@@ -254,7 +254,6 @@ sub storySearch {
 	print " ";
 
 	my $stories = $searchDB->findStory($form);
-	print "Stories:$stories:\n";
 	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $form->{query};

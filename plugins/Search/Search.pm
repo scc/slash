@@ -65,7 +65,6 @@ sub findComments {
 
 
 	my $cursor = $self->{_dbh}->prepare($sql);
-	print ":$sql:\n";
 	$cursor->execute;
 
 	my $search = $cursor->fetchall_arrayref;
