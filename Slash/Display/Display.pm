@@ -44,7 +44,8 @@ use strict;
 use base 'Exporter';
 use vars qw($REVISION $VERSION @EXPORT $CONTEXT);
 use Exporter ();
-use Slash::Display::Provider;
+use Slash::Display::Plugin ();
+use Slash::Display::Provider ();
 use Slash::Utility;
 use Template;
 

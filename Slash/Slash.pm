@@ -5,6 +5,8 @@
 
 package Slash;
 
+# BENDER: It's time to kick some shiny metal ass!
+
 =head1 NAME
 
 Slash - the BEAST
