@@ -105,7 +105,6 @@ sub _install {
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
 	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix_site/htdocs\n";
 		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs";
 		chmod(0755, "$prefix_site/htdocs/$_");
 	}
@@ -150,7 +149,6 @@ sub _install {
 	}
 
 	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix_site/htdocs\n";
 		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs";
 	}
 

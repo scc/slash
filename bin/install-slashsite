@@ -339,6 +339,10 @@ sub apache_site_conf {
     CustomLog logs/${sitename}_access_log common
     SlashVirtualUser $ARGV[0]
     ErrorDocument 404 /404.pl
+		PerlAccessHandler Slash::Apache::User::handler
+		# Enable the line below if you are worried about performance
+		#PerlTransHandler Slash::Apache::IndexHandler
+		PerlLogHandler Slash::Apache::Log
 </VirtualHost>
 |;
 	my $file = "$prefix_site/$sitename/$sitename.conf";  
