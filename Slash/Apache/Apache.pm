@@ -24,7 +24,6 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{constants} = $cfg->{slashdb}->getSlashConf();
 
 	# Backwards compatibility
-	$cfg->{constants}{dbh} = $cfg->{slashdb}{dbh};
 	my $anonymous_coward = $cfg->{slashdb}->getUserInstance(
 		$cfg->{constants}{anonymous_coward_uid}
 	);

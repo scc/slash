@@ -19,13 +19,13 @@ sub setStoryIndex {
 	for my $sid (@_) {
 		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
 	}
-	$self->{dbh}->do("LOCK TABLES newstories WRITE");
+	$self->{_dbh}->do("LOCK TABLES newstories WRITE");
 
 	foreach my $sid (keys %stories) {
 		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
 	}
 
-	$self->{dbh}->do("UNLOCK TABLES");
+	$self->{_dbh}->do("UNLOCK TABLES");
 }
 
 ########################################################
@@ -237,10 +237,9 @@ sub getTop10Comments {
 # For portald
 sub randomBlock {
 	my($self) = @_;
-	my $c = $self->sqlSelectMany("blocks.bid,title,url,block",
-		"blocks,sectionblocks",
-		"blocks.bid=sectionblocks.bid
-		AND sectionblocks.section='index'
+	my $c = $self->sqlSelectMany("bid,title,url,block",
+		"blocks",
+		"section='index'
 		AND portal=1
 		AND ordernum < 0");
 
@@ -250,7 +249,7 @@ sub randomBlock {
 	my $R = $A->[rand @$A];
 	my($bid, $title, $url, $block) = @$R;
 
-	$self->sqlUpdate("sectionblocks", {
+	$self->sqlUpdate("blocks", {
 		title	=> "rand($title);",
 		url	=> $url
 	}, "bid='rand'");
@@ -279,7 +278,7 @@ sub getAccesLogCountTodayAndYestarday {
 sub getSitesRDF {
 	my($self) = @_;
 	my $columns = "bid,url,rdf,retrieve";
-	my $tables = "sectionblocks";
+	my $tables = "blocks";
 	my $where = "rdf != '' and retrieve=1";
 	my $other = "";
 	my $rdf = $self->sqlSelectAll($columns, $tables, $where, $other);
@@ -301,11 +300,11 @@ sub getSectionMenu2{
 # For portald
 sub getSectionMenu2Info{
 	my($self, $section) = @_;
-	my($month, $day) = $self->{dbh}->selectrow_array(
+	my($month, $day) = $self->{_dbh}->selectrow_array(
 			"select month(time), dayofmonth(time) from stories where " .
 			"section='$section' and time < now() and displaystatus > -1 order by ".
 			"time desc limit 1");
-	my($count) = $self->{dbh}->selectrow_array(
+	my($count) = $self->{_dbh}->selectrow_array(
 			"select count(*) from stories where section='$section' and " .
 			"to_days(now()) - to_days(time) <= 2 and time < now() and " .
 			"displaystatus > -1");

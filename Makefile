@@ -59,7 +59,11 @@ install: slash
 	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/S99slashd
 	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/K99slashd
 	touch $(PREFIX)/slash.sites
-	chown -R $(USER):$(GROUP) $(PREFIX)
+	chown $(USER):$(GROUP) $(PREFIX)
+	chown -R $(USER):$(GROUP) $(PREFIX)/themes
+	chown -R $(USER):$(GROUP) $(PREFIX)/sbin
+	chown -R $(USER):$(GROUP) $(PREFIX)/bin
+	chown -R $(USER):$(GROUP) $(PREFIX)/sql
 
 reload: install
 	apachectl stop

@@ -16,7 +16,7 @@ sub new {
 	print STDERR "DRIVER $dsn:$user \n";
 	if ($dsn) {
 		if ($dsn =~ /mysql/) {
-			print STDERR "Picking MySQL \n";
+#			print STDERR "Picking MySQL \n";
 			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 			unless ($ENV{GATEWAY_INTERFACE}) {
@@ -50,6 +50,12 @@ sub new {
 	$self->SUPER::init();
 	return $self;
 }
+
+sub DESTROY {
+  my($self) = @_;
+  $self->{_dbh}->disconnect;
+}
+
 
 1;
 

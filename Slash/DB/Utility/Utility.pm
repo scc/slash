@@ -25,7 +25,7 @@ sub sqlSelectMany {
 	$sql .= "  WHERE $where " if $where;
 	$sql .= "        $other" if $other;
 
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$self->sqlConnect();
 	if ($sth->execute) {
 		return $sth;
@@ -44,7 +44,7 @@ sub sqlSelect {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 	
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$self->sqlConnect();
 	if (!$sth->execute) {
 		errorLog($sql);
@@ -65,7 +65,7 @@ sub sqlSelectArrayRef {
 	$sql .= "$other" if $other;
 	
 	$self->sqlConnect();
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
 		errorLog($sql);
 		return undef;
@@ -93,7 +93,7 @@ sub selectCount  {
 	my $sql = "SELECT count(*) AS count FROM $table $where";
 	# we just need one stinkin value - count
 	$self->sqlConnect();
-	my $sth = $self->{dbh}->selectall_arrayref($sql);
+	my $sth = $self->{_dbh}->selectall_arrayref($sql);
 	return $sth->[0][0];  # count
 }
 
@@ -107,7 +107,7 @@ sub sqlSelectHashref {
 	$sql .= "$other" if $other;
 
 	$self->sqlConnect();
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
 	unless ($sth->execute) {
@@ -142,7 +142,7 @@ sub sqlSelectAll {
 	$sql .= "$other" if $other;
 
 	$self->sqlConnect();
-	my $H = $self->{dbh}->selectall_arrayref($sql);
+	my $H = $self->{_dbh}->selectall_arrayref($sql);
 	return $H;
 }
 
@@ -155,13 +155,13 @@ sub sqlUpdate {
 			s/^-//;
 			$sql .= "\n  $_ = $data->{-$_},";
 		} else { 
-			$sql .= "\n $_ = " . $self->{dbh}->quote($data->{$_}) . ',';
+			$sql .= "\n $_ = " . $self->{_dbh}->quote($data->{$_}) . ',';
 		}
 	}
 	chop $sql;
 	$sql .= "\nWHERE $where\n";
 	$self->sqlConnect();
-	my $rows = $self->{dbh}->do($sql);
+	my $rows = $self->{_dbh}->do($sql);
 	#print STDERR "SQL: $sql\n";
 	errorLog($sql) unless($rows);
 	return $rows;
@@ -177,7 +177,7 @@ sub sqlReplace {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $self->{dbh}->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
 		}
 		$names .= "$_,";
 	}
@@ -187,7 +187,7 @@ sub sqlReplace {
 
 	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or errorLog($sql);
+	return $self->{_dbh}->do($sql) or errorLog($sql);
 }
 
 ########################################################
@@ -200,7 +200,7 @@ sub sqlInsert {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $self->{dbh}->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
 		}
 		$names .= "$_,";	
 	}
@@ -210,7 +210,7 @@ sub sqlInsert {
 
 	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or errorLog($sql);
+	return $self->{_dbh}->do($sql) or errorLog($sql);
 }
 
 ########################################################
@@ -226,7 +226,7 @@ sub sqlTableExists {
 	my($self, $table) = @_;
 	return unless $table;
 
-	my $sth = $self->{dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
+	my $sth = $self->{_dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
 	$self->sqlConnect();
 	$sth->execute;
 	my $te = $sth->rows;
@@ -239,7 +239,7 @@ sub sqlSelectColumns {
 	my($self, $table) = @_;
 	return unless $table;
 
-	my $sth = $self->{dbh}->prepare_cached("SHOW COLUMNS FROM $table");
+	my $sth = $self->{_dbh}->prepare_cached("SHOW COLUMNS FROM $table");
 	$self->sqlConnect();
 	$sth->execute;
 	my @ret;
@@ -263,7 +263,7 @@ sub generatesession {
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
-	$self->{dbh}->do($sql) or errorLog($sql);
+	$self->{_dbh}->do($sql) or errorLog($sql);
 }
 
 1;

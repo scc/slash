@@ -475,7 +475,7 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 
 
 			newmotd();
-			system("$constants->{datadir}/portald $virtual_user&");
+			system("$constants->{sbindir}/portald $virtual_user&");
 			sleep(60 * 2);
 
 			my($today) = $slashdb->getTime();
@@ -484,13 +484,13 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			if ($today ne $yesterday) {
 				$slashdb->setVar("today", $today);
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
-				system("$constants->{datadir}/dailyStuff $virtual_user &");
+				system("$constants->{sbindir}/dailyStuff $virtual_user &");
 			}
 			$last = time;
 
 		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
 			slashdLog("Running Moderatord");
-			system("$constants->{datadir}/moderatord $virtual_user");
+			system("$constants->{sbindir}/moderatord $virtual_user");
 			prog2file("$constants->{basedir}/hof.pl ssi=yes", "$constants->{basedir}/hof.shtml");
 			prog2file("$constants->{basedir}/topics.pl ssi=yes", "$constants->{basedir}/topics.shtml");
 			prog2file("$constants->{basedir}/cheesyportal.pl ssi=yes",

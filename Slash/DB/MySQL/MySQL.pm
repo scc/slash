@@ -80,7 +80,7 @@ my $keysearch = sub {
 		last if $x++ > 3;
 		foreach my $c (@columns) {
 			$sql .= "+" if $sql;
-			$sql .= "($c LIKE " . $self->{dbh}->quote("%$w%") . ")";
+			$sql .= "($c LIKE " . $self->{_dbh}->quote("%$w%") . ")";
 		}
 	}
 #	void context, does nothing?
@@ -124,11 +124,11 @@ sub sqlConnect {
 # Ok, first lets see if we already have a connection
 	my($self) = @_;
 
-	if (defined($self->{dbh})) {
-		unless ($self->{dbh}) {
+	if (defined($self->{_dbh})) {
+		unless ($self->{_dbh}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
-			$self->{dbh}->disconnect;
-			undef $self->{dbh};
+			$self->{_dbh}->disconnect;
+			undef $self->{_dbh};
 			$self->sqlConnect();
 		}
 	} else {
@@ -138,7 +138,7 @@ sub sqlConnect {
 			eval {
 				local $SIG{'ALRM'} = sub { die "Connection timed out" };
 				alarm $timeout;
-				$self->{dbh} = DBIx::Password->connect($self->{virtual_user});
+				$self->{_dbh} = DBIx::Password->connect($self->{virtual_user});
 				alarm 0;
 			};
 			if ($@) {
@@ -146,7 +146,7 @@ sub sqlConnect {
 				#connection in here. For now, we die
 				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
-				kill 9, $$ unless $self->{dbh};	 # The Suicide Die
+				kill 9, $$ unless $self->{_dbh};	 # The Suicide Die
 			}
 		}
 	}
@@ -166,7 +166,7 @@ sub init {
 ########################################################
 sub setComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
-	my $sid_db = $self->{dbh}->quote($form->{sid});
+	my $sid_db = $self->{_dbh}->quote($form->{sid});
 
 	$self->sqlDo("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
@@ -175,9 +175,9 @@ sub setComment {
 
 	$maxCid++; # This is gonna cause troubles
 	my $insline = "INSERT into comments values ($sid_db,$maxCid," .
-		$self->{dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
-		$self->{dbh}->quote($form->{postersubj}) . "," .
-		$self->{dbh}->quote($form->{postercomment}) . "," .
+		$self->{_dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
+		$self->{_dbh}->quote($form->{postersubj}) . "," .
+		$self->{_dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
 
 	# don't allow pid to be passed in the form.
@@ -218,7 +218,7 @@ sub setComment {
 		$self->sqlUpdate(
 			"users_info",
 			{ -totalcomments => 'totalcomments+1' },
-			"uid=" . $self->{dbh}->quote($user->{uid}), 1
+			"uid=" . $self->{_dbh}->quote($user->{uid}), 1
 		);
 
 		# successful submission
@@ -294,7 +294,7 @@ sub getModeratorLogID {
 sub unsetModeratorlog {
 	my($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val", "moderatorlog",
-			"uid=$uid and sid=" . $self->{dbh}->quote($sid)
+			"uid=$uid and sid=" . $self->{_dbh}->quote($sid)
 	);
 	my @removed;
 
@@ -303,7 +303,7 @@ sub unsetModeratorlog {
 		# inactive ones...)
 		$self->sqlDo("delete from moderatorlog where
 			cid=$cid and uid=$uid and sid=" .
-			$self->{dbh}->quote($sid)
+			$self->{_dbh}->quote($sid)
 		);
 
 		# If moderation wasn't actually performed, we should not change
@@ -317,7 +317,7 @@ sub unsetModeratorlog {
 		$self->sqlUpdate(
 			"comments",
 			{ -points => "points+" . (-1 * $val) },
-			"cid=$cid and sid=" . $self->{dbh}->quote($sid) . " AND $scorelogic"
+			"cid=$cid and sid=" . $self->{_dbh}->quote($sid) . " AND $scorelogic"
 		);
 		push(@removed, $cid);
 	}
@@ -343,11 +343,11 @@ sub createPollVoter {
 		uid	=> $ENV{REMOTE_USER}
 	});
 
-	my $qid_db = $self->{dbh}->quote($qid);
+	my $qid_db = $self->{_dbh}->quote($qid);
 	$self->sqlDo("update pollquestions set
 		voters=voters+1 where qid=$qid_db");
 	$self->sqlDo("update pollanswers set votes=votes+1 where
-		qid=$qid_db and aid=" . $self->{dbh}->quote($aid));
+		qid=$qid_db and aid=" . $self->{_dbh}->quote($aid));
 }
 
 ########################################################
@@ -377,7 +377,7 @@ sub createDiscussions {
 	my($self, $sid) = @_;
 	# Posting from outside discussions...
 	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
-	$sid = $self->{dbh}->quote($sid);
+	$sid = $self->{_dbh}->quote($sid);
 	my($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
 	$story_time ||= "now()";
 	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
@@ -413,17 +413,17 @@ sub getAdminInfo {
 	my($aid, $seclev, $section, $url) = $self->sqlSelect(
 		'sessions.aid, authors.seclev, section, url',
 		'sessions, authors',
-		'sessions.aid=authors.aid AND session=' . $self->{dbh}->quote($session)
+		'sessions.aid=authors.aid AND session=' . $self->{_dbh}->quote($session)
 	);
 
 	unless ($aid) {
 		return('', 0, '', '');
 	} else {
 		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
-			$self->{dbh}->quote($session)
+			$self->{_dbh}->quote($session)
 		);
 		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-			'session=' . $self->{dbh}->quote($session)
+			'session=' . $self->{_dbh}->quote($session)
 		);
 		return($aid, $seclev, $section, $url);
 	}
@@ -466,14 +466,14 @@ sub setAdminInfo {
 	my($self, $aid, $pwd) = @_;
 
 	if (my($seclev) = $self->sqlSelect('seclev', 'authors',
-			'aid=' . $self->{dbh}->quote($aid) .
-			' AND pwd=' . $self->{dbh}->quote($pwd) ) ) {
+			'aid=' . $self->{_dbh}->quote($aid) .
+			' AND pwd=' . $self->{_dbh}->quote($pwd) ) ) {
 
 		my($title) = $self->sqlSelect('lasttitle', 'sessions',
-			'aid=' . $self->{dbh}->quote($aid)
+			'aid=' . $self->{_dbh}->quote($aid)
 		);
 
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($aid) );
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($aid) );
 
 		my $sid = $self->generatesession($aid);
 		$self->sqlInsert('sessions', { session => $sid, aid => $aid,
@@ -512,7 +512,7 @@ sub createAccessLog {
 
 	if ($dat =~ /\//) {
 		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' },
-			'sid=' . $self->{dbh}->quote($dat)
+			'sid=' . $self->{_dbh}->quote($dat)
 		);
 	}
 }
@@ -583,7 +583,7 @@ sub getUserInstance {
 	}
 
 	$user = $self->sqlSelectHashref('*', 'users',
-		' uid = ' . $self->{dbh}->quote($uid)
+		' uid = ' . $self->{_dbh}->quote($uid)
 	);
 	return undef unless $user;
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
@@ -654,7 +654,7 @@ sub getUserAuthenticate {
 
 	# RECHECK LOGIC!!  -- pudge
 
-	$dbh = $self->{dbh};
+	$dbh = $self->{_dbh};
 	$user_db = $dbh->quote($user);
 	$cryptpasswd = encryptPassword($passwd);
 	@pass = $self->sqlSelect(
@@ -702,7 +702,7 @@ sub getNewPasswd {
 	my $newpasswd = changePassword();
 	$self->sqlUpdate('users', {
 		newpasswd => $newpasswd
-	}, 'uid=' . $self->{dbh}->quote($uid));
+	}, 'uid=' . $self->{_dbh}->quote($uid));
 	return $newpasswd;
 }
 
@@ -718,7 +718,7 @@ sub getUserUID {
 # as is, it may be a security flaw
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	my($uid) = $self->sqlSelect('uid', 'users',
-		'nickname=' . $self->{dbh}->quote($name)
+		'nickname=' . $self->{_dbh}->quote($name)
 	);
 
 	return $uid;
@@ -733,7 +733,7 @@ sub getCommentsByUID {
 			. ",points FROM comments WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
-	my $sth = $self->{dbh}->prepare($sqlquery);
+	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
 	my($comments) = $sth->fetchall_arrayref;
 
@@ -769,10 +769,10 @@ sub createUser {
 
 	my($cnt) = $self->sqlSelect(
 		"matchname","users",
-		"matchname=" . $self->{dbh}->quote($matchname)
+		"matchname=" . $self->{_dbh}->quote($matchname)
 	) || $self->sqlSelect(
 		"realemail","users",
-		" realemail=" . $self->{dbh}->quote($email)
+		" realemail=" . $self->{_dbh}->quote($email)
 	);
 	return 0 if ($cnt);
 
@@ -826,13 +826,13 @@ sub getVars {
 ########################################################
 sub setVar {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
+	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{_dbh}->quote($name));
 }
 
 ########################################################
 sub setSessionByAid {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
+	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{_dbh}->quote($name));
 }
 
 ########################################################
@@ -865,7 +865,7 @@ sub updateCommentTotals {
 			hitparade	=> $hp,
 			writestatus	=> 0,
 			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $self->{dbh}->quote($sid)
+		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
 }
 
@@ -882,11 +882,11 @@ sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	if ($cid) {
 		$self->sqlDo("delete from comments WHERE sid=" .
-			$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
+			$self->{_dbh}->quote($sid) . " and cid=" . $self->{_dbh}->quote($cid)
 		);
 	} else {
 		$self->sqlDo("delete from comments WHERE sid=" .
-			$self->{dbh}->quote($sid));
+			$self->{_dbh}->quote($sid));
 		$self->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
 	}
 }
@@ -903,7 +903,7 @@ sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
 	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
-	my $section_dbh = $self->{dbh}->quote($section);
+	my $section_dbh = $self->{_dbh}->quote($section);
 	my($count) = $self->sqlSelect("count(*)","sections","section=$section_dbh");
 	my($ok1, $ok2);
 
@@ -911,7 +911,7 @@ sub setSection {
 	# I need to do this diffently under Oracle
 	unless ($count) {
 		$self->sqlDo("INSERT into sections (section) VALUES($section_dbh)");
-		$ok1++ unless $self->{dbh}->errstr;
+		$ok1++ unless $self->{_dbh}->errstr;
 	}
 
 	$self->sqlUpdate('sections', {
@@ -922,7 +922,7 @@ sub setSection {
 			artcount  => $artcount
 		}, "'section=$section_dbh"
 	);
-	$ok2++ unless $self->{dbh}->errstr;
+	$ok2++ unless $self->{_dbh}->errstr;
 
 	return($count, $ok1, $ok2);
 }
@@ -936,14 +936,14 @@ sub setStoriesCount {
 				-commentcount => "commentcount-$count",
 				writestatus => 1
 			},
-			"sid=" . $self->{dbh}->quote($sid)
+			"sid=" . $self->{_dbh}->quote($sid)
 	);
 }
 
 ########################################################
 sub getSectionTitle {
 	my($self) = @_;
-	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
+	my $sth = $self->{_dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
 	$sth->execute;
 	my $sections = $sth->fetchall_arrayref;
 	$sth->finish;
@@ -963,7 +963,7 @@ sub deleteSubmission {
 
 	if ($form->{subid}) {
 		$self->sqlUpdate("submissions", { del => 1 },
-			"subid=" . $self->{dbh}->quote($form->{subid})
+			"subid=" . $self->{_dbh}->quote($form->{subid})
 		);
 		$self->sqlUpdate("authors",
 			{ -deletedsubmissions => 'deletedsubmissions+1' },
@@ -990,7 +990,7 @@ sub deleteSubmission {
 				}
 
 				$self->sqlUpdate("submissions", \%sub,
-					"subid=" . $self->{dbh}->quote($n));
+					"subid=" . $self->{_dbh}->quote($n));
 			}
 		} else {
 			my $key = $n;
@@ -1011,23 +1011,23 @@ sub deleteSubmission {
 sub deleteSession {
 	my($self, $aid) = @_;
 	if ($aid) {
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($aid));
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($aid));
 	} else {
 		my $user = getCurrentUser();
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($user->{aid}));
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($user->{aid}));
 	}
 }
 
 ########################################################
 sub deleteAuthor {
 	my($self, $aid) = @_;
-	$self->sqlDo('DELETE FROM sessions WHERE authors=' . $self->{dbh}->quote($aid));
+	$self->sqlDo('DELETE FROM sessions WHERE authors=' . $self->{_dbh}->quote($aid));
 }
 
 ########################################################
 sub deleteTopic {
 	my($self, $tid) = @_;
-	$self->sqlDo('DELETE from topics WHERE tid=' . $self->{dbh}->quote($tid));
+	$self->sqlDo('DELETE from topics WHERE tid=' . $self->{_dbh}->quote($tid));
 }
 
 ########################################################
@@ -1039,7 +1039,7 @@ sub revertBlock {
 ########################################################
 sub deleteBlock {
 	my($self, $bid) = @_;
-	$self->sqlDo('DELETE FROM blocks WHERE bid=' . $self->{dbh}->quote($bid));
+	$self->sqlDo('DELETE FROM blocks WHERE bid=' . $self->{_dbh}->quote($bid));
 }
 
 ########################################################
@@ -1058,7 +1058,7 @@ sub deleteContentFilter {
 sub saveTopic {
 	my($self) = @_;
 	my $form = getCurrentForm();
-	my($rows) = $self->sqlSelect('count(*)', 'topics', 'tid=' . $self->{dbh}->quote($form->{tid}));
+	my($rows) = $self->sqlSelect('count(*)', 'topics', 'tid=' . $self->{_dbh}->quote($form->{tid}));
 	if ($rows == 0) {
 		$self->sqlInsert('topics', {
 			tid	=> $form->{tid},
@@ -1074,7 +1074,7 @@ sub saveTopic {
 			alttext	=> $form->{alttext},
 			width	=> $form->{width},
 			height	=> $form->{height}
-		}, 'tid=' . $self->{dbh}->quote($form->{tid})
+		}, 'tid=' . $self->{_dbh}->quote($form->{tid})
 	);
 }
 
@@ -1082,7 +1082,7 @@ sub saveTopic {
 sub saveBlock {
 	my($self, $bid) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'blocks',
-		'bid=' . $self->{dbh}->quote($bid)
+		'bid=' . $self->{_dbh}->quote($bid)
 	);
 
 	my $form = getCurrentForm();
@@ -1117,7 +1117,7 @@ sub saveBlock {
 			section		=> $form->{section},
 			retrieve	=> $form->{retrieve},
 			portal		=> $form->{portal},
-		}, 'bid=' . $self->{dbh}->quote($bid));
+		}, 'bid=' . $self->{_dbh}->quote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
 			seclev		=> $form->{bseclev},
@@ -1131,7 +1131,7 @@ sub saveBlock {
 			section		=> $form->{section},
 			retrieve	=> $form->{retrieve},
 			portal		=> $form->{portal},
-		}, 'bid=' . $self->{dbh}->quote($bid));
+		}, 'bid=' . $self->{_dbh}->quote($bid));
 	}
 
 
@@ -1162,7 +1162,7 @@ sub saveColorBlock {
 
 	} elsif ($form->{colororig}) {
 		# reload original version of colors
-		$self->{dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
+		$self->{_dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
 	}
 }
 
@@ -1170,7 +1170,7 @@ sub saveColorBlock {
 sub getSectionBlock {
 	my($self, $section) = @_;
 	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
-		"blocks", "section=" . $self->{dbh}->quote($section),
+		"blocks", "section=" . $self->{_dbh}->quote($section),
 		"ORDER by ordernum"
 	);
 
@@ -1193,8 +1193,8 @@ sub getAuthorDescription {
 sub getPollVoter {
 	my($self, $id) = @_;
 	my($voters) = $self->sqlSelect('id', 'pollvoters',
-		"qid=" . $self->{dbh}->quote($id) .
-		"AND id=" . $self->{dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
+		"qid=" . $self->{_dbh}->quote($id) .
+		"AND id=" . $self->{_dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
 		"AND uid=" . $ENV{REMOTE_USER}
 	);
 
@@ -1226,8 +1226,8 @@ sub savePollQuestion {
 			});
 
 		} else {
-			$self->{dbh}->do("DELETE from pollanswers WHERE qid="
-					. $self->{dbh}->quote($form->{qid}) . " and aid=$x");
+			$self->{_dbh}->do("DELETE from pollanswers WHERE qid="
+					. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
 		}
 	}
 }
@@ -1245,7 +1245,7 @@ sub getPollQuestionList {
 sub getPollAnswers {
 	my($self, $id, $val) = @_;
 	my $values = join ',', @$val;
-	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{dbh}->quote($id), 'ORDER by aid');
+	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by aid');
 
 	return $answers;
 }
@@ -1258,7 +1258,7 @@ sub getPollQuestions {
 
 	my $poll_hash_ref = {};
 	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC LIMIT 25";
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
 		$poll_hash_ref->{$id} = $desc;
@@ -1272,10 +1272,10 @@ sub getPollQuestions {
 sub deleteStory {
 	my($self, $sid) = @_;
 	$self->sqlUpdate('stories', { writestatus => 5 },
-		'sid=' . $self->{dbh}->quote($sid)
+		'sid=' . $self->{_dbh}->quote($sid)
 	);
 
-	$self->{dbh}->do("DELETE from discussions WHERE sid = '$sid'");
+	$self->{_dbh}->do("DELETE from discussions WHERE sid = '$sid'");
 }
 
 ########################################################
@@ -1283,8 +1283,8 @@ sub deleteStory {
 sub deleteStoryAll {
 	my($self, $sid) = @_;
 
-	$self->{dbh}->do("DELETE from stories where sid='$sid'");
-	$self->{dbh}->do("DELETE from newstories where sid='$sid'");
+	$self->{_dbh}->do("DELETE from stories where sid='$sid'");
+	$self->{_dbh}->do("DELETE from newstories where sid='$sid'");
 }
 
 ########################################################
@@ -1293,7 +1293,7 @@ sub deleteStoryAll {
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $cursor = $self->{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
+	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
 		image,commentcount,section,introtext,bodytext,
 		topics.tid as tid
 		    FROM stories,topics
@@ -1349,7 +1349,7 @@ sub getStaticBlock {
 
 	my $block_hash_ref = {};
 	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev AND type != 'portald'";
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
 		$block_hash_ref->{$id} = $desc;
@@ -1364,7 +1364,7 @@ sub getPortaldBlock {
 
 	my $block_hash_ref = {};
 	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev and type = 'portald'";
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
 		$block_hash_ref->{$id} = $desc;
@@ -1379,7 +1379,7 @@ sub getColorBlock {
 
 	my $block_hash_ref = {};
 	my $sql = "SELECT bid,bid FROM blocks WHERE type = 'color'";
-	my $sth = $self->{dbh}->prepare_cached($sql);
+	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
 		$block_hash_ref->{$id} = $desc;
@@ -1415,7 +1415,7 @@ sub updateFormkeyId {
 			id	=> $uid,
 			uid	=> $uid,
 		}, "formname='$formname' AND uid = $anon AND formkey=" .
-			$self->{dbh}->quote($formkey));
+			$self->{_dbh}->quote($formkey));
 	}
 }
 
@@ -1446,7 +1446,7 @@ sub checkFormkey {
 
 	my $where = $whereFormkey->($formkey_id);
 	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
-		'formkey = ' . $self->{dbh}->quote($formkey) .
+		'formkey = ' . $self->{_dbh}->quote($formkey) .
 		" AND $where " .
 		"AND ts >= $formkey_earliest AND formname = '$formname'");
 	return($is_valid);
@@ -1479,7 +1479,7 @@ sub formSuccess {
 			cid             => $cid,
 			submit_ts       => time(),
 			content_length  => $length,
-		}, "formkey=" . $self->{dbh}->quote($formkey)
+		}, "formkey=" . $self->{_dbh}->quote($formkey)
 	);
 }
 
@@ -1488,7 +1488,7 @@ sub formFailure {
 	my($self, $formkey) = @_;
 	$self->sqlUpdate("formkeys", {
 			value   => -1,
-		}, "formkey=" . $self->{dbh}->quote($formkey)
+		}, "formkey=" . $self->{_dbh}->quote($formkey)
 	);
 }
 
@@ -1549,10 +1549,10 @@ sub getTopNewsstoryTopics {
 sub getPoll {
 	my($self, $qid) = @_;
 
-	my $sth = $self->{dbh}->prepare_cached("
+	my $sth = $self->{_dbh}->prepare_cached("
 			SELECT question,answer,aid  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
-			pollquestions.qid= " . $self->{dbh}->quote($qid) . "
+			pollquestions.qid= " . $self->{_dbh}->quote($qid) . "
 			ORDER BY pollanswers.aid
 	");
 	$sth->execute;
@@ -1566,7 +1566,7 @@ sub getPoll {
 # This should be deletable at this point
 #sub getPollComments {
 #	my($self, $qid) = @_;
-#	my($comments) = $self->sqlSelect('count(*)', 'comments', "sid=" .$self->{dbh}->quote($qid));
+#	my($comments) = $self->sqlSelect('count(*)', 'comments', "sid=" .$self->{_dbh}->quote($qid));
 #
 #	return $comments;
 #}
@@ -1630,7 +1630,7 @@ sub getPortals {
 		  GROUP BY bid
 		  ORDER BY ordernum";
 
-	my $sth = $self->{dbh}->prepare($strsql);
+	my $sth = $self->{_dbh}->prepare($strsql);
 	$sth->execute;
 	my $portals = $sth->fetchall_arrayref;
 
@@ -1670,13 +1670,13 @@ sub countComments {
 	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
 	if ($uid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid = ". $self->{_dbh}->quote($uid));
 	} elsif ($cid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($cid));
 	} elsif ($comment) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . ' AND comment=' . $self->{dbh}->quote($comment));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
 	} else {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid));
 	}
 
 	return $value;
@@ -1689,7 +1689,7 @@ sub method {
 	$self->sqlUpdate(
 		"stories",
 		{ commentcount => $count },
-		"sid=" . $self->{dbh}->quote($sid)
+		"sid=" . $self->{_dbh}->quote($sid)
 	);
 
 	return $count;
@@ -1699,7 +1699,7 @@ sub method {
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
-	my($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{dbh}->quote($tid));
+	my($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{_dbh}->quote($tid));
 
 	return $value;
 }
@@ -1731,7 +1731,7 @@ sub refreshStories {
 	my($self, $sid) = @_;
 	$self->sqlUpdate('stories',
 			{ writestatus => 1 },
-			'sid=' . $self->{dbh}->quote($sid) . ' and writestatus=0'
+			'sid=' . $self->{_dbh}->quote($sid) . ' and writestatus=0'
 	);
 }
 
@@ -1746,7 +1746,7 @@ sub getStoryByTime {
 
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 	if ($isolate) {
-		$where = 'AND section=' . $self->{dbh}->quote($story->{'section'})
+		$where = 'AND section=' . $self->{_dbh}->quote($story->{'section'})
 			if $isolate == 1;
 	} else {
 		$where = 'AND displaystatus=0';
@@ -1795,7 +1795,7 @@ sub setMetaMod {
 	my $returns = [];
 
 	# Update $muid's Karma
-	$self->{dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
+	$self->{_dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
 	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
 		my $val = $m2victims->{$_}[1];
@@ -1827,7 +1827,7 @@ sub setMetaMod {
 			-flag => $flag
 		});
 	}
-	$self->{dbh}->do("UNLOCK TABLES");
+	$self->{_dbh}->do("UNLOCK TABLES");
 
 	return $returns;
 }
@@ -1927,7 +1927,7 @@ sub setCommentCleanup {
 		points=points$val,
 		reason=$reason,
 		lastmod=$user->{uid}
-		WHERE sid=" . $self->{dbh}->quote($sid)."
+		WHERE sid=" . $self->{_dbh}->quote($sid)."
 		AND cid=$cid
 		AND points " .
 			($val < 0 ? " > $constants->{comment_minscore}" : "") .
@@ -1992,8 +1992,8 @@ sub getCommentReply {
 		comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
 		"comments,users,users_info,users_comments",
-		"sid=" . $self->{dbh}->quote($sid) . "
-		AND cid=" . $self->{dbh}->quote($pid) . "
+		"sid=" . $self->{_dbh}->quote($sid) . "
+		AND cid=" . $self->{_dbh}->quote($pid) . "
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
 		AND users.uid=comments.uid"
@@ -2014,12 +2014,12 @@ sub getCommentsForUser {
 				comments.points as points,pid,sid,
 				lastmod, reason
 			   FROM comments,users
-			  WHERE sid=" . $self->{dbh}->quote($sid) . "
+			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
 			    AND comments.uid=users.uid";
 	$sql .= "	    AND (";
 	$sql .= "		comments.uid=$user->{uid} OR " unless $user->{is_anon};
 	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		comments.points >= " . $self->{dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
+	$sql .= "		comments.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
 	$sql .= "		  1=1 )   ";
 	$sql .= "	  ORDER BY ";
 	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
@@ -2027,7 +2027,7 @@ sub getCommentsForUser {
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
 
 
-	my $thisComment = $self->{dbh}->prepare_cached($sql) or errorLog($sql);
+	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
 	$thisComment->execute or errorLog($sql);
 	my(@comments);
 	while (my $comment = $thisComment->fetchrow_hashref){
@@ -2103,7 +2103,7 @@ sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
 	my $where = "stories.sid=comments.sid";
-	$where .= " AND stories.sid=" . $self->{dbh}->quote($sid) if $sid;
+	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
 	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject,"
 		. getDateFormat("date","d") . "," . getDateFormat("time","t")
 		. ",uid, cid, points"
@@ -2157,15 +2157,15 @@ sub getSubmissionForUser {
 	my $user = getCurrentUser();
 	my $sql = "SELECT subid,subj,date_format($dateformat,'m/d  H:i'),tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
-	$sql .= $form->{note} ? "note=" . $self->{dbh}->quote($form->{note}) : "isnull(note)";
+	$sql .= $form->{note} ? "note=" . $self->{_dbh}->quote($form->{note}) : "isnull(note)";
 	$sql .= "		or note=' ' " unless $form->{note};
 	$sql .= ")";
 	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
-	$sql .= "         and section=" . $self->{dbh}->quote($user->{asection}) if $user->{asection};
-	$sql .= "         and section=" . $self->{dbh}->quote($form->{section})  if $form->{section};
+	$sql .= "         and section=" . $self->{_dbh}->quote($user->{asection}) if $user->{asection};
+	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section})  if $form->{section};
 	$sql .= "	  ORDER BY time";
 
-	my $cursor = $self->{dbh}->prepare($sql);
+	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 
 	my $submission = $cursor->fetchall_arrayref;
@@ -2189,13 +2189,13 @@ sub getSearch {
 	$sqlquery .= "	  1 as kw " unless $form->{query};
 	$sqlquery .= "	  FROM newstories, comments
 			 WHERE newstories.sid=comments.sid ";
-	$sqlquery .= "     AND newstories.sid=" . $self->{dbh}->quote($form->{sid}) if $form->{sid};
+	$sqlquery .= "     AND newstories.sid=" . $self->{_dbh}->quote($form->{sid}) if $form->{sid};
 	$sqlquery .= "     AND points >= $threshold ";
-	$sqlquery .= "     AND section=" . $self->{dbh}->quote($form->{section}) if $form->{section};
+	$sqlquery .= "     AND section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
 	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
 
 
-	my $cursor = $self->{dbh}->prepare($sqlquery);
+	my $cursor = $self->{_dbh}->prepare($sqlquery);
 	$cursor->execute;
 
 	my $search = $cursor->fetchall_arrayref;
@@ -2206,7 +2206,7 @@ sub getSearch {
 sub getNewstoryTitle {
 	my($self, $storyid, $sid) = @_;
 	my($title) = $self->sqlSelect("title", "newstories",
-	      "sid=" . $self->{dbh}->quote($sid)
+	      "sid=" . $self->{_dbh}->quote($sid)
 	);
 
 	return $title;
@@ -2233,7 +2233,7 @@ sub getSearchUsers {
 		$sqlquery .= "AND ($kw) ";
 	}
 	$sqlquery .= "ORDER BY uid LIMIT $form->{min}, $form->{max}";
-	my $sth = $self->{dbh}->prepare($sqlquery);
+	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
 
 	my $users = $sth->fetchall_arrayref;
@@ -2262,18 +2262,18 @@ WHERE ((displaystatus = 0 and "$form->{section}"="")
 EOT
 
 	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
-	$sqlquery .= "   AND aid=" . $self->{dbh}->quote($form->{author})
+	$sqlquery .= "   AND aid=" . $self->{_dbh}->quote($form->{author})
 		if $form->{author};
-	$sqlquery .= "   AND section=" . $self->{dbh}->quote($form->{section})
+	$sqlquery .= "   AND section=" . $self->{_dbh}->quote($form->{section})
 		if $form->{section};
-	$sqlquery .= "   AND tid=" . $self->{dbh}->quote($form->{topic})
+	$sqlquery .= "   AND tid=" . $self->{_dbh}->quote($form->{topic})
 		if $form->{topic};
 
 	$sqlquery .= " ORDER BY ";
 	$sqlquery .= " kw DESC, " if $form->{query};
 	$sqlquery .= " time DESC LIMIT $form->{min},$form->{max}";
 
-	my $cursor = $self->{dbh}->prepare($sqlquery);
+	my $cursor = $self->{_dbh}->prepare($sqlquery);
 	$cursor->execute;
 	my $stories = $cursor->fetchall_arrayref;
 
@@ -2310,7 +2310,7 @@ sub setCommentCount {
 	my($self, $delCount) = @_;
 	my $form =  getCurrentForm();
 	$self->sqlDo("UPDATE stories SET commentcount=commentcount-$delCount,
-	      writestatus=1 WHERE sid=" . $self->{dbh}->quote($form->{sid})
+	      writestatus=1 WHERE sid=" . $self->{_dbh}->quote($form->{sid})
 	);
 }
 
@@ -2334,7 +2334,7 @@ sub saveStory {
 	if ($form->{subid}) {
 		my($suid) = $self->sqlSelect(
 			'uid','submissions',
-			'subid=' . $self->{dbh}->quote($form->{subid})
+			'subid=' . $self->{_dbh}->quote($form->{subid})
 		);
 
 		# i think i got this right -- pudge
@@ -2353,7 +2353,7 @@ sub saveStory {
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
-			'subid=' . $self->{dbh}->quote($form->{subid})
+			'subid=' . $self->{_dbh}->quote($form->{subid})
 		);
 	}
 
@@ -2591,7 +2591,7 @@ sub getStoryList {
 	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
 	$sql .= "	ORDER BY time DESC";
 
-	my $cursor = $self->{dbh}->prepare($sql);
+	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 	my $list = $cursor->fetchall_arrayref;
 
@@ -2609,7 +2609,7 @@ sub updateStory {
 			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
 			-ts	=> $form->{'time'},
 		},
-		'sid = ' . $self->{dbh}->quote($form->{sid})
+		'sid = ' . $self->{_dbh}->quote($form->{sid})
 	);
 
 	$self->sqlUpdate('stories', {
@@ -2625,11 +2625,11 @@ sub updateStory {
 			relatedtext	=> $form->{relatedtext},
 			displaystatus	=> $form->{displaystatus},
 			commentstatus	=> $form->{commentstatus}
-		}, 'sid=' . $self->{dbh}->quote($form->{sid})
+		}, 'sid=' . $self->{_dbh}->quote($form->{sid})
 	);
 
-	$self->{dbh}->do('UPDATE stories SET time=now() WHERE sid='
-		. $self->{dbh}->quote($form->{sid})
+	$self->{_dbh}->do('UPDATE stories SET time=now() WHERE sid='
+		. $self->{_dbh}->quote($form->{sid})
 	) if $form->{fastforward} eq 'on';
 	$self->saveExtras($form);
 }
@@ -2637,7 +2637,7 @@ sub updateStory {
 ##################################################################
 sub getPollVotesMax {
 	my($self, $id) = @_;
-	my($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{dbh}->quote($id));
+	my($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{_dbh}->quote($id));
 	return $answer;
 }
 
@@ -2897,7 +2897,7 @@ sub _genericGetCacheName {
 # and just not the cache (if one even exists)
 sub _genericSet {
 	my($table, $table_prime, $self, $id, $value) = @_;
-	$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{dbh}->quote($id));
+	$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
 
 	my $table_cache= '_' . $table . '_cache';
 	return unless (keys %{$self->{$table_cache}});
@@ -2961,7 +2961,7 @@ sub _genericGetCache {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -2994,7 +2994,7 @@ sub _genericClearCache {
 sub _genericGet {
 	my($table, $table_prime, $self, $id, $val) = @_;
 	my($answer, $type);
-	my $id_db = $self->{dbh}->quote($id);
+	my $id_db = $self->{_dbh}->quote($id);
 
 	if (ref($val) eq 'ARRAY') {
 		my $values = join ',', @$val;
@@ -3075,8 +3075,8 @@ sub createMenuItem {
 ########################################################
 sub getMenuItems {
 	my($self, $script) = @_;
-	my $sql = "SELECT * FROM menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
-	my $sth = $self->{dbh}->prepare($sql);
+	my $sql = "SELECT * FROM menus WHERE page=" . $self->{_dbh}->quote($script) . "ORDER by menuorder";
+	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
 	my(@menu, $row);
 	push(@menu, $row) while ($row = $sth->fetchrow_hashref);
@@ -3090,7 +3090,7 @@ sub getMenus {
 	my($self) = @_;
 
 	my $sql = "SELECT DISTINCT menu FROM menus ORDER BY menu";
-	my $sth = $self->{dbh}->prepare($sql);
+	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute;
 	my $menu_names = $sth->fetchall_arrayref;
 	$sth->finish;
@@ -3098,8 +3098,8 @@ sub getMenus {
 	my $menus;
 	for (@$menu_names) {
 		my $script = $_->[0];
-		$sql = "SELECT * FROM menus WHERE menu=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
-		$sth =	$self->{dbh}->prepare($sql);
+		$sql = "SELECT * FROM menus WHERE menu=" . $self->{_dbh}->quote($script) . "ORDER by menuorder";
+		$sth =	$self->{_dbh}->prepare($sql);
 		$sth->execute();
 		my(@menu, $row);
 		push(@menu, $row) while ($row = $sth->fetchrow_hashref);
@@ -3108,11 +3108,6 @@ sub getMenus {
 	}
 
 	return $menus;
-}
-
-sub DESTROY {
-	my($self) = @_;
-	$self->{dbh}->disconnect;
 }
 
 1;

@@ -647,8 +647,9 @@ INSERT INTO vars VALUES ('archive_delay','60','days to wait for story archiving,
 INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu',NULL,NULL);
 INSERT INTO vars VALUES ('authors_unlimited','1','Authors have unlimited moderation',NULL,NULL);
 INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value',NULL,NULL);
-INSERT INTO vars VALUES ('basedir','/home/slash/public_html','Where should the html/perl files be found?',NULL,NULL);
+INSERT INTO vars VALUES ('basedir','/usr/local/slash/public_html','Where should the html/perl files be found?',NULL,NULL);
 INSERT INTO vars VALUES ('basedomain','www.example.com','The URL for the site',NULL,NULL);
+INSERT INTO vars VALUES ('sbindir','/usr/local/slash/sbin','Where are the sbin scripts kept',NULL,NULL);
 INSERT INTO vars VALUES ('block_expire','3600','Default expiration time for the block cache',NULL,NULL);
 INSERT INTO vars VALUES ('breaking','100','Undefined',NULL,NULL);
 INSERT INTO vars VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not',NULL,NULL);
@@ -659,7 +660,7 @@ INSERT INTO vars VALUES ('commentstatus','0','default comment code',NULL,NULL);
 INSERT INTO vars VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)',NULL,NULL);
 INSERT INTO vars VALUES ('cookiepath','/','Path on server for cookie to be active',NULL,NULL);
 INSERT INTO vars VALUES ('currentqid','happy','The Current Question on the homepage pollbooth',NULL,NULL);
-INSERT INTO vars VALUES ('datadir','/home/slash','What is the root of the install for slash',NULL,NULL);
+INSERT INTO vars VALUES ('datadir','/usr/local/slash','What is the root of the install for slash',NULL,NULL);
 INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.',NULL,NULL);
 INSERT INTO vars VALUES ('defaultdisplaystatus','0','Default display status...',NULL,NULL);
 INSERT INTO vars VALUES ('defaultsection','articles','Default section to display',NULL,NULL);
@@ -673,7 +674,7 @@ INSERT INTO vars VALUES ('http_proxy','','http://proxy.www.example.com',NULL,NUL
 INSERT INTO vars VALUES ('imagedir','http://www.example.com/images','Absolute URL for image directory',NULL,NULL);
 INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points',NULL,NULL);
 INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block',NULL,NULL);
-INSERT INTO vars VALUES ('logdir','/home/slash/logs','Where should the logs be found?',NULL,NULL);
+INSERT INTO vars VALUES ('logdir','/usr/local/slash/logs','Where should the logs be found?',NULL,NULL);
 INSERT INTO vars VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation.',NULL,NULL);
 INSERT INTO vars VALUES ('m2_comments','10','Number of comments for meta-moderation.',NULL,NULL);
 INSERT INTO vars VALUES ('m2_maxbonus','12','??',NULL,NULL);
