@@ -81,7 +81,11 @@ sub verbosity {
 ############################################################
 
 sub slashdLogInit {
-	doLogInit('slashd', 1);
+	doLogInit('slashd', 1, 'runtask');
+}
+
+sub slashdLogExit {
+	doLogExit('slashd', 1, 'runtask');
 }
 
 sub get_task_subref {
@@ -204,8 +208,8 @@ sub main {
 	$slashdb = getCurrentDB();
 	$user = getCurrentUser();
 	$dir = "$constants->{datadir}/tasks";
-	slashdLogInit();
 	$ENV{TZ} = 'GMT' if $ENV{TZ} ne 'GMT';
+	slashdLogInit();
 
 	# Process task specific options, if any.
 	if ($opts{'o'}) {
@@ -225,6 +229,8 @@ sub main {
 		my $duration = sprintf("%.2f", Time::HiRes::time - $start_time);
 		slashdLog("$task_name end: $rc (ran in ${duration}s)");
 	}
+
+	slashdLogExit();
 }
 
 sub usage {

@@ -193,7 +193,8 @@ sub doEmail {
 }
 
 sub doLogPid {
-	my($fname, $nopid) = @_;
+	my($fname, $nopid, $sname) = @_;
+	$sname ||= $fname;
 
 	my $fh      = gensym();
 	my $dir     = getCurrentStatic('logdir');
@@ -212,45 +213,56 @@ sub doLogPid {
 
 	# do this for all things, not just ones needing a .pid
 	$SIG{TERM} = $SIG{INT} = sub {
-		doLog($fname, ["Exiting $fname ($_[0]) with pid $$"]);
-		unlink $file;  # fails silently even if $file does not exist
+		doLog($fname, ["Exiting $sname ($_[0]) with pid $$"]);
+		# Don't delete the .pid file unless we wrote it.
+		# Yes, this next line does what you'd expect;  $nopid is
+		# lexically scoped and nested subs inherit the value
+		# acquired on the first time the outer sub is called.
+		# The Camel book has more info on this phenomenon at its
+		# description of the diagnostic message "Variable '%s'
+		# will not stay shared" (which won't be a warning here
+		# because this inner sub is anonymous).  Oh, and the
+		# unlink will silently fail if the file is missing, too.
+		unlink $file unless $nopid;
 		exit 0;
 	};
 }
 
 sub doLogInit {
-	my($fname, $nopid) = @_;
+	my($fname, $nopid, $sname) = @_;
+	$sname ||= $fname;
 
 	my $dir     = getCurrentStatic('logdir');
 	my $file    = catfile($dir, "$fname.log");
 
 	mkpath $dir, 0, 0775;
-	doLogPid($fname, $nopid);
+	doLogPid($fname, $nopid, $sname);
 	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
-	doLog($fname, ["Starting $fname with pid $$"]);
+	doLog($fname, ["Starting $sname with pid $$"]);
 }
 
 sub doLogExit {
-	my($fname) = @_;
+	my($fname, $nopid, $sname) = @_;
+	$sname ||= $fname;
 
 	my $dir     = getCurrentStatic('logdir');
 	my $file    = catfile($dir, "$fname.pid");
 
-	doLog($fname, ["Exiting $fname (exit) with pid $$"]);
-	unlink $file;  # fails silently even if $file does not exist
+	doLog($fname, ["Exiting $sname (exit) with pid $$"]);
+	unlink $file unless $nopid;  # fails silently even if $file does not exist
 	exit 0;
 }
 
 sub doLog {
-	my($fname, $msg, $stdout, $name) = @_;
+	my($fname, $msg, $stdout, $sname) = @_;
 	chomp(my @msg = @$msg);
 
-	$name     ||= '';
-	$name      .= ' ';
+	$sname    ||= '';
+	$sname     .= ' ' if $sname;
 	my $fh      = gensym();
 	my $dir     = getCurrentStatic('logdir');
 	my $file    = catfile($dir, "$fname.log");
-	my $log_msg = scalar(localtime) . "\t$name@msg\n";
+	my $log_msg = scalar(localtime) . " $sname@msg\n";
 
 	open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @msg\n";
 	print $fh $log_msg;
