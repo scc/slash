@@ -449,16 +449,24 @@ The 'displayThread' template block.
 =cut
 
 sub displayThread {
-	my($sid, $pid, $lvl, $comments, $const) = @_;
+	my($sid, $pid, $lvl, $comments, $const, $displayed, $recurse) = @_;
+# Couple of notes.
+# $displayed is past along as we need it to make sure we don't print
+# to many comments. $recurse is a flag. Why not use wantarray()? For
+# for some reason the original template call makes wantarray think
+# that an array should be returned (which is bad) so I added this
+# as a flag. 
+#	-Brian
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
 	$lvl ||= 0;
+	$displayed ||= 0;
 	my $mode = getCurrentUser('mode');
 	my $indent = 1;
 	my $full = my $cagedkids = !$lvl;
-	my $hidden = my $displayed = my $skipped = 0;
+	my $hidden = my $skipped = 0;
 	my $return = '';
 
 	# Archive really doesn't exist anymore -Brian 
@@ -498,10 +506,10 @@ sub displayThread {
 		if ($full || $highlight) {
 			if ($lvl && $indent) {
 				$return .= $const->{tablebegin} .
-					dispComment($comment) . $const->{tableend};
+					dispComment($comment, $constants, $form, $user) . $const->{tableend};
 				$cagedkids = 0;
 			} else {
-				$return .= dispComment($comment);
+				$return .= dispComment($comment, $constants, $form, $user);
 			}
 			$displayed++;
 		} else {
@@ -514,10 +522,12 @@ sub displayThread {
 		if ($comment->{kids}) {
 			$return .= $const->{cagebegin} if $cagedkids;
 			$return .= $const->{indentbegin} if $indent;
-			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
+			(my $addition, $displayed) = displayThread($sid, $cid, $lvl+1, $comments, $const, $displayed, 1);
+			$return .= $addition;
 			$return .= $const->{indentend} if $indent;
 			$return .= $const->{cageend} if $cagedkids;
 		}
+		
 
 		$return .= $const->{commentend} if $finish_list;
 
@@ -536,6 +546,10 @@ sub displayThread {
 			{ Return => 1, Nocomm => 1 });
 		$return .= $const->{cagebigend} if $cagedkids;
 	}
+
+	if ($recurse) {
+		return ($return, $displayed);
+	} 
 
 	return $return;
 }
@@ -573,10 +587,7 @@ The 'dispComment' template block.
 =cut
 
 sub dispComment {
-	my($comment) = @_;
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my($comment, $constants, $form, $user) = @_;
 
 	my($comment_shrunk, %reasons);
 
