@@ -548,20 +548,21 @@ sub getCodes {
 
 ########################################################
 sub getDescriptions {
-# Creating three different methods for this seems a bit
-# silly.
-# This is getting way to long... probably should
-# become a generic getDescription method
 	my $self = shift; # Shift off to keep things clean
 	my $codetype = shift; # Shift off to keep things clean
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
+	my $cache = '_getDescriptions_' . $codetype;
+
+	return $self->{$cache} if $self->{$cache};
+
 	my $sth = $descriptions{$codetype}->($self, @_);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 	$sth->finish;
 
+	$self->{$cache} = $codeBank_hash_ref;
 	return $codeBank_hash_ref;
 }
 
