@@ -1,7 +1,7 @@
 __section__
 default
 __description__
-Display admin menu.
+Display users menu.
 
 * items = arrayref of hashref of menu items (value (link), label)
 

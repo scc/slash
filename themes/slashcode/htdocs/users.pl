@@ -1290,7 +1290,7 @@ sub saveUser {
 	my $uid;
 	my $user_editfield_flag;
 
-	$uid = ($user->{uid} == $form->{uid}) ? $form->{uid} : $user->{uid};
+	$uid = $user->{is_admin} && $form->{uid} ? $form->{uid} : $user->{uid};
 	my $user_edit = $slashdb->getUser($uid);
 
 	my($note, $formname);
