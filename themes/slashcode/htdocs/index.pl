@@ -202,7 +202,7 @@ sub displayStories {
 	# shift them off, so we do not display them in the Older
 	# Stuff block later (simulate the old cursor-based
 	# method)
-	for my $story_essentials (@$stories_essentials) {
+	while (my $story_essentials = shift @$stories_essentials) {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) =
 			@$story_essentials{qw( sid section title time commentcount day hitparade )};
 		my @links;

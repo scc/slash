@@ -796,10 +796,9 @@ sub getOlderStories {
 	my $form = getCurrentForm();
 
 	$stories_essentials ||= $slashdb->getStoriesEssentials($section);
-	for $sr (@$stories_essentials) {
+	for my $sr (@$stories_essentials) {
 
 		my @wordy_split = split / /, $sr->{wordytime};
-		my %wordy_split = map {
 		for my $i (0..5) {
 			$sr->{ qw( w m d h min ampm )[$_] } = $wordy_split[$_]
 		}
@@ -808,7 +807,6 @@ sub getOlderStories {
 			sid	=> $sr->{sid},
 			section	=> $sr->{section},
 		});
-warn "Ready for bigarray: %$sr";
 		push @$stories_bigarray, $sr;
 
 	}

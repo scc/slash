@@ -2395,15 +2395,13 @@ sub getStoriesEssentials {
 			$row->{ qw( yyyy MM dd hh mm ss )[$i] } = $timesplit[$i];
 		}
 		formatDate([ $row ], 'time', 'day', '%Q');
-warn "Essentials1: " . join(" ", %$row);
 
 		# If we're not back to the day the user asked for, skip it.
 		next if $form->{issue} and $row->{day} > $form->{issue};
 
-		$row->{mon} = $Date$Date$row->{MM}-1];
+		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
-warn "Essentials2: " . join(" ", %$row);
-		push @stories, [ $row ];
+		push @stories, $row;
 		last if ++$count >= $limit;
 
 	}
