@@ -2039,7 +2039,7 @@ sub setCommentCount {
 
 ########################################################
 sub createStory {
-	my($self) = @_;
+	my($self, $story) = @_;
 	unless ($story) {
 		my $form = getCurrentForm() unless ($story);
 		$story ||= $form;
