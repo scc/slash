@@ -240,6 +240,7 @@ CREATE TABLE discussions (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (topic) REFERENCES topics(tid),
 	INDEX (type,uid,ts),
+	PRIMARY KEY (id)
 ) TYPE = myisam;
 
 #

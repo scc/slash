@@ -1,3 +1,14 @@
+slash-2.2.3, 2002.01.05
+-----------------------
+
+*	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.3 from
+	versions 2.2.0 and 2.2.1 (and 2.2.2, if you managed to install it;
+	schema problem prevented install of 2.2.2)
+
+*	Fix for broken slashschema.sql (Jean-Philippe Moins)
+
+*	Cleanup in users.pl
+
 slash-2.2.2, 2002.01.02
 -----------------------
 
