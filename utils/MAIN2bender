@@ -7,18 +7,31 @@ $0 =~ /[^\/]+$/;
 my $PROGNAME = $1;
 
 my(%optsi, %aidCache);
-getopts('P:s:d:o:', \%opts);
-my ($prefix, $dumpfile, $rcfile, $outfile)=	($opts{P} || '/usr/local/slash',
-											 $opts{d} || './site.dump',
-								 			 $opts{s} || './slashdotrc.pl',
-											 $opts{o} || './bendersite.dump');
+getopts('P:s:d:o:?h', \%opts);
+# Blindly show usage under the usual conditions.
+usage() if $opts{'?'} || $opts{h} || !keys(%opts);
+# Perform sensible tilde expansion.
+my(@fileopts) = qw[P d s o];
+map {
+	$opts{$_} =~ s/^\~(\w+)?/(($1) ? getpwnam($1):getpwuid($<))[7]/e; 
+} @fileopts;
+
+my ($prefix, $dumpfile, $rcfile, $outfile) = @opts{qw[P d s o]};
+$prefix 	||= '/usr/local/slash';
+$dumpfile	||= './site.dump';
+$rcfile 	||= './slashdotrc.pl';
+$outfile	||= './bender.dump';
 
 die "FATAL ERROR: Can't read $rcfile: $!\n"
 	if ! -r $rcfile;
 die "FATAL ERROR: Can't read input dump file: $!\n"
 	if ! -r $dumpfile;
 
+$rcfile =~ s!^(.+)/!!;
+my $rcdir = $1 || '.';
+unshift(@INC, $rcdir);
 require $rcfile;
+*my_conf = $Slash::conf{DEFAULT};
 
 my(@updateFile);
 open(INFILE, "<$prefix/sql/updates/$PROGNAME")
@@ -46,12 +59,19 @@ for (@updateFile) {
 
 # Create temporary database.
 my $tempDBname = tempDBname();
-my $dbh = DBI->connect($my_conf{dsn}, $my_conf{dbuser}, $my_conf{dbpass}) or
+my $dbh = DBI->connect($my_conf{dsn}, $my_conf{dbuser}, $my_conf{dbpass}, {
+	PrintError => 0,
+}) or
 	exit 1;
-$dbh->do("CREATE TABLE $tempDBname") ||
-	die "Can't create temporary database for conversion: $dbh->errstr\n";
-$dbh->do("connect $tempDBname") ||
-	die "Can't connect to temporary conversion database: $dbh->errstr\n";
+$dbh->do("CREATE DATABASE $tempDBname") ||
+	die "Can't create temporary database for conversion: " . 
+		$dbh->errstr . "\n";
+$dbh->disconnect();
+$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
+my $dbhostname = $1 || 'localhost';
+$dbh = DBI->connect("DBI:mysql:database=$tempDBnam;host=$dbhostname", 
+		    $my_conf{dbuser}, $my_conf{dbpass}, {PrintError=>0});
+die "Can't connect to temporary conversion database!\n" if !$dbh;
 
 # Perform selective import of given dump.
 importDump();
@@ -59,7 +79,7 @@ importDump();
 # Perform schema updates on loaded tables.
 for (@updateFile) {
 	$dbh->do($_) or
-		print STDERR "Error executing '$_': $dbh->errstr\n";
+		printf STDERR "Error executing '$_': %s\n", $dbh->errstr;
 }
 
 # Perform version specific conversion process.
@@ -70,18 +90,22 @@ userskey2Param();
 
 # Drop obsolete tables.
 for (@otables) {
+	print "-- Dropping obsolete table '$_'\n";
 	$dbh->do("DROP TABLE $_");
 }
 
 # Make dump of temporary database.
+print "-- Creating output dump '$outfile'\n";
+system("mysqldump -u $my_conf{dbuser} -p$my_conf{dbpass} $tempDBname > $outfile");
+print "DONE!\n";
 
 
 END {
 	# Destroy temporary database.
 	if ($dbh) {
 		$dbh->do("DROP DATABASE $tempDBname") ||
-			print STDERR <<EOT;
-Cannot DROP DATABASE '$tempDBname': $dbh->errstr
+			printf STDERR <<EOT, $dbh->errstr;
+Cannot DROP DATABASE '$tempDBname': %s
 Database drop should be performed manually!
 
 EOT
@@ -93,7 +117,7 @@ EOT
 
 sub tempDBname {
 	my $size = shift || 6;
-	my $ret = 'slashConvert-';
+	my $ret = 'slashConvert';
 	my @chars = ('A'..'Z', 'a'..'z', '0'..'9');
 
 	while ($size) {
@@ -108,34 +132,41 @@ sub tempDBname {
 sub importDump {
 	my @vtables = (@rtables, @otables);
 
+	print "-- Opening $dumpfile\n";
 	open(DUMPFILE, "<$dumpfile") or 
 		die "FATAL ERROR: Odd! Can't open dumpfile for reading: $!\n";
 	while (! eof DUMPFILE) {
-		next if /^(#.+|\s+)?$/;
-
-		my($cmd, $valid) = ('', 0);
+		my $cmd = '';
 		do {
 			my $c = <DUMPFILE>;
 			chomp($c);
 			$cmd .= $c;
-		} until $cmd =~ /\);$/ || eof DUMPFILE;
+		} until $cmd =~ /\;$/ || eof DUMPFILE;
+		next if $cmd =~ /^(#|\s+)$/;
 
 		# We only deal with CREATE TABLE and INSERT statements for now.
-		if ($cmd =~ /(?:CREATE TABLE (.+?)|INSERT INTO (.+?) VALUES)/) {
-			my $tablename = $1;
+		my ($op, $tablename);
+		if ($cmd =~ /(?:(CREATE) TABLE (.+?)|(INSERT) INTO (.+?) VALUES)/i) {
+			($op, $tablename) = (uc $1, uc $2);
 			local $" = '|';
-			$valid = ($tablename =~ /"(@vtables)"/);
+			my $valid = ($tablename =~ /"(@vtables)"/);
+			print "---- Skipping command '$cmd'\n" && next 
+				if ! $valid;
+		} else {
+			print "---- Skipping command '$cmd'\n";
 		}
 		
-		$dbh->do($cmd) if $valid;
+		print "-- Creating table '$tablename'\n" if $op eq 'CREATE';
+		$dbh->do($cmd);
 	}
+	print "-- Closing $dumpfile\n";
 }
 
 
 sub authors2Users {
 	my $sth = $dbh->prepare('SELECT * FROM authors');
 	if (! $sth->execute) {
-		err("Can't execute on statement handle: $dbh->errstr\n");
+		err("Can't execute on statement handle: ".$dbh->errstr);
 		return;
 	}
 	my $data = $sth->fetchall_arrayref({});
@@ -146,7 +177,7 @@ sub authors2Users {
 		my $l_sth = $dbh->prepare('SELECT * FROM users WHERE nickname=' .
 			$dbh->quote($_->{aid}));
 		if (! $l_sth->execute) {
-			err("Can't exacute on USER statement handle: $dbh->errstr\n");
+			err("Can't exacute on USER statement handle: ".$dbh->errstr);
 			next;
 		}
 		my $user = $l_sth->fetchrow_hashref;
@@ -279,7 +310,7 @@ EOQ
 }
 
 
-sub users_key2Param {
+sub userskey2Param {
 	my $sth = $dbh->prepare("SELECT * FROM users_key");
 	print STDERR "-- Processing table USERS_KEY into table USERS_PARAM\n";
 	for (@{$sth->fetchall_arrayref({})}) {
@@ -304,12 +335,13 @@ sub usage {
 
 	print <<EOT;
 
-usage: $PROGNAME {-Psdo}
+usage: $PROGNAME {-Psdo?h}
 
-	-P Prefix for Slash install 			[default: /usr/local/slash]
+	-P Prefix for Slash install 		[default: /usr/local/slash]
 	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
-	-d Location of source MySQL dump		[default: ./site.dump]
-	-o Location of output dump 				[default: ./bendersite.dump]
+	-d Location of source MySQL dump	[default: ./site.dump]
+	-o Location of output dump 		[default: ./bendersite.dump]
+	-? Displays this help screen (also -h)
 
 Notes: 
 	User given in slashdotrc.pl should have global CREATE/DROP priviledges
