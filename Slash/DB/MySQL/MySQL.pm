@@ -122,7 +122,7 @@ sub _whereFormkey {
 	my $user = getCurrentUser();
 	# anonymous user without cookie, check host, not formkey id
 	if ($user->{anon_id} && ! $user->{anon_cookie}) {
-		$where = "host_name = '$ENV{REMOTE_ADDR}'";
+		$where = "host_name = MD5('$ENV{REMOTE_ADDR}')";
 	} else {
 		$where = "id='$formkey_id'";
 	}
@@ -319,7 +319,7 @@ sub createPollVoter {
 
 	$self->sqlInsert("pollvoters", {
 		qid	=> $qid,
-		id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
+		-id	=> "MD5('$ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}')",
 		-'time'	=> 'now()',
 		uid	=> $ENV{SLASH_USER}
 	});
@@ -459,7 +459,7 @@ sub createAccessLog {
 	}
 
 	$self->sqlInsert('accesslog', {
-		host_addr	=> $ENV{REMOTE_ADDR} || '0',
+		-host_addr	=> "MD5('$ENV{REMOTE_ADDR}')",
 		dat		=> $dat,
 		uid		=> $uid,
 		op		=> $op,
@@ -738,14 +738,14 @@ sub createUser {
 # Do not like this method -Brian
 sub setVar {
 	my($self, $name, $value) = @_;
-	if (ref $value) {
+	if (ref($value)) {
 		$self->sqlUpdate('vars', {
-			value		=> $value->{'value'},
-			description	=> $value->{'description'}
+			value => $value->{'value'},
+			description => $value->{'desc'}
 		}, 'name=' . $self->sqlQuote($name));
 	} else {
 		$self->sqlUpdate('vars', {
-			value		=> $value
+			value => $value
 		}, 'name=' . $self->sqlQuote($name));
 	}
 }
@@ -1123,7 +1123,7 @@ sub getPollVoter {
 	my($self, $id) = @_;
 	my($voters) = $self->sqlSelect('id', 'pollvoters',
 		"qid=" . $self->{_dbh}->quote($id) .
-		"AND id=" . $self->{_dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
+		"AND id=MD5('$ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}') " .
 		"AND uid=" . $ENV{SLASH_USER}
 	);
 
@@ -1268,7 +1268,7 @@ sub createFormkey {
 		id 		=> $id,
 		sid		=> $sid,
 		uid		=> $ENV{SLASH_USER},
-		host_name	=> $ENV{REMOTE_ADDR},
+		-host_name	=> "MD5('$ENV{REMOTE_ADDR}')",
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1339,7 +1339,7 @@ sub createAbuse {
 	my($self, $reason, $remote_addr, $script_name, $query_string) = @_;
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {
-		host_name => $remote_addr,
+		-host_name => "MD5('$remote_addr')",
 		pagename  => $script_name,
 		querystring => $query_string,
 		reason    => $reason,
@@ -1713,9 +1713,7 @@ sub createVar {
 ########################################################
 sub deleteVar {
 	my($self, $name) = @_;
-	
-	$self->sqlDo("DELETE from vars WHERE name=" .
-		$self->{_dbh}->quote($name));
+	$self->sqlDo("DELETE from vars WHERE name=$name");
 }
 
 ########################################################
@@ -2349,7 +2347,7 @@ sub getAuthor {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,homepage,bio', 
+	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,bio', 
 		'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
@@ -2383,40 +2381,7 @@ sub getAuthors {
 	}
 
 	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('users.uid,nickname,fakeemail,homepage,bio',
-		'users,users_info,users_param',
-		'users_param.name="author" and users_param.value=1 and ' .
-		'users.uid = users_param.uid and users.uid = users_info.uid');
-	while (my $row = $sth->fetchrow_hashref) {
-		$self->{$table_cache}{ $row->{'uid'} } = $row;
-	}
-
-	$self->{$table_cache_full} = 1;
-	$sth->finish;
-	$self->{$table_cache_time} = time();
-
-	my %return = %{$self->{$table_cache}};
-	return \%return;
-}
-
-########################################################
-# copy of getAuthors, for admins ... needed for anything?
-sub getAdmins {
-	my($self, $cache_flag) = @_;
-
-	my $table = 'admins';
-	my $table_cache= '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
-	my $table_cache_full= '_' . $table . '_cache_full';
-
-	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
-		my %return = %{$self->{$table_cache}};
-		return \%return;
-	}
-
-	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('users.uid,nickname,fakeemail,homepage,bio',
-		'users,users_info', 'seclev >= 100 and users.uid = users_info.uid');
+	my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 100');
 	while (my $row = $sth->fetchrow_hashref) {
 		$self->{$table_cache}{ $row->{'uid'} } = $row;
 	}
@@ -2508,10 +2473,11 @@ sub getTemplateByName {
 		$type  = $values ? 1 : 0;
 	}
 
-	if (!$cache_flag && exists $self->{$table_cache}{$id} && keys %{$self->{$table_cache}{$id}}) {
-		if ($type) {
-			return $self->{$table_cache}{$id}{$values};
-		} else {
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values}
+			if (keys %{$self->{$table_cache}{$id}} && !$cache_flag);
+	} else {
+		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
 			my %return = %{$self->{$table_cache}{$id}};
 			return \%return;
 		}
@@ -3075,7 +3041,6 @@ sub createTemplate {
 		}
 	}
 	$self->sqlInsert('templates', $hash);
-	return $self->sqlSelect('LAST_INSERT_ID()');
 }
 
 ########################################################

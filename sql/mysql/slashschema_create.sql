@@ -11,7 +11,7 @@
 DROP TABLE IF EXISTS abusers;
 CREATE TABLE abusers (
   abuser_id int(5) NOT NULL auto_increment,
-  host_name varchar(25) DEFAULT '' NOT NULL,
+  host_name char(32) NOT NULL,
   pagename varchar(20) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   reason varchar(120) DEFAULT '' NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE abusers (
 DROP TABLE IF EXISTS accesslog;
 CREATE TABLE accesslog (
   id int(5) NOT NULL auto_increment,
-  host_addr varchar(16) DEFAULT '' NOT NULL,
+  host_addr char(32)  NOT NULL,
   op varchar(8),
   dat varchar(32),
   uid int(1) NOT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE formkeys (
   id varchar(30) DEFAULT '' NOT NULL,
   sid char(16) DEFAULT '' NOT NULL,
   uid int(11) NOT NULL,
-  host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
+  host_name char(32) NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
   ts int(12) DEFAULT '0' NOT NULL,
@@ -325,6 +325,7 @@ CREATE TABLE pollvoters (
 
 DROP TABLE IF EXISTS sections;
 CREATE TABLE sections (
+  id int(11) NOT NULL auto_increment,
   section varchar(30) DEFAULT '' NOT NULL,
   artcount int(11),
   title varchar(64),
@@ -332,7 +333,8 @@ CREATE TABLE sections (
   isolate int(1),
   issue int(1),
   extras int(11) DEFAULT '0',
-  PRIMARY KEY (section)
+  UNIQUE (section),
+  PRIMARY KEY (id)
 );
 
 #
@@ -408,20 +410,20 @@ CREATE TABLE storiestuff (
 
 DROP TABLE IF EXISTS submissions;
 CREATE TABLE submissions (
-  subid varchar(15) DEFAULT '' NOT NULL,
-  email varchar(50),
-  name varchar(50),
-  time datetime,
-  subj varchar(50),
-  story text,
-  tid varchar(20),
-  note varchar(30),
-  section varchar(30) DEFAULT '' NOT NULL,
-  comment varchar(255),
-  uid int(11) DEFAULT '1' NOT NULL,
-  del tinyint(4) DEFAULT '0' NOT NULL,
-  PRIMARY KEY (subid),
-  KEY subid (subid,section)
+	subid varchar(15) DEFAULT '' NOT NULL,
+	email varchar(50),
+	name varchar(50),
+	time datetime,
+	subj varchar(50),
+	story text,
+	tid varchar(20),
+	note varchar(30),
+	section varchar(30) DEFAULT '' NOT NULL,
+	comment varchar(255),
+	uid int(11) DEFAULT '1' NOT NULL,
+	del tinyint(4) DEFAULT '0' NOT NULL,
+	PRIMARY KEY (subid),
+	KEY subid (subid,section)
 );
 
 #
@@ -429,17 +431,17 @@ CREATE TABLE submissions (
 #
 DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
-  tpid int(11) NOT NULL auto_increment,
-  name varchar(30) NOT NULL,
-  page varchar(20) DEFAULT 'misc' NOT NULL,
-  section varchar(30) DEFAULT 'default' NOT NULL,
-  lang char(5) DEFAULT 'en_US' NOT NULL,
-  template text,
-  seclev int(1),
-  description text,
-  title varchar(128),
-  PRIMARY KEY (tpid),
-  UNIQUE true_template (name,page,section,lang)
+	tpid int(11) NOT NULL auto_increment,
+	name varchar(30) NOT NULL,
+	page varchar(20) DEFAULT 'misc' NOT NULL,
+	section varchar(30) DEFAULT 'default' NOT NULL,
+	lang char(5) DEFAULT 'en_US' NOT NULL,
+	template text,
+	seclev int(1),
+	description text,
+	title varchar(128),
+	PRIMARY KEY (tpid),
+	UNIQUE true_template (name,page,section,lang)
 );
 #
 # Table structure for table 'topics'
@@ -447,12 +449,15 @@ CREATE TABLE templates (
 
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
-  tid char(20) NOT NULL,
-  image char(30),
-  alttext char(40),
-  width int(11),
-  height int(11),
-  PRIMARY KEY (tid)
+	id int(11) NOT NULL auto_increment,
+	section_id int(11),
+	tid char(20) NOT NULL,
+	image char(30),
+	alttext char(40),
+	width int(11),
+	height int(11),
+	UNIQUE u_tid (tid),
+	PRIMARY KEY (id)
 );
 
 #
@@ -461,10 +466,10 @@ CREATE TABLE topics (
 
 DROP TABLE IF EXISTS tzcodes;
 CREATE TABLE tzcodes (
-  tz char(3) DEFAULT '' NOT NULL,
-  off_set int(1),
-  description varchar(64),
-  PRIMARY KEY (tz)
+	tz char(3) DEFAULT '' NOT NULL,
+	off_set int(1),
+	description varchar(64),
+	PRIMARY KEY (tz)
 );
 
 #
