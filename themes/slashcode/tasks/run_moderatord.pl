@@ -43,8 +43,7 @@ sub reconcileM2 {
 	my($constants, $slashdb) = @_;
 	# We load the optional plugin object here, so we save a few cycles, 
 	# rather than loading it constantly in a lower scope.
-	my $messages;
-	#my $messages = getObject('Slash::Messages');
+	my $messages = getObject('Slash::Messages');
 
 	my $m2ids = $slashdb->getMetamodIDs();
 	slashdLog(
@@ -101,9 +100,12 @@ sub reconcileM2 {
 			}
 		}
 		
+		# Ugh-ly.
 		slashdLog(
-			sprintf "$me - %ld: CON=%d (%6.4f) DIS=%d (%6.4f)",
-				$m2id->{id}, $con, $con_avg, $dis, $dis_avg
+			sprintf 
+			"me - %ld (mod #%ld): CON=%d (%6.4f) DIS=%d (%6.4f)",
+			$m2id->{id}, $m2id->{mmid}, $con, $con_avg, $dis,
+			$dis_avg
 		) if $constants->{moderatord_debug_info};
 
 		# Dole out reward among the consensus if there is a clear
@@ -157,9 +159,12 @@ sub reconcileM2 {
 				# isn't a problem.
 				my $data = {
 					template_name	=> 'msg_m2',
+					template_page	=> 'messages',
 					subject		=> {
 						template_name	=>
 							'msg_m2_subj',
+						template_page	=>
+							'messages',
 					},
 					m2		=> {
 						c_subj	=> $comment->{subj},
@@ -175,7 +180,7 @@ sub reconcileM2 {
 
 		# Mark remaining entries with a '0' which means that they have
 		# been processed.
-		#$slashdb->clearM2Flag($m2id);
+		$slashdb->clearM2Flag($m2id->{id});
 	}
 }
 

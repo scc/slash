@@ -44,7 +44,7 @@ __template__
 
 [% IF reasonTotal %]
 	<FONT COLOR="[% user.bg.3 %]"><B>Moderation Totals</B></FONT>:
-	[% FOREACH i = [0 .. reasonHist.size] %]
+	[% FOREACH i = [0 .. reasonHist.max] %]
 		[% IF reasonHist.$i %]
 			[% constants.reasons.$i %]=[% reasonHist.$i %],
 		[% END %]

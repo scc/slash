@@ -628,15 +628,14 @@ sub getMetamodIDs {
 	# finds a need to add more "lag time" into the system.
 	#					- Cliff 7/12/01
 	my $num_days = $constants->{archive_delay} + 1;
-	my $list = $self->sqlSelectAll(
-		'mmid', 'metamodlog', 
-		"TO_DAYS(CURDATE())-TO_DAYS(ts) >= $num_days AND flag=10",
-		"order by mmid LIMIT $constants->{m2_batchsize}"
+	my $list = $self->sqlSelectAllHashrefArray(
+		'metamodlog.id as id, mmid', 'metamodlog,moderatorlog', 
+		"TO_DAYS(CURDATE())-TO_DAYS(metamodlog.ts) >= $num_days AND 
+		flag=10 AND moderatorlog.id=metamodlog.mmid",
+		"order by id LIMIT $constants->{m2_batchsize}"
 	);
-	# Flatten the returned list out to a simple list of mmids.
-	my(@returnable) = map { $_ = $_->[0] } @{$list};
 
-	return \@returnable;
+	return $list;
 }
 
 ########################################################
