@@ -5,9 +5,30 @@ use Slash::DB::Utility;
 use Getopt::Std;
 use Date::Manip;
 
+# REGULAR EXPRESSION DEFINITIONS
+
+# Enclosure defs.
+
+my $enclosure_regexps = {
+	"Slashcode v0.9.2+"	=> {
+		regexp		=>
+'<!-- begin comment block -->(.+?)<!-- end comment block -->',
+		extractors	=> "*",
+	},
+};
+
+# Extractor defs.
+
+my %extractor_regexps = (
+	'Slash v0.9.2+' =>
+'<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR>.+?<FONT.+?>(?:\(.+?User Info</A>\).+?(?:<A HREF="(.+?)">(.+?)</A><BR>)?)?.+?<TR><TD BGCOLOR=.+?>.+?</TD>.+?<TR><TD BGCOLOR=.+?>(.+?)</TD>',
+);
+
+
+
 # Parameter validation.
 my(%opts);
-getopts('d:s:f:y:X', \%opts);
+getopts('d:s:f:y:e:n:X', \%opts);
 &usage if !keys(%opts);
 # Optionally use single parameter as virtual username, however specification
 # with -d <virtualuser> will override anything given in @ARGV.
@@ -31,20 +52,60 @@ my $ac_uid = $slashdb->getVar('anonymous_coward_uid', 'value');
 my $ac_nickname = $slashdb->getUser($ac_uid, 'nickname');
 
 # We slurp in everything as one big file. This will NOT be pleasant on machines
-# with low amounts of memory (anything < 32M - Heavy Slashdot .shtml files
+# with low amounts of memory (anything < 32M; quite a few Slashdot .shtml files
 # can amass well over one meg in size and that's for a SINGLE scalar.
+my $bigscalar;
+
 do {
-	local($/) = undef;
+	local $/ = undef;
 
 	open(INPUT, "<$opts{f}");
-	$_ = <INPUT>;
+	$bigscalar = <INPUT>;
 	close(INPUT);
 };
 
-# Main loop is over our master regexp (we'd need to create a ludicrously large 
-# array to be able to use split() ...
-$regexp = '<!-- begin comment block -->(.+?)<!-- end comment block -->';
-while (/$regexp/g) {
+# Define parsing vars.
+my ($enclosure, $extractor) = ($opts{n}, $opts{e});
+
+# Determine which enclosure and extractor regular expressions to use for the given file; note
+# that choices for enclosures and/or extractors can be forced by command line options.
+if (!$enclosure || !$extractor) {
+	my @enclosures;
+	push (@enclosures, ($enclosure) ? $enclosure : sort keys %{$enclosure_regexps});
+	for (@enclosures) {
+		printf STDERR "%s ENCLOSURE '$_'\n", ($opts{e}) ? 'Using':'Trying' if $debug;
+		$enclosure = $_ if $bigscalar =~ /$enclosure_regexps->{$_}->{regexp}/s;
+		next if ! $enclosure;
+		if (! $extractor) {
+			my $x_data = $1;
+
+			my @extractors;
+			if (ref $enclosure_regexps->{$_}->{extractors} eq 'ARRAY') {
+				push @extractors, @{$enclosure_regexps->{$_}->{extractors}};
+			} elsif ($enclosure_regexps->{$_}->{extractors} eq '*') {
+				push @extractors, sort keys %extractor_regexps;
+			}
+			for (@extractors) {
+				print STDERR "\tTrying EXTRACTOR '$_'\n" if $debug;
+				if ($x_data =~ /$extractor_regexps{$_}/s) {
+					$extractor = $_;
+					last;
+				}
+			}
+		}
+		last if $enclosure && $extractor;
+	}
+}
+die "Can't determine enclosure/extractor pair!\n" if !$enclosure && !$extractor;
+die "Enclosure '$enclosure' matched, but no extractor found!\n" if !$extractor;
+print "Using Enclosure '$enclosure' and Extractor '$extractor'\n";
+
+exit if $debug;
+
+my($en_regexp, $ex_regexp) = 	($enclosure_regexps->{$enclosure}->{regexp},
+				 $extractor_regexps{$extractor});
+pos $bigscalar = 0;
+while ($bigscalar =~ /$en_regexp/sg) {
 	my($uid, $email_addy, $uid_s, $x_data, $wait, $result, $resultpos);
 	my($subj, $score_ind, $username, $ts, $url, $url_name, $comment, $sig);
 	my($gmt_time, $score, $posttime, $uname);
@@ -54,12 +115,7 @@ while (/$regexp/g) {
 	$result = 'Unextracted ';
 	$resultpos = '';
 
-#$x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR> <FONT.+?>(?:\(.+?User Info</A>\) (?:<A HREF="(.+?)">(.+?)</A><BR>)?)?</TD></TR>\s<TR><TD BGCOLOR=.+?>(.+)<BR>(.+?)?</TD></TR> (?:<TR><TD> |<LI><FONT .+?><B>.+)?} 
-
-	if	(
-$x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR> <FONT.+?>(?:\(.+?User Info</A>\) (?:<A HREF="(.+?)">(.+?)</A><BR>)?)? .+?<TR><TD BGCOLOR=.+?>.+?</TD>.+?<TR><TD BGCOLOR=.+?>(.+?)</TD>}
-		)
-	{
+	if ($x_data =~ /$ex_regexp/s) {
 		# This is ugly...
 		($cid,
 		 $subj, 
@@ -71,8 +127,7 @@ $x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.
 		 $comment,
 		 $sig) = ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
-		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n"
-			if $debug;
+		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n" if $debug;
 
 		# Copy $username.
 		$uname = $username;
@@ -169,9 +224,6 @@ $x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.
 				($comment ? "\n--> $comment\n\n" : "\n"),
 				($sig ? "\nSig: $sig\n\n" : "\n");
 
-		# Drop statement handle if necessary.
-		$sth->finish if defined $sth;
-
 		# Assign data to hash.
 		$data{$cid}->{subject} = $subj;
 		$data{$cid}->{'-uid'} = ($uid) ? $uid : -1;
@@ -190,8 +242,8 @@ $x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.
 	}
 }
 
-# Unload massive scalar (would setting $_ to undef be a bad thing here?)
-$_  = '';
+# Unload massive scalar (would setting $bigscalar to undef be a bad thing here?)
+$bigscalar  = '';
 
 # Now write data to database.
 print "Writing to database...";
@@ -238,16 +290,28 @@ sub header {
 
 
 sub usage {
-	print <<EOT;
+	my (@enlist) = sort keys %{$enclosure_regexps};
+	my (@exlist) = sort keys %extractor_regexps;
+	local $" = "\t\t";
+	printf <<EOT, "@enlist", "@exlist";
 
-$ARGV[0] [-d <virtuser>] [-f <filename>] [-s <sid to use>] {-y <year>}
+Usage: slashcode-dearchive -[dfs] {-yen} <slashsite virtual user>
 
--or-
+	Command line options:
+		-d <virtuser> 
+		-f <filename>
+		-s <sid to use>
+		-y <year>
+		-n <enclosure name>
+		-e <extractor name>
 
-$ARGV[0] [-f <filename>] [-s <sid to use>] {-y <year>} <virtuser>
+Note: If -d is given, then the virtual user given as the last argument will be ignored.
 
-Note: If the first form is used and <virtuser> is also specified as in the
-second form, then one specified by the -d switch is used!
+	Defined enclosures:
+		%s
+
+	Defined extractors:
+		%s
 
 EOT
 
