@@ -1559,42 +1559,6 @@ sub deleteStory {
 }
 
 ########################################################
-# Interim kludgy method to do something that has to get done
-# a lot:  set a story dirty, given either its sid or its
-# discussion ID.
-sub setStoryDirty {
-	my($self, $id) = @_;
-	return unless $id;
-	my $sid = '';
-	if ($id =~ /\D/) {
-		# There's a non-numeric character in it, so it's not a
-		# discussion ID.  Assume it's a story sid.
-		$sid = $id;
-		# Don't bother trying to get the corresponding
-		# discussion ID (if any);  serves no purpose at the
-		# moment, so we might as well not waste time.
-		$id = '';
-	} else {
-		# It's numeric, so it must be a discussion ID.  Get the
-		# corresponding story sid, if there is one.
-		$sid = $self->sqlSelect('sid', 'discussions', "id=$id");
-		# As long as we already know the discussion ID, keep it
-		# around, we'll dirty it up in a moment.
-	}
-
-	# Mark the story dirty if we have a valid story sid.
-	$self->setStory($sid, { writestatus => 'dirty' }) if $sid;
-	# If we know the discussion ID as well, we should set it dirty
-	# (too).  But we won't because noplace in the code reads this
-	# field right now, so nobody would care!
-#	$self->sqlUpdate('discussions',
-#		{ flags => 'dirty' },
-#		"id=$id") if $id;
-	# And update the global write var too.
-	$self->setVar('writestatus', 'dirty');
-}
-
-########################################################
 sub setStory {
 	my($self, $sid, $hashref) = @_;
 	my(@param, %update_tables, $cache);
