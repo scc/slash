@@ -2284,22 +2284,21 @@ sub getNetIDList {
 ########################################################
 sub getBanList {
 	my($self, $refresh) = @_;
-	my $acuid = getCurrentStatic('anon_coward_uid');
-	my $expire = getCurrentStatic('banlist_expire');
+	my $constants = getCurrentStatic();
 	
-	_genericCacheRefresh($self, 'banlist', $expire);
-    my $banlist_ref = $self->{'_banlist_cache'} ||= {};
-	
+	_genericCacheRefresh($self, 'banlist', $constants->{'banlist_expire'});
+	my $banlist_ref = $self->{'_banlist_cache'} ||= {};
+
 	%$banlist_ref = () if $refresh;
 
-	if ($refresh || ! keys %$banlist_ref) {
+	if (! keys %$banlist_ref) {
 		my $sth = $self->{_dbh}->prepare("SELECT ipid,subnetid,uid from accesslist WHERE isbanned = 1");
 		$sth->execute;
 		my $list = $sth->fetchall_arrayref;
 		for (@$list) {
 			$banlist_ref->{$_->[0]} = 1 if $_->[0] ne '';
 			$banlist_ref->{$_->[1]} = 1 if $_->[1] ne '';
-			$banlist_ref->{$_->[2]} = 1 if ($_->[2] ne '' and $_->[2] ne $acuid);
+			$banlist_ref->{$_->[2]} = 1 if ($_->[2] ne '' and $_->[2] ne $constants->{'anon_coward_uid'});
 		}
 		# why this? in case there are no banned users.
 		$banlist_ref->{'junk'} = 1;

@@ -606,11 +606,13 @@ describing that action.
 	$running_fast = 0;	# right, gerund, boolean flag
 
 Arrays and hashes should be plural nouns, whether as regular arrays and
-hashes or array and hash references.
+hashes or array and hash references.  Do not name references with "ref"
+or the data type in the name.
 
-	@stories  = (1, 2, 3);
-	$comments = [4, 5, 6];
-	$comment  = $comments->[0];
+	@stories     = (1, 2, 3);      # right
+	$comment_ref = [4, 5, 6];      # wrong
+	$comments    = [4, 5, 6];      # right
+	$comment     = $comments->[0]; # right
 
 Make the name descriptive.  Don't use variables like "$sc" when you
 could call it "$story_count".  See L<"Comments">.
@@ -1027,6 +1029,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.11  2001/10/10 14:52:11  pudge
+	Minor fixes to banlist and docs; temporary fix for odd problem with testing for "javascript" URLs.
+	
 	Revision 1.1.2.10  2001/10/08 22:10:58  pudge
 	Add strip_notags, like strip_nohtml but for stripping only tags, preserving entities (used in TITLE)
 	
