@@ -172,8 +172,8 @@ sub reconcileM2 {
 		$slashdb->clearM2Flag($m2id->{id});
 	}
 
-	# Optional: Send message to original moderator 
-	# indicating results of metamoderation.
+	# Optional: Send message to original moderator indicating that
+	# metamoderation has occured.
 	if ($messages) {
 		# Unfortunately, the template must be aware
 		# of the valid states of $modlog->{val}, but
@@ -190,8 +190,12 @@ sub reconcileM2 {
 
 		# Sends the actual message, varying M2 results by user.
 		for (keys %m2_results) {
-			$data->{m2} = $m2_results{$_}->{m2};
-			$messages->create($_, MSG_CODE_M2, $data);
+			my $msg_user = 
+				$messages->checkMessageCodes(MSG_CODE_M2, $_);
+			if (@{$msg_user}) {
+				$data->{m2} = $m2_results{$_}->{m2};
+				$messages->create($_, MSG_CODE_M2, $data);
+			}
 		}
 	}
 }
