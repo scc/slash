@@ -33,27 +33,27 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	if ($I{F}{op} eq 'userlogin' && $I{F}{upasswd} && $I{F}{unickname}) {
+	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
 		redirect($ENV{SCRIPT_NAME});
 		return;
 	}
 
-	# $I{F}{mode} = $I{U}{mode}="dynamic" if $ENV{SCRIPT_NAME};
+	# $form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
 
-	for ($I{F}{op}) {
-		/^u$/ and upBid($I{F}{bid});
-		/^d$/ and dnBid($I{F}{bid});
-		/^x$/ and rmBid($I{F}{bid});
+	for ($form->{op}) {
+		/^u$/ and upBid($form->{bid});
+		/^d$/ and dnBid($form->{bid});
+		/^x$/ and rmBid($form->{bid});
 	}
 
-	my $SECT = getSection($I{F}{section});
+	my $SECT = getSection($form->{section});
 	$SECT->{mainsize} = int($SECT->{artcount} / 3);
 
 	my $title = $SECT->{title};
 	$title = "$I{sitename}: $title" unless $SECT->{isolate};
 	
 	header($title, $SECT->{section});
-#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($I{U});
+#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($user->);
 		
 	my $block = getEvalBlock("index");
 	my $execme = prepEvalBlock($block);
@@ -75,21 +75,21 @@ sub main {
 	# zero the order count
 	$I{StoryCount} = 0;
 
-	$I{dbobject}->writelog('index', $I{F}{section} || 'index') unless $I{F}{ssi};
+	$I{dbobject}->writelog('index', $form->{section} || 'index') unless $form->{ssi};
 }
 
 #################################################################
 sub saveUserBoxes {
 	my(@a) = @_;
 
-	$I{U}{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
-	$I{dbobject}->setUserBoxes($I{U}{uid}, $I{U}{exboxes}) 
-		if $I{U}{uid} != $I{anonymous_coward_uid};
+	$user->{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
+	$I{dbobject}->setUserBoxes($user->{uid}, $user->{exboxes}) 
+		if $user->{uid} != $I{anonymous_coward_uid};
 }
 
 #################################################################
 sub getUserBoxes {
-	my $boxes = $I{U}{exboxes};
+	my $boxes = $user->{exboxes};
 	$boxes =~ s/'//g;
 	return split m/,/, $boxes;
 }
@@ -140,16 +140,16 @@ sub rmBid {
 #################################################################
 sub displayStandardBlocks {
 	my ($SECT, $olderStuff) = @_;
-	return if $I{U}{noboxes};
+	return if $user->{noboxes};
 
 	my ($boxBank, $sectionBoxes) = $I{dbobject}->getPortalsCommon();
 
 	my $getblocks = $SECT->{section} || 'index';
 	my @boxes;
 
-	if ($I{U}{exboxes} && $getblocks eq 'index') {
-		$I{U}{exboxes} =~ s/'//g;
-		@boxes = split m/,/, $I{U}{exboxes};
+	if ($user->{exboxes} && $getblocks eq 'index') {
+		$user->{exboxes} =~ s/'//g;
+		@boxes = split m/,/, $user->{exboxes};
 	} else {
 		@boxes = @{$sectionBoxes->{$getblocks}} if ref $sectionBoxes->{$getblocks};
 	}
@@ -157,15 +157,15 @@ sub displayStandardBlocks {
 	foreach my $bid (@boxes) {
 		if ($bid eq 'mysite') {
 			print portalbox(
-				200, "$I{U}{nickname}'s Slashbox",
-				$I{U}{mylinks} || 'This is your user space.  Love it.',
+				200, "$user->{nickname}'s Slashbox",
+				$user->{mylinks} || 'This is your user space.  Love it.',
 				$bid
 			);
 		} elsif ($bid =~ /_more$/) {
 			print portalbox(200,"Older Stuff",
 				getOlderStories($olderStuff, $SECT),
 				$bid) if $olderStuff;
-		} elsif ($bid eq "userlogin" && $I{U}{uid} != $I{anonymous_coward_uid}) {
+		} elsif ($bid eq "userlogin" && $user->{uid} != $I{anonymous_coward_uid}) {
 			# Don't do nuttin'
 		} elsif ($bid eq "userlogin") {
 			my $SB = $boxBank->{$bid};
@@ -184,7 +184,7 @@ sub displayStandardBlocks {
 sub displayStories {
 	my $cursor = shift;
 	my($today, $x) = ('', 1);
-	my $cnt = int($I{U}{maxstories} / 3);
+	my $cnt = int($user->{maxstories} / 3);
 
 	#stackTrace(8);
 	while (my($sid, $thissection, $title, $time, $cc, $d, $hp) = $cursor->fetchrow) {
@@ -218,13 +218,13 @@ sub displayStories {
 			$cc = $threshComments[0];
 			print ' | <B>' if $cc;
 
-			if ($cc && $I{U}{threshold} > -1
-				&& $cc ne $threshComments[$I{U}{threshold} + 1]) {
+			if ($cc && $user->{threshold} > -1
+				&& $cc ne $threshComments[$user->{threshold} + 1]) {
 
 				print linkStory({
 					sid	  => $sid,
-					threshold => $I{U}{threshold},
-					'link'	  => $threshComments[$I{U}{threshold} + 1]
+					threshold => $user->{threshold},
+					'link'	  => $threshComments[$user->{threshold} + 1]
 				});
 				print ' of ';
 			}
@@ -239,12 +239,12 @@ sub displayStories {
 
 		}
 
-		if ($thissection ne $I{defaultsection} && !$I{F}{section}) {
+		if ($thissection ne $I{defaultsection} && !$form->{section}) {
 			my($SEC) = getSection($thissection);
 			print qq' | <A HREF="$I{rootdir}/$thissection/">$SEC->{title}</A>';
 		}
 		print qq' | <A HREF="$I{rootdir}/admin.pl?op=edit&sid=$sid">Edit</A>'
-			if $I{U}{aseclev} > 100;
+			if $user->{aseclev} > 100;
 
 		$execme = getEvalBlock('story_trailer');
 		print eval $execme; 
@@ -263,4 +263,6 @@ sub displayStories {
 
 #################################################################
 main();
+my $user = getCurrentUser();
+my $form = getCurrentForm();
 #################################################################

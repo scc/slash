@@ -58,6 +58,7 @@ sub main {
 		print "</CENTER>";
 
 	} else {
+	print "<H1>Got here coments :$op:$I{F}{qid}:</H1>\n";
 		my $vote = vote($I{F}{qid}, $I{F}{aid});
 		printComments($I{F}{qid})
 			if $vote && ! $I{dbobject}->getVar("nocomment");
