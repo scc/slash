@@ -64,7 +64,6 @@ my %descriptions = (
 	'commentcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'commentcodes') },
 	
-	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
 	
