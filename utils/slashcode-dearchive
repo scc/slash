@@ -11,9 +11,10 @@ use Date::Manip;
 
 my $enclosure_regexps = {
 	"Slashcode v0.9.2+"	=> {
-		regexp		=>
+		regexp			=>
 '<!-- begin comment block -->(.+?)<!-- end comment block -->',
-		extractors	=> "*",
+		extractors		=> '*',
+		id_extractors 	=> 'Slash 0.9.2+'
 	},
 };
 
@@ -24,19 +25,23 @@ my %extractor_regexps = (
 '<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR>.+?<FONT.+?>(?:\(.+?User Info</A>\).+?(?:<A HREF="(.+?)">(.+?)</A><BR>)?)?.+?<TR><TD BGCOLOR=.+?>.+?</TD>.+?<TR><TD BGCOLOR=.+?>(.+?)</TD>',
 );
 
+my %idextractor_regexps = (
+	'Slash v0.9.2+' =>
+'<INPUT.+?NAME="returnto" VALUE=.+?article.pl\?sid=(.+?)\"',
+);
 
 
 # Parameter validation.
 my(%opts);
-getopts('d:s:f:y:e:n:X', \%opts);
+getopts('d:s:f:y:e:n:CX', \%opts);
 &usage if !keys(%opts);
 # Optionally use single parameter as virtual username, however specification
 # with -d <virtualuser> will override anything given in @ARGV.
 $opts{d} = $ARGV[-1] if !$opts{d};
 $opts{y} = UnixDate('now', '%Y') if !$opts{y};
-$debug = 1 if $opts{X};
+my($confirm, $debug) = ($opts{C}, $opts{X});
 
-&usage if !$opts{f} || !$opts{s} || !$opts{d};
+&usage if !$opts{f} || !$opts{d};
 
 # Initialize Slash site database object.
 my $slashdb = new Slash::DB($opts{d}) ||
@@ -47,7 +52,7 @@ $ENV{TZ} = 'EST5EDT';
 &Date_Init();
 
 # Globals.
-my($cid, %data);
+my($sid, %data);
 my $ac_uid = $slashdb->getVar('anonymous_coward_uid', 'value');
 my $ac_nickname = $slashdb->getUser($ac_uid, 'nickname');
 
@@ -100,13 +105,32 @@ die "Can't determine enclosure/extractor pair!\n" if !$enclosure && !$extractor;
 die "Enclosure '$enclosure' matched, but no extractor found!\n" if !$extractor;
 print "Using Enclosure '$enclosure' and Extractor '$extractor'\n";
 
-exit if $debug;
+if (! $opts{s}) {
+	for (sort keys %idextractor_regexps) {
+		print STDERR "Trying ID EXTRACTOR '$_'..." if $debug;
+		if ($bigscalar =~ /$idextractor_regexps{$_}/s) {
+			print STDERR 'found ID ' if $debug;
+			$sid = $1;
+			last;
+		}
+	}
+} else {
+	print STDERR 'Using ID ' if $debug;
+	$sid = $opts{s};
+}
+die "\nCan't find ID using any extractor!\n" if !$sid;
+print STDERR "'$sid'\n" if $debug && $sid;
+
+if ($confirm) {
+	print "\n\n<Hit RETURN to begin, ^C to abort execution>\n\n";
+	local $input = <STDIN>;
+}
 
 my($en_regexp, $ex_regexp) = 	($enclosure_regexps->{$enclosure}->{regexp},
 				 $extractor_regexps{$extractor});
 pos $bigscalar = 0;
 while ($bigscalar =~ /$en_regexp/sg) {
-	my($uid, $email_addy, $uid_s, $x_data, $wait, $result, $resultpos);
+	my($uid, $cid, $email_addy, $uid_s, $x_data, $wait, $result, $resultpos);
 	my($subj, $score_ind, $username, $ts, $url, $url_name, $comment, $sig);
 	my($gmt_time, $score, $posttime, $uname);
 	my(%uid_cache, $rc);
@@ -224,6 +248,11 @@ while ($bigscalar =~ /$en_regexp/sg) {
 				($comment ? "\n--> $comment\n\n" : "\n"),
 				($sig ? "\nSig: $sig\n\n" : "\n");
 
+		if ($confirm) {
+			print "<Hit RETURN for Next Comment>";
+			local $input = <STDIN>;
+		}
+
 		# Assign data to hash.
 		$data{$cid}->{subject} = $subj;
 		$data{$cid}->{'-uid'} = ($uid) ? $uid : -1;
@@ -290,28 +319,43 @@ sub header {
 
 
 sub usage {
-	my (@enlist) = sort keys %{$enclosure_regexps};
-	my (@exlist) = sort keys %extractor_regexps;
+	my (@enlist)	= sort keys %{$enclosure_regexps};
+	my (@exlist)	= sort keys %extractor_regexps;
+	my (@idexlist)	= sort keys %idextractor_regexps;
 	local $" = "\t\t";
-	printf <<EOT, "@enlist", "@exlist";
+	printf <<EOT, "@enlist", "@exlist", "@idexlist";
 
-Usage: slashcode-dearchive -[dfs] {-yen} <slashsite virtual user>
+Usage: slashcode-dearchive -[df] {-ysenC} <slashsite virtual user>
 
 	Command line options:
 		-d <virtuser> 
 		-f <filename>
-		-s <sid to use>
+		-s <discussion ID>
 		-y <year>
-		-n <enclosure name>
-		-e <extractor name>
+		-n <comment enclosure name>
+		-e <comment extractor name>
+	
+	Command line switches:
+		-C	Confirms all options and provides prompts during 
+			processing operations. Used primarily for debugging.
 
-Note: If -d is given, then the virtual user given as the last argument will be ignored.
+Notes:
+	If -d is given, then the virtual user given as the last argument will be
+	ignored.
 
-	Defined enclosures:
-		%s
+	If -s is not given, then the program will cycle thru all defined ID
+	extractors in an attempt to find a key suitable for database insertion. If 
+	no ID can be found, then the program will quit with an error and the use
+	of -s will be required.
 
-	Defined extractors:
-		%s
+Defined comment enclosures:
+	%s
+
+Defined comment extractors:
+	%s
+
+Defined ID extractors:
+	%s
 
 EOT
 
