@@ -101,17 +101,16 @@ IF section_block.block;
 		title		= section.title
 		contents	= section_block.block
 		center		= 1;
-END %]
-<!-- /TD></TR><TR><TD COLSPAN="4" -->
+END;
 
-[% IF user.is_admin; 
+IF user.is_admin; 
  PROCESS fancybox 
 	title 		= 'Story admin'
 	contents 	= authorbox
 	center		= 1;
 END %]
  
-</TD></TR><TR><TD COLSPAN="3" -->
+</TD></TR><TR><TD COLSPAN="4">
 
 [% BLOCK nextStory;
 	IF !s;
