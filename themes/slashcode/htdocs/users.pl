@@ -1179,7 +1179,7 @@ sub saveUserAdmin {
 	}
 
 	for my $formname ('comments', 'submit') {
-		my $existing_reason = $slashdb->getReadOnlyReason($formname, 0, $user_edit);
+		my $existing_reason = $slashdb->getAccessListReason($formname, 'readonly', $user_edit);
 		my $is_readonly_now = $slashdb->checkReadOnly($formname, $user_edit) ? 1 : 0;
 
 		my $keyname = "readonly_" . $formname;
@@ -1189,12 +1189,12 @@ sub saveUserAdmin {
 
 		if ($form->{$keyname} != $is_readonly_now) {
 			if ("$existing_reason" ne "$form->{$reason_keyname}") {
-				$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, 0, $form->{$reason_keyname});
+				$slashdb->setAccessList($formname, $user_edit, $form->{$keyname}, 'readonly', $form->{$reason_keyname});
 			} else {
-				$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname});
+				$slashdb->setAccessList($formname, $user_edit, $form->{$keyname}, 'readonly');
 			}
 		} elsif ("$existing_reason" ne "$form->{$reason_keyname}") {
-			$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, 0, $form->{$reason_keyname});
+			$slashdb->setAccessList($formname, $user_edit, $form->{$keyname}, 'readonly', $form->{$reason_keyname});
 		}
 
 		# $note .= getError('saveuseradmin_notsaved', { field => $user_editfield_flag, id => $id });
@@ -1205,12 +1205,12 @@ sub saveUserAdmin {
 	$form->{banned} = $form->{banned} eq 'on' ? 1 : 0 ;
 	if ($banned) {
 		if ($form->{banned} == 0) {
-			$slashdb->setReadOnly('', $user_edit, 0, 1, $form->{banned_reason});
+			$slashdb->setAccessList('', $user_edit, 0, 'isbanned', $form->{banned_reason});
 			$slashdb->getBanList(1);
 		}
 	} else {
 		if ($form->{banned} == 1) {
-			$slashdb->setReadOnly('', $user_edit, $form->{banned}, 1, $form->{banned_reason});
+			$slashdb->setAccessList('', $user_edit, $form->{banned}, 'isbanned', $form->{banned_reason});
 			$slashdb->getBanList(1);
 		}
 	}
@@ -1334,24 +1334,6 @@ sub saveUser {
 			return $note;
 		}
 	}
-
-# Users shouldn't be able to ban/unban themselves unless they have a
-# seclev!  And these form elements aren't written anyway.  I'm not sure
-# what this code was ever doing here. - Jamie
-#	for $formname ('comments', 'submit') {
-#		my $keyname = "readonly_" . $formname;
-#		my $reason_keyname = $formname . "_ro_reason";
-#		$form->{$keyname} = $form->{$keyname} eq 'on' ? 1 : 0 ;
-#
-#		$form->{$reason_keyname} ||= '';
-#
-#		$slashdb->setReadOnly(
-#			$formname, $user_edit,
-#			$form->{$keyname},
-#			0,
-#			$form->{$reason_keyname}
-#		);
-#	}
 
 	# The schema is 160 chars but we limit their input to 120.
 	# If the sig becomes too long to fit (domain tagging causes
@@ -1580,7 +1562,7 @@ sub saveHome {
 sub listReadOnly {
 	my $slashdb = getCurrentDB();
 
-	my $readonlylist = $slashdb->getReadOnlyList(0, 'readonly');
+	my $readonlylist = $slashdb->getAccessList(0, 'readonly');
 
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,
@@ -1592,7 +1574,7 @@ sub listReadOnly {
 sub listBanned {
 	my $slashdb = getCurrentDB();
 
-	my $bannedlist = $slashdb->getReadOnlyList(0, 'isbanned');
+	my $bannedlist = $slashdb->getAccessList(0, 'isbanned');
 
 	slashDisplay('listBanned', {
 		bannedlist => $bannedlist,
@@ -1787,13 +1769,13 @@ sub getUserAdmin {
 
 	for my $formname ('comments', 'submit') {
 		$readonly->{$formname} = $slashdb->checkReadOnly($formname, $user_edit) ? ' CHECKED' : '';
-		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, 0, $user_edit) if $readonly->{$formname};
+		$readonly_reasons->{$formname} = $slashdb->getAccessListReason($formname, 'readonly', $user_edit) if $readonly->{$formname};
 	}
 	
 	my $banref = $slashdb->getBanList(1);
 
 	$banned = $banref->{$id} ? ' CHECKED' : '';
-	$banned_reason = $slashdb->getReadOnlyReason('', 1, $user_edit);
+	$banned_reason = $slashdb->getAccessListReason('', 'isbanned', $user_edit);
 
 	for (@$uidlist) {
 		$uidstruct->{$_->[0]} = $slashdb->getUser($_->[0], 'nickname');

@@ -2308,7 +2308,7 @@ sub getBanList {
 }
 
 ##################################################################
-sub getReadOnlyList {
+sub getAccessList {
 	my($self, $min, $flag) = @_;
 	$min ||= 0;
 	my $max = $min + 100;
@@ -2340,8 +2340,8 @@ sub getAbuses {
 }
 
 ##################################################################
-sub getReadOnlyReason {
-	my($self, $formname, $banned, $user) = @_;
+sub getAccessListReason {
+	my($self, $formname, $column, $user) = @_;
 
 	my $constants = getCurrentStatic();
 	my $ref = {};
@@ -2364,7 +2364,7 @@ sub getReadOnlyReason {
 		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	if ($banned) {
+	if ($column eq 'isbanned') {
 		$where .= " AND isbanned = 1";
 	} else {
 		$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
@@ -2386,19 +2386,19 @@ sub getReadOnlyReason {
 }
 
 ##################################################################
-sub setReadOnly {
+sub setAccessList {
 	# do not use this method to set/unset expired
-	my($self, $formname, $user, $flag, $banned, $reason) = @_;
+	my($self, $formname, $user, $setflag, $column, $reason) = @_;
 
 	return if $reason eq 'expired';
 
 	my $insert_hashref = {};
-	my $banned_hack = $banned ? 'isbanned' : 'readonly';
-	$insert_hashref->{"-$banned_hack"} = 1;
+	print STDERR "banned $column\n";
+	$insert_hashref->{"-$column"} = 1;
 	my $constants = getCurrentStatic();
 	my $rows;
 
-	my $where = "/* setReadOnly $banned_hack WHERE clause */";
+	my $where = "/* setAccessList $column WHERE clause */";
 
 	if ($user) {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
@@ -2419,20 +2419,22 @@ sub setReadOnly {
 		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND formname = '$formname' AND reason != 'expired'" if $banned == 0;
+	$where .= " AND formname = '$formname' AND reason != 'expired'" if $column eq 'readonly';
 	$insert_hashref->{formname} = $formname if $formname ne '';
 	$insert_hashref->{reason} = $reason if $reason ne '';
 	$insert_hashref->{-ts} = 'now()';
 
-	$rows = $self->sqlSelect("count(*) FROM accesslist WHERE $where AND $banned_hack = 1");
+	$rows = $self->sqlSelect("count(*) FROM accesslist WHERE $where AND $column = 1");
 	$rows ||= 0;
 
-	if ($flag == 0 && $rows > 0) {
-		$self->sqlDo("DELETE from accesslist WHERE $where");
+	if ($setflag == 0) {
+		if ($rows > 0) {
+			$self->sqlDo("DELETE from accesslist WHERE $where");
+		}
 	} else {
-		if ($reason && $rows == 1) {
+		if ($rows > 0) {
 			my $return = $self->sqlUpdate("accesslist", {
-				"-$banned_hack" => $flag,
+				"-$column" => $setflag,
 				reason		=> $reason,
 			}, $where);
 
