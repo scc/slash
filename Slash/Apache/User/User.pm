@@ -87,7 +87,8 @@ sub handler {
 		# It may be faster to just let the delete fail then test -Brian
 		# well, uid is undef here ... can't use it to test
 		# until it is defined :-) -- pudge
-		$slashdb->deleteSession(); #  if $slashdb->getUser($uid, 'seclev') >= 99;
+		# Went boom without if. --Brian
+		#$slashdb->deleteSession(); #  if $slashdb->getUser($uid, 'seclev') >= 99;
 		delete $cookies->{user};
 		setCookie('user', '');
 

@@ -203,11 +203,9 @@ sub setComment {
 		# successful submission
 		$self->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
 
-		my($tc, $mp, $cpp) = $self->getVars(
-			"totalComments",
-			"maxPoints",
-			"commentsPerPoint"
-		);
+		my $tc = $self->getVar('totalComments');
+		my $mp = $self->getVar('maxPoints');
+		my $cpp = $self->getVar('commentsPerPoint');
 
 		$self->setVar("totalComments", ++$tc);
 
@@ -384,24 +382,6 @@ sub createSubmission {
 			section	=> $form->{section}
 	});
 	$self->formSuccess($form->{formkey}, 0, length($form->{subj}));
-}
-
-########################################################
-sub createDiscussions {
-	my($self, $sid) = @_;
-	# Posting from outside discussions...
-	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
-	$sid = $self->{_dbh}->quote($sid);
-	my($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
-	$story_time ||= "now()";
-	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
-		$self->sqlInsert("discussions", {
-			sid	=> $sid,
-			title	=> '',
-			ts	=> $story_time,
-			url	=> $ENV{HTTP_REFERER}
-		});
-	}
 }
 
 #################################################################
@@ -782,21 +762,6 @@ sub getACTz {
 	return $ac_hash_ref;
 }
 
-###############################################################################
-# Functions for dealing with vars (system config variables)
-
-########################################################
-sub getVars {
-	my($self, @invars) = @_;
-
-	my @values;
-	for (@invars) {
-		push @values, $self->sqlSelect('value', 'vars', "name='$_'");
-	}
-
-	return @values;
-}
-
 
 ########################################################
 sub setVar {
@@ -821,10 +786,6 @@ sub setTemplate {
 }
 
 ########################################################
-sub newVar {
-	my($self, $name, $value, $desc) = @_;
-	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
-}
 
 ########################################################
 sub updateCommentTotals {
@@ -979,6 +940,7 @@ sub deleteSubmission {
 ########################################################
 sub deleteSession {
 	my($self, $uid) = @_;
+	return unless $uid;
 	$uid = defined($uid) || getCurrentUser('uid');
 	if (defined $uid) {
 		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
@@ -1152,6 +1114,14 @@ sub getSectionBlock {
 	return $block;
 }
 
+########################################################
+sub getSectionBlocks {
+	my($self) = @_;
+
+	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "blocks", "portal=1", "order by bid");
+
+	return $blocks;
+}
 
 ########################################################
 sub getAuthorDescription {
@@ -1263,39 +1233,6 @@ sub deleteStoryAll {
 }
 
 ########################################################
-# for slashd
-# This method is used in a pretty wasteful way
-sub getBackendStories {
-	my($self, $section) = @_;
-
-	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
-		image,commentcount,section,introtext,bodytext,
-		topics.tid as tid
-		    FROM stories,topics
-		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
-		      OR (section=\"$section\" and displaystatus > -1))
-		     AND time < now()
-		     AND writestatus > -1
-		     AND stories.tid=topics.tid
-		ORDER BY time DESC
-		   LIMIT 10");
-
-		  # AND time < date_add(now(), INTERVAL 4 HOUR)
-
-	$cursor->execute;
-	my $returnable = [];
-	my $row;
-	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
-
-	return $returnable;
-}
-
-########################################################
-sub clearStory {
-	 _genericClearCache('stories', @_);
-}
-
-########################################################
 sub setStory {
 	_genericSet('blocks', 'bid', @_);
 }
@@ -1314,23 +1251,6 @@ sub getSubmissionLast {
 	return $last_submitted;
 }
 
-
-########################################################
-sub getSectionBlocks {
-	my($self) = @_;
-
-	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "blocks", "portal=1", "order by bid");
-
-	return $blocks;
-}
-
-########################################################
-sub getLock {
-	my($self) = @_;
-	my $locks = $self->sqlSelectAll('lasttitle,uid', 'sessions');
-
-	return $locks;
-}
 
 ########################################################
 sub updateFormkeyId {
@@ -1551,11 +1471,6 @@ sub getSubmissionCount {
 # Get all portals
 sub getPortals {
 	my($self) = @_;
-	# As a side note portal seems to only be a 1 and 0 in
-	# in slash's database currently (even though since it
-	# is a tinyint it could easily be a negative number).
-	# It is a shame we are currently hitting the database
-	# for this since the same info can be found in $commonportals
 	my $strsql = "SELECT block,title,blocks.bid,url
 		   FROM blocks
 		  WHERE section='index'
@@ -1648,15 +1563,6 @@ sub getAuthorNames {
 	}
 
 	return [sort(@authors)];
-}
-
-##################################################################
-sub refreshStories {
-	my($self, $sid) = @_;
-	$self->sqlUpdate('stories',
-			{ writestatus => 1 },
-			'sid=' . $self->{_dbh}->quote($sid) . ' and writestatus=0'
-	);
 }
 
 ##################################################################
@@ -1814,28 +1720,15 @@ sub countPollquestions {
 }
 
 ########################################################
-sub saveVars {
-#this is almost copied verbatium. Needs to be cleaned up
-	my($self) = @_;
-	my $form = getCurrentForm();
-	my $name = $self->{_dbh}->quote($form->{thisname});
-	if ($form->{desc}) {
-		my($exists) = $self->sqlSelect('count(*)', 'vars',
-			"name=$name"
-		);
-		if ($exists == 0) {
-			$self->sqlInsert('vars', { name => $form->{thisname} });
-		}
-		$self->sqlUpdate("vars", {
-				value		=> $form->{value},
-				description	=> $form->{desc},
-				datatype	=> $form->{datatype},
-				dataop		=> $form->{dataop}
-			}, "name=$name"
-		);
-	} else {
-		$self->sqlDo("DELETE from vars WHERE name=$name");
-	}
+sub createVar {
+	my($self, $name, $value, $desc) = @_;
+	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
+}
+
+########################################################
+sub deleteVar {
+	my($self, $name) = @_;
+	$self->sqlDo("DELETE from vars WHERE name=$name");
 }
 
 ########################################################
@@ -1977,7 +1870,7 @@ sub getComments {
 }
 
 ########################################################
-# Do we need to bother passing in User and Form?
+# 
 sub getStories {
 	my($self, $section, $limit, $tid) = @_;
 
@@ -2205,6 +2098,41 @@ sub saveStory {
 	$self->saveExtras($form);
 }
 
+##################################################################
+sub updateStory {
+	my($self) = @_;
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+	$self->sqlUpdate('discussions',{
+			sid	=> $form->{sid},
+			title	=> $form->{title},
+			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
+			ts	=> $form->{'time'},
+		},
+		'sid = ' . $self->{_dbh}->quote($form->{sid})
+	);
+
+	$self->sqlUpdate('stories', {
+			uid		=> $form->{uid},
+			tid		=> $form->{tid},
+			dept		=> $form->{dept},
+			'time'		=> $form->{'time'},
+			title		=> $form->{title},
+			section		=> $form->{section},
+			bodytext	=> $form->{bodytext},
+			introtext	=> $form->{introtext},
+			writestatus	=> $form->{writestatus},
+			relatedtext	=> $form->{relatedtext},
+			displaystatus	=> $form->{displaystatus},
+			commentstatus	=> $form->{commentstatus}
+		}, 'sid=' . $self->{_dbh}->quote($form->{sid})
+	);
+
+	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
+		. $self->{_dbh}->quote($form->{sid})
+	) if $form->{fastforward} eq 'on';
+	$self->saveExtras($form);
+}
 ########################################################
 # Now, the idea is to not cache here, since we actually
 # cache elsewhere (namely in %Slash::Apache::constants)
@@ -2459,41 +2387,6 @@ sub getStoryList {
 	return $list;
 }
 
-##################################################################
-sub updateStory {
-	my($self) = @_;
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-	$self->sqlUpdate('discussions',{
-			sid	=> $form->{sid},
-			title	=> $form->{title},
-			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
-			ts	=> $form->{'time'},
-		},
-		'sid = ' . $self->{_dbh}->quote($form->{sid})
-	);
-
-	$self->sqlUpdate('stories', {
-			uid		=> $form->{uid},
-			tid		=> $form->{tid},
-			dept		=> $form->{dept},
-			'time'		=> $form->{'time'},
-			title		=> $form->{title},
-			section		=> $form->{section},
-			bodytext	=> $form->{bodytext},
-			introtext	=> $form->{introtext},
-			writestatus	=> $form->{writestatus},
-			relatedtext	=> $form->{relatedtext},
-			displaystatus	=> $form->{displaystatus},
-			commentstatus	=> $form->{commentstatus}
-		}, 'sid=' . $self->{_dbh}->quote($form->{sid})
-	);
-
-	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
-		. $self->{_dbh}->quote($form->{sid})
-	) if $form->{fastforward} eq 'on';
-	$self->saveExtras($form);
-}
 
 ##################################################################
 sub getPollVotesMax {

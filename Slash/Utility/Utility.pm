@@ -336,6 +336,7 @@ sub timeCalc {
 	# this needs to be elsewhere, so it can be done once, and
 	# access slashDisplay(); stay here for now ... maybe in
 	# User.pm ? -- pudge
+	# Yeah, it should be in User.pm --Brian
 	if ($user->{'format'} eq '%i ish') {
 		$user->{aton} = 'around'; # getData('atonish');
 	} else {

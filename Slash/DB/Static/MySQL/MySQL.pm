@@ -17,6 +17,33 @@ use URI ();
 
 1;
 
+########################################################
+# for slashd
+# This method is used in a pretty wasteful way
+sub getBackendStories {
+	my($self, $section) = @_;
+
+	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
+		image,commentcount,section,introtext,bodytext,
+		topics.tid as tid
+		    FROM stories,topics
+		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
+		      OR (section=\"$section\" and displaystatus > -1))
+		     AND time < now()
+		     AND writestatus > -1
+		     AND stories.tid=topics.tid
+		ORDER BY time DESC
+		   LIMIT 10");
+
+		  # AND time < date_add(now(), INTERVAL 4 HOUR)
+
+	$cursor->execute;
+	my $returnable = [];
+	my $row;
+	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
+
+	return $returnable;
+}
 
 ########################################################
 # For slashd
