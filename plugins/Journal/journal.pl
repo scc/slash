@@ -311,8 +311,14 @@ sub listArticle {
 			uid		=> $form->{uid},
 			nickname	=> $nickname,
 		});
-	} else {
+	} elsif (!$user->{is_anon} && (!$form->{uid} || $form->{uid} == $user->{uid})) {
+		slashDisplay('journaloptions', {
+			default		=> $theme,
+			themes		=> $themes,
+		});
 		print getData('noentries');
+	} else {
+		print getData('noentries', { nickname => $nickname });
 	}
 }
 

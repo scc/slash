@@ -193,6 +193,7 @@ sub top {
 }
 
 sub topFriends {
+	# this should only return users who have journal entries -- pudge
 	my($self, $limit) = @_;
 	$limit ||= getCurrentStatic('journal_top') || 10;
 	my $sql;

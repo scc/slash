@@ -23,12 +23,7 @@ sub main {
 	my $previous_formkey;
 
 	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
-	# just trying to see why I get 'GET' when the form is 'POST'
-	# my $r = Apache->request;
-	# my $method = $r->method();
-	# print STDERR "method $method\n";
-	my $postflag = $ENV{REQUEST_METHOD} eq 'POST' ? 1 : 0 ;
-	# my $postflag = $method eq 'POST' ? 1 : 0 ;
+	my $postflag = $curuser->{state}{post};
 	print STDERR "postflag: $postflag\n";
 	my $op = $form->{op};
 	$op ||= 'userinfo';

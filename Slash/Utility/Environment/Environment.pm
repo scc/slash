@@ -1062,7 +1062,7 @@ bunches of other user datum.
 
 sub prepareUser {
 	# we must get form data and cookies, because we are preparing it here
-	my($uid, $form, $uri, $cookies) = @_;
+	my($uid, $form, $uri, $cookies, $method) = @_;
 	my($slashdb, $constants, $user, $hostip);
 
 	$cookies ||= {};
@@ -1107,10 +1107,11 @@ sub prepareUser {
 		$user->{'format'} = $dateformats->{ $user->{dfid} };
 	}
 
-	$user->{ipid}     = md5_hex($hostip);
-	$user->{subnetid} = $hostip;
-	$user->{subnetid} =~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;
-	$user->{subnetid} = md5_hex($user->{subnetid});
+	$user->{state}{post}	= $method eq 'POST' ? 1 : 0;
+	$user->{ipid}		= md5_hex($hostip);
+	$user->{subnetid}	= $hostip;
+	$user->{subnetid}	=~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;
+	$user->{subnetid}	= md5_hex($user->{subnetid});
 
 	my @defaults = (
 		['mode', 'thread'], qw[

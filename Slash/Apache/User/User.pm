@@ -7,7 +7,7 @@ package Slash::Apache::User;
 
 use strict;
 use Apache;
-use Apache::Constants qw(:common REDIRECT);
+use Apache::Constants qw(:common M_GET REDIRECT);
 use Apache::Cookie;
 use Apache::File;
 use Apache::ModuleConfig;
@@ -76,6 +76,8 @@ sub handler {
 	my $method = $r->method;
 	# Don't remove this. This solves a known bug in Apache -- brian
 	$r->method('GET');
+	# do we need to do this too? i am leaning toward No. -- pudge
+# 	$r->method_number(M_GET);
 
 	my $form = filter_params($r->args, $r->content);
 	my $cookies = Apache::Cookie->fetch;
@@ -153,7 +155,7 @@ sub handler {
 	# I need to complete this as a feature. -Brian
 	return DECLINED if $cfg->{auth} && isAnon($uid);
 
-	createCurrentUser(prepareUser($uid, $form, $uri, $cookies));
+	createCurrentUser(prepareUser($uid, $form, $uri, $cookies, $method));
 	createCurrentForm($form);
 	createCurrentCookie($cookies);
 	createEnv($r) if $cfg->{env};
