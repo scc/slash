@@ -1,8 +1,7 @@
 __section__
 default
 __description__
-Hrm, we either need an easy API to update a template from slashd (do we have one?), or this needs to remain as a block. 
-That wouldn't be very hard to do to be honest. -Brian
+Message of the day.
 __title__
 
 __page__
@@ -12,8 +11,8 @@ en_US
 __name__
 motd
 __template__
-Bite my shiny, metal ass! 
-		-- Bender
+I'm not a robot like you. I don't like having disks crammed into me... unless they're Oreos, and then only in the mouth.
+		-- Fry
 
 __seclev__
 500
