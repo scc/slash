@@ -158,15 +158,23 @@ __template__
 		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% readonly_reasons.submit %]"></TD>
 	</TR>
 	<TR>
-		<TD>Expire User</TD>
-		<TD><INPUT TYPE="checkbox" NAME="expired" [% expired %]>&nbsp;</TD>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
+	[% IF ! useredit.nonuid %]
+	<TR>
+		<TD><B>Expire User</B></TD>
+		<TD><INPUT TYPE="checkbox" NAME="expired" [% checked.expired %]>&nbsp;</TD>
 		<TD>&nbsp;</TD> 
 	</TR>
 	<TR>
-		<TD>Real time black list</TD>
+		<TD><B>Real time black list</B></TD>
 		<TD><INPUT TYPE="checkbox" NAME="rtbl" [% useredit.rtbl %]>&nbsp;</TD>
 		<TD>&nbsp;</TD> 
 	</TR>
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
+	[% END %]
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10>
 		Save Admin: <INPUT TYPE="SUBMIT" NAME="saveuseradmin" VALUE="Save Admin">

@@ -250,10 +250,9 @@ sub showInfo {
 
 	} elsif ($form->{userfield_flag} eq 'nickname') { 
 		$id ||= $form->{userfield};
-		$nick = $id;
-		$uid = $slashdb->getUserUID($nick);
+		$uid = $slashdb->getUserUID($id);
 		$user = $slashdb->getUser($uid);
-		$admin_block = $admin_flag ? getUserAdmin($nick, 1, 1) : '';
+		$admin_block = $admin_flag ? getUserAdmin($id, 1, 1) : '';
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
 
 	} elsif ($form->{userfield_flag} eq 'ip') {
@@ -287,18 +286,16 @@ sub showInfo {
 		$comments = $slashdb->getCommentsBySubnetID($user->{subnetid}, $form->{min});
 
 	} elsif ($form->{nick}) {
-		$nick = $form->{nick};
-		$uid = $slashdb->getUserUID($nick);
+		$uid = $slashdb->getUserUID($form->{nick});
 		$user = $slashdb->getUser($uid);
 		$admin_block = $admin_flag ? getUserAdmin($uid, 1, 1) : '';
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
 
 	} else {
-		$user = $curuser;
-		$uid = $curuser->{uid};
-		$nick = $curuser->{nickname};
-		$admin_block = $admin_flag ? getUserAdmin($curuser->{uid}, 1, 1) : '';
-		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
+		$user = $id ? $slashdb->getUser($id) : $curuser;
+		$uid = $user->{uid};
+		$admin_block = $admin_flag ? getUserAdmin($user->{uid}, 1, 1) : '';
+		$comments = $slashdb->getCommentsByUID($user->{uid}, $form->{min});
 	}
 
 	for (@$comments) {
@@ -802,6 +799,7 @@ sub saveUserAdmin {
 		$user->{uid} = $constants->{anonymous_coward_uid};
 		$id = $id =~ /^\d+\.\d+\.\d+\.?\d+?$/ ? md5_hex($id) : $id;
 		$user->{ipid} = $id;
+		$user->{nonuid} = 1;
 
 	} elsif ($form->{userfield_flag} eq 'subnet') {
 		if ($id =~ /^(\d+\.\d+\.\d+\.)\.?\d+?/) {
@@ -812,6 +810,7 @@ sub saveUserAdmin {
 		}
 		$user->{uid} = $constants->{anonymous_coward_uid};
 		$user->{subnetid} = $id;
+		$user->{nonuid} = 1;
 
 	} else { # a bit redundant, I know
 		$user = $curuser;
@@ -844,6 +843,11 @@ sub saveUserAdmin {
 		#	$note .= getMessage('saveuseradmin_notsaveduser', { field => $form->{userfield_flag}, id => $id});
 		#}
 	}
+			my $exp = $slashdb->checkExpired($user->{uid});
+	if ($form->{expired} eq 'on' && ! ($slashdb->checkExpired($user->{uid})) && ! $user->{nonuid}) {
+			print STDERR"form expired $form->{expired} user expired $exp\n";
+			$slashdb->setExpired($user->{uid});
+	};
 
 	print getMessage('note', { note => $note }) if defined $note;
 
@@ -1279,7 +1283,8 @@ sub getUserAdmin {
 
 	my($checked, $uidstruct, $readonly, $readonly_reasons) = ({}, {}, {}, {});
 	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select);
-	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo}) ? 1 : 0;
+	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
+	print STDERR "op $form->{op} userinfo_flag $userinfo_flag\n";
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
 
 	if ($form->{userfield_flag} eq 'uid') {
@@ -1290,12 +1295,14 @@ sub getUserAdmin {
 		}
 		$userfield = $user->{uid};
 		$checked->{uid} = ' CHECKED';
+		$checked->{expired} = $slashdb->checkExpired($user->{uid});
 		$iplist = $slashdb->getNetIDList($user->{uid});
 
 	} elsif ($form->{userfield_flag} eq 'nickname') {
 		$user = $slashdb->getUser($slashdb->getUserUID($id));
 		$userfield = $user->{nickname};
 		$checked->{nickname} = ' CHECKED';
+		$checked->{expired} = $slashdb->checkExpired($user->{uid});
 		$iplist = $slashdb->getNetIDList($user->{uid});
 
 	} elsif ($form->{userfield_flag} eq 'ip') {
@@ -1320,7 +1327,7 @@ sub getUserAdmin {
 		$uidlist = $slashdb->getUIDList('subnetid', $user->{subnetid});
 
 	} else {
-		$user = getCurrentUser();
+		$user = $id ? $slashdb->getUser($id) : $curuser; 
 		$userfield = $user->{uid};
 		$checked->{uid} = ' CHECKED';
 		$iplist = $slashdb->getNetIDList($user->{uid});
@@ -1347,16 +1354,16 @@ sub getUserAdmin {
 
 	print STDERR "userinfo flag $userinfo_flag\n";
 	return slashDisplay('getUserAdmin', {
-		useredit		=> $user,
+		useredit			=> $user,
 		userinfo_flag		=> $userinfo_flag,
-		userfield		=> $userfield,
-		iplist			=> $iplist,
-		uidstruct		=> $uidstruct,
+		userfield			=> $userfield,
+		iplist				=> $iplist,
+		uidstruct			=> $uidstruct,
 		seclev_field		=> $seclev_field,
-		checked 		=> $checked,
+		checked 			=> $checked,
 		author_select		=> $author_select,
-		form_flag		=> $form_flag,
-		readonly		=> $readonly,
+		form_flag			=> $form_flag,
+		readonly			=> $readonly,
 		readonly_reasons 	=> $readonly_reasons,
 		authoredit_flag 	=> $authoredit_flag
 	}, 1);
