@@ -79,9 +79,14 @@ moderatordLog(getData('moderatord_log_header'));
 # defined, we use the site's DB object.
 $read_db = $slashdb;
 if ($constants->{moderatord_read_user}) {
-	# What happens if these return more than one row?
-	my $count = $constants->{moderatord_replication_waitcount} || 2;
+	# How many times we loop.
+	my $count = $constants->{moderatord_catchup_count} || 2;
+	# The user we use.
 	my $rusr = $constants->{moderatord_read_user};
+	# The number of updates behind, the read database can be.
+	my $lag = $constants->{moderatord_lag_threshold};
+	# How long to wait between loops.
+	my $sleep = $constants->{moderatord_catchup_sleep}
 	while ($count--) {
 		$read_db = new Slash::DB($rusr);
 		my $master_stat = ($slashdb->sqlShowMasterStatus())->[0];
@@ -89,11 +94,11 @@ if ($constants->{moderatord_read_user}) {
 		fatalErrorLog('Replication requested but not active!')
 			if lc($slave_stat->{Slave_running}) eq 'no';
 		fatalErrorLog('Var$moderatord_lag_threshold not set!')
-			if !exists $constants->{moderatord_lag_threshold};
+			if !defined($lag);
 		$read_db = undef
-			if $master_stat->{Position} - $slave_stat->{'pos'} <=
-			   $constants->{moderatord_lag_threshold};
-		sleep 5 if !$read_db;
+			if $master_stat->{Position} - $slave_stat->{'pos'} <= 
+			   $lag;
+		sleep $sleep if !$read_db;
 	}
 	fatalErrorLog('Aborting: Replication not sufficiently caught-up.')
 		if !$read_db;
