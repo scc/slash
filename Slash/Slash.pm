@@ -410,15 +410,24 @@ Need From address and SMTP server from vars table,
 =cut
 
 sub sendEmail {
-	my($addr, $subject, $content) = @_;
+	my($addr, $subject, $content, $pr) = @_;
 	my $constants = getCurrentStatic();
-	sendmail(
+
+	my %data = (
 		smtp	=> $constants->{smtp_server},
 		subject	=> $subject,
 		to	=> $addr,
 		body	=> $content,
 		from	=> $constants->{mailfrom}
-	) or errorLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
+	);
+
+	if ($pr && $pr eq 'bulk') {
+		$data{precedence} = 'bulk';
+	}
+
+	sendmail(%data) or errorLog(
+		"Can't send mail '$subject' to $addr: $Mail::Sendmail::error"
+	);
 }
 
 
