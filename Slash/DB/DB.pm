@@ -24,7 +24,8 @@ sub new {
 	}
 	push (@Slash::DB::EXPORT, 'sqlConnect');
 	bless ($self,$class);
-	$self->SUPER::sqlConnect($user);
+	$self->{virtual_user} = $user;
+	$self->SUPER::sqlConnect();
 	return $self;
 }
 

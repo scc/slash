@@ -119,14 +119,25 @@ sub getSlash {
 	my $r = Apache->request;
 	$I{r} = $r;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+	while (my ($key, $val) = each %$cfg) {
+		print STDERR "APACHE $key:$val\n";
+	}
+	while (my ($key, $val) = each %$user_cfg) {
+		print STDERR "USER $key:$val\n";
+	}
 	# We might as well put this here for the moment
-	$I{dbobject} = $cfg->{'Apache'}->{'dbslash'};
+	$I{dbobject} = $cfg->{'dbslash'};
+print STDERR "DBOBJECT $I{dbobject}\n";
 	$I{query} = new CGI;
 
-	$I{F} = $cfg->{'Apache'}->{'form'};
 	my $user = getUser($ENV{REMOTE_USER});
-	$r->notes('user' =>  $user);
-	$cfg->{'Apache'}->{'user'} = $user;
+	# When we can move this method into Slash::Apache::User
+	# this can go away
+	$user_cfg->{'user'} = $user;
+print STDERR "USEROBJECT $user_cfg->{'user'}\n";
+	# %I legacy
+	$I{F} = $user_cfg->{'form'};
 	$I{U} = $user;
 
 	return 1;
@@ -317,6 +328,7 @@ sub getUser {
 	my($uid) = @_;
 	undef $I{U};
 
+print STDERR "getUser() $uid \n";
 	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
 
 		# Get the Timezone Stuff
@@ -347,7 +359,6 @@ sub getUser {
 		addToUser($I{AC});
 
 	}
-
 	# Add On Admin Junk
 	if ($I{F}{op} eq 'adminlogin') {
 		my $sid;

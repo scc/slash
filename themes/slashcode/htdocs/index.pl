@@ -32,7 +32,6 @@ use Slash::Utility;
 sub main {
 	*I = getSlashConf();
 	getSlash();
-	print STDERR "Getting past getSlash()";
 
 	if ($I{F}{op} eq 'userlogin' && $I{F}{upasswd} && $I{F}{unickname}) {
 		redirect($ENV{SCRIPT_NAME});

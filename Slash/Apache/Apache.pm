@@ -1,29 +1,30 @@
 package Slash::Apache;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 use Apache::ModuleConfig;
 use Slash::DB;
 require DynaLoader;
 require AutoLoader;
+use vars qw($VERSION @ISA);
 
 @Slash::Apache::ISA = qw(DynaLoader);
-$Slash::Apache::VERSION = '0.01';
+$Slash::Apache::VERSION = '1.00';
 
 bootstrap Slash::Apache $VERSION;
 
 sub SlashVirtualUser ($$$){
 	my ($cfg, $params, $user) = @_;
-	$cfg->{Apache}{VirtualUser} = $user;
-	$cfg->{Apache}{dbslash} = new Slash::DB($user);
+	$cfg->{VirtualUser} = $user;
+	$cfg->{dbslash} = new Slash::DB($user);
 	# More of a place holder to remind me that it
 	# is here. The uid will be populated once Patrick
 	# finishes up with slashdotrc
-	$cfg->{Apache}{anonymous_coward_uid} = '-1';
-	$cfg->{Apache}{anonymous_coward} = '';
+	# There will need to be some get var calls here
+	$cfg->{anonymous_coward_uid} = '-1';
+	$cfg->{anonymous_coward} = '';
+	$cfg->{authors_unlimited} = '1';
 }
-
 __END__
 1;
 

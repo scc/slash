@@ -154,23 +154,14 @@ EOT
 
 ##################################################################
 # Welcome to one of the ancient beast functions.  The comment editor
-# is the form in whcih you edit a comment.
+# is the form in which you edit a comment.
 sub editComment {
-	my $id = shift;
+	my ($id) = @_;
 	$I{U}{points} = 0;
 
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	my $reply = sqlSelectHashref(getDateFormat("date", "time", $I{U}) . ",
-		subject,comments.points as points,comment,realname,nickname,
-		fakeemail,homepage,cid,sid,users.uid as uid",
-		"comments,users,users_info,users_comments",
-		"sid=" . $I{dbh}->quote($I{F}{sid}) . "
-		AND cid=" . $I{dbh}->quote($I{F}{pid}) . "
-		AND users.uid=users_info.uid 
-		AND users.uid=users_comments.uid 
-		AND users.uid=comments.uid"
-	);
+	my $reply = $I{dbobject}->getCommentReply(getDateFormat("date", "time", $I{U}), $I{F}{sid}, $I{F}{pid});
 
 	# Display parent comment if we got one
 	if ($I{F}{pid}) {

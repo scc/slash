@@ -128,12 +128,12 @@ sub sqlConnect {
 # What we are going for here, is the ability to reuse
 # the database connection.
 # Ok, first lets see if we already have a connection
-	my $self = shift;
-	($user) = @_;
+	my ($self) = @_;
 
 	if (defined($self->{dbh})) {
 		unless (eval {$self->{dbh}->ping}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
+			$self->{dbh}->disconnect;
 			undef $self->{dbh};
 			$self->sqlConnect();
 		}
@@ -144,12 +144,13 @@ sub sqlConnect {
 			eval {
 				local $SIG{'ALRM'} = sub { die "Connection timed out" };
 				alarm $timeout;
-				$self->{dbh} = DBIx::Password->connect($user);
+				$self->{dbh} = DBIx::Password->connect($self->{virtual_user});
 				alarm 0;
 			};
 			if ($@) {
 				#In the future we should have a backupdatabase 
 				#connection in here. For now, we die
+				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
 				kill 9, $$ unless $self->{dbh};	 # The Suicide Die
 			}
@@ -1518,6 +1519,65 @@ sub countUsersIndexExboxesByBid{
 			);
 
 	return $count;
+}
+########################################################
+#sub somethingComment {
+#	my ($val) = @_;
+#	my $strsql = "UPDATE comments SET
+#		points=points$val,
+#		reason=$reason,
+#		lastmod=$I{U}{uid}
+#		WHERE sid=" . $I{dbh}->quote($sid)."
+#		AND cid=$cid 
+#		AND points " .
+#			($val < 0 ? " > $I{comment_minscore}" : "") .
+#			($val > 0 ? " < $I{comment_maxscore}" : "");
+#
+#	$strsql .= " AND lastmod<>$I{U}{uid}"
+#		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
+#
+#	if ($val ne "+0" && $I{dbh}->do($strsql)) {
+#		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
+#
+#		# Adjust comment posters karma
+#		$self->sqlUpdate(
+#			"users_info",
+#			{ -karma => "karma$val" }, 
+#			"uid=$cuid"
+#		) if $val && $cuid != $I{anonymous_coward};
+#
+#		# Adjust moderators total mods
+#		$self->sqlUpdate(
+#			"users_info",
+#			{ -totalmods => 'totalmods+1' }, 
+#			"uid=$I{U}{uid}"
+#		);
+#
+#		# And deduct a point.
+#		$I{U}{points} = $I{U}{points} > 0 ? $I{U}{points} - 1 : 0;
+#		$self->sqlUpdate(
+#			"users_comments",
+#			{ -points=>$I{U}{points} }, 
+#			"uid=$I{U}{uid}"
+#		); # unless ($I{U}{aseclev} > 99 && $I{authors_unlimited});
+#	}
+#}
+#
+########################################################
+sub getCommentReply{	
+	my ($self, $time, $sid, $pid) = @_;
+	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
+		comment,realname,nickname,
+		fakeemail,homepage,cid,sid,users.uid as uid",
+		"comments,users,users_info,users_comments",
+		"sid=" . $self->{dbh}->quote($sid) . "
+		AND cid=" . $self->{dbh}->quote($pid) . "
+		AND users.uid=users_info.uid
+		AND users.uid=users_comments.uid
+		AND users.uid=comments.uid"
+	);
+
+	return $reply;
 }
 ########################################################
 sub getComments{

@@ -35,6 +35,7 @@ sub main {
 	getSlash();
 
 	my $op = $I{F}{op};
+print STDERR "OP $I{F}{op}\n";
 
 	if ($op eq "userlogin" and $I{U}{uid} != $I{anonymous_coward}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
@@ -260,7 +261,6 @@ sub userInfo {
 	my($nick) = @_;
 
 	my $userbio = $I{dbobject}->getUserBio($nick);
-	print STDERR ":$userbio:$nick:\n";
 
 	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$userbio) {
 		$bio = stripByMode($bio, "html");

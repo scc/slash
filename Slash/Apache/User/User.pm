@@ -4,17 +4,33 @@ use strict;
 
 use Apache; 
 use Apache::Constants qw(:common);
+use Apache::ModuleConfig;
 use Slash::DB;
 use CGI::Cookie;
+use vars qw($VERSION @ISA);
 
-$Slash::Apache::User::VERSION = '0.01';
+require DynaLoader;
+require AutoLoader;
+
+
+@Slash::Apache::User::ISA = qw(DynaLoader);
+$VERSION = '0.01';
+
+bootstrap Slash::Apache::User $VERSION;
+
+sub SlashUserInit ($$){
+	my ($cfg, $params) = @_;
+	$cfg->{user} = '';
+	$cfg->{form} = '';
+}
 
 # handler method
 sub handler{
 	my ($r) = @_;
-	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $cfg = Apache::ModuleConfig->get($r);
+	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	# Lets do this to make it a bit easier to handle
-	my $dbslash = $cfg->{'Apache'}->{'dbslash'};
+	my $dbslash = $dbcfg->{'dbslash'};
 
 	my %params = ($r->args, $r->content);
 	# Don't remove this. This solves a known bug in Apache
@@ -70,18 +86,18 @@ sub handler{
 	my $op = $form{'op'} || '';
 	if (($op eq 'userlogin' || $form{'rlogin'} )&& length($form{upasswd}) > 1){
 		my $user = $dbslash->getUserUID($form{unickname});
-		$uid = userLogin($cfg, $user, $form{upasswd});
+		$uid = userLogin($dbcfg, $user, $form{upasswd});
 	} elsif ($op eq 'userclose' ) {
 		setCookie('user', '');
 	} elsif ($op eq 'adminclose') {
 		setCookie('session', ' ');
 	#This is icky, should be simplified
 	} elsif ($cookies{'user'}) {
-		my($user, $password) = userCheckCookie($cfg, $cookies{'user'}->value);
+		my($user, $password) = userCheckCookie($dbcfg, $cookies{'user'}->value);
 		if($password) {
 			$uid = $dbslash->getUserAuthenticate($user, $password);
 			unless ($uid) {
-				$uid = $cfg->{'Apache'}->{'anonymous_coward_uid'}; 
+				$uid = $dbcfg->{'anonymous_coward_uid'}; 
 				setCookie('user', '');
 			} else {
 				$uid = $user;
@@ -90,17 +106,14 @@ sub handler{
 			$uid = $user;
 		}
 	} else {
-		$uid = $cfg->{'Apache'}->{'anonymous_coward_uid'};
+		$uid = $dbcfg->{'anonymous_coward_uid'};
 	}
 
-	#Not sure if we really need it here or not. Leave it
-	#in for the moment.
-	$r->notes('slash_user_uid' => $uid);
 	#Ok, yes we could use %ENV here, but if we did and 
 	#if someone ever wrote a module in another language
 	#or just a cheesy CGI, they would never see it.
 	$r->subprocess_env('REMOTE_USER' => $uid);
-	$cfg->{'Apache'}->{'form'} = \%form;
+	$cfg->{'form'} = \%form;
 
 	return OK;
 }
@@ -122,7 +135,7 @@ sub userCheckCookie {
 	my($cfg, $cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
 	my($uid, $passwd) = split('::', $cookie);
-	return ($cfg->{'Apache'}->{'anonymous_coward_uid'}, '')  unless $uid && $passwd;
+	return ($cfg->{'anonymous_coward_uid'}, '')  unless $uid && $passwd;
 	return ($uid, $passwd);
 }
 
@@ -133,15 +146,15 @@ sub userLogin {
   my($cfg, $name, $passwd) = @_;
 
 	$passwd = substr $passwd, 0, 20;
-	my $uid = $cfg->{'Apache'}->{'dbslash'}->getUserAuthenticate($name, $passwd);
+	my $uid = $cfg->{'dbslash'}->getUserAuthenticate($name, $passwd);
 
-	if ($uid != $cfg->{'Apache'}->{anonymous_coward_uid}) {
+	if ($uid != $cfg->{anonymous_coward_uid}) {
 		my $cookie = $uid . '::' . $passwd;
 		#$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
 		setCookie('user', $cookie);
 		return $uid ;
 	} else {
-		return $cfg->{'Apache'}->{'anonymous_coward_uid'};
+		return $cfg->{'anonymous_coward_uid'};
 	}
 }
 
@@ -166,6 +179,18 @@ sub setCookie {
 #	$r->header_out('Set-Cookie' => $bakedcookie);
 	$r->err_header_out('Set-Cookie' => $bakedcookie);
 }
+
+#sub new {
+#	return bless {}, shift;
+#}
+#
+#sub DIR_CREATE {
+#	my ($class) = @_;
+#	my $self = $class->new;
+#	$self->{user} = '';
+#	$self->{form} = '';
+#	return $self;	
+#}
 
 __END__
 1;
