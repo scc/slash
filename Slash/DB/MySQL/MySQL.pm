@@ -382,18 +382,20 @@ sub getSessionInstance {
 		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
+		my $session_q = $self->{_dbh}->quote($session);
+
 		my($uid) = $self->sqlSelect(
 			'uid',
 			'sessions',
-			'session=' . $self->{_dbh}->quote($session)
+			"session=$session_q"
 		);
 
 		if ($uid) {
-			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND session != " .
-				$self->{_dbh}->quote($session)
+			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND "
+				"session != $session_q"
 			);
 			$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-				"session=$session"
+				"session=$session_q"
 			);
 		}
 	} else {
