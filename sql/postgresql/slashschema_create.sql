@@ -316,6 +316,14 @@ CREATE TABLE sessions (
 	PRIMARY KEY (session)
 );
 
+CREATE TABLE site_info (
+  param_id SERIAL,
+  name varchar(50) NOT NULL,
+  value varchar(200) NOT NULL,
+  description varchar(255),
+  UNIQUE (name,value),
+  PRIMARY KEY (param_id)
+);
 
 
 CREATE TABLE stories (
