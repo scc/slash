@@ -3713,7 +3713,7 @@ sub calcModval {
 	# get the moderatorlog valsum twice.
 	my $cid_text = join(",", @$cid_ar);
 	if ($minicache and defined($minicache->{$cid_text})) {
-#printf STDERR "cM 1 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $minicache->{$cid_text};
+#printf STDERR "cM 1 %4d %6.3f %7.3f\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $minicache->{$cid_text};
 		return $minicache->{$cid_text};
 	}
 
@@ -3736,6 +3736,8 @@ sub calcModval {
 		next unless $val;
 		if ($hoursback <= $halflife) {
 			$modval += $val;
+		} elsif ($hoursback > $halflife*10) {
+			# So old it's not worth looking at.
 		} else {
 			# Logarithmically weighted.
 			$modval += $val / (2 ** ($hoursback/$halflife));
@@ -3743,7 +3745,7 @@ sub calcModval {
 	}
 
 	$minicache->{$cid_text} = $modval if $minicache;
-#printf STDERR "cM 0 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $modval;
+#printf STDERR "cM 0 %4d %6.3f %7.3f\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $modval;
 	$modval;
 }
 
@@ -3819,7 +3821,7 @@ sub getIsTroll {
 		$ipid_hoursback, $minicache);
 #my $idstuff = "";
 #$idstuff  = " uid $user->{uid}" if !$user->{is_anon};
-#$idstuff .= " ipid '$user->{ipid}' subnetid '$user->{subnetid}";
+#$idstuff .= " ipid '$user->{ipid}' subnetid '$user->{subnetid}'";
 #printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $idstuff;
 	return 1 if $modval <= $trollpoint;
 
