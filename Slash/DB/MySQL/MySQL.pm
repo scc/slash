@@ -4780,6 +4780,26 @@ sub getRandomSpamArmor {
 }
 
 ########################################################
+sub sqlShowProcessList {
+        my($self) = @_;
+
+        $self->sqlConnect();
+        my $proclist = $self->{_dbh}->prepare("SHOW PROCESSLIST");
+
+        return $proclist;
+}
+
+########################################################
+sub sqlShowStatus {
+        my($self) = @_;
+
+        $self->sqlConnect();
+        my $status = $self->{_dbh}->prepare("SHOW STATUS");
+
+        return $status;
+}
+
+########################################################
 # Get a unique string for an admin session
 #sub generatesession {
 #	# crypt() may be implemented differently so as to
