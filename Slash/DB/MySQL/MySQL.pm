@@ -514,12 +514,16 @@ sub createAccessLog {
 
 ########################################################
 sub getDescriptions {
-	my ($self, $codetype) =  @_;
+	my ($self, $codetype, $flag) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $cache = '_getDescriptions_' . $codetype;
 
-	return $self->{$cache} if $self->{$cache};
+	if ($flag) {
+		undef $self->{$cache};
+	} else {
+		return $self->{$cache} if $self->{$cache}; 
+	}
 
 	my $sth = $descriptions{$codetype}->(@_);
 	while (my($id, $desc) = $sth->fetchrow) {
