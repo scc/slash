@@ -103,9 +103,9 @@ sub archiveComments {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
-	$self->sqlDo("update discussions SET type=2  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 0 ");
+	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 	# Optimize later to use heap table -Brian
-	for ($self->sqlSelect('cid', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 1 AND discussion.pid = 0")) {
+	for ($self->sqlSelect('cid', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 'recycle' AND discussion.pid = 0")) {
 		$self->deleteComments('', $_);
 	}
 }

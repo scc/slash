@@ -14,10 +14,6 @@ use Slash::Utility;
 use constant MSG_CODE_COMMENT_MODERATE	=> 3;
 use constant MSG_CODE_COMMENT_REPLY	=> 4;
 
-use constant COMMENTS_OPEN 	=> 0;
-use constant COMMENTS_RECYCLE 	=> 1;
-use constant COMMENTS_READ_ONLY => 2;
-
 ##################################################################
 sub main {
 	my $slashdb = getCurrentDB();
@@ -457,6 +453,11 @@ sub editComment {
 		return;
 	}
 
+	if ($discussion->{type} == 'archived') {
+		print getError('archive_error');
+		return;
+	}
+
 	if (lc($form->{op}) ne 'reply' || $form->{op} eq 'preview' || ($form->{postersubj} && $form->{postercomment})) {
 		$preview = previewForm(\$error_message) or $error_flag++;
 	}
@@ -766,7 +767,12 @@ sub moderate {
 	my $sid = $form->{sid};
 	my $was_touched = 0;
 
-	if (! $constants->{allow_moderation} or $discussion->{type} == COMMENTS_READ_ONLY) {
+	if ($discussion->{type} == 'archived') {
+		print getData('archive_error');
+		return;
+	}
+
+	if (! $constants->{allow_moderation}) {
 		print getData('no_moderation');
 		return;
 	}

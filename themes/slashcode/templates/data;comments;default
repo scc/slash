@@ -29,6 +29,9 @@ __template__
 [% CASE 'no_such_sid' %]
 	This is not the discussion you are looking for.
 
+[% CASE 'archive_error' %]
+	This discussion has been archive, no further changes/additions can be made to it.
+
 [% END %]
 
 __seclev__

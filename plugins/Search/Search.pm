@@ -145,10 +145,10 @@ sub findStory {
 	$start ||= 0;
 
 	my $query = $self->sqlQuote($form->{query});
-	my $columns = "users.nickname, stories.title, stories.sid as sid, time, discussions.commentcount, section";
+	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
-	my $tables = "stories,users,discussions";
+	my $tables = "stories,users";
 	$tables .= ",story_text"
 		if $form->{query};
 	my $other;
@@ -157,12 +157,14 @@ sub findStory {
 	} else {
 		$other = " ORDER BY time DESC";
 	}
-	$other .= " LIMIT $start, $limit" if $limit;
+	$other .= " LIMIT $start, $limit" 
+		if $limit;
 
 	# The big old searching WHERE clause, fear it
 	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";
 	my $where = "stories.sid = story_text.sid AND stories.sid=discussions.sid AND stories.uid = users.uid ";
-	$where .= " AND $key" if $form->{query};
+	$where .= " AND $key" 
+		if $form->{query};
 
 	if ($form->{section}) { 
 		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";

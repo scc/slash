@@ -226,7 +226,7 @@ sub createComment {
 	my $uid = $comment->{postanon} ? $default_user : $user->{uid};
 	# Basically, this makes sure that the thread is not
 	# been set read only -Brian
-	return -1 if ($self->getDiscussion($header, 'type') == 2);
+	return -1 if ($self->getDiscussion($header, 'type') == 'archived');
 
 	my $insline = "INSERT into comments (sid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header," .
 		$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
@@ -495,7 +495,7 @@ sub getStoryDiscussions {
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
 		"discussions, $story_table",
-		"displaystatus > -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND type = 0",
+		"displaystatus > -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND type = 'open'",
 		"ORDER BY time DESC LIMIT 50"
 	);
 
@@ -508,7 +508,7 @@ sub getDiscussions {
 	my($self) = @_;
 	my $discussion = $self->sqlSelectAll("id, title, url",
 		"discussions",
-		"type < 2 AND ts <= now()",
+		"type != 'archived' AND ts <= now()",
 		"ORDER BY ts DESC LIMIT 50"
 	);
 
@@ -523,7 +523,7 @@ sub getDiscussionsByCreator {
 
 	my $discussion = $self->sqlSelectAll("id, title, url",
 		"discussions",
-		"type < 2 AND ts <= now() AND uid = $uid",
+		"type != 'archived' AND ts <= now() AND uid = $uid",
 		"ORDER BY ts DESC LIMIT 50"
 	);
 
@@ -3105,7 +3105,7 @@ sub createDiscussion {
 	my($self, $title, $url, $topic, $type, $sid, $time, $uid) = @_;
 
 	#If no type is specified we assume the value is zero
-	$type ||= 0;
+	$type ||= 'ok';
 	$sid ||= '';
 	$time ||= $self->getTime();
 	$uid ||= getCurrentUser('uid');

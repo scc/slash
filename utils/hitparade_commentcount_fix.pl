@@ -33,7 +33,7 @@ $task{$PROGNAME}{code} = sub {
 		}
 	}
 
-	my $hits = $slashdb->sqlSelectAll('discussions.id,threshold,count,sid', 'discussion_hitparade, discussions', " discussions.id=discussion_hitparade.discussion AND  sid != '' AND type ='0' ");
+	my $hits = $slashdb->sqlSelectAll('discussions.id,threshold,count,sid', 'discussion_hitparade, discussions', " discussions.id=discussion_hitparade.discussion AND  sid != '' AND type ='open' ");
 	
 	my $hitparade;
 	my $sid2discussion;
