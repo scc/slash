@@ -147,7 +147,7 @@ for (sort keys %$themes) {
 }
 my $atheme;
 if ((keys %$themes) > 1) {
-	chomp($theme = <STDIN>);
+	chomp($atheme = <STDIN>);
 	$atheme ||= '1';
 } else {
 	print "\nSkipping theme select since you only have one theme!\n";
