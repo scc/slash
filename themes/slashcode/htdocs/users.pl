@@ -1317,7 +1317,8 @@ sub saveUser {
 	# If the sig becomes too long to fit (domain tagging causes
 	# string expansion and tag balancing can too), warn the user to
 	# use shorter domain names and don't save their change.
-	my $sig = strip_html(substr($form->{sig}, 0, 120));
+	my $sig = chopEntity($form->{sig}, 120);
+	$sig = strip_html($sig);
 	$sig = balanceTags($sig);
 	$sig = addDomainTags($sig);
 	if (length($sig) > 160) {

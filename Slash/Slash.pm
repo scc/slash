@@ -572,9 +572,16 @@ sub dispComment {
 
 	if ($form->{mode} ne 'archive' && length($comment->{comment}) > $user->{maxcommentsize}
 		&& $form->{cid} ne $comment->{cid}) {
-		$comment_shrunk = balanceTags(
-			chopEntity($comment->{comment}, $user->{maxcommentsize})
-		);
+		# We remove the domain tags so that strip_html will not
+		# consider </a blah> to be a non-approved tag.  We'll
+		# add them back at the last step.  In-between, we chop
+		# the comment down to size, then massage it to make sure
+		# we still have good HTML after the chop.
+		$comment_shrunk = $comment->{comment};
+		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi;
+		$comment_shrunk = chopEntity($comment_shrunk, $user->{maxcommentsize});
+		$comment_shrunk = strip_html($comment_shrunk);
+		$comment_shrunk = balanceTags($comment_shrunk);
 		$comment_shrunk = addDomainTags($comment_shrunk);
 	}
 
