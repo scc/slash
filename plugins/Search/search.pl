@@ -102,7 +102,7 @@ sub commentSearch {
 	slashDisplay('linksearch', {
 		prev => $prev,
 		linksearch => \&linksearch
-	}) if $prev => 0;
+	}) if ($prev => 0);
 }
 
 #################################################################
@@ -118,11 +118,12 @@ sub userSearch {
 	
 	my $x = @$users;
 
-	my $prev = $form->{min} - $form->{max};
+	my $prev = ($form->{min} - $form->{max});
+
 	slashDisplay('linksearch', {
 		prev => $prev,
 		linksearch => \&linksearch
-	}) if $prev => 0;
+	}) if ($prev => 0);
 }
 
 #################################################################
