@@ -92,7 +92,7 @@ sub findComments {
 			if $form->{section};
 
 	my $other;
-	if($form->{query}) {
+	if ($form->{query}) {
 		$other = " ORDER BY score DESC, time DESC ";
 	} else {
 		$other = " ORDER BY date DESC, time DESC ";
@@ -155,7 +155,7 @@ sub findStory {
 		if $form->{query};
 	my $tables = "stories, story_text, users, discussions";
 	my $other;
-	if($form->{query}) {
+	if ($form->{query}) {
 		$other = " ORDER BY score DESC";
 	} else {
 		$other = " ORDER BY time DESC";

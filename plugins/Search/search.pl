@@ -423,6 +423,7 @@ sub findJournalEntry {
 
 #################################################################
 # Do not enable -Brian
+# do not WRITE in the first place -- pudge
 sub findJournalEntryRSS {
 	my($form, $constants) = @_;
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());

@@ -4,17 +4,14 @@ __description__
 Message body that is sent back to a user whenever a moderation from
 this user is metamoderated.
 
-	num_m2mods = Number of metamoderators involved over ALL listed
-	results.
-
-	m2 = List of hashrefs containing the following keys:
-		title	- Title of the discussion in which the moderated comment
-			  appears.
-		url	- URL of the discussion in question
-		subj	- subject of moderated comment
-		vote	- moderation vote on that comment
-		reason  - Reason given for original moderation
-		change	- Amount of karma change as a result of the moderation.
+* num_m2mods = Number of metamoderators involved over ALL listed results.
+* m2 = List of hashrefs containing the following keys:
+	title	- Title of the discussion in which the moderated comment appears.
+	url	- URL of the discussion in question
+	subj	- subject of moderated comment
+	vote	- moderation vote on that comment
+	reason  - Reason given for original moderation
+	change	- Amount of karma change as a result of the moderation.
 
 __title__
 Metamoderation Message Body
