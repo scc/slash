@@ -205,7 +205,7 @@ sub displayStories {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
 		my @links;
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
-		my($storytext, $story) = displayStory($sid, '', 'index');
+		my($storytext, $story) = displayStory($sid);
 
 		$return .= $storytext;
 

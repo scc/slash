@@ -464,23 +464,24 @@ The 'linkStory' template block.
 =cut
 
 sub linkStory {
-	my($c) = @_;
+	my($story_link) = @_;
 	my $user = getCurrentUser();
 	my($dynamic, $mode, $threshold);
 
-	if ($user->{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
-		$dynamic = 1 if $c->{mode} || exists $c->{threshold} || $ENV{SCRIPT_NAME};
-		$mode = $c->{mode} || $user->{mode};
-		$threshold = $c->{threshold} if exists $c->{threshold};
+	# archive should never happen since it is gone, so???? -Brian
+	if ($user->{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$story_link->{section})) {
+		$dynamic = 1 if $story_link->{mode} || exists $story_link->{threshold} || $ENV{SCRIPT_NAME};
+		$mode = $story_link->{mode} || $user->{mode};
+		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
 	}
 
 	return slashDisplay('linkStory', {
 		dynamic		=> $dynamic,
 		mode		=> $mode,
 		threshold	=> $threshold,
-		sid		=> $c->{sid},
-		section		=> $c->{section},
-		text		=> $c->{'link'}
+		sid		=> $story_link->{sid},
+		section		=> $story_link->{section},
+		text		=> $story_link->{'link'}
 	}, { Return => 1, Nocomm => 1 });
 }
 
@@ -857,6 +858,7 @@ sub header {
 		$r->send_http_header;
 	}
 
+	# Current mode still used?
 	$constants->{userMode} = $user->{currentMode} eq 'flat' ? '_F' : '';
 	$user->{currentSection} = $section || '';
 	getSectionColors();
@@ -1846,7 +1848,7 @@ sub dispStory {
 
 #========================================================================
 
-=head2 displayStory(SID, FULL, CALLER)
+=head2 displayStory(SID, FULL)
 
 Display a story (frontend to C<dispStory>).
 
@@ -1865,10 +1867,6 @@ Story ID to display.
 Boolean for show full story, or just the
 introtext portion.
 
-=item CALLER
-
-The calling script.
-
 =back
 
 =item Return value
@@ -1883,16 +1881,23 @@ hashref of author data, and hashref of topic data.
 sub displayStory {
 	# caller is the pagename of the calling script
 	my($sid, $full) = @_;	# , $caller  no longer needed?  -- pudge
+												# caller was used by storycount (which we
+												# no longer need). -Brian
 
 	my $slashdb = getCurrentDB();
 	my $story = $slashdb->getStory($sid);
-#	my $author = $slashdb->getUser($story->{uid}, ['nickname', 'fakeemail']);
 	my $author = $slashdb->getAuthor($story->{uid}, ['nickname', 'fakeemail']);
 	my $topic = $slashdb->getTopic($story->{tid});
 	
 	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
 	# based on their preferences 
+	# An interesting note... this is pretty much the
+	# only reason this function is even needed. 
+	# Everything else can easily be done with
+	# dispStory(). Even this could be worked
+	# into the logic for the template Display
+	#  -Brian
 	$story->{storytime} = timeCalc($story->{'time'});
 
 	# get extra data from section table for this story

@@ -139,7 +139,6 @@ sub DESTROY {
 
 
 1;
-__END__
 # Below is the stub of documentation for your module. You better edit it!
 
 =head1 NAME

@@ -510,6 +510,7 @@ CREATE TABLE users (
   PRIMARY KEY (uid),
   KEY login (uid,passwd,nickname),
   KEY chk4user (nickname,realemail),
+  KEY nickname_lookup (nickname),
   KEY chk4email (realemail)
 );
 
