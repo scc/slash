@@ -2721,13 +2721,12 @@ sub getCommentsForUser {
 #		'comment_heap' : 'comments';
 	my $comment_table = 'comments';
 	my $user = getCurrentUser();
-	my $sql = <<EOT;
-SELECT	cid, date, subject, nickname, homepage, fakeemail,
-	users.uid as uid, sig, $comment_table.points as points, pid, sid,
-	lastmod, reason, journal_last_entry_date
-FROM $comment_table, users, users_info
-WHERE sid=$sid_quoted AND $comment_table.uid=users.uid AND users.uid=users_info.uid
-EOT
+	my $sql;
+	$sql .= " SELECT	cid, date, subject, nickname, homepage, fakeemail, ";
+	$sql .= "	users.uid as uid, sig, $comment_table.points as points, pid, sid, ";
+	$sql .= " lastmod, reason, journal_last_entry_date ";
+	$sql .= "	FROM $comment_table, users  ";
+	$sql .= "	WHERE sid=$sid_quoted AND $comment_table.uid=users.uid ";
 
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
@@ -2766,9 +2765,9 @@ EOT
 	# ($comment->{points} < $user->{threshold}). - Jamie
 	my $comment_texts = $self->_getCommentText($cids);
 	# Now distribute those texts into the $comments hashref.
+
 	for my $comment (@$comments) {
-		my $text = $comment_texts->{$comment->{cid}};
-		if (!defined($text)) {
+		if (!exists($comment_texts->{$comment->{cid}})) {
 			errorLog("no text for cid " . $comment->{cid});
 		} else {
 			$comment->{comment} = $comment_texts->{$comment->{cid}};
@@ -2794,7 +2793,6 @@ sub _getCommentText {
 	# If this is the first time this is called, create an empty comment text
 	# cache (a hashref).
 	$self->{_comment_text} ||= { };
-	my $retval;
 	if (ref $cid) {
 		if (ref $cid ne "ARRAY") {
 			errorLog("_getCommentText called with ref to non-array: $cid");
@@ -2805,21 +2803,19 @@ sub _getCommentText {
 		my @needed = grep { !exists($self->{_comment_text}{$_}) } @$cid;
 		if (@needed) {
 			my $in_list = join(",", @needed);
-			my $comment_hashref_ary = $self->sqlSelectAllHashrefArray(
+			my $comment_array = $self->sqlSelectAll(
 				"cid, comment",
 				"comment_text",
 				"cid IN ($in_list)"
 			);
-			for my $comment_hr (@$comment_hashref_ary) {
-				$self->{_comment_text}{$comment_hr->{cid}} = $comment_hr->{comment};
+			# Now we cache them so we never fetch them again
+			for my $comment_hr (@$comment_array) {
+				$self->{_comment_text}{$comment_hr->[0]} = $comment_hr->[1];
 			}
 		}
-		# Now, all the comment texts we need are in cache;  collect them
-		# all and return them.
-		$retval = { };
-		for my $new_cid (@$cid) {
-			$retval->{$new_cid} = $self->{_comment_text}{$new_cid};
-		}
+		# Now, all the comment texts we need are in cache, return them.
+		return $self->{_comment_text};
+
 	} else {
 		# We just need a single comment's text.
 		if (!$self->{_comment_text}{$cid}) {
@@ -2828,9 +2824,8 @@ sub _getCommentText {
 				$self->sqlSelect("comment", "comment_text", "cid=$cid");
 		}
 		# Now it's in cache.  Return it.
-		$retval = $self->{_comment_text}{$cid};
+		return $self->{_comment_text}{$cid};
 	}
-	return $retval;
 }
 
 ########################################################
