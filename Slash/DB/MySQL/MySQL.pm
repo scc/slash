@@ -371,7 +371,7 @@ sub createPollVoter {
 		qid	=> $qid,
 		id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
 		-'time'	=> 'now()',
-		uid	=> $ENV{REMOTE_USER}
+		uid	=> $ENV{SLASH_USER}
 	});
 
 	my $qid_db = $self->{_dbh}->quote($qid);
@@ -391,7 +391,7 @@ sub createSubmission {
 
 	$self->sqlInsert("submissions", {
 			email	=> $form->{email},
-			uid	=> $ENV{REMOTE_USER},
+			uid	=> $ENV{SLASH_USER},
 			name	=> $form->{from},
 			story	=> $form->{story},
 			-'time'	=> 'now()',
@@ -535,7 +535,7 @@ sub createAccessLog {
 	my($self, $op, $dat) = @_;
 
 	my $uid;
-	if ($ENV{REMOTE_USER}) {
+	if ($ENV{SLASH_USER}) {
 		$uid = getCurrentUser('uid')
 	} else {
 		$uid = getCurrentStatic('anonymous_coward_uid');
@@ -1236,7 +1236,7 @@ sub getPollVoter {
 	my($voters) = $self->sqlSelect('id', 'pollvoters',
 		"qid=" . $self->{_dbh}->quote($id) .
 		"AND id=" . $self->{_dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
-		"AND uid=" . $ENV{REMOTE_USER}
+		"AND uid=" . $ENV{SLASH_USER}
 	);
 
 	return $voters;
@@ -1474,8 +1474,8 @@ sub insertFormkey {
 		formname 	=> $formname,
 		id 		=> $id,
 		sid		=> $sid,
-		uid		=> $ENV{'REMOTE_USER'},
-		host_name	=> $ENV{'REMOTE_ADDR'},
+		uid		=> $ENV{SLASH_USER},
+		host_name	=> $ENV{REMOTE_ADDR},
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1862,7 +1862,7 @@ sub setMetaMod {
 		# you the M2 votes for a specific user ordered by M2 'session'
 		$self->sqlInsert("metamodlog", {
 			-mmid => $mmid,
-			-uid  => $ENV{'REMOTE_USER'},
+			-uid  => $ENV{SLASH_USER},
 			-val  => ($val eq '+') ? 1 : -1,
 			-ts   => "from_unixtime($ts)",
 			-flag => $flag

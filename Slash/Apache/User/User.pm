@@ -51,7 +51,7 @@ sub handler {
 	# let pass unless / or .pl
 	unless ($cfg->{auth}){
 		unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
-			$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
+			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			return OK;
 		}
 	}
@@ -109,7 +109,7 @@ sub handler {
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
-	$r->subprocess_env('REMOTE_USER' => $uid);
+	$r->subprocess_env(SLASH_USER => $uid);
 
 	return DECLINED if $cfg->{auth} && isAnon($uid);
 
@@ -332,7 +332,7 @@ Slash::Apache::User - Apache Authenticate for slashcode user
 This is the user authenication system for Slash. This is
 where you want to be if you want to modify slashcode's
 method of authenication. The rest of slashcode depends
-on finding the UID of the user in the REMOTE_USER 
+on finding the UID of the user in the SLASH_USER 
 environmental variable.
 
 =head1 AUTHOR
