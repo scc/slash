@@ -91,32 +91,6 @@ my %descriptions = (
 
 );
 
-#################################################################
-# Private method used by the search methods
-#sub keySearch {
-#	my $self = shift;
-#	my $keywords = shift;
-#	my @columns = @_;
-#
-#	my @words = split m/ /, $keywords;
-#	my $sql;
-#	my $x = 0;
-#
-#	foreach my $w (@words) {
-#		next if length $w < 3;
-#		last if $x++ > 3;
-#		foreach my $c (@columns) {
-#			$sql .= "+" if $sql;
-#			$sql .= "($c LIKE " . $self->{_dbh}->quote("%$w%") . ")";
-#		}
-#	}
-##	void context, does nothing?
-#	$sql = "0" unless $sql;
-#	$sql .= " as kw";
-#	return $sql;
-#};
-#
-########################################################
 sub _whereFormkey {
 	my($self, $formkey_id) = @_;
 	my $where;
@@ -2223,6 +2197,7 @@ sub getSlashConf {
 		basedomain
 		block_expire
 		breaking
+		cache_enabled
 		comment_maxscore
 		comment_minscore
 		cookiedomain
