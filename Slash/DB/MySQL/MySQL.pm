@@ -977,7 +977,7 @@ sub deleteSubmission {
 			my $key = $n;
 			print "$key " if $self->sqlUpdate(
 				"submissions", { del => 1 }, "subid='$key'"
-			) && self->sqlUpdate("authors",
+			) && $self->sqlUpdate("authors",
 				{ -deletedsubmissions => 'deletedsubmissions+1' },
 				"aid='$aid'"
 			);
@@ -1948,7 +1948,7 @@ sub saveVars {
 	my ($self) = @_;
 	my $form = getCurrentForm();
 	if($form->{desc}) {
-		my ($exists) = self->sqlSelect('count(*)', 'vars',
+		my ($exists) = $self->sqlSelect('count(*)', 'vars',
 			"name='$form->{thisname}'"
 		);
 		if ($exists == 0) {
