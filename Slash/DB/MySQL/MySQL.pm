@@ -2835,12 +2835,12 @@ sub getStoriesEssentials {
 		# DB only has to manipulate each row's "time" once instead
 		# of twice.  But this works now;  we'll optimize later. - Jamie
 		my $tomorrow_str =
-			'DATEFORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
+			'DATE_FORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
 		my $yesterday_str =
-			'DATEFORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
+			'DATE_FORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
 		$where .=
-			"AND '$form->{issue}' BETWEEN $tomorrow_str AND
-			$yesterday_str ";
+			"AND '$form->{issue}' BETWEEN $yesterday_str AND
+			$tomorrow_str ";
 	}
 
 	my(@stories, @story_ids, @discussion_ids, $count);
