@@ -31,7 +31,7 @@ sub main {
 
 	my $op = lc($form->{op});
 
-	my ($formkey,$stories,$SECT);
+	my ($formkey,$stories);
 
 	######################################################
 	#
@@ -200,15 +200,19 @@ sub main {
 	
 	# This is here to save a function call, even though the
 	# function can handle the situation itself
-	$stories = $slashdb->getNewStory($form->{sid},
-				['section', 'title', 'commentstatus']);
-	$stories->{'title'} ||= "Comments";
-
-	$SECT = $slashdb->getSection($stories->{'section'});
+	my $discussion;
+	if ($form->{sid}) {
+		# SID compatibility
+		if ($form->{sid} !~ /^\d+$/) {
+			$discussion = $slashdb->getDiscussionBySid($form->{sid});
+		} else {
+			$discussion = $slashdb->getDiscussion($form->{sid});
+		}
+	}
 
 	$form->{pid} ||= "0";
 
-	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
+	header($discussion ? $discussion->{'title'} : 'Comments');
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
 		print getError('login error');
@@ -241,7 +245,7 @@ sub main {
 
 	if (! $error_flag) {
 		# CALL THE OP
-		my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants, $formkeyid);
+		my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants, $formkeyid, $discussion);
 
 		# this has to happen - if this is a form that you updated the formkey val ('formkey_check')
 		# you need to call updateFormkey to update the timestamp (time of successful submission) and
@@ -296,7 +300,7 @@ sub delete {
 
 ##################################################################
 sub change {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
 		$slashdb->setUser($user->{uid}, {
@@ -305,17 +309,17 @@ sub change {
 			commentsort	=> $user->{commentsort}
 		});
 	}
-	printComments($form->{sid}, $form->{cid}, $form->{cid});
+	printComments($discussion, $form->{cid}, $form->{cid});
 }
 
 ##################################################################
 sub displayComments {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	if ($form->{cid}) {
-		printComments($form->{sid}, $form->{cid}, $form->{cid});
+		printComments($discussion, $form->{cid}, $form->{cid});
 	} elsif ($form->{sid}) {
-		printComments($form->{sid}, $form->{pid});
+		printComments($discussion, $form->{pid});
 	} else {
 		commentIndex(@_);
 	}
@@ -648,7 +652,7 @@ sub previewForm {
 # A note, right now form->{sid} is a discussion id, not a
 # story id.
 sub submitComment {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	my $error_message;
 
@@ -707,7 +711,7 @@ sub submitComment {
 	} else {
 		slashDisplay('comment_submit');
 		undoModeration($form->{sid});
-		printComments($form->{sid}, $maxCid, $maxCid);
+		printComments($discussion, $maxCid, $maxCid);
 
 		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
@@ -749,7 +753,7 @@ sub submitComment {
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	my $sid = $form->{sid};
 	my $was_touched = 0;
@@ -792,7 +796,7 @@ sub moderate {
 			comment_count	=> $slashdb->countCommentsBySid($sid),
 		});
 	}
-	printComments($sid, $form->{pid}, $form->{cid});
+	printComments($discussion, $form->{pid}, $form->{cid});
 
 	if ($was_touched) {
 		$slashdb->setDiscussion($sid, { flags => "dirty" });

@@ -3550,17 +3550,6 @@ sub getStory {
 }
 
 ########################################################
-# Why would you ever want to call this? If you only
-# wanted the meta data, didn't want to worry
-# about cache. -Brian
-sub getNewStory {
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
-	my $answer = _genericGet($story_table, 'sid', '', @_);
-	return $answer;
-}
-
-########################################################
 sub getAuthor {
 	my($self, $id, $values, $cache_flag) = @_;
 	my $table = 'authors';

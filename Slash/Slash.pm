@@ -75,41 +75,54 @@ sub selectComments {
 	}
 
 	my $thisComment = $slashdb->getCommentsForUser($header, $cid);
+	# This loop mainly takes apart the array and builds 
+	# a hash with the comments in it.  Each comment is
+	# is in the index of the hash (based on its cid).
 	for my $C (@$thisComment) {
-		# Let's think about whether we really want to set pid to 0 here.  It may
-		# be a friendlier UI to allow bouncing up to parent comments even though
-		# the comment sort is set to flat. - Jamie 2001/06/19
+		# By setting pid to zero, we remove the threaded
+		# relationship between the comments
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
-		# Tally up this comment in its "natural" score category (before the user's
-		# preferences get a chance to knock it up or down).
-		$comments->{0}{natural_totals}[$C->{points} - $min]++;
+		# User can setup to give points based on size.
+		$C->{points}++ if length($C->{comment}) > $user->{clbig}
+			&& $C->{points} < $constants->{comment_maxscore} && $user->{clbig} != 0;
 
-		$C->{points}++ if $user->{clbig} and length($C->{comment}) > $user->{clbig}
-			and $C->{points} < $max;
-
-		$C->{points}-- if $user->{clsmall} and length($C->{comment}) < $user->{clsmall}
-			and $C->{points} > $min;
+		# User can setup to give points based on size.
+		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
+			&& $C->{points} > $constants->{comment_minscore} && $user->{clsmall};
 
 		# fix points in case they are out of bounds
-		# (XXX looking at the logic above, this seems unnecessary)
-		$C->{points} = $min if $C->{points} < $min;
-		$C->{points} = $max if $C->{points} > $max;
+		$C->{points} = $constants->{comment_minscore}
+			if $C->{points} < $constants->{comment_minscore};
+		$C->{points} = $constants->{comment_maxscore}
+			if $C->{points} > $constants->{comment_maxscore};
 
-		# Also tally up this comment for the user's personal score.
-		$comments->{0}{totals}[$C->{points} - $min]++;
-
+		# So we save information. This will only have data if we have 
+		# happened through this cid while it was a pid for another
+		# comments. -Brian
 		my $tmpkids = $comments->{$C->{cid}}{kids};
 		my $tmpvkids = $comments->{$C->{cid}}{visiblekids};
+
+		# We save a copy of the comment in the root of the hash
+		# which we will use later to find it via its cid
 		$comments->{$C->{cid}} = $C;
+
+		# Kids is what displayThread will actually use.
 		$comments->{$C->{cid}}{kids} = $tmpkids;
 		$comments->{$C->{cid}}{visiblekids} = $tmpvkids;
 
+		# The comment pushes itself onto it own kids structure 
+		# which should make it the first -Brian
 		push @{$comments->{$C->{pid}}{kids}}, $C->{cid};
-		$comments->{$C->{pid}}{visiblekids}++
-#			if $C->{points} >= ($user->{threshold} || $min); # XXX wrong for two reasons - should be form->threshold, and a threshold of 0 should not be replaced by -1 - still fixing this logic elsewhere, stay tuned - Jamie
-			if $C->{points} >= (defined($form->{threshold}) ? $form->{threshold} : $user->{threshold});
 
+		# The next line deals with hitparade -Brian
+		$comments->{0}{totals}[$C->{points} - $constants->{comment_minscore}]++;  # invert minscore
+
+		# This deals with what will appear.
+		$comments->{$C->{pid}}{visiblekids}++
+			if $C->{points} >= ($user->{threshold} || $constants->{comment_minscore});
+
+		# Just a point rule -Brian
 		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
 
@@ -122,7 +135,7 @@ sub selectComments {
 		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
 	}
 
-	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
+	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi} && $sid;
 
 	my $hp = join ',', @{$comments->{0}{totals}};
 
@@ -131,16 +144,16 @@ sub selectComments {
 			writestatus => "ok",
 			commentcount  => $comments->{0}{totals}[0]
 		}
-	) if $form->{ssi};
+	) if $form->{ssi} && $sid;
 
 
-	reparentComments($comments);
+	reparentComments($comments, $header);
 	return($comments, $count);
 }
 
 ########################################################
 sub reparentComments {
-	my($comments) = @_;
+	my($comments, $header) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -152,12 +165,13 @@ sub reparentComments {
 
 	# adjust depth for root pid or cid
 	if (my $cid = $form->{cid} || $form->{pid}) {
-		while ($cid && (my($pid) = $slashdb->getCommentPid($form->{sid}, $cid))) {
+		while ($cid && (my($pid) = $slashdb->getCommentPid($header, $cid))) {
 			$depth++;
 			$cid = $pid;
 		}
 	}
 
+	# You know, we do assume comments are linear -Brian
 	for my $x (sort(keys(%$comments))) {
 
 		my $pid = $comments->{$x}{pid};
@@ -245,39 +259,17 @@ and 'printCommComments' template blocks.
 =cut
 
 sub printComments {
-	my($sid, $pid, $cid) = @_;
+	my($discussion, $pid, $cid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
-
-	my($discussion, $header);
-	# SID compatibility
-	if ($sid !~ /^\d+$/) {
-		$discussion = $slashdb->getDiscussionBySid($sid);
-		$header = $discussion->{id};
-	} else {
-		$discussion = $slashdb->getDiscussion($sid);
-		$sid = $discussion->{sid};
-		$header = $discussion->{id};
-	}
-
-	if (getCurrentStatic('DEBUG')) {
-		print STDERR join(" ",
-			"DEBUG",
-			"printComments: Sid:($sid)",
-			"Header:($header)",
-			"PID:($pid)",
-			"CID:($cid)",
-			"Discussion:($discussion)"
-		) . "\n";
-	}
 
 	$pid ||= 0;
 	$cid ||= 0;
 	my $lvl = 0;
 
 	# Get the Comments
-	my($comments, $count) = selectComments($header, $cid || $pid, $sid);
+	my($comments, $count) = selectComments($discussion->{id}, $cid || $pid, $discussion->{sid});
 
 	# Should I index or just display normally?
 	my $cc = 0;
@@ -300,7 +292,7 @@ sub printComments {
 		title		=> $discussion->{title},
 		link		=> $discussion->{url},
 		count		=> $count,
-		sid		=> $header,
+		sid		=> $discussion->{id},
 		cid		=> $cid,
 		pid		=> $pid,
 		lvl		=> $lvl,
@@ -313,13 +305,12 @@ sub printComments {
 		my($next, $previous);
 		$comment = $comments->{$cid};
 		if (my $sibs = $comments->{$comment->{pid}}{kids}) {
-			FINDSIBS: for (my $x = 0; $x <= $#$sibs; $x++) {
-				if ($sibs->[$x] == $cid) {
-					($next, $previous) = ($sibs->[$x+1], $sibs->[$x-1]);
-					last FINDSIBS;
-				}
+			for (my $x = 0; $x < @$sibs; $x++) {
+			($next, $previous) = ($sibs->[$x+1], $sibs->[$x-1])
+			  if $sibs->[$x] == $cid;
 			}
 		}
+
 		$next = $comments->{$next} if $next;
 		$previous = $comments->{$previous} if $previous;
 	}
@@ -333,11 +324,11 @@ sub printComments {
 		comments	=> $comments,
 		'next'		=> $next,
 		previous	=> $previous,
-		sid		=> $header,
+		sid		=> $discussion->{id},
 		cid		=> $cid,
 		pid		=> $pid,
 		cc		=> $cc,
-		lcp		=> linkCommentPages($header, $pid, $cid, $cc),
+		lcp		=> linkCommentPages($discussion->{id}, $pid, $cid, $cc),
 		lvl		=> $lvl,
 	});
 }
@@ -457,6 +448,7 @@ sub displayThread {
 	my $hidden = my $displayed = my $skipped = 0;
 	my $return = '';
 
+	# Archive really doesn't exist anymore -Brian 
 	if ($user->{mode} eq 'flat' || $user->{mode} eq 'archive') {
 		$indent = 0;
 		$full = 1;
