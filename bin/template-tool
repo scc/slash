@@ -525,7 +525,7 @@ OPTIONS
 	page and template name from.
 	* -s -f <multiple template filenames> allows you to save specific 
 	templates from the given files. You should make sure the template
-	name conforms to section-page-templatename standard 
+	name conforms to templatename;page;section standard 
 	* If you don't supply a template name, or leave the section and page 
 	unset, the name will try to be derived from the filename.
 	* If you supply a section and/or page and your reading files out of a 
