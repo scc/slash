@@ -109,7 +109,7 @@ $task{$me}{code} = sub {
 			prog2file("$bd/article.pl",
 				"ssi=yes sid='$sid' section='$section'",
 				"$bd/$section/$sid.shtml");
-			slashdLog("$me updated $section:$sid ($title)");
+#			slashdLog("$me updated $section:$sid ($title)");
 		} else {
 			prog2file("$bd/article.pl",
 				"ssi=yes sid='$sid'",

@@ -107,7 +107,8 @@ sub selectComments {
 
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
 		$comments->[$C->{pid}]{visiblekids}++
-			if $C->{points} >= ($user->{threshold} || $min);
+#			if $C->{points} >= ($user->{threshold} || $min); # XXX wrong for two reasons - should be form->threshold, and a threshold of 0 should not be replaced by -1 - still fixing this logic elsewhere, stay tuned - Jamie
+			if $C->{points} >= (defined($form->{threshold}) ? $form->{threshold} : $user->{threshold});
 
 		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
@@ -248,8 +249,8 @@ sub printComments {
 		$sid = $discussion->{sid};
 		$header = $discussion->{id};
 	}
-print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n";
 
+print STDERR "==========\nDEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n";
 
 	$pid ||= 0;
 	$cid ||= 0;
@@ -257,6 +258,8 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 
 	# Get the Comments
 	my($comments, $count) = selectComments($header, $cid || $pid, $sid);
+
+# { use Data::Dumper; print STDERR "form: " . Dumper($form) . "comments: " . Dumper($comments) . "\n" }
 
 	# Should I index or just display normally?
 	my $cc = 0;
@@ -292,9 +295,11 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 		my($next, $previous);
 		$comment = $comments->[$cid];
 		if (my $sibs = $comments->[$comment->{pid}]{kids}) {
-			for (my $x = 0; $x < @$sibs; $x++) {
-				($next, $previous) = ($sibs->[$x+1], $sibs->[$x-1])
-					if $sibs->[$x] == $cid;
+			FINDSIBS: for (my $x = 0; $x <= $#$sibs; $x++) {
+				if ($sibs->[$x] == $cid) {
+					($next, $previous) = ($sibs->[$x+1], $sibs->[$x-1]);
+					last FINDSIBS;
+				}
 			}
 		}
 		$next = $comments->[$next] if $next;
@@ -571,11 +576,11 @@ sub dispComment {
 			and $comment->{fakeemail}	# and we think the poster has earned tagless posting
 		);
 	if ($want_tags) {
-		$comment->{comment} =~ s{</A ([^>]+)>}{</A> [$1]}g;
-		$comment_shrunk =~ s{</A ([^>]+)>}{</A> [$1]}g if $comment_shrunk;
+		$comment->{comment} =~ s{</A ([^>]+)>}{</A> [$1]}gi;
+		$comment_shrunk =~ s{</A ([^>]+)>}{</A> [$1]}gi if $comment_shrunk;
 	} else {
-		$comment->{comment} =~ s{</A[^>]+>}{</A>}g;
-		$comment_shrunk =~ s{</A[^>]+>}{</A>}g if $comment_shrunk;
+		$comment->{comment} =~ s{</A[^>]+>}{</A>}gi;
+		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
 	}
 
 	for (0 .. @{$constants->{reasons}} - 1) {

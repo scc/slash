@@ -50,7 +50,7 @@ $constants = getCurrentStatic();
 {
  
 	# Determine user list size (for -R)
-	my $max_uid = $slashdb->sqlSelect('MAX(uid)', 'users');
+	my $max_uid = $slashdb->getLastUser();
 
 	my $rootdir = getCurrentStatic("rootdir");
  
@@ -102,11 +102,13 @@ $constants = getCurrentStatic();
 
 		my $sid = $slashdb->createStory($story);
 		if ($sid) {
-			my $id = $slashdb->createDiscussion($sid,
+			my $id = $slashdb->createDiscussion(
 				$story->{title},
-				$story->{'time'},
 				"$rootdir/article.pl?sid=$sid",
-				$story->{topic}
+				$tid,
+				0,
+				$sid,
+				$story->{'time'},
 			);
 			if ($id) {
 				$slashdb->setStory($sid, { discussion => $id });
@@ -118,7 +120,7 @@ $constants = getCurrentStatic();
 			warn "($count) Story could not be created";
 		}
         	$count--;
-		sleep rand(15)+2 if $count; # otherwise sids will collide!
+		sleep rand(5)+2 if $count; # otherwise sids will collide!
 	}
 	my $t1 = new Benchmark;
 	print "$opts{num_stories} stories created in: ",

@@ -248,6 +248,8 @@ sub createComment {
 	# should this be conditional on the others happening?
 	# is there some sort of way to doublecheck that this value
 	# is correct?  -- pudge
+	# This is fine as is; if the insert failed, we've already
+	# returned out of this method. - Jamie
 	$self->sqlUpdate(
 		"discussions",
 		{
@@ -2745,7 +2747,7 @@ sub setCommentCleanup {
 	$strsql .= " AND lastmod<>$user->{uid}"
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
-	my($rc1, $rc2) = 0;
+	my($rc1, $rc2) = (0, 0);
 	$rc1 = $self->sqlDo("UPDATE comment_heap $strsql")
 		if getCurrentStatic('mysql_heap_table');
 	$rc2 = $self->sqlDo("UPDATE comments $strsql");
@@ -2822,10 +2824,34 @@ EOT
 	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
 	$thisComment->execute or errorLog($sql);
 	my $comments = [];
+	my $cids = [];
 	while (my $comment = $thisComment->fetchrow_hashref) {
-		$comment->{comment} = $self->_getCommentText($comment->{cid});
 		push @$comments, $comment;
+		push @$cids, $comment->{cid};
 	}
+	$thisComment->finish;
+
+	# We have a list of all the cids in @$comments.  Get the texts of
+	# all these comments, all at once.
+	# XXX This algorithm could be (significantly?) sped up for users
+	# with hardthresh=0 (most of them) by only getting the text of
+	# comments we're going to be displaying.  As it is now, if you
+	# display a thread with threshold=5, it (above) SELECTs all the
+	# comments you _won't_ see just so it can count them -- and (here)
+	# grabs their full text as well.  Wasteful.  We could probably
+	# just refuse to push $comment (above) when
+	# ($comment->{points} < $user->{threshold}). - Jamie
+	my $comment_texts = $self->_getCommentText($cids);
+	# Now distribute those texts into the $comments hashref.
+	for my $comment (@$comments) {
+		my $text = $comment_texts->{$comment->{cid}};
+		if (!defined($text)) {
+			errorLog("no text for cid " . $comment->{cid});
+		} else {
+			$comment->{comment} = $comment_texts->{$comment->{cid}};
+		}
+	}
+
 	formatDate($comments);
 	return $comments;
 }
@@ -2833,22 +2859,55 @@ EOT
 ########################################################
 # This is here to save us a database lookup when drawing comment pages.
 #
-# Couldn't this go faster by having getCommentsForUser() (10 lines up) collect a
-# list of all the cid's it needs (i.e. doesn't already have in cache) and then
-# grabbing them all with one SELECT?
-#
-#	SELECT cid,comment_text FROM comment WHERE cid IN (2,3,5,7...);
-#
-# - Jamie
+# I tweaked this to go a little faster by allowing $cid to be either
+# an integer (old mode, retained for backwards compatibility, returns
+# the text) or a reference to an array of integers (new mode, returns
+# a hashref of cid=>text).  Either way it stores all the answers it
+# gets into cache.  But passing it an arrayref of 100 cids is faster
+# than calling it 100 times with one cid.  Works fine with an arrayref
+# of 0 or 1 entries, of course.  - Jamie
 sub _getCommentText {
 	my($self, $cid) = @_;
-	if ($self->{_comment_text} && $self->{_comment_text}{$cid}) {
-		return $self->{_comment_text}{$cid};
+	# If this is the first time this is called, create an empty comment text
+	# cache (a hashref).
+	$self->{_comment_text} ||= { };
+	my $retval;
+	if (ref $cid) {
+		if (ref $cid ne "ARRAY") {
+			errorLog("_getCommentText called with ref to non-array: $cid");
+			return { };
+		}
+		# We need a list of comments' text.  First, eliminate the ones we
+		# already have in cache.
+		my @needed = grep { !exists($self->{_comment_text}{$_}) } @$cid;
+		if (@needed) {
+			my $in_list = join(",", @needed);
+			my $comment_hashref_ary = $self->sqlSelectAllHashrefArray(
+				"cid, comment",
+				"comment_text",
+				"cid IN ($in_list)"
+			);
+			for my $comment_hr (@$comment_hashref_ary) {
+				$self->{_comment_text}{$comment_hr->{cid}} = $comment_hr->{comment};
+			}
+		}
+		# Now, all the comment texts we need are in cache;  collect them
+		# all and return them.
+		$retval = { };
+		for my $new_cid (@$cid) {
+			$retval->{$new_cid} = $self->{_comment_text}{$new_cid};
+		}
+	} else {
+		# We just need a single comment's text.
+		if (!$self->{_comment_text}{$cid}) {
+			# If it's not already in cache, load it in.
+			$self->{_comment_text}{$cid} =
+				$self->sqlSelect("comment", "comment_text", "cid=$cid");
+		}
+		# Now it's in cache.  Return it.
+		$retval = $self->{_comment_text}{$cid};
 	}
-
-	$self->{_comment_text}{$cid} =
-		$self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
-	return $self->{_comment_text}{$cid};
+	return $retval;
 }
 
 ########################################################
@@ -3053,8 +3112,6 @@ EOT
 		);
 	}
 
-#	{ use Data::Dumper; print STDERR "getStoriesEssentials returning: " . Dumper(\@stories) . "\n"; }
-
 	return \@stories;
 }
 
@@ -3238,6 +3295,8 @@ sub createDiscussion {
 	# question-mark-substitution INSERT commands, but, I'm lazy.
 	my $min = getCurrentStatic('comment_minscore');
 	my $max = getCurrentStatic('comment_maxscore');
+	$min = -99 if $min < -99; # sanity checks, make it harder to
+	$max =  99 if $max >  99; # accidentally insert a billion rows
 	for my $threshold ($min .. $max) {
 		$self->sqlInsert("discussion_hitparade", {
 			discussion	=> $discussion_id,

@@ -36,11 +36,21 @@ $opts{'u'} ||= 'slash';
 	# Perform syntax checks on all armor entries!
 	my $cpt = new Safe;
 	$cpt->permit(qw[:base_core :base_loop :base_math join]);
-	for my $a (@{$armors}) {
-		local $_ = '';
+	my %success = ( );
+	for my $a (@$armors) {
+		my $ok = 1;
+		local $_ = 'me\@privacy.net';
 		$cpt->reval($a->{code});
-		die "Error in Armor '$a->{name}': $@\n" if $@;
+		if ($@) {
+			warn "Error in armor '$a->{name}': $@\n";
+			$ok = 0;
+		} elsif ($_ eq 'me\@privacy.net') {
+			warn "Error in armor '$a->{name}': didn't change test address\n";
+			$ok = 0;
+		}
+		$success{$a} = $ok;
 	}
+	@$armors = grep { $success{$_} } @$armors;
 
 	if (my $n = $inst->reloadArmors($armors)) {
 		print "$n armoring codes loaded into database.\n" unless $opts{'q'};
@@ -62,8 +72,9 @@ sub readArmorFile {
 	my @file = <FILE>;
 	for (@file) {
 		chomp($_);
-		# Primitive commenting system. Ignore all lines beginning w/ '#'
-		next if /^#/;
+		# Primitive commenting system. Ignore all lines beginning w/ '#'.
+		# Also ignore blank lines.
+		next if /^\s*(#|$)/;
 		# Insert data based on field break.
 		if (/^__(.*)__$/) {
 			# We only expect $1 to match 2 things here:

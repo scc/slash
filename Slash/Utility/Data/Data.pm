@@ -1263,7 +1263,11 @@ sub _url_to_domain_tag {
 			$info = $1;
 		} else {
 			# any other a.b.c.d.e -> c.d.e
-			$info = join(".", (split /\./, $info)[-3..-1]);
+			my @info = split /\./, $info;
+			my $num_levels = scalar @info;
+			if ($num_levels >= 3) {
+				$info = join(".", @info[-3..-1]);
+			}
 		}
 	} elsif ($uri->can("scheme")) {
 		# Most schemes, like ftp or http, have a host.  Some,

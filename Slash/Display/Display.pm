@@ -54,7 +54,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
 @EXPORT	   = qw(slashDisplay);
 @EXPORT_OK = qw(get_template);
 
-# BENDER: Well I don't have anything else planned for today, let's get drunk!
+# FRY: That doesn't look like an L at all. Unless you count lowercase.
 
 #========================================================================
 

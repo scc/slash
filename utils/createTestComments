@@ -57,7 +57,7 @@ $werder = new Silly::Werder;
 # main program logic (in braces to offset nicely)
 {
 	# Determine user list size (for -R)
-	my $max_uid = $slashdb->sqlSelect('MAX(uid)', 'users');
+	my $max_uid = $slashdb->getLastUser();
 
 	my $story_id = $opts{I};
 

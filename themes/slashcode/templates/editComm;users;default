@@ -114,7 +114,7 @@ __template__
 		<INPUT TYPE="TEXT" NAME="clbig" VALUE="[% user_edit.clbig %]" SIZE="6">
 
 		<P><B>Max Comment Size</B> (Truncates long comments, and
-		adds a \"Read More\" link.  Set really big to disable)<BR>
+		adds a "Read More" link.  Set really big to disable)<BR>
 		<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="[% user_edit.maxcommentsize %]">
 
 		<P><B>Disable Sigs</B> (strip sig quotes from comments)

@@ -55,7 +55,7 @@ INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points,
 # Dumping data for table 'comment_text'
 #
 
-INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!');
+INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a <a href="http://www.suck.com/daily/2000/03/22/4.html">bad day</a suck.com>.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!');
 
 #
 # Dumping data for table 'content_filters'

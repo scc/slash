@@ -488,8 +488,8 @@ sub stirPool {
 }
 
 ########################################################
-# For moderatord
-sub getUserLast {
+# For moderatord and some utils
+sub getLastUser {
 	my($self) = @_;
 	my($totalusers) = $self->sqlSelect("max(uid)", "users_info");
 
