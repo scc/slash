@@ -1,0 +1,20 @@
+__name__
+Example #1
+__code__
+s/^(.+?)\@(.+)$/{$1} {at} {$2}/
+#
+#
+__name__
+Example #2 - (Reverse of #1)
+__code__
+s/^(.+?)\@(.+)$/\}$1\{ \}at\{ \}$2\{/;
+@a = split //;
+$_ = "reversethis-" . scalar reverse @a;
+#
+#
+__name__
+Example #3
+__code__
+s/^(.+?)\@(.+)$/${1}NO\@SPAM$2/
+#
+#
