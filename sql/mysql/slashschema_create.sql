@@ -80,7 +80,7 @@ CREATE TABLE blocks (
 DROP TABLE IF EXISTS code_param;
 CREATE TABLE code_param (
   param_id int(11) NOT NULL auto_increment,
-  type varchar(16),
+  type varchar(16) NOT NULL,
   code int(1) DEFAULT '0' NOT NULL,
   name varchar(32),
   UNIQUE code_key (type,code),
