@@ -436,7 +436,8 @@ EOT
 	#printf STDERR "M2 Time: %s\n", 
 	#	Benchmark::timestr(Benchmark::timediff($t1, $t0), 'noc');
 
-	formatDate($M2mods);
+# format in the template instead
+#	formatDate($M2mods);
 	return $M2mods
 }
 
