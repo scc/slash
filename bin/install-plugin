@@ -69,7 +69,7 @@ $install->installPlugin(\@answers);
 
 sub usage {
 usage() unless getopts('l?', \%opts);
-	print "Usage:install-slashsite  [OPTIONS] <DBIx:Password Virtual User>\n";
+	print "Usage:install-plugin  [OPTIONS] <DBIx:Password Virtual User>\n";
 	print "\t?: Gives you this list.\n";
 	print "\tl: List all known plugins.\n";
 	print "\n\tIf no virtual user is given the install will not run\n\n";

@@ -437,7 +437,7 @@ sub usage {
 	my ($message) = @_;
 	print "ERROR: $message\n";
 	print <<EOT;
-Usage: template-editor [OPTIONS] <template templateN>
+Usage: template-tool [OPTIONS] <template templateN>
 
 OPTIONS
 
