@@ -44,7 +44,7 @@ The F<.pod> documentation included with Slash can be read with the
 C<perldoc> program, included with perl, or translated using one of
 the many C<pod2*> translators.
 
-Most of the documentation is also available online on the Slash FAQ.
+The documentation is also available online on the Slash FAQ.
 
 =over 4
 
