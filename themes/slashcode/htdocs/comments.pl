@@ -326,8 +326,21 @@ sub createDiscussion {
 	my($form, $slashdb, $user, $constants) = @_;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-		$form->{url}   = fixurl($form->{url} || $ENV{HTTP_REFERER});
-		$form->{title} = strip_nohtml($form->{title});
+		# if form.url is empty, try the REFERER.  if it
+		# matches comments.pl without any query string,
+		# then (later, down below) set url to point to discussion
+		# itself.
+		# this only catches URLs without query string ...
+		# we don't want to override prefs too easily.  this
+		# can be modified to become more inclusive later,
+		# if needed.  -- pudge
+		my $newurl	= $form->{url}
+			? $form->{url}
+			: $ENV{HTTP_REFERER} =~ m|\Q$constants->{rootdir}/comments.pl\E$|
+				? ""
+				: $ENV{HTTP_REFERER};
+		$form->{url}	= fixurl($newurl);
+		$form->{title}	= strip_nohtml($form->{title});
 
 
 		# for now, use the postersubj filters; problem is,
@@ -346,6 +359,12 @@ sub createDiscussion {
 			$id = $slashdb->createDiscussion(
 				$form->{title}, $form->{url}, $form->{topic}, "recycle"
 			);
+
+			# fix URL to point to discussion if no referer
+			if ($form->{url} eq "") {
+				$newurl = $constants->{rootdir} . "/comments.pl?sid=$id";
+				$slashdb->setDiscussion($id, { url => $newurl });
+			}
 		}
 
 		my $formats = $slashdb->getDescriptions('postmodes');

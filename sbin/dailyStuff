@@ -80,7 +80,7 @@ EOT
 		$email .= sprintf("%s\t%s %s by %s\n",
 			$value, $key, substr($story->{'title'}, 0, 30),
 			$slashdb->getUser($story->{uid}, 'nickname')
-		) if $value > 100;
+		) if $story->{'title'} && $story->{uid} && $value > 100;
 	}
 
 	$email .= "\n-----------------------\n";

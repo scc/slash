@@ -644,7 +644,7 @@ sub dispComment {
 	return _hard_dispComment(
 		$comment, $constants, $user, $form, $comment_shrunk,
 		$can_mod, \%reasons
-	) if $constants->{comments_hardcoded};
+	) if $constants->{comments_hardcoded} && !$user->{light};
 
 	return slashDisplay('dispComment', {
 		%$comment,

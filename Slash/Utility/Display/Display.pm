@@ -445,7 +445,7 @@ sub linkStory {
 	}
 
 	return _hard_linkStory($story_link, $mode, $threshold, $dynamic)
-		if $constants->{comments_hardcoded};
+		if $constants->{comments_hardcoded} && !$user->{light};
 
 	return slashDisplay('linkStory', {
 		mode		=> $mode,

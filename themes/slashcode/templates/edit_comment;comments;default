@@ -37,7 +37,7 @@ __template__
 
 <FORM ACTION="[% constants.rootdir %]/comments.pl" METHOD="POST">
 
-	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% form.sid %]">
+	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="[% form.sid || sid %]">
 	<INPUT TYPE="HIDDEN" NAME="pid" VALUE="[% form.pid %]">
 	<INPUT TYPE="HIDDEN" NAME="mode" VALUE="[% user.mode %]">
 	<INPUT TYPE="HIDDEN" NAME="startat" VALUE="[% user.startat %]">

@@ -22,7 +22,7 @@ __template__
 <P>Your discussion, <A HREF="[% constants.rootdir %]/comments.pl?sid=[% id %]"><B>[% form.title %]</B></A>,
 has been created.  Go to <A HREF="[% constants.rootdir %]/comments.pl?sid=[% id %]">[% constants.absolutedir %]/comments.pl?sid=[% id %]</A> to begin posting.  Remeber this URL!</P>
 <P>
-[% INCLUDE edit_comment %]
+[% INCLUDE edit_comment sid => id %]
 <P>
 [% ELSE %]
 [% IF error; error; ELSE; INCLUDE titlebar width => "95%", title => "Unknown error" %]
