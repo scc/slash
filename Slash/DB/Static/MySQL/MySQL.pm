@@ -847,7 +847,10 @@ sub deleteStoryAll {
 
 ########################################################
 # For tasks/author_cache.pl
+# please don't unnecessarily stretch lines out to 250 columns -- pudge
 # This runs once a day, I am not worried -Brian
+# it makes it hard to read.  whether or not you are worried about
+# it doesn't matter.  that it was not readable matters.  -- pudge
 sub createAuthorCache {
 	my($self) = @_;
 	my $sql;

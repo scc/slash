@@ -233,6 +233,25 @@ sub _thaw {
 	$data->{$store} = ${$data->{$store}} if ref($data->{$store}) eq 'SCALAR';
 }
 
+# For dailystuff
+sub deleteMessages {
+	my($self) = @_;
+	my $table = $self->{_web_table1};
+	my $prime = $self->{_web_prime1};
+
+	# set defaults
+	my $constants = getCurrentStatic();
+	my $sendx = $constants->{message_send_expire} || 7;
+	my $webx  = $constants->{message_web_expire}  || 31;
+
+	my $ids = $self->sqlSelectColArrayref($prime, $table,
+		"TO_DAYS(NOW()) - TO_DAYS(date) > $webx"
+	);
+	$self->_delete_web($_, 0, 1) for @$ids;
+
+	$self->_delete(0, "TO_DAYS(NOW()) - TO_DAYS(date) > $sendx");
+}
+
 sub _delete_web {
 	my($self, $id, $uid, $override) = @_;
 	my $table1 = $self->{_web_table1};
@@ -259,11 +278,13 @@ sub _delete_web {
 }
 
 sub _delete {
-	my($self, $id) = @_;
+	my($self, $id, $where) = @_;
 	my $table = $self->{_drop_table};
 	my $prime = $self->{_drop_prime};
-	my $id_db = $self->sqlQuote($id);
-	my $where = "$prime=$id_db";
+	if (!$where) {
+		my $id_db = $self->sqlQuote($id);
+		$where = "$prime=$id_db";
+	}
 
 	$self->sqlDo("DELETE FROM $table WHERE $where");
 }

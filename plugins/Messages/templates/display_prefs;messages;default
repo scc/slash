@@ -51,9 +51,12 @@ instead will be sent via email if selected.
 	</TD><TD VALIGN="TOP">
 		<B>Delivery Mode</B> <BR>
 Currently, your options for receiving messages is either via email, or via the web interface.
-If you don't have your email address registered with the system (???), you will receive
+If you don't have your email address registered with the system, you will receive
 messages via the web, regardless of how your preference is set here.  Daily headlines
-and newsletter will only be sent via email.
+and newsletter will only be sent via email.  Messages delivered via the web will be kept in
+the system for only <B>[% constants.message_web_expire || 31 %] days</B>, whether they
+have been read or not.  After [% constants.message_web_expire || 31 %] days, they
+<B>will be deleted</B>.
 	</TD></TR>
 	<TR><TD COLSPAN="2">
 		<INPUT TYPE="hidden" NAME="op" VALUE="save_prefs">

@@ -13,6 +13,9 @@ MANIFEST.SKIP
 Makefile
 README
 Slash/Apache/Apache.pm
+Slash/Apache/Banlist/Banlist.pm
+Slash/Apache/Banlist/MANIFEST
+Slash/Apache/Banlist/Makefile.PL
 Slash/Apache/Changes
 Slash/Apache/Log/Changes
 Slash/Apache/Log/Log.pm
@@ -147,6 +150,7 @@ docs/formkeys.txt
 docs/slasherd.fig
 docs/slasherd.pdf
 docs/slasherd.ps
+docs/slashguide.pod
 docs/slashstyle.pod
 docs/slashtables.pod
 httpd/slash.conf
@@ -246,7 +250,6 @@ plugins/Messages/MANIFEST
 plugins/Messages/Makefile.PL
 plugins/Messages/Messages.pm
 plugins/Messages/PLUGIN
-plugins/Messages/TODO
 plugins/Messages/dump
 plugins/Messages/message_delivery.pl
 plugins/Messages/messages.pl
@@ -289,6 +292,7 @@ plugins/Search/templates/searchform;search;default
 plugins/Search/templates/storysearch;search;default
 plugins/Search/templates/usersearch;search;default
 plugins/Search/test.pl
+sbin/dailyStuff
 sbin/moderatord
 sbin/portald
 sbin/slashd
@@ -345,6 +349,7 @@ themes/slashcode/htdocs/images/wr.gif
 themes/slashcode/htdocs/images/wr_cccccc.gif
 themes/slashcode/htdocs/index.pl
 themes/slashcode/htdocs/metamod.pl
+themes/slashcode/htdocs/moderation.shtml
 themes/slashcode/htdocs/pollBooth.pl
 themes/slashcode/htdocs/sections.pl
 themes/slashcode/htdocs/slashguide.shtml
@@ -358,8 +363,8 @@ themes/slashcode/sql/postgresql/datadump.sql
 themes/slashcode/sql/postgresql/prep.sql
 themes/slashcode/tasks/adminmail.pl
 themes/slashcode/tasks/counthits.pl
+themes/slashcode/tasks/daily.pl
 themes/slashcode/tasks/daily_archive.pl
-themes/slashcode/tasks/daily_mailing.pl
 themes/slashcode/tasks/expire.pl
 themes/slashcode/tasks/flush_formkeys.pl
 themes/slashcode/tasks/freshenup.pl
@@ -367,6 +372,7 @@ themes/slashcode/tasks/new_headfoot.pl
 themes/slashcode/tasks/new_motd.pl
 themes/slashcode/tasks/open_backend.pl
 themes/slashcode/tasks/p2f_hof_topics.pl
+themes/slashcode/tasks/refresh_authors_cache.pl
 themes/slashcode/tasks/refresh_sectionindex.pl
 themes/slashcode/tasks/run_moderatord.pl
 themes/slashcode/tasks/run_portald.pl
@@ -435,6 +441,7 @@ themes/slashcode/templates/linkComment;misc;default
 themes/slashcode/templates/linkCommentPages;misc;default
 themes/slashcode/templates/linkStory;misc;default
 themes/slashcode/templates/listAbuses;admin;default
+themes/slashcode/templates/listBanned;users;default
 themes/slashcode/templates/listReadOnly;users;default
 themes/slashcode/templates/listSections;sections;default
 themes/slashcode/templates/listTopics;topics;default
@@ -484,6 +491,7 @@ themes/slashcode/templates/storylink;index;light
 themes/slashcode/templates/subEdAdmin;submit;default
 themes/slashcode/templates/subEdTable;submit;default
 themes/slashcode/templates/subEdUser;submit;default
+themes/slashcode/templates/three;misc;default
 themes/slashcode/templates/tildeEd;users;default
 themes/slashcode/templates/titlebar;misc;default
 themes/slashcode/templates/titlebar;misc;light
@@ -501,7 +509,7 @@ utils/convert-dump
 utils/excessiveHits
 utils/replaceblock
 utils/slash
-utils/slash1toslash2
 utils/slash1toslash2.2
+utils/slash2toslash2.2
 utils/slashcode-dearchive
 utils/sqlps
