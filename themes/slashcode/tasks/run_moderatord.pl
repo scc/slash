@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 
 use strict;
 my $me = 'run_moderatord.pl';
@@ -34,7 +34,6 @@ EOT
 		}
 		reconcileM2($constants, $slashdb);
 	}
-
 };
 
 

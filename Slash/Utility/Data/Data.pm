@@ -501,11 +501,11 @@ sub stripByMode {
 	# convert HTML attribute to allowed text (just convert ")
 	} elsif ($fmode == ATTRIBUTE) {
 		$str =~ s/"/&#34;/g;
-	# for use in templates to remove whitespace from inside HREF anchors.
+
+	# for use in templates to remove whitespace from inside HREF anchors
 	} elsif ($fmode == ANCHOR) {
-		# The ever popular Portable-CR/LF-Removal. The one below
-		# is NOT very portable, but should work fine for Slashdot.
-		$str =~ s/\n+//g;
+		$str =~ s/[\r\n]+//g;
+
 	# probably 'html'
 	} else {
 		$str = stripBadHtml($str);
@@ -518,7 +518,7 @@ sub stripByMode {
 
 #========================================================================
 
-=head2 strip__anchor(STRING [, NO_WHITESPACE_FIX])
+=head2 strip_anchor(STRING [, NO_WHITESPACE_FIX])
 
 =head2 strip_attribute(STRING [, NO_WHITESPACE_FIX])
 
