@@ -13,8 +13,8 @@ en_US
 __name__
 html-header
 __template__
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 [% DEFAULT title="$constants.sitename: $constants.slogan" %]
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML><HEAD><TITLE>[% FILTER strip_literal; title; END %]</TITLE>
 
 __seclev__
