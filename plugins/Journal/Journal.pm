@@ -127,8 +127,15 @@ sub get {
 	my $answer;
 
 	if((ref($val) eq 'ARRAY')) {
-		my $values = join ',', @$val;
-		$answer = $self->sqlSelectHashref($values, 'journals', "id=$id");
+		my @articles = grep('comment', @$val);
+		my @other = grep(!'comment', @$val);
+		if(@other) {
+			my $values = join ',', @other;
+			$answer = $self->sqlSelectHashref($values, 'journals', "id=$id");
+		}
+		if(@articles) {
+			$answer->{comment} = $self->sqlSelect('article', 'journals', "id=$id");
+		}
 	} elsif ($val) {
 		if($val eq 'article') {
 			($answer) = $self->sqlSelect('article', 'journals', "id=$id");
