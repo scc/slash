@@ -1380,7 +1380,7 @@ sub saveStory {
 			$form->{'time'},
 			"$rootdir/article.pl?sid=$sid", $form->{topic}
 		);
-		$slashdb->setStory($sid, { header => $id });
+		$slashdb->setStory($sid, { discussion => $id });
 	}
 
 	titlebar('100%', getTitle('saveStory-title'));
