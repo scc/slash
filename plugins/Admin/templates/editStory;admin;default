@@ -24,15 +24,18 @@ __template__
 	[% END %]
 
 <TABLE>
-	<TR>
+	<TR VALIGN=TOP>
 		<TD>
-		[% storycontent %]
-	</TD>
+			[% storycontent %]
+		</TD>
 
-		<TD WIDTH="210" VALIGN="TOP">
+		<TD WIDTH="210">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
-		[% authorbox %]
+		 [% PROCESS fancybox
+			title           = 'Story admin'
+			contents        = authorbox
+		%]
 		</TD>
 	</TR>
 </TABLE>
@@ -47,7 +50,10 @@ __template__
 		<TD WIDTH="220" VALIGN="TOP">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
-		[% authorbox %]
+		 [% PROCESS fancybox
+			title           = 'Story admin'
+			contents        = authorbox
+		%]
 		</TD>
 	</TR>
 </TABLE>
