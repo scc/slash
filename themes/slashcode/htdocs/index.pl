@@ -164,7 +164,7 @@ sub displayStandardBlocks {
 			);
 
 		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
-			$return .= $boxcache->{$bid} ||= portalbox(
+			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				getData('morehead'),
 				getOlderStories($older_stories_essentials, $section),
@@ -191,6 +191,15 @@ sub displayStandardBlocks {
 				pollbooth('', 1),
 				$boxBank->{$bid}{bid},
 				$boxBank->{$bid}{url}
+			);
+
+		# this could grab from the cache in the future, perhaps ... ?
+		} elsif ($bid eq 'rand' || $bid eq 'srandblock') {
+			# don't use cached title/bid/url from getPortalsCommon
+			my $data = $slashdb->getBlock($bid, [qw(title block bid url)]);
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				@{$data}{qw(title block bid url)}
 			);
 
 		} else {
