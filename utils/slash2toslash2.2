@@ -81,7 +81,6 @@ my (%conversions) = (
 	'metamodlog'		=> undef,
 	'sections'		=> undef,
 	'tzcodes'		=> undef,
-	'users'			=> undef,
 	'users_comments'	=> undef,
 	'users_info'		=> undef,
 	'users_param'		=> undef,
@@ -158,6 +157,14 @@ EOT
 			id sid title url topic ts type uid commentcount
 		)];
 			
+		return $data;
+	},
+
+	'users'			=> sub {
+		my($data) = @_;
+
+		# Handle author flag conversion.
+		$data->{author} = 1 if exists $story_authors{lc($data->{nickname})};
 		return $data;
 	},
 
@@ -477,7 +484,7 @@ sub convert_plugins {
 		my $alit = "(@{$old_plugins})";
 		if ($forced_plugins{$_} || /^$alit$/) {
 			if (! $printed) {
-				print "\nConverting PLUGINS...\n\n";
+				print "\nConverting PLUGINS...\n";
 				$printed++;
 			}
 			if (! $plugins{$_}{tables}) {
@@ -487,6 +494,7 @@ EOT
 
 				next;
 			}
+			print "\n=== $_ ===\n";
 			for (@{$plugins{$_}{tables}}) {
 				duplicate($_, 1);
 			}
@@ -697,16 +705,6 @@ sub convert {
 
 	duplicate('sections', 1);
 
-	# Deal with section_topics table (new for Fry).
-	$dbh_new->do(<<EOT);
-DELETE FROM section_topics
-EOT
-
-	$dbh_new->do(<<EOT);
-INSERT INTO section_topics 
-	SELECT distinct section, tid FROM topics, sections WHERE LENGTH(section) > 0
-EOT
-	
 	for (@user_tables) {
 		duplicate($_, 0);
 	}
@@ -742,6 +740,47 @@ EOT
 	duplicate('metamodlog', 1);
 
 	convert_plugins();
+
+	# CLEAN UP PHASE -- THE MISCELLANY OF QUERIES
+	#
+	# Deal with section_topics table (new for Fry).
+	print "\nPerforming clean up...\n\n";
+	print "Constructing section_topics\n";
+	$dbh_new->do(<<EOT);
+DELETE FROM section_topics
+EOT
+
+	$dbh_new->do(<<EOT);
+INSERT INTO section_topics 
+	SELECT distinct section, tid FROM topics, sections WHERE LENGTH(section) > 0
+EOT
+
+	# Construct author_cache table (new for Fry).
+	print "Constructing authors_cache\n";
+	$dbh_new->do(<<EOT);
+DELETE FROM authors_cache
+EOT
+
+	$dbh_new->do(<<EOT);
+REPLACE INTO authors_cache
+	SELECT users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author
+	FROM users, stories, users_info
+	WHERE stories.uid=users.uid AND users.uid=users_info.uid
+	GROUP BY stories.uid
+EOT
+
+	# Delete 'author' entries from users_param.
+	print "Cleaning users_param of all 'author' entries...";
+	{
+		local $" = ',';
+		$dbh_new->do(<<EOT);
+DELETE FROM users_param WHERE name='author' 
+EOT
+
+	}
+	print "Done.\n";
+
+	print "\nConversion completed.\n\n";
 }
 
 
@@ -1032,20 +1071,19 @@ sub reload_keys {
 }
 
 
-# The difference here is that we are retrieving this list from the IMPORTED
-# database, not the original.
 sub get_authors {
 	my $sql = <<EOT;
 SELECT users.uid, nickname FROM users, users_param
 WHERE name='author' AND value=1 AND users.uid=users_param.uid
 EOT
 
-	my $sth_d = $dbh_new->prepare($sql);
-	$sth_d->execute;
-	my $err = $dbh_new->errstr;
+	my $sth_s = $dbh_old->prepare($sql);
+	$sth_s->execute;
+	my $err = $dbh_old->errstr;
 	die "SQL: $sql\n" if $err;
 
-	while (my($uid, $auth) = $sth_d->fetchrow_array) {
+	my @uidlist;
+	while (my($uid, $auth) = $sth_s->fetchrow_array) {
 		$story_authors{lc($auth)} = $uid;
 	}
 }
