@@ -501,9 +501,7 @@ sub editArticle {
 	} else {
 		$article  = $journal->get($form->{id}) if $form->{id};
 		$posttype = $article->{posttype};
-		$slashdb->createFormkey(
-			'journal', getFormkeyId($user->{uid}), 'journal'
-		);
+		$slashdb->createFormkey('journal', getFormkeyId($user->{uid}));
 	}
 
 	$posttype ||= $user->{'posttype'};
@@ -548,14 +546,22 @@ sub editArticle {
 }
 
 sub _validFormkey {
-	# welcome to the Race Condition Convention, everyone
-	# please take your assigned seats!
+	my $error;
+	# this is a hack, think more on it, OK for now -- pudge
+	Slash::Utility::Anchor::getSectionColors();
 	for (qw(max_post_check interval_check formkey_check)) {
-		return if formkeyHandler($_);
+		last if formkeyHandler($_, 0, 0, 0, \$error);
 	}
 
-	getCurrentDB()->updateFormkey;
-	return 1;
+	if ($error) {
+		_printHead("mainhead");
+		print $error;
+		return 0;
+	} else {
+		# why does anyone care the length?
+		getCurrentDB()->updateFormkey(0, length(getCurrentForm()->{article}));
+		return 1;
+	}
 }
 
 sub _printHead {
