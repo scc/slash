@@ -72,7 +72,8 @@ install: slash plugins
 	chown -R $(USER):$(GROUP) $(PREFIX)/bin
 	chown -R $(USER):$(GROUP) $(PREFIX)/sql
 	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
-	echo "+--------------------------------------------------------+"; \
+	# Add a @ to suppress output of the echo's
+	@echo "+--------------------------------------------------------+"; \
 	echo "| All done.                                              |"; \
 	echo "| If you want to let slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
