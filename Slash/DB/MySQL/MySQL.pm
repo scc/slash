@@ -742,6 +742,7 @@ sub createUser {
 	))[0];
 
 	$self->sqlInsert("users", {
+		uid	=> '',
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,

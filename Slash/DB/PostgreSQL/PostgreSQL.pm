@@ -94,16 +94,17 @@ sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
 	return unless $matchname && $email && $newuser;
 
-	my($cnt) = $self->sqlSelect(
-		"matchname","users",
+	return if ($self->sqlSelect(
+		"count(uid)","users",
 		"matchname=" . $self->{_dbh}->quote($matchname)
-	) || $self->sqlSelect(
-		"realemail","users",
+	))[0];
+	return if ($self->sqlSelect(
+		"count(uid)","users",
 		" realemail=" . $self->{_dbh}->quote($email)
-	);
-	return 0 if ($cnt);
+	))[0];
 
 	$self->sqlInsert("users", {
+		uid	=> '',
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
