@@ -12,7 +12,9 @@ sub handler {
 	my $slashdb = getCurrentDB();
 	my $op = $r->notes('SLASH_LOG_OPERATION');
 	my $dat = $r->notes('SLASH_LOG_DATA');
-	$slashdb->createAccessLog($op, $dat);
+	if($op) {
+		$slashdb->createAccessLog($op, $dat);
+	}
 
 	return OK;
 }

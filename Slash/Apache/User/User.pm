@@ -33,6 +33,7 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $dbslash = $dbcfg->{dbslash};
 	unless ($r->filename =~ /\.pl$/) {
+	# We are still missing a call to writeLog at this point
 		$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
 		$cfg->{user} = '';
 		$cfg->{form} = '';
