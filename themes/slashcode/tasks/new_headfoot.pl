@@ -3,11 +3,11 @@
 use strict;
 use Slash;
 use File::Path;
-my $me = 'new_headfoot.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '3,33 * * * *';
+$task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
@@ -25,6 +25,7 @@ $task{$me}{code} = sub {
 
 	*STDOUT = *SO;
 
+	return ;
 };
 
 sub sectionHeaders {

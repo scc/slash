@@ -5,10 +5,7 @@
 # $Id$
 
 use strict;
-use vars qw( %task );
-use FindBin '$Bin';
-use File::Basename;
-use Getopt::Std;
+use vars qw( %task $me );
 use Safe;
 use Slash;
 use Slash::DB;
@@ -16,14 +13,11 @@ use Slash::Display;
 use Slash::Utility;
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-#my $PROGNAME = basename($0);
-my $PROGNAME = 'spamarmor.pl';
-(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-$task{$PROGNAME}{timespec} = '30 0 * * *';
+$task{$me}{timespec} = '30 0 * * *';
 
 # Handles rotation of fakeemail address of all users.
-$task{$PROGNAME}{code} = sub {
+$task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 #	# Loop over all users. The call to iterateUsers gets a block of 
@@ -65,35 +59,8 @@ $task{$PROGNAME}{code} = sub {
 		sleep 1 if ($count % 20) == 0;
 	}
 
-	slashdLog("$PROGNAME: Rotated armoring on $count user accounts");
+	return "rotated armoring for $count users";
 };
 
-
-# Standalone code.
-if ($0 =~ /$PROGNAME$/) {
-	my(%opts);
-
-	getopts('hu:v', \%opts);
-	if (exists $opts{h} || !exists $opts{u}) {
-		print <<EOT;
-
-Usage: $PROGNAME -u [virtual user]
-
-	This program is designed for execution within the Slash architecture
-	and should only be run as a standalone for testing purposes.
-EOT
-
-		exit 1;
-	} elsif (exists $opts{v}) {
-		print "(slashd task) $PROGNAME $VERSION.\n\n";
-	}
-
-	createEnvironment($opts{u});
-	my $constants = getCurrentStatic();
-	my $slashdb = getCurrentDB();
-
-	# Calls the code defined above.
-	$task{$PROGNAME}{code}->($opts{u}, $constants, $slashdb);
-}
-
 1;
+

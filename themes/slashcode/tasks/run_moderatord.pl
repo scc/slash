@@ -3,14 +3,13 @@
 # $Id$
 
 use strict;
-my $me = 'run_moderatord.pl';
 
 use Slash::DB;
 use Slash::Utility;
 
 use constant MSG_CODE_M2 => 2;
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '18 0-23/2 * * *';
 $task{$me}{code} = sub {
@@ -18,7 +17,7 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	if (! $constants->{allow_moderation}) {
-		slashdLog(<<EOT);
+		slashdLog(<<EOT) if verbosity() >= 2;
 $me - moderation system is inactive, no action performed
 EOT
 
@@ -36,6 +35,7 @@ EOT
 		}
 		reconcileM2($constants, $slashdb);
 	}
+	return ;
 };
 
 
@@ -51,7 +51,7 @@ sub reconcileM2 {
 		sprintf "$me - Iterating from %ld to %ld - (Batch of %d)",
 			$m2ids->[0]{id}, $m2ids->[-1]{id},
 			$constants->{m2_batchsize}
-	) if @{$m2ids};
+	) if @{$m2ids} and verbosity() >= 3;
 	for my $m2id (@{$m2ids}) {
 		my $m2_list = $slashdb->getMetaModerations($m2id->{mmid});
 		my $modlog = $slashdb->getModeratorLog($m2id->{mmid});
@@ -115,7 +115,7 @@ sub reconcileM2 {
 			$m2id->{id}, $m2id->{mmid}, 
 			($rank[0] == 1) ? 'Fair' : 'Unfair',
 			$con, $con_avg, $dis, $dis_avg
-		) if $constants->{moderatord_debug_info};
+		) if verbosity() >= 3;
 
 		# Dole out reward among the consensus if there is a clear
 		# victory.

@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
 
 use strict;
-my $me = 'new_motd.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '12 * * * *';
 $task{$me}{code} = sub {
@@ -17,6 +16,8 @@ $task{$me}{code} = sub {
 		my $tpid = $slashdb->getTemplateByName("motd", "tpid");
 		$slashdb->setTemplate($tpid, { template => $t });
 	}
+
+	return ;
 };
 
 1;

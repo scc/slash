@@ -6,9 +6,7 @@ use strict;
 use Slash;
 use Slash::XML;
 
-my $me = 'open_backend.pl';
-
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '13,43 * * * *';
 $task{$me}{code} = sub {
@@ -28,6 +26,7 @@ $task{$me}{code} = sub {
 		newrss(@_, $section);
 	}
 
+	return ;
 };
 
 sub save2file {

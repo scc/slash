@@ -3,13 +3,13 @@
 use File::Path;
 
 use strict;
-my $me = 'freshenup.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 my $total_freshens = 0;
 
 $task{$me}{timespec} = '1-59/3 * * * *';
+$task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my %updates;
@@ -23,15 +23,15 @@ $task{$me}{code} = sub {
 		$x++;
 		$updates{$section} = 1;
 		$slashdb->deleteStoryAll($sid);
-		slashdLog("Deleting $sid ($title)");
+		slashdLog("Deleting $sid ($title)") if verbosity() >= 1;
 	}
 	my $stories = $slashdb->getStoriesWithFlag('dirty');
 	my @updatedsids;
 	my $totalChangedStories = 0;
 
-	for (@$stories){
+	for (@$stories) {
 		my($sid, $title, $section) = @$_;
-		slashdLog("Updating $sid");
+		slashdLog("Updating $sid") if verbosity() >= 2;
 		$updates{$section} = 1;
 		$totalChangedStories++;
 		push @updatedsids, $sid;
@@ -40,12 +40,12 @@ $task{$me}{code} = sub {
 			prog2file("$constants->{basedir}/article.pl",
 			"ssi=yes sid='$sid' section='$section'",
 			"$constants->{basedir}/$section/$sid.shtml");
-			slashdLog("$me updated $section:$sid ($title)");
+			slashdLog("$me updated $section:$sid ($title)") if verbosity() >= 2;
 		} else {
 			prog2file("$constants->{basedir}/article.pl",
 			"ssi=yes sid='$sid'",
 			"$constants->{basedir}/$sid.shtml");
-			slashdLog("$me updated $sid ($title)");
+			slashdLog("$me updated $sid ($title)") if verbosity() >= 2;
 		}
 		$slashdb->setStory($sid, { writestatus => 'ok'});
 	}
@@ -65,6 +65,8 @@ $task{$me}{code} = sub {
 
 	my $num_users = $slashdb->sqlSelect("COUNT(*)", "users");
 	$slashdb->setVar("num_users_approx", $num_users);
+
+	return $totalChangedStories ? "totalChangedStories $totalChangedStories" : "";
 };
 
 sub makeDir {

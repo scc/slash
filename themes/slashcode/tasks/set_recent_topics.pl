@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
 
 use strict;
-my $me = 'set_recent_topics.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '1-59/15 * * * *';
+$task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
@@ -40,6 +40,7 @@ EOT
 	my($tpid) = $slashdb->getTemplateByName('recentTopics', 'tpid');
 	$slashdb->setTemplate($tpid, { template => $html });
 
+	return ;
 };
 
 1;

@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
 
 use strict;
-my $me = 'p2f_hof_topics.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 $task{$me}{timespec} = '56 0-23/2 * * *';
 $task{$me}{code} = sub {
@@ -15,6 +14,7 @@ $task{$me}{code} = sub {
 		prog2file("$bd/$name.pl", "ssi=yes", "$bd/$name.shtml");
 	}
 
+	return ;
 };
 
 1;

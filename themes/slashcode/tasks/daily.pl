@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
 
 use strict;
-my $me = 'daily.pl';
 
-use vars qw( %task );
+use vars qw( %task $me );
 
 # Remember that timespec goes by the database's time, which should be
 # GMT if you installed everything correctly.  So 6:07 AM GMT is a good
@@ -16,6 +15,7 @@ $task{$me}{code} = sub {
 
 	system("$constants->{sbindir}/dailyStuff $virtual_user &");
 
+	return ;
 };
 
 1;
