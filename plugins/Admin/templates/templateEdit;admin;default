@@ -154,7 +154,7 @@ __template__
 		</TD>
 	</TR>
 [% ELSIF seclev_flag == 0 %]
-You don't have privedges to edit the template [% templateref.name %], TPID [% templateref.tpid %].
+You don't have privileges to edit the template [% templateref.name %], TPID [% templateref.tpid %].
 [% END %]
 
 [% IF form.templatedelete_cancel %]

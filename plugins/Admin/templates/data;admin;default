@@ -69,7 +69,7 @@ Saved [% form.thisname %]<BR>
 	Saved template [% name %], TPID [% tpid %]<BR>
 
 [% CASE 'seclev-message' %]
-	You don't have priviledges to template name [% name %], TPID [% tpid %]<BR>
+	You don't have privileges to template name [% name %], TPID [% tpid %]<BR>
 	
 [% CASE 'blockDelete-message' %]
 	<B>Deleted [% bid %]!</B><BR>

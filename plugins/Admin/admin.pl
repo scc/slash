@@ -5,7 +5,6 @@
 # $Id$
 
 use strict;
-# use Date::Manip;
 use Image::Size;
 use POSIX;
 
@@ -137,10 +136,6 @@ sub main {
 		# will have to get this information from the database anyways.
 		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
 	}
-
-# 	my $gmt_now_secs = UnixDate(ParseDate($slashdb->getTime()), "%s");
-# 	my $gmt_ts = UnixDate("epoch $gmt_now_secs", "%T");
-# 	my $local_ts = UnixDate("epoch ".($gmt_now_secs + $user->{off_set}), "%T");
 
 	my $db_time = $slashdb->getTime();
 	my $gmt_ts = timeCalc($db_time, "%T", 0);

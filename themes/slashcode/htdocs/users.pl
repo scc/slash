@@ -1763,9 +1763,9 @@ sub getUserAdmin {
 	if (! $user->{nonuid}) {
 		my $threshcodes = $slashdb->getDescriptions('threshcode_values','',1);
 		$thresh_select = createSelect('defaultpoints', $threshcodes, $user_edit->{defaultpoints}, 1);
-
 	}
-	undef $iplist if defined $iplist && @$iplist < 1;
+
+	undef $iplist if ref $iplist && @$iplist < 1;
 
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
@@ -1779,7 +1779,7 @@ sub getUserAdmin {
 		topabusers		=> $topabusers,
 		form_flag		=> $form_flag,
 		readonly		=> $readonly,
-		thresh_select 	=> $thresh_select,
+		thresh_select		=> $thresh_select,
 		readonly_reasons 	=> $readonly_reasons,
 		authoredit_flag 	=> $authoredit_flag
 	}, 1);

@@ -381,7 +381,7 @@ sub moderatorCommentLog {
 	my $comments = $slashdb->getModeratorCommentLog($cid);
 #	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 
-	return unless @comments; # skip it, if no mods to show
+	return unless @$comments; # skip it, if no mods to show
 
 	my(@return, @reasonHist, $reasonTotal);
 

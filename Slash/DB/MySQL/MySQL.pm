@@ -3011,7 +3011,6 @@ sub _getCommentText {
 	}
 }
 
-
 ########################################################
 sub getComments {
 	my($self, $sid, $cid) = @_;

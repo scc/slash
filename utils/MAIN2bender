@@ -453,7 +453,7 @@ usage: $PROGNAME {-YZfFwWxXkKH?hv}
 	-f Location of source MySQL dump	[default: ./site.dump]
 	-F Location of output dump 		[default: ./bendersite.dump]
 
-	-w [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
+	-w [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT privileges
 	-W Password for user given by -w
 
 	-Z Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
@@ -470,7 +470,7 @@ usage: $PROGNAME {-YZfFwWxXkKH?hv}
 	-k Do NOT delete obsolete tables after performing conversion.
 
 Notes: 
-	User given in slashdotrc.pl should have global CREATE/DROP priviledges
+	User given in slashdotrc.pl should have global CREATE/DROP privileges
 	when this program is run. See INSTALL file for more details.	
 
 	If you specify "-w ''" (ie use the null string as the password) then the

@@ -446,8 +446,6 @@ which is probably faster, too.
 
 =cut
 
-require Template::Stash;
-
 my %list_ops = (
 	'rand'		=> sub {
 		my $list = shift;
