@@ -60,6 +60,9 @@ __template__
                 Show your real email address without cowering behind childish
 		anonymity or obfuscation<BR>
 
+		<P><B>Disable Sigs</B> (strip sig quotes from comments)
+		<INPUT TYPE="CHECKBOX" NAME="nosigs"[% s_check %]>
+
 		<P><B>Display Mode</B>
 
 		[% commentmodes_select %]
@@ -116,9 +119,6 @@ __template__
 		<P><B>Max Comment Size</B> (Truncates long comments, and
 		adds a "Read More" link.  Set really big to disable)<BR>
 		<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="[% user_edit.maxcommentsize %]">
-
-		<P><B>Disable Sigs</B> (strip sig quotes from comments)
-		<INPUT TYPE="CHECKBOX" NAME="nosigs"[% s_check %]>
 
 		<P><B>Comment Post Mode</B>
 

@@ -148,14 +148,15 @@ my %descriptions = (
 sub _whereFormkey {
 	my($self) = @_;
 
-	my $user = getCurrentUser();
+	my $ipid = getCurrentUser('ipid');
+	my $uid = getCurrentUser('uid');
 	my $where;
 
 	# anonymous user without cookie, check host, not ipid
-	if (isAnon($user->{uid})) {
-		$where = "ipid = '$user->{ipid}'";
+	if (isAnon($uid)) {
+		$where = "ipid = '$ipid'";
 	} else {
-		$where = "uid = '$user->{uid}'";
+		$where = "uid = '$uid'";
 	}
 
 	return $where;
@@ -603,6 +604,11 @@ sub setContentFilter {
 	my($self, $formname) = @_;
 
 	my $form = getCurrentForm();
+	$formname ||= $form->{formname};
+
+	for (keys %$form) {
+		print STDERR "KEY $_ value $form->{$_}\n";
+	}
 
 	$self->sqlUpdate("content_filters", {
 			regex		=> $form->{regex},
@@ -1733,6 +1739,7 @@ sub createFormkey {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $ipid = getCurrentUser('ipid');
+	my $subnetid = getCurrentUser('subnetid');
 
 	# save in form object for printing to user
 	$form->{formkey} = getFormkey();
@@ -1747,6 +1754,7 @@ sub createFormkey {
 		formname 	=> $formname,
 		uid		=> $ENV{SLASH_USER},
 		ipid		=> $ipid,
+		subnetid		=> $subnetid,
 		value		=> 0,
 		ts		=> time(),
 		last_ts		=> $last_submitted,
@@ -1787,6 +1795,8 @@ sub validFormkey {
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	my $uid = getCurrentUser('uid');
+	my $subnetid = getCurrentUser('subnetid');
 
 	undef $form->{formkey} unless $form->{formkey} =~ /^\w{10}$/;
 	return(0) if ! $form->{formkey};
@@ -1794,6 +1804,7 @@ sub validFormkey {
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	my $where = $self->_whereFormkey();
+	$where = "( $where OR subnetid = '$subnetid')" if ($constants->{lenient_formkeys} && isAnon($uid)); 
 	my($is_valid) = $self->sqlSelect(
 		'COUNT(*)',
 		'formkeys',
@@ -1872,6 +1883,7 @@ sub resetFormkey {
 		-value		=> 0,
 		-idcount	=> '(idcount -1)',
 		ts		=> time(),
+		submit_ts => '0',
 	}, "formkey=" . $self->sqlQuote($formkey));
 
 	print STDERR "RESET formkey $updated\n" if $constants->{DEBUG};

@@ -228,7 +228,8 @@ sub main {
 	}
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {
-		my $refer = URI->new_abs($form->{returnto} || $constants->{rootdir},
+		# my $refer = URI->new_abs($form->{returnto} || $constants->{rootdir},
+		my $refer = URI->new_abs($constants->{rootdir},
 			$constants->{absolutedir});
 		# Tolerate redirection with or without a "www.", this is a little
 		# sloppy but it may help avoid a subtle misbehavior someday.
@@ -299,7 +300,10 @@ sub main {
 	errorLog("users.pl error_flag '$error_flag'") if $error_flag;
 
 	# call the method
-	$ops->{$op}{function}->() if ! $error_flag;
+	my $retval = $ops->{$op}{function}->() if ! $error_flag;
+	if ($op eq 'mailpasswd' && $retval) {
+		$ops->{$op}{update_formkey} = 0;
+	}
 
 	if ($ops->{$op}{update_formkey} && $user->{seclev} < 100 && ! $error_flag) {
 		# successful save action, no formkey errors, update existing formkey
@@ -405,21 +409,28 @@ sub mailPasswd {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
+	print STDERR "FIELD $form->{unickname}\n";
 	if (! $uid) {
 		if ($form->{unickname} =~ /\@/) {
 			$uid = $slashdb->getUserEmail($form->{unickname});
+			print STDERR "EMAIL $form->{unickname} has a UID of $uid\n";
 
 		} elsif ($form->{unickname} =~ /^\d+$/) {
-			$uid = $form->{unickname};
+			my $tmpuser = $slashdb->getUser($form->{unickname}, ['uid']);
+			$uid = $tmpuser->{uid};
 
 		} else {
 			$uid = $slashdb->getUserUID($form->{unickname});
 		}
 	}
+	print STDERR "UID $uid\n";
 
 	unless ($uid) {
 		print getError('mailpasswd_notmailed_err');
-		return;
+		$slashdb->resetFormkey($form->{formkey});	
+		$form->{op} = 'mailpasswdform';
+		displayForm();
+		return(1);
 	}
 	my $user_edit = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my $newpasswd = $slashdb->getNewPasswd($uid);
@@ -465,6 +476,7 @@ sub showInfo {
 			($uid, $id) = ($form->{uid}, $form->{uid});
 			$requested_user = isAnon($uid) ? $user : $slashdb->getUser($id);
 			$nick = $requested_user->{nickname};
+			$form->{userfield} = $nick if $admin_flag;
 
 		} elsif ($form->{nick} && ! $id) {
 			$fieldkey = 'nickname';
@@ -476,11 +488,13 @@ sub showInfo {
 			} else {
 				$requested_user = $slashdb->getUser($uid);
 			}
+			$form->{userfield} = $uid if $admin_flag;
 
 		} else {
 			$fieldkey = 'uid';
 			($id, $uid) = ($user->{uid}, $user->{uid});
 			$requested_user = $slashdb->getUser($uid);
+			$form->{userfield} = $uid if $admin_flag;
 		}
 
 		# no can do boss-man
@@ -574,7 +588,7 @@ sub showInfo {
 		}
 
 	} else {
-		$admin_block = $admin_flag ? getUserAdmin($id, $fieldkey, 1, 1) : '';
+		$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 
 		$commentcount =
 			$slashdb->countCommentsByUID($requested_user->{uid});
@@ -1369,6 +1383,7 @@ sub saveUser {
 			realemail => $form->{realemail}
 		}, 1);
 
+		sendEmail($form->{realemail}, $saveuser_emailtitle, $saveuser_email_msg);
 		doEmail($uid, $saveuser_emailtitle, $saveuser_email_msg);
 	}
 
@@ -1581,6 +1596,7 @@ sub displayForm {
 
 	$op ||= 'displayform';
 
+	print STDERR "DISPLAYFORM op $op\n";
 	my $ops = {
 		displayform 	=> 'loginForm',
 		edithome	=> 'loginForm',
@@ -1682,7 +1698,7 @@ sub getUserAdmin {
 
 	my($checked, $uidstruct, $readonly, $readonly_reasons);
 	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $author_select, $topabusers);
-	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
+	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 
 	$field ||= 'uid';

@@ -20,7 +20,7 @@ __template__
 [% INCLUDE titlebar title = "Your recent submissons" %]
 
 <P>Here are your recent submissions to [% constants.sitename %],
-and their staus within the system:</P>
+and their status within the system:</P>
 
 <UL>
 [% FOREACH submission = submissions %]

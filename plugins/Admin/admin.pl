@@ -16,6 +16,9 @@ use Slash::Utility;
 sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	for (keys %$form) {
+		print STDERR "KEY2 $_ value $form->{$_}\n";
+	}
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $postflag = $user->{state}{post};
@@ -1315,8 +1318,10 @@ sub editFilter {
 
 	my($filter_id);
 
+	my $formname = $form->{formname};
+
 	if ($form->{newfilter}) {
-		$filter_id = $slashdb->createContentFilter($form->{formname});
+		$filter_id = $slashdb->createContentFilter($formname);
 		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
 
 	} elsif ($form->{updatefilter}) {
@@ -1324,7 +1329,7 @@ sub editFilter {
 			print getData('updateFilter-message');
 
 		} else {
-			$slashdb->setContentFilter($form->{formname});
+			$slashdb->setContentFilter();
 		}
 
 		$filter_id = $form->{filter_id};
@@ -1333,7 +1338,7 @@ sub editFilter {
 	} elsif ($form->{deletefilter}) {
 		$slashdb->deleteContentFilter($form->{filter_id});
 		titlebar("100%", getTitle('updateFilter-delete-title'));
-		listFilters($form->{formname});
+		listFilters($formname);
 		return();
 	}
 
@@ -1343,6 +1348,7 @@ sub editFilter {
 		minimum_length err_message);
 	my $filter = $slashdb->getContentFilter($filter_id, \@values, 1);
 
+	print STDERR "FILTER form $filter->{form} formname $formname\n";
 	my $form_list = $slashdb->getDescriptions('forms');
 	my $form_select = createSelect('formname', $form_list, $filter->{form}, 1);
 

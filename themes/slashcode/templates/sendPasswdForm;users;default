@@ -17,7 +17,7 @@ __name__
 sendPasswdForm
 __template__
 
-<FORM ACTION="[% env.script_name %]" METHOD="GET">
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="mailpasswd">
 [% IF form.formkey %]
 <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">

@@ -60,7 +60,7 @@ __template__
 
 [% END %]
 
-<FORM ACTION="[% env.script_name %]" METHOD="GET">
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="userlogin">
 <TABLE WIDTH="75%">
 	<TR>

@@ -16,24 +16,28 @@ __template__
 
 <TABLE BORDER="0">
 	<TR>
-		<TD VALIGN="top" WIDTH="40"><B>Form</B></TD>
-		<TD>[% form_select %]</TD>
-	</TR>
-	<TR>
 		<TD><B>List Filters</B></TD>
+		<TD> [% form_select %]</TD>
 		<TD>
 		<INPUT TYPE="SUBMIT" NAME="listfilters" VALUE="List">
 		</FORM>
 		</TD>
 	</TR>
 	<TR>
-		<TD><B>Create a new filter</B></TD>
-		<TD>
 		<FORM action="[% env.script_name %]" method="POST">
+		<TD><B>Create a new filter</B></TD>
+		<TD> [% form_select %]</TD>
+		<TD>
 		<INPUT TYPE="hidden" NAME="op" VALUE="editfilter">
 		<INPUT TYPE="SUBMIT" NAME="newfilter" VALUE="Create">
+		</FORM>
 		</TD>
 	</TR>
+	<TR>
+		<FORM action="[% env.script_name %]" method="POST">
+		<INPUT TYPE="hidden" NAME="op" VALUE="editfilter">
+		<TD><B>Form to save under:</B></TD>
+		<TD COLSPAN="2"> [% form_select %]</TD>
 	<TR>
 		<TD VALIGN="top" WIDTH="40"><B>Filter id</B><BR>This is not editable<BR><BR></TD>
 		<TD VALIGN="top"><INPUT TYPE="hidden" name="filter_id" value="[% filter_id %]">&nbsp;&nbsp;</TD>

@@ -29,93 +29,6 @@ sub main {
 	my($formkey, $stories);
 
 	######################################################
-	#
-	# this really should be in the db... all the op stuff...
-	#
-	# the formkey checks are handled by formkeyHandler. Formkey handler 
-	# is called:
-	#	$error_flag = 
-	#		formkeyHandler($check, $formname, $formkey);
-	#
-	# 		example of what the args would actually be:
-	#
-	# 		formkeyHandler('max_post_check','comments', 3, 'xd2i2u3o2u45');
-	# 
-	# in the case such as in users, where you have to check the formkey 
-	# on 'savepasswd', which happens before "header" is called, you need 
-	# to save the error message into "$note"
-	#
-	#	$error_flag = 
-	#		formkeyHandler($check, $formname, $formkey, \$note);
-	#  
-	# This way, since '$note' is being passwd, note gets the error message from the 
-	# formkey checks (if there's and error) but won't print the error, which happens
-	# by default without that 5th argument.
-	# 
-	# These are the major checks that formkeyHandler deals with:
-	# 
-	# generate_formkey - generates the formkey by populating $form->{formkey} 
-	# which automagically shows up in the form
-	# no message in formkeyErrors
-	# 
-	# max_read_check - checks how many times the form has been access
-	# and returns and error if that number has been exceded
-	# calls checkMaxReads
-	# the var for the form is max_<formname>_viewings (just make sure it matches 
-	# the message in formkeyErrors is triggered by '<formname>_maxreads' 
-	# 
-	# max_post_check - checks how many times ipid or uid has successfully 
-	# posted and returns and error if that number has been exceded
-	# calls checkMaxPosts
-	# the var for the form is max_<formname>_allowed (just make sure it matches 
-	# the message in formkeyErrors is triggered by '<formname>_maxposts' 
-	#
-	# interval_check - checks the interval between last successful post
-	# calls checkPostInterval
-	# the var for the form is <forname>_speed_limit 
-	# (check hashref in checkPostInterval) to make sure
-	# the message in formkeyErrors is triggered by '<formname>_speed'
-	# 
-	# response_check - check the response between reply and post (only
-	# used on comments so far)
-	# calls checkResponseTime
-	# the var is <formname>_response_limit (check hashref in checkResponseTime) 
-	# the message in formkeyErrors is triggered by '<formname>_response'
-	# 
-	# valid_check - checks whether a formkey is valid
-	# calls validFormkey
-	# not form specific, no var
-	# the message in formkeyErrors is triggered by 'valid', no need to add 
-	# another message per form
-	#
-	# formkey_check - updates the formkey val to indicate the formkey has
-	# been used
-	# calls updateFormkeyVal
-	# not form specific, just keys on the formkey itself
-	# the message in formkeyErrors is triggered by 'usedform' no need to add
-	# another message per form 
-	#
-	# regen_formkey - creates a new formkey in the case with functions that 
-	# regenerate a form after submitting (without going through the op hashref)
-	# just need to check the calling function and see if it generates a new form
-	# outside the op hashref
-	# calls createFormkey which populates $form->{formkey}
-	#
-	# generate_formkey - creates a new formkey. make sure this is the last call 
-	# if your checking max_post_check, update_formkeyid 
-	# calls createFormkey which populates $form->{formkey}
-	# if you want the formkey in the form, you'll need to put
-	# <INPUT TYPE="HIDDEN" NAME="FORMKEY" VALUE="[% form.formkey %]">
-	# in the template for the form that you want it to be in
-	# 
-	# update_formkeyid - some forms require the formkey id to be updated
-	# as in the case with comments where a user might reply as anon and 
-	# then log in and then post
-	# calls updateFormkeyID
-	# 
-	# note: post and edit don't look like they're used anywhere
-	#
-	######################################################
 	my $ops	= {
 		# there will only be a discussions creation form if 
 		# the user is anon, or if there's an sid, therefore, we don't want 
@@ -651,6 +564,7 @@ sub previewForm {
 	my($error_message) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
+	my $slashdb = getCurrentDB();
 
 	$user->{sig} = "" if $form->{postanon};
 
@@ -666,7 +580,7 @@ sub previewForm {
 		pid		=> $form->{pid},
 		homepage	=> $form->{postanon} ? '' : $user->{homepage},
 		fakeemail	=> $form->{postanon} ? '' : $user->{fakeemail},
-		'time'		=> 'Soon',
+		'time'		=> $slashdb->getTime(),
 		subject		=> $tempSubject,
 		comment		=> $tempComment,
 	};
@@ -773,10 +687,6 @@ sub submitComment {
 		$slashdb->setUser($user->{uid}, {
 			-totalcomments => 'totalcomments+1',
 		});
-
-		# successful submission		
-		# my $updated = $slashdb->updateFormkey($form->{formkey}, $maxCid, length($form->{postercomment})); 
-		# yeah, ok, I should do something with $updated
 
 		my $messages = getObject('Slash::Messages') if $form->{pid};
 		if ($form->{pid} && $messages) {

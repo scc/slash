@@ -65,7 +65,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 [% END %]
 </P>
 
-[% IF karma_flag && (nickmatch_flag || user.is_admin) %]
+[% IF karma_flag && (admin_flag || nickmatch_flag)  %]
         <B>Karma</B> [% useredit.karma %] (mostly the sum of moderation done to users comments)<BR>
 [% END %]
 
