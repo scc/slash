@@ -173,7 +173,7 @@ sub reparentComments {
 
 	my $depth = $constants->{max_depth} || 7;
 
-	return unless $depth || $user->{reparent};
+	return if $user->{state}{noreparent} || (!$depth && !$user->{reparent});
 
 	# adjust depth for root pid or cid
 	if (my $cid = $form->{cid} || $form->{pid}) {
@@ -316,7 +316,7 @@ sub printComments {
 		lvl		=> $lvl,
 	});
 
-	return if $user->{mode} eq 'nocomment';
+	return if $user->{state}{nocomment} || $user->{mode} eq 'nocomment';
 
 	my($comment, $next, $previous);
 	if ($cid) {
