@@ -580,9 +580,11 @@ sub checkUserExpiry {
 
 	# Subtract one from number of 'registered days left' for all users.
 	$self->sqlTransactionStart("LOCK TABLES users_info WRITE");
-	$self->sqlUpdate('users_info', {
-		-'expiry_days'	=> 'expiry_days-1',
-	});
+	$self->sqlUpdate(
+		'users_info',
+		{ -'expiry_days' => 'expiry_days-1' },
+		'1=1'
+	);
 	$self->sqlTransactionFinish();
 
 	# Now grab all UIDs that look to be expired, we explicitly exclude
