@@ -10,13 +10,13 @@ sub new {
 	my $dsn = 'mysql'; #This is just here for the moment.
 	if(defined ($dsn)){
 		if($dsn =~ /mysql/) {
-			eval { require Slash::DB::MySQL;};
+			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 		} elsif ($dsn =~ /oracle/) {
-			eval { require Slash::DB::Oracle;};
+			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
 		}elsif ($dsn =~ /postgress/) {
-			eval { require Slash::DB::Postgress;};
+			require Slash::DB::Postgress;
 			push(@Slash::DB::ISA, 'Slash::DB::Postgress');
 		}
 	} else {
