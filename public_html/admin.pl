@@ -37,6 +37,7 @@ sub main {
 
 	
 	redirect("/users.pl") if($user->{seclev} < 100);
+
 	my($tbtitle);
 	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
 		# Show submission/article title on browser's titlebar.
@@ -54,15 +55,8 @@ sub main {
 	print "<P>&nbsp;</P>" unless $user->{seclev};
 
 	my $op = $form->{op};
-	if (!$user->{seclev}) {
-		titlebar('100%', getTitle('adminLogin-title'));
-		adminLoginForm();
 
-	} elsif ($op eq 'logout') {
-		titlebar('100%', getTitle('adminLogout-title'));
-		adminLoginForm();
-
-	} elsif ($form->{topicdelete}) {
+	if ($form->{topicdelete}) {
 		topicDelete();
 		topicEdit();
 
@@ -220,11 +214,6 @@ sub main {
 	writeLog('admin', $user->{uid}, $op, $form->{sid});
 }
 
-##################################################################
-# Misc
-sub adminLoginForm {	
-	slashDisplay('admin-adminLoginForm');
-}
 
 ##################################################################
 #  Variables Editor

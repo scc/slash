@@ -310,7 +310,6 @@ INSERT INTO menus VALUES (2,'users','Customize Homepage','/users.pl?op=edithome'
 INSERT INTO menus VALUES (3,'users','Edit User Info','/users.pl?op=edituser',0,2);
 INSERT INTO menus VALUES (4,'users','Customize Comments','/users.pl?op=editcomm',0,5);
 INSERT INTO menus VALUES (5,'users','Logout','/users.pl?op=userclose',0,6);
-INSERT INTO menus VALUES (6,'admin','Logout [% user.aid %]','/admin.pl?op=adminclose',1,1);
 INSERT INTO menus VALUES (7,'admin','Home','/',1,2);
 INSERT INTO menus VALUES (8,'admin','Help','/getting_started.shtml',1,3);
 INSERT INTO menus VALUES (9,'admin','Topics','/admin.pl?op=listtopics',1,4);
