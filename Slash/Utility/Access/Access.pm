@@ -446,7 +446,7 @@ sub filterOk {
 			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
 		}
 		$report .= " nm=$number_match uid=$user->{uid} ipid=$user->{ipid} karma=$user->{karma}";
-		$report .= " content=$content";
+		$report .= " content=".substr($content,0,200);
 		$report =~ s/\s+/ /gs;
 
 		$regex = $raw_regex . $number_match;
@@ -483,58 +483,78 @@ sub compressOk {
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
-	my $uid;
 
+	my $uid;
 	if ($user->{uid} == $constants->{anonymous_coward_uid}) {
 		$uid = $user->{ipid};
 	} else {
 		$uid = $user->{uid};
 	}
 
-	# interpolative hash ref. Got these figures by testing out
-	# several paragraphs of text and saw how each compressed
-	# the key is the ratio it should compress, the array lower,upper
-	# for the ratio. These ratios are _very_ conservative
-	# a comment has to be absolute shit to trip this off
+	# These could be tweaked.  $slice_size could be roughly 300-3000;
+	# the $x_space vars could go up or down by a factor of roughly 2.
+	my $slice_size = 1000;
+	my $nbsp_space = " " x 12;
+	my $breaktag_space = " " x 4;
+
+	my $orig_length = length($content);
+	my $slice_remainder = $orig_length % $slice_size;
+	my $n_slices = int($orig_length/$slice_size);
+	$slice_size += int($slice_remainder/$n_slices+1) if $n_slices > 0;
+
 	my $limits = {
-		1.3 => [10,19],
-		1.1 => [20,29],
-		.8 => [30,44],
-		.5 => [45,99],
-		.4 => [100,199],
-		.3 => [200,299],
-		.2 => [300,399],
-		.1 => [400,1000000],
+		0.8  => [ 10, 19],		# was 1.3
+		0.65 => [ 20, 29],		# was 1.1
+		0.5  => [ 30, 44],		# was 0.8
+		0.4  => [ 45, 99],		# was 0.5
+		0.35 => [100,199],		# was 0.4
+		0.3  => [200,299],
+		0.2  => [300,2**31-1],
 	};
 
-	my $length = length($content);
+	while ($content) {
+		# Slice off a hunk from the front and check it.
+		my $content_slice = substr($content, 0, $slice_size);
+		substr($content, 0, $slice_size) = "";
 
-	# too short to bother
-	return 1 if $length < 10;
+		# too short to bother?
+		my $length = length($content_slice);
+		next if $length < 10;
 
-	# Ok, one list ditch effort to skew out the trolls!
-	for (sort { $a <=> $b } keys %$limits) {
-		# if it's within lower to upper
-		if ($length >= $limits->{$_}->[0] && $length <= $limits->{$_}->[1]) {
+		# Whitespace tags get converted to easily-compressible whitespace
+		# for purposes of the compression check.
+		$content_slice =~ s/<\/?(BR|P)>/$breaktag_space/gi;
+		# Whitespace entities get similar special treatment
+		$content_slice =~ s/\&(nbsp|#160|#xa0);/$nbsp_space/gi;
+		# Other entities just get plain old decoded before the compress check
+		$content_slice = decode_entities($content_slice);
+		# The length we compare against for ratios is the length of the
+		# modified slice of the text.
+		$length = length($content_slice);
+		next if $length < 10;
 
-			# if is >= the ratio, then it's most likely a
-			# troll comment
-			my $comlen = length(Compress::Zlib::compress(strip_nohtml($content)));
+		for (sort { $a <=> $b } keys %$limits) {
+			next unless $length >= $limits->{$_}->[0]
+				and $length <= $limits->{$_}->[1];
+
+			# OK, we have the right numbers for the size of this slice.
+			# Compress it and check its size.
+			my $comlen = length(Compress::Zlib::compress($content_slice));
 			if (($comlen / $length) <= $_) {
 				$slashdb->createAbuse("content compress", $formname, $content);
-				my $len2 = length(strip_nohtml($content));
-				my $report = "compressOk_report len1=$length len2=$len2";
+				my $report = "compressOk_report ss=$slice_size leno=$orig_length len1=$length";
 				$report .= " comlen=$comlen field=$field";
 				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
 				$report .= " uid=$user->{uid} karma=$user->{karma} ipid=$user->{ipid}";
-				$report .= " content=$content";
+				$report .= " content=".substr($content, 0, 200);
 				$report =~ s/\s+/ /gs;
-print STDERR "$report\n";
+				print STDERR "$report\n";
 				return 0;
 			}
 		}
 	}
 
+	# Every slice of the comment text passed the test, so it's OK.
 	return 1;
 }
 

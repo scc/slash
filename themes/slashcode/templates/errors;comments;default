@@ -127,12 +127,13 @@ CASE "filter message" %]
 <B>Reason: [% err_message %]</B><BR>
 [% END %]
 
-
 [% # COMPRESS FILTER.
 CASE "compress filter" %]
 [% PROCESS titlebar width="95%" title="Lameness filter encountered." %]
-Your comment violated the [% ratio %] compression filter.
-<B>Comment aborted</B>
+Your comment violated the "[% ratio %]" compression filter. Try less
+whitespace and/or less repetition[%
+IF ratio == 'postersubj' %] in the subject line[% END %].
+<B>Comment aborted.</B>
 
 [% # SUBMISSION ERROR.
 CASE "submission error" %]

@@ -331,13 +331,15 @@ sub displayForm {
 		titlebar('100%', getData('max_submissionsize_title'));
 		print getData('max_submissionsize_err', { size => $constants->{max_submission_size}});
 	}
-		
+
+	my %keys_to_check = ( story => 1, subj => 1 );
 	if ($error_message ne '') {
 		titlebar('100%', getData('filtererror', { err_message => $error_message}));
 		print getData('filtererror', { err_message => $error_message });
 	} else {
+		my $message = "";
 		for (keys %$form) {
-			my $message = "";
+			next unless $keys_to_check{$_};
 			# run through filters
 			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
 				my $err = getData('filtererror', { err_message => $message});
@@ -392,8 +394,10 @@ sub saveSub {
 		return(0);
 	}
 
+	my %keys_to_check = ( story => 1, subj => 1 );
+	my $message = "";
 	for (keys %$form) {
-		my $message = "";
+		next unless $keys_to_check{$_};
 		# run through filters
 		if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
 			displayForm($form->{name}, $form->{email}, $form->{section}, '', '', $message);
