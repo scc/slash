@@ -35,8 +35,14 @@ __template__
 	<B>user id</B>=[% uid %]<BR>
 	<B>nick</B>=[% form.newusernick %]<BR>
 	<B>passwd</B>=mailed to [% form.email %]<BR>
+	[% IF suadmin_flag %]
+		<P>Now you can edit the newly created user  
+		<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% uid %]">
+		[% form.newusernick %], UID [% uid %]</A></P>
+	[% ELSE %]
 	<P>Once you receive your password, you can log in and
 	<A HREF="[% constants.rootdir %]/users.pl">set your account up</A>
+	[% END %]
 
 [% CASE 'mailpasswd_msg' %]
 

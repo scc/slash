@@ -7,7 +7,6 @@ Template for editing user
 * seclev_field = boolean to display seclev editing field
 * uid_checked = whether or not uid is checked
 * nickname_checked = whether or not nickname is checked
-* author_select = select popup for authors
 * author_flag = current user is author
 * authoredit_flag = current user can edit authors
 __title__
@@ -55,24 +54,6 @@ __template__
 		</TD>
 	</TR>
 		[% END %]
-</TABLE>
-	[% END %]
-
-
-	[% IF authoredit_flag %]
-<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
-	<TR>
-		<FORM ACTION="[% env.script_name %]" METHOD="POST">
-
-[% IF form.formkey %]
-	        <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
-[% END %]
-		<TD><B>Authors</B></TD>
-		<TD>[% author_select %]</TD>
-		<TD>&nbsp;<INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author">
-		<INPUT TYPE="HIDDEN" NAME="op" VALUE="authoredit"></TD>
-		</FORM>
-	</TR>
 </TABLE>
 	[% END %]
 
@@ -139,6 +120,12 @@ __template__
 	</TR>
 	[% END %]
 
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
+	<TR>
+		<TD><B>Default points (threshcode)</B></TD><TD>[% thresh_select %]</TD><TD>&nbsp;</TD>
+	</TR>
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10></TD>
 	</TR>

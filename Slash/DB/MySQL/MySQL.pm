@@ -52,6 +52,9 @@ my %descriptions = (
 	'threshcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='threshcodes'") },
 
+	'threshcode_values'
+		=> sub { $_[0]->sqlSelectMany('code,code', 'code_param', "type='threshcodes'") },
+
 	'postmodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='postmodes'") },
 

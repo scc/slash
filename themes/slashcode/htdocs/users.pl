@@ -374,7 +374,9 @@ sub newUserForm {
 sub newUser {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
+	my $user = getCurrentUser();
 	my $title;
+	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0;
 
 	# Check if User Exists
 	$form->{newusernick} = fixNickname($form->{newusernick});
@@ -389,7 +391,11 @@ sub newUser {
 			$title = getTitle('newUser_title');
 
 			$form->{pubkey} = strip_html($form->{pubkey}, 1);
-			print getMessage('newuser_msg', { title => $title, uid => $uid });
+			print getMessage('newuser_msg', { 
+				suadmin_flag => $suadmin_flag, 
+				title => $title, 
+				uid => $uid });
+
 			mailPasswd($uid);
 
 			return;
@@ -410,11 +416,9 @@ sub mailPasswd {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	print STDERR "FIELD $form->{unickname}\n";
 	if (! $uid) {
 		if ($form->{unickname} =~ /\@/) {
 			$uid = $slashdb->getUserEmail($form->{unickname});
-			print STDERR "EMAIL $form->{unickname} has a UID of $uid\n";
 
 		} elsif ($form->{unickname} =~ /^\d+$/) {
 			my $tmpuser = $slashdb->getUser($form->{unickname}, ['uid']);
@@ -424,7 +428,6 @@ sub mailPasswd {
 			$uid = $slashdb->getUserUID($form->{unickname});
 		}
 	}
-	print STDERR "UID $uid\n";
 
 	unless ($uid) {
 		print getError('mailpasswd_notmailed_err');
@@ -510,7 +513,7 @@ sub showInfo {
 			$requested_user = $slashdb->getUser($id);
 			$uid = $requested_user->{uid};
 			$nick = $requested_user->{nickname};
-			if ((my $conflict_id = $slashdb->getUserUID($id)) && ($form->{userfield} ne $form->{uid})) {
+			if ((my $conflict_id = $slashdb->getUserUID($id)) && $form->{userinfo}) {
 				slashDisplay('showInfoConflict', { op => 'userinfo', id => $uid, nick => $nick, conflict_id => $conflict_id});
 				return(1);
 			}
@@ -532,7 +535,6 @@ sub showInfo {
 			$fieldkey = 'ipid';
 			$requested_user->{nonuid} = 1;
 			$id ||= $1;
-			print STDERR "\$1 $1\n";
 			$requested_user->{ipid} = md5_hex($1);
 
 		} else {
@@ -555,15 +557,12 @@ sub showInfo {
 		my $netid;
 		if ($requested_user->{ipid}) {
 			$netid = $requested_user->{ipid} ;
-			print STDERR "IPID $netid\n";
 
 		} elsif ($requested_user->{md5id}) {
 			$netid = $requested_user->{md5id} ;
-			print STDERR "MD5ID $netid\n";
 
 		} else {
 			$netid = $requested_user->{subnetid} ;
-			print STDERR "SUBNETID $netid\n";
 		}
 
 		$title = getTitle('user_netID_user_title', {
@@ -1200,6 +1199,7 @@ sub saveUserAdmin {
 		$user_edits_table->{seclev} = $form->{seclev};
 		$user_edits_table->{rtbl} = $form->{rtbl} eq 'on' ? 1 : 0 ;
 		$user_edits_table->{author} = $form->{author} ? 1 : 0 ;
+		$user_edits_table->{defaultpoints} = $form->{defaultpoints};
 
 		$slashdb->setUser($id, $user_edits_table);
 		$note .= getMessage('saveuseradmin_saveduser', { field => $user_editfield_flag, id => $id });
@@ -1598,7 +1598,6 @@ sub displayForm {
 
 	$op ||= 'displayform';
 
-	print STDERR "DISPLAYFORM op $op\n";
 	my $ops = {
 		displayform 	=> 'loginForm',
 		edithome	=> 'loginForm',
@@ -1699,12 +1698,11 @@ sub getUserAdmin {
 	my $constants	= getCurrentStatic();
 
 	my($checked, $uidstruct, $readonly, $readonly_reasons);
-	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $author_select, $topabusers);
+	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $topabusers, $thresh_select);
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 
 	$field ||= 'uid';
-	print STDERR "FIELD $field\n";
 	if ($field eq 'uid') {
 		$user_edit = $slashdb->getUser($id);
 		$user_editfield = $user_edit->{uid};
@@ -1720,7 +1718,7 @@ sub getUserAdmin {
 	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{md5id} = $id;
-		$uidlist = $slashdb->getUIDList('md5id', ($user_edit->{ipid}));
+		$uidlist = $slashdb->getUIDList('md5id', ($user_edit->{md5id}));
 
 	} elsif ($field eq 'ipid') {
 		$user_edit->{nonuid} = 1;
@@ -1730,7 +1728,6 @@ sub getUserAdmin {
 
 	} elsif ($field eq 'subnetid') {
 		$user_edit->{nonuid} = 1;
-		print STDERR "SUBNET ID 1 $id\n";
 		if ($id =~ /^(\d+\.\d+\.\d+\.)\.?\d+?/) {
 			$id = $1 . ".0";
 			$user_edit->{subnetid} = $id;
@@ -1739,7 +1736,6 @@ sub getUserAdmin {
 		}
 
 		$user_editfield = $id;
-		print STDERR "SUBNET ID 2 $user_edit->{subnetid}\n";
 		$uidlist = $slashdb->getUIDList('subnetid', $user_edit->{subnetid});
 
 	} else {
@@ -1747,13 +1743,6 @@ sub getUserAdmin {
 		$user_editfield = $user_edit->{uid};
 		$iplist = $slashdb->getNetIDList($user_edit->{uid});
 	}
-
-	$authors = $slashdb->getDescriptions('authors');
-
-	$author_select = $authoredit_flag
-		? createSelect('authoruid', $authors, $user_edit->{uid}, 1)
-		: '';
-	$author_select =~ s/\s{2,}//g;
 
 	for my $formname ('comments', 'submit') {
 		$readonly->{$formname} = $slashdb->checkReadOnly($formname, $user_edit) ? ' CHECKED' : '';
@@ -1766,6 +1755,12 @@ sub getUserAdmin {
 
 	$user_edit->{author} = ($user_edit->{author} == 1) ? ' CHECKED' : '';
 	$user_edit->{rtbl} = ($user_edit->{rtbl} == 1) ? ' CHECKED' : '';
+	if (! $user->{nonuid}) {
+		my $threshcodes = $slashdb->getDescriptions('threshcode_values','',1);
+		$thresh_select = createSelect('defaultpoints', $threshcodes, $user_edit->{defaultpoints}, 1);
+
+	}
+	undef $iplist if defined $iplist && @$iplist < 1;
 
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
@@ -1777,9 +1772,9 @@ sub getUserAdmin {
 		seclev_field		=> $seclev_field,
 		checked 		=> $checked,
 		topabusers		=> $topabusers,
-		author_select		=> $author_select,
 		form_flag		=> $form_flag,
 		readonly		=> $readonly,
+		thresh_select 	=> $thresh_select,
 		readonly_reasons 	=> $readonly_reasons,
 		authoredit_flag 	=> $authoredit_flag
 	}, 1);

@@ -246,7 +246,8 @@ sub authorEdit {
 	$aid ||= $user->{uid};
 	$aid = '' if $form->{authornew};
 
-	my $authors = $slashdb->getDescriptions('authors');
+	# force it to get from the db and not cache
+	my $authors = $slashdb->getDescriptions('authors','',1);
 	my $author = $slashdb->getAuthor($aid) if $aid;
 
 	$author_select = createSelect('myuid', $authors, $aid, 1);
@@ -1104,7 +1105,7 @@ sub editStory {
 
 	if ($user->{seclev} >= 100) {
 		$authoredit_flag = 1;
-		my $authors = $slashdb->getDescriptions('authors');
+		my $authors = $slashdb->getDescriptions('authors','',1);
 		$author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
 	}
 

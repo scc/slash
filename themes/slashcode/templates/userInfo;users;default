@@ -52,6 +52,10 @@ before you do any moderation.<BR><P>
 
 [% END %]
 
+[% IF admin_flag %]
+[% admin_block %]
+[% END %]
+
 <P>
 [% IF useredit.homepage %]
 <A HREF="[% useredit.homepage %]">[% useredit.homepage %]</A><BR>
@@ -75,8 +79,17 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 
 [% IF useredit.pubkey %]
 		<B>Public Key</B><BR>
-		[% constants.rootdir %]/~[% nick %]/pubkey/
+		<A HREF="[% constants.rootdir %]/~[% nick %]/pubkey/">[% constants.rootdir %]/~[% nick %]/pubkey/</A>
 		<P>
+[% END %]
+
+[% IF stories %]
+	<BR><B>[% nick %] has submitted [% storycount %] stories.[% IF storycount > constants.user_submitter_display_default %] Below are the most recent [% form.min %] stories.[% END %]</B><P>
+	[% n = 0 %]
+	[% FOREACH story = stories %]
+		[% n = n + 1 %]
+			<A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</A> on [% Slash.timeCalc(story.time) %]<br>
+	[% END %]
 [% END %]
 
 <BR><B>[% nick %] has posted [% commentcount %] comments. [% IF commentcount > constants.user_comment_display_default %]Below are the most recent [% constants.user_comment_display_default %] comments.[% END %]</B><P>
@@ -100,18 +113,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
       </FONT>
 [% END %]
 
-[% IF stories %]
-	<BR><B>[% nick %] has submitted [% storycount %] stories.[% IF storycount > constants.user_submitter_display_default %] Below are the most recent [% form.min %] stories.[% END %]</B><P>
-	[% n = 0 %]
-	[% FOREACH story = stories %]
-		[% n = n + 1 %]
-			<A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</A> on [% Slash.timeCalc(story.time) %]<br>
-	[% END %]
-[% END %]
 
-[% IF admin_flag %]
-[% admin_block %]
-[% END %]
 
 __seclev__
 500
