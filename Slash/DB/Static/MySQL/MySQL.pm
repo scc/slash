@@ -56,21 +56,20 @@ sub sqlShowSlaveStatus {
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $story_table = 'stories';
 	my $cursor = $self->{_dbh}->prepare("SELECT
-		$story_table.sid, $story_table.title, time, dept, $story_table.uid,
+		stories.sid, stories.title, time, dept, stories.uid,
 		alttext,
-		image, $story_table.commentcount, $story_table.section as section,
+		image, stories.commentcount, stories.section as section,
 		story_text.introtext, story_text.bodytext,
 		topics.tid as tid
-		    FROM $story_table, story_text, topics, discussions
-		   WHERE $story_table.sid = story_text.sid
-		     AND $story_table.discussion = discussions.id
-		     AND $story_table.tid=topics.tid
+		    FROM stories, story_text, topics, discussions
+		   WHERE stories.sid = story_text.sid
+		     AND stories.discussion = discussions.id
+		     AND stories.tid=topics.tid
 		     AND ((displaystatus = 0 and \"$section\"=\"\")
-			      OR ($story_table.section=\"$section\" and displaystatus > -1))
+			      OR (stories.section=\"$section\" and displaystatus > -1))
 		     AND time < NOW()
-		     AND $story_table.writestatus != 'delete_me'
+		     AND stories.writestatus != 'delete_me'
 		ORDER BY time DESC
 		   LIMIT 10");
 
@@ -107,13 +106,12 @@ sub updateCommentTotals {
 sub getNewStoryTopic {
 	my($self) = @_;
 
-	my $story_table = 'stories';
 	my $sth = $self->sqlSelectMany(
-		"alttext, image, width, height, $story_table.tid as tid",
-		"$story_table, topics",
-		"$story_table.tid=topics.tid AND displaystatus = 0
+		'alttext, image, width, height, stories.tid as tid',
+		'stories, topics',
+		"stories.tid=topics.tid AND displaystatus = 0
 		AND writestatus != 'delete' AND time < NOW()",
-		"ORDER BY time DESC LIMIT 10"
+		'ORDER BY time DESC LIMIT 10'
 	);
 
 	return $sth;
@@ -294,16 +292,15 @@ sub updateStamps {
 sub getDailyMail {
 	my($self) = @_;
 
-	my $story_table = 'stories';
-	my $columns = "$story_table.sid, $story_table.title, $story_table.section,
+	my $columns = "stories.sid, stories.title, stories.section,
 		users.nickname,
-		$story_table.tid, $story_table.time, $story_table.dept,
+		stories.tid, stories.time, stories.dept,
 		story_text.introtext, story_text.bodytext";
-	my $tables = "$story_table, story_text, users";
+	my $tables = "stories, story_text, users";
 	my $where = "time < NOW() AND TO_DAYS(NOW())-TO_DAYS(time)=1 ";
-	$where .= "AND users.uid=$story_table.uid AND $story_table.sid=story_text.sid ";
-	$where .= "AND $story_table.displaystatus=0 ";
-	my $other = " ORDER BY $story_table.time DESC";
+	$where .= "AND users.uid=stories.uid AND stories.sid=story_text.sid ";
+	$where .= "AND stories.displaystatus=0 ";
+	my $other = " ORDER BY stories.time DESC";
 
 	my $email = $self->sqlSelectAll($columns, $tables, $where, $other);
 
@@ -345,10 +342,9 @@ sub getMailingList {
 # For portald
 sub getTop10Comments {
 	my($self) = @_;
-	my $story_table = 'stories';
-	my $c = $self->sqlSelectMany("$story_table.sid, title, cid, subject, date, nickname, comments.points",
-		"comments, $story_table, users",
-		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=$story_table.sid",
+	my $c = $self->sqlSelectMany("stories.sid, title, cid, subject, date, nickname, comments.points",
+		"comments, stories, users",
+		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=stories.sid",
 		"ORDER BY date DESC LIMIT 10");
 
 	my $comments = $c->fetchall_arrayref;
@@ -415,7 +411,6 @@ sub getSitesRDF {
 # tasks/refresh_sectionblocks.pl in the defaut theme.
 sub getSectionInfo {
 	my($self) = @_;
-	my $story_table = 'stories';
 	my $sections = $self->sqlSelectAllHashrefArray(
 		'section', "sections",
 		"isolate=0 and (section != '' and section != 'articles')
@@ -426,14 +421,14 @@ sub getSectionInfo {
 		@{%{$_}}{qw(month day)} =
 			$self->{_dbh}->selectrow_array(<<EOT);
 SELECT MONTH(time), DAYOFMONTH(time)
-FROM $story_table
+FROM stories
 WHERE section='$_->{section}' AND time < NOW() AND displaystatus > -1
 ORDER BY time DESC LIMIT 1
 EOT
 
 		$_->{count} =
 			$self->{_dbh}->selectrow_array(<<EOT);
-SELECT COUNT(*) FROM $story_table
+SELECT COUNT(*) FROM stories
 WHERE 	section='$_->{section}' AND
 	TO_DAYS(NOW()) - TO_DAYS(time) <= 2 AND time < NOW() AND
 	displaystatus > -1

@@ -292,8 +292,6 @@ sub getMetamodComments {
 	#require Benchmark;
 	#my $t0 = new Benchmark;
 
-	my $comment_table = 'comments';
-
 	# We first check to see if we have any moderator records that need
 	# processing at the current count level If not, we then increment the
 	# count level and use that.
@@ -368,16 +366,16 @@ sub getMetamodComments {
 		local $" = ',';
 		$comments = $self->sqlSelectAllHashref(
 			'cid',
-			"$comment_table.cid, $comment_table.sid as sid, date,
+			'comments.cid, comments.sid as sid, date,
 			subject, discussions.sid as discussions_sid,
-			comment,comments.uid,pid, reason, sig, title, nickname",
+			comment,comments.uid,pid, reason, sig, title, nickname',
 	
-			"$comment_table, comment_text, discussions, users",
+			'comments, comment_text, discussions, users',
 
-			"$comment_table.cid in (@comments)
-			AND $comment_table.cid=comment_text.cid
-			AND $comment_table.uid=users.uid
-			AND discussions.id=$comment_table.sid"
+			"comments.cid in (@comments)
+			AND comments.cid=comment_text.cid
+			AND comments.uid=users.uid
+			AND discussions.id=comments.sid"
 		) if @comments;
 	}
 
@@ -451,21 +449,20 @@ sub getModeratorCommentLog {
 #
 # I've replaced it. - Cliff
 
-	my $comment_table = 'comments'; 
 	# We no longer need SID as CID is now unique.
-	my $comments = $self->sqlSelectMany("$comment_table.sid as sid,
-				 $comment_table.cid as cid,
-				 $comment_table.points as score,
+	my $comments = $self->sqlSelectMany("comments.sid as sid,
+				 comments.cid as cid,
+				 comments.points as score,
 				 moderatorlog.uid as uid,
 				 users.nickname as nickname,
 				 moderatorlog.val as val,
 				 moderatorlog.reason as reason,
 				 moderatorlog.ts as ts,
 				 moderatorlog.active as active",
-				"moderatorlog, users, $comment_table",
+				"moderatorlog, users, comments",
 				"moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
-			     AND $comment_table.cid=$cid
+			     AND comments.cid=$cid
 			     AND moderatorlog.active=1",
 				"ORDER BY ts"
 	);
@@ -634,10 +631,9 @@ sub createSubmission {
 #################################################################
 sub getStoryDiscussions {
 	my($self) = @_;
-	my $story_table = 'stories';
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
-		"discussions, $story_table",
-		"displaystatus != -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'",
+		"discussions, stories",
+		"displaystatus != -1 AND discussions.sid=stories.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'",
 		"ORDER BY time DESC LIMIT 50"
 	);
 
@@ -1004,9 +1000,8 @@ sub getUserEmail {
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
-	my $comment_table = 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $comment_table WHERE uid=$uid "
+			. " FROM comments WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -1020,9 +1015,8 @@ sub getCommentsByUID {
 sub getCommentsByNetID {
 	my($self, $id, $min) = @_;
 
-	my $comment_table = 'comments'; 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $comment_table WHERE ipid='$id' "
+			. " FROM comments WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -1036,9 +1030,8 @@ sub getCommentsByNetID {
 sub getCommentsBySubnetID{
 	my($self, $subnetid, $min) = @_;
 
-	my $comment_table = 'comments'; 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $comment_table WHERE subnetid='$subnetid' "
+			. " FROM comments WHERE subnetid='$subnetid' "
 			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -1205,8 +1198,7 @@ sub setTemplate {
 ########################################################
 sub getCommentChildren {
 	my($self, $cid) = @_;
-	my $comment_table = 'comments'; 
-	my($scid) = $self->sqlSelectAll('cid', $comment_table, "pid=$cid");
+	my($scid) = $self->sqlSelectAll('cid', 'comments', "pid=$cid");
 
 	return $scid;
 }
@@ -1219,10 +1211,9 @@ sub getCommentChildren {
 sub deleteComment {
 	my($self, $cid, $discussion_id) = @_;
 	my @comment_tables = qw( comment_text comments );
-	my $comment_table = "comments";
 	# We have to update the discussion, so make sure we have its id.
 	if (!$discussion_id) {
-		($discussion_id) = $self->sqlSelect("sid", $comment_table, "cid=$cid");
+		($discussion_id) = $self->sqlSelect("sid", 'comments', "cid=$cid");
 	}
 	my $total_rows = 0;
 	for my $table (@comment_tables) {
@@ -1240,9 +1231,7 @@ sub deleteComment {
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 
-	my $comment_table = 'comments'; 
-
-	$self->sqlSelect('pid', $comment_table, "sid='$sid' and cid=$cid");
+	$self->sqlSelect('pid', 'comments', "sid='$sid' and cid=$cid");
 }
 
 ########################################################
@@ -1251,8 +1240,7 @@ sub checkStoryViewable {
 	my($self, $sid) = @_;
 	return unless $sid;
 
-	my $story_table = 'stories';
-	my $count = $self->sqlCount($story_table, "sid='$sid' AND  displaystatus != -1 AND time < now()");
+	my $count = $self->sqlCount('stories', "sid='$sid' AND  displaystatus != -1 AND time < now()");
 	return $count;
 }
 
@@ -1576,11 +1564,10 @@ sub getSectionBlocks {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
-	my $story_table = 'stories';
-	my $authors = $self->sqlSelectAll("count(*) as c, stories.uid",
-		"$story_table, users_param",
+	my $authors = $self->sqlSelectAll('count(*) as c, stories.uid',
+		'stories, users_param',
 		"users_param.uid = stories.uid AND users_param.name='author' AND VALUE = '1'",
-		"GROUP BY uid ORDER BY c DESC"
+		'GROUP BY uid ORDER BY c DESC'
 	);
 
 	return $authors;
@@ -2410,10 +2397,9 @@ sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $story_table = 'stories';
 	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt",
-		"topics,$story_table",
-		"topics.tid=$story_table.tid
+		'topics,stories',
+		"topics.tid=stories.tid
 		$when
 		GROUP BY topics.tid
 		$order"
@@ -2584,9 +2570,8 @@ sub findCommentsDuplicate {
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
-	my $story_table = 'stories';
 	my($value) = $self->sqlSelect("count(*)",
-		$story_table,
+		'stories',
 		"tid=" . $self->sqlQuote($tid));
 
 	return $value;
@@ -2641,10 +2626,9 @@ sub getStoryByTime {
 	$where .= "   AND sid != '$story->{'sid'}'";
 
 	my $time = $story->{'time'};
-	my $story_table = 'stories';
 	my $returnable = $self->sqlSelectHashref(
 			'title, sid, section',
-			$story_table,
+			'stories',
 			"time $sign '$time' AND writestatus != 'delete' AND writestatus != 'archived' AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
@@ -2655,12 +2639,11 @@ sub getStoryByTime {
 ########################################################
 sub countStories {
 	my($self) = @_;
-	my $story_table = 'stories';
 	my $stories = $self->sqlSelectAll(
-		"$story_table.sid, $story_table.title, section, $story_table.commentcount, nickname",
-		"$story_table, users, discussions",
-		"$story_table.uid=users.uid AND $story_table.discussion=discussions.id",
-		"ORDER BY commentcount DESC LIMIT 10"
+		'stories.sid, stories.title, stories.section as section, stories.commentcount, nickname',
+		'stories, users, discussions',
+		'stories.uid=users.uid AND stories.discussion=discussions.id',
+		'ORDER BY commentcount DESC LIMIT 10'
 	);
 	return $stories;
 }
@@ -2774,10 +2757,9 @@ sub countUsers {
 ########################################################
 sub countStoriesTopHits {
 	my($self) = @_;
-	my $story_table = 'stories';
-	my $stories = $self->sqlSelectAll("sid,title,section,hits,users.nickname",
-		"$story_table,users", "$story_table.uid=users.uid",
-		"ORDER BY hits DESC LIMIT 10"
+	my $stories = $self->sqlSelectAll('sid,title,section,hits,users.nickname',
+		'stories,users', 'stories.uid=users.uid',
+		'ORDER BY hits DESC LIMIT 10'
 	);
 	return $stories;
 }
@@ -2787,10 +2769,9 @@ sub countStorySubmitters {
 	my($self) = @_;
 
 	my $ac_uid = getCurrentAnonymousCoward('uid');
-	my $story_table = 'stories';
-	my $submitters = $self->sqlSelectAll("count(*) as c, nickname",
-		"$story_table, users", "users.uid=$story_table.submitter AND users.uid != $ac_uid",
-		"GROUP BY users.uid ORDER BY c DESC LIMIT 10"
+	my $submitters = $self->sqlSelectAll('count(*) as c, nickname',
+		'stories, users', "users.uid=stories.submitter AND users.uid != $ac_uid",
+		'GROUP BY users.uid ORDER BY c DESC LIMIT 10'
 	);
 
 	return $submitters;
@@ -2799,10 +2780,9 @@ sub countStorySubmitters {
 ########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
-	my $story_table = 'stories';
-	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
-		"$story_table, users", "users.uid=$story_table.uid",
-		"GROUP BY $story_table.uid ORDER BY c DESC LIMIT 10"
+	my $authors = $self->sqlSelectAll('count(*) as c, nickname, homepage',
+		'stories, users', 'users.uid=stories.uid',
+		'GROUP BY stories.uid ORDER BY c DESC LIMIT 10'
 	);
 	return $authors;
 }
@@ -2880,20 +2860,19 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
-	my $comment_table = 'comments'; 
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $reply = $self->sqlSelectHashref(
-		"date,subject,$comment_table.points as points,
+		"date,subject,comments.points as points,
 		comment_text.comment as comment,realname,nickname,
-		fakeemail,homepage,$comment_table.cid as cid,sid,
+		fakeemail,homepage,comments.cid as cid,sid,
 		users.uid as uid",
-		"$comment_table,comment_text,users,users_info,users_comments",
+		"comments,comment_text,users,users_info,users_comments",
 		"sid=$sid_quoted
-		AND $comment_table.cid=$pid
+		AND comments.cid=$pid
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
 		AND comment_text.cid=$pid
-		AND users.uid=$comment_table.uid"
+		AND users.uid=comments.uid"
 	) || {};
 
 	# For a comment we're replying to, there's no need to mod.
@@ -2908,7 +2887,6 @@ sub getCommentsForUser {
 	my($self, $sid, $cid, $cache_read_only) = @_;
 
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = 'comments';
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
@@ -2916,22 +2894,22 @@ sub getCommentsForUser {
 	# harder to read/edit variable assignments?  -- pudge
 	my $sql;
 	$sql .= " SELECT	cid, date, date as time, subject, nickname, homepage, fakeemail, ";
-	$sql .= "	users.uid as uid, sig, $comment_table.points as points, pid, sid, ";
+	$sql .= "	users.uid as uid, sig, comments.points as points, pid, sid, ";
 	$sql .= " lastmod, reason, journal_last_entry_date, ipid, subnetid ";
-	$sql .= "	FROM $comment_table, users  ";
-	$sql .= "	WHERE sid=$sid_quoted AND $comment_table.uid=users.uid ";
+	$sql .= "	FROM comments, users  ";
+	$sql .= "	WHERE sid=$sid_quoted AND comments.uid=users.uid ";
 
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
-		$sql .= "	$comment_table.points >= " .
+		$sql .= "	comments.points >= " .
 			$self->sqlQuote($user->{threshold});
-		$sql .= "     OR $comment_table.uid=$user->{uid}"
+		$sql .= "     OR comments.uid=$user->{uid}"
 			unless $user->{is_anon};
 		$sql .= "     OR cid=$cid" if $cid;
 		$sql .= "	)";
 	}
 	$sql .= "	  ORDER BY ";
-	$sql .= "$comment_table.points DESC, " if $user->{commentsort} eq '3';
+	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ?
 		'DESC' : 'ASC';
@@ -3349,9 +3327,8 @@ sub _purgeCommentTextIfNecessary {
 sub getComments {
 	my($self, $sid, $cid) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = 'comments';
 	$self->sqlSelect("uid, pid, subject, points, reason, ipid, subnetid",
-		$comment_table,
+		'comments',
 		"cid=$cid AND sid=$sid_quoted"
 	);
 }
@@ -3360,12 +3337,11 @@ sub getComments {
 # Needs to be more generic in the long run. -Brian
 sub getStoriesBySubmitter {
 	my($self, $id, $limit) = @_;
-	my $story_table = 'stories';
 
 	$limit = 'LIMIT ' . $limit if $limit;
 	my $answer = $self->sqlSelectAllHashrefArray(
 		'sid,title,time',
-		$story_table, "submitter='$id'",
+		'stories', "submitter='$id'",
 		"ORDER by time DESC $limit");
 	return $answer;
 }
@@ -3386,8 +3362,6 @@ sub getStoriesEssentials {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my $story_table = 'stories';
-
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "time < NOW() ";
@@ -3402,7 +3376,7 @@ sub getStoriesEssentials {
 	# User Config Vars
 	$where .= "AND tid not in ($user->{extid}) "
 		if $user->{extid};
-	$where .= "AND $story_table.uid not in ($user->{exaid}) "
+	$where .= "AND stories.uid not in ($user->{exaid}) "
 		if $user->{exaid};
 	$where .= "AND section not in ($user->{exsect}) "
 		if $user->{exsect};
@@ -3433,12 +3407,12 @@ sub getStoriesEssentials {
 	}
 
 	my(@stories, @story_ids, @discussion_ids, $count);
-	my $cursor = $self->sqlSelectMany($columns, $story_table, $where, $other)
+	my $cursor = $self->sqlSelectMany($columns, 'stories', $where, $other)
 		or
 	errorLog(<<EOT);
 error in getStoriesEssentials
 	columns: $columns
-	story_table: $story_table
+	story_table: stories
 	where: $where
 	other: $other
 EOT
@@ -3467,24 +3441,21 @@ EOT
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $story_table = 'stories';
-	my $comment_table = 'comments'; 
 
-	my $where = "$story_table.sid=$comment_table.sid AND
-		     $story_table.uid=users.uid";
-	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
+	my $where = 'stories.sid=comments.sid AND stories.uid=users.uid';
+	$where .= ' AND stories.sid=' . $self->sqlQuote($sid) if $sid;
 	my $stories = $self->sqlSelectAll(
-		"section, $story_table.sid, users.nickname, title,
-		pid, subject, date, time, $comment_table.uid, cid, points",
-		"$story_table, $comment_table, users",
+		'section, stories.sid, users.nickname, title,
+		pid, subject, date, time, comments.uid, cid, points',
+		'stories, comments, users',
 		$where,
-		" ORDER BY points DESC, date DESC LIMIT 10 "
+		' ORDER BY points DESC, date DESC LIMIT 10 '
 	);
 
 	# First select the top scoring comments (which on Slashdot or
 	# any big site will just be the latest score:5 comments).
 	my $columns = "sid, pid, cid, uid, points, date, subject";
-	my $tables = $comment_table;
+	my $tables = 'comments';
 	$where = "1=1";
 	my $other = "ORDER BY points DESC, date DESC LIMIT 10";
 	my $top_comments = $self->sqlSelectAll($columns,$tables,$where,$other);
@@ -3496,12 +3467,12 @@ sub getCommentsTop {
 	# Meanwhile...
 	return $top_comments;
 
-#	my $where = "$comment_table.points >= 2 AND $story_table.discussion=$comment_table.sid AND $comment_table.uid=users.uid";
-#	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
+#	my $where = "comments.points >= 2 AND stories.discussion=comments.sid AND comments.uid=users.uid";
+#	$where .= " AND stories.sid=" . $self->sqlQuote($sid) if $sid;
 #	my $stories = $self->sqlSelectAll(
-#		"section, $story_table.sid, users.nickname, title, pid,
-#		subject, date, time, $comment_table.uid, cid, points",
-#		"$story_table, $comment_table, users",
+#		"section, stories.sid, users.nickname, title, pid,
+#		subject, date, time, comments.uid, cid, points",
+#		"stories, comments, users",
 #		$where,
 #		" ORDER BY points DESC, date DESC LIMIT 10"
 #	);
@@ -3579,9 +3550,8 @@ sub getTrollAddress {
 	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
 	my $days_back = int($hours_back / 24);
 	my $ipid = getCurrentUser('ipid');
-	my $comment_table = 'comments'; 
-	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
-			"$comment_table.cid = moderatorlog.cid AND
+	my($badIP) = $self->sqlSelect("sum(val)", "comments, moderatorlog",
+			"comments.cid = moderatorlog.cid AND
 			 ipid ='$ipid' AND moderatorlog.active=1 AND
 			 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
 	);
@@ -3596,11 +3566,10 @@ sub getTrollUID {
 	my $hours_back = getCurrentStatic('istroll_uid_hours') || 72;
 	my $days_back = int($hours_back / 24);
 	my $user = getCurrentUser();
-	my $comment_table = 'comments';
 	my($badUID) = $self->sqlSelect("sum(val)",
-		"$comment_table,moderatorlog",
-		"$comment_table.cid=moderatorlog.cid
-		AND $comment_table.uid=$user->{uid} AND moderatorlog.active=1
+		"comments,moderatorlog",
+		"comments.cid=moderatorlog.cid
+		AND comments.uid=$user->{uid} AND moderatorlog.active=1
 		AND TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
 	);
 	$badUID = 0 if !$badUID; # make sure it's not undef
@@ -3885,9 +3854,8 @@ sub linkNode {
 # Image Importing, Size checking, File Importing etc
 sub getUrlFromTitle {
 	my($self, $title) = @_;
-	my $story_table = 'stories';
 	my($sid) = $self->sqlSelect('sid',
-		$story_table,
+		'stories',
 		"title like '\%$title\%'",
 		'ORDER BY time DESC LIMIT 1'
 	);
@@ -3935,14 +3903,13 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $story_table = 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $columns = "hits, $story_table.commentcount as commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
-		. "time, name, $story_table.section, displaystatus, $story_table.writestatus";
-	my $tables = "$story_table, discussions, topics";
-	my $where = "$story_table.tid=topics.tid AND $story_table.discussion=discussions.id";
-	$where .= " AND $story_table.section='$user->{section}'" if $user->{section};
-	$where .= " AND $story_table.section='$form->{section}'"
+	my $columns = 'hits, stories.commentcount as commentcount, stories.sid, stories.title, stories.uid, '
+		. 'time, name, stories.section, displaystatus, stories.writestatus';
+	my $tables = "stories, discussions, topics";
+	my $where = "stories.tid=topics.tid AND stories.discussion=discussions.id";
+	$where .= " AND stories.section='$user->{section}'" if $user->{section};
+	$where .= " AND stories.section='$form->{section}'"
 		if $form->{section} && !$user->{section};
 	$where .= " AND time < DATE_ADD(NOW(), INTERVAL 72 HOUR) "
 		if $form->{section} eq "";
@@ -3985,12 +3952,10 @@ sub getStory {
 	my($self, $id, $val, $force_cache_freshen) = @_;
 	my $constants = getCurrentStatic();
 
-	my $story_table = 'stories';
-
 	# If our story cache is too old, expire it.
-	_genericCacheRefresh($self, $story_table, $constants->{story_expire});
-	my $table_cache = '_' . $story_table . '_cache';
-	my $table_cache_time= '_' . $story_table . '_cache_time';
+	_genericCacheRefresh($self, 'stories', $constants->{story_expire});
+	my $table_cache = '_stories_cache';
+	my $table_cache_time= '_stories_cache_time';
 
 	my $val_scalar = 1;
 	$val_scalar = 0 if !$val or ref($val);
@@ -4003,7 +3968,7 @@ sub getStory {
 		# but why do a join if it's not needed?
 		my($append, $answer, $db_id);
 		$db_id = $self->sqlQuote($id);
-		$answer = $self->sqlSelectHashref('*', $story_table, "sid=$db_id");
+		$answer = $self->sqlSelectHashref('*', 'stories', "sid=$db_id");
 		$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
 		for my $key (keys %$append) {
 			$answer->{$key} = $append->{$key};
@@ -4881,29 +4846,24 @@ sub getRelatedLinks {
 ########################################################
 # single big select for ForumZilla ... if someone wants to
 # improve on this, please go ahead
-# pudge, could/should we add $story_table.discussion=discussions.id to the WHERE or JOIN? - Jamie
 sub fzGetStories {
 	my($self, $section) = @_;
 	my $slashdb = getCurrentDB();
 	my $section_dbi = $self->sqlQuote($section || '');
 
-	my($comment_table, $story_table);
-	$comment_table = "comments";
-	$story_table  = "stories";
-
-#,MAX($comment_table.date) AS lastcommentdate
-#LEFT OUTER JOIN $comment_table ON discussions.id = $comment_table.sid
+#,MAX(comments.date) AS lastcommentdate
+#LEFT OUTER JOIN comments ON discussions.id = comments.sid
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-$story_table.sid, $story_table.title, time, commentcount
+stories.sid, stories.title, time, commentcount
 S
-discussions, $story_table
+discussions, stories
 F
-$story_table.sid = discussions.sid
+stories.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
-OR ($story_table.section=$section_dbi and displaystatus > -1))
-AND time < NOW()  $story_table.writestatus != 'delete' AND $story_table.writestatus != 'archived'
+OR (stories.section=$section_dbi and displaystatus > -1))
+AND time < NOW()  stories.writestatus != 'delete' AND stories.writestatus != 'archived'
 W
-GROUP BY $story_table.sid
+GROUP BY stories.sid
 ORDER BY time DESC
 LIMIT 10
 E
