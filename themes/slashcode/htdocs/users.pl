@@ -660,7 +660,8 @@ sub showInfo {
 		}
 
 		$karma_flag = 1 if $admin_flag;
-		$nick = strip_literal($nick || $requested_user->{nickname});
+		my $nick_plain = $nick ||= $requested_user->{nickname};
+		$nick = strip_literal($nick);
 
 		if ($requested_user->{uid} == $user->{uid}) {
 			$karma_flag = 1;
@@ -689,6 +690,7 @@ sub showInfo {
 
 		slashDisplay('userInfo', {
 			title			=> $title,
+			nick_plain		=> $nick_plain,
 			nick			=> $nick,
 			useredit		=> $requested_user,
 			points			=> $points,
@@ -1348,7 +1350,7 @@ sub saveUser {
 	$form->{pubkey} = strip_nohtml($form->{pubkey}, 1);
 
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
-	$form->{homepage}	= fixurl($form->{homepage});
+	$form->{homepage}	= fudgeurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
 
 	# for the users table

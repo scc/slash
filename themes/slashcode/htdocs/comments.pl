@@ -339,7 +339,7 @@ sub createDiscussion {
 			: $ENV{HTTP_REFERER} =~ m|\Q$constants->{rootdir}/comments.pl\E$|
 				? ""
 				: $ENV{HTTP_REFERER};
-		$form->{url}	= fixurl($newurl);
+		$form->{url}	= fudgeurl($newurl);
 		$form->{title}	= strip_nohtml($form->{title});
 
 
@@ -956,7 +956,13 @@ sub moderateCid {
 				} else {
 					# Some other kind of discussion,
 					# probably poll, journal entry, or
-					# user-created;  don't trust its url.
+					# user-created;  don't trust its url. -- jamie
+					# I really don't like this.  I want users
+					# to be able to go to the poll or journal
+					# directly.  we could consider matching a pattern
+					# for journal.pl or pollBooth.pl etc.,
+					# but that is not great.  maybe a field in discussions
+					# for whether or not url is trusted. -- pudge
 					$discussion->{realurl} =
 						"$constants->{absolutedir}/comments.pl?sid=$discussion->{id}";
 				}

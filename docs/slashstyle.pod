@@ -426,17 +426,29 @@ as it originally appeared.  The most common use of this is for
 TEXTAREA form elements.  All text put into a TEXTAREA element
 must be run through strip_literal.
 
-=item fixurl
+=item fudgeurl
 
 This takes a URL and strips out bad things.  It encodes illegal characters
 to the proper escape sequences, it strips out JavaScript, etc.
 It should be used on I<every> URL that we get from outside Slash,
 whether supplied by a user, or an RSS file, or anything else.
+Example:
+
+	$url = fudgeurl($user->{homepage});
+
+=item fixurl
+
+The function called by C<fudgeurl> that does just the encoding of
+illegal characters to the proper escape sequences.
+It should be used on every URL that we get from I<inside> Slash
+that might contain unknown data.  For example:
+
+	$url = "http://www.example.com/~" . fixurl($data) . "/";
 
 =item fixparam
 
 This is similar to fixurl, but it only encodes characters that are
-in the parameter portion of a URL, instead of the entire URL.
+in the parameter portion of a URL, instead of the rest of the URL.
 Example:
 
 	$url = "http://www.example.com/script.pl?op=" . fixparam($data);
@@ -1002,6 +1014,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.8  2001/09/11 01:26:34  pudge
+	fixurl fixes, including new fudgeurl (mostly) internal function, and new code for parsing ~username stuff (which should be created with fixparam from now on); also the author displaying for users who are no longer authors
+	
 	Revision 1.1.2.7  2001/08/23 18:23:20  pudge
 	More stats and logging fixes
 	

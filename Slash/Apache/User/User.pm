@@ -243,23 +243,25 @@ sub userdir_handler {
 	my($r) = @_;
 
 	my $constants = getCurrentStatic();
-	my $uri = $r->uri;
+
+	# note that, contrary to the RFC, a + in this handler
+	# will be treated as a space; the only way to get a +
+	# is to encode it, such as %2B
+	my $uri = $r->the_request;
+	$uri =~ s/^\S+\s+//;
+	$uri =~ s/\s+\S+$//;
+	$uri =~ s/\+/ /g;
+	$uri =~ s/%([a-fA-F0-9]{2})/pack('C', hex($1))/ge;
+
 	if ($constants->{rootdir}) {
 		my $path = URI->new($constants->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
 	}
 
-	# what's going on here?  matching ~ seems like the
-	# wrong thing to do, since you are going to match
-	# it again in the next if ... ?  if this is correct,
-	# please comment as to why --pudge	
-	# Two different uses. ~/ goes to your personal 
-	# pages while ~username/ takes you to other people's
-	# pages. -Brian
 	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
 		my $match = $1;
 		if ($r->header_in('Cookie') =~ $USER_MATCH) {
-			my($toss,$op) = split /\//, $match, 3;
+			my($toss, $op) = split /\//, $match, 3;
 			# Its past five, and the below makes it go -Brian
 			$op ||= $toss;
 			if ($op eq 'journal') {
@@ -282,11 +284,18 @@ sub userdir_handler {
 		} else {
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
+			return OK;
 		}
 	}
 
+	# assuming Apache/mod_perl is decoding the URL in ->uri before
+	# returning it, we have to re-encode it with fixparam().  that
+	# will change if somehow Apache/mod_perl no longer decodes before
+	# returning the data. -- pudge
 	if ($uri =~ m[^/~(.+)]) {
+		# this won't work if the nick has a "/" in it ...
 		my($nick, $op) = split /\//, $1, 3;
+		$nick = fixparam($nick);	# make safe to pass back to script
 		if ($op eq 'journal') {
 			$r->args("nick=$nick&op=display");
 			$r->uri('/journal.pl');

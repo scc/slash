@@ -17,7 +17,7 @@ __template__
 A user has given a <B>[% constants.reasons.${moderation.reason} %] ([% moderation.value %])</B> moderation to
 your comment, <B><A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid
 %]">[% comment.subject %]</A></B>, attached to
-<B><A HREF="[% discussion.url %]">[% discussion.title %]</A></B>.
+<B><A HREF="[% discussion.realurl %]">[% discussion.title %]</A></B>.
 Your comment is currently scored <B>[% constants.reasons.${comment.reason} %] ([% comment.points %])</B>.
 </P>
 

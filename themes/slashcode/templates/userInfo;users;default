@@ -79,7 +79,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 
 [% IF useredit.pubkey %]
 		<B>Public Key</B><BR>
-		<A HREF="[% constants.rootdir %]/~[% nick %]/pubkey/">[% constants.absolutedir %]/~[% nick %]/pubkey/</A>
+		<A HREF="[% constants.rootdir %]/~[% nick_plain | fixparam %]/pubkey/">[% constants.absolutedir %]/~[% nick_plain | fixparam %]/pubkey/</A>
 		<P>
 [% END %]
 

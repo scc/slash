@@ -3870,12 +3870,23 @@ sub getAuthors {
 		return \%return;
 	}
 
+	my $where;
+	# allow overriding with set of UIDs
+	if (ref($cache_flag) eq 'ARRAY') {
+		$where = 'users.uid IN (' .
+			(join ",", map { $self->sqlQuote($_) } @$cache_flag) .
+		')';
+	} else {
+		$where = 'users_param.name="author" AND users_param.value=1';
+	}
+
 	$self->{$table_cache} = {};
 	my $sth = $self->sqlSelectMany(
 		'users.uid,nickname,fakeemail,homepage,bio',
 		'users,users_info,users_param',
-		'users_param.name="author" and users_param.value=1 and ' .
-		'users.uid = users_param.uid and users.uid = users_info.uid');
+		$where .
+		'AND users.uid = users_param.uid AND users.uid = users_info.uid'
+	);
 	while (my $row = $sth->fetchrow_hashref) {
 		$self->{$table_cache}{ $row->{'uid'} } = $row;
 	}

@@ -298,6 +298,7 @@ my $filters = Template::Filters->new({
 	FILTERS => {
 		fixparam	=> \&fixparam,
 		fixurl		=> \&fixurl,
+		fudgeurl	=> \&fudgeurl,
 		strip_anchor	=> \&strip_anchor,
 		strip_attribute	=> \&strip_attribute,
 		strip_code	=> \&strip_code,
@@ -424,20 +425,22 @@ from the given list.
 
 	[% mylist.rand %]  # return single random element from mylist
 
-Also provided are some filters.  The C<fixurl>, C<fixparam>, and
-C<strip_*> filters are just frontends to the functions of those
+Also provided are some filters.  The C<fixurl>, C<fixparam>, C<fudgeurl>,
+and C<strip_*> filters are just frontends to the functions of those
 names in the Slash API:
 
 	[% FILTER strip_literal %]
 		I think that 1 > 2!
 	[% END %]
 
-	<A HREF="[% env.script_name %]?op=[% FILTER fixparam %][% form.op %][% END %]">
+(Note that [% var | filter %] is a synonym for [% FILTER filter; var; END %].)
+
+	<A HREF="[% env.script_name %]?op=[% form.op | fixparam %]">
 
 Each strip_* function in Slash::Utility is also available as a filter.
 It might seem simpler to just use the functional form:
 
-	[% FILTER strip_nohtml %][% form.something %][% END %]
+	[% form.something | strip_nohtml %]
 	[% Slash.strip_nohtml(form.something) %]
 
 But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>)

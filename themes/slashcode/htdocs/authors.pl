@@ -16,7 +16,7 @@ sub main {
 
 	my $section = $slashdb->getSection($form->{section});
 	my $list    = $slashdb->getAuthorDescription();
-	my $authors = $slashdb->getAuthors();
+	my $authors = $slashdb->getAuthors([ map { $_->[1] } @$list ]);
 
 	header("$constants->{sitename}: Authors", $section->{section});
 	slashDisplay('main', {

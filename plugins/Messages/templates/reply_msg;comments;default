@@ -19,7 +19,7 @@ __template__
 %]">[% reply.subject %]</A></B>, in reply to your comment,
 <B><A HREF="[% constants.rootdir %]/comments.pl?sid=[% parent.sid %]&amp;cid=[% parent.cid
 %]">[% parent.subject %]</A></B>, attached to
-<B><A HREF="[% discussion.url %]">[% discussion.title %]</A></B>.
+<B><A HREF="[% discussion.realurl %]">[% discussion.title %]</A></B>.
 </P>
 
 [% ELSE %]

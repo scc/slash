@@ -51,6 +51,7 @@ use vars qw($VERSION @EXPORT);
 	fixint
 	fixparam
 	fixurl
+	fudgeurl
 	formatDate
 	getArmoredEmail
 	html2text
@@ -856,7 +857,7 @@ Tag after processing.
 =item Dependencies
 
 Uses the "approvetags" variable in the vars table.  Passes URLs
-in HREFs through C<fixurl>.
+in HREFs through C<fudgeurl>.
 
 =back
 
@@ -870,13 +871,13 @@ sub approveTag {
 
 	# Take care of URL:foo and other HREFs
 	# Using /s means that the entire variable is treated as a single line
-	# which means \n will not fool it into stopping processing.  fixurl()
+	# which means \n will not fool it into stopping processing.  fudgeurl()
 	# knows how to handle multi-line URLs (it removes whitespace).
 	if ($tag =~ /^URL:(.+)$/is) {
-		my $url = fixurl($1);
+		my $url = fudgeurl($1);
 		return qq!<A HREF="$url">$url</A>!;
 	} elsif ($tag =~ /href\s*=(.+)$/is) {
-		my $url = fixurl($1);
+		my $url = fudgeurl($1);
 		return qq!<A HREF="$url">!;
 	}
 
@@ -897,8 +898,6 @@ Prepares data to be a parameter in a URL.  Such as:
 =over 4
 
 	my $url = 'http://example.com/foo.pl?bar=' . fixparam($data);
-
-=item Function actually calls C<fixurl(DATA, 1)>.
 
 =item Parameters
 
@@ -926,7 +925,42 @@ sub fixparam {
 
 #========================================================================
 
-=head2 fixurl(DATA [, PARAM])
+=head2 fixurl(DATA)
+
+Prepares data to be a URL or in part of a URL.  Such as:
+
+=over 4
+
+	my $url = 'http://example.com/~' . fixurl($data) . '/';
+
+=item Parameters
+
+=over 4
+
+=item DATA
+
+The data to be escaped.
+
+=back
+
+=item Return value
+
+The escaped data.
+
+=back
+
+=cut
+
+sub fixurl {
+	my($url) = @_;
+	# add '#' to allowed characters, since it is often included
+	$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
+	return $url;
+}
+
+#========================================================================
+
+=head2 fudgeurl(DATA)
 
 Prepares data to be a URL.  Such as:
 
@@ -942,16 +976,6 @@ Prepares data to be a URL.  Such as:
 
 The data to be escaped.
 
-=item PARAM
-
-Boolean for whether DATA is a whole URL, or just parameter
-data for a URL, for use like:
-
-	$url = 'http://example.com/foo.pl?bar=' . fixurl($data, 1);
-
-It is normally best to, instead of calling C<fixurl(DATA, 1)>, call
-C<fixparam(DATA)>, which is just a wrapper.
-
 =back
 
 =item Return value
@@ -962,7 +986,7 @@ The escaped data.
 
 =cut
 
-sub fixurl {
+sub fudgeurl {
 	my($url) = @_;
 
 	# Remove quotes and whitespace (we will expect some at beginning and end,
@@ -974,8 +998,8 @@ sub fixurl {
 	$url =~ s/[<>].*//;
 	# strip surrounding ' if exists
 	$url =~ s/^'(.+?)'$/$1/g;
-	# add '#' to allowed characters; escape anything not allowed.
-	$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
+	# escape anything not allowed
+	$url = fixurl($url);
 	# run it through the grungy URL miscellaneous-"fixer"
 	$url = fixHref($url) || $url;
 
