@@ -490,6 +490,7 @@ CREATE TABLE stories (
 	FOREIGN KEY (section) REFERENCES sections(section),
 	INDEX frontpage (time, displaystatus,section,writestatus),
 	KEY time (time),
+	KEY submitter (submitter),
 	KEY searchform (displaystatus,time)
 ) TYPE = myisam;
 
@@ -517,6 +518,7 @@ CREATE TABLE story_heap (
 	PRIMARY KEY (sid),
 	INDEX frontpage (time, displaystatus,section,writestatus),
 	KEY time (time),
+	KEY submitter (submitter),
 	KEY searchform (displaystatus,time)
 ) TYPE=heap;
 
