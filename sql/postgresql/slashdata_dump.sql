@@ -264,20 +264,18 @@ INSERT INTO content_filters VALUES (3,'^(?:\\s+)','gi','postercomment',0.0000,40
 INSERT INTO content_filters VALUES (4,'(?:(?:\\W){5,})','gi','postercomment',0.0000,5,25,'Junk character post.',0);
 INSERT INTO content_filters VALUES (5,'(?:\\b(?:[^a-zA-Z0-9])+\\b)','gi','postercomment',0.0000,10,10,'Junk character post.',0);
 INSERT INTO content_filters VALUES (6,'(?:\\b(?:[^a-zA-Z0-9])+\\b)','gi','postersubj',0.0000,10,0,'Junk character post.',0);
-INSERT INTO content_filters VALUES (7,'^(\\w+ \\w+\\s?).*\\1+.*','gi','postercomment',0.0000,0,0,'Junk character post.',0);
-INSERT INTO content_filters VALUES (8,'^(\\w+ \\w+\\s?).*\\1+.*','gi','postersubj',0.0000,0,0,'Junk character post.',0);
-INSERT INTO content_filters VALUES (9,'^(.)\\1{5,}$','gi','postersubj',0.0000,0,0,'Junk character post.',0);
-INSERT INTO content_filters VALUES (11,'^(?:.)$','gi','postersubj',0.0000,0,0,'One character. Hmmm. Gee, might this be a troll?',0);
-INSERT INTO content_filters VALUES (12,'^(?:.)$','gi','postercomment',0.0000,0,0,'One character. Hmmm. Gee, might this be a troll?',0);
-INSERT INTO content_filters VALUES (13,'[\\\\\\,\\.\\-\\_\\*\\|\\}\\{\\]\\[\\@\\&\\%\\$\\s\\)\\(\\?\\!\\^\\=\\+\\~\\`\\\"\\\']','gi','postercomment',0.6000,0,10,'Ascii art. How creative. Not here though.',0);
-INSERT INTO content_filters VALUES (14,'[^a-zA-Z0-9]','gi','postercomment',0.6000,0,10,'Ascii Art. How creative. Not here though.',0);
-INSERT INTO content_filters VALUES (15,'[^a-zA-Z0-9]','gi','postersubj',0.6000,0,10,'Ascii Art. How creative. Not here though.',0);
-INSERT INTO content_filters VALUES (16,'[^a-z]','g','postercomment',0.5000,0,2,'PLEASE DON\'T USE SO MANY CAPS. USING CAPS IS LIKE YELLING!',0);
-INSERT INTO content_filters VALUES (17,'[^a-z]','g','postersubj',0.5000,0,2,'PLEASE DON\'T USE SO MANY CAPS. USING CAPS IS LIKE YELLING!',0);
-INSERT INTO content_filters VALUES (18,'^(?:)$','gi','postersubj',0.0000,0,0,'Cat got your tongue? You mean you have nothing to say?',0);
-INSERT INTO content_filters VALUES (19,'^()$','gi','postercomment',0.0000,0,0,'Cat got your tongue? You mean you have nothing to say?',0);
-INSERT INTO content_filters VALUES (20,'\\w{80}','','postersubj',0.0000,0,0,'that\'s an awful long string of letters there!',0);
-INSERT INTO content_filters VALUES (21,'\\w{80}','','postercomment',0.0000,0,0,'that\'s an awful long string of letters there!',0);
+INSERT INTO content_filters VALUES (7,'^(.)\\1{5,}$','gi','postersubj',0.0000,0,0,'Junk character post.',0);
+INSERT INTO content_filters VALUES (8,'^(?:.)$','gi','postersubj',0.0000,0,0,'One character. Hmmm. Gee, might this be a troll?',0);
+INSERT INTO content_filters VALUES (9,'^(?:.)$','gi','postercomment',0.0000,0,0,'One character. Hmmm. Gee, might this be a troll?',0);
+INSERT INTO content_filters VALUES (10,'[\\\\\\,\\.\\-\\_\\*\\|\\}\\{\\]\\[\\@\\&\\%\\$\\s\\)\\(\\?\\!\\^\\=\\+\\~\\`\\\"\\\']','gi','postercomment',0.6000,0,10,'Ascii art. How creative. Not here though.',0);
+INSERT INTO content_filters VALUES (11,'[^a-zA-Z0-9]','gi','postercomment',0.6000,0,10,'Ascii Art. How creative. Not here though.',0);
+INSERT INTO content_filters VALUES (12,'[^a-zA-Z0-9]','gi','postersubj',0.6000,0,10,'Ascii Art. How creative. Not here though.',0);
+INSERT INTO content_filters VALUES (13,'[^a-z]','g','postercomment',0.5000,0,2,'PLEASE DON\'T USE SO MANY CAPS. USING CAPS IS LIKE YELLING!',0);
+INSERT INTO content_filters VALUES (14,'[^a-z]','g','postersubj',0.5000,0,2,'PLEASE DON\'T USE SO MANY CAPS. USING CAPS IS LIKE YELLING!',0);
+INSERT INTO content_filters VALUES (15,'^(?:)$','gi','postersubj',0.0000,0,0,'Cat got your tongue? You mean you have nothing to say?',0);
+INSERT INTO content_filters VALUES (16,'^(?:)$','gi','postercomment',0.0000,0,0,'Cat got your tongue? You mean you have nothing to say?',0);
+INSERT INTO content_filters VALUES (17,'\\w{80}','','postersubj',0.0000,0,0,'that\'s an awful long string of letters there!',0);
+INSERT INTO content_filters VALUES (18,'\\w{80}','','postercomment',0.0000,0,0,'that\'s an awful long string of letters there!',0);
 
 
 INSERT INTO dateformats VALUES (0,'%A %B %d, @%I:%M%p','Sunday March 21, @10:00AM');

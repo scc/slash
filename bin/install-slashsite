@@ -99,7 +99,7 @@ unless ($opts{'g'}) {
 } else {
 	$group = $opts{'g'};
 }
-$group_id = getpwnam($group) or die "$group is not a valid group name.\n";
+$group_id = getgrnam($group) or die "$group is not a valid group name.\n";
 
 if($opts{'r'}) {
 	$sitename = $host_noport;

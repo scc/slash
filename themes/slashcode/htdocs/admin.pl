@@ -1190,6 +1190,10 @@ sub editFilter {
 }
 
 ##################################################################
+# updateFilter - 3 possible actions
+# 1 - create new filter
+# 2 - update existing
+# 3 - delete existing
 sub updateFilter {
 	my($filter_action) = @_;
 
