@@ -63,6 +63,22 @@ CREATE TABLE accesslog (
 ) TYPE = myisam;
 
 #
+# Table structure for table 'authors_cache'
+#
+
+DROP TABLE IF EXISTS authors_cache;
+CREATE TABLE authors_cache (
+	uid mediumint UNSIGNED NOT NULL auto_increment,
+	nickname varchar(20) NOT NULL,
+	fakeemail varchar(75) NOT NULL,
+	homepage varchar(100) NOT NULL,
+	storycount mediumint NOT NULL,
+	bio text NOT NULL,
+	author tinyint DEFAULT 0 NOT NULL,
+	PRIMARY KEY (uid)
+) TYPE = myisam;
+
+#
 # Table structure for table 'backup_blocks'
 #
 
