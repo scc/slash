@@ -189,6 +189,7 @@ sub main {
 
 	# Display who is logged in right now.
 	footer();
+}
 
 
 ##################################################################

@@ -139,7 +139,7 @@ print STDERR "OP $I{F}{op}\n";
 	}
 
 	miniAdminMenu() if $I{U}{aseclev} > 100;
-	writeLog("users", $I{U}{nickname});
+	$I{dbobject}->writeLog("users", $I{U}{nickname});
 	footer();
 }
 
@@ -835,7 +835,7 @@ sub displayForm {
 	# users_dispform_newmsg1: users_dispform_newmsg2
 
 	my $form2= $I{dbobject}->getBlock('users_dispform_newmsg1','block');
-	$form2 .= $I{dbobject}->getBlock('users_dispform_newmsg2','block') if $I{F}{newuser};
+	$form2 .= $I{dbobject}->getBlock('users_dispform_newmsg2','block') if ! $I{F}{newuser};
 	$form2 .= eval prepBlock $I{dbobject}->getBlock('users_dispform_form2','block');
 
 	print $form2;
