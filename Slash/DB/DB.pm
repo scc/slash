@@ -112,6 +112,7 @@ This package is the front end interface to slashcode.
 By looking at the database parameter during creation
 it determines what type of database to inherit from.
 
+=head1 Methods
 
 =head2 createComment(FORM, USER, POINTS, DEFAULT_USER)
 
@@ -124,34 +125,24 @@ fear calling it.
 
 =item Parameters
 
-=over 4
-
 =item FORM
 
 FORM, as in a form structure. Pretty much no
 good reason why we have to pass this.
-
-=back
 
 =item USER
 
 USER, as in a USER structure. Pretty much no
 good reason why we have to pass this.
 
-=back
-
 =item POINTS
 
 Points for the comment.
-
-=back
 
 =item DEFAULT_USER
 
 Default user to use if the person is being a coward about
 posting.
-
-=back
 
 =item Return value
 
@@ -170,37 +161,25 @@ creates an entry in the moderator log.
 
 =item Parameters
 
-=over 4
-
 =item CID
 
 Comment ID.
-
-=back
 
 =item SID
 
 Story ID.
 
-=back
-
 =item UID
 
 UID of the user doing the moderation.
-
-=back
 
 =item VAL
 
 Value for moderation
 
-=back
-
 =item REASON
 
 Reason for moderation
-
-=back
 
 =item Return value
 
@@ -216,13 +195,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -238,13 +213,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -260,13 +231,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -282,13 +249,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -319,19 +282,13 @@ Increment the poll count for a given answer.
 
 =item Parameters
 
-=over 4
-
 =item QID
 
 QID is a question ID for polls.
 
-=back
-
 =item AID
 
 Answer ID for the poll
-
-=back
 
 =item Return value
 
@@ -348,13 +305,9 @@ form is optional.
 
 =item Parameters
 
-=over 4
-
 =item FORM
 
 Standard form structure.
-
-=back
 
 =item Return value
 
@@ -370,13 +323,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -392,13 +341,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -414,13 +359,9 @@ Save data into a filter.
 
 =item Parameters
 
-=over 4
-
 =item FORM
 
 Optional form.
-
-=back
 
 =item Return value
 
@@ -436,13 +377,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -460,19 +397,13 @@ variables for its entry.
 
 =item Parameters
 
-=over 4
-
 =item OP
 
 Opcode for this entry
 
-=back
-
 =item DATA
 
 Optional data for the accesslog
-
-=back
 
 =item Return value
 
@@ -504,26 +435,18 @@ maillist
 
 =item Parameters
 
-=over 4
-
 =item CODETYPE
 
 This is one of the valid types
-
-=back
 
 =item OPTIONAL
 
 Sometypes have an option flag
 
-=back
-
 =item CACHE_FLAG
 
 By placing a value in this parameter you force the database
 to reload the caches hash for this type.
-
-=back
 
 =item Return value
 
@@ -539,13 +462,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -561,13 +480,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -583,13 +498,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -605,13 +516,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -627,13 +534,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -649,13 +552,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -671,13 +570,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -693,13 +588,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -715,13 +606,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -737,13 +624,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -759,13 +642,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -781,13 +660,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -803,13 +678,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -825,13 +696,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -847,13 +714,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -869,13 +732,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -891,13 +750,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -913,13 +768,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -935,13 +786,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -957,13 +804,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -979,13 +822,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1001,13 +840,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1023,13 +858,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1045,13 +876,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1067,13 +894,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1089,13 +912,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1111,13 +930,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1133,13 +948,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1155,13 +966,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1177,13 +984,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1199,13 +1002,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1221,13 +1020,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1243,13 +1038,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1265,13 +1056,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1287,13 +1074,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1309,13 +1092,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1331,13 +1110,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1353,13 +1128,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1375,13 +1146,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1397,13 +1164,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1419,13 +1182,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1441,13 +1200,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1463,13 +1218,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1485,13 +1236,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1507,13 +1254,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1529,13 +1272,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1551,13 +1290,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1573,13 +1308,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1595,13 +1326,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1617,13 +1344,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1639,13 +1362,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1661,13 +1380,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1683,13 +1398,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1705,13 +1416,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1727,13 +1434,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1749,13 +1452,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1771,13 +1470,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1793,13 +1488,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1815,13 +1506,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1837,13 +1524,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1859,13 +1542,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1881,13 +1560,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1903,13 +1578,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1925,13 +1596,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1947,13 +1614,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1969,13 +1632,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -1991,13 +1650,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2013,13 +1668,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2035,13 +1686,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2057,13 +1704,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2079,13 +1722,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2101,13 +1740,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2123,13 +1758,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2145,13 +1776,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2167,13 +1794,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2189,13 +1812,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2211,13 +1830,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2233,13 +1848,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2255,13 +1866,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2277,13 +1884,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2299,13 +1902,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2321,13 +1920,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2343,13 +1938,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2365,13 +1956,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2387,13 +1974,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2409,13 +1992,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2431,13 +2010,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2453,13 +2028,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2475,13 +2046,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2497,13 +2064,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2519,13 +2082,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2541,13 +2100,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2563,13 +2118,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2585,13 +2136,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2607,13 +2154,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2629,13 +2172,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2651,13 +2190,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2673,13 +2208,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2695,13 +2226,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2717,13 +2244,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2739,13 +2262,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2761,13 +2280,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2783,13 +2298,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2805,13 +2316,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2827,13 +2334,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2849,13 +2352,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2871,13 +2370,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2893,13 +2388,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2915,13 +2406,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2937,13 +2424,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2959,13 +2442,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -2981,13 +2460,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3003,13 +2478,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3025,13 +2496,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3047,13 +2514,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3069,13 +2532,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3091,13 +2550,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3113,13 +2568,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3135,13 +2586,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3157,13 +2604,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3179,13 +2622,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3201,13 +2640,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3223,13 +2658,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3245,13 +2676,9 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
@@ -3267,86 +2694,15 @@ I am the default documentation, short and stout.
 
 =item Parameters
 
-=over 4
-
 =item KEY
 
 Key, as in the KEY
-
-=back
 
 =item Return value
 
 Fixed KEY.
 
 =back
-
-=head2 sqlTableExists(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 sqlSelectColumns(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 generatesession(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
 
 =head1 SEE ALSO
 
