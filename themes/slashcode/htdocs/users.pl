@@ -640,6 +640,7 @@ sub editHome {
 
 	my($formats, $title, $tzformat_select, $tzcode_select);
 	my $user = {};
+	#Is it a good idea to set this, this low
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
 	my $admin_block = '';
 

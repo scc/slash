@@ -93,14 +93,20 @@ sub displayTop {
 	my($form, $journal, $constants) = @_;
 	my $journals;
 
-	$journals = $journal->top($constants->{journal_top});
-	slashDisplay('journaltop', { journals => $journals, type => 'top' });
+	if($constants->{journal_top_posters}) {
+		$journals = $journal->top($constants->{journal_top});
+		slashDisplay('journaltop', { journals => $journals, type => 'top' });
+	}
 
-	$journals = $journal->topFriends($constants->{journal_top});
-	slashDisplay('journaltop', { journals => $journals, type => 'friend' });
+	if($constants->{journal_top_friend}) {
+		$journals = $journal->topFriends($constants->{journal_top});
+		slashDisplay('journaltop', { journals => $journals, type => 'friend' });
+	}
 
-	$journals = $journal->topRecent($constants->{journal_top});
-	slashDisplay('journaltop', { journals => $journals, type => 'recent' });
+	if($constants->{journal_top_recent}) {
+		$journals = $journal->topRecent($constants->{journal_top});
+		slashDisplay('journaltop', { journals => $journals, type => 'recent' });
+	}
 }
 
 sub displayFriends {

@@ -297,10 +297,10 @@ INSERT INTO submissions (subid, email, name, time, subj, story, tid, note, secti
 # Dumping data for table 'topics'
 #
 
-INSERT INTO topics (tid, image, alttext, width, height) VALUES (1,'topicnews.gif','News',34,44);
-INSERT INTO topics (tid, image, alttext, width, height) VALUES (2,'topiclinux.gif','Linux',60,70);
-INSERT INTO topics (tid, image, alttext, width, height) VALUES (3,'topicslashdot.gif','Slashdot',100,34);
-INSERT INTO topics (tid, image, alttext, width, height) VALUES (4,'topicslash.gif','Slash',81,36);
+INSERT INTO topics (tid, name, image, alttext, width, height) VALUES (1,'news', 'topicnews.gif','News',34,44);
+INSERT INTO topics (tid, name, image, alttext, width, height) VALUES (2,'linux', 'topiclinux.gif','Linux',60,70);
+INSERT INTO topics (tid, name, image, alttext, width, height) VALUES (3,'slashdot', 'topicslashdot.gif','Slashdot',100,34);
+INSERT INTO topics (tid, name, image, alttext, width, height) VALUES (4,'slash', 'topicslash.gif','Slash',81,36);
 
 #
 # Dumping data for table 'tzcodes'
@@ -435,6 +435,7 @@ INSERT INTO vars (name, value, description) VALUES ('datadir','/usr/local/slash/
 INSERT INTO vars (name, value, description) VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed');
 INSERT INTO vars (name, value, description) VALUES ('defaultdisplaystatus','0','Default display status ...');
 INSERT INTO vars (name, value, description) VALUES ('defaultsection','articles','Default section to display');
+INSERT INTO vars (name, value, description) VALUES ('defaulttopic','1','Default topic to use');
 INSERT INTO vars (name, value, description) VALUES ('defaultwritestatus','1','Default write status for newly created articles');
 INSERT INTO vars (name, value, description) VALUES ('discussion_archive','15','Number of days till discussions are set to read only.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');

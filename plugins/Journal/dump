@@ -19,4 +19,8 @@ INSERT INTO vars (name, value, description) VALUES ('journal_default_display', '
 INSERT INTO vars (name, value, description) VALUES ('journal_default_theme', 'generic', 'Default theme to use on journal entries');
 INSERT INTO vars (name, value, description) VALUES ('journal_default_topic', 'journal', 'Default topic that all journal discussions belong to');
 INSERT INTO vars (name, value, description) VALUES ('journal_comments', '0', 'Turn on and off comments for journal entries');
+INSERT INTO vars (name, value, description) VALUES ('journal_top_posters', '1', 'Turn on and off top posters view');
+INSERT INTO vars (name, value, description) VALUES ('journal_top_friend', '1', 'Turn on and off top friends view');
+INSERT INTO vars (name, value, description) VALUES ('journal_top_recent', '1', 'Turn on and off top recent view');
+
 INSERT INTO blocks VALUES ('top10journals','',1000,'portald',NULL,'index',3,'Most Recent Journal Entries',1,NULL,'http://www.example.com/journal.pl?op=rss&content=top',1);

@@ -692,6 +692,7 @@ sub colorSave {
 # Topic Editor
 sub topicEdit {
 
+	my $constants = getCurrentStatic();
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
@@ -712,7 +713,15 @@ sub topicEdit {
 	closedir(DIR);
 
 	$topics_menu = $slashdb->getDescriptions('topics', '', 1);
+	$form->{nexttid} ||= $constants->{defaulttopic};
 	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid}, 1);
+	my $sections = $slashdb->getDescriptions('sections', '', 1);
+	my $section_topics = $slashdb->getDescriptions('topic-sections', $form->{nexttid}, 1);
+	my $sectionref;
+	while (my($section, $title) = each %$sections) {
+		$sectionref->{$section}{checked} = ($section_topics->{$section}) ? ' CHECKED' : '';
+		$sectionref->{$section}{title} = $title;
+	}
 
 	if (!$form->{topicdelete}) {
 
@@ -737,7 +746,8 @@ sub topicEdit {
 		images_flag		=> $images_flag,
 		topic			=> $topic,
 		topics_select		=> $topics_select,
-		image_select		=> $image_select
+		image_select		=> $image_select,
+		sectionref		=> $sectionref
 	});
 }
 
@@ -1184,8 +1194,6 @@ sub listStories {
 		my $td   = timeCalc($time_plain, '%A %B %d', 0);
 		my $td2  = timeCalc($time_plain, '%m/%d', 0);
 
-		$topic =~ s/^the//i;
-		$topic =~ s/\W+//g;
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
 		my $tbtitle = fixparam($title);
 		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {

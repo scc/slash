@@ -113,7 +113,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
 
 	'templatesections'
-		=> sub { $_[0]->sqlSelectMany('distinct section,section', 'templates') },
+		=> sub { $_[0]->sqlSelectMany('distinct section, section', 'templates') },
 
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') },
@@ -123,6 +123,9 @@ my %descriptions = (
 
 	'site_info'
 		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") },
+
+	'topic-sections'
+		=> sub { $_[0]->sqlSelectMany('section,1', 'section_topics', "tid = '$_[2]'") },
 
 	'forms'
 		=> sub { $_[0]->sqlSelectMany('value,value', 'site_info', "name = 'form'") },
@@ -2851,7 +2854,7 @@ sub getStoryList {
 
 	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, topics.name, section,
+	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, name, section,
 			displaystatus,writestatus
 			FROM $table,topics
 			WHERE $table.tid=topics.tid];

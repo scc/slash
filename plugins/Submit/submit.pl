@@ -296,6 +296,7 @@ sub displayForm {
 	}
 
 
+	$form->{tid} ||= $constants->{defaulttopic};
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),
 		savestory	=> $form->{story} && $form->{subj},

@@ -573,6 +573,7 @@ CREATE TABLE templates (
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
 	tid smallint UNSIGNED NOT NULL auto_increment,
+	name char(20) NOT NULL,
 	image char(30),
 	alttext char(40),
 	width tinyint,
