@@ -952,6 +952,8 @@ sub editUser {
 
 	$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 	$user_edit->{homepage} ||= "http://";
+	# Remove domain tags, they'll be added back in, in saveUser.
+	$user_edit->{sig} =~ s{</A[^>]+>}{</A>}gi;
 
 	$title = getTitle('editUser_title', { user_edit => $user_edit});
 
@@ -1311,15 +1313,24 @@ sub saveUser {
 		);
 	}
 
-	# strip_mode _after_ fitting sig into schema, 120 chars
-	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
+	# The schema is 160 chars but we limit their input to 120.
+	# If the sig becomes too long to fit (domain tagging causes
+	# string expansion and tag balancing can too), warn the user to
+	# use shorter domain names and don't save their change.
+	my $sig = strip_html(substr($form->{sig}, 0, 120));
+	$sig = balanceTags($sig);
+	$sig = addDomainTags($sig);
+	if (length($sig) > 160) {
+		print getError('sig_too_long_err');
+		$sig = undef;
+	}
+
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
 
 	# for the users table
 	my $user_edits_table = {
-		sig		=> $form->{sig},
 		homepage	=> $form->{homepage},
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
@@ -1327,6 +1338,7 @@ sub saveUser {
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
 	};
+	$user_edits_table->{sig} = $sig if defined $sig;
 
 	# don't want undef, want to be empty string so they
 	# will overwrite the existing record

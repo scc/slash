@@ -589,9 +589,11 @@ sub dispComment {
 		);
 	if ($want_tags) {
 		$comment->{comment} =~ s{</A ([^>]+)>}{</A> [$1]}gi;
+		$comment->{sig} =~ s{</A ([^>]+)>}{</A> [$1]}gi;
 		$comment_shrunk =~ s{</A ([^>]+)>}{</A> [$1]}gi if $comment_shrunk;
 	} else {
 		$comment->{comment} =~ s{</A[^>]+>}{</A>}gi;
+		$comment->{sig} =~ s{</A[^>]+>}{</A>}gi;
 		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
 	}
 

@@ -89,6 +89,10 @@ __template__
 [% CASE 'emailexists_err' %]
 	Sorry, [% FILTER strip_literal; form.realemail; END %] already exists in our userbase.<BR>
 
+[% CASE 'sig_too_long_err' %]
+	Sorry, adding domain tags to your sig made it too long. Please try again,
+	using fewer links or shorter domain names.<BR>
+
 [% CASE DEFAULT %]
 	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>
 
