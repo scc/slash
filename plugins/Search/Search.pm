@@ -75,7 +75,6 @@ sub findComments {
 	# Welcome to the join from hell -Brian
 	my $where;
 	$where .= " comments.sid = discussions.id ";
-	$where .= " AND discussions.sid = stories.sid ";
 	$where .= "	  AND $key "
 			if $form->{query};
 
@@ -94,7 +93,7 @@ sub findComments {
 	}
 
 
-	$sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
+	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
 	$sql .= " LIMIT $start, $limit" if $limit;
 
 	$self->sqlConnect();
