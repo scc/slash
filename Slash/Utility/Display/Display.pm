@@ -930,7 +930,9 @@ sub createMenu {
 	for my $item (sort { $a->{menuorder} <=> $b->{menuorder} } @$menu_items) {
 		next unless $user->{seclev} >= $item->{seclev};
 		push @$items, {
-			value => slashDisplay(\$item->{value}, {}, { Return => 1, Nocomm => 1 }),
+			value => $item->{value}
+				? slashDisplay(\$item->{value}, {}, { Return => 1, Nocomm => 1 })
+				: "",
 			label => slashDisplay(\$item->{label}, {}, { Return => 1, Nocomm => 1 })
 		};
 	}
