@@ -1,6 +1,7 @@
 package Slash::DB;
 
 use strict;
+use DBIx::Password;
 
 $Slash::DB::VERSION = '0.01';
 # Note to me (AKA Brian) GATEWAY_INTERFACE is not working. Need
@@ -8,11 +9,15 @@ $Slash::DB::VERSION = '0.01';
 sub new {
 	my($class, $user) = @_;
 	my $self = {};
-	my $dsn = 'mysql'; #This is just here for the moment.
+	my $dsn = DBIx::Password::getDriver($user);
 	if (defined $dsn) {
 		if ($dsn =~ /mysql/) {
 			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
+			if($ENV{GATEWAY_INTERFACE}) {
+				require Slash::DB::Static::MySQL;
+				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+			}
 		} elsif ($dsn =~ /oracle/) {
 			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
@@ -20,7 +25,7 @@ sub new {
 				require Slash::DB::Static::Oracle;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
 			}
-		} elsif ($dsn =~ /postgres/) {
+		} elsif ($dsn =~ /Pg/) {
 			require Slash::DB::PostgresSQL;
 			push(@Slash::DB::ISA, 'Slash::DB::PostgresSQL');
 			if($ENV{GATEWAY_INTERFACE}) {
