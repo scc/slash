@@ -930,7 +930,7 @@ sub editStory {
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 	
 	if ($form->{title}) { 
-		$slashdb->setSession($user->{nickname}, { lasttitle => $storyref->{title} });
+		$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
 		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');

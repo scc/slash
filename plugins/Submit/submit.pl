@@ -17,9 +17,8 @@ sub main {
 	my $form = getCurrentForm();
 
 	my $id = getFormkeyId($user->{uid});
-	my($section, $op, $aid) = (
-		$form->{section}, $form->{op}, $user->{nickname}
-	);
+	my($section, $op) = (
+		$form->{section}, $form->{op});
 	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
 
 	$form->{del}	||= 0;
@@ -55,7 +54,7 @@ sub main {
 			$id, getData('previewhead'));
 
 	} elsif ($op eq 'viewsub' && ($user->{submit_admin} || $constants->{submiss_view})) {
-		previewForm($aid, $form->{subid});
+		previewForm($form->{subid});
 
 	} elsif ($op eq 'SubmitStory') {
 		saveSub($id);
@@ -90,10 +89,9 @@ sub yourPendingSubmissions {
 
 #################################################################
 sub previewForm {
-	my($aid, $subid) = @_;
+	my($subid) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
 	my $sub = $slashdb->getSubmission($subid,
@@ -101,7 +99,7 @@ sub previewForm {
 
 	$sub->{email} = processSub($sub->{email});
 
-	$slashdb->setSession($user->{uid}, { lasttitle => $sub->{subj} });
+	$slashdb->setSession(getCurrentUser('uid'), { lasttitle => $sub->{subj} });
 
 	slashDisplay('previewForm', {
 		submission	=> $sub,
