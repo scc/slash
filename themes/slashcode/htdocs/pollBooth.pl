@@ -137,7 +137,6 @@ sub savepoll {
 sub vote {
 	my($qid, $aid) = @_;
 
-	my $qid_dbi = $I{dbh}->quote($qid);
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	# get valid answer IDs
@@ -172,9 +171,9 @@ sub vote {
 		}
 	} 
 
-	my($question->{'totalvotes'}, $question->{'question'}) = $I{dbobject}->getPollQuestion($qid, 'voters', 'question');
+	my $question = $I{dbobject}->getPollQuestion($qid, 'voters', 'question');
 
-	my($maxvotes) = sqlSelect("max(votes)", "pollanswers", "qid=$qid_dbi");
+	my $maxvotes  = getPollVotesMax($qid);
 
 	print <<EOT;
 <CENTER><TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="500">
@@ -184,15 +183,14 @@ EOT
 	titlebar("99%", $question->{'question'});
 	print qq!\t<FONT SIZE="2">$notes</FONT></TD></TR>!;
 
-	my $a = sqlSelectMany("answer,votes", "pollanswers", "qid=$qid_dbi ORDER by aid");
+	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
 
-	while (my($answer, $votes) = $a->fetchrow) {
+	for(@$answers) {
+		my($answer, $votes) = @$_;
 		my $imagewidth	= $maxvotes ? int (350 * $votes / $maxvotes) + 1 : 0;
 		my $percent	= $question->{'totalvotes'} ? int (100 * $votes / $question->{'totalvotes'}) : 0;
 		pollItem($answer, $imagewidth, $votes, $percent);
 	}
-
-	$a->finish;
 
 	my $postvote = blockCache("$I{currentSection}_postvote")
 		|| blockCache("postvote");
@@ -216,11 +214,11 @@ EOT
 sub listPolls {
 	$I{F}{min} ||= "0";
 
-	my $cursor = sqlSelectMany("qid, question, date_format(date,\"W M D\")",
-		"pollquestions order by date DESC LIMIT $I{F}{min},20");
+	my $questions = $I{dbobject}->getPollQuestionList($I{F}{min});
 
 	titlebar("99%", "$I{sitename} Polls");
-	while (my($qid, $question, $date) = $cursor->fetchrow) {
+	for (@$questions) {
+		my($qid, $question, $date) = @$_;
 		my $href = $I{U}{aseclev} >= 100
 			? qq! (<A HREF="$ENV{SCRIPT_NAME}?op=edit&qid=$qid">Edit</A>)!
 			: '';
@@ -231,12 +229,12 @@ EOT
 
 	}
 
-	my $startat = $I{F}{min} + $cursor->rows;
+	my $number = @$questions;
+	my $startat = $I{F}{min} + $number;
 	print <<EOT;
 <P><FONT SIZE="4"><B><A HREF="$ENV{SCRIPT_NAME}?min=$startat">More Polls</A></B></FONT>
 EOT
 
-	$cursor->finish;
 }
 
 main();

@@ -1248,6 +1248,14 @@ sub savePollQuestion {
 	}
 }
 ########################################################
+sub getPollQuestionList{
+	my ($self, $time) = @_;
+	my $questions = sqlSelectAll("qid, question, date_format(date,\"W M D\")",
+		"pollquestions order by date DESC LIMIT $time,20");
+
+	return $questions;
+}
+########################################################
 sub getPollAnswers {
 	my($self, $id, @val) = @_;
 	my $values = join ',', @val;
@@ -2516,7 +2524,11 @@ sub updateStory {
 }
 
 ##################################################################
-
+sub getPollVotesMax {
+	my ($self, $id) = @_;
+	my ($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{dbh}->quote($id));
+	return $answer;
+}
 ##################################################################
 # Probably should make this private at some point
 sub saveExtras {
