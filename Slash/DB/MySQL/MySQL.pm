@@ -3500,6 +3500,8 @@ sub _getTemplateNameCache {
 
 ########################################################
 sub existsTemplate {
+	# if this is going to get called a lot, we already
+	# have the template names cached -- pudge
 	my($self, $template) = @_;
 	my $answer = $self->sqlSelect('tpid', 'templates', "name = '$template->{name}' AND section = '$template->{section}' AND page = '$template->{page}'");
 	return $answer;

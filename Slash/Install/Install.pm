@@ -335,7 +335,7 @@ sub _install {
 		for (@{$hash->{'template'}}) {
 			my $id;
 			my $template = $self->readTemplateFile("$hash->{'dir'}/$_");
-			if($template and ($id = $self->{slashdb}->existsTemplate($template))) {
+			if ($template and ($id = $self->{slashdb}->existsTemplate($template))) {
 				$self->{slashdb}->setTemplate($id, $template);
 			} else {
 				$self->{slashdb}->createTemplate($template);

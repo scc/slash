@@ -182,12 +182,12 @@ while ($select ne 'q'){
 		last;
 	} elsif ($select eq 'a') {
 		for (keys %$plugins) {
-			my $answer = $plugins->{$_}->{name};
+			my $answer = $plugins->{$_}{name};
 			$themes->{$theme}{plugin}{$answer} = 1;	
 		}
 		last;
 	} elsif ($select ne 'q') {
-		my $answer = $plugins->{$select}->{name};
+		my $answer = $plugins->{$select}{name};
 		$themes->{$theme}{plugin}{$select} = 1;	
 	}
 }
