@@ -143,6 +143,12 @@ sub _install {
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
 
+	$self->create({
+		name            => 'plugin',
+		value           => $plugin->{'name'},
+		description     => $plugin->{'description'},
+	});
+
 	for (@{$plugin->{'htdoc'}}) {
 		if ($symlink) {
 			symlink "$plugin->{'dir'}/$_", "$prefix_site/htdocs/$_";

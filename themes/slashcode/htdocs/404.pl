@@ -34,7 +34,7 @@ sub main {
 		});
 	}
 
-	writeLog('404', '404');
+	writeLog('404');
 	footer();
 }
 

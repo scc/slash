@@ -51,7 +51,7 @@ sub main {
 		$ops{$form->{op}}->($form);
 	} 
 
-	writeLog("search", $form->{query})
+	writeLog($form->{query})
 		if $form->{op} =~ /^(?:comments|stories|users)$/;
 	footer();	
 }

@@ -1823,8 +1823,7 @@ The 'dispStory' template block.
 sub dispStory {
 	my($story, $author, $topic, $full) = @_;
 	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my $form_section = getCurrentForm('section');
 
 	my $section = getSection($story->{section});
 
@@ -1834,10 +1833,10 @@ sub dispStory {
 		topic	=> $topic,
 		author	=> $author,
 		full	=> $full,
-		magic	=> (!$full && index($story->{title}, ':') == -1
-			&& $story->{section} ne $constants->{defaultsection}
-			&& $story->{section} ne $form->{section})
-		width	=> $constants->{titlebar_width},
+		magic	=> (!$full && index($story->{title}, ':') ==( -1
+			and ($story->{section} ne $constants->{defaultsection})
+			and ($story->{section} ne $form_section))),
+		width	=> $constants->{titlebar_width}
 	);
 
 	slashDisplay('dispStory', \%data, 1);

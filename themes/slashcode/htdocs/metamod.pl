@@ -30,7 +30,7 @@ sub main {
 		displayTheComments($id);
 	}
 
-	writeLog("metamod", $op);
+	writeLog($op);
 	footer();
 }
 

@@ -46,9 +46,8 @@ EOT
 
 	printComments($form->{sid});
 
-	writeLog($SECT->{section}, $story->{sid} || $form->{sid})
-		unless $form->{ssi};
 	footer();
+	writeLog($story->{sid} || $form->{sid});
 }
 
 createEnvironment();

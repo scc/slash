@@ -59,12 +59,6 @@ while($select ne 'q'){
 	}
 }
 
-for (%$plugins) {
-	if ($answers[$plugins->{$_}{'order'}]) {
-		$install->create({ name => 'plugin', value => $plugins->{$_}{'order'}, description => $plugins->{$_}{'description'} });
-	}
-}
-
 $install->installPlugin(\@answers);
 
 sub usage {

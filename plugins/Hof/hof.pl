@@ -38,6 +38,7 @@ sub main {
 	});
 
 # this is commented out ... ?
+# Not I. -Brian
 # 	if (0) {  #  only do this in static mode
 # 		print "<P>";
 # 		titlebar("100%", "Most Popular Slashboxes");
@@ -68,7 +69,6 @@ sub main {
 # 		}
 # 	}
 
-	writeLog('hof');
 	footer($form->{ssi});
 }
 

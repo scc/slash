@@ -23,7 +23,6 @@ sub main {
 		listTopics();
 	}
 
-	writeLog('topics');
 	footer($form->{ssi});
 }
 

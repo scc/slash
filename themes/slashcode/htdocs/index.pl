@@ -52,7 +52,7 @@ sub main {
 
 	footer();
 
-	writeLog('index', $form->{section} || 'index') unless $form->{ssi};
+	writeLog($form->{section});
 }
 
 #################################################################

@@ -27,7 +27,6 @@ sub main {
 		'time'	=> scalar localtime,
 	});
 
-	writeLog('authors');
 	footer($form->{ssi});
 }
 

@@ -96,7 +96,7 @@ sub main {
 		commentIndex();
 	}
 
-	writeLog('comments', $form->{sid}) unless $form->{ssi};
+	writeLog($form->{sid});
 
 	footer();
 }

@@ -312,16 +312,6 @@ while(my $dir = readdir(TEMPLATEDIR)) {
 }
 closedir(TEMPLATEDIR);
 
-for (keys %$plugins) {
-	if ($answers[$plugins->{$_}{'order'}]) {
-		$install->create({
-			name		=> 'plugin',
-			value		=> $plugins->{$_}{'order'},
-			description	=> $plugins->{$_}{'description'},
-		});
-	}
-}
-
 $install->installPlugin(\@answers, 0, $symlink);
 
 my $uid = $slashdb->createUser($username, $email, $username);

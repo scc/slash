@@ -2360,20 +2360,15 @@ sub _testExStr {
 
 #========================================================================
 
-=head2 writeLog(OP, DATA)
+=head2 writeLog(DATA)
 
-Places data into the request records notes table. The two keys
-it uses are SLASH_LOG_OPERATION and SLASH_LOG_DATA.
+Places optional data in the accesslog.
 
 =over 4
 
 =item Parameters
 
 =over 4
-
-=item OP
-
-The operation code for this entry (is stored in SLASH_LOG_OPERATION).
 
 =item DATA
 
@@ -2391,7 +2386,6 @@ No value is returned.
 
 sub writeLog {
 	return unless $ENV{GATEWAY_INTERFACE};
-	my $op = shift;
 	my $dat = join("\t", @_);
 
 	my $r = Apache->request;
@@ -2400,7 +2394,6 @@ sub writeLog {
 	# last look). Apache's directory sub handler
 	# is not copying notes. Bad Apache!
 	# -Brian
-	$r->err_header_out(SLASH_LOG_OPERATION => $op);
 	$r->err_header_out(SLASH_LOG_DATA => $dat);
 }
 

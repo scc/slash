@@ -40,7 +40,7 @@ sub main {
 			if $vote && ! $slashdb->getVar('nocomment', 'value');
 	}
 
-	writeLog('pollbooth', $form->{qid});
+	writeLog($form->{qid});
 	footer();
 }
 

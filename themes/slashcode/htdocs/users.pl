@@ -129,7 +129,7 @@ sub main {
 	}
 
 	# miniAdminMenu() if $user->{seclev} > 100;
-	writeLog('users', $user->{nickname});
+	writeLog($user->{nickname});
 
 	footer();
 }
