@@ -55,7 +55,7 @@ sub main {
 		adminLoginForm();
 
 	} elsif ($op eq 'logout') {
-		$I{dbh}->do('DELETE FROM sessions WHERE aid=' . $I{dbh}->quote($I{U}{aid}));
+		$I{dbobject}->deleteSession();
 		titlebar('100%', 'back<I>Slash</I> Buh Bye');
 		adminLoginForm();
 
@@ -117,7 +117,7 @@ sub main {
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
 	} elsif($I{F}{blockrevert}) {
-		blockRevert($I{F}{thisbid}) if $I{U}{aseclev} < 500;
+		$I{dbobject}->revertBlock($I{F}{thisbid}) if $I{U}{aseclev} < 500;
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
 	} elsif($I{F}{blockdelete}) {
@@ -359,7 +359,7 @@ sub authorDelete {
 		<INPUT TYPE="SUBMIT" VALUE="Delete $aid" NAME="authordelete_confirm">
 EOT
 		if ($I{F}{authordelete_confirm}) {
-			$I{dbh}->do('DELETE from authors WHERE aid=' . $I{dbh}->quote($aid));
+			$I{dbobject}->deleteAuthor($aid);
 			print "<B>Deleted $aid!</B><BR>" if ! DBI::errstr;
 		}
 		elsif($I{F}{authordelete_cancel}) {
@@ -568,14 +568,6 @@ EOT
 }
 
 ##################################################################
-sub blockRevert {
-	my ($bid) = @_;
-
-	$I{dbh}->do("update blocks set block = blockbak where bid = '$bid'");
-	
-}
-
-##################################################################
 sub blockSave {
 	my ($bid) = @_;
 	return if $I{U}{aseclev} < 500;
@@ -595,11 +587,10 @@ sub blockSave {
 
 ##################################################################
 sub blockDelete {
-		my $bid = shift;
+		my ($bid) = @_;
 		return if $I{U}{aseclev} < 500;
 		print "<B>Deleted $bid!</B><BR>";
-		$I{dbh}->do('DELETE from blocks WHERE bid=' . $I{dbh}->quote($bid));
-		$I{dbh}->do('DELETE from sectionblocks WHERE bid=' . $I{dbh}->quote($bid));
+		$I{dbobject}->deleteBlock($bid);
 }
 
 ##################################################################
@@ -800,9 +791,9 @@ print qq|</FORM>\n<!-- end topic editor form -->\n|;
 
 ##################################################################
 sub topicDelete {
-		my $tid = shift || $I{F}{tid};
+		my ($tid) = @_ || $I{F}{tid};
 		print "<B>Deleted $tid!</B><BR>";
-		$I{dbh}->do('DELETE from topics WHERE tid=' . $I{dbh}->quote($tid));
+		$I{dbobject}->deleteTopic($I{F}{tid});
 		$I{F}{tid} = '';
 }
 
@@ -820,16 +811,13 @@ sub topicSave {
 ##################################################################
 sub listtopics {
 	my($seclev) = @_;
-	my $cursor = $I{dbh}->prepare('SELECT tid,image,alttext,width,height
-					FROM topics
-					ORDER BY tid');
+	my $topics = $I{dbobject}->getTopic();
 	titlebar('100%', 'Topic Lister');
 
 	my $x = 0;
-	$cursor->execute;
 
 	print qq[\n<!-- begin listtopics -->\n<TABLE WIDTH="600" ALIGN="CENTER">];
-	while (my($tid, $image, $alttext, $width, $height) = $cursor->fetchrow) {
+	for my $topic (%$topics) {
 		if ($x == 0) {
 			print "<TR>\n";
 		} elsif ($x++ % 6) {
@@ -838,16 +826,15 @@ sub listtopics {
 		print qq!\t<TD ALIGN="CENTER">\n!;
 
 		if ($seclev > 500) {
-			print qq[\t\t<A HREF="$ENV{SCRIPT_NAME}?op=topiced&nexttid=$tid">];
+			print qq[\t\t<A HREF="$ENV{SCRIPT_NAME}?op=topiced&nexttid=$topic->{tid}">];
 		} else {
 			print qq[\t\t<A NAME="">];
 		}
 
-		print qq[<IMG SRC="$I{imagedir}/topics/$image" ALT="$alttext"
-			WIDTH="$width" HEIGHT="$height" BORDER="0"><BR>$tid</A>\n\t</TD>\n];
+		print qq[<IMG SRC="$I{imagedir}/topics/$topic->{image}" ALT="$topic->{alttext}"
+			WIDTH="$topic->{width}" HEIGHT="$topic->{height}" BORDER="0"><BR>$topic->{tid}</A>\n\t</TD>\n];
 
 	}
-	$cursor->finish();
 	print "</TR></TABLE>\n<!-- end listtopics -->\n";
 }
 
@@ -999,9 +986,7 @@ EOT
 		print qq!<INPUT TYPE="HIDDEN" NAME="subid" VALUE="$I{F}{subid}">!
 			if $I{F}{subid};
 
-		sqlUpdate('sessions', { lasttitle => $S->{title} },
-			'aid=' . $I{dbh}->quote($I{U}{aid})
-		);
+		$I{dbobject}->setSessionByAid($I{U}{aid}, { lasttitle => $S->{title} });
 
 		($S->{writestatus}, $S->{displaystatus}, $S->{commentstatus}) =
 			$I{dbobject}->getVars('defaultwritestatus','defaultdisplaystatus',
@@ -1335,11 +1320,6 @@ sub editFilter {
 EOT
 	my @values = qw (regex modifier field ratio minimum_match minimum_length maximum_length err_message);
 	my $filter = $I{dbobject}->getContentFilterById($filter_id, @values);
-#	my($regex, $modifier, $field, $ratio, $minimum_match,
-#		$minimum_length, $maximum_length, $err_message) =
-#		sqlSelect("regex,modifier,field,ratio,minimum_match," .
-#			"minimum_length,maximum_length,err_message",
-#			"content_filters","filter_id=$filter_id");
 
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
@@ -1359,20 +1339,10 @@ sub updateFilter {
 	my ($filter_action) = @_;
 
 	if ($filter_action eq "new") {
-		sqlInsert("content_filters", {
-			regex => "",
-			modifier => "",
-			field => "",
-			ratio => 0,
-			minimum_match => 0,
-			minimum_length => 0,
-			maximum_length => 0,
-			err_message => ""
-		});
+		my $filter_id = $I{dbobject}->createContentFilter();
 
 		# damn damn damn!!!! wish I could use sth->insertid !!!
 		# ewww.....
-		my($filter_id) = sqlSelect("max(filter_id)", "content_filters");
 		titlebar("100%", "New filter# $filter_id.", "c");
 		editFilter($filter_id);
 

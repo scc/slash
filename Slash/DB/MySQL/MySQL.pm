@@ -659,6 +659,27 @@ sub getUserInfoByNickname {
 }
 
 #################################################################
+# Just create an empty content_filter
+sub createContentFilter {
+	my ($self) = @_;
+
+	$self->sqlInsert("content_filters", {
+			regex => "",
+			modifier => "",
+			field => "",
+			ratio => 0,
+			minimum_match => 0,
+			minimum_length => 0,
+			maximum_length => 0,
+			err_message => ""
+		});
+
+	my($filter_id) = $self->sqlSelect("max(filter_id)", "content_filters");
+
+	return $filter_id;
+}
+
+#################################################################
 sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
 
@@ -728,6 +749,11 @@ sub setVar {
 	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
 }
 
+########################################################
+sub setSessionByAid {
+	my($self, $name, $value) = @_;
+	$self->sqlUpdate('sessions', {value => $value}, 'aid=' . $self->{dbh}->quote($name));
+}
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
@@ -874,6 +900,44 @@ sub getSectionTitle {
 	$sth->finish;
 
 	return $sections;
+}
+
+########################################################
+sub deleteSession {
+	my($self, $aid) = @_;
+	if ($aid) {
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($aid));
+	} else {
+		my $user = getCurrentUser();
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($user->{aid}));
+	}
+}
+
+########################################################
+sub deleteAuthor {
+	my($self, $aid) = @_;
+	$self->sqlDo('DELETE FROM sessions WHERE authors=' . $self->{dbh}->quote($aid));
+}
+
+########################################################
+sub deleteTopic {
+	my($self, $tid) = @_;
+	$self->sqlDo('DELETE from topics WHERE tid=' . $self->{dbh}->quote($tid));
+}
+
+########################################################
+sub revertBlock {
+	my ($self, $bid) = @_;
+
+	$self->sqlDo("update blocks set block = blockbak where bid = '$bid'");
+
+}
+
+########################################################
+sub deleteBlock {
+	my($self, $bid) = @_;
+	$self->sqlDo('DELETE FROM blocks WHERE bid=' . $self->{dbh}->quote($bid));
+	$self->sqlDo('DELETE FROM sectionblocks WHERE bid=' . $self->{dbh}->quote($bid));
 }
 
 ########################################################
