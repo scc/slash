@@ -3,6 +3,16 @@ default
 __description__
 Message body that is sent back to a user whenever a moderation from
 this user is metamoderated.
+
+Parameters:
+
+	m2 = List of hashrefs containing the following keys:
+		title	- Title of the discussion in which the moderated comment
+			  appears.
+		url	- URL of the discussion in question
+		subj	- subject of moderated comment
+		vote	- moderation vote on that comment
+
 __title__
 Metamoderation Message Body
 __page__
@@ -13,22 +23,28 @@ __name__
 msg_m2
 __template__
 
-[% vote = 'Fair'; IF m1_vote < 0; vote='Unfair'; END %]
+[% vote_result = { '-1' => 'Unfair', '1' => 'Fair' } %]
 
-[% IF msg.mode == 1 %]
+[% IF msg.mode == 1 %]<P>[% END %]
+Your moderations on the following messages have been metamoderated:
 
-<P>Your moderation of "<B>[% vote %]</B>" on
-message "<B>[% c_subj %]</B>" has been metamoderated.</P>
-<P>Thank you for moderating.</P>
-
+[% IF msg.mode == 1%]
+<UL>
+[% FOREACH m2item = m2 %]
+	<LI> "[% m2item.subj %]" from the discussion 
+	<A HREF="[% m2item.url %]">"[% m2item.title %]</A> which you moderated as
+	<B>[% vote_result.${m2item.vote} %]</B>
+[% END %]
+</UL>
 [% ELSE %]
-
-Your moderation of [% vote %] on message
-"[% c_subj %]" has been metamoderated.
-
-Thank you for moderating.
+[% FOREACH m2item = m2 -%]
+	- "[% m2item.subj %]" from the discussion "[% m2item.title %]"
+	which you moderated as [% vote_result.${m2item.vote} %]
 
 [% END %]
+[%- END -%]
+
+[%- IF msg.mode == 1 %]<P>[% END %]Thank you for metamoderating.
 
 __seclev__
 500

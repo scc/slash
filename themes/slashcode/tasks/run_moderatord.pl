@@ -41,6 +41,7 @@ EOT
 
 sub reconcileM2 {
 	my($constants, $slashdb) = @_;
+	my(%m2_results);
 	# We load the optional plugin object here, so we save a few cycles, 
 	# rather than loading it constantly in a lower scope.
 	my $messages = getObject('Slash::Messages');
@@ -103,7 +104,7 @@ sub reconcileM2 {
 		# Ugh-ly.
 		slashdLog(
 			sprintf 
-			"me - %ld (mod #%ld): CON=%d (%6.4f) DIS=%d (%6.4f)",
+			"$me - %ld (mod #%ld): CON=%d (%6.4f) DIS=%d (%6.4f)",
 			$m2id->{id}, $m2id->{mmid}, $con, $con_avg, $dis,
 			$dis_avg
 		) if $constants->{moderatord_debug_info};
@@ -137,51 +138,63 @@ sub reconcileM2 {
 				$slashdb->getModeratorLog($m2_list->[0]{mmid});
 			if ($modlog->{val} eq $rank[0]) {
 				my $mod_karma =
-					$slashdb->getUser($m2_list->[0]{uid},
+					$slashdb->getUser($modlog->{uid},
 							  'karma');
-				$slashdb->setUser($m2_list->[0]{uid}, {
+				$slashdb->setUser($modlog->{uid}, {
 					karma => $mod_karma + 1,
 				});
 			}
 
-			# Optional: Send message to original moderator 
-			# indicating results of metamoderation.
+			# We only do the following if Messaging has been 
+			# installed.
 			if ($messages) {
-				# Why is there no $slashdb->getComment($cid)?
-				# doesn't seem it is needed -- pudge
 				my $comment = $slashdb->getComments(
 					$modlog->{sid}, $modlog->{cid}
 				);
 
-				# Unfortunately, the template must be aware
-				# of the valid states of $modlog->{val}, but
-				# for default Slashcode (and Slashdot), this
-				# isn't a problem.
-				my $data = {
-					template_name	=> 'msg_m2',
-					template_page	=> 'messages',
-					subject		=> {
-						template_name	=>
-							'msg_m2_subj',
-						template_page	=>
-							'messages',
-					},
-					m2		=> {
-						c_subj	=> $comment->{subj},
-						m1_vote	=> $modlog->{val},
-					},
-				};
-				
-				$messages->create(
-					$modlog->{uid}, MSG_CODE_M2, $data
+				# Get discussion metadata without caching it.
+				my $discuss = $slashdb->getDiscussion(
+					$modlog->{sid}
 				);
+
+				push @{$m2_results{$modlog->{uid}}->{m2}}, {
+					title	=> $discuss->{title},
+					url	=> $discuss->{url},
+					subj	=> $comment->{subj},
+					vote	=> $modlog->{val},
+				};
 			}
+						
 		}
 
 		# Mark remaining entries with a '0' which means that they have
 		# been processed.
 		$slashdb->clearM2Flag($m2id->{id});
 	}
+
+	# Optional: Send message to original moderator 
+	# indicating results of metamoderation.
+	if ($messages) {
+		# Unfortunately, the template must be aware
+		# of the valid states of $modlog->{val}, but
+		# for default Slashcode (and Slashdot), this
+		# isn't a problem.
+		my $data = {
+			template_name	=> 'msg_m2',
+			template_page	=> 'messages',
+			subject		=> {
+				template_name	=> 'msg_m2_subj',
+				template_page	=> 'messages',
+			},
+		};
+
+		# Sends the actual message, varying M2 results by user.
+		for (keys %m2_results) {
+			$data->{m2} = $m2_results{$_}->{m2};
+			$messages->create($_, MSG_CODE_M2, $data);
+		}
+	}
 }
+
 
 1;

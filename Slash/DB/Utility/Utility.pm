@@ -399,6 +399,7 @@ sub sqlSelectAll {
 	$sql .= "$other" if $other;
 
 	$self->sqlConnect();
+
 	my $H = $self->{_dbh}->selectall_arrayref($sql);
 	unless ($H) {
 		errorLog($sql);
