@@ -1210,6 +1210,17 @@ sub setDiscussionHitParade {
 				count		=> $hp->{$threshold},	# value
 			});
 		}
+		# If commentcount is screwed up, we need to fix it.  This is
+		# a kludge!  But it won't hurt anything on a normally
+		# running site because of the WHERE clause; it will only
+		# affect imports from 1.0 and such that fail correctly to
+		# set commentcount.
+		if ($hp->{-1}) {
+			$self->sqlUpdate("discussions",
+				{ commentcount => $hp->{-1} },
+				"discussion=$discussion_id AND commentcount=0"
+			);
+		}
 	}
 }
 

@@ -1398,7 +1398,13 @@ sub saveStory {
 			$form->{'time'},
 			"$rootdir/article.pl?sid=$sid", $form->{topic}
 		);
-		$slashdb->setStory($sid, { discussion => $id });
+		if ($id) {
+			$slashdb->setStory($sid, { discussion => $id });
+		} else {
+			# Probably should be a warning sent to the browser
+			# for this error, though it should be rare.
+			warn "could not create discussion for story '$sid'";
+		}
 	} else {
 		titlebar('100%', getData('story_creation_failed'));
 		listStories();

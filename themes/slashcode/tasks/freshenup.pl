@@ -39,13 +39,13 @@ $task{$me}{code} = sub {
 		}
 		my($comments, $count) = Slash::selectComments($discussion_id, 0);
 		my $hp = { };
-                for my $score (0 .. $num_scores-1) {
-                        $hp->{$score + $min} = $comments->[0]{natural_totals}[$score];
-                }
+		for my $score (0 .. $num_scores-1) {
+			$hp->{$score + $min} = $comments->[0]{natural_totals}[$score];
+		}
 		# This will clear the flag, too.
-                $slashdb->setDiscussionHitParade($discussion_id, $hp);
+		$slashdb->setDiscussionHitParade($discussion_id, $hp);
 		# Take a pause so we don't load the DB too much.
-		sleep 1;
+		sleep 1 if ($i % 5) == 0;
 		++$total_freshens;
 	}
 
@@ -87,7 +87,7 @@ $task{$me}{code} = sub {
 	my @freshened_stories = ( );
 	for my $i (0..$#story_order) {
 		my $sid = $story_order[$i];
-		next unless exists $updates{story}{sid};
+		next unless exists $updates{story}{$sid};
 		my($discussion_id, $title, $section);
 		($sid, $discussion_id, $title, $section) = @{$updates{story}{$sid}};
 		# Don't do too many at once.
@@ -109,7 +109,7 @@ $task{$me}{code} = sub {
 		}
 		push @freshened_stories, $sid;
 		# Take a pause so we don't load the DB too much.
-		sleep 1;
+		sleep 1 if ($i % 5) == 0;
 		++$total_freshens;
 	}
 	if (@freshened_stories) {
@@ -127,7 +127,7 @@ $task{$me}{code} = sub {
 	}
 
 	my $aborted_string = "";
-	$aborted_string = " (aborted: " . join(",", @aborted) . ")" if @aborted;
+	$aborted_string = " (aborted: " . join(", ", @aborted) . ")" if @aborted;
 	slashdLog("$me total_freshens $total_freshens$aborted_string")
 		if $total_freshens != $start_total_freshens;
 

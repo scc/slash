@@ -29,7 +29,6 @@ EOT
 		$last_tid = $cur_tid;
 	}
 	$sth->finish();
-	# pudge, check this
 	my $tpid = $slashdb->getTemplateByName("recentTopics", "tpid");
 	$slashdb->setTemplate($tpid, { template => $html });
 
