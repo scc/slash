@@ -144,39 +144,25 @@ sub moveImages {
 
 #################################
 sub setheadertopics {
-	my $c = sqlSelectMany("alttext,image,width,height,newstories.tid",
-				"newstories,topics",
-				"newstories.tid=topics.tid
-				  AND displaystatus = 0
-				  AND writestatus >= 0
-				  AND time < now()
-			     ORDER BY time DESC");
-
+	my $stories = getNewStoryTopic();
 	my($x, $r, $t);
 
-	while (($x < 5) && (my($alttext, $image, $width, $height, $tid) = $c->fetchrow)) {
+	for (@$stories) {
+		break if $x < 5;
 		local $_ = $t;
-		if (! /$tid/) {	
+		if (! /$_->{'tid'}/) {	
 			$r .= <<EOT;
-	<TD><A HREF="$I->{rootdir}/search.pl?topic=$tid"><IMG
-		SRC="$I->{imagedir}/topics/$image" WIDTH="$width" HEIGHT="$height"
-		BORDER="0" ALT="$alttext"></A>
+	<TD><A HREF="$I->{rootdir}/search.pl?topic=$_->{'tid'}"><IMG
+		SRC="$I->{imagedir}/topics/$_->{'image'}" WIDTH="$_->{'width'}" HEIGHT="$_->{'height'}"
+		BORDER="0" ALT="$_->{'alttext'}"></A>
 	</TD>
 
 EOT
-			$t .= $tid;
+			$t .= $_->{'tid'};
 			$x++;
 		}
 	}
-	$c->finish;
-	setblock("topics", $r);
-}
-
-#################################
-sub setblock {
-	my($bid, $block)=@_;
-	$block = $slashdb->{dbh}->quote($block);
-	$slashdb->{dbh}->do("UPDATE blocks SET block=$block WHERE bid='$bid'");
+	$slashdb->setBlock('topic', {block => $r});
 }
 
 #################################
@@ -198,25 +184,10 @@ sub save2file {
 sub newmotd {
 	return unless -x '/usr/games/fortune';
 	chomp(my $t = `/usr/games/fortune -s`);
-	setblock('motd', $t) if $t;
+	$slashdb->setBlock('motd', {block => $t}) if $t;
 }
 
 
-#################################
-sub updateStoryIndex {
-	my %stories;
-
-	foreach my $sid (@_) {
-		$stories{$sid} = sqlSelectHashref("*","stories","sid='$sid'");
-	}
-	$slashdb->{dbh}->do("LOCK TABLES newstories WRITE");
-
-	foreach my $sid (keys %stories) {
-		sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
-	}
-
-	$slashdb->{dbh}->do("UNLOCK TABLES");
-}
 
 #################################
 sub sectionHeaders {
@@ -258,13 +229,13 @@ sub newfooter {
 	local *SO = *STDOUT;
 
 	sectionHeaders("");
-	my $c = sqlSelectMany("section", "sections");
-	while (my($section) = $c->fetchrow) {
+	my $sections = $slashdb->getSections('section');
+	for(@$sections)
+		my ($section) = @$_;
 		mkdir "$I->{basedir}/$section", 0755;
 		sectionHeaders($section);
 	}
 
-	$c->finish;
 	*STDOUT = *SO;
 }
 
@@ -446,12 +417,12 @@ sub openBackend {
 	newxml();
 	newrdf();
 	newwml();
-	my $sec = sqlSelectMany("section", "sections");
-	while(my($s) = $sec->fetchrow) {
-		newxml($s);
-		newrdf($s);
+	my $sections = $slashdb->getSections('section');
+	for(@$sections)
+		my ($section) = @$_;
+		newxml($section);
+		newrdf($section);
 	}
-	$sec->finish;
 }
 
 #################################
@@ -468,14 +439,13 @@ sub makeDir {
 #################################
 # This is the normal, every 60 seconds stuff
 sub freshenup {
-	sqlConnect();
 	moveImages();
 
 	my %updates;
-	my $c = sqlSelectMany("sid,title,section", "stories", "writestatus=1");
+	my $stories = $slashdb->getStoriesForSlashdb();
 	my @updatedsids;
 
-	while (my($sid, $title, $section) = $c->fetchrow) {
+	for (@$stories){
 		slashdLog("Updating $title $sid");
 		$updates{$section} = 1;
 		makeDir($section, $sid);
@@ -488,21 +458,18 @@ sub freshenup {
 			prog2file("$I->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
 				"$I->{basedir}/$section/$sid"."_F.shtml");
 
-			# Disabled because I handle this in SSI article generate- save a locking UPDATE wherever possible...
-			# sqlUpdate("stories",{writestatus=>0},"sid=".$dbh->quote($sid));
-			# sleep 1; # Let http catch up a bit...
 			push @updatedsids, $sid;
 		} else {
 			slashdLog("Trouble Updating $sid");
 		}
 	}
 
-	$c->finish;
 
-	updateStoryIndex(@updatedsids);
+	$slashdb->setStoryIndex(@updatedsids);
 
 	my $x = 0;
-	$c = sqlSelectMany("sid,section", "stories", "writestatus=5");
+	$stories = $slashdb->getStoriesForSlashdb();
+	for (@$stories){
 	while (my($sid, $section) = $c->fetchrow) {
 		$x++;
 		$updates{$section} = 1;
@@ -514,12 +481,11 @@ sub freshenup {
 		$slashdb->{dbh}->do("DELETE from newstories where sid='$sid'");
 		slashdLog("Deleting $sid");
 	}
-	$c->finish;
 
-	my($w) = $I->{dbobject}->getVar("writestatus");
+	my($w) = $slashdb->getVar("writestatus");
 
 #	if ($updates{articles} ne "" || $w ne "0") {
-		$I->{dbobject}->setVar("writestatus", "0");
+		$slashdb->setVar("writestatus", "0");
 		prog2file("$I->{basedir}/index.pl ssi=yes", "$I->{basedir}/index.shtml");
 		# prog2file("$I->{basedir}/index.pl ssi=yes\\\&mode=flat","$I->{basedir}/index_F.shtml");
 #	}
@@ -602,24 +568,23 @@ sub main {
 	my $last = my $modlast = 0;
 	while (1) {
 		freshenup();
+		print "Got out of freshen \n";
 		if ((time - $last) > 60 * 60 ) { # Every Hour
 			slashdLog("Doing Hourly Update");
-			nukeBlockCache();
 			newfooter();
 			setheadertopics();
 			openBackend();
 
-#			getSlicesTable() if $I->{run_ads};
 
 			newmotd();
 			system("$I->{datadir}/portald &");
 			sleep(60 * 2);
 
-			my($today) = sqlSelect("to_days(now())");
-			my($yesterday) = $I->{dbobject}->getVars("today");
+			my($today) = $slashdb->getTime();
+			my($yesterday) = $slashdb->getVars("today");
 
 			if ($today ne $yesterday) {
-				$I->{dbobject}->setVar("today", $today);
+				$slashdb->setVar("today", $today);
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
 				system("$I->{datadir}/dailyStuff &");
 			}

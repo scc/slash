@@ -13,7 +13,6 @@ use Slash::Utility;
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my $timeout = 30; #This should eventualy be a parameter that is configurable
-#Yes, the following need to be moved into %self
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
 my %topicBank; # This is here to save us a database call
@@ -804,6 +803,11 @@ sub setAuthor {
 	my($self, $author, $value) = @_;
 	$self->sqlUpdate('authors', $value, 'name=' . $self->{dbh}->quote($author));
 }
+########################################################
+sub setBlock {
+	my($self, $bid, $block) = @_;
+	$self->sqlUpdate('blocks', $block, 'bid=' . $self->{dbh}->quote($bid));
+}
 
 ########################################################
 sub newVar {
@@ -886,12 +890,27 @@ sub getSectionBank {
 }
 
 ########################################################
+#This should be made to be generic
 sub getSection {
 	my($self, $section) = @_;
 	$self->sqlSelect(
 		"artcount,title,qid,isolate,issue",
 		"sections", "section=" . $self->{dbh}->quote($section)
 	);
+}
+
+########################################################
+sub getSections {
+	my($self, $id, @val) = @_;
+	my $values;
+	unless (scalar @val) {
+		$values = '*';
+	} else {
+		my $values = join ',', @val;
+	}
+	my $answers = $self->sqlSelectAll($values, 'sections');
+
+	return $answers;
 }
 
 ########################################################
@@ -1825,7 +1844,6 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 	return unless $d;
 	my($tuid) = sqlSelect('count(*)', 'users');
 	# what to do with %I here?
-#	return unless $user->{uid} < int($tuid * $I{m2_userpercentage});
 	return 1;  # OK to M2
 }
 
@@ -2766,6 +2784,53 @@ sub getSectionBlockByBid {
 sub getModeratorLog {
 	my $answer = _genericGet('moderatorlog', 'id', @_);
 	return $answer;
+}
+
+########################################################
+# For slashdb
+sub setStoryIndex {
+	my $self = shift;
+
+	my %stories;
+
+	for my $sid (@_) {
+		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
+	}
+	$self->{dbh}->do("LOCK TABLES newstories WRITE");
+
+	foreach my $sid (keys %stories) {
+		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
+	}
+
+	$self->{dbh}->do("UNLOCK TABLES");
+}
+
+########################################################
+# For slashdb
+sub getNewStoryTopic {
+	my ($self) = @_;
+
+	my $returnable = $self->sqlSelectHashref(
+				"alttext,image,width,height,newstories.tid",
+				"newstories,topics",
+				"newstories.tid=topics.tid
+				AND displaystatus = 0
+				AND writestatus >= 0
+				AND time < now()
+				ORDER BY time DESC");
+
+	return $returnable;
+}
+
+########################################################
+# For slashdb
+sub getStoriesForSlashdb {
+	my ($self) = @_;
+
+	my $returnable = $self->sqlSelectHashref("sid,title,section", 
+			"stories", "writestatus=1");
+
+	return $returnable;
 }
 
 1;

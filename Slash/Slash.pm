@@ -53,7 +53,7 @@ BEGIN {
 		selectTopic selectSection fixHref
 		getblock getsid getsiddir getWidgetBlock
 		anonLog pollbooth stripByMode header footer pollItem
-		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
+		prepEvalBlock prepBlock blockCache formLabel
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
@@ -226,12 +226,6 @@ sub getblock {
 	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "$I{anonymous_coward_uid}";
 }
 
-
-########################################################
-# Blank the block cache.
-sub nukeBlockCache {
-	undef $I{blockBank};
-}
 
 ########################################################
 # Gets a block.  Stores a block.  Returns a block.  Future requests read
