@@ -2038,26 +2038,29 @@ sub setCommentCount {
 }
 
 ########################################################
-sub saveStory {
+sub createStory {
 	my($self) = @_;
-	my $form = getCurrentForm();
+	unless ($story) {
+		my $form = getCurrentForm() unless ($story);
+		$story ||= $form;
+	}
 	my $constants = getCurrentStatic();
-	$self->sqlInsert('storiestuff', { sid => $form->{sid} });
+	$self->sqlInsert('storiestuff', { sid => $story->{sid} });
 	$self->sqlInsert('discussions', {
-		sid	=> $form->{sid},
-		title	=> $form->{title},
-		ts	=> $form->{'time'},
-		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}"
+		sid	=> $story->{sid},
+		title	=> $story->{title},
+		ts	=> $story->{'time'},
+		url	=> "$constants->{rootdir}/article.pl?sid=$story->{sid}"
 	});
 
 
 	# If this came from a submission, update submission and grant
 	# Karma to the user
 	my $suid;
-	if ($form->{subid}) {
+	if ($story->{subid}) {
 		my($suid) = $self->sqlSelect(
 			'uid','submissions',
-			'subid=' . $self->{_dbh}->quote($form->{subid})
+			'subid=' . $self->{_dbh}->quote($story->{subid})
 		);
 
 		# i think i got this right -- pudge
@@ -2076,26 +2079,26 @@ sub saveStory {
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
-			'subid=' . $self->{_dbh}->quote($form->{subid})
+			'subid=' . $self->{_dbh}->quote($story->{subid})
 		);
 	}
 
 	$self->sqlInsert('stories',{
-		sid		=> $form->{sid},
-		uid		=> $form->{uid},
-		tid		=> $form->{tid},
-		dept		=> $form->{dept},
-		'time'		=> $form->{'time'},
-		title		=> $form->{title},
-		section		=> $form->{section},
-		bodytext	=> $form->{bodytext},
-		introtext	=> $form->{introtext},
-		writestatus	=> $form->{writestatus},
-		relatedtext	=> $form->{relatedtext},
-		displaystatus	=> $form->{displaystatus},
-		commentstatus	=> $form->{commentstatus}
+		sid		=> $story->{sid},
+		uid		=> $story->{uid},
+		tid		=> $story->{tid},
+		dept		=> $story->{dept},
+		'time'		=> $story->{'time'},
+		title		=> $story->{title},
+		section		=> $story->{section},
+		bodytext	=> $story->{bodytext},
+		introtext	=> $story->{introtext},
+		writestatus	=> $story->{writestatus},
+		relatedtext	=> $story->{relatedtext},
+		displaystatus	=> $story->{displaystatus},
+		commentstatus	=> $story->{commentstatus}
 	});
-	$self->saveExtras($form);
+	$self->_saveExtras($story);
 }
 
 ##################################################################
@@ -2131,7 +2134,7 @@ sub updateStory {
 	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
 		. $self->{_dbh}->quote($form->{sid})
 	) if $form->{fastforward} eq 'on';
-	$self->saveExtras($form);
+	$self->_saveExtras($form);
 }
 ########################################################
 # Now, the idea is to not cache here, since we actually
@@ -2397,7 +2400,7 @@ sub getPollVotesMax {
 
 ##################################################################
 # Probably should make this private at some point
-sub saveExtras {
+sub _saveExtras {
 	my($self, $form) = @_;
 	return unless $self->sqlTableExists($form->{section});
 	my @extras = $self->sqlSelectColumns($form->{section});

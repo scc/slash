@@ -29,9 +29,9 @@ use Slash::Utility;
 use Slash::Search;
 
 my %ops = {
-	comments => &commentSearch,
-	users => &userSearch,
-	stories => &storySearch,
+	comments => \&commentSearch,
+	users => \&userSearch,
+	stories => \&storySearch,
 };
 #################################################################
 sub main {

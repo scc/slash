@@ -1268,7 +1268,7 @@ sub saveStory {
 	) . otherLinks($user->{nickname}, $form->{tid});
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
-	$slashdb->saveStory();
+	$slashdb->createStory();
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories();
