@@ -141,6 +141,7 @@ template=templates/mod_footer;comments;default
 template=templates/mod_header;comments;default
 template=templates/moderation;comments;default
 template=templates/motd;misc;default
+template=templates/newdiscussion;comments;default
 template=templates/newUserForm;users;default
 template=templates/organisation;misc;default
 template=templates/pollbooth;misc;default

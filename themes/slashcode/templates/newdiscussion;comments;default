@@ -1,0 +1,24 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+newdiscussion
+__template__
+[% IF id %]
+[% INCLUDE titlebar width => "95%", title => "New Discussion Created" %]
+<P>Your discussion, <A HREF="[% constants.rootdir %]/comments.pl?sid=[% id %]"><B>[% form.title %]</B></A>,
+has been created.  Go to <A HREF="[% constants.rootdir %]/comments.pl?sid=[% id %]">[% constants.absolutedir %]/comments.pl?sid=[% id %]</A> to begin posting.  Remeber this URL!</P>
+[% ELSE %]
+[% IF error; error; ELSE; INCLUDE titlebar width => "95%", title => "Unknown error" %]
+<P>An unknown error has occurred.</P>
+[% END; END %]
+
+__seclev__
+500

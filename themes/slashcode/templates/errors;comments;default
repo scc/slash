@@ -164,6 +164,10 @@ invalid formkey [% formname %] [% formkey %]
 CASE "formabuse_usedform" %]
 form [% formname %] [% formkey %] already submitted 
 
+[% CASE "seclevtoolow" %]
+[% INCLUDE titlebar width="95%" title="No permissions" %]
+You do not have appropriate permissions to perform that action.
+
 [% CASE %]
 An unexpected error has occured.<BR><B>[% value %]</B><BR>
 [% END %]

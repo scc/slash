@@ -345,10 +345,30 @@ sub createDiscussion {
 	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-		$form->{url} = fixurl($form->{url} || $ENV{HTTP_REFERER});
-		$slashdb->createDiscussion($form->{title},
-			$form->{url}, $form->{topic}, 1
-		);
+		$form->{url}   = fixurl($form->{url} || $ENV{HTTP_REFERER});
+		$form->{title} = strip_nohtml($form->{title});
+
+
+		# for now, use the postersubj filters; problem is,
+		# the error messages can come out a bit funny.
+		# oh well.  -- pudge
+		my($error, $err_message, $id);
+		if (! filterOk('comments', 'postersubj', $form->{title}, \$err_message)) {
+			$error = getError('filter message', {
+				err_message	=> $err_message
+			});
+		} elsif (! compressOk('comments', 'postersubj', $form->{title})) {
+			$error = getError('compress filter', {
+				ratio	=> 'postersubj',
+			});
+		} else {
+			$id = $slashdb->createDiscussion(
+				$form->{title}, $form->{url}, $form->{topic}, 1
+			);
+		}
+		slashDisplay('newdiscussion', { error => $error, id => $id });
+	} else {
+		slashDisplay('newdiscussion', { error => getError('seclevtoolow') });
 	}
 
 	commentIndex(@_);
