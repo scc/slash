@@ -224,7 +224,8 @@ sub createComment {
 			cid => $cid,
 			comment =>  $comment->{postercomment},
 	});
- 
+	
+	return $cid;
 }
 
 ########################################################
