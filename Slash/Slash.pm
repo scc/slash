@@ -1027,6 +1027,7 @@ EOT
 				[ $reply$parent$mod_select$deletion ]
 				</FONT>
 			</TD></TR>
+			<TR><TD>
 EOT
 	}
 	return $return;
