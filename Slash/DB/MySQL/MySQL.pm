@@ -253,8 +253,8 @@ sub getMetamodComments {
 	my($self, $id, $uid, $num_comments) = @_;
 
 	my $sth = $self->sqlSelectMany(
-		'comments.cid,' . getDateFormat('date','time') .
-		',subject,comment,nickname,homepage,fakeemail,realname,users.uid as uid,
+		'comments.cid,date,' .
+		'subject,comment,nickname,homepage,fakeemail,realname,users.uid as uid,
 		sig,comments.points as points,pid,comments.sid as sid,
 		moderatorlog.id as id,title,moderatorlog.reason as modreason,
 		comments.reason',
@@ -266,17 +266,18 @@ sub getMetamodComments {
 		moderatorlog.uid!=$uid AND moderatorlog.reason<8 LIMIT $num_comments"
 	);
 
-	my @comments;
-	while (my $C = $sth->fetchrow_hashref) {
+	my $comments;
+	while (my $comment = $sth->fetchrow_hashref) {
 		# Anonymize comment that is to be metamoderated.
-		@{$C}{qw(nickname uid fakeemail homepage points)} =
+		@{$comment}{qw(nickname uid fakeemail homepage points)} =
 			('-', -1, '', '', 0);
 
-		push (@comments, $C);
+		push @$comments, $comment;
 	}
 	$sth->finish;
 
-	return \@comments;
+	formatDate($comments);
+	return $comments;
 }
 
 ########################################################
@@ -710,15 +711,14 @@ sub getUserUID {
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
-	my $sqlquery = "SELECT pid,sid,cid,subject,"
-			. getDateFormat("date","d")
-			. ",points FROM comments WHERE uid=$uid "
+	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
+			. " FROM comments WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
 	my($comments) = $sth->fetchall_arrayref;
-
+	formatDate($comments, 4);
 	return $comments;
 }
 
@@ -890,12 +890,12 @@ sub setSection {
 	}
 
 	$self->sqlUpdate('sections', {
-			qid   => $qid,
-			title   => $title,
-			issue   => $issue,
-			isolate   => $isolate,
-			artcount  => $artcount
-		}, "'section=$section_dbh"
+			qid		=> $qid,
+			title		=> $title,
+			issue		=> $issue,
+			isolate		=> $isolate,
+			artcount	=> $artcount
+		}, "section=$section_dbh"
 	);
 	$ok2++ unless $self->{_dbh}->errstr;
 
@@ -905,14 +905,10 @@ sub setSection {
 ########################################################
 sub setStoriesCount {
 	my($self, $sid, $count) = @_;
-	$self->sqlUpdate(
-			"stories",
-			{
-				-commentcount => "commentcount-$count",
-				writestatus => 1
-			},
-			"sid=" . $self->{_dbh}->quote($sid)
-	);
+	$self->sqlUpdate('stories', {
+		-commentcount	=> "commentcount-$count",
+		writestatus	=> 1
+	}, 'sid=' . $self->{_dbh}->quote($sid));
 }
 
 ########################################################
@@ -1923,8 +1919,8 @@ sub countUsersIndexExboxesByBid {
 
 ########################################################
 sub getCommentReply {
-	my($self, $time, $sid, $pid) = @_;
-	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
+	my($self, $sid, $pid) = @_;
+	my $reply = $self->sqlSelectHashref("date, subject,comments.points as points,
 		comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
 		"comments,users,users_info,users_comments",
@@ -1935,6 +1931,7 @@ sub getCommentReply {
 		AND users.uid=comments.uid"
 	);
 
+	formatDate([$reply]);
 	return $reply;
 }
 
@@ -1943,7 +1940,7 @@ sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $sql = "SELECT cid," . getDateFormat('date', 'time') . ",
+	my $sql = "SELECT cid,date,
 				subject,comment,
 				nickname,homepage,fakeemail,
 				users.uid as uid,sig,
@@ -1965,73 +1962,63 @@ sub getCommentsForUser {
 
 	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
 	$thisComment->execute or errorLog($sql);
-	my(@comments);
+	my $comments;
 	while (my $comment = $thisComment->fetchrow_hashref){
-		push @comments, $comment;
+		push @$comments, $comment;
 	}
-	return \@comments;
+	formatDate($comments);
+	return $comments;
 }
 
 ########################################################
 sub getComments {
 	my($self, $sid, $cid) = @_;
-	$self->sqlSelect( "uid,pid,subject,points,reason","comments",
-			"cid=$cid and sid='$sid'"
+	$self->sqlSelect("uid,pid,subject,points,reason",
+		"comments", "cid=$cid and sid='$sid'"
 	);
 }
 
 ########################################################
 # Do we need to bother passing in User and Form?
 sub getStories {
-	my($self, $SECT, $currentSection, $limit, $tid) = @_;
+	my($self, $SECT, $limit, $tid) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$limit ||= $user->{maxstories};
+	$limit ||= $user->{currentSection} eq 'index'
+		? $user->{maxstories} : $SECT->{artcount};
 
-	my $tables = "newstories";
-	my $columns = "sid, section, title, date_format(" .
-		getDateOffset('time') .
-		',"%W %M %d %h %i %p"), commentcount, to_days(' .
-		getDateOffset('time') . "), hitparade";
+	my $tables = 'newstories';
+	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
-	my $where = "1=1 "; # Mysql's Optimize gets this.";
-
+	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
 	$where .= "AND displaystatus=0 " unless $form->{section};
-
-	$where .= "AND time < now() "; 
-	$where .= "AND (displaystatus>=0 AND '$SECT->{section}'=section) " if $form->{section};
-
-	$form->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
-
-	$where .= "AND $form->{issue} >= to_days(" . getDateOffset("time") . ") " if $form->{issue};
+	$where .= "AND (displaystatus>=0 AND section='$SECT->{section}') " if $form->{section};
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
-	$where .= "AND tid not in ($user->{extid}) " if $user->{extid};
-	$where .= "AND uid not in ($user->{exaid}) " if $user->{exaid};
+	$where .= "AND tid not in ($user->{extid}) "		if $user->{extid};
+	$where .= "AND uid not in ($user->{exaid}) "		if $user->{exaid};
 	$where .= "AND section not in ($user->{exsect}) "	if $user->{exsect};
 
 	# Order
-	my $other .= "ORDER BY time DESC ";
+	my $other = "ORDER BY time DESC ";
 
-	if ($limit) {
-		$other .= "LIMIT $limit ";
 
-	# BUG: if $limit if not true, $user->{maxstories} won't be, either ...
-	# should this be something else? -- pudge
-	} elsif ($currentSection eq 'index') {
-		$other .= "LIMIT $user->{maxstories} ";
-	} else {
-		$other .= "LIMIT $SECT->{artcount} ";
-	}
-#	print "\n\n\n\n\n<-- stories select $tables $columns $where $other -->\n\n\n\n\n";
-
-	my $stories_arrayref = $self->sqlSelectAll($columns, $tables, $where, $other)
+	my(@stories, $count);
+	my $cursor = $self->sqlSelectMany($columns, $tables, $where, $other)
 		or errorLog("error in getStories columns $columns table $tables where $where other $other");
 
-	return $stories_arrayref;
+	while (my(@data) = $cursor->fetchrow) {
+		formatDate([\@data], 3, 3, '%A %B %d %I %M %p');
+		formatDate([\@data], 5, 5, '%Q');
+		next if $form->{issue} && $data[5] > $form->{issue};
+		push @stories, [@data];
+		last if ++$count >= $limit;
+	}
+
+	return \@stories;
 }
 
 ########################################################
@@ -2041,12 +2028,13 @@ sub getCommentsTop {
 	my $where = "stories.sid=comments.sid";
 	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
 	my $stories = $self->sqlSelectAll("section, stories.sid, uid, title, pid, subject,"
-		. getDateFormat("date","d") . "," . getDateFormat("time","t")
-		. ",uid, cid, points"
+		. "date, time, uid, cid, points"
 		, "stories, comments"
 		, $where
 		, " ORDER BY points DESC, d DESC LIMIT 10 ");
 
+	formatDate($stories, 'date', 'd');
+	formatDate($stories, 'time', 't');
 	return $stories;
 }
 
@@ -2407,12 +2395,14 @@ sub getTime {
 }
 
 ##################################################################
-# Should this really be in here?
+# Should this really be in here? -- krow
+# dunno ... sigh, i am still not sure this is best
+# (see getStories()) -- pudge
 sub getDay {
-	my($self) = @_;
-	my($now) = $self->sqlSelect('to_days(now())');
-
-	return $now;
+#	my($self) = @_;	
+#	my($now) = $self->sqlSelect('to_days(now())');
+	my $yesterday = timeCalc('epoch ' . time, '%Q');
+	return $yesterday;
 }
 
 ##################################################################

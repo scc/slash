@@ -93,8 +93,9 @@ sub handler {
 		if ($uid) {
 			# password in cookie was not encrypted, so
 			# save new cookie
-			setCookie('user', bakeUserCookie($uid, $cookpasswd), $slashdb->getUser($uid, 'session_login'))
-				if $cookpasswd ne $password;
+			setCookie('user', bakeUserCookie($uid, $cookpasswd),
+				$slashdb->getUser($uid, 'session_login')
+			) if $cookpasswd ne $password;
 		} else {
 			$uid = $constants->{anonymous_coward_uid};
 			delete $cookies->{user};
@@ -202,7 +203,7 @@ sub getUser {
 			($param, $default) = @$param;
 		}
 
-		if (defined $form->{$param}) {
+		if (defined $form->{$param} && $form->{param} ne '') {
 			$user->{$param} = $form->{$param};
 		} else {
 			$user->{$param} ||= $default || 0;
@@ -274,7 +275,7 @@ sub filter_params {
 		maxcommentsize maximum_length maxstories min minimum_length
 		minimum_match ordernum pid
 		retrieve seclev startat uid uthreshold voters width
-		writestatus ratio
+		writestatus ratio posttype
 	);
 
 	# regexes to match dynamically generated numeric fields

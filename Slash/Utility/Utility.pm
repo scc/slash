@@ -23,6 +23,7 @@ Unless otherwise noted, they are publically available functions.
 
 use strict;
 use Apache;
+use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 require Exporter;
@@ -38,8 +39,6 @@ use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 	errorLog	
 	stackTrace
 	changePassword
-	getDateFormat
-	getDateOffset
 	getCurrentUser
 	getCurrentForm
 	getCurrentStatic
@@ -52,6 +51,8 @@ use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 	createCurrentDB
 	createCurrentAnonymousCoward
 	createEnvironment
+	formatDate
+	timeCalc
 	setCurrentUser
 	setCurrentForm
 	isAnon
@@ -175,29 +176,86 @@ sub errorLog {
 	return 0;
 }
 
-################################################################################
-# SQL Timezone things
-sub getDateOffset {
-	my($col) = @_;
-	my $offset = getCurrentUser('offset');
-	return $col unless $offset;
-	return " DATE_ADD($col, INTERVAL $offset SECOND) ";
+
+sub formatDate {
+	my($data, $col, $as, $format) = @_;
+	errorLog("Not arrayref"), return unless ref($data) eq 'ARRAY';
+
+	if ($col && $col =~ /^\d+$/) {   # LoL
+		$as = defined($as) ? $as : $col;
+		for (@$data) {
+			errorLog("Not arrayref"), return unless ref($_) eq 'ARRAY';
+			$_->[$as] = timeCalc($_->[$col], $format);
+		}
+	} else {
+		$col ||= 'date';
+		$as  ||= 'time';
+		for (@$data) {
+			errorLog("Not hashref"), return unless ref($_) eq 'HASH';
+			$_->{$as} = timeCalc($_->{col}, $format);
+		}
+	}
 }
 
-sub getDateFormat {
-	my($col, $as) = @_;
-	$as = 'time' unless $as;
-	my $user = getCurrentUser();
 
-	$user->{'format'} ||= '%A %B %d, @%I:%M%p ';
-	unless ($user->{tzcode}) {
-		$user->{tzcode} = 'EDT';
-		$user->{offset} = '-14400';
+#========================================================================
+
+=item timeCalc(DATE)
+
+Format time strings.
+
+Parameters
+
+	DATE
+	Raw date from database.
+
+Return value
+
+	Formatted date string.
+
+Dependencies
+
+	The 'atonish' and 'aton' template blocks.
+
+=cut
+
+#######################################################################
+# timeCalc 051100 PMG 
+# Removed timeformats hash and updated table to have perl formats 092000 PMG 
+# inputs: raw date from database
+# returns: formatted date string from dateformats converted to
+# time strings that Date::Manip can format
+#######################################################################
+sub timeCalc {
+	# raw mysql date of story
+	my($date, $format) = @_;
+	my $user = getCurrentUser();
+	my(@dateformats, $err);
+
+	# I put this here because
+	# when they select "6 ish" it
+	# looks really stupid for it to
+	# display "posted by xxx on 6 ish"
+	# It looks better for it to read:
+	# "posted by xxx around 6 ish"
+
+	# this needs to be elsewhere, so it can be done once, and
+	# access slashDisplay(); stay here for now -- pudge
+	if ($user->{'format'} eq '%i ish') {
+		$user->{aton} = 'around'; # getData('atonish');
+	} else {
+		$user->{aton} = 'on'; # getData('aton');
 	}
 
-	$user->{offset} ||= '0';
-	return ' CONCAT(DATE_FORMAT(' . getDateOffset($col) .
-		qq!,"$user->{'format'}")," $user->{tzcode}") as $as !;
+	# find out the user's time based on personal offset
+	# in seconds
+	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
+
+	# convert the raw date to pretty formatted date
+	$date = UnixDate($date, $format || $user->{'format'});
+
+	# return the new pretty date
+	return $date;
 }
 
 #################################################################

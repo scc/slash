@@ -133,7 +133,7 @@ sub commentIndex {
 
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $db->getDiscussions();
-	slashDisplay('comments-discussion-list', {
+	slashDisplay('comments-discussion_list', {
 		discussions => $discussions,
 	});
 }
@@ -149,8 +149,7 @@ sub editComment {
 
 	# Get the comment we may be responding to. Remember to turn off 
 	# moderation elements for this instance of the comment. 
-	my $reply = $db->getCommentReply(getDateFormat('date', 'time'), $f->{sid},
-									 $f->{pid});
+	my $reply = $db->getCommentReply($f->{sid}, $f->{pid});
 	$reply->{no_moderation} = 1;
 
 	if (!$c->{allow_anonymous} && $u->{is_anon}) {
@@ -192,7 +191,7 @@ sub editComment {
 	my $approvedtags =
 		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$c->{approvedtags}};
 
-	slashDisplay('comments-edit-comment', {
+	slashDisplay('comments-edit_comment', {
 		approved_tags => $approvedtags,
 		error_message => $error_message,
 		format_select => $formatSelect,
@@ -460,7 +459,7 @@ sub validateComment {
 ##################################################################
 # Previews a comment for submission
 sub previewForm {
-	my ($form, $user) = @_;
+	my($form, $user) = @_;
 
 	$user->{sig} = "" if $form->{postanon};
 
@@ -476,7 +475,7 @@ sub previewForm {
 	my $preview = {
 		nickname	=> $form->{postanon} ?
 			getCurrentAnonymousCoward('nickname') : $user->{nickname},
-		pid			=> $form->{pid},
+		pid		=> $form->{pid},
 		homepage	=> $form->{postanon} ? '' : $user->{homepage},
 		fakeemail	=> $form->{postanon} ? '' : $user->{fakeemail},
 		'time'		=> 'Soon',
@@ -488,7 +487,7 @@ sub previewForm {
 	$user->{mode} = 'archive';
 	my $previewForm;
 	if ($tempSubject && $tempComment) {
-		$previewForm = slashDisplay('comments_preview_comment', {
+		$previewForm = slashDisplay('comments-preview_comment', {
 			preview => $preview,
 		}, 1);	
 	}
@@ -540,7 +539,7 @@ sub submitComment {
 			type	=> 'maxcid exceeded',
 		});
 	} else {
-		slashDisplay('comments_comment_submitted');
+		slashDisplay('comments-comment_submitted');
 		undoModeration($f->{sid}, $u, $db, $c);
 		printComments($f->{sid}, $maxCid, $maxCid);
 	}
@@ -559,7 +558,7 @@ sub moderate {
 		$hasPosted = $db->countComments($f->{sid}, '','', $u->{uid});
 	}
 
-	slashDisplay('comment_moderation_header');
+	slashDisplay('comments-moderation_header');
 
 	# Handle Deletions, Points & Reparenting
 	for (sort keys %{$f}) {
@@ -573,7 +572,7 @@ sub moderate {
 		}
 	}
 
-	slashDisplay('comment_moderation_footer');
+	slashDisplay('comments-moderation_footer');
 
 	if ($hasPosted && !$totalDel) {
 		slashDisplay('comments-errors', {
@@ -581,7 +580,7 @@ sub moderate {
 		});
 	} elsif ($u->{seclev} && $totalDel) {
 		my $count = $db->countComments($f->{sid});
-		slashDisplay('comments_deleted_message', {
+		slashDisplay('comments-deleted_message', {
 			total_deleted => $totalDel,
 			comment_count => $count,
 		});
@@ -692,7 +691,7 @@ sub deleteThread {
 	$db->deleteComment($sid, $cid);
 
 	if (!$level) {
-		slashDisplay('comments_deleted_cids', {
+		slashDisplay('comments-deleted_cids', {
 			sid => $sid,
 			count => $delCount,
 			comments_deleted => $deleted,
@@ -708,12 +707,10 @@ sub undoModeration {
 	my($sid, $u, $db, $c) = @_;
 	return if !$u->{is_anon} || ($u->{seclev} > 99 && $c->{authors_unlimited});
 
-	my $removed = $db->unsetModeratorlog($u->{uid},
-										 $sid,
-										 $c->{comment_maxscore},
-										 $c->{comment_minscore});
+	my $removed = $db->unsetModeratorlog($u->{uid}, $sid,
+		$c->{comment_maxscore}, $c->{comment_minscore});
 
-	slashDisplay('comment_undo_moderation', {
+	slashDisplay('comments-undo_moderation', {
 		removed => $removed,
 	});
 }

@@ -470,6 +470,7 @@ sub editHome {
 	my $tzformat_select = createSelect('tzformat', $formats, $user_edit->{dfid}, 1);
 
 	$formats = $slashdb->getDescriptions('tzcodes');
+	$formats = { map { ($_ => uc($_)) } keys %$formats };
 	my $tzcode_select = createSelect('tzcode', $formats, $user_edit->{tzcode}, 1);
 
 	my $l_check = $user_edit->{light}	? ' CHECKED' : '';

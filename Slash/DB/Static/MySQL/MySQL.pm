@@ -219,9 +219,7 @@ sub getOldStories {
 sub getTop10Comments {
 	my($self) = @_;
 	my $c = $self->sqlSelectMany("stories.sid, title,
-		cid, subject,".
-		getDateFormat("date", "d").",
-		nickname,comments.points",
+		cid, subject,date,nickname,comments.points",
 		"comments,stories,users",
 		"comments.points >= 4
 		AND users.uid=comments.uid
@@ -231,7 +229,9 @@ sub getTop10Comments {
 	my $comments = $c->fetchall_arrayref;
 	$c->finish;
 
-	return $comments
+	formatDate($comments, 'date', 'd');
+
+	return $comments;
 }
 
 ########################################################

@@ -27,7 +27,6 @@ use CGI ();
 use CGI::Cookie;
 use DBI;
 use Data::Dumper;  # the debuggerer's best friend
-use Date::Manip;
 use Exporter ();
 use File::Spec::Functions;
 use HTML::Entities;
@@ -55,8 +54,8 @@ $VERSION = '1.0.9';
 	moderatorCommentLog pollbooth portalbox printComments
 	redirect selectMode selectSection selectSortcode
 	selectThreshold selectTopic sendEmail titlebar
-	anonLog timeCalc
-);  # anonLog, timeCalc?
+	anonLog
+);  # anonLog
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
 
@@ -1629,63 +1628,6 @@ sub displayStory {
 
 #========================================================================
 
-=item timeCalc(DATE)
-
-Format time strings.
-
-Parameters
-
-	DATE
-	Raw date from database.
-
-Return value
-
-	Formatted date string.
-
-Dependencies
-
-	The 'atonish' and 'aton' template blocks.
-
-=cut
-
-#######################################################################
-# timeCalc 051100 PMG 
-# Removed timeformats hash and updated table to have perl formats 092000 PMG 
-# inputs: raw date from database
-# returns: formatted date string from dateformats converted to
-# time strings that Date::Manip can format
-#######################################################################
-sub timeCalc {
-	# raw mysql date of story
-	my($date) = @_;
-	my $user = getCurrentUser();
-	my(@dateformats, $err);
-
-	# I put this here because
-	# when they select "6 ish" it
-	# looks really stupid for it to
-	# display "posted by xxx on 6 ish"
-	# It looks better for it to read:
-	# "posted by xxx around 6 ish"
-	if ($user->{'format'} eq '%i ish') {
-		$user->{aton} = getData('atonish');
-	} else {
-		$user->{aton} = getData('aton');
-	}
-
-	# find out the user's time based on personal offset
-	# in seconds
-	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
-
-	# convert the raw date to pretty formatted date
-	$date = UnixDate($date, $user->{'format'});
-
-	# return the new pretty date
-	return $date;
-}
-
-#========================================================================
-
 =item getOlderStories(STORIES, SECTION)
 
 Get older stories for older stories box.
@@ -1716,7 +1658,7 @@ sub getOlderStories {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories ||= $slashdb->getStories($section, $user->{currentSection});
+	$stories ||= $slashdb->getStories($section);
 	for (@$stories) {
 		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
@@ -1741,10 +1683,13 @@ sub getOlderStories {
 		};
 	}
 
+	my $yesterday = $slashdb->getDay() unless $form->{issue} > 1 || $form->{issue};
+	$yesterday ||= int($form->{issue}) - 1;
+
 	slashDisplay('getOlderStories', {
 		stories		=> $newstories,
 		section		=> $section,
-		yesterday	=> (($form->{issue} > 1 || $form->{issue}) ? $slashdb->getDay() : int($form->{issue})) - 1,
+		yesterday	=> $yesterday,
 		min		=> $section->{artcount} + $form->{min},
 	}, 1);
 }
