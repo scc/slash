@@ -76,7 +76,7 @@ __template__
 	</TABLE>
 	</TD></TR>
 
-[% INCLUDE dispLinkComment %]
+[% INCLUDE link %]
 
 __seclev__
 10000

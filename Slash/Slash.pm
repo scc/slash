@@ -561,7 +561,6 @@ The 'dispComment' template block.
 
 sub dispComment {
 	my($comment) = @_;
-	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -617,13 +616,78 @@ sub dispComment {
 		$comment->{$_} = '' unless exists $comment->{$_};
 	}
 
-	slashDisplay('dispComment', {
-		%$comment,
-		comment_shrunk	=> $comment_shrunk,
-		reasons		=> \%reasons,
-		can_mod		=> $can_mod,
-		is_anon		=> isAnon($comment->{uid}),
-	}, { Return => 1, Nocomm => 1 });
+	if($constants->{comments_hardcoded}) {
+		my($comment_to_display, $score_to_display, $user_to_display, 
+			$time_to_display, $comment_link_to_display, $userinfo_to_display);
+
+		if($comment_shrunk) {
+			my $link = linkComment({
+					sid	=> $comment->{sid},
+					cid	=> $comment->{cid},
+					pid	=> $comment->{cid},
+					subject	=> 'Read the rest of this comment...'
+				}, 1);
+			$comment_to_display = "$comment_shrunk<P><B>$link</B>";
+		} elsif ($user->{nosigs}) {
+			$comment_to_display  = "$comment->{comment}<BR>$comment->{sig}";
+		} else {
+			$comment_to_display = $comment->{comment};
+		}
+
+		unless($user->{noscores}) {
+			$score_to_display .= "(Score:$comment->{points}";
+			my $reasons = $constants->{reasons}{$comment->{reason}};
+			$score_to_display .= ", $reasons"
+				if $constants->{reason};
+			$score_to_display .= ")";
+		}
+
+		$comment_link_to_display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}&cid=$comment->{cid}">#$comment->{cid}</A>|;
+		$time_to_display = timeCalc($comment->{date});
+		if(isAnon($comment->{uid})) {
+			$user_to_display = $user->{nickname};
+		} else {
+			$userinfo_to_display = qq|<BR>(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$user->{uid}">User #$user->{uid} Info</A>)|;
+
+			$userinfo_to_display .= qq| <A HREF="$comment->{homepage}">$comment->{homepage}</A>|
+				if length($comment->{homepage}) > 8;
+
+			$user_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$user->{uid}"><SMALL>View User's Journal</SMALL></A>|
+				if $comment->{journal_last_entry_date};
+
+			# This is wrong, must be fixed before we ship -Brian
+			if($comment->{fakeemail}) {
+				$user_to_display = qq| <A HREF="mailto:$comment->{fakeemail}">$comment->{fakeemail}</A>($comment->{fakeemail})|;
+			} else {
+				$user_to_display = $user->{nickname};
+			}
+		}
+			
+
+		my $color = $user->{bg}[2];
+		print <<EOF;
+			<TR><TD BGCOLOR="$color">
+				<FONT SIZE="3" COLOR="$color">
+					<A NAME="comment->{cid}"><B>comment->{subject}</B></A>$score_to_display
+				</FONT>
+				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
+				$userinfo_to_display
+			</TD></TR>
+			<TR><TD>
+				$comment_to_display
+			</TD></TR>
+EOF
+		print linkComment($comment, '', $comment->{date})
+	} else {
+		slashDisplay('dispComment', {
+			%$comment,
+			comment_shrunk	=> $comment_shrunk,
+			reasons		=> \%reasons,
+			can_mod		=> $can_mod,
+			is_anon		=> isAnon($comment->{uid}),
+			link      => linkComment($comment, '', $comment->{date}),
+		}, { Return => 1, Nocomm => 1 });
+	}
 }
 
 

@@ -639,6 +639,7 @@ CREATE TABLE users (
 	seclev mediumint UNSIGNED DEFAULT '0' NOT NULL,	/* This is set to 0 as a safety factor */
 	matchname varchar(20),
 	newpasswd varchar(8),
+	journal_last_entry_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	PRIMARY KEY (uid),
 	KEY login (uid,passwd,nickname),
 	KEY chk4user (nickname,realemail),
@@ -739,7 +740,6 @@ CREATE TABLE users_info (
 	expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
-	journal_last_entry_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	created_at datetime DEFAULT '0000-00-00 00:00' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)

@@ -2722,7 +2722,7 @@ sub getCommentsForUser {
 	my $comment_table = 'comments';
 	my $user = getCurrentUser();
 	my $sql;
-	$sql .= " SELECT	cid, date, subject, nickname, homepage, fakeemail, ";
+	$sql .= " SELECT	cid, date, date as time, subject, nickname, homepage, fakeemail, ";
 	$sql .= "	users.uid as uid, sig, $comment_table.points as points, pid, sid, ";
 	$sql .= " lastmod, reason, journal_last_entry_date ";
 	$sql .= "	FROM $comment_table, users  ";
@@ -2774,7 +2774,6 @@ sub getCommentsForUser {
 		}
 	}
 
-	formatDate($comments);
 	return $comments;
 }
 

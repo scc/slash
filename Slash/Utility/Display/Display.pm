@@ -859,50 +859,52 @@ sub linkComment {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my $return = qq!<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}!;
-	$return .= "&op=$comment->{op}" if $comment->{op};
-	$return .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
-	$return .= "&commentsort=$user->{commentsort}";
-	$return .= "&mode=$user->{mode}";
-	$return .= "&startat=$comment->{startat}" if $comment->{startat};
+	if($constants->{comments_hardcoded}) {
+	my $display = qq!<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}!;
+		$display .= "&op=$comment->{op}" if $comment->{op};
+		$display .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
+		$display .= "&commentsort=$user->{commentsort}";
+		$display .= "&mode=$user->{mode}";
+		$display .= "&startat=$comment->{startat}" if $comment->{startat};
 
-	if ($printcomment) {
-		$return .= "&cid=$comment->{cid}";
+		if ($printcomment) {
+			$display .= "&cid=$comment->{cid}";
+		} else {
+			$display .= "&pid=" . ($comment->{realpid} || $comment->{pid});
+			$display .= "#$comment->{cid}" if $comment->{cid};
+		}
+
+		my $s = $comment->{color}
+			? qq!<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>!
+			: $comment->{subject};
+
+		$display .= qq!">$s</A>!;
+		$display .= " by $comment->{nickname}" if $comment->{nickname};
+		$display .= qq! <FONT SIZE="-1">(Score:$comment->{points})</FONT> !
+				if !$user->{noscores} && $comment->{points};
+		$display .= qq! <FONT SIZE="-1"> $comment->{'time'} </FONT>! if $date;
+		$display .= "\n";
+		return $display;
 	} else {
-		$return .= "&pid=" . ($comment->{realpid} || $comment->{pid});
-		$return .= "#$comment->{cid}" if $comment->{cid};
-	}
-
-	my $s = $comment->{color}
-		? qq!<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>!
-		: $comment->{subject};
-
-	$return .= qq!">$s</A>!;
-	$return .= " by $comment->{nickname}" if $comment->{nickname};
-	$return .= qq! <FONT SIZE="-1">(Score:$comment->{points})</FONT> !
-			if !$user->{noscores} && $comment->{points};
-	$return .= qq! <FONT SIZE="-1"> $comment->{'time'} </FONT>! if $date;
-	$return .= "\n";
-	return $return;
-
-#	my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
-#
-#	# don't inherit these ...
-#	for (qw(sid cid pid date subject comment uid points lastmod
-#		reason nickname fakeemail homepage sig)) {
-#		$comment->{$_} = '' unless exists $comment->{$_};
-#	}
-#
-#	slashDisplay('linkComment', {
-#		%$comment, # defaults
-#		adminflag	=> $adminflag,
-#		date		=> $date,
-#		pid		=> $comment->{realpid} || $comment->{pid},
-#		threshold	=> $comment->{threshold} || $user->{threshold},
-#		commentsort	=> $user->{commentsort},
-#		mode		=> $user->{mode},
-#		comment		=> $printcomment,
-#	}, { Return => 1, Nocomm => 1 });
+			my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
+		
+			# don't inherit these ...
+			for (qw(sid cid pid date subject comment uid points lastmod
+				reason nickname fakeemail homepage sig)) {
+				$comment->{$_} = '' unless exists $comment->{$_};
+			}
+		
+			return slashDisplay('linkComment', {
+				%$comment, # defaults
+				adminflag	=> $adminflag,
+				date		=> $date,
+				pid		=> $comment->{realpid} || $comment->{pid},
+				threshold	=> $comment->{threshold} || $user->{threshold},
+				commentsort	=> $user->{commentsort},
+				mode		=> $user->{mode},
+				comment		=> $printcomment,
+			}, { Return => 1, Nocomm => 1 });
+		}
 }
 
 #========================================================================
