@@ -70,14 +70,14 @@ __template__
 
 [% n = 0 %]
 [% FOREACH comment = commentstruct %]
-       [% n = n + 1 %]
-     [% replies = comment.replies ? " Replies: $comment.replies" : "" %]
-     [% IF comment.story;
-                href    = writestatus == 10 ? "$constants.rootdir/$comment.story.section/${comment.sid}.shtml" : "$constants.rootdir/article.pl?sid=$comment.sid";
-     label    = comment.story.title;
-      ELSE;
-               href    = "$constants.rootdir/pollBooth.pl?qid=$comment.sid";
-             label   = question.question;
+	[% n = n + 1 %]
+	[% replies = comment.replies ? " Replies: $comment.replies" : "" %]
+	[% IF comment.story;
+		href    = "$constants.rootdir/article.pl?sid=$comment.sid";
+		label    = comment.story.title;
+	ELSE;
+		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.sid";
+		label   = question.question;
         END %]
 <BR><B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]">
    [% comment.subj %]</A> posted on [% comment.cdate %]

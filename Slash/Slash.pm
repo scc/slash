@@ -45,7 +45,7 @@ use vars qw($VERSION @ISA @EXPORT);
 # this is the worst damned warning ever, so SHUT UP ALREADY!
 $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
-$VERSION = '1.001014';	# v1.1.14
+$VERSION = '1.001015';	# v1.1.15
 @ISA	 = 'Exporter';
 @EXPORT  = qw(
 	checkSubmission createMenu createSelect
@@ -465,17 +465,14 @@ The 'linkStory' template block.
 sub linkStory {
 	my($story_link) = @_;
 	my $user = getCurrentUser();
-	my($dynamic, $mode, $threshold);
+	my($mode, $threshold);
 
-	# archive should never happen since it is gone, so???? -Brian
-	if ($user->{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$story_link->{section})) {
-		$dynamic = 1 if $story_link->{mode} || exists $story_link->{threshold} || $ENV{SCRIPT_NAME};
+	if ($ENV{SCRIPT_NAME} || !$story_link->{section}) {
 		$mode = $story_link->{mode} || $user->{mode};
 		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
 	}
 
 	return slashDisplay('linkStory', {
-		dynamic		=> $dynamic,
 		mode		=> $mode,
 		threshold	=> $threshold,
 		sid		=> $story_link->{sid},

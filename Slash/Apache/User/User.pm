@@ -16,10 +16,11 @@ use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
 use URI ();
-use vars qw($VERSION @ISA @QUOTES);
+use vars qw($REVISION $VERSION @ISA @QUOTES);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@ISA = qw(DynaLoader);
+@ISA		= qw(DynaLoader);
+$VERSION	= '1.001015';	# v1.1.15
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
 

@@ -20,13 +20,13 @@ sub main {
 	# - Cliff
 	my $story = $dbslash->getStory($form->{sid});
 
-	if ($story->{writestatus} == 10) {
-		$ENV{SCRIPT_NAME} = '';
-		redirect(<<EOT);
-$constants->{rootdir}/$story->{section}/$story->{sid}_$constants->{userMode}.shtml
-EOT
-		return;
-	};
+# 	if ($story->{writestatus} == 10) {
+# 		$ENV{SCRIPT_NAME} = '';
+# 		redirect(<<EOT);
+# $constants->{rootdir}/$story->{section}/$story->{sid}_$constants->{userMode}.shtml
+# EOT
+# 		return;
+# 	};
 
 	my $SECT = $dbslash->getSection($story->{section});
 	my $title = $SECT->{isolate} ?

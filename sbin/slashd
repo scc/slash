@@ -496,13 +496,13 @@ sub freshenup {
 		makeDir($section, $sid);
 		$totalChangedStories++;
 
-		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=thread",
-			"$constants->{basedir}/$section/$sid.shtml")) {
-
-			push @updatedsids, $sid;
-		} else {
-			slashdLog("Trouble Updating $sid");
-		}
+# 		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=thread",
+# 			"$constants->{basedir}/$section/$sid.shtml")) {
+# 
+# 			push @updatedsids, $sid;
+# 		} else {
+# 			slashdLog("Trouble Updating $sid");
+# 		}
 	}
 
 
@@ -516,10 +516,10 @@ sub freshenup {
 		my($sid, $title, $section) = @$_;
 		$x++;
 		$updates{$section} = 1;
-		unlink "$constants->{basedir}/$section/$sid.shtml"
-			or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
-		unlink "$constants->{basedir}/$section/${sid}_F.shtml"
-			or warn "Can't unlink $constants->{basedir}/$section/${sid}_F.shtml: $!";
+# 		unlink "$constants->{basedir}/$section/$sid.shtml"
+# 			or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
+# 		unlink "$constants->{basedir}/$section/${sid}_F.shtml"
+# 			or warn "Can't unlink $constants->{basedir}/$section/${sid}_F.shtml: $!";
 		$slashdb->deleteStoryAll($sid);
 		slashdLog("Deleting $sid");
 	}

@@ -18,8 +18,6 @@ en_US
 __name__
 linkStory
 __template__
-[% url = dynamic ? "article.pl?sid=$sid&mode=$mode&threshold=$threshold" : "$section/${sid}.shtml" %]
-<A HREF="[% constants.rootdir %]/[% url %]">[% text %]</A>
-
+<A HREF="[% constants.rootdir %]/article.pl?sid=[% sid %]&mode=[% mode %]&threshold=[% threshold %]">[% text %]</A>
 __seclev__
 10000

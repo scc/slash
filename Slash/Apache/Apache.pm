@@ -12,10 +12,11 @@ use Slash::DB;
 use Slash::Utility;
 require DynaLoader;
 require AutoLoader;
-use vars qw($VERSION @ISA);
+use vars qw($REVISION $VERSION @ISA);
 
-@ISA = qw(DynaLoader);
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+@ISA		= qw(DynaLoader);
+$VERSION	= '1.001015';	# v1.1.15
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache $VERSION;
 
