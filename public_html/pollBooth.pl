@@ -58,9 +58,9 @@ sub main {
 		print "</CENTER>";
 
 	} else {
-		my $error = vote($I{F}{qid}, $I{F}{aid});
+		my $vote = vote($I{F}{qid}, $I{F}{aid});
 		printComments($I{F}{qid})
-			unless $I{dbobject}->getVar("nocomment") || $error;
+			if $vote && ! $I{dbobject}->getVar("nocomment");
 	}
 
 	$I{dbobject}->writelog($I{U}{uid}, "pollbooth", $I{F}{qid});
@@ -172,7 +172,7 @@ sub vote {
 		print "Invalid poll!<BR>";
 		# Non-zero denotes error condition and that comments should not be 
 		# printed.
-		return 1;
+		return;
 	}
 
 	my $notes = "Displaying poll results";
