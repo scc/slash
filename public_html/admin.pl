@@ -31,90 +31,115 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
+	my $op;
+
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+	for(keys %{$form}) {
+		print STDERR "key $_ value $form->{$_}\n";
+	}
 	getSection('admin');
 
 	my($tbtitle);
-	if ($form->{op} =~ /^preview|edit$/ && $form->{title}) {
+	if (($form->{editstory} || $form->{previewstory}) && $form->{title}) {
 		# Show submission/article title on browser's titlebar.
 		$tbtitle = $form->{title};
 		$tbtitle =~ s/"/'/g;
 		$tbtitle = " - \"$tbtitle\"";
 		# Undef the form title value if we have SID defined, since the editor
 		# will have to get this information from the database anyways.
-		undef $form->{title} if $form->{sid} && $form->{op} eq 'edit';
+		undef $form->{title} if ($form->{sid} && $form->{editstory});
 	}
 	header("backSlash $user->{tzcode} $user->{offset}$tbtitle", 'admin');
 
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $user->{aseclev};
 
-	my $op = $form->{op};
 	if (!$user->{aseclev}) {
 		titlebar('100%', 'back<I>Slash</I> Login');
 		adminLoginForm();
 
-	} elsif ($op eq 'logout') {
+	} elsif ($form->{adminclose}) {
 		$slashdb->deleteSession();
 		titlebar('100%', 'back<I>Slash</I> Buh Bye');
 		adminLoginForm();
+		$op = 'adminclose';
 
 	} elsif ($form->{topicdelete}) {
 		topicDelete();
-		topicEd();
+		topicEdit();
+		$op = 'topicdelete';
 
 	} elsif ($form->{topicsave}) {
 		topicSave();
-		topicEd();
+		topicEdit();
+		$op = 'topicsave';
 
-	} elsif ($form->{topiced} || $op eq 'topiced' || $form->{topicnew}) {
-		topicEd();
+	} elsif ($form->{topiced} || $form->{topicnew}) {
+		topicEdit();
+		$op = 'topicedornew';
 
-	} elsif ($op eq 'save') {
+	} elsif ($form->{savestory}) {
 		saveStory();
+		$op = 'savestory';
 
-	} elsif ($op eq 'update') {
+	} elsif ($form->{updatestory}) {
 		updateStory();
+		$op = 'updatestory';
 
-	} elsif ($op eq 'list') {
+	} elsif ($form->{liststories}) {
 		titlebar('100%', 'Story List', 'c');
 		listStories();
+		$op = 'liststories';
 
-	} elsif ($op eq 'delete') {
+	} elsif ($form->{rmstory}) {
 		rmStory($form->{sid});
 		listStories();
+		$op = 'rmstory';
 
-	} elsif ($op eq 'preview') {
-		editstory('');
+	} elsif ($form->{newstory}) {
+		editStory();
+		$op = 'newstory';
 
-	} elsif ($op eq 'edit') {
-		editstory($form->{sid});
+	} elsif ($form->{previewstory}) {
+		editStory();
+		$op = 'previewstory';
 
-	} elsif ($op eq 'topics') {
+	} elsif ($form->{editstory}) {
+		editStory($form->{sid});
+		$op = 'editstory';
+
+	} elsif ($form->{listtopics}) {
 		listTopics($user->{aseclev});
+		$op = 'listtopics';
 
-	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
+	} elsif ($form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
 		colorEdit($user->{aseclev});
+		$op = 'colored';
 
 	} elsif ($form->{colorsave} || $form->{colorsavedef} || $form->{colororig}) {
 		colorSave();
 		colorEdit($user->{aseclev});
+		$op = 'colorsave';
 
-	} elsif ($form->{blockdelete_cancel} || $op eq "blocked") {
+	} elsif ($form->{blockdelete_cancel} || $form->{blocked}) {
 		blockEdit($user->{aseclev},$form->{bid});
+		$op = 'blocked';
 
 	} elsif ($form->{blocknew}) {
 		blockEdit($user->{aseclev});
+		$op = 'blocknew';
 
 	} elsif ($form->{blocked1}) {
 		blockEdit($user->{aseclev}, $form->{bid1});
+		$op = 'blocked1';
 
 	} elsif ($form->{blocked2}) {
 		blockEdit($user->{aseclev}, $form->{bid2});
+		$op = 'blocked2';
 
 	} elsif ($form->{blocksave} || $form->{blocksavedef}) {
 		blockSave($form->{thisbid});
@@ -137,11 +162,8 @@ sub main {
 		blockDelete($form->{deletebid});
 		blockEdit($user->{aseclev});
 
-	} elsif ($op eq 'authors') {
-		authorEdit($form->{thisaid});
-
 	} elsif ($form->{authoredit}) {
-		authorEdit($form->{myaid});
+		authorEdit($form->{thisaid});
 
 	} elsif ($form->{authornew}) {
 		authorEdit();
@@ -164,7 +186,7 @@ sub main {
 		varSave();
 		varEdit($form->{name});
 
-	} elsif ($op eq "listfilters") {
+	} elsif ($form->{listfilters}) {
 		titlebar("100%","List of comment filters","c");
 		listFilters();
 
@@ -241,9 +263,9 @@ sub varSave {
 	if ($form->{thisname}) {
 		$slashdb->saveVars();
 		if ($form->{desc}) {
-			print "Saved $form->{thisname}<BR>\n";
+			print getMessage('varSave-message');
 		} else {
-			print "<B>Deleted $form->{thisname}!</B><BR>\n";
+			print getMessage('varDelete-message');
 		}
 	}
 }
@@ -258,70 +280,33 @@ sub authorEdit {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-
 	return if $user->{aseclev} < 500;
+
+	my ($section_select,$author_select);
+	my $deletebutton_flag = 0;
 
 	$aid ||= $user->{aid};
 	$aid = '' if $form->{authornew};
 
-	print qq!<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">!;
 	my $authors = $slashdb->getDescriptions('authors');
-	createSelect('myaid', $authors, $aid);
-
-	
 	my $author = $slashdb->getAuthor($aid) if $aid;
+
+	$author_select = createSelect('myaid', $authors, $aid, 1);
+	$section_select = selectSection('section', $author->{section}, {}, 1) ;
+	$deletebutton_flag = 1 if (! $form->{authornew} && $aid ne $user->{aid}) ;
 
 	for ($author->{email}, $author->{copy}) {
 		$_ = stripByMode($_, 'literal', 1);
 	}
 
-	print <<EOT;
-<INPUT TYPE="submit" VALUE="Select Author" NAME="authoredit"><BR>
-<TABLE BORDER="0">
-	<TR>
-		<TD>Aid</TD><TD><INPUT TYPE="text" NAME="thisaid" VALUE="$aid"></TD>
-	</TR>
-	<TR>
-		<TD>Name</TD><TD><INPUT TYPE="text" NAME="name" VALUE="$author->{name}"></TD>
-	</TR>
-	<TR>
-		<TD>URL</TD><TD><INPUT TYPE="text" NAME="url" VALUE="$author->{url}"></TD>
-	</TR>
-	<TR>
-		<TD>Email</TD><TD><INPUT TYPE="text" NAME="email" VALUE="$author->{email}"></TD>
-	</TR>
-	<TR>
-		<TD>Quote</TD><TD><TEXTAREA NAME="quote" COLS="50" ROWS="4">$author->{email}</TEXTAREA></TD>
-	</TR>
-	<TR>
-		<TD>Copy</TD><TD><TEXTAREA NAME="copy" COLS="50" ROWS="5">$author->{copy}</TEXTAREA></TD>
-	</TR>
-	<TR>
-		<TD>Passwd</TD><TD><INPUT TYPE="password" NAME="pwd" VALUE="$author->{pwd}"></TD>
-	</TR>
-	<TR>
-		<TD>Seclev</TD><TD><INPUT TYPE="text" NAME="seclev" VALUE="$author->{seclev}"></TD>
-	</TR>
-</TABLE>
-		Restrict to Section
-EOT
-
-	selectSection('section', $author->{section}) ;
-
-	print <<EOT;
-<TABLE BORDER="0">
-	<TR>
-		<TD><BR><INPUT TYPE="SUBMIT" VALUE="Save Author" NAME="authorsave"></TD>
-EOT
-	print <<EOT if ! $form->{authornew};
-		<TD><BR><INPUT TYPE="SUBMIT" VALUE="Create Author" NAME="authornew"></TD>
-EOT
-	print <<EOT if (! $form->{authornew} && $aid ne $user->{aid}) ;
-		<TD><BR><INPUT TYPE="SUBMIT" VALUE="Delete Author" NAME="authordelete"></TD>
-EOT
-
-print qq|\t</TR>\n</TABLE>\n</FORM>\n|;
-
+	slashDisplay('admin-authorEdit', {
+			author 			=> $author,
+			author_select		=> $author_select,
+			section_select		=> $section_select,
+			deletebutton_flag 	=> $deletebutton_flag,
+			aid			=> $aid,
+			}
+	);	
 }
 
 ##################################################################
@@ -337,10 +322,10 @@ sub authorSave {
 		# And just why do we take two calls to do
 		# a new user? 
 		if ($slashdb->createAuthor($form->{thisaid})) {
-			print "Inserted $form->{thisaid}<BR>";
+			print getMessage('authorInsert-message');
 		}
 		if ($form->{thisaid}) {
-			print "Saved $form->{thisaid}<BR>";
+			print getMessage('authorSave-message');
 			my %author = (
 				name	=> $form->{name},
 				pwd	=> $form->{pwd},
@@ -353,7 +338,7 @@ sub authorSave {
 			);
 			$slashdb->setAuthor($form->{thisaid}, \%author);
 		} else {
-			print "<B>Deleted $form->{thisaid}!</B><BR>";
+			print getMessage('authorDelete-message');
 			$slashdb->deleteAuthor($form->{thisaid});
 		}
 	}
@@ -371,18 +356,14 @@ sub authorDelete {
 	return if $user->{aseclev} < 500;
 
 	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
-	print <<EOT if $form->{authordelete};
-		<B>Do you really want to delete $aid?</B><BR> 
-		<INPUT TYPE="HIDDEN" VALUE="$aid" NAME="thisaid">
-		<INPUT TYPE="SUBMIT" VALUE="Cancel delete $aid" NAME="authordelete_cancel">
-		<INPUT TYPE="SUBMIT" VALUE="Delete $aid" NAME="authordelete_confirm">
-EOT
-		if ($form->{authordelete_confirm}) {
-			$slashdb->deleteAuthor($aid);
-			print "<B>Deleted $aid!</B><BR>" if ! DBI::errstr;
-		} elsif ($form->{authordelete_cancel}) {
-			print "<B>Canceled Deletion of $aid!</B><BR>";
-		}
+	print getMessage('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
+
+	if ($form->{authordelete_confirm}) {
+		$slashdb->deleteAuthor($aid);
+		print getMessage('authorDelete-deleted-msg', { aid => $aid }) if ! DBI::errstr;
+	} elsif ($form->{authordelete_cancel}) {
+		print getMessage('authorDelete-canceled-msg', { aid => $aid});
+	}
 }
 
 ##################################################################
@@ -397,200 +378,71 @@ EOT
 sub blockEdit {
 	my($seclev, $bid) = @_;
 
+	return if $seclev < 500;
+
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-
-	return if $seclev < 500;
 	my($hidden_bid) = "";
-	my $saveflag;
-	my $section = {};
+	my ($blockref, $saveflag, $block_select, $retrieve_checked, $portal_checked) ;
+	my ($description_ta,$block_ta, $block_select1, $block_select2);
+	my ($blockedit_flag,$blockdelete_flag, $blockform_flag) = (0,0,0);
 
-        titlebar("100%","Site Block Editor","c");
-
-	print <<EOT;
-<!-- begin block editing form -->
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-EOT
-
-	if (! $form->{blockdelete} && ! $form->{blockdelete1} && ! $form->{blockdelete2}) {
-		print <<EOT;
-<P>Select a block to edit. 
-<UL>
-	<LI>You can only edit static blocks.</LI> 
-	<LI>Blocks that are portald type blocks are written by portald</LI>
-</UL>
-</P>
-<TABLE>
-	<TR>
-		<TD><B>Static Blocks</B></TD><TD>
-EOT
-
-		# get the static blocks
-		my $block = $slashdb->getStaticBlock($seclev);
-		createSelect('bid1', $block, $bid);
-
-		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked1"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete1"></TD>\n\t</TR>\n];
-		# get the portald blocks
-		print qq[\t<TR><TD><B>Portald Blocks</B></TD><TD>];
-		my $second_block = $slashdb->getPortaldBlock($seclev);
-		createSelect('bid2', $second_block, $bid);
-		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked2"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete2"></TD>\n\t</TR>\n</TABLE>\n];
+	if ($bid) {
+		$blockref = $slashdb->getBlock($bid, '', 1);
 	}
+	my $sectionbid = $blockref->{section}; 
 
+	my $title = getTitle('blockEdit-title',{}, 1);
 
 	if ($form->{blockdelete} || $form->{blockdelete1} || $form->{blockdelete2}) {
-		print <<EOT;
-<INPUT TYPE="HIDDEN" NAME="deletebid" VALUE="$bid">
-<TABLE BORDER="0">
-	<TR>
-		<TD><B>Do you really want to delete Block $bid?</B></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Cancel Delete of $bid" NAME="blockdelete_cancel"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Really Delete $bid!" NAME="blockdelete_confirm"></TD>
-	</TR>
-</TABLE>
-EOT
+		$blockdelete_flag = 1;
+	} else { 
+		# get the static blocks
+		my $blocks = $slashdb->getStaticBlock($seclev);
+		$block_select1 = createSelect('bid1', $blocks, $bid, 1);
+
+		$blocks = $slashdb->getPortaldBlock($seclev);
+		$block_select2 = createSelect('bid2', $blocks, $bid, 1);
+
 	}
 
 	# if the pulldown has been selected and submitted 
 	# or this is a block save and the block is a portald block
 	# or this is a block edit via sections.pl
 	if (! $form->{blocknew} && $bid ) {
-		# getSection() is cached so you might as well grab it all
-		$section = $slashdb->getSection($bid, '', 1);
-
-		if ($section->{'bid'}) {
-			$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$section->{'title'}"></TD>\n\t</TR>];
-			$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$section->{'url'}"></TD>\n\t</TR>];
-			$section->{'rdf'} = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE="$section->{'rdf'}"></TD>\n\t</TR>];
-			$section->{'section'} = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE="$section->{'section'}"></TD>\n\t</TR>];
-			$section->{'ordernum'} = "NA" if $section->{'ordernum'} eq '';
-			$section->{'ordernum'} = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE="$section->{'ordernum'}"></TD>\n\t</TR>];
-			my $checked = "CHECKED" if $section->{'retrieve'} == 1; 
-			$section->{'retrieve'} = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve" $checked></TD>\n\t</TR>];
-			$checked = "";
-			$checked = "CHECKED" if $section->{'portal'} == 1; 
-			$section->{'portal'} = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox.</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal" $checked></TD>\n\t</TR>];
-			$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_existing" VALUE="1">];
-			$checked = "";
+		if ($blockref->{bid}) {
+			$blockedit_flag = 1;
+			$blockref->{ordernum} = "NA" if $blockref->{ordernum} eq '';
+			$retrieve_checked = "CHECKED" if $blockref->{retrieve} == 1; 
+			$portal_checked = "CHECKED" if $blockref->{portal} == 1; 
 		}	
 	}	
-	# if this is a new block, we want an empty form 
-	else {
-		$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE=""></TD>\n\t</TR>];
-		$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE=""></TD>\n\t</TR>];
-		$section->{'rdf'} = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE=""></TD>\n\t</TR>];
-		$section->{'section'} = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE=""></TD>\n\t</TR>];
-		$section->{'ordernum'} = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE=""></TD>\n\t</TR>];
-		$section->{'retrieve'} = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve"></TD>\n\t</TR>];
-		$section->{'portal'} = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox. </B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal"></TD>\n\t</TR>];
-		$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_new" VALUE="1">];
-	}
 
-	my $bidblock;
-	if ($bid) {
-		$bidblock = $slashdb->getBlock($bid, '', 1);
-	}
+	$description_ta = stripByMode($blockref->{description}, 'literal', 1);
+	$block_ta = stripByMode($blockref->{block}, 'literal', 1);
 
-	my $description_ta = stripByMode($bidblock->{'description'}, 'literal', 1);
-	my $block_ta = stripByMode($bidblock->{'block'}, 'literal', 1);
+	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
-	# main table
-	print <<EOT;
-<TABLE BORDER="0">
-EOT
-
-	# if there's a block description, print it
-	print <<EOT if $bidblock->{'description'};
-	<TR>
-		<TD COLSPAN="3">
-		<TABLE BORDER="2" CELLPADDING="4" CELLSPACING="0" BGCOLOR="$constants->{fg}[1]" WIDTH="80%">
-			<TR>
-				<TD BGCOLOR="$constants->{bg}[2]"><BR><B>Block ID: $bid</B><BR>
-				<P>$bidblock->{'description'}</P><BR>
-				</TD>
-			</TR>
-		</TABLE>
-		<BR>
-		</TD>
-	</TR>
-EOT
-
-# print the form if this is a new block, submitted block, or block edit via sections.pl
-	print <<EOT if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
-	<TR>	
-		<TD><B>Block ID</B></TD>
-		<TD><INPUT TYPE="TEXT" NAME="thisbid" VALUE="$bid"></TD>
-	</TR>
-		$section->{'title'}
-	<TR>	
-		<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="$bidblock->{'seclev'}" SIZE="6"></TD>
-	</TR>
-	<TR>	
-		<TD><B>Type</B></TD><TD><INPUT TYPE="TEXT" NAME="type" VALUE="$bidblock->{'type'}" SIZE="10"></TD>
-	</TR>
-		$section->{'section'}
-		$section->{'ordernum'}
-		$section->{'portal'}
-		$section->{'retrieve'}
-		$section->{'url'}
-		$section->{'rdf'}
-		$saveflag
-	<TR>
-		<TD VALIGN="TOP"><B>Description</B></TD>
-		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">$description_ta</TEXTAREA>
-		</TD>
-	</TR>
-	<TR>	
-		<TD VALIGN="TOP"><B>Block</B><BR>
-		<P>
-			<INPUT TYPE="SUBMIT" VALUE="Save Block" NAME="blocksave"><BR>
-			<INPUT TYPE="SUBMIT" NAME="blockrevert" VALUE="Revert to default">
-			<BR><INPUT TYPE="SUBMIT" NAME="blocksavedef" VALUE="Save as default">
-			(Make sure this is what you want!)
-		</P>
-		</TD>
-		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="15" COLS="100" NAME="block">$block_ta</TEXTAREA>
-		</TD>
-	</TR>
-EOT
-
-# print the delete button if this is anything other than 
-# a new form, or initial submission from author menu
-print <<EOT if (! $form->{blocknew} && $form->{blockdelete_cancel} && ! $form->{blockdelete} && ! $form->{blockdelete1} && ! $form->{blockdelete2});
-	<TR>	
-		<TD COLSPAN="3">
-		<INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete"></P>
-		</TD>
-	</TR>
-EOT
-
-# print the new block if this isn't already a new block
-print <<EOT if (! $form->{blocknew});
-	<TR>	
-		<TD COLSPAN="3">
-		<INPUT TYPE="SUBMIT" VALUE="Create a new block" NAME="blocknew"></P>
-		</TD>
-	</TR>
-EOT
-
-print <<EOT;
-</TABLE>
-</FORM>
-<!-- end block editing form -->
-EOT
-
-	my $sectionbid = $slashdb->getSection($bid, 'section');
-	print <<EOT;
-<B><A HREF="$constants->{rootdir}/sections.pl?section=$sectionbid&op=editsection">$sectionbid</A></B>
-(<A HREF="$constants->{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
-EOT
+	slashDisplay('admin-blockEdit', {
+			bid 			=> $bid,
+			title 			=> $title,
+			blockref		=> $blockref,
+			blockedit_flag		=> $blockedit_flag,
+			blockdelete_flag	=> $blockdelete_flag,
+			block_select1		=> $block_select1,
+			block_select2		=> $block_select2,
+			blockform_flag		=> $blockform_flag,
+			portal_checked		=> $portal_checked,
+			retrieve_checked	=> $retrieve_checked,
+			description_ta		=> $description_ta,
+			block_ta		=> $block_ta,
+			sectionbid		=> $sectionbid,
+			}
+	);	
+			
 }
 
 ##################################################################
@@ -607,14 +459,14 @@ sub blockSave {
 	my $saved = $slashdb->saveBlock($bid);
 
 	if ($form->{save_new} && $saved > 0) {
-		print qq[<P><B>This block, $bid, already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>]; 
+		print getMessage('blockSave-exists-message', { bid => $bid } );
 		return;
 	}	
 
 	if ($saved == 0) {
-		print "Inserted $bid<BR>";
+		print getMessage('blockSave-inserted-message', { bid => $bid });
 	}
-	print "Saved $bid<BR>";
+	print getMessage('blockSave-saved-message', { bid => $bid });
 }
 
 ##################################################################
@@ -627,8 +479,8 @@ sub blockDelete {
 	my $constants = getCurrentStatic();
 
 	return if $user->{aseclev} < 500;
-	print "<B>Deleted $bid!</B><BR>";
 	$slashdb->deleteBlock($bid);
+	print getMessage('blockDelete-message', { bid => $bid });
 }
 
 ##################################################################
@@ -639,6 +491,8 @@ sub colorEdit {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
+	my($color_select,$block,$colorblock_clean,$title);
+	my $colors = [];
 	return if $user->{aseclev} < 500;
 
 	my $colorblock;
@@ -648,104 +502,32 @@ sub colorEdit {
 		$colorblock = 
 		"$form->{fg0},$form->{fg1},$form->{fg2},$form->{fg3},$form->{bg0},$form->{bg1},$form->{bg2},$form->{bg3}";
 
-		my $colorblock_clean = $colorblock;
+		$colorblock_clean = $colorblock;
 		# the #s will break the url 
 		$colorblock_clean =~ s/#//g;
-		print <<EOT
-	<br>
-	<a href="$constants->{rootdir}/index.pl?colorblock=$colorblock_clean">
-	<p><b>Click here to see the site in these colors!</a></b> 
-	 (Hit the <b>"back"</b> button to get back to this page.)</p>
-	
-EOT
+
 	} else {
 		$colorblock = $slashdb->getBlock($form->{color_block}, 'block'); 
 	}
 
-	my @colors = split m/,/, $colorblock;
+	@{$colors} = split m/,/, $colorblock;
 
-	$constants->{fg} = [@colors[0..3]];
-	$constants->{bg} = [@colors[4..7]];
-	print "<P>You may need to reload the page a couple of times to see a change in the color scheme.
-		<BR>If you can restart the webserver, that's the quickest way to see your changes.</P>";
+	$constants->{fg} = [@{$colors}->[0..3]];
+	$constants->{bg} = [@{$colors}->[4..7]];
 
-       	titlebar("100%","Site Color Editor","c");
-	print <<EOT;
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-<P>Shown are the site colors. If you make a change to any one of them, 
-you will need to restart the webserver for the change(s) to show up.</P>
-<P>Note: make sure you use a valid color value, or the color will not work properly.</P>
-Select the color block to edit: 
-EOT
-	my $block = $slashdb->getColorBlock();
-	createSelect('color_block', $block, $form->{color_block});
+       	$title = getTitle('colorEdit-title');
 
-print <<EOT;
-	<INPUT TYPE="submit" name="colored" value="Edit Colors">
-EOT
-
-print <<EOT if $form->{color_block};
-<TABLE BORDER="0">
-	<TR>
-		<TD>Foreground color 0 \$constants->{fg}[0]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="fg0" VALUE="$colors[0]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[0]">Foreground color 0 \$constants->{fg}[0]</FONT></TD>
-		<TD BGCOLOR="$colors[0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Foreground color 1 \$constants->{fg}[1]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="fg1" VALUE="$colors[1]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[1]">Foreground color 1 \$constants->{fg}[1]</FONT></TD>
-		<TD BGCOLOR="$colors[1]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Foreground color 2 \$constants->{fg}[2]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="fg2" VALUE="$colors[2]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[2]">Foreground color 2 \$constants->{fg}[2]</FONT></TD>
-		<TD BGCOLOR="$colors[2]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Foreground color 3 \$constants->{fg}[3]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="fg3" VALUE="$colors[3]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[3]">Foreground color 3 \$constants->{fg}[3]</FONT></TD>
-		<TD BGCOLOR="$colors[3]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TD>
-	<TR>
-		<TD>Background color 0 \$constants->{bg}[0]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="bg0" VALUE="$colors[4]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[4]">Background color 0 \$constants->{bg}[0]</FONT></TD>
-		<TD BGCOLOR="$colors[4]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Background color 1 \$constants->{bg}[1]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="bg1" VALUE="$colors[5]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[5]">Background color 1 \$constants->{bg}[1]</FONT></TD>
-		<TD BGCOLOR="$colors[5]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TD>
-	<TR>
-		<TD>Background color 2 \$constants->{bg}[2]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="bg2" VALUE="$colors[6]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[6]">Background color 2 \$constants->{bg}[2]</FONT></TD>
-		<TD BGCOLOR="$colors[6]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Background color 3 \$constants->{bg}[3]</TD>
-		<TD><INPUT TYPE="TEXT" WIDTH="12" NAME="bg3" VALUE="$colors[7]"></TD>
-		<TD><FONT FACE="ARIAL,HELVETICA" SIZE="+1" COLOR="$colors[7]">Background color 3 \$constants->{bg}[3]</FONT></TD>
-		<TD BGCOLOR="$colors[7]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD><INPUT TYPE="SUBMIT" NAME="colorpreview" VALUE="Preview"></TD>
-		<TD><INPUT TYPE="SUBMIT" NAME="colorsave" VALUE="Save Colors"></TD>
-		<TD><INPUT TYPE="SUBMIT" NAME="colorrevert" VALUE="Revert to saved"></TD>
-		<TD><INPUT TYPE="SUBMIT" NAME="colororig" VALUE="Revert to default">
-		<BR><INPUT TYPE="SUBMIT" NAME="colorsavedef" VALUE="Save as default">
-		 (Make sure this is what you want!) 
-		</TD>
-	</TR>
-</TABLE>
-</FORM>
-EOT
+	$block = $slashdb->getColorBlock();
+	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
+	
+	slashDisplay('admin-colorEdit', {
+			title 			=> $title,
+			colorblock_clean	=> $colorblock_clean,
+			colors			=> $colors,
+			color_select		=> $color_select,
+			}
+	);
+			
 }
 
 ##################################################################
@@ -764,7 +546,7 @@ sub colorSave {
 
 ##################################################################
 # Topic Editor
-sub topicEd {
+sub topicEdit {
 
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
@@ -772,75 +554,58 @@ sub topicEd {
 	my $constants = getCurrentStatic();
 
 	return if $user->{aseclev} < 1;
-	my($topic, @available_images);
+	my($topic, $topics_menu, $topics_select);
+	my @available_images;
+	my $image_select = "";
+
+	my ($imageseen_flag,$images_flag) = (0,0);
 
 	local *DIR;
 	opendir(DIR, "$constants->{basedir}/images/topics");
-	@available_images = grep(!/^\./, readdir(DIR)); 
+	@available_images = grep(/.*\.gif|jpg/i, readdir(DIR)); 
+
 	closedir(DIR);
 
-	print <<EOT;
-<!-- begin topic editor form -->
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-EOT
+	for(@available_images) {
+		print STDERR "img $_\n";
+	}
 
-	my $topics_menu = $slashdb->getDescriptions('topics');
-	createSelect('nexttid', $topics_menu, $form->{nexttid});
-
-	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
-	print '<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>';
+	$topics_menu = $slashdb->getDescriptions('topics');
+	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid},1);
 
 	if (!$form->{topicdelete}) {
+
+		$imageseen_flag = 1 if ($form->{nexttid} && ! $form->{topicnew} && ! $form->{topicdelete});
+
 		if (!$form->{topicnew}) {
 			$topic = $slashdb->getTopic($form->{nexttid});
 		} else {
 			$topic = {};
-			$topic->{'tid'} = 'new topic';
+			$topic->{tid} = getTitle('topicEd-new-title',{},1);
 		}
-
-		print qq|<BR>Image as seen: <BR><BR><IMG SRC="$constants->{imagedir}/topics/$topic->{'image'}" ALT="$topic->{'alttext'}" WIDTH="$topic->{'width'}" HEIGHT="$topic->{'height'}">|
-			if ($form->{nexttid} && ! $form->{topicnew} && ! $form->{topicdelete});
-
-		print <<EOT;
-		<BR><BR>Tid<BR><INPUT TYPE="TEXT" NAME="tid" VALUE="$topic->{'tid'}"><BR>
-		<BR>Dimensions (leave blank to determine automatically)<BR>
-		Width: <INPUT TYPE="TEXT" NAME="width" VALUE="$topic->{'width'}" SIZE="4">
-		Height: <INPUT TYPE="TEXT" NAME="height" VALUE="$topic->{'height'}" SIZE="4"><BR>
-		<BR>Alt Text<BR>
-		<INPUT TYPE="TEXT" NAME="alttext" VALUE="$topic->{'alttext'}"><BR>
-		<BR>Image<BR>
-EOT
 
 		if (@available_images) {
-			print qq|<SELECT name="image">|;
-			print qq|<OPTION value="">Select an image</OPTION>| if $form->{topicnew};
+			$images_flag = 1;
+			$image_select = qq|<SELECT name="image">|;
+			$image_select .= qq|<OPTION value="">Select an image</OPTION>| if $form->{topicnew};
 			for (@available_images) {
-				my($selected);
-				$selected = "SELECTED" if ($_ eq $topic->{'image'});
-				print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
+				my $selected = "SELECTED" if ($_ eq $topic->{'image'});
+				$image_select .= qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
 				$selected = '';
 			}
-			print '</SELECT>';
-		} else {
-			# If we don't have images in the proper place, print a message
-			# and use a regular text input field.
-			print <<EOT;
-<P>No images were found in the topic images directory (&lt;basedir&gt;/images/topics).<BR>
-<INPUT TYPE="TEXT" NAME="image" VALUE="$topic->{'image'}"><BR><BR>
-EOT
-		}
-
-		print <<EOT;
-			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
-			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
-EOT
+			$image_select .= '</SELECT>';
+		} 
 	}
 
-print qq|</FORM>\n<!-- end topic editor form -->\n|;
-
-
-
-
+	slashDisplay('admin-topicEdit', {
+			imageseen_flag		=> $imageseen_flag,
+			images_flag		=> $images_flag,
+			topic			=> $topic,
+			topics_select		=> $topics_select,
+			image_select		=> $image_select
+			}
+	);
+			
 }
 
 ##################################################################
@@ -871,8 +636,10 @@ sub topicSave {
 		    @{ $form }{'width', 'height'} = imgsize("$constants->{basedir}/images/topics/$form->{image}");
 		}
 	}
-	print "<B>Saved $form->{tid}!</B><BR>" if ! DBI::errstr;
+	
 	$form->{nexttid} = $form->{tid};
+
+	print getMessage('topicSave-message');
 }
 
 ##################################################################
@@ -912,6 +679,7 @@ sub listTopics {
 }
 
 ##################################################################
+# hmmm, what do we want to do with this sub ? PMG 10/18/00
 sub importImage {
 	# Check for a file upload
 	my $section = $_[0];
@@ -994,21 +762,12 @@ sub importText {
 }
 
 ##################################################################
-sub linkNode {
-	my $n = shift;
-	return '[?]' if $n eq '?';
-	return $n . '<SUP><A HREF="http://www.everything2.com/index.pl?node='
-		. CGI::escape($n) . '">[?]</A></SUP>';
-}
-
-##################################################################
 # Generated the 'Related Links' for Stories
 sub getRelated {
+	my ($story_content) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
+	my $related_links = "";
 
 	my %relatedLinks = (
 		intel		=> "Intel;http://www.intel.com",
@@ -1028,24 +787,21 @@ sub getRelated {
 		cnn		=> "CNN;http://www.cnn.com"
 	);
 
-
-	local($_) = @_;
-	my $r;
 	foreach my $key (keys %relatedLinks) {
 		if (exists $relatedLinks{$key} && /\W$key\W/i) {
-			my($t,$u) = split m/;/, $relatedLinks{$key};
-			$t =~ s/(\S{20})/$1 /g;
-			$r .= qq[<LI><A HREF="$u">$t</A></LI>\n];
+			my($label,$url) = split m/;/, $relatedLinks{$key};
+			$label =~ s/(\S{20})/$1 /g;
+			$related_links .= qq[<LI><A HREF="$url">$label</A></LI>\n];
 		}
 	}
 
 	# And slurp in all the URLs just for good measure
-	while (m|<A(.*?)>(.*?)</A>|sgi) {
-		my($u, $t) = ($1, $2);
-		$t =~ s/(\S{30})/$1 /g;
-		$r .= "<LI><A$u>$t</A></LI>\n" unless $t eq "[?]";
+	while ($story_content =~ m|<A(.*?)>(.*?)</A>|sgi) {
+		my($url, $label) = ($1, $2);
+		$label =~ s/(\S{30})/$1 /g;
+		$related_links .= "<LI><A$url>$label</A></LI>\n" unless $label eq "[?]";
 	}
-	return $r;
+	return $related_links;
 }
 
 ##################################################################
@@ -1060,16 +816,17 @@ sub otherLinks {
 
 	my $topic = $slashdb->getTopic($tid);
 
-	return <<EOT;
-<LI><A HREF="$constants->{rootdir}/search.pl?topic=$tid">More on $topic->{alttext}</A></LI>
-<LI><A HREF="$constants->{rootdir}/search.pl?author=$aid">Also by $aid</A></LI>
-EOT
-
+	return slashDisplay('admin-otherLinks', {
+			aid		=> $aid,
+			tid		=> $tid,
+			topic		=> $topic,
+			} , 1, 1
+	);
 }
 
 ##################################################################
 # Story Editing
-sub editstory {
+sub editStory {
 	my($sid) = @_;
 
 	my $slashdb = getCurrentDB();
@@ -1077,207 +834,159 @@ sub editstory {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my($S, $A, $T);
+	my ($authoredit_flag,$extracolumn_flag) = (0,0);
+	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest);
+	my($editbuttons,$topic_select, $section_select, $author_select);
+	my($extracolumns,$introtext,$bodytext,$relatedtext);
+	my($displaystatus_select, $commentstatus_select);
+	my $extracolref = {};
+	my($fixquotes_check,$autonode_check,$fastforward_check) = ('off','off','off');
 
-	foreach (keys %{$form}) { $S->{$_} = $form->{$_} }
+	foreach (keys %{$form}) { $storyref->{$_} = $form->{$_} }
 
-	my $newarticle = 1 if !$sid && !$form->{sid};
+	my $newarticle = 1 if (!$sid && !$form->{sid});
 	
-	print <<EOT;
-
-<!-- begin editstory -->
-
-<FORM ENCTYPE="multipart/form-data" ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-EOT
-
 	if ($form->{title}) { 
-		# Preview Mode
-		print qq!<INPUT TYPE="HIDDEN" NAME="subid" VALUE="$form->{subid}">!
-			if $form->{subid};
+		$slashdb->setSessionByAid($user->{aid}, { lasttitle => $storyref->{title} });
 
-		$slashdb->setSessionByAid($user->{aid}, { lasttitle => $S->{title} });
-
-		($S->{writestatus}, $S->{displaystatus}, $S->{commentstatus}) =
+		($storyref->{writestatus}, $storyref->{displaystatus}, $storyref->{commentstatus}) =
 			$slashdb->getVars('defaultwritestatus','defaultdisplaystatus',
 			'defaultcommentstatus');
 
-		$S->{aid} ||= $user->{aid};
-		$S->{section} = $form->{section};
+		$storyref->{aid} ||= $user->{aid};
+		$storyref->{section} = $form->{section};
 
-		my $extracolumns = $slashdb->getKeys($S->{section});
+		my $extracolumns = $slashdb->getKeys($storyref->{section});
 
 		foreach (@{$extracolumns}) {
-			$S->{$_} = $form->{$_} || $S->{$_};
+			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 		}
 
-		$S->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
-		$S->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
-		$S->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
-		$S->{dept} =~ s/ /-/gi;
+		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
+		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
+		$storyref->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
+		$storyref->{dept} =~ s/ /-/gi;
 
-		$S->{introtext} = $slashdb->autoUrl($form->{section}, $S->{introtext});
-		$S->{bodytext} = $slashdb->autoUrl($form->{section}, $S->{bodytext});
+		$storyref->{introtext} = $slashdb->autoUrl($form->{section}, $storyref->{introtext});
+		$storyref->{bodytext} = $slashdb->autoUrl($form->{section}, $storyref->{bodytext});
 
-		$T = $slashdb->getTopic($S->{tid});
+		$topic = $slashdb->getTopic($storyref->{tid});
 		$form->{aid} ||= $user->{aid};
-		$A = $slashdb->getAuthor($form->{aid});
+		$author= $slashdb->getAuthor($form->{aid});
 		$sid = $form->{sid};
 
-		if (!$form->{'time'} || $form->{fastforward}) {
-			$S->{'time'} = $slashdb->getTime();
+		if (!$form->{time} || $form->{fastforward}) {
+			$storyref->{time} = $slashdb->getTime();
 		} else {
-			$S->{'time'} = $form->{'time'};
+			$storyref->{time} = $form->{time};
 		}
 
-		print '<TABLE><TR><TD>';
 		my $tmp = $constants->{currentSection};
-		$constants->{currentSection} = $S->{section};
-		print dispStory($S, $A, $T, 'Full');
+		$constants->{currentSection} = $storyref->{section};
+
+		$storycontent = dispStory($storyref, $author, $topic, 'Full');
+
 		$constants->{currentSection} = $tmp;
-		print '</TD><TD WIDTH="210" VALIGN="TOP">';
-		$S->{relatedtext} = getRelated("$S->{title} $S->{bodytext} $S->{introtext}")
-			. otherLinks($S->{aid}, $S->{tid});
+		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
+			. otherLinks($storyref->{aid}, $storyref->{tid});
 
-		fancybox($constants->{fancyboxwidth}, 'Related Links', $S->{relatedtext});
-		CGI::param('relatedtext', $S->{relatedtext});
-		CGI::hidden('relatedtext');
+		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
 
-		print <<EOT;
-</TD></TR></TABLE>
-
-<P><IMG SRC="$constants->{imagedir}/greendot.gif" WIDTH="80%" ALIGN="CENTER" HSPACE="20" HEIGHT="1"></P>
-
-EOT
-
-	} elsif (defined $sid) { # Loading an Old SID
-		print '<TABLE><TR><TD>';
+	} elsif (defined $sid) { # Loading an existing SID
 		my $tmp = $constants->{currentSection};
 		($constants->{currentSection}) = $slashdb->getStory($sid, 'section');
-		(my($story), $S, $A, $T) = displayStory($sid, 'Full');
+		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
 		$constants->{currentSection} = $tmp;
-		print $story, '</TD><TD WIDTH="220" VALIGN="TOP">';
-
-		fancybox($constants->{fancyboxwidth},'Related Links', $S->{relatedtext});
-		CGI::param('relatedtext', $S->{relatedtext});
-
-		print '</TD></TR></TABLE>';
+		$storybox = fancybox($constants->{fancyboxwidth},'Related Links', $storyref->{relatedtext},0,1);
 
 	} else { # New Story
-		$S->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
-		$S->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
-		$S->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
+		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
+		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
+		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
-		$S->{'time'} = $slashdb->getTime();
-		$S->{tid} ||= 'news';
-		$S->{section} ||= 'articles';
-		$S->{aid} = $user->{aid};
+		$storyref->{'time'} = $slashdb->getTime();
+		# hmmm. I don't like hardcoding these PMG 10/19/00
+		$storyref->{tid} ||= 'news';
+		$storyref->{section} ||= 'articles';
+
+		$storyref->{aid} = $user->{aid};
 	}
-	my $extracolumns =  $slashdb->getKeys($S->{section});
+	$extracolumns =  $slashdb->getKeys($storyref->{section});
 
-	my $introtext = stripByMode($S->{introtext}, 'literal', 1);
-	my $bodytext  = stripByMode($S->{bodytext}, 'literal', 1);
-	my $SECT = getSection($S->{section});
+	$introtext = stripByMode($storyref->{introtext}, 'literal', 1);
+	$bodytext  = stripByMode($storyref->{bodytext}, 'literal', 1);
+	$relatedtext = stripByMode($storyref->{relatedtext}, 'literal', 1);
+	my $SECT = getSection($storyref->{section});
 
-	print '<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">';
-	print qq!<TR><TD BGCOLOR="$constants->{bg}[3]">&nbsp; </TD><TD BGCOLOR="$constants->{bg}[3]"><FONT COLOR="$constants->{fg}[3]">!;
-	editbuttons($newarticle);
-	selectTopic('tid', $S->{tid});
+	$editbuttons = editbuttons($newarticle);
+
+	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
+
 	unless ($user->{asection}) {
-		selectSection('section', $S->{section}, $SECT) unless $user->{asection};
+		$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{asection};
 	}
-	print qq!\n<INPUT TYPE="HIDDEN" NAME="writestatus" VALUE="$S->{writestatus}">!;
 
-	if ($user->{aseclev} > 100 and $S->{aid}) {
+	if ($user->{aseclev} > 100 and $storyref->{aid}) {
+		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
-		createSelect('aid', $authors, $S->{aid});
-	} elsif ($S->{aid}) {
-		print qq!\n<INPUT TYPE="HIDDEN" NAME="aid" VALUE="$S->{aid}">!;
-	}
+		$author_select = createSelect('aid', $authors, $storyref->{aid},1);
+	} 
 
-	# print qq!\n<INPUT TYPE="HIDDEN" NAME="aid" VALUE="$S->{aid}">! if $S->{aid};
-	print qq!\n<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$S->{sid}">! if $S->{sid};
+	$storyref->{dept} =~ s/ /-/gi;
 
-	print '</FONT></TD></TR>';
-
-
-	$S->{dept} =~ s/ /-/gi;
-	print qq!<TR><TD BGCOLOR="$constants->{bg}[3]"><FONT COLOR="$constants->{fg}[3]"> <B>Title</B> </FONT></TD>\n<TD BGCOLOR="$constants->{bg}[2]"> !,
-		CGI::textfield(-name => 'title', -default => $S->{title}, -size => 50, -override => 1),
-		'</TD></TR>';
-
-	if ($constants->{use_dept}) {
-		print qq!<TR><TD BGCOLOR="$constants->{bg}[3]"><FONT COLOR="$constants->{fg}[3]"> <B>Dept</B> </FONT></TD>\n!,
-			qq!<TD BGCOLOR="$constants->{bg}[2]"> !,
-			CGI::textfield(-name => 'dept', -default => $S->{dept}, -size => 50),
-			qq!</TD></TR>\n!;
-	}
-
-	print qq!<TR><TD BGCOLOR="$constants->{bg}[3]">&nbsp; </TD>\n!,
-		qq!<TD BGCOLOR="$constants->{bg}[2]"><FONT COLOR="$constants->{fg}[2]">!,
-		lockTest($S->{title});
+	$locktest = lockTest($storyref->{title});
 
 	unless ($user->{asection}) {
 		my $description = $slashdb->getDescriptions('displaycodes');
-		createSelect('displaystatus', $description, $S->{displaystatus});
+		$displaystatus_select = createSelect('displaystatus', $description, $storyref->{displaystatus},1);
 	}
 	my $description = $slashdb->getDescriptions('commentcodes');
-	createSelect('commentstatus', $description, $S->{commentstatus});
+	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus},1);
 
-	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{'time'}" size="16"> <BR>!;
-
-	printf "\t[ %s | %s", CGI::checkbox('fixquotes'), CGI::checkbox('autonode');
-	printf(qq! | %s | <A HREF="$constants->{rootdir}/pollBooth.pl?qid=$sid&op=edit">Related Poll</A>!,
-		CGI::checkbox('fastforward')) if $sid;
-	print " ]\n";
-
-	print <<EOT;
-</FONT></TD></TR></TABLE>
-<BR>Intro Copy<BR>
-	<TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">$S->{introtext}</TEXTAREA><BR>
-EOT
+	$fixquotes_check = "on" if $form->{fixquotes};
+	$autonode_check = "on" if $form->{autonode};
+	$fastforward_check = "on" if $form->{fastforward};
 
 	if (@{$extracolumns}) {
-		print <<EOT;
-
-<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
-	<TR><TD ALIGN="RIGHT" COLSPAN="2" BGCOLOR="$constants->{bg}[3]">
-		<FONT COLOR="$constants->{fg}[3]"> <B>Extra Data for This Section</B> </FONT>
-	</TD></TR>
-EOT
+		$extracolumn_flag = 1;
 
 		foreach (@{$extracolumns}) {
 			next if $_ eq 'sid';
 			my($sect, $col) = split m/_/;
-			$S->{$_} = $form->{$_} || $S->{$_};
+			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 
-			printf <<EOT, CGI::textfield({ -name => $_, -value => $S->{$_}, -size => 64 });
-
-	<TR><TD BGCOLOR="$constants->{bg}[3]">
-		<FONT COLOR="$constants->{fg}[3]"> <B>$col</B> </FONT>
-	</TD><TD BGCOLOR="$constants->{bg}[2]">
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}"> %s </FONT>
-	</TD></TR>
-EOT
-
+			$extracolref->{$_}{sect} = $sect;
+			$extracolref->{$_}{col} = $col;
 		}
-		print "</TABLE>\n";
 	}
 
-
-	editbuttons($newarticle);
-	print <<EOT;
-
-Extended Copy<BR>
-	<TEXTAREA NAME="bodytext" COLS="70" WRAP="VIRTUAL" ROWS="10">$S->{bodytext}</TEXTAREA><BR>
-
-<!-- end edit story -->
-
-EOT
-
+# hmmmm
 #Import Image (don't even both trying this yet :)<BR>
 #	<INPUT TYPE="file" NAME="importme"><BR>
 
-	editbuttons($newarticle);
+	slashDisplay('admin-editStory', {
+			storyref 		=> $storyref,
+			story			=> $story,
+			storycontent		=> $storycontent,
+			storybox		=> $storybox,
+			sid			=> $sid,
+			editbuttons		=> $editbuttons,
+			topic_select		=> $topic_select,
+			section_select		=> $section_select,
+			author_select		=> $author_select,
+			locktest		=> $locktest,
+			displaystatus_select	=> $displaystatus_select,
+			commentstatus_select	=> $commentstatus_select,
+			fixquotes_check		=> $fixquotes_check,
+			autonode_check		=> $autonode_check,
+			fastforward_check	=> $fastforward_check,
+			extracolumn_flag	=> $extracolumn_flag,
+			extracolref		=> $extracolref,
+			introtext		=> $introtext,
+			bodytext		=> $bodytext,
+			relatedtext		=> $relatedtext,
+			}
+	);
 }
 
 ##################################################################
@@ -1340,7 +1049,7 @@ EOT
 		print qq[\t<TR BGCOLOR="$bgcolor"><TD ALIGN="RIGHT">\n];
 		if ($user->{aid} eq $aid || $user->{aseclev} > 100) {
 			my $tbtitle = fixparam($title);
-			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&op=edit&sid=$sid">$x</A>\n]!;
+			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&editstory=1&sid=$sid">$x</A>\n]!;
 
 		} else {
 			print "\t\t[$x]\n"
@@ -1501,18 +1210,8 @@ sub updateFilter {
 ##################################################################
 sub editbuttons {
 	my($newarticle) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-
-	print "\n\n<!-- begin editbuttons -->\n\n";
-	print qq[<INPUT TYPE="SUBMIT" NAME="op" VALUE="save"> ] if $newarticle;
-	print qq[<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"> ];
-	print qq[<INPUT TYPE="SUBMIT" NAME="op" VALUE="update"> ],
-		qq[<INPUT TYPE="SUBMIT" NAME="op" VALUE="delete">] unless $newarticle;
-	print "\n\n<!-- end editbuttons -->\n\n";
+	my $editbuttons = slashDisplay('admin-editbuttons',{newarticle => $newarticle},1);
+	return $editbuttons
 }
 
 ##################################################################
@@ -1579,6 +1278,9 @@ sub getTitle {
 	$hashref ||= {};
 	$hashref->{value} = $value;
 	return slashDisplay('admin-titles', $hashref, 1, $nocomm);
+}
+##################################################################
+sub getLinks {
 }
 
 
