@@ -147,14 +147,14 @@ sub displayStandardBlocks {
 			if ref $sectionBoxes->{$getblocks};
 	}
 
-	if($user->{is_anon}) {
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
-				$boxBank->{$bid}{title},
-				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-				$boxBank->{$bid}{bid},
-				$boxBank->{$bid}{url}
-	}
+#	if($user->{is_anon}) {
+#			$return .= portalbox(
+#				$constants->{fancyboxwidth},
+#				$boxBank->{$bid}{title},
+#				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
+#				$boxBank->{$bid}{bid},
+#				$boxBank->{$bid}{url}
+#	}
 
 	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
