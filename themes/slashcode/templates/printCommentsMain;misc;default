@@ -73,7 +73,7 @@ __template__
 		| Starting at #[% form.startat %]"
 [% END %]
 
-		| <A HREF="[% constants.rootdir %]/search.pl?op=comments&sid=[% sid %]">
+		| <A HREF="[% constants.rootdir %]/search.pl?op=comments&amp;sid=[% sid %]">
 <FONT COLOR="[% user.fg.3 %]">Search Discussion</FONT></A></FONT>
 	</TD></TR>
 
