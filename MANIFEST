@@ -350,6 +350,7 @@ themes/slashcode/tasks/adminmail.pl
 themes/slashcode/tasks/counthits.pl
 themes/slashcode/tasks/daily.pl
 themes/slashcode/tasks/daily_archive.pl
+themes/slashcode/tasks/daily_forget.pl
 themes/slashcode/tasks/expire.pl
 themes/slashcode/tasks/flush_formkeys.pl
 themes/slashcode/tasks/freshenup.pl
