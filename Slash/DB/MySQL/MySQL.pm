@@ -250,12 +250,6 @@ sub createComment {
 			comment	=>  $comment->{postercomment},
 	});
 
-# 	if (getCurrentStatic('mysql_heap_table')) {
-# 		my $insline = "INSERT into comment_heap (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header,$cid," .
-# 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
-# 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
-# 		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
-# 	}
 
 	# should this be conditional on the others happening?
 	# is there some sort of way to doublecheck that this value
@@ -299,8 +293,6 @@ sub getMetamodComments {
 	#my $t0 = new Benchmark;
 
 	my $comment_table = 'comments';
-	#my $comment_table = getCurrentStatic('mysql_heap_table') ? 
-	#	'comment_heap' : 'comments';
 
 	# We first check to see if we have any moderator records that need
 	# processing at the current count level If not, we then increment the
@@ -459,7 +451,7 @@ sub getModeratorCommentLog {
 #
 # I've replaced it. - Cliff
 
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	# We no longer need SID as CID is now unique.
 	my $comments = $self->sqlSelectMany("$comment_table.sid as sid,
 				 $comment_table.cid as cid,
@@ -546,14 +538,6 @@ sub undoModeration {
 			"uid=$cuid AND $scorelogic"
 		);
 
-# comments_heap turned off (at least for now)
-# 		if ($constants->{mysql_heap_table}) {
-# 			$self->sqlUpdate(
-# 				"comment_heap",
-# 				{ -points => "points+" . (-1 * $val) },
-# 				"cid=$cid AND $scorelogic"
-# 			);
-# 		}
 		push(@removed, $cid);
 	}
 
@@ -650,7 +634,7 @@ sub createSubmission {
 #################################################################
 sub getStoryDiscussions {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
 		"discussions, $story_table",
 		"displaystatus != -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'",
@@ -1041,7 +1025,7 @@ sub getCommentsByUID {
 sub getCommentsByNetID {
 	my($self, $id, $min) = @_;
 
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min ";
@@ -1057,7 +1041,7 @@ sub getCommentsByNetID {
 sub getCommentsBySubnetID{
 	my($self, $subnetid, $min) = @_;
 
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE subnetid='$subnetid' "
 			. " ORDER BY date DESC LIMIT $min ";
@@ -1226,7 +1210,7 @@ sub setTemplate {
 ########################################################
 sub getCommentChildren {
 	my($self, $cid) = @_;
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	my($scid) = $self->sqlSelectAll('cid', $comment_table, "pid=$cid");
 
 	return $scid;
@@ -1241,10 +1225,6 @@ sub deleteComment {
 	my($self, $cid, $discussion_id) = @_;
 	my @comment_tables = qw( comment_text comments );
 	my $comment_table = "comments";
-# 	if (getCurrentStatic('mysql_heap_table')) {
-# 		$comment_table = "comment_heap";
-# 		push @comment_tables, $comment_table;
-# 	}
 	# We have to update the discussion, so make sure we have its id.
 	if (!$discussion_id) {
 		($discussion_id) = $self->sqlSelect("sid", $comment_table, "cid=$cid");
@@ -1265,7 +1245,7 @@ sub deleteComment {
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 
 	$self->sqlSelect('pid', $comment_table, "sid='$sid' and cid=$cid");
 }
@@ -1276,7 +1256,7 @@ sub checkStoryViewable {
 	my($self, $sid) = @_;
 	return unless $sid;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $count = $self->sqlCount($story_table, "sid='$sid' AND  displaystatus != -1 AND time < now()");
 	return $count;
 }
@@ -2438,7 +2418,7 @@ sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt",
 		"topics,$story_table",
 		"topics.tid=$story_table.tid
@@ -2612,7 +2592,7 @@ sub findCommentsDuplicate {
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my($value) = $self->sqlSelect("count(*)",
 		$story_table,
 		"tid=" . $self->sqlQuote($tid));
@@ -2683,7 +2663,7 @@ sub getStoryByTime {
 ########################################################
 sub countStories {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $stories = $self->sqlSelectAll(
 		"$story_table.sid, $story_table.title, section, $story_table.commentcount, nickname",
 		"$story_table, users, discussions",
@@ -2802,7 +2782,7 @@ sub countUsers {
 ########################################################
 sub countStoriesTopHits {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $stories = $self->sqlSelectAll("sid,title,section,hits,users.nickname",
 		"$story_table,users", "$story_table.uid=users.uid",
 		"ORDER BY hits DESC LIMIT 10"
@@ -2815,7 +2795,7 @@ sub countStorySubmitters {
 	my($self) = @_;
 
 	my $ac_uid = getCurrentAnonymousCoward('uid');
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $submitters = $self->sqlSelectAll("count(*) as c, nickname",
 		"$story_table, users", "users.uid=$story_table.submitter AND users.uid != $ac_uid",
 		"GROUP BY users.uid ORDER BY c DESC LIMIT 10"
@@ -2827,7 +2807,7 @@ sub countStorySubmitters {
 ########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
 		"$story_table, users", "users.uid=$story_table.uid",
 		"GROUP BY $story_table.uid ORDER BY c DESC LIMIT 10"
@@ -2889,8 +2869,6 @@ sub setCommentCleanup {
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
 	my($rc1, $rc2) = (0, 0);
-# 	$rc1 = $self->sqlDo("UPDATE comment_heap $strsql")
-# 		if getCurrentStatic('mysql_heap_table');
 	$rc2 = $self->sqlDo("UPDATE comments $strsql");
 
 	return $rc1 || $rc2;
@@ -2910,7 +2888,7 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $reply = $self->sqlSelectHashref(
 		"date,subject,$comment_table.points as points,
@@ -2938,8 +2916,6 @@ sub getCommentsForUser {
 	my($self, $sid, $cid, $cache_read_only) = @_;
 
 	my $sid_quoted = $self->sqlQuote($sid);
-#	my $comment_table = getCurrentStatic('mysql_heap_table') ?
-#		'comment_heap' : 'comments';
 	my $comment_table = 'comments';
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
@@ -3381,7 +3357,7 @@ sub _purgeCommentTextIfNecessary {
 sub getComments {
 	my($self, $sid, $cid) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments';
 	$self->sqlSelect("uid, pid, subject, points, reason, ipid, subnetid",
 		$comment_table,
 		"cid=$cid AND sid=$sid_quoted"
@@ -3389,11 +3365,10 @@ sub getComments {
 }
 
 ########################################################
-# Needs to be more generic long run. -Brian
+# Needs to be more generic in the long run. -Brian
 sub getStoriesBySubmitter {
 	my($self, $id, $limit) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
+	my $story_table = 'stories';
 
 	$limit = 'LIMIT ' . $limit if $limit;
 	my $answer = $self->sqlSelectAllHashrefArray(
@@ -3500,9 +3475,8 @@ EOT
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $story_table = 'stories';
+	my $comment_table = 'comments'; 
 
 	my $where = "$story_table.sid=$comment_table.sid AND
 		     $story_table.uid=users.uid";
@@ -3613,7 +3587,7 @@ sub getTrollAddress {
 	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
 	my $days_back = int($hours_back / 24);
 	my $ipid = getCurrentUser('ipid');
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; 
 	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
 			"$comment_table.cid = moderatorlog.cid AND
 			 ipid ='$ipid' AND moderatorlog.active=1 AND
@@ -3630,7 +3604,7 @@ sub getTrollUID {
 	my $hours_back = getCurrentStatic('istroll_uid_hours') || 72;
 	my $days_back = int($hours_back / 24);
 	my $user = getCurrentUser();
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments';
 	my($badUID) = $self->sqlSelect("sum(val)",
 		"$comment_table,moderatorlog",
 		"$comment_table.cid=moderatorlog.cid
@@ -3941,8 +3915,7 @@ sub linkNode {
 # Image Importing, Size checking, File Importing etc
 sub getUrlFromTitle {
 	my($self, $title) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my($sid) = $self->sqlSelect('sid',
 		$story_table,
 		"title like '\%$title\%'",
@@ -3992,8 +3965,7 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
+	my $story_table = 'stories';
 	# CHANGE DATE_ FUNCTIONS
 	my $columns = "hits, $story_table.commentcount as commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
 		. "time, name, $story_table.section, displaystatus, $story_table.writestatus";
@@ -4046,7 +4018,7 @@ sub getStory {
 	my $constants = getCurrentStatic();
 
 	# Lets see if we can use story_heap
-	my $story_table = $constants->{mysql_heap_table} ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 
 	# If our story cache is too old, expire it.
 	_genericCacheRefresh($self, $story_table, $constants->{story_expire});
@@ -4949,13 +4921,8 @@ sub fzGetStories {
 	my $section_dbi = $self->sqlQuote($section || '');
 
 	my($comment_table, $story_table);
-	if (getCurrentStatic('mysql_heap_table')) {
-		$comment_table = "comments";  # comment_heap
-		$story_table  = "story_heap";
-	} else {
-		$comment_table = "comments";
-		$story_table  = "stories";
-	}
+	$comment_table = "comments";
+	$story_table  = "stories";
 
 #,MAX($comment_table.date) AS lastcommentdate
 #LEFT OUTER JOIN $comment_table ON discussions.id = $comment_table.sid
