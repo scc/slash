@@ -109,13 +109,25 @@ EOT
 my (%conversions) = (
 	# Straight copy tables.
 	'metamodlog'		=> undef,
-	'sections'		=> undef,
+	'menus'			=> undef,
 	'tzcodes'		=> undef,
 	'users_comments'	=> undef,
 	'users_info'		=> undef,
 	'users_param'		=> undef,
 	'users_prefs'		=> undef,
 	'vars'			=> undef,
+
+	# This is solely for fixup, we have NON NULL columns that were once 
+	# NULL.
+	'sections'		=> sub {
+		my($data) = @_;
+		
+		delete $data->{artcount} if !defined($data->{artcount});
+		delete $data->{isolate}  if !defined($data->{isolate});
+		delete $data->{issue}    if !defined($data->{issue});
+		
+		return $data;
+	},
 
 	# Plugin tables.
 	'journals'		=> sub {
@@ -802,6 +814,7 @@ sub convert {
 	# These are direct copy tables that don't depend on anything else.
 	duplicate('content_filters', 1);
 	duplicate('tzcodes', 'tz');
+	duplicate('menus', 1);
 
 	duplicate('topics', 1);
 	reload_keys('topics', \%topics, 'tid', 'alttext');
