@@ -1646,11 +1646,13 @@ sub savePollQuestion {
 	# Loop through 1..8 and insert/update if defined
 	for (my $x = 1; $x < 9; $x++) {
 		if ($poll->{"aid$x"}) {
+			my $votes = $poll->{"votes$x"};
+			$votes = 0 if $votes !~ /^-?\d+$/;
 			$self->sqlReplace("pollanswers", {
 				aid	=> $x,
 				qid	=> $poll->{qid},
 				answer	=> $poll->{"aid$x"},
-				votes	=> $poll->{"votes$x"}
+				votes	=> $votes,
 			});
 
 		} else {
