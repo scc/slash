@@ -223,37 +223,41 @@ sub _install {
 }
 
 sub getPluginList {
-	my ($self, $prefix) = @_;
+	my($self, $prefix) = @_;
 	$self->{'_install_dir'} = $prefix;
 	opendir(PLUGINDIR, "$prefix/plugins");
 	my %plugins;
-	while(my $dir = readdir(PLUGINDIR)) {
-		chomp($dir);
+	while (my $dir = readdir(PLUGINDIR)) {
 		next if $dir =~ /^\.$/;
 		next if $dir =~ /^\.\.$/;
 		next if $dir =~ /^CVS$/;
-		open(PLUGIN,"<$prefix/plugins/$dir/PLUGIN") or next; 
+		open(PLUGIN, "< $prefix/plugins/$dir/PLUGIN") or next; 
 		$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir";
 		$plugins{$dir}->{'name'} = $dir;
-		my @info = <PLUGIN>;
-		chomp(@info);
-		for(@info) {
+
+		my @info;
+		{
+			local $/;
+			@info = split /\015\012?|012/, <PLUGIN>;
+		}
+
+		for (@info) {
 			next if /^#/;
-			my ($key, $val) = split(/=/, $_, 2);
-			$key = lc($key);
-			if( $key eq 'htdoc' ) {
-				push (@{$plugins{$dir}->{$key}}, $val);
-			} elsif ( $key eq 'template' ){
-				push (@{$plugins{$dir}->{$key}}, $val);
-			} elsif ( $key eq 'image' ){
-				push (@{$plugins{$dir}->{$key}}, $val);
+			my($key, $val) = split(/=/, $_, 2);
+			$key = lc $key;
+			if ($key eq 'htdoc') {
+				push @{$plugins{$dir}->{$key}}, $val;
+			} elsif ($key eq 'template') {
+				push @{$plugins{$dir}->{$key}}, $val;
+			} elsif ($key eq 'image') {
+				push @{$plugins{$dir}->{$key}}, $val;
 			} else {
 				$plugins{$dir}->{$key} = $val;
 			}
 		}
 	}
 	my $x = 0;
-	for(sort keys %plugins) {
+	for (sort keys %plugins) {
 		$x++;
 		$plugins{$_}->{'order'} = $x;
 	}

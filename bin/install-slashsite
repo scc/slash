@@ -350,9 +350,18 @@ $dbh->disconnect;
 install_message();
 
 sub apache_site_conf {
-	#Ok, I should fix this at somepoint to extract port
-
+	# Ok, I should fix this at some point to extract port
 	my $text = qq|
+# note that if your site's path is a symlink, the
+# path listed here is most likely the actual path;
+# fix it and DocumentRoot if you want to
+<Directory $prefix_site/$sitename/htdocs>
+    Options FollowSymLinks ExecCGI Includes Indexes 
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+</Directory>
+
 <VirtualHost $sitename:80>
     ServerAdmin $email
     DocumentRoot $prefix_site/$sitename/htdocs
@@ -458,7 +467,7 @@ Main options:
 
 Site options:
 	-H	Hostname
-	-s	Site name
+	-n	Site name
 	-R	Reuse hostname as site name (boolean)
 	-L	Install files in htdocs using symlinks [y/n]
 

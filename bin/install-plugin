@@ -23,7 +23,7 @@ my $PROGNAME = basename($0);
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage() unless getopts('hvlu:', \%opts);
+usage() unless getopts('hvlu:L:', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 $opts{'u'} ||= 'slash';  
@@ -59,12 +59,27 @@ unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
 				push @answers, $plugins->{$_}{'order'};
 			}
 			last;
+		} elsif ($select eq "") {
+			last;
 		} elsif ($select ne 'q') {
 			push @answers, $select;
 		}
 	}
 
-	$install->installPlugin(\@answers);
+	my $symlink;
+	if ($opts{'L'}) {
+		$symlink = $opts{'L'} =~ /^n/i ? 0 : 1;
+	} else {
+		print "
+Would you like to install all the files as symlinks
+to the original?  (If not, each file will be copied to
+your Slash directories). [Y] ";
+		chomp(my $ans = <STDIN>);
+		$ans ||= 'Y';
+		$symlink = $ans =~ /^\s*[Yy]/;
+	}
+
+	$install->installPlugin(\@answers, 0, $symlink);
 }
 
 sub usage {
@@ -81,6 +96,7 @@ Main options:
 	-v	Version
 	-u	Virtual user (default is "slash")
 	-l	Does not install plugins, just lists known plugins
+	-L	Install files in htdocs using symlinks [y/n]
 
 EOT
 	exit;

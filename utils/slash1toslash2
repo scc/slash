@@ -172,9 +172,10 @@ sub ask {
 	local $| = 1;
 
 	chomp(my $question = $_[0]);
-	print $question, ' ';
+	print "\n", $question, " ";
 
 	chomp(my $answer = <STDIN>);
+	print "\n";
 	return $answer;
 }
 
@@ -467,6 +468,11 @@ the data on http://use.perl.org/ while preparing this program.  However,
 I had a backup ready to go (although I still lost about 12 hours of
 data, and I feel like an idiot).  Back up your data on your Slash 1.0
 database.  You have been warned.
+
+Also, consider what happens if you have two Slash sites on one machine;
+what if you give this program the wrong virtual user?  Perhaps you
+just deleted a working site!  Back up any existing data on the target
+database server, too.
 
 This program does not write to your Slash 1.0 database, so you should
 be fine, but there are no warranties, expressed or implied.  If you
