@@ -51,7 +51,7 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $slashdb = $dbcfg->{slashdb};
 
-	$r->header_out('X-Powered-By' => 'Slashcode');
+	$r->header_out('X-Powered-By' => 'Slash');
 	random($r);
 	# let pass unless / or .pl
 	my $uri = $r->uri;
@@ -189,7 +189,7 @@ sub random {
 sub authors {
 	my($r) = @_;
 	$r->header_out('X-Author-Krow' => "You can't grep a dead tree");
-	$r->header_out('X-Author-Pudge' => "I like CHEESE");
+	$r->header_out('X-Author-Pudge' => "Bite me.");
 	$r->header_out('X-Author-CaptTofu' => "I like Tofu");
 }
 
@@ -223,17 +223,18 @@ sub DESTROY { }
 'Oh no! Not the magnet! ',
 'Bender\'s a genius! ',
 'Well I don\'t have anything else planned for today, let\'s get drunk!',
-'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackOh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blToo much work!  I say we burn it, then *say* we dumped it in the sewer!',
+'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!',
+'Oh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.',
 'Oh, so, just \'cause a robot wants to kill humans that makes him a radical?',
 'There\'s nothing wrong with murder, just as long as you let Bender whet his beak.Naw, she\'ll probably have me do it.',
 'Bite my shiny, metal ass!',
 'The laws of science be a harsh mistress.',
-'In the event of an emergency, my ass can be used as a flotation device. ',
+'In the event of an emergency, my ass can be used as a flotation device.',
 'Like most of life\'s problems, this one can be solved with bending.',
 'Honey, I wouldn\'t talk about taste if I was wearing a lime green tank top.',
 'A woman like that you gotta romance first!',
 'OK, but I don\'t want anyone thinking we\'re robosexuals.',
-'Hey Fry, I\'m steering with my ass! ',
+'Hey Fry, I\'m steering with my ass!',
 'Care to contribute to the Anti-Mugging-You Fund?',
 );
 
