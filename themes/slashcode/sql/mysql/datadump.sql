@@ -226,8 +226,8 @@ INSERT INTO pollanswers (qid, aid, answer, votes) VALUES (2,5,'manic depressive'
 # Dumping data for table 'pollquestions'
 #
 
-INSERT INTO pollquestions (qid, question, voters, date, discussion) VALUES (1,'What flavor of ice cream?',5,'2000-01-16 19:11:10', 3);
-INSERT INTO pollquestions (qid, question, voters, date, discussion) VALUES (2,'Are you happy?',7,'2000-01-19 16:23:00', 4);
+INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (1,'What flavor of ice cream?',5,'2000-01-16 19:11:10', 3, 2);
+INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (2,'Are you happy?',7,'2000-01-19 16:23:00', 4, 2);
 
 #
 # Dumping data for table 'pollvoters'
@@ -241,7 +241,6 @@ INSERT INTO pollquestions (qid, question, voters, date, discussion) VALUES (2,'A
 INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('articles',30,'Articles','',0,0,0);
 INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('features',21,'Features','eyesight',0,1,0);
 INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('slash',15,'Slash','firstpost',1,1,0);
-INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('',30,'All Sections','',0,0,0);
 
 #
 # Dumping data for table 'sessions'
@@ -309,7 +308,6 @@ INSERT INTO topics (tid, image, alttext, width, height) VALUES (1,'topicnews.gif
 INSERT INTO topics (tid, image, alttext, width, height) VALUES (2,'topiclinux.gif','Linux',60,70);
 INSERT INTO topics (tid, image, alttext, width, height) VALUES (3,'topicslashdot.gif','Slashdot',100,34);
 INSERT INTO topics (tid, image, alttext, width, height) VALUES (4,'topicslash.gif','Slash',81,36);
-INSERT INTO topics (tid, image, alttext, width, height) VALUES (5,'topicslash.gif','All Topics',81,36);
 
 #
 # Dumping data for table 'tzcodes'
@@ -445,6 +443,7 @@ INSERT INTO vars (name, value, description) VALUES ('defaultcommentstatus','0','
 INSERT INTO vars (name, value, description) VALUES ('defaultdisplaystatus','0','Default display status ...');
 INSERT INTO vars (name, value, description) VALUES ('defaultsection','articles','Default section to display');
 INSERT INTO vars (name, value, description) VALUES ('defaultwritestatus','1','Default write status for newly created articles');
+INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');
 INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
 INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What size should the boxes be in?');

@@ -30,6 +30,9 @@ my %descriptions = (
 	'sortcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[1]'") },
 
+	'generic'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[2]'") },
+
 	'statuscodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
 
@@ -1323,6 +1326,7 @@ sub savePollQuestion {
 			question	=> $poll->{question},
 			voters		=> $poll->{voters},
 			topic		=> $poll->{topic},
+			uid			=> getCurrentUser('uid'),
 			-date		=>'now()'
 		});
 		$poll->{qid} = $self->getLastInsertId();
@@ -2508,7 +2512,8 @@ sub createDiscussion {
 		ts	=> $time,
 		url	=> $url,
 		topic	=> $topic,
-		type	=> $type
+		type	=> $type,
+		uid			=> getCurrentUser('uid'),
 	});
 
 	return $self->getLastInsertId();
@@ -3240,8 +3245,12 @@ sub setUser {
 	# What is worse, a select+update or a replace?
 	# I should look into that.
 	for (@param)  {
-		$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]})
-			if defined $_->[1];
+		if ($_->[0] eq "acl") {
+			$self->sqlReplace('users_acl', { uid => $uid, name => $_->[1]->{name}, value => $_->[1]->{value}});
+		} else {
+			$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]})
+ 			if defined $_->[1];
+		}
 	}
 }
 
@@ -3283,7 +3292,9 @@ sub getUser {
 			if ($_ eq 'is_anon') {
 				$answer->{is_anon} = isAnon($id);
 			} else {
-				my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
+				# First we try it as an acl param -acs
+				my $val = $self->sqlSelect('value', 'users_acl', "uid=$id AND name='$_'");
+				$val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'") if !$val;
 				$answer->{$_} = $val;
 			}
 		}
@@ -3292,13 +3303,15 @@ sub getUser {
 		(my $clean_val = $val) =~ s/^-//;
 		my $table = $self->{$cache}{$clean_val};
 		if ($table) {
-			($answer) = $self->sqlSelect($val, $table, "uid=$id");
+			$answer = $self->sqlSelect($val, $table, "uid=$id");
 		} else {
-			($answer) = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$val'");
+			# First we try it as an acl param -acs
+			$answer = $self->sqlSelect('value', 'users_acl', "uid=$id AND name='$val'");
+			$answer = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$val'") if !$answer;
 		}
 
 	} else {
-		my($where, $table, $append);
+		my($where, $table, $append_acl, $append);
 		for (@$tables) {
 			$where .= "$_.uid=$id AND ";
 		}
@@ -3306,6 +3319,10 @@ sub getUser {
 
 		$table = join ',', @$tables;
 		$answer = $self->sqlSelectHashref('*', $table, $where);
+		$append_acl = $self->sqlSelectAll('name,value', 'users_acl', "uid=$id");
+		for (@$append_acl) {
+			$answer->{$_->[0]} = $_->[1];
+		}
 		$append = $self->sqlSelectAll('name,value', 'users_param', "uid=$id");
 		for (@$append) {
 			$answer->{$_->[0]} = $_->[1];

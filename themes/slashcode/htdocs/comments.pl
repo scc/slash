@@ -32,6 +32,7 @@ sub main {
 		edit			=> \&edit,
 		post			=> \&edit,
 		creatediscussion	=> \&createDiscussion,
+		creatediscussionPage	=> \&createDiscussionPage,
 		Preview			=> \&edit,
 		preview			=> \&edit,
 		submit			=> \&submitComment,
@@ -153,13 +154,28 @@ sub commentIndex {
 sub createDiscussion {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
-	$slashdb->createDiscussion('', $form->{title},
-		$slashdb->getTime(), $ENV{HTTP_REFERER}, $form->{topic}, 1
-	);
+	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+		$form->{url} ||= $ENV{HTTP_REFERER};
+		$slashdb->createDiscussion('', $form->{title},
+			$slashdb->getTime(), $form->{url}, $form->{topic}, 1
+		);
+	}
 
 	commentIndex(@_);
 }
 
+##################################################################
+# Yep, I changed the l33t method of adding discussions.
+# "The Slash job, keeping trolls on their toes"
+# -Brian
+sub createDiscussionPage {
+	my($form, $slashdb, $user, $constants, $id) = @_;
+
+	commentIndex(@_);
+	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+		slashDisplay('discussioncreate');
+	}
+}
 
 ##################################################################
 # Welcome to one of the ancient beast functions.  The comment editor

@@ -227,6 +227,7 @@ CREATE TABLE discussions (
   topic int(10) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   type int(2) DEFAULT 0 NOT NULL,
+  uid int(11) NOT NULL,
   KEY (sid),
   PRIMARY KEY (id)
 );
@@ -367,6 +368,7 @@ CREATE TABLE pollquestions (
   topic int(11),
   discussion int(11),
   date datetime,
+  uid int(11) NOT NULL,
   PRIMARY KEY (qid)
 );
 
@@ -584,6 +586,22 @@ CREATE TABLE users (
   KEY nickname_lookup (nickname),
   KEY chk4email (realemail)
 );
+
+#
+# Table structure for table 'users'
+#
+
+DROP TABLE IF EXISTS users_acl;
+CREATE TABLE users_acl (
+  id int(11) NOT NULL auto_increment,
+  uid int(11) NOT NULL,
+  name varchar(32) NOT NULL,
+  value varchar(254) NOT NULL,
+  UNIQUE uid_key (uid,name),
+  KEY uid (uid),
+  PRIMARY KEY (id)
+);
+
 
 #
 # Table structure for table 'users_comments'

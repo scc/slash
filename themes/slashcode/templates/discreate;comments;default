@@ -1,0 +1,27 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+comments
+__lang__
+en_US
+__name__
+discussioncreate
+__template__
+[% USE Slash %]
+<FORM METHOD="POST" ACTION="comments.pl?op=creatediscussion" ENCTYPE="application/x-www-form-urlencoded">
+	<H3>Create a discussion</H3>
+	<H4>Title of discussion:</H4>
+	<INPUT TYPE="text" NAME="title" SIZE=50><br>
+	<H4>URL for discussion:</H4>
+	<INPUT TYPE="text" NAME="url" SIZE=50><br>
+	Discussion Topic: [% Slash.selectTopic('topic', topic, 1) %]<br>
+	<INPUT TYPE="submit" NAME="submit" VALUE="Submit">
+	<INPUT TYPE="reset">
+</FORM>
+
+__seclev__
+100
