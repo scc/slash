@@ -77,6 +77,9 @@ sub SlashCompileTemplates ($$$) {
 	my $templates = $slashdb->getTemplateNameCache();
 
 	# temporarily turn off warnings and errors, see errorLog()
+	# This is normally considered a big no no inside of Apache
+	# since how will its own signal handlers be put back in place?
+  # -Brian
 	local $Slash::Utility::NO_ERROR_LOG = 1;
 	local $SIG{__WARN__} = 'IGNORE';
 	local $slashdb->{_dbh}{PrintError};

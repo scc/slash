@@ -249,7 +249,16 @@ sub userdir_handler {
 			$r->uri('/comments.pl');
 			$r->filename($constants->{basedir} . '/comments.pl');
 		} else {
-			$r->args("nick=$nick");
+			# Slashdot hack, early on a few people had accounts
+			# that were number only.
+			# -Brian
+			if ($nick !~ /^\d+$/) {
+				$r->args("nick=$nick");
+			} else {
+				my $slashdb = getCurrentDB();
+				my $nickname = $slashdb->getUser($nick, 'nickname');
+				$r->args("nick=$nickname");
+			}
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
 		}

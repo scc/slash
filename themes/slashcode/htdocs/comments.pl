@@ -722,7 +722,14 @@ sub submitComment {
 		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
 
-		$slashdb->setDiscussion($form->{sid}, { flags => 'dirty' });
+		# This is for stories. If a sid is only a number
+		# then it belongs to discussions, if it has characters
+		# in it then it belongs to stories and we should
+		# update to help with stories/hitparade.
+		# -Brian
+		if ($form->{sid} !~ /^\d+$/) {
+			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		}
 
 		$slashdb->setUser($user->{uid}, {
 			-totalcomments => 'totalcomments+1',
@@ -805,7 +812,14 @@ sub moderate {
 	printComments($discussion, $form->{pid}, $form->{cid});
 
 	if ($was_touched) {
-		$slashdb->setDiscussion($sid, { flags => "dirty" });
+		# This is for stories. If a sid is only a number
+		# then it belongs to discussions, if it has characters
+		# in it then it belongs to stories and we should
+		# update to help with stories/hitparade.
+		# -Brian
+		if ($form->{sid} !~ /^\d+$/) {
+			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		}
 	}
 }
 

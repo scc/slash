@@ -165,15 +165,15 @@ sub reparentComments {
 
 	# adjust depth for root pid or cid
 	if (my $cid = $form->{cid} || $form->{pid}) {
-		while ($cid && (my($pid) = $slashdb->getCommentPid($header, $cid))) {
+		while ($cid && (my($pid) = $slashdb->getComment($cid, 'pid'))) {
 			$depth++;
 			$cid = $pid;
 		}
 	}
 
 	# You know, we do assume comments are linear -Brian
-	# how about numeric sorting ... ?  -- pudge
 	for my $x (sort { $a <=> $b } keys %$comments) {
+		next if $x == 0;
 
 		my $pid = $comments->{$x}{pid};
 		my $reparent;
@@ -470,7 +470,7 @@ sub displayThread {
 		}
 	}
 
-	foreach my $cid (@{$comments->{$pid}{kids}}) {
+	for my $cid (@{$comments->{$pid}{kids}}) {
 		my $comment = $comments->{$cid};
 
 		$skipped++;
@@ -616,8 +616,6 @@ sub dispComment {
 			  ($user->{seclev} > 99 &&
 			   $constants->{authors_unlimited}) );
 
-	# brian, why did you comment this out?  this is *required* for
-	# templates.  it is not optional, hence, uncommented. -- pudge
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
 		reason nickname fakeemail homepage sig)) {

@@ -3662,6 +3662,12 @@ sub getAdmins {
 }
 
 ########################################################
+sub getComment {
+	my $answer = _genericGet('comments', 'cid', '', @_);
+	return $answer;
+}
+
+########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', '', @_);
 	return $answer;
