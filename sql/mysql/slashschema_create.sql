@@ -89,17 +89,6 @@ CREATE TABLE blocks (
   KEY section (section)
 );
 
-# Table structure for table 'block_param'
-#
-DROP TABLE IF EXISTS block_param;
-CREATE TABLE blocks_param (
-  param_id int(11) DEFAULT '0' NOT NULL auto_increment,
-  uid int(11) DEFAULT '0' NOT NULL,
-  name varchar(32) NOT NULL,
-  value text,
-  UNIQUE uid_key (uid, name),
-  PRIMARY KEY (param_id)
-);
 #
 # Table structure for table 'commentcodes'
 #
