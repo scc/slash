@@ -68,14 +68,6 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 	[% editkey %]
 
-	[% IF admin_flag %]
-	<P><B>Quote</B>(author quote)<BR>
-	<TEXTAREA NAME="quote" ROWS="4" COLS="60">[% FILTER strip_literal; user_edit.quote; END %]</TEXTAREA>
-
-	<P><B>Copy</B> (text displayed next to author's name)<BR>
-	<TEXTAREA NAME="copy" ROWS="4" COLS="60">[% FILTER strip_literal; user_edit.copy; END %]</TEXTAREA>
-	[% END %]
-
 	<P><B>Password</B> Enter new passwd twice to change it.
 		(must be 6-32 chars long)<BR>
 		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="32" MAXLENGTH="32">
@@ -85,6 +77,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 	<INPUT TYPE="SUBMIT" NAME="op" VALUE="saveuser">
 	</FORM>
+
 
 __seclev__
 500
