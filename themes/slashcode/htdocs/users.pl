@@ -1290,15 +1290,10 @@ sub saveUser {
 	my $uid;
 	my $user_editfield_flag;
 
-	if ($user->{is_admin}) {
-		$uid = $form->{uid} ? $form->{uid} : $user->{uid} if !$uid;
-	} else {
-		$uid = ($user->{uid} == $form->{uid}) ?
-			$form->{uid} : $user->{uid};
-	}
+	$uid = ($user->{uid} == $form->{uid}) ? $form->{uid} : $user->{uid};
 	my $user_edit = $slashdb->getUser($uid);
 
-	my($note, $author_flag, $formname);
+	my($note, $formname);
 
 	$note .= getMessage('savenickname_msg', {
 		nickname => $user_edit->{nickname},
@@ -1351,7 +1346,6 @@ sub saveUser {
 
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fudgeurl($form->{homepage});
-	$author_flag		= $form->{author} ? 1 : 0;
 
 	# for the users table
 	my $user_edits_table = {
@@ -1368,11 +1362,6 @@ sub saveUser {
 	# will overwrite the existing record
 	for (keys %$user_edits_table) {
 		$user_edits_table->{$_} = '' unless defined $user_edits_table->{$_};
-	}
-
-	if ($user->{is_admin}) {
-		$user_edits_table->{seclev} = $form->{seclev};
-		$user_edits_table->{author} = $author_flag;
 	}
 
 	if ($user_edit->{realemail} ne $form->{realemail}) {

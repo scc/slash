@@ -3879,7 +3879,7 @@ sub getAuthors {
 		$where = 'users_param.name="author" AND users_param.value=1';
 	}
 
-	$self->{$table_cache} = {};
+	my %return;
 	my $sth = $self->sqlSelectMany(
 		'users.uid,nickname,fakeemail,homepage,bio',
 		'users,users_info,users_param',
@@ -3887,14 +3887,16 @@ sub getAuthors {
 		'AND users.uid = users_param.uid AND users.uid = users_info.uid'
 	);
 	while (my $row = $sth->fetchrow_hashref) {
-		$self->{$table_cache}{ $row->{'uid'} } = $row;
+		$return{ $row->{'uid'} } = $row;
+	}
+	$sth->finish;
+
+	if (!ref($cache_flag) eq 'ARRAY') {
+		$self->{$table_cache} = \%return;
+		$self->{$table_cache_full} = 1;
+		$self->{$table_cache_time} = time();
 	}
 
-	$self->{$table_cache_full} = 1;
-	$sth->finish;
-	$self->{$table_cache_time} = time();
-
-	my %return = %{$self->{$table_cache}};
 	return \%return;
 }
 
