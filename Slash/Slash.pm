@@ -65,9 +65,6 @@ BEGIN {
 getSlashConf();
 $I{dbobject} = new Slash::DB(@I{qw[dsn dbuser dbpass]});
 
-# The actual connect statement appears in this function.
-sqlConnect();
-
 
 ###############################################################################
 #
@@ -111,14 +108,13 @@ sub getSlashConf {
 
 
 # Blank variables, get $I{r} (apache) $I{query} (CGI) $I{U} (User) and $I{F} (Form)
-# Handles logging in, sql connection, and prints HTTP headers
+# Handles logging in and printing HTTP headers
 sub getSlash {
 	for (qw[r query F U SETCOOKIE]) {
 		undef $I{$_} if $I{$_};
 	}
 
 	$I{r} = Apache->request if $ENV{GATEWAY_INTERFACE} =~ m|^CGI-Perl/|;
-	sqlConnect();
 
 	$I{query} = new CGI;
 
@@ -233,43 +229,43 @@ sub selectSection {
 		return;
 	}
 
-	my $o = qq!<SELECT NAME="$name">\n!;
+	my $html_to_display = qq!<SELECT NAME="$name">\n!;
 	print STDERR "VAL : $I{sectionBank}\n";
 	foreach my $s (sort keys %{$I{sectionBank}}) {
 		print STDERR "Keys: $s \n";
 		my $S = $I{sectionBank}{$s};
 		next if $S->{isolate} && $I{U}{aseclev} < 500;
 		my $selected = $s eq $section ? ' SELECTED' : '';
-		$o .= qq!\t<OPTION VALUE="$s"$selected>$S->{title}</OPTION>\n!;
+		$html_to_display .= qq!\t<OPTION VALUE="$s"$selected>$S->{title}</OPTION>\n!;
 	}
-	$o .= "</SELECT>";
-	print $o;
+	$html_to_display .= "</SELECT>";
+	print $html_to_display;
 }
 
 ########################################################
 sub selectSortcode {
-	$I{dbobject}->getCodes(\$I{sortcodeBank}, 'sortcodes') unless ($I{sortcodeBank});
+	my $sortcode = $I{dbobject}->getCodes('sortcodes');
 
-	my $o .= qq!<SELECT NAME="commentsort">\n!;
-	foreach my $id (keys %{$I{sortcodeBank}}) {
+	my $html_to_display .= qq!<SELECT NAME="commentsort">\n!;
+	foreach my $id (keys %$sortcode) {
 		my $selected = $id eq $I{U}{commentsort} ? ' SELECTED' : '';
-		$o .= qq!<OPTION VALUE="$id"$selected>$I{sortcodeBank}{$id}</OPTION>\n!;
+		$html_to_display .= qq!<OPTION VALUE="$id"$selected>$sortcode->{$id}</OPTION>\n!;
 	}
-	$o .= "</SELECT>";
-	return $o;
+	$html_to_display .= "</SELECT>";
+	return $html_to_display;
 }
 
 ########################################################
 sub selectMode {
-	$I{dbobject}->getCodes(\$I{modeBank}, 'commentmodes') unless ($I{modeBank});
+	my $commentcode = $I{dbobject}->getCodes('commentmodes');
 
-	my $o .= qq!<SELECT NAME="mode">\n!;
-	foreach my $id (keys %{$I{modeBank}}) {
+	my $html_to_display .= qq!<SELECT NAME="mode">\n!;
+	foreach my $id (keys %$commentcode) {
 		my $selected = $id eq $I{U}{mode} ? ' SELECTED' : '';
-		$o .= qq!<OPTION VALUE="$id"$selected>$I{modeBank}{$id}</OPTION>\n!;
+		$html_to_display .= qq!<OPTION VALUE="$id"$selected>$commentcode->{$id}</OPTION>\n!;
 	}
-	$o .= "</SELECT>";
-	return $o;
+	$html_to_display .= "</SELECT>";
+	return $html_to_display;
 }
 
 #############################################################################
@@ -412,13 +408,13 @@ sub getUser {
 		$I{U} = $I{dbobject}->getUserInfo($uid, $passwd, $ENV{SCRIPT_NAME});
 
 		# Get the Timezone Stuff
-		$I{dbobject}->getCodes(\$I{timezones}, 'tzcodes') unless (defined $I{timezones});
+		my $timezones = $I{dbobject}->getCodes('tzcodes');
 
-		$I{U}{offset} = $I{timezones}{ $I{U}{tzcode} };
+		$I{U}{offset} = $timezones->{ $I{U}{tzcode} };
 
-		$I{dbobject}->getCodes(\$I{dateformats}, 'dateformats') unless (defined $I{dateformats});
+		my $dateformats = $I{dbobject}->getCodes('dateformats');
 
-		$I{U}{'format'} = $I{dateformats}{ $I{U}{dfid} };
+		$I{U}{'format'} = $dateformats->{ $I{U}{dfid} };
 
 
 	} else {
@@ -660,10 +656,6 @@ sub getDateFormat {
 # Dealing with Polls
 
 ########################################################
-sub latestpoll {
-	my($qid) = sqlSelect('qid', 'pollquestions', '', 'ORDER BY date DESC LIMIT 1');
-	return $qid;
-}
 
 ########################################################
 sub pollbooth {
@@ -673,16 +665,10 @@ sub pollbooth {
 	my $qid_dbi = $I{dbh}->quote($qid);
 	my $qid_htm = stripByMode($qid, 'attribute');
 
-	my $cursor = $I{dbh}->prepare_cached("
-		SELECT question,answer,aid  from pollquestions, pollanswers
-		WHERE pollquestions.qid=pollanswers.qid AND
-			pollquestions.qid=$qid_dbi
-		ORDER BY pollanswers.aid
-	");
-	$cursor->execute;
-
+	my $polls = $I{dbobject}->getPoll($qid);
 	my($x, $tablestuff) = (0);
-	while (my($question, $answer, $aid) = $cursor->fetchrow) {
+	for (@$polls) {
+		my($question, $answer, $aid) = @$_;
 		if ($x == 0) {
 			$tablestuff = <<EOT;
 <FORM ACTION="$I{rootdir}/pollBooth.pl">
@@ -697,8 +683,8 @@ EOT
 		$tablestuff .= qq!<BR><INPUT TYPE="radio" NAME="aid" VALUE="$aid">$answer\n!;
 	}
 
-	my($voters) = sqlSelect('voters', 'pollquestions', " qid=$qid_dbi");
-	my($comments) = sqlSelect('count(*)', 'comments', " sid=$qid_dbi");
+	my $voters = $I{dbobject}->getPollVoters($qid);
+	my $comments = $I{dbobject}->getPollComments($qid);
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
@@ -709,7 +695,6 @@ EOT
 	$tablestuff .= " ] <BR>\n";
 	$tablestuff .= "Comments:<B>$comments</B> | Votes:<B>$voters</B>\n" if $notable ne 'rh';
 	$tablestuff .="</FORM>\n";
-	$cursor->finish;
 
 	return $tablestuff if $notable;
 	fancybox(200, 'Poll', $tablestuff, 'c');
@@ -949,10 +934,7 @@ EOT
 	| <A HREF="$I{rootdir}/admin.pl?op=edit">New</A>
 EOT
 
-	my($cnt) = sqlSelect('count(*)', 'submissions',
-		"(length(note)<1 or isnull(note)) and del=0" .
-		($I{articles_only} ? " and section='articles'" : '')
-	);
+	my $cnt = $I{dbobject}->getSubmissionCount($I{articles_only});
 
 	print <<EOT if $seclev > 499;
 	| <A HREF="$I{rootdir}/submit.pl?op=list">$cnt Submissions</A>

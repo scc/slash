@@ -13,6 +13,7 @@ my $timeout = 30; #This should eventualy be a parameter that is configurable
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
 my %topicBank; # This is here to save us a database call
+my %codeBank; # This is here to save us a database call
 
 ########################################################
 sub sqlConnect {
@@ -133,12 +134,12 @@ sub writelog {
 ########################################################
 sub getCodes {
 # Creating three different methods for this seems a bit
-# silly. Really I should change these over to just 
-# grabbing hashref's.
+# silly. 
 #
-  my ($self, $codeBank_hash_ref, $codetype) = @_;
+  my ($self, $codetype) = @_;
+	return $codeBank{$codetype} if $codeBank{$codetype};
+
 	my $sth;
-	$codeBank_hash_ref={};
 	if($codetype eq 'sortcodes') {
 		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
 	}
@@ -151,17 +152,22 @@ sub getCodes {
 	if($codetype eq 'commentmodes') {
 		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
 	}
+
+	my $codeBank_hash_ref={};
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
+
+	$codeBank{$codetype} = $codeBank_hash_ref;
 	$sth->finish;
+
+	return $codeBank_hash_ref;
 }
 
 ########################################################
 sub getFormatDescriptions {
 # Creating three different methods for this seems a bit
-# silly. Really I should change these over to just 
-# grabbing hashref's.
+# silly. 
 # This is getting way to long... probably should
 # become a generic getDescription method
   my $self = shift; # Shit off to keep things clean
@@ -645,6 +651,7 @@ my ($self) = @_;
 		push @aids, \@row;
 	}
 
+	$sth->finish;
 	return \@aids;
 }
 ########################################################
@@ -680,6 +687,61 @@ sub getTopic {
 	} else {
 		return \%topicBank;
 	}
+}
+########################################################
+# This was added to replace latestpoll() except I
+# don't think anything is using it anymore
+#sub getPoll{
+#	my ($self) = @_;
+#  my($qid) = $self->sqlSelect('qid', 'pollquestions', '', 'ORDER BY date DESC LIMIT 1');
+#	return $qid;
+#}
+
+##################################################################
+# Get poll
+sub getPoll {
+	my ($self, $qid) = @_;
+
+	my $sth = $self->{dbh}->prepare_cached("
+			SELECT question,answer,aid  from pollquestions, pollanswers
+			WHERE pollquestions.qid=pollanswers.qid AND
+			pollquestions.qid=$self->{dbh}->quote($qid)
+			ORDER BY pollanswers.aid
+	");
+	$sth->execute;
+
+
+	my @polls;
+	while (my @row = $sth->fetchrow) {
+		push @polls, \@row;
+	}
+	$sth->finish;
+
+	return \@polls;
+}
+##################################################################
+# Get poll
+sub getPollVoters {
+	my ($self, $qid) = @_;
+	my($voters) = $self->sqlSelect('voters', 'pollquestions', " qid=$self-{dbh}->quote($qid)");
+
+	return $voters;
+}
+sub getPollComments {
+	my ($self, $qid) = @_;
+	my($comments) = $self->sqlSelect('count(*)', 'comments', " sid=$self-{dbh}->quote($qid)");
+
+	return $comments;
+}
+##################################################################
+# Get poll
+sub getSubmissionCount{
+	my ($self, $articles_only) = @_;
+	my($cnt) = $self->sqlSelect('count(*)', 'submissions',
+			"(length(note)<1 or isnull(note)) and del=0" .
+			($articles_only ? " and section='articles'" : '')
+	);
+	return $cnt;
 }
 
 1;
