@@ -118,6 +118,19 @@ sub main {
 	} elsif ($op eq 'userlogin' && !$user->{is_anon}) {
 		userInfo($user->{uid}, $user->{nickname});
 
+	} elsif ($op eq 'validateuser') {
+		if ($user->{is_anon} || ! $user->{reg_id}) {
+			if ($user->{is_anon}) {
+				print getMessage('anon_validation_attempt');
+				displayForm();
+			} else {
+				print getMessage('no_registration_needed') if !$user->{reg_id};
+				userInfo($user->{uid}, $user->{nickname});
+			}
+		} else {
+			validateUser();
+		}
+
 	} elsif ($op eq 'preview') {
 		previewSlashbox();
 
@@ -330,6 +343,55 @@ sub userInfo {
 		admin_block		=> $admin_block,
 		admin_flag 		=> $admin_flag,
 	});
+}
+
+sub validateUser {
+	my $user = getCurrentUser();
+	my $form = getCurerntForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	# If we aren't expiring accounts in some way, we don't belong here.
+	if ($constants->{expiry_min_comm} < 0 &&
+		$constants->{expiry_max_comm} < 0 &&
+		$constants->{expiry_min_days} < 0 && 
+		$constants->{expiry_max_days} < 0)
+	{
+		displayForm();
+		exit;
+	}
+
+	if ($user->{reg_id} eq $form->{reg_id}) {
+		# We have a user and the registration IDs match. We are happy!
+		my ($maxComm, $maxDays) = (	$constants->{expiry_max_comm},
+									$constants->{expiry_max_days} );
+		my ($userComm, $userDays) = ($user->{user_expiry_comm},
+									 $user->{user_expiry_days});		
+		my $exp = $constants->{expiry_exponent};
+
+		my $new_comment_expiry = ($userComm > $maxComm) ?
+			$maxComm : $userComm * (($user->{expiry_comm} < 0) ? 1 : $exp);
+		my $new_days_expiry = ($userDays > $maxDays) ?
+			$maxDays : $userDays * (($user->{expiry_days} < 0) ? 1 : $exp);
+
+		# Reregister user.
+		$slashdb->setUser($user->{uid}, {
+			'registered'		=> '1',
+			'reg_id'			=> '',
+			'expiry_comm'		=> $new_comment_expiry,
+			'expiry_days'		=> $new_days_expiry,
+			'user_expiry_comm'	=> $new_comment_expiry,
+			'user_expiry_days'	=> $new_days_expiry,
+		});
+
+		# Since expiry CAN be viewed as an atomic operation, this also should
+		# be a method (but it's still only a wrapper for Slash::DB::setReadOnly()
+		for (split /,\s+/, $constants->{reg_expireforms}) {
+			$slashdb->setReadOnly($_, $user->{uid}, 0, 'expired');
+		}
+	}
+
+	slashDisplay('registrationResult');
 }
 
 #################################################################
@@ -564,7 +626,8 @@ sub saveUser {
 
 	# strip_mode _after_ fitting sig into schema, 120 chars
 	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
-	$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
+	# Fry's form doesn't process fakeemail anymore.
+	#$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
@@ -573,7 +636,7 @@ sub saveUser {
 	my $users_table = {
 		sig		=> $form->{sig},
 		homepage	=> $form->{homepage},
-		fakeemail	=> $form->{fakeemail},
+		#fakeemail	=> $form->{fakeemail},
 		maillist	=> $form->{maillist},
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
@@ -581,6 +644,7 @@ sub saveUser {
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
 		session_login	=> $form->{session_login},
+		emaildisplay	=> $form->{emaildisplay},
 	};
 
 	# don't want undef, want to be empty string so they
@@ -657,14 +721,16 @@ sub saveComm {
 	my $users_comments_table = {
 		clbig		=> $form->{clbig},
 		clsmall		=> $form->{clsmall},
+		commentlimit	=> $form->{commentlimit},
+		commentsort	=> $form->{commentsort},
+		commentspill	=> $form->{commentspill},
+		displaytags	=> $form->{displaytags},
+		highlightthresh	=> $form->{highlightthresh},
+		maxcommentsize	=> $form->{maxcommentsize},
 		mode		=> $form->{umode},
 		posttype	=> $form->{posttype},
-		commentsort	=> $form->{commentsort},
 		threshold	=> $form->{uthreshold},
-		commentlimit	=> $form->{commentlimit},
-		commentspill	=> $form->{commentspill},
-		maxcommentsize	=> $form->{maxcommentsize},
-		highlightthresh	=> $form->{highlightthresh},
+		domaintags	=> $form->{domaintags},
 		nosigs		=> ($form->{nosigs}     ? 1 : 0),
 		reparent	=> ($form->{reparent}   ? 1 : 0),
 		noscores	=> ($form->{noscores}   ? 1 : 0),
