@@ -16,8 +16,6 @@ Slash is the code that runs Slashdot.
 
 Unless otherwise noted, they are publically available functions.
 
-=over 4
-
 =cut
 
 use strict;  # ha ha ha ha ha!
@@ -61,37 +59,50 @@ $VERSION = '1.0.9';
 
 #========================================================================
 
-=item createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT])
+=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT])
 
 Creates a drop-down list in HTML.
 
-Parameters
+=over 4
 
-	LABEL
-	The name for the HTML entity.
+=item Parameters
 
-	DATA
-	A hashref containing key-value pairs for the list.
-	Keys are list values, and values are list labels.
+=over 4
 
-	DEFAULT
-	Default value for the list.
+=item LABEL
 
-	RETURN
-	See "Return value" below.
+The name for the HTML entity.
 
-	NSORT
-	Sort numerically, not alphabetically.
+=item DATA
 
-Return value
+A hashref containing key-value pairs for the list.
+Keys are list values, and values are list labels.
 
-	If RETURN is true, the text of the list is returned.
-	Otherwise, list is just printed, and returns
-	true/false if operation is successful.
+=item DEFAULT
 
-Dependencies
+Default value for the list.
 
-	The 'select' template block.
+=item RETURN
+
+See "Return value" below.
+
+=item NSORT
+
+Sort numerically, not alphabetically.
+
+=back
+
+=item Return value
+
+If RETURN is true, the text of the list is returned.
+Otherwise, list is just printed, and returns
+true/false if operation is successful.
+
+=item Dependencies
+
+The 'select' template block.
+
+=back
 
 =cut
 
@@ -113,26 +124,37 @@ sub createSelect {
 
 #========================================================================
 
-=item selectTopic(LABEL [, DEFAULT, RETURN])
+=head2 selectTopic(LABEL [, DEFAULT, RETURN])
 
 Creates a drop-down list of topics in HTML.  Calls C<createSelect>.
 
-Parameters
+=over 4
 
-	LABEL
-	The name for the HTML entity.
+=item Parameters
 
-	DEFAULT
-	Default topic for the list.
+=over 4
 
-	RETURN
-	See "Return value" below.
+=item LABEL
 
-Return value
+The name for the HTML entity.
 
-	If RETURN is true, the text of the list is returned.
-	Otherwise, list is just printed, and returns
-	true/false if operation is successful.
+=item DEFAULT
+
+Default topic for the list.
+
+=item RETURN
+
+See "Return value" below.
+
+=back
+
+=item Return value
+
+If RETURN is true, the text of the list is returned.
+Otherwise, list is just printed, and returns
+true/false if operation is successful.
+
+=back
 
 =cut
 
@@ -150,34 +172,46 @@ sub selectTopic {
 
 #========================================================================
 
-=item selectSection(LABEL [, DEFAULT, SECT, RETURN])
+=head2 selectSection(LABEL [, DEFAULT, SECT, RETURN])
 
 Creates a drop-down list of sections in HTML.  Calls C<createSelect>.
 
-Parameters
+=over 4
 
-	LABEL
-	The name for the HTML entity.
+=item Parameters
 
-	DEFAULT
-	Default topic for the list.
+=over 4
 
-	SECT
-	Hashref for current section.  If SECT->{isolate} is true,
-	list is not created, but hidden value is returned instead.
+=item LABEL
 
-	RETURN
-	See "Return value" below.
+The name for the HTML entity.
 
-Return value
+=item DEFAULT
 
-	If RETURN is true, the text of the list is returned.
-	Otherwise, list is just printed, and returns
-	true/false if operation is successful.
+Default topic for the list.
 
-Dependencies
+=item SECT
 
-	The 'sectionisolate' template block.
+Hashref for current section.  If SECT->{isolate} is true,
+list is not created, but hidden value is returned instead.
+
+=item RETURN
+
+See "Return value" below.
+
+=back
+
+=item Return value
+
+If RETURN is true, the text of the list is returned.
+Otherwise, list is just printed, and returns
+true/false if operation is successful.
+
+=item Dependencies
+
+The 'sectionisolate' template block.
+
+=back
 
 =cut
 
@@ -205,14 +239,18 @@ sub selectSection {
 
 #========================================================================
 
-=item selectSortcode()
+=head2 selectSortcode()
 
 Creates a drop-down list of sortcodes in HTML.  Default is the user's
 preference.  Calls C<createSelect>.
 
-Return value
+=over 4
 
-	The created list.
+=item Return value
+
+The created list.
+
+=back
 
 =cut
 
@@ -224,14 +262,18 @@ sub selectSortcode {
 
 #========================================================================
 
-=item selectMode()
+=head2 selectMode()
 
 Creates a drop-down list of modes in HTML.  Default is the user's
 preference.  Calls C<createSelect>.
 
-Return value
+=over 4
 
-	The created list.
+=item Return value
+
+The created list.
+
+=back
 
 =cut
 
@@ -244,23 +286,32 @@ sub selectMode {
 
 #========================================================================
 
-=item selectThreshold(COUNTS)
+=head2 selectThreshold(COUNTS)
 
 Creates a drop-down list of thresholds in HTML.  Default is the user's
 preference.  Calls C<createSelect>.
 
-Parameters
+=over 4
 
-	COUNTS
-	An arrayref of thresholds -> counts for that threshold.
+=item Parameters
 
-Return value
+=over 4
 
-	The created list.
+=item COUNTS
 
-Dependencies
+An arrayref of thresholds -E<gt> counts for that threshold.
 
-	The 'selectThresholdLabel' template block.
+=back
+
+=item Return value
+
+The created list.
+
+=item Dependencies
+
+The 'selectThresholdLabel' template block.
+
+=back
 
 =cut
 
@@ -350,9 +401,45 @@ sub anonLog {
 }
 
 
-########################################################
-# Takes the address, subject and an email, and does what it says
-# used by dailyStuff, users.pl, and someday submit.pl
+#========================================================================
+
+=head2 sendEmail(ADDR, SUBJECT, CONTENT)
+
+Takes the address, subject and an email, and does what it says.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ADDR
+
+Mail address to send to.
+
+=item SUBJECT
+
+Subject of mail.
+
+=item CONTENT
+
+Content of mail.
+
+=back
+
+=item Return value
+
+True if successful, false if not.
+
+=item Dependencies
+
+Need From address and SMTP server from vars table,
+'mailfrom' and 'smtp_server'.
+
+=back
+
+=cut
+
 sub sendEmail {
 	my($addr, $subject, $content) = @_;
 	my $constants = getCurrentStatic();
@@ -368,22 +455,31 @@ sub sendEmail {
 
 #========================================================================
 
-=item linkStory(STORY)
+=head2 linkStory(STORY)
 
 The generic "Link a Story" function, used wherever stories need linking.
 
-Parameters
+=over 4
 
-	STORY
-	A hashref containing data about a story to be linked to.
+=item Parameters
 
-Return value
+=over 4
 
-	The complete <A HREF ...></A> text for linking to the story.
+=item STORY
 
-Dependencies
+A hashref containing data about a story to be linked to.
 
-	The 'linkStory' template block.
+=back
+
+=item Return value
+
+The complete E<lt>A HREF ...E<gt>E<lt>/AE<gt> text for linking to the story.
+
+=item Dependencies
+
+The 'linkStory' template block.
+
+=back
 
 =cut
 
@@ -444,32 +540,43 @@ sub getSection {
 
 #========================================================================
 
-=item pollbooth(QID [, NO_TABLE, CENTER])
+=head2 pollbooth(QID [, NO_TABLE, CENTER])
 
 Creates a voting pollbooth.
 
-Parameters
+=over 4
 
-	QID
-	The unique question ID for the poll.
+=item Parameters
 
-	NO_TABLE
-	Boolean for whether to leave the poll out of a table.
-	If false, then will be formatted inside a C<fancybox>.
+=over 4
 
-	CENTER
-	Whether or not to center the tabled pollbooth (only
-	works with NO_TABLE).
+=item QID
 
-Return value
+The unique question ID for the poll.
 
-	Well, right now prints if NO_TABLE is true, and returns if
-	NO_TABLE is false.  That's because if you don't want it in
-	a table, it is presumed you are going to do something with it.
+=item NO_TABLE
 
-Dependencies
+Boolean for whether to leave the poll out of a table.
+If false, then will be formatted inside a C<fancybox>.
 
-	The 'pollbooth' template block.
+=item CENTER
+
+Whether or not to center the tabled pollbooth (only
+works with NO_TABLE).
+
+=back
+
+=item Return value
+
+Well, right now prints if NO_TABLE is true, and returns if
+NO_TABLE is false.  That's because if you don't want it in
+a table, it is presumed you are going to do something with it.
+
+=item Dependencies
+
+The 'pollbooth' template block.
+
+=back
 
 =cut
 
@@ -501,17 +608,21 @@ sub pollbooth {
 
 #========================================================================
 
-=item ssiHead()
+=head2 ssiHead()
 
 Prints the head for server-parsed HTML pages.
 
-Return value
+=over 4
 
-	The SSI head.
+=item Return value
 
-Dependencies
+The SSI head.
 
-	The 'ssihead' template block.
+=item Dependencies
+
+The 'ssihead' template block.
+
+=back
 
 =cut
 
@@ -527,17 +638,21 @@ sub ssiHead {
 
 #========================================================================
 
-=item ssiFoot()
+=head2 ssiFoot()
 
 Prints the foot for server-parsed HTML pages.
 
-Return value
+=over 4
 
-	The SSI foot.
+=item Return value
 
-Dependencies
+The SSI foot.
 
-	The 'ssifoot' template block.
+=item Dependencies
+
+The 'ssifoot' template block.
+
+=back
 
 =cut
 
@@ -553,25 +668,35 @@ sub ssiFoot {
 
 #========================================================================
 
-=item formLabel(VALUE [, COMMENT])
+=head2 formLabel(VALUE [, COMMENT])
 
 Prints a label for a form element.
 
-Parameters
+=over 4
 
-	VALUE
-	The label.
+=item Parameters
 
-	COMMENT
-	An additional comment to stick in parentheses.
+=over 4
 
-Return value
+=item VALUE
 
-	The form label.
+The label.
 
-Dependencies
+=item COMMENT
 
-	The 'formLabel' template block.
+An additional comment to stick in parentheses.
+
+=back
+
+=item Return value
+
+The form label.
+
+=item Dependencies
+
+The 'formLabel' template block.
+
+=back
 
 =cut
 
@@ -588,17 +713,21 @@ sub formLabel {
 
 #========================================================================
 
-=item currentAdminUsers()
+=head2 currentAdminUsers()
 
 Displays table of current admin users, with what they are adminning.
 
-Return value
+=over 4
 
-	The HTML to display.
+=item Return value
 
-Dependencies
+The HTML to display.
 
-	The 'currentAdminUsers' template block.
+=item Dependencies
+
+The 'currentAdminUsers' template block.
+
+=back
 
 =cut
 
@@ -640,22 +769,31 @@ sub getAd {
 
 #========================================================================
 
-=item redirect(URL)
+=head2 redirect(URL)
 
 Redirect browser to URL.
 
-Parameters
+=over 4
 
-	URL
-	URL to redirect browser to.
+=item Parameters
 
-Return value
+=over 4
 
-	None.
+=item URL
 
-Dependencies
+URL to redirect browser to.
 
-	The 'html-redirect' template block.
+=back
+
+=item Return value
+
+None.
+
+=item Dependencies
+
+The 'html-redirect' template block.
+
+=back
 
 =cut
 
@@ -681,34 +819,45 @@ sub redirect {
 
 #========================================================================
 
-=item header([TITLE, SECTION, STATUS])
+=head2 header([TITLE, SECTION, STATUS])
 
 Prints the header for the document.
 
-Parameters
+=over 4
 
-	TITLE
-	The title for the HTML document.  The HTML header won't
-	print without this.
+=item Parameters
 
-	SECTION
-	The section to handle the header.  This sets the
-	currentSection constant, too.
+=over 4
 
-	STATUS
-	A special status to print in the HTTP header.
+=item TITLE
 
-Return value
+The title for the HTML document.  The HTML header won't
+print without this.
 
-	None.
+=item SECTION
 
-Side effects
+The section to handle the header.  This sets the
+currentSection constant, too.
 
-	Sets currentSection and userMode constants.
+=item STATUS
 
-Dependencies
+A special status to print in the HTTP header.
 
-	The 'html-header' and 'header' template blocks.
+=back
+
+=item Return value
+
+None.
+
+=item Side effects
+
+Sets currentSection and userMode constants.
+
+=item Dependencies
+
+The 'html-header' and 'header' template blocks.
+
+=back
 
 =cut
 
@@ -758,17 +907,21 @@ sub header {
 
 #========================================================================
 
-=item footer()
+=head2 footer()
 
 Prints the footer for the document.
 
-Return value
+=over 4
 
-	None.
+=item Return value
 
-Dependencies
+None.
 
-	The 'footer' template block.
+=item Dependencies
+
+The 'footer' template block.
+
+=back
 
 =cut
 
@@ -785,18 +938,22 @@ sub footer {
 
 #========================================================================
 
-=item horizmenu()
+=head2 horizmenu()
 
 Silly little function to create a horizontal menu from the
 'mainmenu' block.
 
-Return value
+=over 4
 
-	The horizontal menu.
+=item Return value
 
-Dependencies
+The horizontal menu.
 
-	The 'mainmenu' template block.
+=item Dependencies
+
+The 'mainmenu' template block.
+
+=back
 
 =cut
 
@@ -814,30 +971,40 @@ sub horizmenu {
 
 #========================================================================
 
-=item titlebar(WIDTH, TITLE)
+=head2 titlebar(WIDTH, TITLE)
 
 Prints a titlebar widget.  Deprecated; exactly equivalent to:
+
+=over 4
 
 	slashDisplay('titlebar', {
 		width	=> $width,
 		title	=> $title
 	});
 
-Parameters
+=item Parameters
 
-	WIDTH
-	Width of the titlebar.
+=over 4
 
-	TITLE
-	Title of the titlebar.
+=item WIDTH
 
-Return value
+Width of the titlebar.
 
-	None.
+=item TITLE
 
-Dependencies
+Title of the titlebar.
 
-	The 'titlebar' template block.
+=back
+
+=item Return value
+
+None.
+
+=item Dependencies
+
+The 'titlebar' template block.
+
+=back
 
 =cut
 
@@ -851,37 +1018,50 @@ sub titlebar {
 
 #========================================================================
 
-=item fancybox(WIDTH, TITLE, CONTENTS [, CENTER, RETURN])
+=head2 fancybox(WIDTH, TITLE, CONTENTS [, CENTER, RETURN])
 
 Creates a fancybox widget.
 
-Parameters
+=over 4
 
-	WIDTH
-	Width of the fancybox.
+=item Parameters
 
-	TITLE
-	Title of the fancybox.
+=over 4
 
-	CONTENTS
-	Contents of the fancybox.  (I see a pattern here.)
+=item WIDTH
 
-	CENTER
-	Boolean for whether or not the fancybox
-	should be centered.
+Width of the fancybox.
 
-	RETURN
-	Boolean for whether to return or print the
-	fancybox.
+=item TITLE
 
-Return value
+Title of the fancybox.
 
-	The fancybox if RETURN is true, or true/false
-	on success/failure.
+=item CONTENTS
 
-Dependencies
+Contents of the fancybox.  (I see a pattern here.)
 
-	The 'fancybox' template block.
+=item CENTER
+
+Boolean for whether or not the fancybox
+should be centered.
+
+=item RETURN
+
+Boolean for whether to return or print the
+fancybox.
+
+=back
+
+=item Return value
+
+The fancybox if RETURN is true, or true/false
+on success/failure.
+
+=item Dependencies
+
+The 'fancybox' template block.
+
+=back
 
 =cut
 
@@ -913,36 +1093,49 @@ sub fancybox {
 
 #========================================================================
 
-=item portalbox(WIDTH, TITLE, CONTENTS, BID [, URL])
+=head2 portalbox(WIDTH, TITLE, CONTENTS, BID [, URL])
 
 Creates a portalbox widget.  Calls C<fancybox> to process
 the box itself.
 
-Parameters
+=over 4
 
-	WIDTH
-	Width of the portalbox.
+=item Parameters
 
-	TITLE
-	Title of the portalbox.
+=over 4
 
-	CONTENTS
-	Contents of the portalbox.
+=item WIDTH
 
-	BID
-	The block ID for the portal in question.
+Width of the portalbox.
 
-	URL
-	URL to link the title of the portalbox to.
+=item TITLE
 
-Return value
+Title of the portalbox.
 
-	The portalbox.
+=item CONTENTS
 
-Dependencies
+Contents of the portalbox.
 
-	The 'fancybox', 'portalboxtitle', and
-	'portalmap' template blocks.
+=item BID
+
+The block ID for the portal in question.
+
+=item URL
+
+URL to link the title of the portalbox to.
+
+=back
+
+=item Return value
+
+The portalbox.
+
+=item Dependencies
+
+The 'fancybox', 'portalboxtitle', and
+'portalmap' template blocks.
+
+=back
 
 =cut
 
@@ -1096,29 +1289,40 @@ sub reparentComments {
 
 #========================================================================
 
-=item printComments(SID [, PID, CID])
+=head2 printComments(SID [, PID, CID])
 
 Prints all that comment stuff.
 
-Parameters
+=over 4
 
-	SID
-	The story ID to print comments for.
+=item Parameters
 
-	PID
-	The parent ID of the comments to print.
+=over 4
 
-	CID
-	The comment ID to print.
+=item SID
 
-Return value
+The story ID to print comments for.
 
-	None.
+=item PID
 
-Dependencies
+The parent ID of the comments to print.
 
-	The 'printCommentsMain', 'printCommentsNoArchive',
-	and 'printCommentsComments' template blocks.
+=item CID
+
+The comment ID to print.
+
+=back
+
+=item Return value
+
+None.
+
+=item Dependencies
+
+The 'printCommentsMain', 'printCommentsNoArchive',
+and 'printCommentsComments' template blocks.
+
+=back
 
 =cut
 
@@ -1205,26 +1409,36 @@ sub printComments {
 
 #========================================================================
 
-=item moderatorCommentLog(SID, CID)
+=head2 moderatorCommentLog(SID, CID)
 
 Prints a table detailing the history of moderation of
 a particular comment.
 
-Parameters
+=over 4
 
-	SID
-	Comment's story ID.
+=item Parameters
 
-	CID
-	Comment's ID.
+=over 4
 
-Return value
+=item SID
 
-	The HTML.
+Comment's story ID.
 
-Dependencies
+=item CID
 
-	The 'moderatorCommentLog' template block.
+Comment's ID.
+
+=back
+
+=item Return value
+
+The HTML.
+
+=item Dependencies
+
+The 'moderatorCommentLog' template block.
+
+=back
 
 =cut
 
@@ -1251,31 +1465,43 @@ sub moderatorCommentLog {
 
 #========================================================================
 
-=item linkCommentPages(SID, PID, CID, TOTAL)
+=head2 linkCommentPages(SID, PID, CID, TOTAL)
 
 Print links to pages for additional comments.
 
-Parameters
+=over 4
 
-	SID
-	Story ID.
+=item Parameters
 
-	PID
-	Parent ID.
+=over 4
 
-	CID
-	Comment ID.
+=item SID
 
-	TOTAL
-	Total number of comments.
+Story ID.
 
-Return value
+=item PID
 
-	Links.
+Parent ID.
 
-Dependencies
+=item CID
 
-	The 'linkCommentPages' template block.
+Comment ID.
+
+=item TOTAL
+
+Total number of comments.
+
+=back
+
+=item Return value
+
+Links.
+
+=item Dependencies
+
+The 'linkCommentPages' template block.
+
+=back
 
 =cut
 
@@ -1292,29 +1518,40 @@ sub linkCommentPages {
 
 #========================================================================
 
-=item linkComment(COMMENT [, PRINTCOMMENT, DATE])
+=head2 linkComment(COMMENT [, PRINTCOMMENT, DATE])
 
 Print a link to a comment.
 
-Parameters
+=over 4
 
-	COMMENT
-	A hashref containing data about the comment.
+=item Parameters
 
-	PRINTCOMMENT
-	Boolean for whether to create link directly
-	to comment, instead of to the story for that comment.
+=over 4
 
-	DATE
-	Boolean for whather to print date with link.
+=item COMMENT
 
-Return value
+A hashref containing data about the comment.
 
-	Link for comment.
+=item PRINTCOMMENT
 
-Dependencies
+Boolean for whether to create link directly
+to comment, instead of to the story for that comment.
 
-	The 'linkComment' template block.
+=item DATE
+
+Boolean for whather to print date with link.
+
+=back
+
+=item Return value
+
+Link for comment.
+
+=item Dependencies
+
+The 'linkComment' template block.
+
+=back
 
 =cut
 
@@ -1335,31 +1572,43 @@ sub linkComment {
 
 #========================================================================
 
-=item displayThread(SID, PID, LVL, COMMENTS)
+=head2 displayThread(SID, PID, LVL, COMMENTS)
 
 Displays an entire thread.  w00p!
 
-Parameters
+=over 4
 
-	SID
-	The story ID.
+=item Parameters
 
-	PID
-	The parent ID.
+=over 4
 
-	LVL
-	What level of the thread we're at.
+=item SID
 
-	COMMENTS
-	Arrayref of all our comments.
+The story ID.
 
-Return value
+=item PID
 
-	The thread.
+The parent ID.
 
-Dependencies
+=item LVL
 
-	The 'displayThread' template block.
+What level of the thread we're at.
+
+=item COMMENTS
+
+Arrayref of all our comments.
+
+=back
+
+=item Return value
+
+The thread.
+
+=item Dependencies
+
+The 'displayThread' template block.
+
+=back
 
 =cut
 
@@ -1456,27 +1705,33 @@ sub displayThread {
 
 #========================================================================
 
-=item dispComment(COMMENT)
+=head2 dispComment(COMMENT)
 
 Displays a particular comment.
 
-Parameters
+=over 4
 
-	COMMENT
-	Hashref of comment data.
-		If the 'no_moderation' key of the COMMENT hashref exists, the
-		moderation elements of the comment will not be displayed.
+=item Parameters
 
-Return value
+=over 4
 
-	The comment to display.
+=item COMMENT
 
-Side effects
+Hashref of comment data.
+If the 'no_moderation' key of the COMMENT hashref exists, the
+moderation elements of the comment will not be displayed.
 
+=back
 
-Dependencies
+=item Return value
 
-	The 'dispComment' template block.
+The comment to display.
+
+=item Dependencies
+
+The 'dispComment' template block.
+
+=back
 
 =cut
 
@@ -1518,32 +1773,44 @@ sub dispComment {
 
 #========================================================================
 
-=item dispStory(STORY, AUTHOR, TOPIC, FULL)
+=head2 dispStory(STORY, AUTHOR, TOPIC, FULL)
 
 Display a story.
 
-Parameters
+=over 4
 
-	STORY
-	Hashref of data about the story.
+=item Parameters
 
-	AUTHOR
-	Hashref of data about the story's author.
+=over 4
 
-	TOPIC
-	Hashref of data about the story's topic.
+=item STORY
 
-	FULL
-	Boolean for show full story, or just the
-	introtext portion.
+Hashref of data about the story.
 
-Return value
+=item AUTHOR
 
-	Story to display.
+Hashref of data about the story's author.
 
-Dependencies
+=item TOPIC
 
-	The 'dispStory' and 'dispStoryTitle' template blocks.
+Hashref of data about the story's topic.
+
+=item FULL
+
+Boolean for show full story, or just the
+introtext portion.
+
+=back
+
+=item Return value
+
+Story to display.
+
+=item Dependencies
+
+The 'dispStory' and 'dispStoryTitle' template blocks.
+
+=back
 
 =cut
 
@@ -1579,26 +1846,37 @@ sub dispStory {
 
 #========================================================================
 
-=item displayStory(SID, FULL, CALLER)
+=head2 displayStory(SID, FULL, CALLER)
 
 Display a story (frontend to C<dispStory>).
 
-Parameters
+=over 4
 
-	SID
-	Story ID to display.
+=item Parameters
 
-	FULL
-	Boolean for show full story, or just the
-	introtext portion.
+=over 4
 
-	CALLER
-	The calling script.
+=item SID
 
-Return value
+Story ID to display.
 
-	A list of story to display, hashref of story data,
-	hashref of author data, and hashref of topic data.
+=item FULL
+
+Boolean for show full story, or just the
+introtext portion.
+
+=item CALLER
+
+The calling script.
+
+=back
+
+=item Return value
+
+A list of story to display, hashref of story data,
+hashref of author data, and hashref of topic data.
+
+=back
 
 =cut
 
@@ -1627,25 +1905,35 @@ sub displayStory {
 
 #========================================================================
 
-=item getOlderStories(STORIES, SECTION)
+=head2 getOlderStories(STORIES, SECTION)
 
 Get older stories for older stories box.
 
-Parameters
+=over 4
 
-	STORIES
-	Array ref of the older stories.
+=item Parameters
 
-	SECTION
-	Hashref of section data.
+=over 4
 
-Return value
+=item STORIES
 
-	The older stories.
+Array ref of the older stories.
 
-Dependencies
+=item SECTION
 
-	The 'getOlderStories' template block.
+Hashref of section data.
+
+=back
+
+=item Return value
+
+The older stories.
+
+=item Dependencies
+
+The 'getOlderStories' template block.
+
+=back
 
 =cut
 
@@ -1901,24 +2189,33 @@ sub checkSubmission {
 
 #========================================================================
 
-=item createMenu(MENU)
+=head2 createMenu(MENU)
 
 Creates a menu.
 
-Parameters
+=over 4
 
-	MENU
-	The name of the menu to get.
+=item Parameters
 
-Return value
+=over 4
 
-	The menu.
+=item MENU
 
-Dependencies
+The name of the menu to get.
 
-	The template blocks 'menu-admin', 'menu-user', and any other
-	template blocks for menus, along with all the data in the
-	'menus' table.
+=back
+
+=item Return value
+
+The menu.
+
+=item Dependencies
+
+The template blocks 'menu-admin', 'menu-user', and any other
+template blocks for menus, along with all the data in the
+'menus' table.
+
+=back
 
 =cut
 
@@ -1957,7 +2254,7 @@ sub getData {
 
 __END__
 
-=head1 TOP TEN BENDER MOST FREQUENTLY UTTERED WORDS
+=head1 BENDER'S TOP TEN MOST FREQUENTLY UTTERED WORDS
 
 =over 4
 
