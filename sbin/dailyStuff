@@ -91,7 +91,7 @@ $email .= "\n-----------------------\n";
 
 
 sub generateDailyMail {
-	my $email = $slashdb->getDailyEmail();
+	my $email = $slashdb->getDailyMail();
 
 	my $r = "$constants->{sitename} Daily Headline Mailer\n\n";
 	$r .= $slashdb->getBlock("emailsponsor");
