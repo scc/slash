@@ -4,6 +4,12 @@ slash-2.2.2, 2002.01.02
 *	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.2 from
 	versions 2.2.0 and 2.2.1
 
+*	Fix filter call in header template
+
+*	Cleanup in sections.pl
+
+*	Fix foreign key references in schema
+
 *	Fix journals problems, including proper handling of date
 	in last_journal_entry field
 
