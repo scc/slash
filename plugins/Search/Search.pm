@@ -56,7 +56,6 @@ sub _keysearch {
 	return qq|($sql)|;
 };
 
-
 ####################################################################################
 # This has been changed. Since we no longer delete comments
 # it is safe to have this run against stories.
@@ -66,19 +65,18 @@ sub findComments {
 	# and SID, article title, type and a link to the article
 	my $query = $self->sqlQuote($form->{query});
 	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.writestatus as writestatus, time, date, comments.uid as uid, comments.cid as cid ";
-	$columns .= ", TRUNCATE((((MATCH (comments.subject) AGAINST($query) + (MATCH (comment_text.comment) AGAINST($query)))) / 2), 1) as score "
+	$columns .= ", TRUNCATE((MATCH (comments.subject) AGAINST($query)), 1) as score "
 		if $form->{query};
 
-	my $tables = "stories, comments, comment_text, discussions";
+	my $tables = "stories, comments, discussions";
 
-	my $key = " (MATCH (comments.subject) AGAINST ($query) or MATCH (comment_text.comment) AGAINST ($query)) ";
+	my $key = " MATCH (comments.subject) AGAINST ($query) ";
 
 
 	$limit = " LIMIT $start, $limit" if $limit;
 
 	# Welcome to the join from hell -Brian
 	my $where;
-	$where .= " comments.cid = comment_text.cid ";
 	$where .= " AND comments.sid = discussions.id ";
 	$where .= " AND discussions.sid = stories.sid ";
 	$where .= "	  AND $key "
@@ -107,6 +105,59 @@ sub findComments {
 	my $search = $cursor->fetchall_arrayref;
 	return $search;
 }
+
+
+####################################################################################
+# This has been changed. Since we no longer delete comments
+# it is safe to have this run against stories.
+# Original with comment body
+#sub findComments {
+#	my($self, $form, $start, $limit) = @_;
+#	# select comment ID, comment Title, Author, Email, link to comment
+#	# and SID, article title, type and a link to the article
+#	my $query = $self->sqlQuote($form->{query});
+#	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.writestatus as writestatus, time, date, comments.uid as uid, comments.cid as cid ";
+#	$columns .= ", TRUNCATE((((MATCH (comments.subject) AGAINST($query) + (MATCH (comment_text.comment) AGAINST($query)))) / 2), 1) as score "
+#		if $form->{query};
+#
+#	my $tables = "stories, comments, comment_text, discussions";
+#
+#	my $key = " (MATCH (comments.subject) AGAINST ($query) or MATCH (comment_text.comment) AGAINST ($query)) ";
+#
+#
+#	$limit = " LIMIT $start, $limit" if $limit;
+#
+#	# Welcome to the join from hell -Brian
+#	my $where;
+#	$where .= " comments.cid = comment_text.cid ";
+#	$where .= " AND comments.sid = discussions.id ";
+#	$where .= " AND discussions.sid = stories.sid ";
+#	$where .= "	  AND $key "
+#			if $form->{query};
+#
+#	$where .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
+#			if $form->{sid};
+#	$where .= "     AND points >= $form->{threshold} "
+#			if $form->{threshold};
+#	$where .= "     AND section=" . $self->sqlQuote($form->{section})
+#			if $form->{section};
+#
+#	my $other;
+#	if ($form->{query}) {
+#		$other = " ORDER BY score DESC, time DESC ";
+#	} else {
+#		$other = " ORDER BY date DESC, time DESC ";
+#	}
+#
+#
+#	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
+#
+#	my $cursor = $self->{_dbh}->prepare($sql);
+#	$cursor->execute;
+#
+#	my $search = $cursor->fetchall_arrayref;
+#	return $search;
+#}
 
 ####################################################################################
 sub findUsers {

@@ -523,7 +523,6 @@ sub displayThread {
 			$return .= $const->{cagebegin} if $cagedkids;
 			$return .= $const->{indentbegin} if $indent;
 			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
-			$return .= $addition;
 			$return .= $const->{indentend} if $indent;
 			$return .= $const->{cageend} if $cagedkids;
 		}
