@@ -14,9 +14,9 @@ __template__
 [% USE Slash %]
 [% IF users %]
 	[% FOREACH user=users %]
-		<A HREF="[% constants.rootdir %]/users.pl?nick=[% user.1 %]">[% user.1 %]</A> &nbsp;
+		<A HREF="[% constants.rootdir %]/users.pl?nick=[% FILTER fixparam; user.1; END %]">[% FILTER strip_literal; user.1; END %]</A> &nbsp;
 		[% IF user.0 %]
-			([% user.2 %]) email: <A HREF="mailto:[% user.0 %]">[% user.0 %]</A> <BR>
+			([% user.2 %]) email: <A HREF="mailto:[% FILTER fixparam; user.0; END %]">[% FILTER strip_literal; user.0; END %]</A> <BR>
 		[% ELSE %]
 			([% user.2 %])<BR>
 		[% END %]

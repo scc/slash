@@ -579,11 +579,11 @@ For XML::Parser, the expat library is required.
 If they are not present on the system already, download and
 install them before installing the modules.
 
-	ftp://ftp.freesoftware.com/pub/infozip/zlib/
+	http://www.gzip.org/zlib/
 	http://sourceforge.net/projects/expat/
 
-The following modules are all included in the Bundle::Slash
-distribution.
+The following required distributions are all included in
+the Bundle::Slash distribution.
 
 =over 4
 
@@ -627,11 +627,11 @@ distribution.
 
 =item Image-Size
 
-=item Apache::Cookie
+=item libapreq
 
 =item Storable
 
-=item Template
+=item Template-Toolkit
 
 =item AppConfig
 
