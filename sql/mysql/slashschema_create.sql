@@ -221,7 +221,7 @@ CREATE TABLE dateformats (
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
   id int(16) NOT NULL auto_increment, 
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   title varchar(128),
   url varchar(255) NOT NULL,
   topic int(10) NOT NULL,
@@ -241,7 +241,7 @@ CREATE TABLE formkeys (
   formkey varchar(20) DEFAULT '' NOT NULL,
   formname varchar(20) DEFAULT '' NOT NULL,
   id varchar(30) DEFAULT '' NOT NULL,
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   uid int(11) NOT NULL,
   ipid	char(32) DEFAULT '' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
@@ -338,7 +338,7 @@ CREATE TABLE pollanswers (
 DROP TABLE IF EXISTS pollquestions;
 CREATE TABLE pollquestions (
   qid int(10) NOT NULL auto_increment,
-  sid char(16),
+  sid char(20),
   question char(255) NOT NULL,
   voters int(11),
   topic int(11),
@@ -413,7 +413,7 @@ CREATE TABLE spamarmors (
 
 DROP TABLE IF EXISTS stories;
 CREATE TABLE stories (
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   tid int(10) DEFAULT '' NOT NULL,
   uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
@@ -438,7 +438,7 @@ CREATE TABLE stories (
 
 DROP TABLE IF EXISTS story_heap;
 CREATE TABLE story_heap (
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   tid int(10) NOT NULL,
   uid int(11) NOT NULL,
   commentcount int(1) DEFAULT '0',
@@ -463,7 +463,7 @@ CREATE TABLE story_heap (
 
 DROP TABLE IF EXISTS story_text;
 CREATE TABLE story_text (
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   introtext text,
   bodytext text,
   relatedtext text,
@@ -477,7 +477,7 @@ CREATE TABLE story_text (
 DROP TABLE IF EXISTS story_param;
 CREATE TABLE story_param (
   param_id int(11) NOT NULL auto_increment,
-  sid char(16) DEFAULT '' NOT NULL,
+  sid char(20) DEFAULT '' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
   value varchar(254) DEFAULT '' NOT NULL,
   UNIQUE story_key (sid,name),
