@@ -1,7 +1,7 @@
 package Slash::DB::MySQL;
 # Big note on *User methods. They are in need of clean
 # up in a big way. If we had one normalized table
-# this would be quite clean. I will find a way around 
+# this would be quite clean. I will find a way around
 # this.  -Brian
 
 use strict;
@@ -26,49 +26,49 @@ my $sectionBoxes;
 my %descriptions = (
 	'sortcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'sortcodes') },
-	
+
 	'tzcodes'
 		=> sub { $_[0]->sqlSelectMany('tz,description', 'tzcodes') },
-	
+
 	'dateformats'
 		=> sub { $_[0]->sqlSelectMany('id,description', 'dateformats') },
-	
+
 	'commentmodes'
 		=> sub { $_[0]->sqlSelectMany('mode,name', 'commentmodes') },
-	
+
 	'threshcodes'
 		=> sub { $_[0]->sqlSelectMany('thresh,description', 'threshcodes') },
-	
+
 	'postmodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'postmodes') },
-	
+
 	'isolatemodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'isolatemodes') },
-	
+
 	'issuemodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'issuemodes') },
-	
+
 	'vars'
 		=> sub { $_[0]->sqlSelectMany('name,description', 'vars') },
-	
+
 	'topics'
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
-	
+
 	'maillist'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'maillist') },
-	
+
 	'displaycodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'displaycodes') },
-	
+
 	'commentcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'commentcodes') },
-	
+
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
-	
+
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'sections', 'portal=1') }
-	
+
 );
 
 #################################################################
@@ -85,7 +85,7 @@ my $keysearch = sub {
 	foreach my $w (@words) {
 		next if length $w < 3;
 		last if $x++ > 3;
-		foreach my $c (@columns) { 
+		foreach my $c (@columns) {
 			$sql .= "+" if $sql;
 			$sql .= "($c LIKE " . $self->{dbh}->quote("%$w%") . ")";
 		}
@@ -119,7 +119,7 @@ my $whereFormkey = sub {
 #  fetchall_rowref vs fetch the hashses and push'ing
 #  	them into an array (good arguments for both)
 #	 break up these methods into multiple classes and
-#   use the dB classes to override methods (this 
+#   use the dB classes to override methods (this
 #   could end up being very slow though since the march
 #   is kinda slow...).
 #	 the getAuthorEdit() methods need to be refined
@@ -128,7 +128,7 @@ sub sqlConnect {
 # What we are going for here, is the ability to reuse
 # the database connection.
 # Ok, first lets see if we already have a connection
-	my ($self) = @_;
+	my($self) = @_;
 
 	if (defined($self->{dbh})) {
 		#unless (eval {$self->{dbh}->ping}) {
@@ -149,7 +149,7 @@ sub sqlConnect {
 				alarm 0;
 			};
 			if ($@) {
-				#In the future we should have a backupdatabase 
+				#In the future we should have a backupdatabase
 				#connection in here. For now, we die
 				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
@@ -162,7 +162,7 @@ sub sqlConnect {
 }
 
 ########################################################
-sub setComment{
+sub setComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
 
 	$self->sqlDo("LOCK TABLES comments WRITE");
@@ -208,7 +208,7 @@ sub setComment{
 		if ($ws == 0) {
 			sqlUpdate(
 				"stories",
-				{ writestatus => 1 }, 
+				{ writestatus => 1 },
 				"sid=" . $self->{dbh}->quote($form->{sid})
 			);
 		}
@@ -219,7 +219,7 @@ sub setComment{
 			"uid=" . $self->{dbh}->quote($user->{uid}), 1
 		);
 
-		# successful submission		
+		# successful submission
 		$self->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
 
 		my($tc, $mp, $cpp) = $self->getVars(
@@ -238,33 +238,35 @@ sub setComment{
 		return -1;
 	}
 }
+
 ########################################################
 sub setModeratorLog {
 	my($self, $cid, $sid, $uid, $val, $reason) = @_;
 	$self->sqlInsert("moderatorlog", {
-			uid => $uid,
-			val => $val,
-			sid => $sid,
-			cid => $cid,
-			reason  => $reason,
-			-ts => 'now()'
+		uid => $uid,
+		val => $val,
+		sid => $sid,
+		cid => $cid,
+		reason  => $reason,
+		-ts => 'now()'
 	});
 }
+
 ########################################################
 sub getModeratorLogID {
 	my($self, $cid, $sid, $uid) = @_;
 	my($mid) = sqlSelect(
-	    "id", "moderatorlog",
-			"uid=$uid and cid=$cid and sid='$sid'"
+		"id", "moderatorlog",
+		"uid=$uid and cid=$cid and sid='$sid'"
 	);
 	return $mid;
-
 }
+
 ########################################################
-sub unsetModeratorlog{
+sub unsetModeratorlog {
 	my($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
-			"uid=$uid and sid=" . $self->{dbh}->quote($sid)
+		"uid=$uid and sid=" . $self->{dbh}->quote($sid)
 	);
 	my @removed;
 
@@ -294,64 +296,68 @@ sub unsetModeratorlog{
 
 	return \@removed;
 }
+
 ########################################################
 sub getContentFilters {
-	my ($self) = @_;
+	my($self) = @_;
 	my $filters = $self->sqlSelectAll("*","content_filters","regex != '' and field != ''");
 	return $filters;
 }
+
 ########################################################
-sub createDiscussions{
-	my ($self, $sid) = @_;
+sub createDiscussions {
+	my($self, $sid) = @_;
 	# Posting from outside discussions...
 	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
 	$sid = $self->{dbh}->quote($sid);
-	my ($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
+	my($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
 	$story_time ||= "now()";
 	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
 		$self->sqlInsert("discussions", {
-				sid => $sid,
-				title => '',
-				ts  => $story_time,
-				url => $ENV{HTTP_REFERER}
+			sid	=> $sid,
+			title	=> '',
+			ts	=> $story_time,
+			url	=> $ENV{HTTP_REFERER}
 		});
 	}
 }
 
 #################################################################
-sub getDiscussions{
-	my ($self) = @_;
-  my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url"
-			, "discussions,stories "
-			, "displaystatus > -1 and discussions.sid=stories.sid and time <= now() "
-			, "order by time desc LIMIT 50"
+sub getDiscussions {
+	my($self) = @_;
+	my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url",
+		"discussions,stories ",
+		"displaystatus > -1 and discussions.sid=stories.sid and time <= now() ",
+		"order by time desc LIMIT 50"
 	);
-	
+
 	return $discussion;
 }
 
 ########################################################
 sub getUserKarma {
-	my ($self, $uid) = @_;
-	my ($karma) =	$self->sqlSelect("karma", "users_info", "uid=$uid");
+	my($self, $uid) = @_;
+	my($karma) = $self->sqlSelect("karma", "users_info", "uid=$uid");
 
 	return $karma;
 }
+
 ########################################################
 sub getNewStories {
-	my ($self, $sid) = @_;
+	my($self, $sid) = @_;
 	return unless ($sid);
 	my($s, $title, $commentstatus) = $self->sqlSelect(
 		"section,title,commentstatus","newstories","sid=" . $self->{dbh}->quote($sid)
 	);
 
-	return ($s, $title, $commentstatus);
+	return($s, $title, $commentstatus);
 }
+
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
 sub getAdminInfo {
-	my($self , $session, $admin_timeout) = @_;
+	my($self, $session, $admin_timeout) = @_;
 
 	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
@@ -375,7 +381,7 @@ sub getAdminInfo {
 }
 
 ########################################################
-# Initial Administrator Login.  
+# Initial Administrator Login.
 sub setAdminInfo {
 	my($self, $aid, $pwd) = @_;
 
@@ -395,6 +401,7 @@ sub setAdminInfo {
 			lasttitle => $title }
 		);
 		return($seclev, $sid);
+
 	} else {
 		return(0);
 	}
@@ -418,7 +425,7 @@ sub writelog {
 	}, 2);
 
 	if ($dat =~ m[/]) {
-		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' }, 
+		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' },
 			'sid=' . $self->{dbh}->quote($dat)
 		);
 	} elsif ($op eq 'index') {
@@ -429,26 +436,23 @@ sub writelog {
 ########################################################
 sub getCodes {
 # Creating three different methods for this seems a bit
-# silly. 
+# silly.
 #
-  my ($self, $codetype) = @_;
+	my($self, $codetype) = @_;
 	return $codeBank{$codetype} if $codeBank{$codetype};
 
 	my $sth;
-	if($codetype eq 'sortcodes') {
+	if ($codetype eq 'sortcodes') {
 		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
-	}
-	if($codetype eq 'tzcodes') {
+	} elsif ($codetype eq 'tzcodes') {
 		$sth = $self->sqlSelectMany('tz,offset', 'tzcodes');
-	}
-	if($codetype eq 'dateformats') {
+	} elsif ($codetype eq 'dateformats') {
 		$sth = $self->sqlSelectMany('id,format', 'dateformats');
-	}
-	if($codetype eq 'commentmodes') {
+	} elsif ($codetype eq 'commentmodes') {
 		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
 	}
 
-	my $codeBank_hash_ref={};
+	my $codeBank_hash_ref = {};
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -462,12 +466,12 @@ sub getCodes {
 ########################################################
 sub getDescriptions {
 # Creating three different methods for this seems a bit
-# silly. 
+# silly.
 # This is getting way to long... probably should
 # become a generic getDescription method
-  my $self = shift; # Shit off to keep things clean
-  my $codetype = shift; # Shit off to keep things clean
-	my $codeBank_hash_ref={};
+	my $self = shift; # Shit off to keep things clean
+	my $codetype = shift; # Shit off to keep things clean
+	my $codeBank_hash_ref = {};
 	my $sth = &{$descriptions{$codetype}}($self);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
@@ -476,38 +480,42 @@ sub getDescriptions {
 
 	return  $codeBank_hash_ref;
 }
+
 ########################################################
 # Get user info from the users table.
-sub getUser{
-  my($self, $uid, $script) = @_;
+sub getUser {
+	my($self, $uid, $script) = @_;
 	my $user = $self->sqlSelectHashref('*', 'users',
 		' uid = ' . $self->{dbh}->quote($uid)
 	);
-	return undef unless ($user);
+	return undef unless $user;
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
-	while(my ($key, $val) = each %$user_extra) {
+	while (my($key, $val) = each %$user_extra) {
 		$user->{$key} = $val;
 	}
 
+	# what is this for?  it appears to want to do the same as the
+	# code above ... but this assigns a scalar to a scalar ...
+	# perhaps `@{$user}{ keys %foo } = values %foo` is wanted?  -- pudge
 	$user->{ keys %$user_extra } = values %$user_extra;
 
 	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/) {
 		my $user_extra = $self->sqlSelectHashref('*', "users_comments", "uid=$uid");
-		while(my ($key, $val) = each %$user_extra) {
+		while (my($key, $val) = each %$user_extra) {
 			$user->{$key} = $val;
 		}
 	}
 	# Do we want the index stuff?
 	if (!$script || $script =~ /index/) {
 		my $user_extra = $self->sqlSelectHashref('*', "users_index", "uid=$uid");
-		while(my ($key, $val) = each %$user_extra) {
+		while (my($key, $val) = each %$user_extra) {
 			$user->{$key} = $val;
 		}
 	}
 
 
 	$user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
-	while(my ($key, $val) = each %$user_extra) {
+	while (my($key, $val) = each %$user_extra) {
 		$user->{$key} = $val;
 	}
 
@@ -516,28 +524,29 @@ sub getUser{
 
 ########################################################
 # Get user info from the users table.
-sub getUserAuthenticate{
-  my($self, $name, $passwd) = @_;
+sub getUserAuthenticate {
+	my($self, $name, $passwd) = @_;
 
-	my ($uid) = $self->sqlSelect('uid', 'users',
-			'passwd=' . $self->{dbh}->quote($passwd) .
-			' AND uid=' . $self->{dbh}->quote($name)
+	# are we really supposed to see if uid = $name? -- pudge
+	my($uid) = $self->sqlSelect('uid', 'users',
+		'passwd=' . $self->{dbh}->quote($passwd) .
+		' AND uid=' . $self->{dbh}->quote($name)
 	);
 	return $uid;
-
 }
+
 ########################################################
 # Get user info from the users table.
 # May be worth it to cache this at some point
-sub getUserUID{
-  my($self, $name) = @_;
+sub getUserUID {
+	my($self, $name) = @_;
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # We need to add BINARY to this
 # as is, it may be a security flaw
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	my ($uid) = $self->sqlSelect('uid', 'users',
-			'nickname=' . $self->{dbh}->quote($name)
+	my($uid) = $self->sqlSelect('uid', 'users',
+		'nickname=' . $self->{dbh}->quote($name)
 	);
 
 	return $uid;
@@ -545,29 +554,31 @@ sub getUserUID{
 
 ########################################################
 # Get user info from the users table.
-sub getUserPoints{
-  my($self, $uid) = @_;
+sub getUserPoints {
+	my($self, $uid) = @_;
 
-	my ($points) = $self->sqlSelect('points', 'users_comments',
-			"uid='$uid'");
+	my($points) = $self->sqlSelect('points', 'users_comments',
+		"uid='$uid'"
+	);
 
 	return $points;
-
 }
+
 ########################################################
 # Get user info from the users table.
-sub getUserPublicKey{
-  my($self, $uid) = @_;
+sub getUserPublicKey {
+	my($self, $uid) = @_;
 
-	my ($key) = $self->sqlSelect('pubkey', 'users_key',
-			"uid='$uid'");
+	my($key) = $self->sqlSelect('pubkey', 'users_key',
+		"uid='$uid'"
+	);
 
 	return $key;
-
 }
+
 #################################################################
-sub getUserComments{
-  my($self, $uid, $min) = @_;
+sub getUserComments {
+	my($self, $uid, $min) = @_;
 
 	my $sqlquery = "SELECT pid,sid,cid,subject,"
 			. getDateFormat("date","d")
@@ -576,50 +587,52 @@ sub getUserComments{
 
 	my $sth = $self->{dbh}->prepare($sqlquery);
 	$sth->execute;
-	my ($comments) = $sth->fetchall_arrayref;
+	my($comments) = $sth->fetchall_arrayref;
 
 	return $comments;
-
 }
+
 #################################################################
 sub getUserIndexExboxes {
 	my($self, $uid) = @_;
 	my($exboxes) = $self->sqlSelect("exboxes", "users_index", "uid=$uid");
-	return $exboxes
+	return $exboxes;
 }
+
 ########################################################
 # Get user info from the users table.
-sub getUserInfoByUID{
-  my($self, $uid) = @_;
+sub getUserInfoByUID {
+	my($self, $uid) = @_;
 
 	my $user = $self->sqlSelectHashref('nickname,realemail', 'users',
-			'nickname=' . $self->{dbh}->quote($uid)); 
+			'nickname=' . $self->{dbh}->quote($uid));
 	return $user;
 }
+
 ########################################################
 # Get user info from the users table.
-sub getUserFakeEmail{
-  my($self, $uid) = @_;
+sub getUserFakeEmail {
+	my($self, $uid) = @_;
 
 	my $user = $self->sqlSelectHashref('nickname,fakeemail', 'users',
-			'nickname=' . $self->{dbh}->quote($uid)); 
+			'nickname=' . $self->{dbh}->quote($uid));
 	return $user;
 }
 
 ########################################################
 # Get user info from the users table.
-sub getUserInfoByNickname{
-  my($self, $name) = @_;
+sub getUserInfoByNickname {
+	my($self, $name) = @_;
 
 	my $user = $self->sqlSelectArrayRef('passwd,realemail', 'users',
-			'nickname=' . $self->{dbh}->quote($name)); 
+			'nickname=' . $self->{dbh}->quote($name));
 	return $user;
-
 }
+
 #################################################################
 sub createUser {
-	my ($self, $matchname, $email, $newuser) = @_;
-	
+	my($self, $matchname, $email, $newuser) = @_;
+
 	my($cnt) = $self->sqlSelect(
 		"matchname","users",
 		"matchname=" . $self->{dbh}->quote($matchname)
@@ -630,7 +643,7 @@ sub createUser {
 	return 0 if ($cnt);
 
 	$self->sqlInsert("users", {
-		realemail	=> $email, 
+		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
 		passwd		=> changePassword()
@@ -638,7 +651,7 @@ sub createUser {
 # This is most likely a transaction problem waiting to
 # bite us at some point. -Brian
 	my($uid) = $self->sqlSelect("LAST_INSERT_ID()");
-	$self->sqlInsert("users_info", { uid => $uid, lastaccess=>'now()' } );
+	$self->sqlInsert("users_info", { uid => $uid, lastaccess =>'now()' } );
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
@@ -647,9 +660,9 @@ sub createUser {
 }
 
 ########################################################
-sub getUserAll{
-	my ($self, $uid) = @_;
-  my $ac_hash_ref;
+sub getUserAll {
+	my($self, $uid) = @_;
+	my $ac_hash_ref;
 	$ac_hash_ref = $self->sqlSelectHashref('*',
 		'users, users_index, users_comments, users_prefs',
 		"users.uid=$uid AND users_index.uid=$uid AND " .
@@ -659,8 +672,8 @@ sub getUserAll{
 }
 
 ########################################################
-sub getACTz{
-	my ($self, $tzcode, $dfid) = @_;
+sub getACTz {
+	my($self, $tzcode, $dfid) = @_;
 	my $ac_hash_ref;
 	$ac_hash_ref = $self->sqlSelectHashref('*',
 		'tzcodes,dateformats',
@@ -686,7 +699,7 @@ sub getVars {
 
 ########################################################
 sub getVar {
-	my ($self, $var) = @_;
+	my($self, $var) = @_;
 	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$var'");
 }
 
@@ -708,7 +721,7 @@ sub updateCommentTotals {
 	my($self, $sid, $comments) = @_;
 	my $hp = join ',', @{$comments->[0]{totals}};
 	$self->sqlUpdate("stories", {
-			hitparade	=> $hp, 
+			hitparade	=> $hp,
 			writestatus	=> 0,
 			commentcount	=> $comments->[0]{totals}[0]
 		}, 'sid=' . $self->{dbh}->quote($sid)
@@ -718,23 +731,24 @@ sub updateCommentTotals {
 ########################################################
 sub getCommentCid {
 	my($self, $sid, $cid) = @_;
-	my ($scid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
+	my($scid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
 
 	retunr $scid;
 }
-########################################################
-sub removeComment{
-	my($self, $sid, $cid) = @_;
-	  $self->sqlDo("delete from comments WHERE sid=" .
-		    $self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
-		);
 
+########################################################
+sub removeComment {
+	my($self, $sid, $cid) = @_;
+	$self->sqlDo("delete from comments WHERE sid=" .
+		$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
+	);
 }
+
 ########################################################
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 	$self->sqlSelect('pid', 'comments',
-			"sid='$sid' and cid=$cid");
+		"sid='$sid' and cid=$cid");
 }
 
 ########################################################
@@ -747,7 +761,7 @@ sub getNicknameByUID {
 
 ########################################################
 sub getBlockBank {
-	my ($self, $iHashRef) = @_;
+	my($self, $iHashRef) = @_;
 	return if $iHashRef->{blockBank}{cached};
 	$iHashRef->{blockBank}{cached} = localtime;
 
@@ -760,7 +774,7 @@ sub getBlockBank {
 
 ########################################################
 sub getSectionBank {
-	my ($self) = @_;
+	my($self) = @_;
 	my $sectionbank = {};
 	my $sth = $self->sqlSelectMany('*', 'sections');
 	while (my $S = $sth->fetchrow_hashref) {
@@ -769,40 +783,43 @@ sub getSectionBank {
 	$sth->finish;
 	return $sectionbank;
 }
+
 ########################################################
 sub getSection {
-	my ($self, $section) = @_;
+	my($self, $section) = @_;
 	$self->sqlSelect(
-			"artcount,title,qid,isolate,issue",
-			"sections","section=". $self->{dbh}->quote($section));
+		"artcount,title,qid,isolate,issue",
+		"sections", "section=" . $self->{dbh}->quote($section)
+	);
 }
+
 ########################################################
 sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
-	my ($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
-	my ($count) = $self->sqlSelect("count(*)","sections","section = '$section'");
+	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
+	my($count) = $self->sqlSelect("count(*)","sections","section = '$section'");
 	#This is a poor attempt at a transaction I might add. -Brian
 	#I need to do this diffently under Oracle
 	if ($count) {
 		$self->sqlDo("INSERT into sections (section) VALUES( '$section')"
 		);
-	} 
+	}
 	$self->sqlUpdate("sections", {
 			qid   => $qid,
 			title   => $title,
 			issue   => $issue,
 			isolate   => $isolate,
 			artcount  => $artcount
-			}, "section=" . $self->{dbh}->quote($section)
+		}, "section=" . $self->{dbh}->quote($section)
 	);
 
 	return $count;
-		
 }
+
 ########################################################
 sub setStoriesCount {
-	my ($self, $sid, $count) = @_;
+	my($self, $sid, $count) = @_;
 	$self->sqlUpdate(
 			"stories",
 			{
@@ -811,11 +828,11 @@ sub setStoriesCount {
 			},
 			"sid=" . $self->{dbh}->quote($sid)
 	);
-
 }
+
 ########################################################
 sub getSectionTitle {
-	my ($self) = @_;
+	my($self) = @_;
 	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
 	$sth->execute;
 	my $sections = $sth->fetchall_arrayref;
@@ -823,24 +840,27 @@ sub getSectionTitle {
 
 	return $sections;
 }
+
 ########################################################
-sub deleteSection{
-	my ($self, $section) = @_;
+sub deleteSection {
+	my($self, $section) = @_;
 	$self->sqlDo("DELETE from sections WHERE section='$section'");
 }
+
 ########################################################
 sub getSectionBlock {
-	my ($self, $section) = @_;
+	my($self, $section) = @_;
 	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
-			"sectionblocks", "section=" . $self->{dbh}->quote($section), 
-			"ORDER by ordernum");
+		"sectionblocks", "section=" . $self->{dbh}->quote($section),
+		"ORDER by ordernum"
+	);
 
 	return $block;
 }
 
 ########################################################
 sub getAuthor {
-  my ($self, $aid) = @_;
+	my($self, $aid) = @_;
 
 	return $authorBank{$aid} if $authorBank{$aid};
 	# Get all the authors and throw them in a hash for later use:
@@ -851,29 +871,30 @@ sub getAuthor {
 	$sth->finish;
 	return $authorBank{$aid};
 }
+
 ########################################################
 sub getAuthorDescription {
-  my ($self) = @_;
+	my($self) = @_;
 	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid as aid, url, copy",
 		"stories, authors",
 		"authors.aid=stories.aid", "
 		GROUP BY aid ORDER BY c DESC"
-		);
+	);
 
 	return $authors;
 }
 
 ########################################################
 sub getAuthorNameByAid {
-# Ok, this is really similair to the code get methods 
+# Ok, this is really similair to the code get methods
 # for the moment it will stay seperate just becuase
-# those tables will change. My be a good idea to 
+# those tables will change. My be a good idea to
 # cache this at some point.
 # We should be smart at some point and actually see if
 # we can just grab data from the author bank hash
-  my ($self) = @_;
+	my($self) = @_;
 
-	my $author_hash_ref={};
+	my $author_hash_ref = {};
 	my $sth = $self->sqlSelectMany('aid,name', 'authors');
 	while (my($id, $desc) = $sth->fetchrow) {
 		$author_hash_ref->{$id} = $desc;
@@ -886,11 +907,11 @@ sub getAuthorNameByAid {
 ########################################################
 sub getPollQuestions {
 # This may go away. Haven't finished poll stuff yet
-# 
-  my ($self) = @_;
+#
+	my($self) = @_;
 
-	my $poll_hash_ref={};
-	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC LIMIT 25"; 
+	my $poll_hash_ref = {};
+	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC LIMIT 25";
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -898,55 +919,57 @@ sub getPollQuestions {
 	}
 	$sth->finish;
 
-	return  $poll_hash_ref;
+	return $poll_hash_ref;
 }
 
 ########################################################
 # I don't like this method at all (AKA how it is used).
-# There has to be a better way. Should be a way to 
+# There has to be a better way. Should be a way to
 # combine its usage with the getPollQuestions()
 # All we are doing is making sure qid exists.
 sub getPollQuestionID {
-	my ($self, $qid) = @_;
-	my ($fetched_qid) = $self->sqlSelect('qid', 'pollquestions', "qid='${qid}'");
+	my($self, $qid) = @_;
+	my($fetched_qid) = $self->sqlSelect('qid', 'pollquestions', "qid='${qid}'");
 
 	return $fetched_qid;
 }
+
 ########################################################
 # Simple method
 sub getPollQuestionBySID {
-	my ($self, $sid) = @_;
-	my ($question) = $self->sqlSelect("question", "pollquestions", "qid='$sid'");
+	my($self, $sid) = @_;
+	my($question) = $self->sqlSelect("question", "pollquestions", "qid='$sid'");
 
 	return $question;
 }
+
 ########################################################
 sub getUserEditInfo {
-	my ($self, $name) = @_;
+	my($self, $name) = @_;
 	my $bio = $self->sqlSelectHashref("users.uid, realname, realemail, fakeemail, homepage, nickname, passwd, sig, seclev, bio, maillist", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
 
 	return $bio;
-
 }
+
 ########################################################
 sub getUserEditHome {
-	my ($self, $name) = @_;
+	my($self, $name) = @_;
 	my $bio = $self->sqlSelectHashref("users.uid, willing, dfid, tzcode, noicons, light, mylinks, users_index.extid, users_index.exaid, users_index.exsect, users_index.exboxes, users_index.maxstories, users_index.noboxes", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
 
 	return $bio;
-
 }
+
 ########################################################
 sub getUserEditComment  {
-	my ($self, $name) = @_;
+	my($self, $name) = @_;
 	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
 
 	return $bio;
-
 }
+
 ########################################################
 sub getUserBio {
-	my ($self, $nick) = @_;
+	my($self, $nick) = @_;
 	my $sth = $self->{dbh}->prepare(
 			"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
 			FROM users, users_info
@@ -957,31 +980,32 @@ sub getUserBio {
 	my $bio = $sth->fetchrow_arrayref;
 
 	return $bio;
-
 }
+
 ########################################################
 sub getStoryBySid {
-	my ($self, $sid, $member) = @_;
-	
-	if($member) {
+	my($self, $sid, $member) = @_;
+
+	if ($member) {
 		return $storyBank{$sid}->{$member} if $storyBank{$sid}->{$member};
 	} else {
 		return $storyBank{$sid} if $storyBank{$sid};
 	}
 	my $hashref = $self->sqlSelectHashref('title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid, tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
 		'stories', 'sid=' . $self->{dbh}->quote($sid)
-		);
+	);
 	$storyBank{$sid} = $hashref;
-	if($member) {
+	if ($member) {
 		$storyBank{$sid}->{$member};
 	} else {
 		return $storyBank{$sid};
 	}
 }
+
 ########################################################
 sub clearStory {
-	my ($self, $sid) = @_;
-	if($sid) {
+	my($self, $sid) = @_;
+	if ($sid) {
 		undef $storyBank{$sid};
 	} else {
 		undef %storyBank;
@@ -990,7 +1014,7 @@ sub clearStory {
 
 ########################################################
 sub setStoryBySid {
-	my ($self, $sid, $key, $value, $perm) = @_;
+	my($self, $sid, $key, $value, $perm) = @_;
 	# The idea with $perm, is that at some point, if you set it
 	# it will update the database with the change you requested
 	$storyBank{$sid}{$key} = $value;
@@ -1015,10 +1039,10 @@ sub getSubmissionLast {
 # up a bit (so names and methods may change)
 ########################################################
 sub getStaticBlock {
-  my ($self, $seclev) = @_;
+	my($self, $seclev) = @_;
 
-	my $block_hash_ref={};
-	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev AND type != 'portald'"; 
+	my $block_hash_ref = {};
+	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev AND type != 'portald'";
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -1026,14 +1050,14 @@ sub getStaticBlock {
 	}
 	$sth->finish;
 
-	return  $block_hash_ref;
+	return $block_hash_ref;
 }
 
 sub getPortaldBlock {
-  my ($self, $seclev) = @_;
+	my($self, $seclev) = @_;
 
-	my $block_hash_ref={};
-	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev and type = 'portald'"; 
+	my $block_hash_ref = {};
+	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev and type = 'portald'";
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -1041,13 +1065,14 @@ sub getPortaldBlock {
 	}
 	$sth->finish;
 
-	return  $block_hash_ref;
+	return $block_hash_ref;
 }
+
 sub getColorBlock {
-  my ($self) = @_;
+	my($self) = @_;
 
-	my $block_hash_ref={};
-	my $sql = "SELECT bid,bid FROM blocks WHERE type = 'color'"; 
+	my $block_hash_ref = {};
+	my $sql = "SELECT bid,bid FROM blocks WHERE type = 'color'";
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -1055,11 +1080,12 @@ sub getColorBlock {
 	}
 	$sth->finish;
 
-	return  $block_hash_ref;
+	return $block_hash_ref;
 }
+
 ########################################################
 sub getSectionblocks {
-	my ($self) = @_;
+	my($self) = @_;
 
 	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
 
@@ -1068,12 +1094,11 @@ sub getSectionblocks {
 
 ########################################################
 sub getLock {
-	my ($self) = @_;
+	my($self) = @_;
 	my $locks = $self->sqlSelectAll('lasttitle,aid', 'sessions');
 
 	return $locks;
 }
-
 
 
 ########################################################
@@ -1106,6 +1131,7 @@ sub insertFormkey {
 		ts		=> time()
 	});
 }
+
 ########################################################
 sub checkFormkey {
 	my($self, $formkey_earliest, $formname, $formkey_id, $formkey, $user) = @_;
@@ -1130,6 +1156,7 @@ sub checkTimesPosted {
 
 	return $times_posted >= $max ? 0 : 1;
 }
+
 ##################################################################
 # the form has been submitted, so update the formkey table
 # to indicate so
@@ -1144,21 +1171,23 @@ sub formSuccess {
 			cid             => $cid,
 			submit_ts       => time(),
 			content_length  => $length,
-			}, "formkey=" . $self->{dbh}->quote($formkey)
+		}, "formkey=" . $self->{dbh}->quote($formkey)
 	);
 }
+
 ##################################################################
 sub formFailure {
-	my ($self, $formkey) = @_;
+	my($self, $formkey) = @_;
 	sqlUpdate("formkeys", {
 			value   => -1,
-			}, "formkey=" . $self->{dbh}->quote($formkey)
+		}, "formkey=" . $self->{dbh}->quote($formkey)
 	);
 }
+
 ##################################################################
 # logs attempts to break, fool, flood a particular form
 sub formAbuse {
-  my ($self, $reason, $remote_addr, $script_name, $query_string) = @_;
+	my($self, $reason, $remote_addr, $script_name, $query_string) = @_;
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {
 		host_name => $remote_addr,
@@ -1173,37 +1202,38 @@ sub formAbuse {
 ##################################################################
 # Check to see if the form already exists
 sub checkForm {
-	my ($self, $formkey, $formname) = @_;
+	my($self, $formkey, $formname) = @_;
 	$self->sqlSelect(
-	    "value,submit_ts",
-			"formkeys", "formkey='$formkey' and formname = '$formname'"
-			);
+		"value,submit_ts",
+		"formkeys", "formkey='$formkey' and formname = '$formname'"
+	);
 }
 
 ##################################################################
 # Current admin users
 sub currentAdmin {
-my ($self) = @_;
-  my $aids = $self->sqlSelectAll('aid,now()-lasttime,lasttitle', 'sessions',
-			'aid=aid GROUP BY aid'
-			);
+	my($self) = @_;
+	my $aids = $self->sqlSelectAll('aid,now()-lasttime,lasttitle', 'sessions',
+		'aid=aid GROUP BY aid'
+	);
 
 	return $aids;
 }
+
 ########################################################
-# getTopic() 
+# getTopic()
 # I'm torn, currently we just dump the entire database
-# into topicBank if we don't find our topic. I am 
+# into topicBank if we don't find our topic. I am
 # wondering if it wouldn't be better to just grab them
 # as needed (when we need them).
 # Probably ought to spend some time to actually figure
-# this out. 
-# 
+# this out.
+#
 # -Brian
 sub getTopic {
-  my ($self, $topic) = @_;
+	my($self, $topic) = @_;
 
-	if($topic) {
+	if ($topic) {
 		return $topicBank{$topic} if $topicBank{$topic};
 	} else {
 		return \%topicBank if (keys %topicBank);
@@ -1218,7 +1248,7 @@ sub getTopic {
 	}
 	$sth->finish;
 
-	if($topic) {
+	if ($topic) {
 		return $topicBank{$topic};
 	} else {
 		return \%topicBank;
@@ -1229,15 +1259,15 @@ sub getTopic {
 # Need to change this method at some point... I hate
 # useing a push
 sub getTopNewsstoryTopics {
-  my ($self, $all) = @_;
+	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $topics=$self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
-			"topics.tid=newstories.tid
-			$when
-			GROUP BY topics.tid
-			$order"
-			);
+	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
+		"topics.tid=newstories.tid
+		$when
+		GROUP BY topics.tid
+		$order"
+	);
 
 	return $topics;
 }
@@ -1246,7 +1276,7 @@ sub getTopNewsstoryTopics {
 # This was added to replace latestpoll() except I
 # don't think anything is using it anymore
 #sub getPoll{
-#	my ($self) = @_;
+#	my($self) = @_;
 #  my($qid) = $self->sqlSelect('qid', 'pollquestions', '', 'ORDER BY date DESC LIMIT 1');
 #	return $qid;
 #}
@@ -1254,7 +1284,7 @@ sub getTopNewsstoryTopics {
 ##################################################################
 # Get poll
 sub getPoll {
-	my ($self, $qid) = @_;
+	my($self, $qid) = @_;
 
 	my $sth = $self->{dbh}->prepare_cached("
 			SELECT question,answer,aid  from pollquestions, pollanswers
@@ -1268,37 +1298,41 @@ sub getPoll {
 
 	return $polls;
 }
+
 ##################################################################
 # Get poll
 sub getPollVoters {
-	my ($self, $qid) = @_;
+	my($self, $qid) = @_;
 	my($voters) = $self->sqlSelect('voters', 'pollquestions', " qid=$self-{dbh}->quote($qid)");
 
 	return $voters;
 }
+
 sub getPollComments {
-	my ($self, $qid) = @_;
+	my($self, $qid) = @_;
 	my($comments) = $self->sqlSelect('count(*)', 'comments', " sid=$self-{dbh}->quote($qid)");
 
 	return $comments;
 }
+
 ##################################################################
 # Get submission count
-sub getSubmissions{
-	my ($self, $uid) = @_;
+sub getSubmissions {
+	my($self, $uid) = @_;
 	my $submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
 
 	return $submissions;
 }
+
 ##################################################################
 # Get submission count
-sub getSubmissionCount{
-	my ($self, $articles_only) = @_;
+sub getSubmissionCount {
+	my($self, $articles_only) = @_;
 	my($count);
-	if($articles_only) {
+	if ($articles_only) {
 		$count = $self->sqlSelect('count(*)', 'submissions',
-				"(length(note)<1 or isnull(note)) and del=0" .
-				($articles_only ? " and section='articles'" : '')
+			"(length(note)<1 or isnull(note)) and del=0" .
+			($articles_only ? " and section='articles'" : '')
 		);
 	} else {
 		$count = $self->sqlSelect("count(*)", "submissions", "del=0");
@@ -1309,17 +1343,17 @@ sub getSubmissionCount{
 ##################################################################
 # Get all portals
 sub getPortals {
-	my ($self) = @_;
+	my($self) = @_;
 	# As a side note portal seems to only be a 1 and 0 in
 	# in slash's database currently (even though since it
 	# is a tinyint it could easily be a negative number).
 	# It is a shame we are currently hitting the database
 	# for this since the same info can be found in $commonportals
-	my $strsql="SELECT block,title,blocks.bid,url
+	my $strsql = "SELECT block,title,blocks.bid,url
 		   FROM blocks,sectionblocks
 		  WHERE section='index'
 		    AND portal > -1
-		    AND blocks.bid=sectionblocks.bid 
+		    AND blocks.bid=sectionblocks.bid
 		  GROUP BY blocks.bid
 		  ORDER BY ordernum";
 
@@ -1329,6 +1363,7 @@ sub getPortals {
 
 	return $portals;
 }
+
 ##################################################################
 # Get standard portals
 sub getPortalsCommon {
@@ -1353,6 +1388,7 @@ sub getPortalsCommon {
 
 	return($boxes, $sectionBoxes);
 }
+
 ##################################################################
 # counts the number of comments for a user
 # This is pretty questionable -Brian
@@ -1371,18 +1407,20 @@ sub countComments {
 
 	return $value;
 }
+
 ##################################################################
 sub method {
 	my($self, $sid) = @_;
 	my $count = $self->countComments($sid);
 	$self->sqlUpdate(
-			"stories",
-			{ commentcount => $count },
-			"sid=" . $self->{dbh}->quote($sid)
+		"stories",
+		{ commentcount => $count },
+		"sid=" . $self->{dbh}->quote($sid)
 	);
 
 	return $count;
 }
+
 ##################################################################
 # counts the number of stories
 sub countStory {
@@ -1394,7 +1432,7 @@ sub countStory {
 
 ##################################################################
 sub checkForModerator {
-	my ($self, $user) = @_;
+	my($self, $user) = @_;
 	return unless $user->{willing};
 	return if $user->{uid} < 1;
 	return if $user->{karma} < 0;
@@ -1404,31 +1442,34 @@ sub checkForModerator {
 
 ##################################################################
 sub setUserBoxes {
-	my ($self, $uid, $exboxes) = @_;
+	my($self, $uid, $exboxes) = @_;
 	$self->sqlUpdate('users_index', { exboxes => $exboxes },
-			"uid=$uid", 1)
+		"uid=$uid", 1
+	);
 }
 
 ##################################################################
 sub getAuthorAids {
 # getAids.... get aids... huhu,huhu...
-	my ($self) = @_;
+	my($self) = @_;
 	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
 
 	return $aids;
 }
+
 ##################################################################
 sub refreshStories {
-	my ($self, $sid) = @_;
+	my($self, $sid) = @_;
 	$self->sqlUpdate('stories',
 			{ writestatus => 1 },
 			'sid=' . $self->{dbh}->quote($sid) . ' and writestatus=0'
 	);
 }
+
 ##################################################################
 sub getStoryByTime {
-	my ($self, $sign, $sqltime, $isolate, $section, $extid, $exaid, $exsect) = @_;
-	my ($where, $order);
+	my($self, $sign, $sqltime, $isolate, $section, $extid, $exaid, $exsect) = @_;
+	my($where, $order);
 	$order = $sign eq '<' ? 'DESC' : 'ASC';
 	if ($isolate) {
 		$where = 'AND section=' . $self->{dbh}->quote($section)
@@ -1450,86 +1491,96 @@ sub getStoryByTime {
 
 #################################################################
 #These methods should be the same
-#and to be honest add little. Perfect for 
+#and to be honest add little. Perfect for
 #a rewrite.
 ########################################################
-sub setUsersKey{
-	my ($self, $uid, $hashref) = @_;
+sub setUsersKey {
+	my($self, $uid, $hashref) = @_;
 	# Replace is a naughy thing
 	$self->sqlReplace("users_key", $hashref);
 }
+
 ########################################################
-sub setUsersComments{
-	my ($self, $uid, $hashref) = @_;
+sub setUsersComments {
+	my($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid, 1);
 }
+
 ########################################################
-sub setUsers{
-	my ($self, $uid, $hashref) = @_;
+sub setUsers {
+	my($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
 }
+
 ########################################################
-sub setUsersPrefrences{
-	my ($self, $uid, $hashref) = @_;
+sub setUsersPrefrences {
+	my($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid, 1);
 }
+
 ########################################################
-sub setUsersIndex{
-	my ($self, $uid, $hashref) = @_;
+sub setUsersIndex {
+	my($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users_index", $hashref, "uid=" . $uid, 1);
 }
+
 ########################################################
-sub countStories{
-	my ($self) = @_;
+sub countStories {
+	my($self) = @_;
 	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,aid",
-			"stories","", "ORDER BY commentcount DESC LIMIT 10"
-			);
+		"stories","", "ORDER BY commentcount DESC LIMIT 10"
+	);
 	return $stories;
 }
+
 ########################################################
-sub countStoriesStuff{
-	my ($self) = @_;
+sub countStoriesStuff {
+	my($self) = @_;
 	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,aid",
-			"stories,storiestuff","stories.sid=storiestuff.sid",
-			"ORDER BY hits DESC LIMIT 10"
-			);
+		"stories,storiestuff","stories.sid=storiestuff.sid",
+		"ORDER BY hits DESC LIMIT 10"
+	);
 	return $stories;
 }
+
 ########################################################
-sub countStoriesAuthors{
-	my ($self) = @_;
-	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid, url", 
-			"stories, authors","authors.aid=stories.aid",
-			"GROUP BY aid ORDER BY c DESC LIMIT 10"
-			);
+sub countStoriesAuthors {
+	my($self) = @_;
+	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid, url",
+		"stories, authors","authors.aid=stories.aid",
+		"GROUP BY aid ORDER BY c DESC LIMIT 10"
+	);
 	return $authors;
 }
+
 ########################################################
-sub countPollquestions{
-	my ($self) = @_;
+sub countPollquestions {
+	my($self) = @_;
 	my $pollquestions = $self->sqlSelectAll("voters,question,qid", "pollquestions",
-			"1=1", "ORDER by voters DESC LIMIT 10"
-			);
+		"1=1", "ORDER by voters DESC LIMIT 10"
+	);
 	return $pollquestions;
 }
+
 ########################################################
-sub countUsersIndexExboxesByBid{
-	my ($self, $bid) = @_;
-	my ($count) = $self->sqlSelect("count(*)","users_index",
-			qq!exboxes like "%'$bid'%" !
-			);
+sub countUsersIndexExboxesByBid {
+	my($self, $bid) = @_;
+	my($count) = $self->sqlSelect("count(*)","users_index",
+		qq!exboxes like "%'$bid'%" !
+	);
 
 	return $count;
 }
+
 ########################################################
 #sub somethingComment {
-#	my ($val) = @_;
+#	my($val) = @_;
 #	my $strsql = "UPDATE comments SET
 #		points=points$val,
 #		reason=$reason,
 #		lastmod=$I{U}{uid}
 #		WHERE sid=" . $I{dbh}->quote($sid)."
-#		AND cid=$cid 
+#		AND cid=$cid
 #		AND points " .
 #			($val < 0 ? " > $I{comment_minscore}" : "") .
 #			($val > 0 ? " < $I{comment_maxscore}" : "");
@@ -1543,14 +1594,14 @@ sub countUsersIndexExboxesByBid{
 #		# Adjust comment posters karma
 #		$self->sqlUpdate(
 #			"users_info",
-#			{ -karma => "karma$val" }, 
+#			{ -karma => "karma$val" },
 #			"uid=$cuid"
 #		) if $val && $cuid != $I{anonymous_coward};
 #
 #		# Adjust moderators total mods
 #		$self->sqlUpdate(
 #			"users_info",
-#			{ -totalmods => 'totalmods+1' }, 
+#			{ -totalmods => 'totalmods+1' },
 #			"uid=$I{U}{uid}"
 #		);
 #
@@ -1558,15 +1609,15 @@ sub countUsersIndexExboxesByBid{
 #		$I{U}{points} = $I{U}{points} > 0 ? $I{U}{points} - 1 : 0;
 #		$self->sqlUpdate(
 #			"users_comments",
-#			{ -points=>$I{U}{points} }, 
+#			{ -points=>$I{U}{points} },
 #			"uid=$I{U}{uid}"
 #		); # unless ($I{U}{aseclev} > 99 && $I{authors_unlimited});
 #	}
 #}
 #
 ########################################################
-sub getCommentReply{	
-	my ($self, $time, $sid, $pid) = @_;
+sub getCommentReply {
+	my($self, $time, $sid, $pid) = @_;
 	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
 		comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
@@ -1580,33 +1631,35 @@ sub getCommentReply{
 
 	return $reply;
 }
+
 ########################################################
-sub getComments{
-	my ($self, $sid, $cid) = @_;
+sub getComments {
+	my($self, $sid, $cid) = @_;
 	$self->sqlSelect( "uid,pid,subject,points,reason","comments",
 			"cid=$cid and sid='$sid'"
 	);
-
 }
+
 ########################################################
-sub getCommentsTop{
-	my ($self, $sid, $user) = @_;
-	my $where ="stories.sid=comments.sid"; 
+sub getCommentsTop {
+	my($self, $sid, $user) = @_;
+	my $where = "stories.sid=comments.sid";
 	$where .= " AND stories.sid=" . $self->{dbh}->quote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject," 
-			. getDateFormat("date","d", $user) . "," . getDateFormat("time","t", $user) 
-			. ",uid, cid, points"
-			, "stories, comments"
-			, $where
-			, " ORDER BY points DESC, d DESC LIMIT 10 ");
+	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject,"
+		. getDateFormat("date","d", $user) . "," . getDateFormat("time","t", $user)
+		. ",uid, cid, points"
+		, "stories, comments"
+		, $where
+		, " ORDER BY points DESC, d DESC LIMIT 10 ");
 
 	return $stories;
 }
+
 ########################################################
 # This makes me nervous... we grab, and they get
 # deleted? I may move the delete to the setQuickies();
 sub getQuickies {
-my ($self) = @_;
+	my($self) = @_;
 # This is doing nothing (unless I am just missing the point). We grab
 # them and then null them? -Brian
 #  my($stuff) = $self->sqlSelect("story", "submissions", "subid='quickies'");
@@ -1635,6 +1688,7 @@ sub setQuickies {
 		story	=> $content,
 	});
 }
+
 ########################################################
 sub getSubmission {
 	my($self, $dateformat, $form, $user) = @_;
@@ -1657,7 +1711,7 @@ sub getSubmission {
 }
 
 ########################################################
-sub getSearch{
+sub getSearch {
 	my($self, $form, $user) =  @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
@@ -1685,10 +1739,10 @@ sub getSearch{
 
 ########################################################
 sub getNewstoryTitle {
-	my ($self, $storyid, $sid) = @_;
+	my($self, $storyid, $sid) = @_;
 	my($title) = sqlSelect("title", "newstories",
 	      "sid=" . $self->{dbh}->quote($sid)
-				);
+	);
 
 	return $title;
 }
@@ -1697,8 +1751,8 @@ sub getNewstoryTitle {
 # Search users, you can also optionally pass it
 # array of users that can be ignored
 sub getSearchUsers {
-	my ($self, $form, @users_to_ignore) = @_;
-	# userSearch REALLY doesn't need to be ordered by keyword since you 
+	my($self, $form, @users_to_ignore) = @_;
+	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
 	my $sqlquery = "SELECT fakeemail,nickname,uid ";
 	$sqlquery .= " FROM users";
@@ -1724,12 +1778,12 @@ sub getSearchUsers {
 
 ########################################################
 sub getSearchStory {
-my ($self, $form) = @_;
+	my($self, $form) = @_;
 	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
 		", commentcount,section ";
 	$sqlquery .= "," . $keysearch->($self, $form->{query}, "title", "introtext") . " "
 		if $form->{query};
-	$sqlquery .="	,0 " unless $form->{query};
+	$sqlquery .= "	,0 " unless $form->{query};
 
 	if ($form->{query} || $form->{topic}) {
 		$sqlquery .= "  FROM stories ";
