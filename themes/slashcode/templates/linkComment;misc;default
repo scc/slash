@@ -36,7 +36,7 @@ __template__
 [% END %]
 
 [% IF date %]
-	<FONT SIZE="-1">[% time %]</FONT>
+	<FONT SIZE="-1">[% Slash.timeCalc(time) %]</FONT>
 [% END %]
 
 __seclev__

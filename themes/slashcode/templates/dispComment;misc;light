@@ -14,7 +14,7 @@ __template__
 	<TR>
 		<TD>
 		<A NAME="[% cid %]"><H4>[% subject %]</H4></A>
-		by [% nickname %] on [% time %]
+		by [% nickname %] on [% Slash.timeCalc(time) %]
 		[% UNLESS user.noscores %] (Score:[% points %][% IF reason %], [% constants.reasons.$reason %][% END %])[% END %]
 		<BR>
 		[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
