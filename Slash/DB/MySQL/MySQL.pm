@@ -2370,36 +2370,42 @@ sub getPortalsCommon {
 # Heap are not optimized for count
 sub countCommentsBySid {
 	my($self, $sid) = @_;
+	return 0 if !$sid;
 	return $self->sqlCount('comments', "sid=$sid");
 }
 
 ##################################################################
 sub countCommentsByUID {
 	my($self, $uid) = @_;
+	return 0 if !$uid;
 	return $self->sqlCount('comments', "uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySubnetID {
 	my($self, $subnetid) = @_;
+	return 0 if !$subnetid;
 	return $self->sqlCount('comments', "subnetid='$subnetid'");
 }
 
 ##################################################################
 sub countCommentsByIPID {
 	my($self, $ipid) = @_;
+	return 0 if !$ipid;
 	return $self->sqlCount('comments', "ipid='$ipid'");
 }
 
 ##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
+	return 0 if !$sid or !$uid;
 	return $self->sqlCount('comments', "sid=$sid AND uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySidPid {
 	my($self, $sid, $pid) = @_;
+	return 0 if !$sid or !$pid;
 	return $self->sqlCount('comments', "sid=$sid AND pid=$pid");
 }
 
