@@ -993,8 +993,11 @@ sub editUser {
 
 	$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 	$user_edit->{homepage} ||= "http://";
+
 	# Remove domain tags, they'll be added back in, in saveUser.
-	$user_edit->{sig} =~ s{</A[^>]+>}{</A>}gi;
+	for my $dat (@{$user_edit}{qw(sig bio)}) {
+		$dat = parseDomainTags($dat, 0, 1);
+	}
 
 	$title = getTitle('editUser_title', { user_edit => $user_edit});
 

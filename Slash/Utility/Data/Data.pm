@@ -1288,7 +1288,7 @@ sub balanceTags {
 
 #========================================================================
 
-=head2 parseDomainTags(HTML, RECOMMENDED)
+=head2 parseDomainTags(HTML, RECOMMENDED, NOTAGS)
 
 To be called before sending the HTML to the user for display.  Takes
 HTML with domain tags (see addDomainTags()) and parses out the tags,
@@ -1309,6 +1309,10 @@ The HTML with tagged with domains.
 Boolean for whether or not domain tags are recommended.  They are not
 required, the user can choose to leave it up to us.
 
+=item NOTAGS
+
+Boolean overriding RECOMMENDED; it strips out all domain tags if true.
+
 =back
 
 =item Return value
@@ -1320,7 +1324,7 @@ The parsed HTML.
 =cut
 
 sub parseDomainTags {
-	my($html, $recommended) = @_;
+	my($html, $recommended, $notags) = @_;
 	return "" if !defined($html) || $html eq "";
 
 	my $user = getCurrentUser();
@@ -1339,7 +1343,7 @@ sub parseDomainTags {
 			and $recommended	# and we think the poster has earned tagless posting
 		);
 
-	if ($want_tags) {
+	if ($want_tags && !$notags) {
 		$html =~ s{</A ([^>]+)>}{</A> [$1]}gi;
 	} else {
 		$html =~ s{</A[^>]+>}{</A>}gi;

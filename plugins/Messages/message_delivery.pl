@@ -51,8 +51,10 @@ $task{$me}{code} = sub {
 	}
 };
 
-sub messagedLog {
+my $errsub = sub {
 	doLog('messaged', \@_);
-}
+};
+
+*messagedLog = $errsub unless defined &messagedLog;
 
 1;

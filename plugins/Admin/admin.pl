@@ -44,9 +44,9 @@ sub main {
 			function	=> \&listStories,
 			seclev		=> 100,
 		},
-		delete		=> {
+		'delete'		=> {
 			function 	=> \&listStories,
-			seclev		=> 100,
+			seclev		=> 10000,
 		},
 		preview		=> {
 			function 	=> \&editStory,
