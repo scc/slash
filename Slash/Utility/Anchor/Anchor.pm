@@ -303,7 +303,7 @@ sub getSectionBlock {
 		: $user->{currentSection};
 
 	my $block;
-	if ($thissect) {
+	if ($thissect and ($thissect ne 'list')) {
 		$block = $slashdb->getBlock("${thissect}_${name}", 'block');
 	}
 
@@ -318,8 +318,9 @@ sub getSectionBlock {
 sub getSectionColors {
 	my($color_block) = @_;
 	my $user = getCurrentUser();
+	my $slashdb = getCurrentDB();
 	my @colors;
-	my $colorblock = getCurrentForm('colorblock');
+	my $colorblock ||= getCurrentForm('colorblock');
 
 	# they damn well better be legit
 	if ($colorblock) {
