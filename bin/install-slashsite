@@ -305,35 +305,27 @@ if ($driver eq 'oracle') {
 	}
 }
 
-#my $dump = gensym;
-#open($dump, "< $theme/sql/$driver/datadump.sql\0")
-#	or die "Can't open $theme/sql/$driver/datadump.sql: $!";
-#while (<$dump>) {
-#	next unless /^INSERT/;
-#	chomp;
-#	s/;$//;
-#	s/www\.example\.com/$hostname/g;
-#	s/admin\@example\.com/$email/g;
-#	if ($driver eq 'oracle') {
-#		# With this we can almost use the MySQL dump verbatim
-#		# Of course, MySQL could have just compiled with SQL-92, too
-#		s/\\r/\r/g;
-#		s/\\n/\n/g;
-#		s/\\'/''/g;
-#		s/\\(["\\])/$1/g;
-#	}
-#	push @sql, $_;
-#}
-#close $dump;
-#
-#open($dump, "< $theme/sql/$driver/prep.sql\0");  # or what?
-#while (<$dump>) {
-#	chomp;
-#	s/;$//;
-#	push @sql, $_;
-#}
-#close $dump;
-#
+my $dump = gensym;
+open($dump, "< $PREFIX/sql/$driver/defaults.sql\0")
+	or die "Can't open $PREFIX/sql/$driver/defaults.sql: $!";
+while (<$dump>) {
+	next unless /^INSERT/;
+	chomp;
+	s/;$//;
+	s/www\.example\.com/$hostname/g;
+	s/admin\@example\.com/$email/g;
+	if ($driver eq 'oracle') {
+		# With this we can almost use the MySQL dump verbatim
+		# Of course, MySQL could have just compiled with SQL-92, too
+		s/\\r/\r/g;
+		s/\\n/\n/g;
+		s/\\'/''/g;
+		s/\\(["\\])/$1/g;
+	}
+	push @sql, $_;
+}
+
+close $dump;
 for my $cmd (@sql) {
 	next unless $cmd;
 	my $rows_affected = $dbh->do($cmd);
