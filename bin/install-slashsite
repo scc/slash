@@ -89,8 +89,9 @@ END { $dbh->disconnect if $dbh }
 
 chomp($hostname_f = `hostname -f`);
 unless ($opts{'H'}) {
-	print "\nWhat is hostname of your Slash site
-	(e.g., www.slashdot.org)? [$hostname_f] ";
+	print "
+What is hostname of your Slash site
+(e.g., www.slashdot.org)? [$hostname_f] ";
 	chomp($hostname = <STDIN>);
 	$hostname ||= $hostname_f;
 } else {
@@ -237,8 +238,8 @@ your Slash directories). [Y] ";
 
 unless ($opts{'a'}) {
 	print "
-OK, we need to create an admin account;
-give us a name (8 characters only please). [$owner] ";
+Create a name for the site's admin account (8 characters
+or less). [$owner] ";
 	chomp($username = <STDIN>);
 	$username ||= $owner;
 } else {
@@ -247,11 +248,10 @@ give us a name (8 characters only please). [$owner] ";
 
 unless ($opts{'p'}) {
 	do {
-		print "\nWhat is the password for the account? ('QUIT' exits):";
+		print "\nCreate a password for the site's admin account. ('QUIT' exits):";
 		chomp($password = <STDIN>);
 		die "Cancelled at user request.\n" if $password eq 'QUIT';
-		print "\nYou need to give us a password.\n"
-			if !$password;
+		print "\nYou need to give us a password.\n" unless $password;
 	} until $password;
 } else {
 	$password = $opts{'p'};
