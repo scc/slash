@@ -32,8 +32,7 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma} = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
-		if $I{U}{uid} != $I{anonymous_coward_uid};
+	$I{U}{karma}=$I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
 	header("Meta Moderation");
 
 	my $id = isEligible();
@@ -87,12 +86,9 @@ sub metaModerate {
 		if ($y < $I{m2_comments} && /^mm(\d+)$/ && $I{F}{$_}) { 
 			my $id = $1;
 			$y++;
-			my($muid) = sqlSelect("uid","moderatorlog",
-				"id=" . $I{dbh}->quote($id)
-			);
+			my $muid = $I{dbobject}->getModeratorLog($id);
 
 			$m2victims{$id} = [$muid, $I{F}{$_}];
-			# metaMod($1, $I{F}{$_}) if $I{metamod_sum} > 0;
 		}
 	}
 
@@ -114,11 +110,10 @@ sub metaModerate {
 		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $I{m2_toomanyunfair}));
 	}
 
-	$I{dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
-	foreach (keys %m2victims) {
-		metaMod($m2victims{$_}[0], $m2victims{$_}[1], $_, $flag, $ts);
+	my $changes = $I{dbobject}->setMetaMod(\%m2victims, $flag, $ts);
+	for(@$changes) {
+		print "<BR>Updating $_[0] with $_[1]" if $I{U}{aseclev} > 10;
 	}
-	$I{dbh}->do("UNLOCK TABLES");
 
 	print <<EOT;
 $y comments have been meta moderated.  Thanks for participating.
@@ -130,12 +125,8 @@ EOT
 
 	$metamod{unfair} ||= 0;
 	$metamod{fair} ||= 0;
-	sqlUpdate("users_info",{
-		-m2unfairvotes	=> "m2unfairvotes+$metamod{unfair}",
-		-m2fairvotes	=> "m2fairvotes+$metamod{fair}",
-		-lastmm		=> 'now()',
-		lastmmid	=> 0
-	}, "uid=$I{U}{uid}") unless $I{U}{uid} == 1;
+	$I{dbobject}->setModerationVotes($I{U}{uid}, \%metamod)
+			if ($I{U}{uid}> $I{anonymous_coward_uid});
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
@@ -148,52 +139,12 @@ EOT
 			($change, $excon) = ($I{m2_penalty}, '');
 		}
 		# Update karma.
-		sqlUpdate("users_info", { -karma => "karma$change" },
-			"uid=$I{U}{uid} $excon") if $change;
+		# This is an abuse
+		$I{dbobject}->setUserInfo("$I{U}{uid} $excon", { -karma => "karma$change" })
+			if $change;
 	}
 }
 
-#################################################################
-sub getRandomActions {
-	my($min, $max) = sqlSelect("min(id),max(id)", "moderatorlog");
-	return $min + int rand($max - $min - $I{m2_comments});
-}
-
-#################################################################
-sub metaMod {
-	my($muid, $val, $mmid, $flag, $ts) = @_;
-
-	return unless $val; # Gotta have something to do with it...
-
-	# Update $muid's Karma
-	if ($muid && $val && !$flag) {
-		if ($val eq '+') {
-			sqlUpdate("users_info", { -m2fair => "m2fair+1" }, "uid=$muid");
-			# The idea here is to not let meta moderators get the comment
-			# bonus...
-			sqlUpdate("users_info", { -karma => "karma+1" },
-				"$muid=uid and karma<$I{m2_maxbonus}");
-		} elsif ($val eq '-') {
-			sqlUpdate("users_info", { -m2unfair => "m2unfair+1" },
-				"uid=$muid");
-			# ...while sufficiently bad moderators can still get the 
-			# comment penalty.
-			sqlUpdate("users_info", { -karma => "karma-1" },
-				"$muid=uid and karma>$I{badkarma_limit}");
-		}
-	}
-	# Time is now fixed at form submission time to ease 'debugging'
-	# of the moderation system, ie 'GROUP BY uid, ts' will give 
-	# you the M2 votes for a specific user ordered by M2 'session'
-	sqlInsert("metamodlog", {
-		-mmid => $mmid,
-		-uid  => $I{U}{uid},
-		-val  => ($val eq '+') ? 1 : -1,
-		-ts   => "from_unixtime($ts)",
-		-flag => $flag
-	});
-	print "<BR>Updating $muid with $val" if $I{U}{aseclev} > 10;
-}
 
 #################################################################
 sub displayTheComments {
@@ -295,6 +246,7 @@ EOT
 }
 
 #################################################################
+# This is going to break under replication
 sub isEligible {
 
 	if ($I{U}{uid} == $I{anonymous_coward_uid}) {
@@ -302,7 +254,7 @@ sub isEligible {
 		return 0;
 	}
 
-	my($tuid) = sqlSelect("count(*)", "users");
+	my $tuid = $I{dbobject}->countUsers();
 	
 	if ($I{U}{uid} > int($tuid * 0.75) ) {
 		print "You haven't been a $I{sitename} user long enough.";
@@ -314,27 +266,21 @@ sub isEligible {
 		return 0;	
 	}
 
-	my($lastmm, $lastmmid) = sqlSelect(
-		"(to_days(now()) - to_days(lastmm)), lastmmid",
-		"users_info",
-		"uid=$I{U}{uid}"
-	);
-
-	# must be eq "0", since == 0 might return true improperly
-	if ($lastmm eq "0") {
+	my $last = $I{dbobject}->getModeratorLast($I{U}{uid});
+	if ($last->{'lastmm'} eq "0") {
 		print "You have recently meta moderated.";
 		return 0;
 	}
 
+
 	# Eligible for M2. Determine M2 comments by selecting random starting
 	# point in moderatorlog.
-	unless ($lastmmid) {
-		$lastmmid = getRandomActions();
-		sqlUpdate("users_info", { lastmmid => $lastmmid }, 
-			"uid=$I{U}{uid}");
+	unless ($last->{'lastmmid'}) {
+		$last->{'lastmmid'} = $I{dbobject}->getModeratorLogRandom();
+		$I{dbobject}->setUserInfo($I{U}{uid}, { lastmmid => $last->{'lastmmid'} });
 	}
 
-	return $lastmmid; # Hooray!
+	return $last->{'lastmmid'}; # Hooray!
 }
 
 main();

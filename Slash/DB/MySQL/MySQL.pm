@@ -791,7 +791,11 @@ sub setSessionByAid {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
 }
-
+########################################################
+sub setUserInfo {
+	my($self, $name, $value) = @_;
+	$self->sqlUpdate('users_info', $value, 'uid=' . $self->{dbh}->quote($name));
+}
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
@@ -1658,7 +1662,7 @@ sub getPoll {
 	my $sth = $self->{dbh}->prepare_cached("
 			SELECT question,answer,aid  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
-			pollquestions.qid=$self->{dbh}->quote($qid)
+			pollquestions.qid= " . $self->{dbh}->quote($qid) . "
 			ORDER BY pollanswers.aid
 	");
 	$sth->execute;
@@ -1909,6 +1913,89 @@ sub countStories {
 	return $stories;
 }
 
+########################################################
+sub setModeratorVotes {
+	my ($self, $uid, $metamod) = @_;
+	$self->sqlUpdate("users_info",{
+		-m2unfairvotes	=> "m2unfairvotes+$metamod->{unfair}",
+		-m2fairvotes	=> "m2fairvotes+$metamod->{fair}",
+		-lastmm		=> 'now()',
+		lastmmid	=> 0
+	}, "uid=$uid");
+}
+
+########################################################
+sub setMetaMod {
+	my($self, $m2victims, $flag, $ts) = @_;
+
+	my $constants = getCurrentStatic();
+	my $returns = [];
+
+	# Update $muid's Karma
+	$self->{dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
+	for(keys %{$m2victims}) {
+		my $muid = $m2victims->{$_}[0];
+		my $val = $m2victims->{$_}[1];
+		next unless $val;
+		push (@$returns , [$muid, $val]);
+
+		my $mmid = $_;
+		if ($muid && $val && !$flag) {
+			if ($val eq '+') {
+				$self->sqlUpdate("users_info", { -m2fair => "m2fair+1" }, "uid=$muid");
+				# The idea here is to not let meta moderators get the comment
+				# bonus...
+				$self->sqlUpdate("users_info", { -karma => "karma+1" },
+					"$muid=uid and karma<$constants->{m2_maxbonus}");
+			} elsif ($val eq '-') {
+				$self->sqlUpdate("users_info", { -m2unfair => "m2unfair+1" },
+					"uid=$muid");
+				# ...while sufficiently bad moderators can still get the 
+				# comment penalty.
+				$self->sqlUpdate("users_info", { -karma => "karma-1" },
+					"$muid=uid and karma>$constants->{badkarma_limit}");
+			}
+		}
+		# Time is now fixed at form submission time to ease 'debugging'
+		# of the moderation system, ie 'GROUP BY uid, ts' will give 
+		# you the M2 votes for a specific user ordered by M2 'session'
+		$self->sqlInsert("metamodlog", {
+			-mmid => $mmid,
+			-uid  => $ENV{'REMOTE_USER'},
+			-val  => ($val eq '+') ? 1 : -1,
+			-ts   => "from_unixtime($ts)",
+			-flag => $flag
+		});
+	}
+	$self->{dbh}->do("UNLOCK TABLES");
+
+	return $returns;
+}
+########################################################
+sub getModeratorLast {
+	my ($self, $uid) = @_;
+	my $last = sqlSelectHashref(
+		"(to_days(now()) - to_days(lastmm)) as lastmm, lastmmid",
+		"users_info",
+		"uid=$uid"
+	);
+
+	return $last;
+}
+########################################################
+# No, this is not API, this is pretty specialized
+sub getModeratorLogRandom {
+	my ($self) = @_;
+	my $m2 = getCurrentStatic('m2_comments');
+	my($min, $max) = $self->sqlSelect("min(id),max(id)", "moderatorlog");
+	return $min + int rand($max - $min - $m2);
+}
+########################################################
+sub countUsers {
+	my($self) = @_;
+	my($users) = $self->sqlSelect("count(*)", "users");
+	return $users;
+}
 ########################################################
 sub countStoriesStuff {
 	my($self) = @_;
@@ -2609,6 +2696,11 @@ sub getSubmission {
 ########################################################
 sub getSectionBlockByBid {
 	my $answer = _genericGet('sectionblocks', 'bid', @_);
+	return $answer;
+}
+########################################################
+sub getModeratorLog {
+	my $answer = _genericGet('moderatorlog', 'id', @_);
 	return $answer;
 }
 
