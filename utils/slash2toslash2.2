@@ -16,7 +16,7 @@ my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my(%opts, %forced_plugins);
-my($del_users);
+my($del_users, $poll_uid);
 my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%vars, %story_authors);
 
@@ -269,9 +269,10 @@ EOT
 
 	'pollquestions'		=> sub {
 		my($data, $poll_data) = @_;
+
 		$data->{'discussion'} = $discussions{$data->{qid}};
-		# Program should accept a default topic for polls.
-		$data->{'topic'} = -1;
+		$data->{'topic'} = $vars{defaulttopic};
+		$data->{'uid'} = $poll_uid;
 		# QID is now SID and the new QID is now a serial key.
 		$data->{'sid'} = $data->{'qid'};
 		$poll_data->{$data->{qid}} = $data if $poll_data;
@@ -392,8 +393,13 @@ my (%conditions) = (
 ####################################
 # main body
 {
+	my %tmpvars;
+
+	load_vars($dbh_old, \%tmpvars);
+
 	# Populate aid->uid author resolver.
 	get_authors();
+
 	if ($opts{I}) {
 		incremental();
 		# We're done.
@@ -413,6 +419,18 @@ EOT
 		for (@user_tables) {
 			$dbh_new->do("DELETE FROM $_");
 		}
+	}
+
+	$poll_uid = '';
+	while ($poll_uid !~ /^\d+$/) {
+		$poll_uid = ask(<<EOT);
+What User ID (UID) should be used as owner of your converted polls?
+[Default = UID #$tmpvars{anonymous_coward_uid}->{value}]: 
+EOT
+
+		$poll_uid = $tmpvars{anonymous_coward_uid}->{value}
+			if !length($poll_uid);
+		print "Invalid UID!\n\n" if $poll_uid !~ /^\d+$/;
 	}
 
 	convert();
