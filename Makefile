@@ -38,7 +38,7 @@ plugins:
 
 all: install
 
-install: slash plugins
+install: slash plugins 
 # Need to toss in a script here that will fix prefix so
 # that if someone wants to install in a different
 # directory it will be easy
@@ -49,11 +49,12 @@ install: slash plugins
 	(cd plugins/Slash-Journal; $(PERL) Makefile.PL; make install)
 
 	# First we do the default sutff
-	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/
+	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/ $(PREFIX)/httpd/
 	install -D bin/install-slashsite bin/tailslash bin/template-editor $(PREFIX)/bin/
 	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
 	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
+	cp httpd/slash.conf $(PREFIX)/httpd/slash.conf
 
 	# Now for the default theme (be nice when this goes in themes)
 	cp -r plugins/* $(PREFIX)/plugins/
@@ -71,6 +72,19 @@ install: slash plugins
 	chown -R $(USER):$(GROUP) $(PREFIX)/bin
 	chown -R $(USER):$(GROUP) $(PREFIX)/sql
 	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
+	echo "+--------------------------------------------------------+"; \
+	echo "| All done.                                              |"; \
+	echo "| If you want to let slash handle your httpd.conf file   |"; \
+	echo "| go add:                                                |"; \
+	echo "|                                                        |"; \
+	echo "| Include $(PREFIX)/slash.conf                           |"; \
+	echo "|                                                        |"; \
+	echo "| to your httpd.conf for apache.                         |"; \
+	echo "| If not, cat its content into your httpd.conf file.     |"; \
+	echo "|                                                        |"; \
+	echo "| Thanks for installing slashcode.                       |"; \
+	echo "+--------------------------------------------------------+"; \
+
 
 reload: install
 	apachectl stop
@@ -96,3 +110,5 @@ distdir :
 manifest :
 	(cd Slash; make distclean)
 	$(PERL) -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest'
+
+

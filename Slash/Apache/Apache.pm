@@ -38,7 +38,7 @@ sub SlashVirtualUser ($$$) {
 
 	# Lets just do this once
 	my $timezones = $cfg->{slashdb}->getDescriptions('tzcodes');
-	$anonymous_coward->{offset} = $timezones->{ $anonymous_coward->{tzcode} };
+	$anonymous_coward->{off_set} = $timezones->{ $anonymous_coward->{tzcode} };
 	my $dateformats = $cfg->{slashdb}->getDescriptions('datecodes');
 	$anonymous_coward->{'format'} = $dateformats->{ $anonymous_coward->{dfid} };
 

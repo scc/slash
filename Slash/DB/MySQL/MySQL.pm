@@ -18,7 +18,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
 
 	'tzcodes'
-		=> sub { $_[0]->sqlSelectMany('tz,offset', 'tzcodes') },
+		=> sub { $_[0]->sqlSelectMany('tz,off_set', 'tzcodes') },
 
 	'tzdescription'
 		=> sub { $_[0]->sqlSelectMany('tz,description', 'tzcodes') },

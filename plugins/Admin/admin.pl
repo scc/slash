@@ -45,7 +45,7 @@ sub main {
 		# will have to get this information from the database anyways.
 		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
 	}
-	header("backSlash $user->{tzcode} $user->{offset}$tbtitle", 'admin');
+	header("backSlash $user->{tzcode} $user->{off_set}$tbtitle", 'admin');
 
 	
 	# Admin Menu

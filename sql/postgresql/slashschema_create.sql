@@ -414,7 +414,7 @@ CREATE TABLE topics (
 
 CREATE TABLE tzcodes (
 	tz char(3) DEFAULT '' NOT NULL,
-	value int4,
+	off_set int4,
 	description varchar(64),
 	PRIMARY KEY (tz)
 );

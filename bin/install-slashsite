@@ -29,20 +29,6 @@ my %drivers = (
 	oracle	=> 'oracle'
 );
 
-my @standard_http = qw(
-	PerlModule Apache::SIG
-	PerlModule Apache::DBI
-	PerlModule Slash::Apache
-	PerlModule Slash::Apache::User
-	PerlModule Slash::Apache::Log
-	PerlAccessHandler Slash::Apache::User
-	PerlLogHandler Slash::Apache::Log
-	PerlModule CGI
-	PerlHandler Apache::Registry
-	PerlSetupEnv On
-	PerlSetEnv TZ GMT
-);
-
 usage() unless ($ARGV[0]);
 
 unless (DBIx::Password::checkVirtualUser($ARGV[0])) {

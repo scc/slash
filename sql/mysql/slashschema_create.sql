@@ -491,7 +491,7 @@ CREATE TABLE topics (
 DROP TABLE IF EXISTS tzcodes;
 CREATE TABLE tzcodes (
   tz char(3) DEFAULT '' NOT NULL,
-  offset int(1),
+  off_set int(1),
   description varchar(64),
   PRIMARY KEY (tz)
 );
