@@ -23,6 +23,10 @@ Call available exported functions from Slash and Slash::Utility
 from within your template.  Also call methods from Slash::DB
 with the C<db> method.  Invoke with C<[% USE Slash %]>.
 
+C<[% Slash.version %]> gives the version of Slash.
+C<[% Slash.VERSION %]> (note case) gives the version
+of this Slash Template plugin.
+
 =cut
 
 use strict;
@@ -45,6 +49,7 @@ sub _populate {
 		@subs{@{"${pkg}::EXPORT"}} =
 			map { *{"${pkg}::$_"}{CODE} } @{"${pkg}::EXPORT"};
 	}
+	$subs{version} = sub { Slash->VERSION };
 }
 
 sub new {

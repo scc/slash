@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '2.11';
+$Bundle::Slash::VERSION = '2.13';
 
 1;
 
@@ -71,11 +71,13 @@ Getopt::Long
 
 Image::Size
 
-Date::Manip             - Still needed, but not for long
+Time::HiRes
 
 Date::Parse		- TimeDate
 
-Time::HiRes
+Date::Manip             - Still needed, but not for long
+
+Time::ParseDate         - Time-modules; Needed for Schedule::Cron
 
 Schedule::Cron
 

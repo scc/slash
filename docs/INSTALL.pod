@@ -698,11 +698,13 @@ the Bundle::Slash distribution.
 
 =item Image-Size
 
-=item DateManip
+=item Time-HiRes
 
 =item TimeDate
 
-=item Time-HiRes
+=item DateManip
+
+=item Time-modules
 
 =item Schedule-Cron
 
@@ -723,12 +725,18 @@ processor speed is also dependent on how busy the site is; Pentium 133
 or equivalent might work, but less than a Pentium II/200 is not
 recommended.
 
-For the curious, Slashdot (as of January 2001) runs on eight machines:
-six webservers (each is Pentium III/600, 1GB RAM, 9GB hard drive), one
-NFS server (dual PIII/600, 2GB RAM, 2 x 9GB hard drive), and one
-database server (quad Xeon/550, 2GB RAM, 6 x 9GB hard drive).  However,
-this is certainly overkill for most sites (and possibly even overkill
-for Slashdot).
+For the curious, Slashdot (as of September 2001) runs on nine machines:
+nine webservers (each is Pentium III/600, 1GB RAM, 9GB hard drive), one
+NFS server (600MHz PIII, 1GB RAM), and three database servers
+database server (quad 600MHz PIII, 4GB RAM).  One database server is
+live, one is a replicated backup, and a third is for doing live searches
+and performance-intensive SELECTs by daemons etc.
+
+However, this is certainly overkill for most sites (and possibly even
+overkill for Slashdot).  slashcode.com runs on two web servers and one
+NFS/database server.  Many sites can run fine on just one machine for
+everything (we use a minimum of two web server machines on every site
+for load balancing and redundancy).
 
 
 =head1 VERSION

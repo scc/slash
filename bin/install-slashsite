@@ -458,7 +458,7 @@ sub apache_site_conf {
 
     # this directive will enable you to display user's pages
     # with /~username
-    #PerlTransHandler Slash::Apache::User::userdir_handler
+    PerlTransHandler Slash::Apache::User::userdir_handler
 
     DirectoryIndex index.pl index.shtml
     ErrorDocument 404 /404.pl
