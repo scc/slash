@@ -398,7 +398,7 @@ sub apache_site_conf {
 	close(FILE);
 	open(FILE, "< $PREFIX/httpd/slash.conf");
 
-	unless (grep /\bInclude $file\b/, <FILE>) {
+	unless (grep /^Include $file$/, <FILE>) {
 		close(FILE);
 		open(FILE, ">> $PREFIX/httpd/slash.conf");
 		print FILE "Include $file\n";
