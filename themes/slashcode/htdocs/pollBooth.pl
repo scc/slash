@@ -58,8 +58,9 @@ sub main {
 		print "</CENTER>";
 
 	} else {
-		vote($I{F}{qid}, $I{F}{aid});
-		printComments($I{F}{qid}) unless $I{dbobject}->getVar("nocomment");
+		my $error = vote($I{F}{qid}, $I{F}{aid});
+		printComments($I{F}{qid})
+			unless $I{dbobject}->getVar("nocomment") || $error;
 	}
 
 	$I{dbobject}->writelog($I{U}{uid}, "pollbooth", $I{F}{qid});
@@ -163,7 +164,17 @@ sub vote {
 	my $qid_dbi = $I{dbh}->quote($qid);
 	my $qid_htm = stripByMode($qid, 'attribute');
 
-	my $notes = "Displaying poll results $aid";
+	my($minaid, $maxaid) =
+		sqlSelect("min(aid),max(aid)", "pollanswers", "qid=$qid_dbi")
+			if $qid;
+	if (!$minaid && !$maxaid) {
+		print "Invalid poll!<BR>";
+		# Non-zero denotes error condition and that comments should not be
+		# printed.
+		return 1;
+	}
+
+	my $notes = "Displaying poll results";
 	if ($I{U}{uid} == $I{anonymous_coward} && ! $I{allow_anonymous}) {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
@@ -180,7 +191,7 @@ sub vote {
 				$notes .= " (proxy for $ENV{HTTP_X_FORWARDED_FOR})";
 			}
 
-		} else {
+		} elsif ($aid >= $minaid && $aid <= $maxaid) {
 			$notes = "Your vote ($aid) has been registered.";
 			sqlInsert("pollvoters", {
 				qid	=> $qid, 
@@ -193,6 +204,8 @@ sub vote {
 				voters=voters+1 where qid=$qid_dbi");
 			$I{dbh}->do("update pollanswers set votes=votes+1 where 
 				qid=$qid_dbi and aid=" . $I{dbh}->quote($aid));
+		} else {
+			$notes = "Your vote ($aid) was rejected.";
 		}
 	} 
 
