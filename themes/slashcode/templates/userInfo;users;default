@@ -5,14 +5,14 @@ Display user's info
 
 * title = passed to titlebar
 * nick = nickname
-* user	= hashref of user's info
+* useredit = hashref of info of the user being viewed
 * points = available moderation points
 * commentstruct = arrayref of comments
 * nickmatch_flag = current user is same as viewed user
 * mod_flag = is moderator
 * karma_flag = boolean for display karma
 * admin_block = admin stuff
-* author_flag = boolean for whether to display admin stuff
+* admin_flag = boolean for whether to display admin stuff
 
 
 __title__
@@ -92,9 +92,13 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 	[% END %]
 [% END %]
 
-<BR><B>[% nick %] has posted [% commentcount %] comments. [% IF commentcount > constants.user_comment_display_default %]Below are the most recent [% constants.user_comment_display_default %] comments.[% END %]</B><P>
+<BR><B>[% nick %] has posted [% commentcount %] comments.
+[% IF commentcount > commentstruct.size %]Below find
+[% IF min_comment == 0 %]the most recent [% commentstruct.size %] comments.
+[% ELSE %][% commentstruct.size %] of them.
+[% END %][% END %]</B><P>
 
-[% n = 0 %]
+[% n = min_comment %]
 [% FOREACH comment = commentstruct %]
 	[% n = n + 1 %]
 	[% replies = comment.replies ? " Replies: $comment.replies" : "" %]
@@ -113,6 +117,10 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
       </FONT>
 [% END %]
 
+[% IF admin_flag && commentcount > n %] 
+<P><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% nick_plain | fixparam %]&amp;min_comment=[% n %]"
+>More Comments...</A><P>
+[% END %]
 
 
 __seclev__

@@ -6,8 +6,10 @@ Display and ipid/subnetid "users" info
 * title = passed to titlebar
 * nick = nickname
 * commentstruct = arrayref of comments
+* commentcount = number of comments
+* min_comment = first comment in list (0 is first)
 * admin_block = admin stuff
-* author_flag = boolean for whether to display admin stuff
+* admin_flag = boolean for whether to display admin stuff
 
 
 __title__
@@ -25,15 +27,15 @@ __template__
 <B>
 
 [% IF edit.ipid %] 
-IP address [% id %],  [% edit.ipid %] has posted [% commentstruct.size %] comments
+IP address [% id %], [% edit.ipid %] has posted [% commentcount %] comments
 [% ELSIF edit.subnetid %]
-Subnet [% id %],  [% edit.subnetid %] has posted [% commentstruct.size %] comments
+Subnet [% id %], [% edit.subnetid %] has posted [% commentcount %] comments
 [% END %]
 
 </B><P>
 
 
-[% n = 0 %]
+[% n = min_comment %]
 [% FOREACH comment = commentstruct %]
 	[% n = n + 1 %]
 	[% replies = comment.replies ? " Replies: $comment.replies" : "" %]
@@ -55,6 +57,12 @@ on [% comment.cdate %] (Score:[% comment.pts %][% replies %])
 [% END %]
 
 [% IF admin_flag %]
+
+[% IF commentcount > n %]
+<P><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;min_comment=[% n %]"
+>More Comments...</A><P>
+[% END %]
+
 [% admin_block %]
 [% END %]
 

@@ -1031,13 +1031,15 @@ sub getUserEmail {
 }
 
 #################################################################
-# Turns out it is faster to hit the disk
-sub getCommentsByUID {
-	my($self, $uid, $min) = @_;
+# Turns out it is faster to hit the disk, so forget about
+# comment_heap
+sub getCommentsByGeneric {
+	my($self, $where_clause, $num, $min) = @_;
+	$min ||= 0;
 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM comments WHERE uid=$uid "
-			. " ORDER BY date DESC LIMIT $min ";
+			. " FROM comments WHERE $where_clause "
+			. " ORDER BY date DESC LIMIT $min, $num ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -1047,18 +1049,31 @@ sub getCommentsByUID {
 }
 
 #################################################################
-sub getCommentsByNetOrSubnetID {
+sub getCommentsByUID {
+	my($self, $uid, $num, $min) = @_;
+	return $self->getCommentsByGeneric("uid=$uid", $num, $min);
+}
+
+#################################################################
+sub getCommentsByIPID {
+	my($self, $id, $num, $min) = @_;
+	return $self->getCommentsByGeneric("ipid='$id'", $num, $min);
+}
+
+#################################################################
+sub getCommentsBySubnetID {
+	my($self, $id, $num, $min) = @_;
+	return $self->getCommentsByGeneric("subnetid='$id'", $num, $min);
+}
+
+#################################################################
+# Avoid using this one unless absolutely necessary;  if you know
+# whether you have an IPID or a SubnetID, those queries take a
+# fraction of a second, but this "OR" is a table scan.
+sub getCommentsByIPIDOrSubnetID {
 	my($self, $id, $min) = @_;
-
-	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM comments WHERE ipid='$id' "
-			. " ORDER BY date DESC LIMIT $min ";
-
-	my $sth = $self->{_dbh}->prepare($sqlquery);
-	$sth->execute;
-	my($comments) = $sth->fetchall_arrayref;
-	formatDate($comments, 4);
-	return $comments;
+	return $self->getCommentsByGeneric(
+		"ipid='$id' OR subnetid='$id'", $min);
 }
 
 #################################################################
@@ -2617,46 +2632,52 @@ sub getPortalsCommon {
 }
 
 ##################################################################
-# Heap are not optimized for count
+# Heaps are not optimized for count; use main comments table
+sub countCommentsByGeneric {
+	my($self, $where_clause) = @_;
+	return $self->sqlCount('comments', $where_clause);
+}
+
+##################################################################
 sub countCommentsBySid {
 	my($self, $sid) = @_;
 	return 0 if !$sid;
-	return $self->sqlCount('comments', "sid=$sid");
+	return $self->countCommentsByGeneric("sid=$sid");
 }
 
 ##################################################################
 sub countCommentsByUID {
 	my($self, $uid) = @_;
 	return 0 if !$uid;
-	return $self->sqlCount('comments', "uid=$uid");
+	return $self->countCommentsByGeneric("uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySubnetID {
 	my($self, $subnetid) = @_;
 	return 0 if !$subnetid;
-	return $self->sqlCount('comments', "subnetid='$subnetid'");
+	return $self->countCommentsByGeneric("subnetid='$subnetid'");
 }
 
 ##################################################################
 sub countCommentsByIPID {
 	my($self, $ipid) = @_;
 	return 0 if !$ipid;
-	return $self->sqlCount('comments', "ipid='$ipid'");
+	return $self->countCommentsByGeneric("ipid='$ipid'");
 }
 
 ##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
 	return 0 if !$sid or !$uid;
-	return $self->sqlCount('comments', "sid=$sid AND uid=$uid");
+	return $self->countCommentsByGeneric("sid=$sid AND uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySidPid {
 	my($self, $sid, $pid) = @_;
 	return 0 if !$sid or !$pid;
-	return $self->sqlCount('comments', "sid=$sid AND pid=$pid");
+	return $self->countCommentsByGeneric("sid=$sid AND pid=$pid");
 }
 
 ##################################################################
@@ -3663,19 +3684,52 @@ sub getSubmissionForUser {
 }
 
 ########################################################
-sub getTrollAddress {
-	my($self) = @_;
-	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
-	my $days_back = int($hours_back / 24);
-	my $ipid = getCurrentUser('ipid');
-	my($badIP) = $self->sqlSelect("sum(val)", "comments, moderatorlog",
-		"comments.cid = moderatorlog.cid AND
-		 ipid ='$ipid' AND moderatorlog.active=1 AND
-		 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
-	);
-	$badIP = 0 if !$badIP; # make sure it's not undef
-
-	return $badIP;
+sub calcModval {
+	my($self, $where_clause, $hoursback_halflife) = @_;
+	my $hr;
+my $start_time = Time::HiRes::time();
+	if (getCurrentStatic('portable_calcmodval')) {
+		$hr = $self->sqlSelectAllHashref(
+			"hoursback",
+			"CEILING((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(ts))/3600) AS hoursback,
+				SUM(val) AS valsum",
+			"comments, moderatorlog",
+			"comments.cid = moderatorlog.cid
+				AND $where_clause
+				AND moderatorlog.active=1",
+			"GROUP BY hoursback",
+		);
+	} else {
+		my $hr1 = $self->sqlSelectAllHashref(
+			"ts",
+			"ts, val",
+			"comments, moderatorlog",
+			"comments.cid = moderatorlog.cid
+				AND $where_clause
+				AND moderatorlog.active=1",
+		);
+		my $db_time = timeCalc($self->getTime(), "%s", 0);
+		for my $ts (keys %$hr1) {
+			my $val = $hr1->{$ts}{val};
+			my $hoursback = int(
+				($db_time - timeCalc($ts, "%s", 0))/3600 + 1
+			);
+			$hr->{$hoursback}{valsum} += $val;
+		}
+	}
+{ use Data::Dumper; printf STDERR "cM %d %.3f %s", (getCurrentStatic('portable_calcmodval')?1:0), Time::HiRes::time()-$start_time, Dumper($hr); }
+	my $modval = 0;
+	for my $hoursback (keys %$hr) {
+		my $val = $hr->{$hoursback}{valsum};
+		next unless $val;
+		if ($hoursback <= $hoursback_halflife) {
+			$modval += $val;
+		} else {
+			# Logarithmically weighted.
+			$modval += $val / (2 ** ($hoursback/$hoursback_halflife));
+		}
+	}
+	$modval;
 }
 
 ########################################################
@@ -3685,51 +3739,35 @@ sub getIsTroll {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my $days_back_ip = int($constants->{istroll_ipid_hours} || 72) / 24;
-	my $days_back_user = int($constants->{istroll_uid_hours} || 72) / 24;
-	my($downmods, $trollpoint);
+	my $ipid_hoursback = $constants->{istroll_ipid_hours} || 72;
+	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
+	my($modval, $trollpoint);
 my $time = time;
-print STDERR "gIT $time gb $good_behavior dbi $days_back_ip dbu $days_back_user\n";
 
-	# Check for downmods by IPID.
+	# Check for modval by IPID.
 	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior;
-	($downmods) = $self->sqlSelect("sum(val)",
-		"comments, moderatorlog",
-		"comments.cid = moderatorlog.cid
-		AND ipid = '$user->{ipid}'
-		AND moderatorlog.active=1
-		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_ip"
-	);
-print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " ip downmods $downmods trollpoint $trollpoint ipid '$user->{ipid}'\n";
-	return 1 if $downmods <= $trollpoint;
+	$modval = $self->calcModval("ipid = '$user->{ipid}'", $ipid_hoursback);
+my $uidipid = "";
+$uidipid  = " uid $user->{uid}" if !$user->{is_anon};
+$uidipid .= " ipid '$user->{ipid}'";
+printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+	return 1 if $modval <= $trollpoint;
 
-	# Check for downmods by subnet.
+	# Check for modval by subnet.
 	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior;
-	($downmods) = $self->sqlSelect("sum(val)",
-		"comments, moderatorlog",
-		"comments.cid = moderatorlog.cid
-		AND subnetid = '$user->{subnetid}'
-		AND moderatorlog.active=1
-		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_ip"
-	);
-print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " subnet downmods $downmods trollpoint $trollpoint subnetid '$user->{subnetid}'\n";
-	return 1 if $downmods <= $trollpoint;
+	$modval = $self->calcModval("subnetid = '$user->{subnetid}'", $ipid_hoursback);
+printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d subnetid '%s'%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $user->{subnetid}, $uidipid;
+	return 1 if $modval <= $trollpoint;
 
 	# At this point, if the user is not logged in, then we don't need
 	# to check the AC's downmods by user ID;  they pass the tests.
 	return 0 if $user->{is_anon};
 
-	# Check for downmods by user ID.
+	# Check for modval by user ID.
 	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
-	($downmods) = $self->sqlSelect("sum(val)",
-		"comments, moderatorlog",
-		"comments.cid = moderatorlog.cid
-		AND comments.uid = $user->{uid}
-		AND moderatorlog.active=1
-		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_user"
-	);
-print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " user downmods $downmods trollpoint $trollpoint uid '$user->{uid}'\n";
-	return 1 if $downmods <= $trollpoint;
+	$modval = $self->calcModval("comments.uid = $user->{uid}", $uid_hoursback);
+printf STDERR "gIT %d %d user modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+	return 1 if $modval <= $trollpoint;
 
 	# All tests passed, user is not a troll.
 	return 0;

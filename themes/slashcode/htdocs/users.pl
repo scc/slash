@@ -492,7 +492,7 @@ sub showInfo {
 
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my($title, $admin_block, $fieldkey) = ('', '', '');
-	my $comments;
+	my $comments = undef;
 	my $commentcount = 0;
 	my $commentstruct = [];
 	my $requested_user = {};
@@ -576,6 +576,12 @@ sub showInfo {
 		$requested_user = $slashdb->getUser($uid);
 	}
 
+	my $comments_wanted = $user->{show_comments_num}
+		|| $constants->{user_comment_display_default};
+	my $min_comment = $form->{min_comment} || 0;
+	# haven't decided whether ordinary users get this yet
+	$min_comment = 0 unless $admin_flag;
+
 	if ($requested_user->{nonuid}) {
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
@@ -603,10 +609,27 @@ sub showInfo {
 		
 		$admin_block = getUserAdmin($netid, $fieldkey, 1, 0) if $admin_flag;
 
-		$comments = $slashdb->getCommentsByNetOrSubnetID(
-			$netid, $constants->{user_comment_display_default}
-		);
-		$commentcount = scalar(@$comments);
+		if ($form->{fieldname}) {
+			if ($form->{fieldname} eq 'ipid') {
+				$commentcount = $slashdb->countCommentsByIPID(
+					$netid, $comments_wanted, $min_comment);
+				$comments = $slashdb->getCommentsByIPID(
+					$netid, $comments_wanted, $min_comment);
+			} elsif ($form->{fieldname} eq 'subnetid') {
+				$commentcount = $slashdb->countCommentsBySubnetID(
+					$netid, $comments_wanted, $min_comment);
+				$comments = $slashdb->getCommentsBySubnetID(
+					$netid, $comments_wanted, $min_comment);
+			}
+		}
+		if (!defined($comments)) {
+			# Last resort; here for backwards compatibility mostly.
+			$commentcount = $slashdb->countCommentsByIPOrSubnetID(
+				$netid, $comments_wanted, $min_comment);
+			$comments = $slashdb->getCommentsByIPOrSubnetID(
+				$netid, $comments_wanted, $min_comment
+			);
+		}
 
 	} else {
 		$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
@@ -614,10 +637,11 @@ sub showInfo {
 		$commentcount =
 			$slashdb->countCommentsByUID($requested_user->{uid});
 		$comments = $slashdb->getCommentsByUID(
-			$requested_user->{uid},
-			$constants->{user_comment_display_default}
+			$requested_user->{uid}, $comments_wanted, $min_comment
 		) if $commentcount;
 	}
+
+{ use Data::Dumper; print STDERR Dumper($comments); }
 
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts, $uid) = @$_;
@@ -669,6 +693,8 @@ sub showInfo {
 			id			=> $id,
 			user			=> $requested_user,
 			commentstruct		=> $commentstruct || [],
+			commentcount		=> $commentcount,
+			min_comment		=> $min_comment,
 			admin_flag		=> $admin_flag,
 			admin_block		=> $admin_block,
 		});
@@ -720,6 +746,7 @@ sub showInfo {
 			lastgranted		=> $lastgranted,
 			commentstruct		=> $commentstruct || [],
 			commentcount		=> $commentcount,
+			min_comment		=> $min_comment,
 			nickmatch_flag		=> $nickmatch_flag,
 			mod_flag		=> $mod_flag,
 			karma_flag		=> $karma_flag,
