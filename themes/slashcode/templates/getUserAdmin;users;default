@@ -29,8 +29,9 @@ __template__
 	<TR>
 		<TD COLSPAN=3"><B>Authors</B></TD>
 		<TD>[% author_select %]</TD>
-		<TD><INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author"></TD>
+		<TD>&nbsp;<INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author"></TD>
 	</TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TR>
 [% END %]
 	<TR>
 		<TD ALIGN="RIGHT"><B>User ID</B><BR><B>Nickname</B></TD>
@@ -38,18 +39,21 @@ __template__
 		<INPUT TYPE="radio" NAME="userfield_flag" VALUE="nickname"[% nickname_checked %]></TD>
 		<TD VALIGN="TOP"><IMG SRC="[% constants.imagedir %]/admin_bracket.gif" WIDTH="22" HEIGHT="43"></TD>
 		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
-		<TD VALIGN="BOTTOM"><INPUT TYPE="SUBMIT" NAME="useredit" VALUE="Edit User"></TD>
+		<TD VALIGN="MIDDLE">&nbsp;<INPUT TYPE="SUBMIT" NAME="useredit" VALUE="Edit User"></TD>
 	</TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TR>
 
 [% IF authoredit_flag && seclev_field %]
 	<TR>
 		<TD><B>Seclev</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="TEXT" NAME="seclev" value="[% edituser.seclev %]"></TD>
 	</TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TR>
 	<TR>
 		<TD><B>Author flag (user is an author)</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
 	</TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TR>
 	<TR>
 		<TD><B>Read-only</B></TD><TD COLSPAN="3">&nbsp;</TD>
 	</TR>

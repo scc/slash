@@ -95,6 +95,18 @@ __template__
 
 		[% posttype_select %]
 
+[% domaintags.${user.domaintags} = " CHECKED" -%]
+		<P><B>Display Link Domains?</B> (shows the actual domain of any link in brackets)<BR>
+		&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="0"[% domaintags.0 %]>
+		Never show link domains<BR>
+		&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="1"[% domaintags.1 %]>
+		Show the links domain only in recommended situations<BR>
+		&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="2"[% domaintags.2 %]>
+		Always show link domains<BR>
+
 		</TD>
 	</TR>
 </TABLE>

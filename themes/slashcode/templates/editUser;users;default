@@ -28,28 +28,37 @@ __template__
 You can automatically login by clicking
 <A HREF="[% constants.rootdir %]/index.pl?op=userlogin&upasswd=[% FILTER fixparam; user_edit.passwd; END %]&unickname=[% FILTER fixparam; user_edit.nickname; END %]">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
-
+<BR>
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 
 	[% IF admin_flag %]
 	[% admin_block %]
 	[% END %]
 
+<BR>
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% user_edit.realname %]" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% user_edit.uid %]">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; user_edit.nickname; END %]">
-
-	<B>Real Email</B> (required but never displayed publicly.
-		This is where your passwd is mailed.  If you change your
-		email, notification will be sent)<BR>
-		<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% user_edit.realemail %]" SIZE="40"><BR>
-
-	<B>Fake Email</B> (optional:This email publicly displayed by
-		your comments, you may spam proof it, leave it blank,
-		or just type in your address)<BR>
-		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="[% user_edit.fakeemail %]" SIZE="40"><BR>
-
+		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; user_edit.nickname; END %]"><BR>
+<BR>
+	<B>Your Email Address</B><BR>
+	<SMALL>(required but never displayed publicly. This is where your passwd is mailed. 
+	If you change this address, a notification will be sent)</SMALL><BR>
+	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% user_edit.realemail %]" SIZE="40"><BR>
+<BR>
+[% emaildisplay.${user.emaildisplay} = 'CHECKED' -%]
+	<B>Email Display</B><BR>
+	&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.0 %] VALUE=0>
+		Do not display an email address.<BR>
+	&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.1 %] VALUE=1>
+		Show your email with random, SPAM-armoring applied (this changes daily).<BR>
+	&nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.2 %] VALUE=2>
+		Show your real email address.<BR>
+<BR>
+	
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
 		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% user_edit.homepage %]" SIZE="60"><BR>
 

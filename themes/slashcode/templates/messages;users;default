@@ -145,6 +145,16 @@ customize [% constants.sitename %], change your password, or just click pretty w
 [% CASE 'saveuser_passtooshort_msg' %]
 	Password is too short and was not changed.
 
+[% CASE 'anon_validation_attempt' %]
+	<P>I'm sorry. Anonymous users have no accounts that need to be validated.
+	If you do have an account on [% constants.sitename %] that you would like
+	to re-register, then please log in as that user, first.
+
+[% CASE 'no_registration_needed' %]
+	<P>Hello, [% user.nickname %]. Your account is currently registered with
+	the system. No re-registration is necessary at this time.
+
+
 [% END %]
 __seclev__
 10000
