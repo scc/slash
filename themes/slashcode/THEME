@@ -199,3 +199,4 @@ plugin=Messages
 plugin=Search
 plugin=Journal
 plugin=Hof
+plugin=PubKey

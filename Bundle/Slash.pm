@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '1.14';
+$Bundle::Slash::VERSION = '2.10';
 
 1;
 
@@ -42,8 +42,6 @@ Mail::Sendmail
 Mail::Address
 
 Email::Valid
-
-Mail::Bulkmail
 
 Apache::DBI
 

@@ -28,7 +28,7 @@ use strict;
 use Email::Valid;
 use File::Path;
 use File::Spec::Functions;
-use Mail::Bulkmail;
+use Slash::Custom::Bulkmail;	# Mail::Bulkmail
 use Mail::Sendmail;
 use Slash::Utility::Environment;
 use Symbol 'gensym';
@@ -145,7 +145,7 @@ sub bulkEmail {
 	my $valid = Email::Valid->new();
 	my @list = grep { $valid->rfc822($_) } @$addrs;
 
-	my $bulk = Mail::Bulkmail->new(
+	my $bulk = Slash::Custom::Bulkmail->new(
 		From    => $constants->{mailfrom},
 		Smtp	=> $constants->{smtp_server},
 		Subject => $subject,
