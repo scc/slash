@@ -96,7 +96,9 @@ close(DUMP);
 
 for(@sql) {
 	next unless $_;
-	$dbh->do($_);
+	unless($dbh->do($_)) {
+		print "Failed on :$_:\n";
+	}
 }
 
 print "Ok, I am planning on user $hostname as the unique name for the slashcode site. If this is not ok, you need to fill in something else here. [$hostname]\n";

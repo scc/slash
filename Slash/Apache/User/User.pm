@@ -160,10 +160,8 @@ sub getUser {
 			$user->{anon_id} = getAnonId();
 		}
 
-		my $coward = getCurrentAnonymousCoward();
+		$user = getCurrentAnonymousCoward();
 		setCookie('anon', $user->{anon_id}, 1);
-
-		@{$user}{ keys %$coward } = values %$coward;	
 		$user->{is_anon} = 1;
 	}
 

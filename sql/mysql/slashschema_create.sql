@@ -53,6 +53,7 @@ CREATE TABLE authors (
   section char(20),
   deletedsubmissions int(11) DEFAULT '0',
   matchname char(30),
+  display tinyint(4) DEFAULT '0',
   PRIMARY KEY (aid)
 );
 

@@ -46,18 +46,19 @@ authors here, along with the number of articles that they
 have posted.
 EOT
 
-	my $authors = $slashdb->getAuthorDescription();
+	my $list = $slashdb->getAuthorDescription();
+	my $authors = $slashdb->getAuthors();
 
-	for (@$authors) {
-		my ($count, $aid, $url, $copy) = @$_;
+	for (@$list) {
+		my ($count, $aid, $copy) = @$_;
 		next if $count < 1; 
 		print <<EOT;
 <H2><B><A HREF="$constants->{rootdir}/search.pl?author=$aid">$count</A></B>
-	<A HREF="$url">$aid</A></H2>
+	<A HREF="$authors->{$aid}{'url'}">$aid</A></H2>
 EOT
 		print qq![ <A HREF="$constants->{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
 			if getCurrentUser('aseclev') > 1000;
-		print $copy;
+		print $authors->{$aid}{'copy'};
 	}
 
 	

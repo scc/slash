@@ -237,25 +237,24 @@ sub createCurrentStatic {
 #################################################################
 sub getCurrentAnonymousCoward {
 	my($value) = @_;
-	my $anonymous_coward;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		if ($value) {
-			$anonymous_coward = $const_cfg->{'anonymous_coward'}{$value};
+			return $const_cfg->{'anonymous_coward'}{$value};
 		} else {
-			$anonymous_coward = $const_cfg->{'anonymous_coward'};
+			my %coward = %{$const_cfg->{'anonymous_coward'}};
+			return \%coward;
 		}
 	} else {
 		if ($value) {
-			$anonymous_coward = $static_anonymous_coward->{$value};
+			return $static_anonymous_coward->{$value};
 		} else {
-			$anonymous_coward = $static_anonymous_coward;
+			my %coward = %{$static_anonymous_coward};
+			return \%coward;
 		}
 	}
-
-	return $anonymous_coward;
 }
 
 #################################################################

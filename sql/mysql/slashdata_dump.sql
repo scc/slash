@@ -18,9 +18,9 @@
 # Dumping data for table 'authors'
 #
 
-INSERT INTO authors VALUES ('God','God','mailto:god@god.gov','god@god.gov','','','HACKME',10000,'','',0,'god');
+INSERT INTO authors VALUES ('God','God','mailto:god@god.gov','god@god.gov','','','HACKME',10000,'','',0,'god',1);
 
-INSERT INTO authors VALUES ('','All Authors',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL);
+INSERT INTO authors VALUES ('','All Authors',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL, 0);
 
 #
 # Dumping data for table 'blocks'

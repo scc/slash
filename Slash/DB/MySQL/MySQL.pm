@@ -1152,10 +1152,8 @@ sub getSectionBlock {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid as aid, url, copy",
-		"stories, authors",
-		"authors.aid=stories.aid", "
-		GROUP BY aid ORDER BY c DESC"
+	my $authors = $self->sqlSelectAll("count(*) as c, aid",
+		"stories", '', "GROUP BY aid ORDER BY c DESC"
 	);
 
 	return $authors;
@@ -2886,8 +2884,10 @@ sub _genericGetCache {
 		return $self->{$table_cache}{$id}{$values}
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	} else {
-		return $self->{$table_cache}->{$id}
-			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
+		if (keys %{$self->{$table_cache}{$id}} and !$cache_flag) {
+			my %return = %{$self->{$table_cache}->{$id}};
+			return \%return;
+		}
 	}
 
 	# Lets go knock on the door of the database
@@ -2903,7 +2903,8 @@ sub _genericGetCache {
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values};
 	} else {
-		return $self->{$table_cache}{$id};
+		my %return = %{$self->{$table_cache}->{$id}};
+		return \%return;
 	}
 }
 
@@ -2947,7 +2948,11 @@ sub _genericGetsCache {
 	my $table_cache_full= '_' . $table . '_cache_full';
 
 
-	return $self->{$table_cache} if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} and !$cache_flag);
+	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} and !$cache_flag) {
+
+		my %return = %{$self->{$table_cache}};
+		return \%return;
+	}
 	# Lets go knock on the door of the database
 	# and grab the data since it is not cached
 	# On a side note, I hate grabbing "*" from a database
@@ -2961,7 +2966,8 @@ sub _genericGetsCache {
 	$sth->finish;
 	$self->{$table_cache_time} = time();
 
-	return $self->{$table_cache};
+	my %return = %{$self->{$table_cache}};
+	return \%return;
 }
 
 ########################################################
