@@ -458,6 +458,8 @@ sub tokens2points {
 
 	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");
 	while (my($uid) = $cursor->fetchrow) {
+		# No update of lastgranted here as this is just a limiter.
+		# these points should expire as per normal.
 		$self->sqlUpdate('users_comments', {
 			points => $constants->{maxpoints},
 		}, "uid=$uid");
@@ -748,9 +750,13 @@ sub getStoriesWithFlag {
 #
 sub getTodayArmorList {
 	my($self, $buckets, $which_bucket) = @_;
-	$buckets = 7 if !defined($buckets); # default to 7 for weekly rotation
+
+	# Defaults to 7 for weekly rotation.
+	$buckets = 7 if !defined($buckets);
 	$buckets =~ /(\d+)/; $buckets = $1;
-	$which_bucket = (localtime)[7] if !defined($which_bucket); # default to day of year
+
+	# Default to day of year.
+	$which_bucket = (localtime)[7] if !defined($which_bucket); 
 	$which_bucket =~ /(\d+)/; $which_bucket = $1;
 	$which_bucket %= $buckets;
 	my $uid_aryref = $self->sqlSelectColArrayref(

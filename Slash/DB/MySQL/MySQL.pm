@@ -307,6 +307,11 @@ sub getMetamodComments {
 	#
 	# If the vars are cached, might we have a race condition here?
 	my $thresh = $self->getVar('m2_consensus', 'value');
+	my $previousM2s = [
+		map { $_ = $_->[0] }
+		@{$self->sqlSelectAll('mmid', 'metamodlog', "uid=$user->{uid}")}
+	];
+	my $M2mods = [];
 	$self->sqlTransactionStart('LOCK TABLES moderatorlog READ, vars WRITE');
 	my $modpos = $user->{lastmmid} ||
 		     $self->getVar('m2_modlog_pos', 'value');
@@ -314,23 +319,42 @@ sub getMetamodComments {
 	my($minMod, $maxMod) =
 		$self->sqlSelect('min(id), max(id)', 'moderatorlog');
 	$minMod--;
-	$self->setVar('m2_modlog_cycles', $timesthru + 1)
-		if $maxMod - $modpos < $num_comments;
-	$modpos=$minMod
-		if $modpos < $minMod || $maxMod-$modpos < $num_comments;
-	my $M2mods = $self->sqlSelectAllHashrefArray(
-		'id, cid as mcid, reason as modreason',
+	my $count = 0;
+	while ($num_comments && $count++ < 2) {
+		my @excluded;
 
-		'moderatorlog',
+		@excluded = map { $_ = $_->{id} } (@excluded = @{$M2mods})
+		if @{$M2mods};
+		push @excluded, @{$previousM2s} if scalar @{$previousM2s};
+		$modpos = $minMod if $modpos < $minMod ||
+			             $maxMod - $modpos < $num_comments;
+		my $cond = "moderatorlog.uid != $user->{uid}
+			AND moderatorlog.cuid != $user->{uid}
+			AND moderatorlog.reason < 8
+			AND moderatorlog.id > $modpos
+			AND moderatorlog.m2count < $thresh";
+		{ 
+			local $" = ',';
+			$cond .= " AND id NOT IN (@excluded)"
+				if scalar @excluded;
+		}
 
-		"moderatorlog.uid != $user->{uid}
-		AND moderatorlog.cuid != $user->{uid}
-		AND moderatorlog.reason < 8
-		AND moderatorlog.id > $modpos
-		AND moderatorlog.m2count < $thresh",
+		my $result = $self->sqlSelectAllHashrefArray(
+			'id, cid as mcid, reason as modreason',
+			'moderatorlog',
+			$cond,
+			"ORDER BY id LIMIT $num_comments"
+		);
+		push @{$M2mods}, @{$result} if $result;
 
-		"ORDER BY moderatorlog.id LIMIT $num_comments"
-	);
+		$num_comments -= scalar @{$M2mods};
+
+		# We only do this the first time thru.
+		if ($count == 1) {
+			$self->setVar('m2_modlog_cycles', $timesthru + 1);
+			$modpos = $minMod;
+		}
+	}
 	# Only write position change if it changes for the user.
 	$self->setVar('m2_modlog_pos', $M2mods->[-1]{id})
 		if @{$M2mods} && !$user->{lastmmid};
@@ -351,9 +375,9 @@ sub getMetamodComments {
 		local $" = ',';
 		$comments = $self->sqlSelectAllHashref(
 			'cid',
-			"$comment_table.cid, $comment_table.sid as sid, date, subject,
-			discussions.sid as discussions_sid,
-			comment, comments.uid, pid, reason, sig, title, nickname",
+			"$comment_table.cid, $comment_table.sid as sid, date,
+			subject, discussions.sid as discussions_sid,
+			comment,comments.uid,pid, reason, sig, title, nickname",
 	
 			"$comment_table, comment_text, discussions, users",
 

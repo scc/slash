@@ -20,7 +20,7 @@ my $PROGNAME = basename($0);
 
 my (%opts);
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hu:v', \%opts);
+usage('Options used incorrectly') unless getopts('hFD:u:v', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 	
@@ -35,8 +35,7 @@ $constants = getCurrentStatic();
 
 # Insure we don't exceed the maximum number of moderations that can be made.
 {
-	my $max_mods = $slashdb->sqlSelect(
-		'count(*)',
+	my $max_mods = $slashdb->sqlCount(
 		'moderatorlog',
 		"m2count < $constants->{m2_consensus}"
 	);
@@ -48,17 +47,44 @@ $constants = getCurrentStatic();
 
 # main program logic (in braces to offset nicely)
 {
+	my $cur_closed = $slashdb->sqlCount(
+		'moderatorlog',
+		"m2count >= $constants->{m2_consensus}"
+	);
+
 	print "Generating meta-moderations...\n";
 
 	my $t0 = new Benchmark;
 	my $startcount = getM2ClosedCount(); 
 	my($curcount, $m2count) = (0, 0);
-	do {
-		my $m2user = $slashdb->getUser(getRandomUID());
-		my $comments = $slashdb->getMetamodComments(
-			$m2user,
-			$constants->{m2_comments}
-		);
+	my(@cids);
+	LOOP: { do {{
+		my $m2uid = getRandomUID();
+		my($m2user, $comments);
+		if ($m2uid) {
+			$m2user = $slashdb->getUser($m2uid);
+			$comments = $slashdb->getMetamodComments(
+				$m2user,
+				$constants->{m2_comments}
+			);
+
+			# OK, so this guy is finished as an M2.
+			if (! @{$comments}) {
+				getRandomUID('exclude', $m2user->{uid});
+				next;
+			}
+		}
+		last LOOP if !$m2uid;
+		
+		@cids = @{$comments};
+		{
+			local $" = ', ';
+			$_ = $_->{id} for @cids;
+			printf <<EOT, $#cids + 1;
+M2: UID #$m2user->{uid} metamoderates %d - (@cids)
+EOT
+
+		}
 
 		for (@{$comments}) {
 			# Our M2 "vote" which is randomly determined with a 
@@ -81,31 +107,43 @@ $constants = getCurrentStatic();
 			);
 
 			$m2count++;
-			printf <<EOT, $m2_count, $constants->{m2_consensus};
+			if ($opts{D} > 2) {
+				printf <<EOT, $m2_count, $constants->{m2_consensus}
 M2($m2count): ID #$_->{id}, M2Mod = $m2user->{uid}, Val = $val, C=%d/%d 
 EOT
 
+			}
 		}
 		# This user has now metamoderated. We should clear the 
 		# lastmmid field.
 		$slashdb->setUser($m2user->{uid}, { lastmmid => 0 });
 
-		$curcount = getM2ClosedCount();
-	} while ($curcount - $startcount < $opts{num_closed});
+		$curcount = getM2ClosedCount() if ! $opts{F};
+	}} while (!$opts{F} && $curcount-$startcount < $opts{num_closed}) ||
+		$opts{F};
+	} # LOOP
+		
+	my $now_closed = $slashdb->sqlCount(
+		'moderatorlog',
+		"m2count >= $constants->{m2_consensus}"
+	);
+	my $closed = $now_closed - $cur_closed;
+
+	printf "Exhausted M2 on %d users\n", getRandomUID('size');
+
 	my $t1 = new Benchmark;
-	printf <<EOT, timestr(timediff($t1, $t0), 'noc');
-$m2count meta-moderations (closing $opts{num_closed} mods) created in:
+	printf <<EOT, $closed || 0, timestr(timediff($t1, $t0), 'noc');
+$m2count meta-moderations (closing %d mods) created in:
 %s
 EOT
 
-}
+} 
 
 
 # subroutines
 
 sub getM2ClosedCount {
-	return $slashdb->sqlSelect(
-		'count(*)',
+	return $slashdb->sqlCount(
 		'moderatorlog',
 		"m2count >= $constants->{m2_consensus}"
 	);
@@ -113,8 +151,22 @@ sub getM2ClosedCount {
 
 # CLOSURE!
 {
+my($list_size);
 my($uid_list);
 sub getRandomUID {
+	my($op, $data) = @_;
+
+	if ($op) {
+		if ($op eq 'exclude') {
+			print "Excluding user #$data\n";
+			@{$uid_list} = grep { $_ != $data} @{$uid_list};
+		}
+
+		if ($op eq 'size') {
+			return $list_size;
+		}
+	}
+
 	if (!$uid_list) {
 		my $max_uid = int(
 			$slashdb->getLastUser() *
@@ -128,8 +180,11 @@ sub getRandomUID {
 			AND users.uid!=$constants->{anonymous_coward_uid}"
 		);
 		$_ = $_->[0] for @{$uid_list};
+		$list_size = scalar @{$uid_list};
 	}
-	return $uid_list->[int rand($#{$uid_list} + 1)];
+
+	return $uid_list->[int rand($#{$uid_list} + 1)] if @{$uid_list};
+	return;
 } }
 
 
@@ -153,6 +208,9 @@ You have been warned. :)
 
 Main options:
 	-h	Help (this message)
+	-D <x>	Set debug level to <x>
+	-F	Finish - Create M2s until there are no more valid moderations 
+		left
 	-v	Version
 	-u	Virtual user (default is "slash")
 EOT

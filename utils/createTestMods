@@ -59,11 +59,12 @@ print "Loading comment authors...\n";
 # For chosing random discussions.
 print "Loading discussions...\n";
 my $discussions = [
-	map { $_ = $_->[0] }
+	map { $_ = $_->[0][0] }
 	$slashdb->sqlSelectAll(
-		'distinct discussion',
-		'stories',
-		'commentcount > 0'
+		'sid, count(*) as c',
+		'comments',
+		'',
+		'group by sid having c > 0'
 	)
 ];
 
