@@ -351,8 +351,7 @@ Fry:It's like a party in my mouth and everyone's throwing up.
 Fry:Nowadays people aren't interested in art that's not tattooed on fat guys.
 Fry:I don't regret this, but I both rue and lament it.
 Fry:I'm gonna be a famous hero just like Neil Armstrong and those other brave guys no one ever heard of.
-Fry:Fix it, fix it, fix it, fix it, fix it, fix it ... fix it, fix it, fix it!
-Fry:Well, thanks to the internet I'm now bored with sex.  Is there a place on the web that panders to my lust for violence?
+Fry:Well, thanks to the Internet I'm now bored with sex.  Is there a place on the web that panders to my lust for violence?
 Fry:Maybe you can't understand this, but I finally found what I need to be happy, and it's not friends, it's things.
 Fry:I heard one time you single-handedly defeated a hoard of rampaging somethings in the something something system.
 Fry:I'm never gonna get used to the thirty-first century. Caffeinated bacon?
@@ -364,12 +363,17 @@ Fry:That's a chick show. I prefer programs of the genre: World's Blankiest Blank
 Fry:But this is HDTV. It's got better resolution than the real world.
 Fry:I'm gonna be a science fiction hero, just like Uhura, or Captain Janeway, or Xena!
 Fry:He's an animal. He belongs in the wild. Or in the circus on one of those tiny tricycles. Now that's entertainment.
-Fry:I learned how to handle delicate social situations from a little show called 'Three's Company.'
+Fry:I learned how to handle delicate social situations from a little show called "Three's Company."
 Fry:Make up some feelings and tell her you have them.
 Fry:I'm flattered, really. If I was gonna do it with a big freaky mud bug, you'd be way up the list.
-Fry:Ow, my head! Ow, my feet! Ow, my head! Ow, my feet!
 Fry:I'm not a robot like you. I don't like having disks crammed into me... unless they're Oreos, and then only in the mouth.
 Fry:I must be a robot. Why else would human women refuse to date me?
+Fry:If this is some kind of scam, I don't get it.  You already have my power of attorney.
+Fry:Hey look, it's that guy you are!
+Fry:That doesn't look like an "L", unless you count lower case.
+Fry:Hardy Boys: too easy.  Nancy Drew: too hard!
+Fry:And then when I feel so stuffed I can't eat any more, I just use the restroom, and then I *can* eat more!
+Fry:I'm going to continue never washing this cheek again.
 EOT
 
 1;
