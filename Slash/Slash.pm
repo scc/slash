@@ -118,6 +118,7 @@ sub selectComments {
 		$comments->{$C->{pid}}{visiblekids}++
 			if $C->{points} >= ($user->{threshold} || $constants->{comment_minscore});
 
+		# Can't mod in a discussion that you've posted in.
 		# Just a point rule -Brian
 		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
@@ -603,14 +604,24 @@ sub dispComment {
 	# become what is put into $comment->{no_moderation}. As it is, a lot
 	# of the functionality of the moderation engine is intrinsically linked
 	# with how things behave on Slashdot.	- Cliff 6/6/01
-	my $can_mod = 	$constants->{allow_moderation} &&
-			!$comment->{no_moderation} && 
-			!$user->{is_anon} &&
-			( ( $user->{willing} && $user->{points} > 0 &&
+	# I rearranged the order of these tests (check anon first for speed)
+	# and pulled some of the tests from dispComment/_hard_dispComment
+	# back here as well, just to have it all in one place. - Jamie 2001/08/17
+	my $can_mod =	!$user->{is_anon} &&
+			$constants->{allow_moderation} &&
+			!$comment->{no_moderation} &&
+			!$user->{state}{comment_read_only} &&
+			( ( $user->{points} > 0 &&
+			    $user->{willing} &&
 			    $comment->{uid} != $user->{uid} &&
-			    $comment->{lastmod} != $user->{uid} ) ||
-			  ($user->{seclev} > 99 &&
-			   $constants->{authors_unlimited}) );
+			    $comment->{lastmod} != $user->{uid} &&
+			    $comment->{ipid} ne $user->{ipid} &&
+			    (    !$constants->{mod_same_subnet_forbid}
+			      || $comment->{subnetid} ne $user->{subnetid} )
+			) || (
+			    $user->{seclev} > 99 &&
+			    $constants->{authors_unlimited}
+			) );
 
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
@@ -992,15 +1003,7 @@ EOT
 			subject	=> 'Parent',
 		}, 1);
 		my $mod_select = '';
-		if ($can_mod
-			and !$user->{state}{comment_read_only}
-			and $comment->{uid} != $user->{uid}
-			and $comment->{ipid} ne $user->{ipid}
-			and (
-				!$constants->{mod_same_subnet_forbid}
-				or $comment->{subnetid} ne $user->{subnetid}
-			)
-		) {
+		if ($can_mod and !$user->{state}{comment_read_only}) {
 			$mod_select = " | "
 				. createSelect("reason_$comment->{cid}",
 					$reasons, '', 1, 1);
