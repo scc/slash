@@ -43,19 +43,24 @@ $object->set($entry, {
 print "ok 6\n";
 $object->add(1);
 $object->add(2);
-my $friends = $object->friends();
+my $friends = $object->friends;
 for(@$friends) {
 	print "\t@$_\n";
 }
 print "ok 7\n";
 $object->delete(2);
-$friends = $object->friends();
+$friends = $object->friends;
 for(@$friends) {
 	print "\t@$_\n";
 }
 $object->delete(1);
 print "ok 8\n";
-my $top = $object->top();
+my $top = $object->top;
 for(@$top) {
+	print "\t@$_\n";
+}
+print "ok 9\n";
+my $themes = $object->themes;
+for(@$themes) {
 	print "\t@$_\n";
 }

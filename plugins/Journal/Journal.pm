@@ -28,14 +28,11 @@ sub set {
 }
 
 sub gets {
-	my ($self, $uid, $values) = @_;
+	my ($self, $uid, $values, $limit) = @_;
 	my $keys = join ',', @$values if $values;
 	$keys ||= '*';
-	my $answer = $self->sqlSelectAll($keys, 'journals', "uid = $uid");
-	return $answer;
-}
-sub get {
-	my $answer = _genericGet('journals', 'id', @_);
+	my $order = " ORDER BY date DESC";
+	my $answer = $self->sqlSelectAll($keys, 'journals', "uid = $uid", $order);
 	return $answer;
 }
 
@@ -101,20 +98,29 @@ sub top {
 	return $losers;
 }
 
-########################################################
-# This is protected and don't call it from your
-# scripts directly.
-sub _genericGet {
-	my($table, $table_where, $self, $id, $val) = @_;
+sub themes {
+	my ($self) = @_;
+	my $uid = $ENV{SLASH_USER};
+	my $sql;
+	$sql .= "SELECT tpid,description from templates ";
+	$sql .= "where tpid like 'journalpage-%'";
+	$self->sqlConnect;
+	my $themes = $self->{_dbh}->selectall_arrayref($sql);
+
+	return $themes;
+}
+
+sub get {
+	my($self, $id, $val) = @_;
 	my $answer;
 
 	if((ref($val) eq 'ARRAY')) {
 		my $values = join ',', @$val;
-		$answer = $self->sqlSelectHashref($values, $table, $table_where . '=' . $self->{_dbh}->quote($id));
+		$answer = $self->sqlSelectHashref($values, 'journals', 'id=' . $self->{_dbh}->quote($id));
 	} elsif ($val) {
-		($answer) = $self->sqlSelect($val, $table, $table_where . '='  . $self->{_dbh}->quote($id));
+		($answer) = $self->sqlSelect($val, 'journals', 'id='  . $self->{_dbh}->quote($id));
 	} else {
-		$answer = $self->sqlSelectHashref('*', $table, $table_where . '=' . $self->{_dbh}->quote($id));
+		$answer = $self->sqlSelectHashref('*', 'journals', 'id=' . $self->{_dbh}->quote($id));
 	}
 
 	return $answer;

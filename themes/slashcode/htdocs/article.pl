@@ -34,7 +34,6 @@ sub main {
 	my $user = getCurrentUser();
 	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
-	$dbslash->refreshStories($form->{sid}) if $form->{refresh};
 
 	# Let's make ONE call to getStory() and fetch all we need.
 	# - Cliff

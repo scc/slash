@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
 use strict;
-use Apache::DBI;
 use Slash;
 use Slash::DB;
 use Slash::Utility;
 use Slash::Journal;
 use Slash::Display;
+use Date::Manip;
 
 
 sub main {
@@ -72,13 +72,26 @@ sub displayArticle {
 	my $slashdb = getCurrentDB();
 	my $nickname = $slashdb->getUser($form->{uid}, 'nickname');
 	my $articles = $journal->gets($form->{uid},[qw|date article  description|]);
+	my @sorted_articles;
+	my $date;
+	my $collection = {};
 	for my $article (@$articles) {
-		slashDisplay('journalentry', {
-			article => $article,
-			author => $nickname,
-		});
+		my ($date_current, $time) =  split / /, $article->[0], 2;	
+		if($date eq $date_current) {
+			push @{$collection->{article}} , { article =>  $article->[1], date =>  $article->[0], description => $article->[2]};
+		}else {
+			push @sorted_articles, $collection if $date;
+			$collection = {};
+			$date = $date_current;
+			$collection->{day} = $date;
+			push @{$collection->{article}} , { article =>  $article->[1], date =>  $article->[0], description => $article->[2]};
+		}
 	}
-	slashDisplay('journaladdfriend', {
+	for(@sorted_articles) {
+		print STDERR "$_->{day}\n";
+	}
+	slashDisplay('journalpage-grey', {
+		articles => \@sorted_articles,
 		uid => $form->{uid},
 		url => '/journal.pl',
 	});

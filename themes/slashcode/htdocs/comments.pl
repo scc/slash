@@ -42,12 +42,10 @@ sub main {
 	my $stories;
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
-	if ($form->{sid}) {
-		$stories = $dbslash->getNewStory($form->{sid},
+	$stories = $dbslash->getNewStory($form->{sid},
 				['section', 'title', 'commentstatus']);
-	} else {
-		$stories->{'title'} = "Comments";
-	}
+	$stories->{'title'} ||= "Comments";
+
 	my $SECT = $dbslash->getSection($stories->{'section'});
 
 	$form->{pid} ||= "0";
@@ -60,8 +58,6 @@ sub main {
 		});
 		$form->{op} = "Preview";
 	}
-
-	$dbslash->createDiscussions($form->{sid}) unless ($form->{sid});
 
 	if ($form->{op} eq "Submit") {
 		submitComment($form, $user, $dbslash, $constants)
@@ -93,7 +89,6 @@ sub main {
 
 		my $delCount = deleteThread($form->{sid}, $form->{cid}, $user, $dbslash);
 		$dbslash->setCommentCount($delCount);
-#		print "Deleted $delCount items from story $form->{sid}\n";
 
 	} elsif ($form->{op} eq "moderate") {
 		titlebar("99%", "Moderating $form->{sid}");

@@ -242,10 +242,20 @@ sub varSave {
 	my $form = getCurrentForm();
 
 	if ($form->{thisname}) {
-		$slashdb->saveVars();
+		my $value = $slashdb->getVar($form->{thisname});
+		if($value) {
+			$slashdb->setVar($form->{thisname}, {
+				value   => $form->{value},
+				description => $form->{desc}
+			});
+		} else {
+			$slashdb->createVar($form->{thisname}, $form->{value}, $form->{desc});
+		}
+
 		if ($form->{desc}) {
 			print getMessage('varSave-message');
 		} else {
+			$slashdb->deleteVar($form->{thisname});
 			print getMessage('varDelete-message');
 		}
 	}
