@@ -16,43 +16,57 @@ $task{$me}{code} = sub {
 
 	my $bd = $constants->{basedir}; # convenience
 	my %updates;
-	my $stories = $slashdb->getStoriesForSlashdb(1);
-	my @updatedsids;
 
-	for (@$stories){
-		my($sid, $title, $section) = @$_;
-		slashdLog("Updating $title $sid");
-		$updates{$section} = 1;
-		makeDir($bd, $section, $sid);
-		++$total_freshens;
-		push @updatedsids, $sid;
+	# Mark discussions with new comment data as needing to be freshened.
+	my $discussions = getDiscussionsWithFlag($slashdb, "hitparade_dirty");
+	# Mark stories with new data as needing to be freshened.
+	my $stories = getStoriesWithFlag($slashdb, "data_dirty");
+	for my $info (@$discussions, @$stories){
+		my($sid, $title, $section) = @$info;
+		next unless $sid;	# XXX for now, skip poll/journal discussions since we don't know how to write their hitparades in yet
+		$updates{section}{$section} = 1;	# need to update its section
+		$updates{story}{$sid} = [@$info];	# need to update the story itself
 	}
 
-#	$slashdb->setStoryIndex(@updatedsids); # no longer needed with story_heap
+	# Delete stories marked as needing such
+	$stories = getStoriesWithFlag($slashdb, "delete_me");
+	for my $info (@$stories) {
+		my($sid, $title, $section) = @$info;
+		$slashdb->finalDeleteStory($sid);
+		$updates{section}{$section} = 1;	# need to update its section
+		delete $updates{story}{$sid};		# no need to update story anymore
+		slashdLog("$me deleted $sid");
+		++$total_freshens;
+	}
 
-	my $x = 0;
-	# this deletes stories that have a writestatus of 5,
-	# which is the delete writestatus
-	$stories = $slashdb->getStoriesForSlashdb(5);
-	for my $aryref (@$stories) {
-		my($sid, $title, $section) = @$aryref;
-		$x++;
-		$updates{$section} = 1;
-		$slashdb->deleteStoryAll($sid);
-		slashdLog("$me Deleting $sid");
+	# Freshen changed stories (that haven't been deleted)
+	for my $sid (sort keys %{$updates{story}}) {
+slashdLog("sid '$sid'");
+		my($sid, $title, $section) = @{$updates{story}{$sid}};
+slashdLog("sid '$sid' title '$title' section '$section'");
+		if ($section) {
+			makeDir($bd, $section, $sid);
+			prog2file("$bd/article.pl",
+				"ssi=yes sid='$sid' section='$section'",
+				"$bd/$section/$sid.shtml");
+			slashdLog("$me updated $section:$sid $title");
+		} else {
+			prog2file("$bd/article.pl",
+				"ssi=yes sid='$sid'",
+				"$bd/$sid.shtml");
+			slashdLog("$me updated $sid $title");
+		}
 	}
 
 # Are we still using this var? I see it in datadump.sql but it doesn't
-# seem to get set anywhere except here.  (The writestatus field in the
-# 'stories' table gets read and written all the time, but that's not
-# really related.) - JRM 2001/05/04
-	my $w = $slashdb->getVar('writestatus', 'value');
+# seem to get set anywhere except here. - Jamie 2001/05/04
+#	my $w = $slashdb->getVar('writestatus', 'value');
 #       if ($updates{articles} ne "" || $w ne "0") {
-		$slashdb->setVar("writestatus", "0");
+#		$slashdb->setVar("writestatus", "0");
 		prog2file("$bd/index.pl", "ssi=yes", "$bd/index.shtml");
 #       }
 
-	foreach my $key (keys %updates) {
+	foreach my $key (keys %{$updates{section}}) {
 		next unless $key;
 		prog2file("$bd/index.pl", "ssi=yes section=$key", "$bd/$key/index.shtml");
 	}
@@ -69,6 +83,28 @@ sub makeDir {
 	my $dayid = substr($sid, 6, 2);
 
 	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0755;
+}
+
+sub getDiscussionsWithFlag {
+	my($slashdb, $flag) = @_;
+	my $flag_quoted = $slashdb->sqlQuote($flag);
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	return $slashdb->sqlSelectAll(
+		"discussions.sid, discussions.title, $story_table.section",
+		"discussions, $story_table",
+		"FIND_IN_SET($flag_quoted, discussions.flags) AND discussions.id = $story_table.discussion",
+	);
+}
+
+sub getStoriesWithFlag {
+	my($slashdb, $flag) = @_;
+	my $flag_quoted = $slashdb->sqlQuote($flag);
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	return $slashdb->sqlSelectAll(
+		"sid, title, section",
+		$story_table,
+		"FIND_IN_SET($flag_quoted, flags)"
+	);
 }
 
 1;

@@ -83,6 +83,8 @@ case "$1" in
 			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
 			if [ -f $RUNNING_PID/slashd.$SERVER_NAME.pid ] ;then
 				echo -n "Stopping slashd $SERVER_NAME: "
+				kill `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
+				sleep 2
 				kill -9 `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
 				rm -f $RUNNING_PID/slashd.$SERVER_NAME.pid
 				echo "ok."
@@ -95,6 +97,7 @@ case "$1" in
   restart)
     cd $DATADIR
 		$0 stop
+		sleep 2
 		$0 start
     ;;
   *)

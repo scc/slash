@@ -42,11 +42,11 @@ sub createUser {
 
 	return if ($self->sqlSelect(
 		"count(uid)", "users",
-		"matchname=" . $self->{_dbh}->quote($matchname)
+		"matchname=" . $self->sqlQuote($matchname)
 	))[0];
 	return if ($self->sqlSelect(
 		"count(uid)", "users",
-		" realemail=" . $self->{_dbh}->quote($email)
+		" realemail=" . $self->sqlQuote($email)
 	))[0];
 
 	$self->sqlInsert("users", {
@@ -56,7 +56,7 @@ sub createUser {
 		passwd		=> encryptPassword(changePassword())
 	});
 	my($uid) = $self->sqlSelect('uid', 'users', 'nickname=' .
-			$self->{_dbh}->quote($newuser)
+			$self->sqlQuote($newuser)
 			);
 
 	return $uid;
@@ -80,8 +80,8 @@ sub getCommentReply {
 		comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
 		"comments,users",
-		"sid=" . $self->{_dbh}->quote($sid) . "
-		AND cid=" . $self->{_dbh}->quote($pid) . "
+		"sid=" . $self->sqlQuote($sid) . "
+		AND cid=" . $self->sqlQuote($pid) . "
 		AND users.uid=comments.uid"
 	);
 
@@ -96,12 +96,12 @@ sub getSubmissionForUser {
 	my $user = getCurrentUser();
 	my $sql = "SELECT subid,subj,date_format($dateformat,'m/d  H:i'),tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
-	$sql .= $form->{note} ? "note=" . $self->{_dbh}->quote($form->{note}) : "isnull(note)";
+	$sql .= $form->{note} ? "note=" . $self->sqlQuote($form->{note}) : "isnull(note)";
 	$sql .= "		or note=' ' " unless $form->{note};
 	$sql .= ")";
 	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
-	$sql .= "         and section=" . $self->{_dbh}->quote($user->{section}) if $user->{section};
-	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
+	$sql .= "         and section=" . $self->sqlQuote($user->{section}) if $user->{section};
+	$sql .= "         and section=" . $self->sqlQuote($form->{section}) if $form->{section};
 	$sql .= "	  ORDER BY time";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
@@ -118,7 +118,7 @@ sub getSubmissionForUser {
 #sub getNewstoryTitle {
 #	my($self, $storyid, $sid) = @_;
 #	my($title) = $self->sqlSelect("title", "newstories",
-#		"sid=" . $self->{_dbh}->quote($sid)
+#		"sid=" . $self->sqlQuote($sid)
 #	);
 #
 #	return $title;
@@ -146,7 +146,7 @@ sub saveStory {
 	if ($form->{subid}) {
 		my($suid) = $self->sqlSelect(
 			'uid', 'submissions',
-			'subid=' . $self->{_dbh}->quote($form->{subid})
+			'subid=' . $self->sqlQuote($form->{subid})
 		);
 
 		# i think i got this right -- pudge
@@ -165,7 +165,7 @@ sub saveStory {
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
-			'subid=' . $self->{_dbh}->quote($form->{subid})
+			'subid=' . $self->sqlQuote($form->{subid})
 		);
 	}
 
@@ -179,7 +179,6 @@ sub saveStory {
 		section		=> $form->{section},
 		bodytext	=> $form->{bodytext},
 		introtext	=> $form->{introtext},
-		writestatus	=> $form->{writestatus},
 		relatedtext	=> $form->{relatedtext},
 		displaystatus	=> $form->{displaystatus},
 		commentstatus	=> $form->{commentstatus}
@@ -318,7 +317,7 @@ sub _genericGetCache {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
+	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->sqlQuote($id));
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -351,7 +350,7 @@ sub _genericClearCache {
 sub _genericGet {
 	my($table, $table_prime, $self, $id, $val) = @_;
 	my($answer, $type);
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 
 	if (ref($val) eq 'ARRAY') {
 		my $values = join ',', @$val;

@@ -25,7 +25,7 @@
 
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('articles_more','',1000,'static',NULL,'articles',5,'Articles',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('colors','#FFFFFF,#222222,#111111,#DDDDDD,#999999,#DDDDDD,#FFFFFF,#DDDDDD,#660000,#BBBBBB',1000,'color','<P>This is a comma delimited list of colors that are split by comma and \r\nassigned to two arrays: $I{fg} and $I{bg}. <BR>The first half of these colors go into $I{fg} and the last half go into $I{bg}.</P>','',0,'',NULL,'','',0);
-INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features','<!-- begin features block -->\r\nThis is a place where you can put linkage to important stories\r\nthat you have on your site.  Or else you can just link some porn.\r\nYou can edit this space easily by just logging into backSlash, clicking\r\n\'Blocks\' from the admin menu, and editing the block named \'features\'.\r\n<!-- end features block -->\r\n\r\n',500,'',NULL,'index',1,'Features',1,'index.pl?section=features',NULL,0);
+INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features','<!-- begin features block -->\r\nThis is a place where you can put linkage to important stories\r\nthat you have on your site.\r\nYou can edit this space easily by just logging into backSlash, clicking\r\n\'Blocks\' from the admin menu, and editing the block named \'features\'.\r\n<!-- end features block -->\r\n\r\n',500,'',NULL,'index',1,'Features',1,'index.pl?section=features',NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_more','',1000,'static',NULL,'features',5,'more',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('features_qlinks','<!-- begin quicklinks block -->\n<A HREF=\"http://newsforge.com/\">Newsforge</A><BR>\n<A HREF=\"http://lists.slashdot.org/mailman/listinfo.cgi\">Slash Mailing lists</A><BR>\n<A HREF=\"http://www.slashcode.com/\">Slashcode.com</A><BR>\n<A HREF=\"http://slashdot.org/\">Slashdot</A><BR>\n<A HREF=\"http://andover.net/\">Andover.Net</A><BR>\n<A HREF=\"http://CmdrTaco.net/\">CmdrTaco.net</A><BR>\n<A HREF=\"http://www.cowboyneal.org/\">Cowboyneal.org</A><BR>\n<A HREF=\"http://pudge.net/\">Pudge.Net</A><BR>\n<A HREF=\"http://thinkgeek.com/\">ThinkGeek</A><BR>\n\n<!-- end quicklinks block -->',500,'static',NULL,'features',7,'Quick Links',0,NULL,NULL,0);
 INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, title, portal, url, rdf, retrieve) VALUES ('index_more','',1000,'',NULL,'index',5,'Older Stuff',1,NULL,NULL,0);
@@ -98,7 +98,8 @@ INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points,
 # Dumping data for table 'comment_heap'
 #
 
-INSERT INTO comment_heap (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000');
+INSERT INTO comment_heap (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
+
 #
 # Dumping data for table 'comment_text'
 #
@@ -161,10 +162,43 @@ INSERT INTO dateformats (id, format, description) VALUES (17,'%Y.%m.%d %k:%M','1
 # Dumping data for table 'discussions'
 #
 
-INSERT INTO discussions (id, sid, title, url, ts, topic) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1);
-INSERT INTO discussions (id, sid, title, url, ts, topic) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1);
-INSERT INTO discussions (id, sid, title, url, ts, topic) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1);
-INSERT INTO discussions (id, sid, title, url, ts, topic) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1);
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1,2,1,'hitparade_dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
+
+#
+# Dumping data for table 'discussion_hitparade'
+#
+
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1, -1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  0, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  2, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  3, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  4, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  5, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2, -1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  0, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  2, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  3, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  4, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  5, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3, -1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  0, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  2, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  3, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  4, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  5, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4, -1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  0, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  2, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  3, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  4, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  5, 0);
 
 #
 # Dumping data for table 'formkeys'
@@ -276,16 +310,15 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion, submitter) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1, 2);
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion, submitter) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2, 2);
+INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2,'');
+INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2,'');
 
 #
 # Dumping data for table 'story_heap'
 #
 
-
-INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1);
-INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2);
+INSERT INTO story_heap (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2,'');
+INSERT INTO story_heap (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2,'');
 
 #
 # Dumping data for table 'story_text'
@@ -454,7 +487,6 @@ INSERT INTO vars (name, value, description) VALUES ('defaultcommentstatus','0','
 INSERT INTO vars (name, value, description) VALUES ('defaultdisplaystatus','0','Default display status ...');
 INSERT INTO vars (name, value, description) VALUES ('defaultsection','articles','Default section to display');
 INSERT INTO vars (name, value, description) VALUES ('defaulttopic','1','Default topic to use');
-INSERT INTO vars (name, value, description) VALUES ('defaultwritestatus','1','Default write status for newly created articles');
 INSERT INTO vars (name, value, description) VALUES ('discussion_archive','15','Number of days till discussions are set to read only.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');
 INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');

@@ -947,7 +947,7 @@ sub editStory {
 
 	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) {
-		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
+		$storyref->{flags} = "";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
@@ -958,7 +958,7 @@ sub editStory {
 			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 		}
 
-		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
+		$storyref->{flags} = $form->{flags} if exists $form->{flags};
 		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
 		$storyref->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
 		$storyref->{dept} =~ s/[-\s]+/-/g;
@@ -998,7 +998,7 @@ sub editStory {
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} else { # New Story
-		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
+		$storyref->{flags} = "";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
@@ -1157,16 +1157,16 @@ sub listStories {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my($x, $first) = (0, $form->{'next'});
-	my $storylist = $slashdb->getStoryList();
+	my($first_story, $num_stories) = ($form->{'next'} || 0, 40);
+	my($count, $storylist) = $slashdb->getStoryList($first_story, $num_stories);
 
 	my $storylistref = [];
-	my($count, $left, $sectionflag);
+	my($sectionflag);
 	my($i, $canedit) = (0, 0);
 
 	for (@$storylist) {
 		my($hits, $comments, $sid, $title, $aid, $time_plain, $topic, $section,
-			$displaystatus, $writestatus) = @$_;
+			$displaystatus, $flags) = @$_;
 		my $time = timeCalc($time_plain, '%H:%M', 0);
 		my $td   = timeCalc($time_plain, '%A %B %d', 0);
 		my $td2  = timeCalc($time_plain, '%m/%d', 0);
@@ -1177,12 +1177,8 @@ sub listStories {
 			$canedit = 1;
 		}
 
-		$x++;
-		next if $x < $first;
-		last if $x > $first + 40;
-
 		$storylistref->[$i] = {
-			'x'		=> $x,
+			'x'		=> $i + $first_story + 1,
 			hits		=> $hits,
 			comments	=> $comments,
 			sid		=> $sid,
@@ -1194,24 +1190,20 @@ sub listStories {
 			section		=> $section,
 			td		=> $td,
 			td2		=> $td2,
-			writestatus	=> $writestatus,
+			flags		=> $flags,
 			displaystatus	=> $displaystatus,
 			tbtitle		=> $tbtitle,
 		};
-
 		$i++;
 	}
 
 	$sectionflag = 1 unless ($user->{section} || $form->{section});
 
-	$count = @$storylist;
-	$left = $count - $x;
-
 	slashDisplay('listStories', {
 		sectionflag	=> $sectionflag,
 		storylistref	=> $storylistref,
-		'x'		=> $x,
-		left		=> $left
+		'x'		=> $i + $first_story, # XXX minus one? possible fencepost error
+		left		=> $count - $i,
 	});
 }
 
@@ -1318,8 +1310,6 @@ sub updateStory {
 		$form->{displaystatus} = 1;
 	}
 
-	$form->{writestatus} = 1;
-
 	$form->{dept} =~ s/ /-/g;
 
 	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid')
@@ -1347,7 +1337,6 @@ sub saveStory {
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
 	) . otherLinks($user->{nickname}, $form->{tid}, $user->{uid});
-	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {

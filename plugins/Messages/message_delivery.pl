@@ -22,9 +22,9 @@ $task{$me}{code} = sub {
 		return;
 	}
 
-	slashdLog("$me begin");
 	messagedLog("$me begin");
 
+	my($successes, $failures) = (0, 0);
 	my $count = $constants->{message_process_count} || 10;
 	my $msgs  = $messages->gets($count);
 	my @good  = $messages->process(@$msgs);
@@ -34,14 +34,18 @@ $task{$me}{code} = sub {
 	for (@good) {
 		messagedLog("msg \#$_ sent successfully.");
 		delete $msgs{$_};
+		++$successes;
 	}
 
 	for (sort { $a <=> $b } keys %msgs) {
 		messagedLog("Error: msg \#$_ not sent successfully.");
+		++$failures;
 	}
 
 	messagedLog("$me end");
-	slashdLog("$me end");
+	if ($successes or $failures) {
+		slashdLog("$me sent $successes successfully, $failures failed");
+	}
 };
 
 sub messagedLog {

@@ -145,8 +145,11 @@ sub submittedAlready {
 		or ($$err_message = Slash::getData('noformkey', '', ''), return);
 
 	if ($submitted_already) {
+		my $interval_string = $submit_ts
+			? intervalString(time - $submit_ts)
+			: ""; # never got submitted, don't know time
 		$$err_message = Slash::getData('submitalready', {
-			interval_string => intervalString(time() - $submit_ts)
+			interval_string => $interval_string
 		}, '');
 	}
 	return $submitted_already;

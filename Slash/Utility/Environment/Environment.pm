@@ -1219,7 +1219,7 @@ sub filter_params {
 		min minimum_length minimum_match next
 		ordernum pid posttype ratio retrieve
 		seclev start startat threshold uid
-		uthreshold voters width writestatus
+		uthreshold voters width
 	);
 
 	# fields that have ONLY a-zA-Z0-9_
@@ -1232,7 +1232,8 @@ sub filter_params {
 
 	# special few
 	my %special = (
-		sid	=> sub { $_[0] =~ s|[^A-Za-z0-9/._]||g },
+		sid	=> sub { $_[0] =~ s|[^A-Za-z0-9/._]||g	},
+		flags	=> sub { $_[0] =~ s|[^a-z0-9_,]||g	},
 	);
 	# add more specials
 	$special{qid} = $special{sid};

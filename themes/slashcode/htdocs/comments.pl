@@ -115,10 +115,10 @@ sub delete {
 	titlebar("99%", "Delete $form->{cid}");
 
 	my $delCount = deleteThread($form->{sid}, $form->{cid});
-	# This does not exist in the API. Once
-	# I know what it was supposed to do I can
-	# create it. -Brian
-	$slashdb->setStoryCount($delCount);
+	# This does not exist in the API. Once I know what it was
+	# supposed to do I can create it. -Brian
+	# Looks OK now. - Jamie
+	$slashdb->setDiscussionDelCount($delCount);
 }
 
 ##################################################################
@@ -520,7 +520,7 @@ sub submitComment {
 		$pts = $maxScore if $pts > $maxScore;
 	}
 
-	# It would be nice to have an arithmatic if right here
+	# It would be nice to have an arithmetic if right here
 	my $maxCid = $slashdb->createComment(
 		$form, 
 		$user, 
@@ -528,7 +528,7 @@ sub submitComment {
 		$constants->{anonymous_coward_uid}
 	);
 
-	$slashdb->setUser($user->{uid}, 'expiry_comm', {
+	$slashdb->setUser($user->{uid}, {
 		'-expiry_comm'	=> 'expiry_comm-1',
 	}) if allowExpiry();
 
@@ -550,12 +550,7 @@ sub submitComment {
 		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
 
-		my $sid;
-		if ($sid = $slashdb->getDiscussion($form->{sid}, 'sid')) {
-			if ($slashdb->getStory($sid, 'writestatus') == 0) {
-				$slashdb->setStory($sid, { writestatus => 1 });
-			}
-		}
+		$slashdb->setDiscussionFlagsBySid([$form->{sid}], 1, ["hitparade_dirty"]);
 
 		$slashdb->setUser($user->{uid}, {
 			-totalcomments => 'totalcomments+1',
@@ -571,7 +566,7 @@ sub submitComment {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 			if (@$users) {
 				my $reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
-				my $story = $slashdb->getStory($sid);
+				my $story = $slashdb->getStory($form->{sid});
 				my $data  = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },
@@ -593,6 +588,9 @@ sub submitComment {
 sub moderate {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
+	my $sid = $form->{sid};
+	my $was_touched = 0;
+
 	if (! $constants->{allow_moderation}) {
 		print getData('no_moderation');
 		return;
@@ -601,24 +599,23 @@ sub moderate {
 	my $total_deleted = 0;
 	my $hasPosted;
 
-	titlebar("99%", "Moderating $form->{sid}");
+	titlebar("99%", "Moderating $sid");
 
-	$hasPosted = $slashdb->countCommentsBySidUID($form->{sid}, $user->{uid})
+	$hasPosted = $slashdb->countCommentsBySidUID($sid, $user->{uid})
 		unless $user->{seclev} > 99 && $constants->{authors_unlimited};
 
 	slashDisplay('mod_header');
 
 	# Handle Deletions, Points & Reparenting
-	for (sort keys %{$form}) {
-		if (/^del_(\d+)$/) { # && $user->{points}) {
-			my $delCount = deleteThread($form->{sid}, $1);
-			$total_deleted += $delCount;
-			$slashdb->setStoryCount($form->{sid}, $delCount);
-
-		} elsif (!$hasPosted && /^reason_(\d+)$/) {
-			moderateCid($form->{sid}, $1, $form->{$_});
+	for my $key (sort keys %{$form}) {
+		if ($user->{seclev} > 100 and $key =~ /^del_(\d+)$/) {
+			$total_deleted += deleteThread($sid, $1);
+		} elsif (!$hasPosted and $key =~ /^reason_(\d+)$/) {
+			$was_touched ||= moderateCid($sid, $1, $form->{$key});
 		}
 	}
+	$slashdb->setDiscussionDelCount($sid, $total_deleted);
+	$was_touched = 1 if $total_deleted;
 
 	slashDisplay('mod_footer');
 
@@ -628,36 +625,41 @@ sub moderate {
 	} elsif ($user->{seclev} && $total_deleted) {
 		slashDisplay('del_message', {
 			total_deleted	=> $total_deleted,
-			comment_count	=>
-				$slashdb->countCommentsBySid($form->{sid}),
+			comment_count	=> $slashdb->countCommentsBySid($sid),
 		});
 	}
-	printComments($form->{sid}, $form->{pid}, $form->{cid});
+	printComments($sid, $form->{pid}, $form->{cid});
+
+	if ($was_touched) {
+		$slashdb->setDiscussionFlagsBySid([$sid], 1, ["hitparade_dirty"]);
+	}
 }
 
 
 ##################################################################
 # Handles moderation
-# Moderates a specific comment
+# Moderates a specific comment. Returns whether the comment score changed.
 sub moderateCid {
 	my($sid, $cid, $reason) = @_;
-	# Check if $userid has seclev and Credits
-	return unless $reason;
+	return 0 unless $reason;
 
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
+	my $comment_changed = 0;
 	my $superAuthor = $constants->{authors_unlimited};
 
 	if ($user->{points} < 1) {
 		unless ($user->{seclev} > 99 && $superAuthor) {
 			print getError('no points');
-			return;
+			return 0;
 		}
 	}
 
 	# $ppid is unused in this context.
+	# XXX We can't get host_name anymore, it's no longer stored.  Check
+	# the logic here. - Jamie
 	my($cuid, $ppid, $subj, $points, $oldreason, $host_name) =
 		$slashdb->getComments($sid, $cid);
 	# Do not allow moderation of anonymous comments with the same IP
@@ -673,12 +675,12 @@ sub moderateCid {
 		points	=> $user->{points},
 	};
 
-	unless ($user->{seclev} > 99 && $superAuthor) {
+	unless ($user->{seclev} > 99 and $superAuthor) {
 		my $mid = $slashdb->getModeratorLogID($cid, $user->{uid});
 		if ($mid) {
 			$dispArgs->{type} = 'already moderated';
 			slashDisplay('moderation', $dispArgs);
-			return;
+			return 0;
 		}
 	}
 
@@ -751,9 +753,20 @@ sub moderateCid {
 
 		# Make sure our changes get propagated back to the comment.
 		# Note that we use the ADJUSTED reason value, $reason.
-		$slashdb->setCommentCleanup($cid, $val, $reason);
+		$comment_changed = $slashdb->setCommentCleanup($cid, $val, $reason);
+		if (!$comment_changed) {
+			# This shouldn't happen;  the only way we believe it
+			# could is if $val is 0, the comment is already at
+			# min or max score, the user's already modded this
+			# comment, or some other reason making this mod invalid.
+			# This is really just here as a safety check.
+			$dispArgs->{type} = 'logic error';
+			slashDisplay('moderation', $dispArgs);
+			return 0;
+		}
 
-		# Update points for display as they have most likely changed.
+		# We know things actually changed, so update points for
+		# display and send a message if appropriate.
 		$dispArgs->{points} = $user->{points};
 		$dispArgs->{type} = 'moderated';
 
@@ -791,6 +804,7 @@ sub moderateCid {
 
 	# Now display the template with the moderation results.
 	slashDisplay('moderation', $dispArgs);
+	return $comment_changed;
 }
 
 
@@ -819,7 +833,10 @@ sub deleteThread {
 		$count += deleteThread($sid, $cid, $level+1, $comments_deleted);
 	}
 	# And now delete $cid.
-	$slashdb->deleteComment($sid, $cid);
+	# XXX Brian, check out deleteComment(); we should change its interface
+	# to accept only the $cid, because it doesn't need the $sid.  Right?
+	# - Jamie 2001/07/08
+	$slashdb->deleteComment($cid);
 
 	if (!$level) {
 		# SID remains for display purposes, only.

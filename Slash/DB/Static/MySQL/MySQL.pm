@@ -28,16 +28,21 @@ use base 'Slash::DB::MySQL';
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
-		image,commentcount,stories.section as section,introtext,bodytext,hitparade,
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $cursor = $self->{_dbh}->prepare("SELECT
+		$story_table.sid, $story_table.title, time, dept, $story_table.uid,
+		alttext,
+		image, commentcount, $story_table.section as section,
+		story_text.introtext, story_text.bodytext,
 		topics.tid as tid
-		    FROM stories,story_text,topics
-		   WHERE stories.sid=story_text.sid
-		     AND stories.tid=topics.tid
+		    FROM $story_table, story_text, topics, discussions
+		   WHERE $story_table.sid = story_text.sid
+		     AND $story_table.discussion = discussions.id
+		     AND $story_table.tid=topics.tid
 		     AND ((displaystatus = 0 and \"$section\"=\"\")
-			      OR (stories.section=\"$section\" and displaystatus > -1))
-		     AND time < now()
-		     AND writestatus > -1
+			      OR ($story_table.section=\"$section\" and displaystatus > -1))
+		     AND time < NOW()
+		     AND NOT FIND_IN_SET('delete_me', $story_table.flags)
 		ORDER BY time DESC
 		   LIMIT 10");
 
@@ -45,12 +50,17 @@ sub getBackendStories {
 	my $returnable = [];
 	my $row;
 	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
+	$cursor->finish;
+
+	# XXX Need to stuff hitparade values in here or open_backend.pl
+	# will not write its RSS etc. files correctly. - Jamie
 
 	return $returnable;
 }
 
 ########################################################
 # This is only called if ssi is set
+# XXX Outdated, delete before tarball release - Jamie 2001/07/08
 #sub updateCommentTotals {
 #	my($self, $sid, $comments) = @_;
 #	my $hp = join ',', @{$comments->[0]{totals}};
@@ -73,8 +83,8 @@ sub getBackendStories {
 ########################################################
 # For slashd
 # Does nothing. Back when this was a copy of stories that needed to be
-# periodically updated, this did something.  We should probably just delete
-# this instead of comment it out. -Jamie 2001/06/21
+# periodically updated, this did something.
+# XXX Outdated, delete before tarball release - Jamie 2001/07/08
 #
 #sub setStoryIndex {
 #	my($self, @sids) = @_;
@@ -95,31 +105,22 @@ sub getBackendStories {
 
 ########################################################
 # For slashd
+# "LIMIT 10" chosen arbitrarily, actually could be LIMIT 5 but doesn't
+# hurt much to kick in some more in case the caller has been changed to
+# want more.
 sub getNewStoryTopic {
 	my($self) = @_;
 
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $sth = $self->sqlSelectMany(
-				"alttext,image,width,height,$table.tid",
-				"$table,topics",
-				"$table.tid=topics.tid
-				AND displaystatus = 0
-				AND writestatus >= 0
-				AND time < now()
-				ORDER BY time DESC");
+		"alttext, image, width, height, $story_table.tid",
+		"$story_table, topics",
+		"$story_table.tid=topics.tid AND displaystatus = 0
+		AND NOT FIND_IN_SET('delete_me', flags) AND time < NOW()",
+		"ORDER BY time DESC LIMIT 10"
+	);
 
 	return $sth;
-}
-
-########################################################
-# For slashd
-sub getStoriesForSlashdb {
-	my($self, $writestatus) = @_;
-
-	my $returnable = $self->sqlSelectAll("sid,title,section",
-			"stories", "writestatus=$writestatus");
-
-	return $returnable;
 }
 
 ########################################################
@@ -245,10 +246,17 @@ sub updateStamps {
 # For dailystuff
 sub getDailyMail {
 	my($self) = @_;
-	my $columns = "sid,title,section,users.nickname,tid,time,dept,introtext,bodytext";
-	my $tables = "stories,users";
-	my $where = "users.uid = stories.uid AND to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
-	my $other = " ORDER BY time DESC";
+
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $columns = "$story_table.sid, $story_table.title, $story_table.section,
+		users.nickname,
+		$story_table.tid, $story_table.time, $story_table.dept,
+		story_text.introtext, story_text.bodytext";
+	my $tables = "$story_table, story_text, users";
+	my $where = "time < NOW() AND TO_DAYS(NOW())-TO_DAYS(time)=1 ";
+	$where .= "AND users.uid=$story_table.uid AND $story_table.sid=story_text.sid ";
+	$where .= "AND $story_table.displaystatus=0 ";
+	my $other = " ORDER BY $story_table.time DESC";
 
 	my $email = $self->sqlSelectAll($columns, $tables, $where, $other);
 
@@ -272,6 +280,7 @@ sub getMailingList {
 
 ########################################################
 # For dailystuff
+# XXX Outdated, delete before tarball release - Jamie 2001/07/08
 #sub getOldStories {
 #	my($self, $delay) = @_;
 #
@@ -288,13 +297,11 @@ sub getMailingList {
 # For portald
 sub getTop10Comments {
 	my($self) = @_;
-	my $c = $self->sqlSelectMany("stories.sid, title,
-		cid, subject,date,nickname,comments.points",
-		"comments,stories,users",
-		"comments.points >= 4
-		AND users.uid=comments.uid
-		AND comments.sid=stories.sid
-		ORDER BY date DESC limit 10");
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $c = $self->sqlSelectMany("$story_table.sid, title, cid, subject, date, nickname, comments.points",
+		"comments, $story_table, users",
+		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=$story_table.sid",
+		"ORDER BY date DESC LIMIT 10");
 
 	my $comments = $c->fetchall_arrayref;
 	$c->finish;
@@ -310,9 +317,7 @@ sub randomBlock {
 	my($self) = @_;
 	my $c = $self->sqlSelectMany("bid,title,url,block",
 		"blocks",
-		"section='index'
-		AND portal=1
-		AND ordernum < 0");
+		"section='index' AND portal=1 AND ordernum < 0");
 
 	my $A = $c->fetchall_arrayref;
 	$c->finish;
@@ -372,13 +377,14 @@ sub getSectionMenu2{
 # For portald
 sub getSectionMenu2Info{
 	my($self, $section) = @_;
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my($month, $day) = $self->{_dbh}->selectrow_array(
-		"select month(time), dayofmonth(time) from stories where 
-		section='$section' and time < now() and displaystatus > -1
-		order by time desc limit 1");
+		"SELECT MONTH(time), DAYOFMONTH(time) FROM $story_table WHERE
+		section='$section' AND time < NOW() AND displaystatus > -1
+		ORDER BY time DESC LIMIT 1");
 	my($count) = $self->{_dbh}->selectrow_array(
-		"select count(*) from stories where section='$section' and 
-		to_days(now()) - to_days(time) <= 2 and time < now() and 
+		"SELECT COUNT(*) FROM $story_table WHERE section='$section' AND
+		TO_DAYS(NOW()) - TO_DAYS(time) <= 2 AND time < NOW() AND
 		displaystatus > -1");
 
 	return($month, $day, $count);

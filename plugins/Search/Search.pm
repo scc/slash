@@ -44,7 +44,7 @@ sub _keysearch {
 		$latch = 0;
 		for (@$columns) {
 			$sql .= " OR " if $latch;
-			$sql .= "$_ LIKE " . $self->{_dbh}->quote("%$word%"). " ";
+			$sql .= "$_ LIKE " . $self->sqlQuote("%$word%"). " ";
 			$latch++;
 		}
 		$sql .= " ) ";
@@ -70,7 +70,7 @@ sub findComments {
 
 	# Welcome to the join from hell -Brian
 	$sql = "SELECT section, stories.sid,";
-	$sql .= " stories.uid as author, discussions.title as title, pid, subject, writestatus, time, date, comments.uid as uid, comments.cid as cid ";
+	$sql .= " stories.uid as author, discussions.title as title, pid, subject, stories.flags as flags, time, date, comments.uid as uid, comments.cid as cid ";
 
 	$sql .= "	  FROM stories, comments, comment_text, discussions WHERE ";
 
@@ -80,11 +80,11 @@ sub findComments {
 	$sql .= "	  AND $key "
 			if $form->{query};
 
-	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid})
+	$sql .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
 			if $form->{sid};
 	$sql .= "     AND points >= $form->{threshold} "
 			if $form->{threshold};
-	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section})
+	$sql .= "     AND section=" . $self->sqlQuote($form->{section})
 			if $form->{section};
 	$sql .= " ORDER BY date DESC, time DESC $limit ";
 
@@ -111,7 +111,7 @@ sub findUsers {
 	if ($users_to_ignore) {
 		for my $user (@$users_to_ignore) {
 			$sql .= ' AND ' if $x != 0;
-			$sql .= " nickname != " .  $self->{_dbh}->quote($user);
+			$sql .= " nickname != " .  $self->sqlQuote($user);
 			$x++;
 		}
 	}
@@ -151,12 +151,12 @@ sub findStory {
 		$sql .= qq| OR (section = "$form->{section}" AND displaystatus >= 0))|;
 	}
 
-	$sql .= " AND time < now() AND writestatus>=0 ";
-	$sql .= " AND stories.uid=" . $self->{_dbh}->quote($form->{author})
+	$sql .= " AND time < now() AND NOT FIND_IN_SET('delete_me', flags) ";
+	$sql .= " AND stories.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
-	$sql .= " AND section=" . $self->{_dbh}->quote($form->{section})
+	$sql .= " AND section=" . $self->sqlQuote($form->{section})
 		if $form->{section};
-	$sql .= " AND tid=" . $self->{_dbh}->quote($form->{topic})
+	$sql .= " AND tid=" . $self->sqlQuote($form->{topic})
 		if $form->{topic};
 
 	$sql .= " AND stories.uid=users.uid ";

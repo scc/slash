@@ -66,7 +66,8 @@ sub selectComments {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $num_scores = $constants->{comment_maxscore} - $constants->{comment_minscore} + 1;
+	my($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
+	my $num_scores = $max-$min+1;
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..$num_scores-1) {
@@ -77,27 +78,26 @@ sub selectComments {
 	for my $C (@$thisComment) {
 		# Let's think about whether we really want to set pid to 0 here.  It may
 		# be a friendlier UI to allow bouncing up to parent comments even though
-		# the comment sort is set to flat. -jamie 2001/06/19
+		# the comment sort is set to flat. - Jamie 2001/06/19
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
 		# Tally up this comment in its "natural" score category (before the user's
 		# preferences get a chance to knock it up or down).
-		$comments->[0]{natural_totals}[$C->{points} - $constants->{comment_minscore}]++;
+		$comments->[0]{natural_totals}[$C->{points} - $min]++;
 
-		$C->{points}++ if length($C->{comment}) > $user->{clbig}
-			&& $C->{points} < $constants->{comment_maxscore} && $user->{clbig} != 0;
+		$C->{points}++ if $user->{clbig} and length($C->{comment}) > $user->{clbig}
+			and $C->{points} < $max;
 
-		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
-			&& $C->{points} > $constants->{comment_minscore} && $user->{clsmall};
+		$C->{points}-- if $user->{clsmall} and length($C->{comment}) < $user->{clsmall}
+			and $C->{points} > $min;
 
 		# fix points in case they are out of bounds
-		$C->{points} = $constants->{comment_minscore}
-			if $C->{points} < $constants->{comment_minscore};
-		$C->{points} = $constants->{comment_maxscore}
-			if $C->{points} > $constants->{comment_maxscore};
+		# (XXX looking at the logic above, this seems unnecessary)
+		$C->{points} = $min if $C->{points} < $min;
+		$C->{points} = $max if $C->{points} > $max;
 
 		# Also tally up this comment for the user's personal score.
-		$comments->[0]{totals}[$C->{points} - $constants->{comment_minscore}]++;
+		$comments->[0]{totals}[$C->{points} - $min]++;
 
 		my $tmpkids = $comments->[$C->{cid}]{kids};
 		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
@@ -107,7 +107,7 @@ sub selectComments {
 
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
 		$comments->[$C->{pid}]{visiblekids}++
-			if $C->{points} >= ($user->{threshold} || $constants->{comment_minscore});
+			if $C->{points} >= ($user->{threshold} || $min);
 
 		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
@@ -122,14 +122,12 @@ sub selectComments {
 	}
 
 	if ($sid and $form->{ssi}) {
-		my $hp = join ',', @{$comments->[0]{natural_totals}};
-		# could try the hitparade separate column thing by just assigning keys
-		# to its values, it would create params ...
-		$slashdb->setStory($sid, {
-			hitparade	=> $hp,
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{natural_totals}[0]
-		});
+		# We know the hitparade;  set it.
+		my $hp = { };
+		for my $score (0 .. $num_scores-1) {
+			$hp->{$score + $min} = $comments->[0]{natural_totals}[$score];
+		}
+		$slashdb->setDiscussionHitParade($sid, $hp);
 	}
 
 	reparentComments($comments);
@@ -366,13 +364,14 @@ The 'modCommentLog' template block.
 =cut
 
 sub moderatorCommentLog {
-	my($sid, $cid) = @_;
+	my($cid) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
 	my $seclev = getCurrentUser('seclev');
 	my $mod_admin = $seclev >= $constants->{modviewseclev} ? 1 : 0;
-	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
+	my $comments = $slashdb->getModeratorCommentLog($cid);
+#	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
 
 	for my $comment (@$comments) {

@@ -298,6 +298,7 @@ CREATE TABLE discussions (
   title   varchar2(128),
   url     varchar2(128),
   ts      date            DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
+  commentcount  number(6)     DEFAULT 0,
   constraint discussions_pk PRIMARY KEY (sid)
 );
 
@@ -401,7 +402,6 @@ CREATE TABLE newstories (
   sid           varchar2(20)  DEFAULT '' NOT NULL,
   tid           varchar2(20)  DEFAULT '' NOT NULL,
   user_id       number(12)    DEFAULT 1 NOT NULL,
-  commentcount  number(6)     DEFAULT 0,
   title         varchar2(100) DEFAULT '' NOT NULL,
   dept          varchar2(100),
   time          date          DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
@@ -546,7 +546,6 @@ CREATE TABLE stories (
   sid           varchar2(20)  DEFAULT '' NOT NULL,
   tid           varchar2(20)  DEFAULT '' NOT NULL,
   user_id       number(12)    DEFAULT 1 NOT NULL,
-  commentcount  number(6)     DEFAULT 0,
   title         varchar2(100) DEFAULT '' NOT NULL,
   dept          varchar2(100),
   time          date          DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,

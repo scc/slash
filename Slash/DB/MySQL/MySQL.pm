@@ -272,24 +272,27 @@ sub setModeratorLog {
 sub getMetamodComments {
 	my($self, $id, $uid, $num_comments) = @_;
 
-	my $table = 'comments';
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	# Removed extraneous "users.uid!=$uid" from WHERE clause.
 	# Also removed "sig" from field list as we anonymize it below.
 	my $sth = $self->sqlSelectMany(
-		"$table.cid,$table.sid as sid,date," .
-		"subject,comment,users.uid as uid,pid,moderatorlog.id as id,
-		moderatorlog.reason as modreason, $table.reason, title, url",
-		"$table,comment_text,users,users_info,moderatorlog,discussions",
-		"moderatorlog.cid=$table.cid AND moderatorlog.id>$id AND
-		$table.uid!=$uid AND users.uid=$table.uid AND 
-		moderatorlog.sid=discussions.id AND
-		comment_text.cid=$table.cid AND users.uid=users_info.uid AND
-		moderatorlog.uid!=$uid AND moderatorlog.reason<8
-		LIMIT $num_comments"
+		"$comment_table.cid, $comment_table.sid as sid, date, subject, comment,
+		users.uid as uid, pid, moderatorlog.id as id,
+		moderatorlog.reason as modreason, $comment_table.reason,
+		title, url",
+
+		"$comment_table, comment_text, users, users_info, moderatorlog, discussions",
+
+		"moderatorlog.cid = $comment_table.cid
+		AND moderatorlog.id > $id
+		AND $comment_table.uid != $uid AND moderatorlog.uid != $uid
+		AND users.uid = $comment_table.uid AND users_info.uid = $comment_table.uid
+		AND moderatorlog.sid = discussions.id
+		AND comment_text.cid = $comment_table.cid
+		AND moderatorlog.reason < 8",
+
+		"LIMIT $num_comments"
 	);
 
 	my $comments = [];
@@ -314,25 +317,21 @@ sub getModeratorCommentLog {
 #
 # I've replaced it. - Cliff
 
-	my $table = 'comments';
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	# We no longer need SID as CID is now unique.
-	my $comments = $self->sqlSelectMany(
-				 "$table.cid as cid,
-				 $table.points as score,
+	my $comments = $self->sqlSelectMany("$comment_table.sid as sid,
+				 $comment_table.cid as cid,
+				 $comment_table.points as score,
 				 moderatorlog.uid as uid,
 				 users.nickname as nickname,
 				 moderatorlog.val as val,
 				 moderatorlog.reason as reason,
 				 moderatorlog.ts as ts,
 				 moderatorlog.active as active",
-				"moderatorlog, users, $table",
+				"moderatorlog, users, $comment_table",
 				"moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
-			     AND $table.cid=moderatorlog.cid
+			     AND $comment_table.cid=$cid
 			     AND moderatorlog.active=1",
 				"ORDER BY ts"
 	);
@@ -360,8 +359,8 @@ sub unsetModeratorlog {
 			"moderatorlog.uid=$uid and moderatorlog.sid=$sid"
 	);
 
-	$max ||= getCurrentStatic('constants_maxscore');
-	$min ||= getCurrentStatic('constants_minscore');
+	$max ||= getCurrentStatic('comment_maxscore');
+	$min ||= getCurrentStatic('comment_minscore');
 	my @removed;
 	while (my($cid, $val, $active) = $cursor->fetchrow){
 		# We undo moderation even for inactive records (but silently for
@@ -465,10 +464,11 @@ sub createSubmission {
 #################################################################
 sub getStoryDiscussions {
 	my($self) = @_;
-	my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url",
-		"discussions,stories ",
-		"displaystatus > -1 and discussions.sid=stories.sid and time <= now() and type = 0 ",
-		"order by time desc LIMIT 50"
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
+		"discussions, $story_table",
+		"displaystatus > -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND type = 0",
+		"ORDER BY time DESC LIMIT 50"
 	);
 
 	return $discussion;
@@ -478,10 +478,10 @@ sub getStoryDiscussions {
 # Less then 2, ince 2 would be a read only discussion
 sub getDiscussions {
 	my($self) = @_;
-	my $discussion = $self->sqlSelectAll("id,title,url",
+	my $discussion = $self->sqlSelectAll("id, title, url",
 		"discussions",
 		"type < 2 AND ts <= now()",
-		"order by ts desc LIMIT 50"
+		"ORDER BY ts DESC LIMIT 50"
 	);
 
 	return $discussion;
@@ -499,7 +499,7 @@ sub getSessionInstance {
 		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
-		my $session_in_q = $self->{_dbh}->quote($session_in);
+		my $session_in_q = $self->sqlQuote($session_in);
 
 		my($uid) = $self->sqlSelect(
 			'uid',
@@ -596,11 +596,11 @@ sub createAccessLog {
 
 	if ($dat =~ /\//) {
 		$self->sqlUpdate('stories', { -hits => 'hits+1' },
-			'sid=' . $self->{_dbh}->quote($dat)
+			'sid=' . $self->sqlQuote($dat)
 		);
 		if (getCurrentStatic('mysql_heap_table')) {
 			$self->sqlUpdate('story_heap', { -hits => 'hits+1' },
-				'sid=' . $self->{_dbh}->quote($dat)
+				'sid=' . $self->sqlQuote($dat)
 			);
 		}
 	}
@@ -659,7 +659,7 @@ sub getUserInstance {
 	}
 
 	$user = $self->sqlSelectHashref('*', 'users',
-		' uid = ' . $self->{_dbh}->quote($uid)
+		' uid = ' . $self->sqlQuote($uid)
 	);
 	return undef unless $user;
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
@@ -781,7 +781,7 @@ sub getNewPasswd {
 	my $newpasswd = changePassword();
 	$self->sqlUpdate('users', {
 		newpasswd => $newpasswd
-	}, 'uid=' . $self->{_dbh}->quote($uid));
+	}, 'uid=' . $self->sqlQuote($uid));
 	return $newpasswd;
 }
 
@@ -797,7 +797,7 @@ sub getUserUID {
 # as is, it may be a security flaw
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	my($uid) = $self->sqlSelect('uid', 'users',
-		'nickname=' . $self->{_dbh}->quote($name)
+		'nickname=' . $self->sqlQuote($name)
 	);
 
 	return $uid;
@@ -810,7 +810,7 @@ sub getUserEmail {
 	my($self, $email) = @_;
 
 	my($uid) = $self->sqlSelect('uid', 'users',
-		'realemail=' . $self->{_dbh}->quote($email)
+		'realemail=' . $self->sqlQuote($email)
 	);
 
 	return $uid;
@@ -820,12 +820,9 @@ sub getUserEmail {
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $table WHERE uid=$uid "
+			. " FROM $comment_table WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -839,12 +836,9 @@ sub getCommentsByUID {
 sub getCommentsByNetID {
 	my($self, $id, $min) = @_;
 
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $table WHERE ipid='$id' "
+			. " FROM $comment_table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -858,12 +852,9 @@ sub getCommentsByNetID {
 sub getCommentsBySubnetID{
 	my($self, $subnetid, $min) = @_;
 
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $table WHERE subnetid='$subnetid' "
+			. " FROM $comment_table WHERE subnetid='$subnetid' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -899,7 +890,7 @@ sub checkEmail {
 
 	# Returns count of users matching $email.
 	return ($self->sqlSelect('count(uid)', 'users',
-		'realemail=' . $self->{_dbh}->quote($email)))[0];
+		'realemail=' . $self->sqlQuote($email)))[0];
 }
 
 #################################################################
@@ -910,7 +901,7 @@ sub createUser {
 
 	return if ($self->sqlSelect(
 		"count(uid)", "users",
-		"matchname=" . $self->{_dbh}->quote($matchname)
+		"matchname=" . $self->sqlQuote($matchname)
 	))[0] || $self->checkEmail($email);
 
 	$self->sqlInsert("users", {
@@ -979,7 +970,7 @@ sub setVar {
 ########################################################
 sub setSession {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('sessions', $value, 'uid=' . $self->{_dbh}->quote($name));
+	$self->sqlUpdate('sessions', $value, 'uid=' . $self->sqlQuote($name));
 }
 
 ########################################################
@@ -1022,52 +1013,46 @@ sub setTemplate {
 ########################################################
 sub getCommentChildren {
 	my($self, $cid) = @_;
-	my $table = "comments";
+	my $comment_table = "comments";
 	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
+		$comment_table = 'comment_heap';
 	}
-	my($scid) = $self->sqlSelectAll('cid', $table, "pid=$cid");
+	my($scid) = $self->sqlSelectAll('cid', $comment_table, "pid=$cid");
 
 	return $scid;
 }
 
 ########################################################
+# Does what it says, deletes one comment.  NOTE that this is inefficient
+# as called from comments.pl deleteThread() -- discussions will get
+# marked as hitparade_dirty many times when only once would do.  But I'm
+# not going to optimize this just yet because I'm lazy and our current
+# comment deletion rate is one per four years :/  - Jamie 2001/07/08
 sub deleteComment {
-	my($self, $sid, $cid) = @_;
-	if ($cid) {
-		$self->sqlDo("DELETE FROM comments WHERE cid=$cid");
-		$self->sqlDo("DELETE FROM comment_text WHERE cid=$cid");
-		if (getCurrentStatic('mysql_heap_table')) {
-			$self->sqlDo("DELETE FROM comment_heap WHERE cid=$cid");
-		}
-	} else {
-		my $table = "comments";
-		if (getCurrentStatic('mysql_heap_table')) {
-			$table = 'comment_heap';
-		}
-		my $ids = $self->sqlSelectAll('cid', $table, "sid='$sid'");
-		$self->sqlDo("DELETE FROM comments WHERE sid=" .  $self->{_dbh}->quote($sid));
-		for (@$ids) {
-			$self->sqlDo("DELETE FROM comment_text WHERE cid=$_->[0]");
-		}
-		if (getCurrentStatic('mysql_heap_table')) {
-			$self->sqlDo("DELETE FROM $table WHERE sid=" .  $self->{_dbh}->quote($sid));
-		}
-		$self->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
+	my($self, $cid, $discussion_id) = @_;
+	my @comment_tables = qw( comment_text comments );
+	my $comment_table = "comments";
+	if (getCurrentStatic('mysql_heap_table')) {
+		$comment_table = "comment_heap";
+		push @comment_tables, $comment_table;
 	}
+	# We have to update the discussion, so make sure we have its id.
+	if (!$discussion_id) {
+		($discussion_id) = sqlSelect("sid", $comment_table, "cid=$cid");
+	}
+	for my $table (@comment_tables) {
+		$self->sqlDo("DELETE FROM $table WHERE cid=$cid");
+	}
+	$self->setDiscussionFlagsById([$discussion_id], 1, ["hitparade_dirty"]);
 }
 
 ########################################################
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
-	$self->sqlSelect('pid', $table,
-		"sid='$sid' and cid=$cid");
+	$self->sqlSelect('pid', $comment_table, "sid='$sid' and cid=$cid");
 }
 
 ########################################################
@@ -1075,7 +1060,7 @@ sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
 	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
-	my $section_dbh = $self->{_dbh}->quote($section);
+	my $section_dbh = $self->sqlQuote($section);
 	my($count) = $self->sqlSelect("count(*)", "sections", "section=$section_dbh");
 	my($ok1, $ok2);
 
@@ -1100,20 +1085,79 @@ sub setSection {
 }
 
 ########################################################
-sub setStoryCount {
+sub setDiscussionDelCount {
 	my($self, $sid, $count) = @_;
 	return unless $sid;
 
-	$self->sqlUpdate('stories', {
-		-commentcount	=> "commentcount-$count",
-		writestatus	=> 1
-	}, 'sid=' . $self->sqlQuote($sid));
+	$self->sqlUpdate(
+		'discussions',
+		{	-commentcount	=> "commentcount-$count",
+			-flags		=> "CONCAT(flags, ',hitparade_dirty')" },
+		'sid=' . $self->sqlQuote($sid)
+	);
+}
 
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlUpdate('story_heap', {
-			-commentcount	=> "commentcount-$count",
-			writestatus	=> 1
-		}, 'sid=' . $self->sqlQuote($sid));
+########################################################
+sub setDiscussionFlagsBySid {
+	my($self, $sid_ary, $onoff, $flags) = @_;
+	return 0 unless $sid_ary and @$sid_ary and $flags and @$flags;
+	my $sid_list = join(",", map { $self->sqlQuote($_) } @$sid_ary);
+	my $id_ary_ary = $self->sqlSelectAll("id", "discussions", "sid IN ($sid_list)");
+	my @id_ary = map { $_->[0] } @$id_ary_ary;
+	$self->setDiscussionFlagsById(\@id_ary, $onoff, $flags);
+}
+
+########################################################
+sub setDiscussionFlagsById {
+	my($self, $id_ary, $onoff, $flags) = @_;
+	return 0 unless $id_ary and @$id_ary and $flags and @$flags;
+	my $rows = 0;
+	my $id_list = join(",", map { $self->sqlQuote($_) } @$id_ary);
+	if ($onoff) {
+		# Set
+		my $flagtext = join(",", map { $self->sqlQuote($_) } @$flags);
+		$rows = $self->sqlUpdate(
+			'discussions',
+			{ -flags => "CONCAT(flags, ',$flagtext')" },
+			"id IN ($id_list)"
+		);
+	} else {
+		# Clear
+		my $numeric = -1;
+		while (my $flag = shift @$flags) {
+			$numeric &= -2 if $flag =~ /delete_me/i;	# bit 0
+			$numeric &= -3 if $flag =~ /hitparade_dirty/i;	# bit 1
+		}
+		$rows = $self->sqlUpdate(
+			'discussions',
+			{ -flags => "flags & $numeric" },
+			"id IN ($id_list)"
+		);
+	}
+	return $rows;
+}
+
+########################################################
+sub setDiscussionHitParade {
+	my($self, $sid, $hp) = @_;
+	return unless $sid;
+	my $sid_quoted = $self->sqlQuote($sid);
+	my($discussion_id) = $self->sqlSelect("id", "discussions", "sid=$sid_quoted");
+	# Clear the hitparade_dirty flag.
+	my $rows_changed = $self->sqlUpdate(
+		"discussions",
+		{ -flags => "flags & -3" }, # works, but depends on SET() order
+		"id=$discussion_id AND FIND_IN_SET('hitparade_dirty', flags)"
+	);
+	if ($rows_changed) {
+		# Update the hitparade only if the flag was changed just now.
+		# (Guaranteed atomicity is not necessary here;  hitparade is
+		# only supposed to be close enough for horseshoes.)
+		for my $threshold (sort {$a<=>$b} keys %$hp) {
+			$self->sqlDo("UPDATE discussion_hitparade
+				SET count=$hp->{$threshold}
+				WHERE discussion=$discussion_id AND threshold=$threshold");
+		}
 	}
 }
 
@@ -1140,7 +1184,7 @@ sub deleteSubmission {
 
 	if ($form->{subid}) {
 		$self->sqlUpdate("submissions", { del => 1 },
-			"subid=" . $self->{_dbh}->quote($form->{subid})
+			"subid=" . $self->sqlQuote($form->{subid})
 		);
 		$self->setUser($uid,
 			{ -deletedsubmissions => 'deletedsubmissions+1' }
@@ -1166,7 +1210,7 @@ sub deleteSubmission {
 				}
 
 				$self->sqlUpdate("submissions", \%sub,
-					"subid=" . $self->{_dbh}->quote($n));
+					"subid=" . $self->sqlQuote($n));
 			}
 		} else {
 			my $key = $n;
@@ -1201,13 +1245,13 @@ sub deleteAuthor {
 ########################################################
 sub deleteTopic {
 	my($self, $tid) = @_;
-	$self->sqlDo('DELETE from topics WHERE tid=' . $self->{_dbh}->quote($tid));
+	$self->sqlDo('DELETE from topics WHERE tid=' . $self->sqlQuote($tid));
 }
 
 ########################################################
 sub revertBlock {
 	my($self, $bid) = @_;
-	my $db_bid = $self->{_dbh}->quote($bid);
+	my $db_bid = $self->sqlQuote($bid);
 	my $block = $self->{_dbh}->selectrow_array("SELECT block from backup_blocks WHERE bid=$db_bid");
 	$self->sqlDo("update blocks set block = $block where bid = $db_bid");
 }
@@ -1215,13 +1259,13 @@ sub revertBlock {
 ########################################################
 sub deleteBlock {
 	my($self, $bid) = @_;
-	$self->sqlDo('DELETE FROM blocks WHERE bid =' . $self->{_dbh}->quote($bid));
+	$self->sqlDo('DELETE FROM blocks WHERE bid =' . $self->sqlQuote($bid));
 }
 
 ########################################################
 sub deleteTemplate {
 	my($self, $tpid) = @_;
-	$self->sqlDo('DELETE FROM templates WHERE tpid=' . $self->{_dbh}->quote($tpid));
+	$self->sqlDo('DELETE FROM templates WHERE tpid=' . $self->sqlQuote($tpid));
 }
 
 ########################################################
@@ -1267,7 +1311,7 @@ sub saveTopic {
 sub saveBlock {
 	my($self, $bid) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'blocks',
-		'bid=' . $self->{_dbh}->quote($bid)
+		'bid=' . $self->sqlQuote($bid)
 	);
 
 	my $form = getCurrentForm();
@@ -1301,10 +1345,10 @@ sub saveBlock {
 			section		=> $form->{section},
 			retrieve	=> $form->{retrieve},
 			portal		=> $form->{portal},
-		}, 'bid=' . $self->{_dbh}->quote($bid));
+		}, 'bid=' . $self->sqlQuote($bid));
 		$self->sqlUpdate('backup_blocks', {
 			block		=> $form->{block},
-		}, 'bid=' . $self->{_dbh}->quote($bid));
+		}, 'bid=' . $self->sqlQuote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
 			seclev		=> $form->{bseclev},
@@ -1318,7 +1362,7 @@ sub saveBlock {
 			section		=> $form->{section},
 			retrieve	=> $form->{retrieve},
 			portal		=> $form->{portal},
-		}, 'bid=' . $self->{_dbh}->quote($bid));
+		}, 'bid=' . $self->sqlQuote($bid));
 	}
 
 
@@ -1330,7 +1374,7 @@ sub saveColorBlock {
 	my($self, $colorblock) = @_;
 	my $form = getCurrentForm();
 
-	my $db_bid = $self->{_dbh}->quote($form->{color_block} || 'colors');
+	my $db_bid = $self->sqlQuote($form->{color_block} || 'colors');
 
 	if ($form->{colorsave}) {
 		# save into colors and colorsback
@@ -1361,7 +1405,7 @@ sub saveColorBlock {
 sub getSectionBlock {
 	my($self, $section) = @_;
 	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
-		"blocks", "section=" . $self->{_dbh}->quote($section),
+		"blocks", "section=" . $self->sqlQuote($section),
 		"ORDER by ordernum"
 	);
 
@@ -1380,8 +1424,11 @@ sub getSectionBlocks {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $authors = $self->sqlSelectAll("count(*) as c, uid",
-		"stories", '', "GROUP BY uid ORDER BY c DESC"
+		$story_table,
+		'',
+		"GROUP BY uid ORDER BY c DESC"
 	);
 
 	return $authors;
@@ -1499,23 +1546,46 @@ sub getPollQuestions {
 ########################################################
 sub deleteStory {
 	my($self, $sid) = @_;
-	$self->sqlUpdate('stories', { writestatus => 5 },
-		'sid=' . $self->{_dbh}->quote($sid)
-	);
-
-	$self->sqlDo("DELETE from discussions WHERE sid = '$sid'");
+	my $sid_quoted = $self->sqlQuote($sid);
+	my @tables = qw( discussions stories );
+	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
+	# Note that (if there is a heap) the order is: discussions, stories, story_heap
+	# for best attempt at atomicity.
+	for my $table (@tables) {
+		$self->sqlUpdate(
+			$table,
+			{ -flags => "CONCAT(flags, ',delete_me')" },
+			"sid=$sid_quoted",
+		);
+	}
 }
 
 ########################################################
-# for slashd
-sub deleteStoryAll {
+sub undeleteStory {
 	my($self, $sid) = @_;
-	my $db_sid = $self->sqlQuote($sid);
+	my $sid_quoted = $self->sqlQuote($sid);
+	my @tables = qw( discussions stories );
+	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
+	# Note that (if there is a heap) the order is: discussions, stories, story_heap
+	# for best attempt at atomicity.
+	for my $table (@tables) {
+		$self->sqlUpdate(
+			$table,
+			{ -flags => "flags & -2" }, # works, but depends on SET() order
+			"sid=$sid_quoted",
+		);
+	}
+}
 
-	$self->sqlDo("DELETE from stories where sid=$db_sid");
-	$self->sqlDo("DELETE from story_text where sid=$db_sid");
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlDo("DELETE from story_heap where sid=$db_sid");
+########################################################
+# Only called by slashd task freshenup.pl 2001/07/08 - Jamie
+sub finalDeleteStory {
+	my($self, $sid) = @_;
+	my $sid_quoted = $self->sqlQuote($sid);
+	my @tables = qw( discussions stories story_text story_param );
+	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
+	for my $table (@tables) {
+		$self->sqlDo("DELETE FROM $table WHERE sid=$sid_quoted");
 	}
 }
 
@@ -1524,7 +1594,6 @@ sub setStory {
 	my($self, $sid, $hashref) = @_;
 	my(@param, %update_tables, $cache);
 	# ??? should we do this?  -- pudge
-	my $table = 'stories';
 	my $table_prime = 'sid';
 	my $param_table = 'story_param';
 	my $tables = [qw(
@@ -1549,9 +1618,9 @@ sub setStory {
 			$minihash{$key} = $hashref->{$key}
 				if defined $hashref->{$key};
 		}
-		$self->sqlUpdate($table, \%minihash, 'sid=' . $sid, 1);
-		if (getCurrentStatic('mysql_heap_table') and $table eq 'stories') {
-			$self->sqlUpdate('story_heap', \%minihash, 'sid=' . $sid, 1);
+		$self->sqlUpdate($table, \%minihash, 'sid=' . $self->sqlQuote($sid), 1);
+		if ($table eq 'stories' and getCurrentStatic('mysql_heap_table')) {
+			$self->sqlUpdate('story_heap', \%minihash, 'sid=' . $self->sqlQuote($sid), 1);
 		}
 	}
 
@@ -1588,7 +1657,7 @@ sub updateFormkeyId {
 			id	=> $uid,
 			uid	=> $uid,
 		}, "formname='$formname' AND uid = $anon AND formkey=" .
-			$self->{_dbh}->quote($formkey));
+			$self->sqlQuote($formkey));
 	}
 }
 
@@ -1630,7 +1699,7 @@ sub checkResponseTime {
 	};
 	# 1 or 0
 	my ($response_time) = $self->sqlSelect("$now - ts", 'formkeys', 
-		'formkey = ' . $self->{_dbh}->quote($form->{formkey}));
+		'formkey = ' . $self->sqlQuote($form->{formkey}));
 
 	if ($constants->{DEBUG}) {
 		print STDERR "SQL select $now - ts from formkeys where formkey = '$form->{formkey}'\n";
@@ -1654,7 +1723,7 @@ sub validFormkey {
 
 	my $where = $self->_whereFormkey($id);
 	my ($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
-		'formkey = ' . $self->{_dbh}->quote($form->{formkey}) .
+		'formkey = ' . $self->sqlQuote($form->{formkey}) .
 		" AND $where " .
 		"AND ts >= $formkey_earliest AND formname = '$formname'");
 
@@ -1690,7 +1759,7 @@ sub updateFormkeyVal {
 	# can't be used again) and also gives a true/false value 
 	my $updated = $self->sqlUpdate("formkeys", {
 		-value		=> 'value+1',
-	}, "formkey=" . $self->{_dbh}->quote($formkey) . " AND value = 0");
+	}, "formkey=" . $self->sqlQuote($formkey) . " AND value = 0");
 	
 	$updated = int($updated);
 	
@@ -1711,7 +1780,7 @@ sub updateFormkey {
 		cid		=> $cid,
 		submit_ts	=> time(),
 		content_length	=> $length,
-	}, "formkey=" . $self->{_dbh}->quote($formkey));
+	}, "formkey=" . $self->sqlQuote($formkey));
 	
 	print STDERR "UPDATED formkey $updated\n" if $constants->{DEBUG}; 
 	return($updated);
@@ -1815,7 +1884,7 @@ sub formSuccess {
 			cid             => $cid,
 			submit_ts       => time(),
 			content_length  => $length,
-		}, "formkey=" . $self->{_dbh}->quote($formkey)
+		}, "formkey=" . $self->sqlQuote($formkey)
 	);
 }
 
@@ -1824,7 +1893,7 @@ sub formFailure {
 	my($self, $formkey) = @_;
 	$self->sqlUpdate("formkeys", {
 			value   => -1,
-		}, "formkey=" . $self->{_dbh}->quote($formkey)
+		}, "formkey=" . $self->sqlQuote($formkey)
 	);
 }
 
@@ -2063,9 +2132,10 @@ sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt", "topics,$table",
-		"topics.tid=$table.tid
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt",
+		"topics,$story_table",
+		"topics.tid=$story_table.tid
 		$when
 		GROUP BY topics.tid
 		$order"
@@ -2182,31 +2252,22 @@ sub getPortalsCommon {
 ##################################################################
 sub countCommentsBySid {
 	my($self, $sid) = @_;
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	return $self->sqlCount($table, "sid=$sid");
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "sid=$sid");
 }
 
 ##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	return $self->sqlCount($table, "sid=$sid AND uid=$uid");
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "sid=$sid AND uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySidPid {
 	my($self, $sid, $pid) = @_;
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	return $self->sqlCount($table, "sid=$sid AND pid=$pid");
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "sid=$sid AND pid=$pid");
 }
 
 ##################################################################
@@ -2216,18 +2277,18 @@ sub countCommentsBySidPid {
 sub findCommentsDuplicate {
 	my($self, $sid, $comment) = @_;
 	my $signature = md5_hex($comment);
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	return $self->sqlCount($table, "sid=$sid AND signature='$signature'");
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "sid=$sid AND signature='$signature'");
 }
 
 ##################################################################
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
-	my($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{_dbh}->quote($tid));
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my($value) = $self->sqlSelect("count(*)",
+		$story_table,
+		"tid=" . $self->sqlQuote($tid));
 
 	return $value;
 }
@@ -2270,7 +2331,7 @@ sub getStoryByTime {
 
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 	if ($isolate) {
-		$where = 'AND section=' . $self->{_dbh}->quote($story->{'section'})
+		$where = 'AND section=' . $self->sqlQuote($story->{'section'})
 			if $isolate == 1;
 	} else {
 		$where = 'AND displaystatus=0';
@@ -2282,10 +2343,11 @@ sub getStoryByTime {
 	$where .= "   AND sid != '$story->{'sid'}'";
 
 	my $time = $story->{'time'};
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $returnable = $self->sqlSelectHashref(
-			'title, sid, section', $table,
-			"time $sign '$time' AND writestatus >= 0 AND time < now() $where",
+			'title, sid, section',
+			$story_table,
+			"time $sign '$time' AND NOT FIND_IN_SET('delete_me', flags) AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
 
@@ -2295,8 +2357,12 @@ sub getStoryByTime {
 ########################################################
 sub countStories {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,users.nickname",
-		"stories,users", "stories.uid=users.uid", "ORDER BY commentcount DESC LIMIT 10"
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $stories = $self->sqlSelectAll(
+		"$story_table.sid, $story_table.title, section, commentcount, nickname",
+		"$story_table, users, discussions",
+		"$story_table.uid=users.uid AND $story_table.discussion=discussions.id",
+		"ORDER BY commentcount DESC LIMIT 10"
 	);
 	return $stories;
 }
@@ -2400,8 +2466,9 @@ sub countUsers {
 ########################################################
 sub countStoriesTopHits {
 	my($self) = @_;
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $stories = $self->sqlSelectAll("sid,title,section,hits,users.nickname",
-		"stories,users", "stories.uid=users.uid",
+		"$story_table,users", "$story_table.uid=users.uid",
 		"ORDER BY hits DESC LIMIT 10"
 	);
 	return $stories;
@@ -2412,9 +2479,10 @@ sub countStorySubmitters {
 	my($self) = @_;
 
 	my $ac_uid = getCurrentAnonymousCoward('uid');
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $submitters = $self->sqlSelectAll("count(*) as c, nickname",
-		"stories, users", "users.uid=stories.submitter AND uid != $ac_uid",
-		"GROUP BY stories.uid ORDER BY c DESC LIMIT 10"
+		"$story_table, users", "users.uid=$story_table.submitter AND users.uid != $ac_uid",
+		"GROUP BY users.uid ORDER BY c DESC LIMIT 10"
 	);
 
 	return $submitters;
@@ -2423,9 +2491,10 @@ sub countStorySubmitters {
 ########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
-		"stories, users", "users.uid=stories.uid",
-		"GROUP BY stories.uid ORDER BY c DESC LIMIT 10"
+		"$story_table, users", "users.uid=$story_table.uid",
+		"GROUP BY $story_table.uid ORDER BY c DESC LIMIT 10"
 	);
 	return $authors;
 }
@@ -2450,17 +2519,18 @@ sub deleteVar {
 	my($self, $name) = @_;
 
 	$self->sqlDo("DELETE from vars WHERE name=" .
-		$self->{_dbh}->quote($name));
+		$self->sqlQuote($name));
 }
 
 ########################################################
 # This is a little better. Most of the business logic
 # has been removed and now resides at the theme level.
 #	- Cliff 7/3/01
+# It now returns a boolean: whether or not the comment was changed. - Jamie
 sub setCommentCleanup {
 	my($self, $cid, $val, $reason) = @_;
 
-	return if $val eq '+0';
+	return 0 if $val eq '+0';
 
 	# Grab the user object.
 	my $user = getCurrentUser();
@@ -2478,9 +2548,11 @@ sub setCommentCleanup {
 	$strsql .= " AND lastmod<>$user->{uid}"
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
-	my $table = (getCurrentStatic('mysql_heap_table')) ?
-		'comment_heap' : 'comments';
-	$self->sqlDo("UPDATE $table $strsql");
+	my $rows_changed = 0;
+	$rows_changed = $self->sqlDo("UPDATE comment_heap $strsql")
+		if getCurrentStatic('mysql_heap_table');
+	$rows_changed ||= $self->sqlDo("UPDATE comments $strsql");
+	return $rows_changed;
 }
 
 
@@ -2497,20 +2569,17 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	my $reply = $self->sqlSelectHashref("date, subject,$table.points as points,
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $reply = $self->sqlSelectHashref("date, subject,$comment_table.points as points,
 		comment_text.comment as comment,realname,nickname,
-		fakeemail,homepage,$table.cid as cid,sid,users.uid as uid",
-		"$table,comment_text,users,users_info,users_comments",
+		fakeemail,homepage,$comment_table.cid as cid,sid,users.uid as uid",
+		"$comment_table,comment_text,users,users_info,users_comments",
 		"sid=$sid
-		AND $table.cid=$pid
+		AND $comment_table.cid=$pid
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
-		AND $table.cid=comment_text.cid
-		AND users.uid=$table.uid"
+		AND $comment_table.cid=comment_text.cid
+		AND users.uid=$comment_table.uid"
 	) || {};
 
 	formatDate([$reply]);
@@ -2521,29 +2590,26 @@ sub getCommentReply {
 sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 
-	my $table = 'comments';
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	my $user = getCurrentUser();
-	my $sql = "SELECT cid,date, subject,nickname,homepage,fakeemail,
-			  users.uid as uid,sig,$table.points as points,pid,sid,
+	my $sql = "SELECT cid, date, subject, nickname, homepage, fakeemail,
+			  users.uid as uid, sig, $comment_table.points as points, pid, sid,
 			  lastmod, reason
-		   FROM $table,users
-		   WHERE sid=" . $self->{_dbh}->quote($sid) . " AND
-		         $table.uid=users.uid";
+		   FROM $comment_table, users
+		   WHERE sid=" . $self->sqlQuote($sid)
+		 . " AND $comment_table.uid = users.uid";
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
-		$sql .= "	$table.points >= " .
-			$self->{_dbh}->quote($user->{threshold});
-		$sql .= "     OR $table.uid=$user->{uid}"
+		$sql .= "	$comment_table.points >= " .
+			$self->sqlQuote($user->{threshold});
+		$sql .= "     OR $comment_table.uid=$user->{uid}"
 			unless $user->{is_anon};
 		$sql .= "     OR cid=$cid" if $cid;
 		$sql .= "	)";
 	}
 	$sql .= "	  ORDER BY ";
-	$sql .= "$table.points DESC, " if $user->{commentsort} eq '3';
+	$sql .= "$comment_table.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ?
 		'DESC' : 'ASC';
@@ -2582,13 +2648,13 @@ sub _getCommentText {
 
 ########################################################
 sub getComments {
+# XXX comments.pl moderateCid() wants host_name returned here, which is gonna
+# be tough considering that data is now stored only in MD5 - Jamie
 	my($self, $sid, $cid) = @_;
-	my $table = 'comments';
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	$self->sqlSelect("uid,pid,subject,points,reason,host_name",
-		$table, "cid=$cid and sid=$sid"
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	$self->sqlSelect("uid, pid, subject, points, reason",
+		$comment_table,
+		"cid=$cid AND sid=$sid"
 	);
 }
 
@@ -2597,6 +2663,7 @@ sub getStoriesEssentials {
 	my($self, $section, $limit, $tid, $section_display) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 
 	$section ||= $user->{currentSection};
 	$section_display ||= $form->{section};
@@ -2607,21 +2674,22 @@ sub getStoriesEssentials {
 			$self->getSection($section, 'artcount') :
 			$self->getSection($section)->{artcount};
 
-	my $table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
-	my $columns =
-		'sid, uid, commentcount, title, section, time, hits, hitparade';
 
-	my $where = "time < NOW() ";
+	my $columns = "$story_table.sid, $story_table.uid, commentcount, $story_table.title,"
+		. " section, time, hits, discussions.id as discussion";
+
+	my $from = "$story_table, discussions";
+
+	my $where = "time < NOW() AND $story_table.discussion=discussions.id ";
 	$where .= "AND displaystatus=0 " unless $form->{section};
 	$where .= "AND (displaystatus>=0 AND section='$section') "
 		if $section_display;
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
-	$where .= "AND tid not in ($user->{extid}) "		if $user->{extid};
-	$where .= "AND uid not in ($user->{exaid}) "		if $user->{exaid};
-	$where .= "AND section not in ($user->{exsect}) "	if $user->{exsect};
+	$where .= "AND tid not in ($user->{extid}) "			if $user->{extid};
+	$where .= "AND $story_table.uid not in ($user->{exaid}) "	if $user->{exaid};
+	$where .= "AND section not in ($user->{exsect}) "		if $user->{exsect};
 
 	# Order
 	my $other = "ORDER BY time DESC ";
@@ -2635,14 +2703,18 @@ sub getStoriesEssentials {
 	if (!$form->{issue}) {
 		$other .= "LIMIT $limit ";
 	} else {
+		# It would be slightly faster to calculate the
+		# yesterday/tomorrow for $form->{issue} in perl so that the
+		# DB only has to manipulate each row's "time" once instead
+		# of twice.  But this works now;  we'll optimize later. - Jamie
 		my $tomorrow_str =  'DATEFORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
 		my $yesterday_str = 'DATEFORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
 		$where .= "AND '$form->{issue}' BETWEEN $tomorrow_str AND $yesterday_str ";
 	}
 
-	my(@stories, $count);
-	my $cursor = $self->sqlSelectMany($columns, $table, $where, $other)
-		or errorLog("error in getStoriesEssentials columns $columns table $table where $where other $other");
+	my(@stories, @discussion_ids, $count);
+	my $cursor = $self->sqlSelectMany($columns, $from, $where, $other)
+		or errorLog("error in getStoriesEssentials columns $columns from $from where $where other $other");
 
 	while (my $row = $cursor->fetchrow_hashref) {
 
@@ -2664,10 +2736,40 @@ sub getStoriesEssentials {
 		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
 		push @stories, $row;
+		push @discussion_ids, $row->{discussion};
 		last if ++$count >= $limit;
 
 	}
 	$cursor->finish;
+
+	# Because we're storing hitparade as a collection of multiple rows for
+	# each discussion (and thus story), it really only makes sense to select
+	# on it separately.  Blech.
+	# And it would be better to return it as a hashref but to prevent
+	# rewriting too much at once I'm keeping it the comma-delimited string.
+	# Double blech.
+	# First, fill a hash with the hitparade values for the discussions
+	# (stories) that we need.
+	my $discussion_id_list = join(",", map { $_->{discussion} } @stories);
+	$cursor = $self->sqlSelectMany(
+		"discussion, threshold, count",
+		"discussion_hitparade",
+		"discussion IN ($discussion_id_list)"
+	);
+	my %count = ( );
+	while (my $row = $cursor->fetchrow_hashref) {
+		$count{$row->{discussion}}{$row->{threshold}} = $row->{count};
+	}
+	$cursor->finish;
+	# Then, go through the stories and assemble a comma-delimited list
+	# based on the values in the hash for each story.
+	my $min = getCurrentStatic('comment_minscore');
+	my $max = getCurrentStatic('comment_maxscore');
+	for my $story (@stories) {
+		$story->{hitparade} = join (",",
+			map { $count{$story->{discussion}}{$_} || 0 } ($min .. $max)
+		);
+	}
 
 	return \@stories;
 }
@@ -2677,17 +2779,16 @@ sub getStoriesEssentials {
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	my $where = "stories.sid=$table.sid and stories.uid=users.uid";
-	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, stories.sid, users.nickname, title, pid, subject,"
-		. "date, time, $table.uid, cid, points"
-		, "stories, $table, users"
-		, $where
-		, " ORDER BY points DESC, date DESC LIMIT 10 ");
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+
+	my $where = "$story_table.sid=$comment_table.sid AND $story_table.uid=users.uid";
+	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
+	my $stories = $self->sqlSelectAll("section, $story_table.sid, users.nickname, title,
+		pid, subject, date, time, $comment_table.uid, cid, points",
+		"$story_table, $comment_table, users",
+		$where,
+		" ORDER BY points DESC, date DESC LIMIT 10 ");
 
 	formatDate($stories, 6);
 	formatDate($stories, 7);
@@ -2738,12 +2839,12 @@ sub getSubmissionForUser {
 
 	my $sql = "SELECT subid,subj,time,tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
-	$sql .= $form->{note} ? "note=" . $self->{_dbh}->quote($form->{note}) : "isnull(note)";
+	$sql .= $form->{note} ? "note=" . $self->sqlQuote($form->{note}) : "isnull(note)";
 	$sql .= "		or note=' ' " unless $form->{note};
 	$sql .= ")";
 	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
-	$sql .= "         and section=" . $self->{_dbh}->quote($user->{section}) if $user->{section};
-	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
+	$sql .= "         and section=" . $self->sqlQuote($user->{section}) if $user->{section};
+	$sql .= "         and section=" . $self->sqlQuote($form->{section}) if $form->{section};
 	$sql .= "	  ORDER BY time";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
@@ -2761,14 +2862,12 @@ sub getTrollAddress {
 	my($self) = @_;
 
 	my $ipid = getCurrentUser('ipid');
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	my($badIP) = $self->sqlSelect("sum(val)", "$table,moderatorlog",
-			"$table.cid=moderatorlog.cid AND
+	my $comment_table = "comments";
+	$comment_table = 'comment_heap' if getCurrentStatic('mysql_heap_table');
+	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
+			"$comment_table.cid = moderatorlog.cid AND
 			 ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1 AND
-			 (to_days(now()) - to_days(ts) < 3) GROUP BY ipid"
+			 (TO_DAYS(NOW()) - TO_DAYS(ts) < 3) GROUP BY ipid"
 	);
 
 	return $badIP;
@@ -2778,14 +2877,11 @@ sub getTrollAddress {
 sub getTrollUID {
 	my($self) = @_;
 	my $user = getCurrentUser();
-	my $table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-	}
-	my($badUID) = $self->sqlSelect("sum(val)", "$table,moderatorlog",
-		"$table.cid=moderatorlog.cid
-		AND $table.uid=$user->{uid} AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY $table.uid"
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my($badUID) = $self->sqlSelect("sum(val)", "$comment_table,moderatorlog",
+		"$comment_table.cid=moderatorlog.cid
+		AND $comment_table.uid=$user->{uid} AND moderatorlog.active=1
+		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY $comment_table.uid"
 	);
 
 	return $badUID;
@@ -2809,9 +2905,25 @@ sub createDiscussion {
 		topic	=> $topic,
 		type	=> $type,
 		uid	=> getCurrentUser('uid'),
+		# commentcount and flags set to defaults
 	});
 
-	return $self->getLastInsertId();
+	my $discussion_id = $self->getLastInsertId();
+
+	# This could be made slightly faster by doing one of those fancy
+	# question-mark-substitution INSERT commands, but, I'm lazy.
+	my $min = getCurrentStatic('comment_minscore');
+	my $max = getCurrentStatic('comment_maxscore');
+	for my $threshold ($min .. $max) {
+		$self->sqlInsert(
+			"discussion_hitparade",
+			{	discussion =>	$discussion_id,
+				threshold =>	$threshold,
+				count =>	0		}
+		);
+	}
+
+	return $discussion_id;
 }
 
 ########################################################
@@ -2834,7 +2946,7 @@ sub createStory {
 		my $constants = getCurrentStatic();
 		my($suid) = $self->sqlSelect(
 			'uid', 'submissions',
-			'subid=' . $self->{_dbh}->quote($story->{subid})
+			'subid=' . $self->sqlQuote($story->{subid})
 		);
 
 		# i think i got this right -- pudge
@@ -2853,7 +2965,7 @@ sub createStory {
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
-			'subid=' . $self->{_dbh}->quote($story->{subid})
+			'subid=' . $self->sqlQuote($story->{subid})
 		);
 	}
 
@@ -2865,10 +2977,10 @@ sub createStory {
 		'time'		=> $story->{'time'},
 		title		=> $story->{title},
 		section		=> $story->{section},
-		writestatus	=> $story->{writestatus},
 		displaystatus	=> $story->{displaystatus},
+		commentstatus	=> $story->{commentstatus},
 		submitter	=> $story->{submitter} ? $story->{submitter} : $story->{uid},
-		commentstatus	=> $story->{commentstatus}
+		flags		=> "",
 	};
 
 	my $text = {
@@ -2893,34 +3005,48 @@ sub updateStory {
 	my($self) = @_;
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
+
+	my $time = ($form->{fastforward} eq 'on')
+		? $self->getTime()
+		: $form->{'time'};
+
 	$self->sqlUpdate('discussions', {
 		sid	=> $form->{sid},
 		title	=> $form->{title},
 		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
-		ts	=> $form->{'time'},
-	}, 'sid = ' . $self->{_dbh}->quote($form->{sid}));
+		ts	=> $time,
+	}, 'sid = ' . $self->sqlQuote($form->{sid}));
+
+	$self->sqlUpdate('story_heap', {
+		uid		=> $form->{uid},
+		tid		=> $form->{tid},
+		dept		=> $form->{dept},
+		'time'		=> $time,
+		title		=> $form->{title},
+		section		=> $form->{section},
+		displaystatus	=> $form->{displaystatus},
+		commentstatus	=> $form->{commentstatus},
+		flags		=> $form->{flags},
+	}, 'sid=' . $self->sqlQuote($form->{sid}));
 
 	$self->sqlUpdate('stories', {
 		uid		=> $form->{uid},
 		tid		=> $form->{tid},
 		dept		=> $form->{dept},
-		'time'		=> $form->{'time'},
+		'time'		=> $time,
 		title		=> $form->{title},
 		section		=> $form->{section},
-		writestatus	=> $form->{writestatus},
 		displaystatus	=> $form->{displaystatus},
-		commentstatus	=> $form->{commentstatus}
-	}, 'sid=' . $self->{_dbh}->quote($form->{sid}));
+		commentstatus	=> $form->{commentstatus},
+		flags		=> $form->{flags},
+	}, 'sid=' . $self->sqlQuote($form->{sid}));
 
 	$self->sqlUpdate('story_text', {
 		bodytext	=> $form->{bodytext},
 		introtext	=> $form->{introtext},
 		relatedtext	=> $form->{relatedtext},
-	}, 'sid=' . $self->{_dbh}->quote($form->{sid}));
+	}, 'sid=' . $self->sqlQuote($form->{sid}));
 
-	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
-		. $self->{_dbh}->quote($form->{sid})
-	) if $form->{fastforward} eq 'on';
 	$self->_saveExtras($form);
 }
 
@@ -3061,9 +3187,11 @@ sub linkNode {
 # Image Importing, Size checking, File Importing etc
 sub getUrlFromTitle {
 	my($self, $title) = @_;
-	my($sid) = $self->sqlSelect('sid', 'stories',
-		qq[title like "\%$title%"],
-		'order by time desc LIMIT 1'
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my($sid) = $self->sqlSelect('sid',
+		$story_table,
+		"title like '\%$title\%'",
+		'ORDER BY time DESC LIMIT 1'
 	);
 	my $rootdir = getCurrentStatic('rootdir');
 	return "$rootdir/article.pl?sid=$sid";
@@ -3086,7 +3214,7 @@ sub getTime {
 # Should this really be in here? -- krow
 # dunno ... sigh, i am still not sure this is best
 # (see getStories()) -- pudge
-# As of now, getDay is only used in Slash.pm getOlderStories() -- jamie
+# As of now, getDay is only used in Slash.pm getOlderStories() - Jamie
 sub getDay {
 #	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
@@ -3096,27 +3224,31 @@ sub getDay {
 
 ##################################################################
 sub getStoryList {
-	my($self) = @_;
+	my($self, $first_story, $num_stories) = @_;
+	$first_story ||= 0;
+	$num_stories ||= 40;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, name, section,
-			displaystatus,writestatus
-			FROM $table,topics
-			WHERE $table.tid=topics.tid];
-	$sql .= "	AND section='$user->{section}'" if $user->{section};
-	$sql .= "	AND section='$form->{section}'" if $form->{section} && !$user->{section};
-	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
-	$sql .= "	ORDER BY time DESC";
+	my $columns = "hits, commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
+		. "time, name, section, displaystatus, $story_table.flags";
+	my $tables = "$story_table, discussions, topics";
+	my $where = "$story_table.tid=topics.tid AND $story_table.discussion=discussions.id";
+	$where .= " AND section='$user->{section}'" if $user->{section};
+	$where .= " AND section='$form->{section}'" if $form->{section} && !$user->{section};
+	$where .= " AND time < DATE_ADD(NOW(), INTERVAL 72 HOUR) " if $form->{section} eq "";
+	my $other = "ORDER BY time DESC LIMIT $first_story, $num_stories";
 
-	my $cursor = $self->{_dbh}->prepare($sql);
+	my $count = $self->sqlSelect("COUNT(*)", $tables, $where);
+
+	my $cursor = $self->{_dbh}->prepare("SELECT $columns FROM $tables WHERE $where $other");
 	$cursor->execute;
 	my $list = $cursor->fetchall_arrayref;
 
-	return $list;
+	return ($count, $list);
 }
 
 ##################################################################
@@ -3147,11 +3279,11 @@ sub _saveExtras {
 sub getStory {
 	my($self, $id, $val, $cache_flag) = @_;
 	# Lets see if we can use story_heap
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# We need to expire stories
-	_genericCacheRefresh($self, $table, getCurrentStatic('story_expire'));
-	my $table_cache = '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
+	_genericCacheRefresh($self, $story_table, getCurrentStatic('story_expire'));
+	my $table_cache = '_' . $story_table . '_cache';
+	my $table_cache_time= '_' . $story_table . '_cache_time';
 
 	my $type;
 	if (ref($val) eq 'ARRAY') {
@@ -3175,7 +3307,7 @@ sub getStory {
 # the db but why do a join if it is not needed?
 	my($append, $answer, $db_id);
 	$db_id = $self->sqlQuote($id);
-	$answer = $self->sqlSelectHashref('*', $table, "sid=$db_id");
+	$answer = $self->sqlSelectHashref('*', $story_table, "sid=$db_id");
 	$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
 	for (keys %$append) {
 		$answer->{$_} = $append->{$_};
@@ -3206,8 +3338,8 @@ sub getStory {
 # wanted the meta data, didn't want to worry
 # about cache. -Brian
 sub getNewStory {
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $answer = _genericGet($table, 'sid', '', @_);
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $answer = _genericGet($story_table, 'sid', '', @_);
 	return $answer;
 }
 
@@ -3241,7 +3373,7 @@ sub getAuthor {
 	# -Brian
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,homepage,bio',
-		'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
+		'users,users_info', 'users.uid=' . $self->sqlQuote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -3697,7 +3829,7 @@ sub _genericSet {
 				push @param, [$_, $value->{$_}];
 			}
 		}
-		$self->sqlUpdate($table, \%updates, $table_prime . '=' . $self->{_dbh}->quote($id))
+		$self->sqlUpdate($table, \%updates, $table_prime . '=' . $self->sqlQuote($id))
 			if keys %updates;
 		# What is worse, a select+update or a replace?
 		# I should look into that. if EXISTS() the
@@ -3707,7 +3839,7 @@ sub _genericSet {
 			$self->sqlReplace($param_table, { $table_prime => $id, name => $_->[0], value => $_->[1]});
 		}
 	} else {
-		$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
+		$self->sqlUpdate($table, $value, $table_prime . '=' . $self->sqlQuote($id));
 	}
 
 	my $table_cache= '_' . $table . '_cache';
@@ -3770,10 +3902,10 @@ sub _genericGetCache {
 	}
 
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
+	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->sqlQuote($id));
 	$answer->{'_modtime'} = time();
 	if ($param_table) {
-		my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=" . $self->{_dbh}->quote($id));
+		my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=" . $self->sqlQuote($id));
 		for (@$append) {
 			$answer->{$_->[0]} = $_->[1];
 		}
@@ -3810,7 +3942,7 @@ sub _genericClearCache {
 sub _genericGet {
 	my($table, $table_prime, $param_table, $self, $id, $val) = @_;
 	my($answer, $type);
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 
 	if ($param_table) {
 	# With Param table
@@ -3976,6 +4108,8 @@ sub _genericGets {
 }
 
 ########################################################
+# This is only called by Slash/DB/t/story.t and it doesn't even serve much purpose
+# there...I assume we can kill it?  - Jamie
 sub getStories {
 	my $answer = _genericGets('stories', 'sid', 'story_param', @_);
 	return $answer;
@@ -3990,32 +4124,33 @@ sub getRelatedLinks {
 ########################################################
 # single big select for ForumZilla ... if someone wants to
 # improve on this, please go ahead
+# pudge, could/should we add $story_table.discussion=discussions.id to the WHERE or JOIN? - Jamie
 sub fzGetStories {
 	my($self, $section) = @_;
 	my $slashdb = getCurrentDB();
 	my $section_dbi = $self->sqlQuote($section || '');
 
-	my($comments, $stories);
+	my($comment_table, $story_table);
 	if (getCurrentStatic('mysql_heap_table')) {
-		$comments = "comment_heap";
-		$stories  = "story_heap";
+		$comment_table = "comment_heap";
+		$story_table  = "story_heap";
 	} else {
-		$comments = "comments";
-		$stories  = "stories";
+		$comment_table = "comments";
+		$story_table  = "stories";
 	}
 
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-$stories.sid, $stories.title, time, commentcount,
-MAX($comments.date) AS lastcommentdate
+$story_table.sid, $story_table.title, time, commentcount,
+MAX($comment_table.date) AS lastcommentdate
 S
-discussions LEFT OUTER JOIN $comments ON discussions.id = $comments.sid, $stories
+discussions LEFT OUTER JOIN $comment_table ON discussions.id = $comment_table.sid, $story_table
 F
-$stories.sid = discussions.sid
+$story_table.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
-OR ($stories.section=$section_dbi and displaystatus > -1))
-AND time < now() AND writestatus > -1
+OR ($story_table.section=$section_dbi and displaystatus > -1))
+AND time < NOW() AND NOT FIND_IN_SET("delete_me", flags)
 W
-GROUP BY $stories.sid
+GROUP BY $story_table.sid
 ORDER BY time DESC
 LIMIT 10
 E
@@ -4066,7 +4201,7 @@ sub createMenuItem {
 ########################################################
 sub getMenuItems {
 	my($self, $script) = @_;
-	my $sql = "SELECT * FROM menus WHERE page=" . $self->{_dbh}->quote($script) . "ORDER by menuorder";
+	my $sql = "SELECT * FROM menus WHERE page=" . $self->sqlQuote($script) . " ORDER by menuorder";
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute();
 	my(@menu, $row);
@@ -4089,7 +4224,7 @@ sub getMenus {
 	my $menus;
 	for (@$menu_names) {
 		my $script = $_->[0];
-		$sql = "SELECT * FROM menus WHERE menu=" . $self->{_dbh}->quote($script) . "ORDER by menuorder";
+		$sql = "SELECT * FROM menus WHERE menu=" . $self->sqlQuote($script) . " ORDER by menuorder";
 		$sth =	$self->{_dbh}->prepare($sql);
 		$sth->execute();
 		my(@menu, $row);
@@ -4111,7 +4246,7 @@ sub sqlReplace {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->sqlQuote($data->{$_}) . ',';
 		}
 		$names .= "$_,";
 	}

@@ -234,11 +234,28 @@ CREATE TABLE discussions (
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	type mediumint(2) DEFAULT 0 NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
+	commentcount smallint UNSIGNED DEFAULT '0',
+	flags set("delete_me","hitparade_dirty") DEFAULT '' NOT NULL,
 	KEY (sid),
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (topic) REFERENCES topics(tid),
 	PRIMARY KEY (id)
+);
+
+#
+# Table structure for table 'discussion_hitparade'
+#
+
+DROP TABLE IF EXISTS discussion_hitparade;
+CREATE TABLE discussion_hitparade (
+	hpid int UNSIGNED NOT NULL auto_increment,
+	discussion mediumint UNSIGNED NOT NULL,
+	threshold tinyint NOT NULL,
+	count smallint UNSIGNED DEFAULT '0' NOT NULL,
+	UNIQUE hpkey (discussion, threshold),
+	FOREIGN KEY (discussion) REFERENCES discussions(id),
+	PRIMARY KEY (hpid)
 );
 
 #
@@ -461,18 +478,16 @@ CREATE TABLE stories (
 	sid char(16) NOT NULL,
 	tid smallint UNSIGNED NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	commentcount smallint UNSIGNED DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	writestatus tinyint DEFAULT '0' NOT NULL,
 	hits mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	section varchar(30) DEFAULT '' NOT NULL,
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
-	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
 	discussion mediumint UNSIGNED,
 	submitter mediumint UNSIGNED NOT NULL,
+	flags set("delete_me","data_dirty") DEFAULT '' NOT NULL,
 	PRIMARY KEY (sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (tid) REFERENCES tid(topic),
@@ -490,18 +505,16 @@ CREATE TABLE story_heap (
 	sid char(16) NOT NULL,
 	tid smallint UNSIGNED NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	commentcount smallint UNSIGNED DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	writestatus tinyint DEFAULT '0' NOT NULL,
 	hits mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	section varchar(30) DEFAULT '' NOT NULL,
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
-	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
 	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	submitter mediumint UNSIGNED NOT NULL,
+	flags set("delete_me","data_dirty") DEFAULT '' NOT NULL,
 	PRIMARY KEY (sid),
 	KEY time (time),
 	KEY searchform (displaystatus,time)

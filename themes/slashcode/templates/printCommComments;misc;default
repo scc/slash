@@ -60,7 +60,7 @@ __template__
 
 	</TD></TR>
 	<TR><TD ALIGN="CENTER">
-	[% Slash.moderatorCommentLog(sid, cid) %]
+	[% Slash.moderatorCommentLog(cid) %]
 	</TD></TR>
 [% END %]
 

@@ -31,10 +31,10 @@ my %story =  (
 		section		=> 'articles',
 		bodytext	=> 'This is body text',
 		introtext	=> 'This is intro text',
-		writestatus	=> 0,
 		relatedtext	=> 'Some related text',
 		displaystatus	=> 0,
-		commentstatus	=> 0
+		commentstatus	=> 0,
+		flags		=> "",
 );
 
 ########################################################################

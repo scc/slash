@@ -49,7 +49,7 @@ sub set {
 	my($self, $id, $value) = @_;
 	my $table = $self->{'_table'};
 	my $prime = $self->{'_prime'};
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 	my $where;
 	if ($self->{_wheresql}) {
 		$where = "$prime=$id_db  AND " . $self->{_wheresql};
@@ -65,7 +65,7 @@ sub get {
 	my($answer, $type);
 	my $table = $self->{'_table'};
 	my $prime = $self->{'_prime'};
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 	my $where;
 
 	if ($self->{_wheresql}) {
@@ -133,7 +133,7 @@ sub create {
 	my($self, $id, $val) = @_;
 	my $table = $self->{'_table'};
 	my $prime = $self->{'_prime'};
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 	my $where;
 
 	if ($self->{_wheresql}) {
@@ -162,7 +162,7 @@ sub delete {
 	my($self, $id) = @_;
 	my $table = $self->{'_table'};
 	my $prime = $self->{'_prime'};
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 	my $where;
 
 	if ($self->{_wheresql}) {
@@ -180,7 +180,7 @@ sub exists {
 
 	my $table = $self->{'_table'};
 	my $prime = $self->{'_prime'};
-	my $id_db = $self->{_dbh}->quote($id);
+	my $id_db = $self->sqlQuote($id);
 
 	my $where;
 	if ($self->{_wheresql}) {
@@ -479,7 +479,7 @@ sub sqlUpdate {
 			s/^-//;
 			$sql .= "\n  $_ = $data->{-$_},";
 		} else {
-			$sql .= "\n $_ = " . $self->{_dbh}->quote($data->{$_}) . ',';
+			$sql .= "\n $_ = " . $self->sqlQuote($data->{$_}) . ',';
 		}
 	}
 	chop $sql;
@@ -502,7 +502,7 @@ sub sqlInsert {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->sqlQuote($data->{$_}) . ',';
 		}
 		$names .= "$_,";
 	}
@@ -516,12 +516,7 @@ sub sqlInsert {
 }
 
 #################################################################
-sub sqlQuote {
-	my($self, $sql) = @_;
-	my $db_sql = $self->{_dbh}->quote($sql);
-
-	return $db_sql;
-}
+sub sqlQuote { $_[0]->{_dbh}->quote($_[1]) }
 
 #################################################################
 sub sqlDo {

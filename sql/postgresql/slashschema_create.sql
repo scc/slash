@@ -126,6 +126,7 @@ CREATE TABLE discussions (
 	title varchar(128),
 	url varchar(128),
 	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+	commentcount int2 DEFAULT '0',
 	PRIMARY KEY (sid)
 );
 
@@ -194,7 +195,6 @@ CREATE TABLE newstories (
 	sid char(16) DEFAULT '' NOT NULL,
 	tid varchar(20) DEFAULT '' NOT NULL,
 	uid int4 NOT NULL,
-	commentcount int2 DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
@@ -297,7 +297,6 @@ CREATE TABLE stories (
 	sid char(16) DEFAULT '' NOT NULL,
 	tid varchar(20) DEFAULT '' NOT NULL,
 	uid int4 NOT NULL,
-	commentcount int2 DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,

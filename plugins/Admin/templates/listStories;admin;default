@@ -36,7 +36,7 @@ END;
 	bgcolor = '';
 	IF story.displaystatus > 0;
 		bgcolor = '#CCCCCC';
-	ELSIF story.writestatus < 0 || story.displaystatus < 0;
+	ELSIF story.flags.search('delete_me') || story.displaystatus < 0;
 		bgcolor = '#999999';
 END %]
 

@@ -17,10 +17,7 @@ $task{$me}{code} = sub {
 
 	slashdLog("$me begin");
 	if (! $constants->{allow_moderation}) {
-		slashdLog(<<EOT);
-$me - Moderation system is inactive. No action performed.
-EOT
-
+		slashdLog("$me - moderation system is inactive, no action performed");
 	} else {
 		# This will soon call a local sub that performs all necessary
 		# moderation actions.
@@ -28,10 +25,7 @@ EOT
 		if (-e $moderatord and -x _) {
 			system("$moderatord $virtual_user");
 		} else {
-			slashdLog(<<EOT);
-$me cannot find $moderatord or not executable
-EOT
-
+			slashdLog("$me cannot find $moderatord or not executable");
 		}
 		reconcileM2($constants, $slashdb);
 	}
