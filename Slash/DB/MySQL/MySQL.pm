@@ -2866,9 +2866,9 @@ sub _genericGets {
 	my $sth;
 
 	if (ref($values) eq 'ARRAY') {
-		my $values = join ',', @$values;
-		$values .= ",$table_prime" unless grep $table_prime, @$values;
-		$sth = $self->sqlSelectMany($values, $table);
+		my $val = join ',', @$values;
+		$val .= ",$table_prime" unless grep $table_prime, @$values;
+		$sth = $self->sqlSelectMany($val, $table);
 	} elsif ($values) {
 		$values .= ",$table_prime" unless $values eq $table_prime;
 		$sth = $self->sqlSelectMany($values, $table);
