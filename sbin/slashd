@@ -337,7 +337,7 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 EOT
 
 	for my $section (@$stories_and_topics) {
-		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
+		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept}));
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
