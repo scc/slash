@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w 
-
-# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
-# released under the GPL.  See README and COPYING for more information.
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
 # $Id$
-#
+
 # First version by Brian, brian@tanegnt.org
 # Updated by Patrick Galbraith, capttofu@slashdot.org
 
@@ -420,6 +420,9 @@ sub delete_templates {
 
 ###############################################
 sub compile_template {
+	# at some point, it would probably be best to get the
+	# template object from Slash::Display.  we should talk
+	# more about this.  -- pudge
 	# Reproduce Slash::Display environment while adding our own options.
 	require Slash::Display;				# could just duplicate $filters.
 	require Slash::Display::Provider;			

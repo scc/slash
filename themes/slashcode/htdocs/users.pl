@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
-# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
-# released under the GPL.  See README and COPYING for more information.
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
 use strict;

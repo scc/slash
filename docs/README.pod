@@ -136,7 +136,7 @@ http://sourceforge.net/projects/slashcode/
 The information below applies to everything in this distribution,
 except where noted.
 
-Slash is Copyright 1997-2001, Open Source Development Network.
+Copyright 1997-2001 by Open Source Development Network.
 
 	http://www.osdn.com/
 
@@ -159,4 +159,4 @@ Suite 330, Boston, MA 02111-1307, USA.
 
 =head1 VERSION
 
-Document last modified Friday, January 12, 2001.
+Document last modified Wednesday, January 31, 2001.

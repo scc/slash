@@ -1,5 +1,6 @@
-# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
-# released under the GPL.  See README and COPYING for more information.
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
 package Slash::DB::Static::MySQL;
@@ -403,9 +404,9 @@ sub stirPool {
 			"users,users_comments,users_info",
 			"users.uid=users_comments.uid AND
 			 users.uid=users_info.uid AND
-			 seclev = 0
-			 AND points > 0
-			 AND to_days(now())-to_days(lastgranted) > $stir");
+			 seclev = 0 AND
+			 points > 0 AND
+			 to_days(now())-to_days(lastgranted) > $stir");
 
 	my $revoked = 0;
 
