@@ -67,7 +67,7 @@ my @user_tables = qw(
 	users users_comments users_info users_index users_prefs users_param
 );
 
-my($vars, $del_users, $do_heaps);
+my($vars, $del_users);
 my(%ac_uid, %topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%story_authors);
 
@@ -421,14 +421,14 @@ my (%conditions) = (
 ####################################
 # main body
 {
-        my($sth_d, $allow_heaps);
+        my($sth_d);
         my @prefs = qw(
-		mysql_heap_table absolutedir comment_minscore
+		absolutedir comment_minscore
 		comment_maxscore defaultsection defaulttopic rootdir archive_delay
 	);
         push @prefs, 'anonymous_coward_uid' if $opts{I};
  
-	# Get AC UID, heap preference.
+	# Get AC UID.
 	{
 		local $" = ',';
 		map { $_ = $dbh_new->quote($_) } @prefs;
@@ -447,13 +447,12 @@ EOT
 
 	if ($opts{I}) {
 		incremental();
-		refill_heaps() if $vars->{mysql_heap_table};
 		# We're done.
 		exit 0;
 	}	
 
 	####################################
-	# Questions: fix AC UID, heaps.
+	# Questions: fix AC UID.
 	$ac_uid{-1} = ask(<<'EOT');
 Please select a UID for the anonymous user of the site.  It is probably
 best if it is the lowest positive integer that is unused on the old
@@ -486,23 +485,7 @@ EOT
 
 	}
 
-	# We only ask about the heaps if it's set in the vars.
-	if ($vars->{mysql_heap_table}) {
-		$do_heaps = ask(<<'EOT') =~ /^(y(es)?)?\s*$/i;
-Should we populate the heap tables during this conversion? 
-(Recommended: Only answer NO to this question if you know what you are doing)
-[Yes/no]
-EOT
-
-	}
-
-	print "Skipping HEAP table creation at your request!\n"
-		if !$do_heaps && $vars->{mysql_heap_table};
-	
 	convert();
-
-	# populate heap tables.
-	refill_heaps() if $do_heaps;
 }
 
 
@@ -838,15 +821,6 @@ EOT
 	}
 }
 
-####################################
-sub refill_heaps {
-	printf "%sPopulating the story_heap table...\n", ($opts{I}) ? 'Re':'';
-	$dbh_new->do('DELETE FROM story_heap') if $opts{I};
-	$dbh_new->do('INSERT INTO story_heap SELECT * FROM stories');
-# 	printf "%sPopulating the comment_heap table...\n", ($opts{I}) ? 'Re':'';
-# 	$dbh_new->do('DELETE FROM comment_heap') if $opts{I};
-# 	$dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
-}
 
 ####################################
 # get vars out of slashdotrc.pl
@@ -1792,11 +1766,6 @@ AID to their UID:
 If there are any stories that have a NULL UID, the program
 asks for a UID to assign to the orphaned stories, printing
 a list of available authors.
-
-=item *
-
-The story_heap table is populated using the data
-from the stories table.
 
 =item *
 
