@@ -3622,6 +3622,10 @@ print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " ip downmods $down
 print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " subnet downmods $downmods trollpoint $trollpoint subnetid '$user->{subnetid}'\n";
 	return 1 if $downmods <= $trollpoint;
 
+	# At this point, if the user is not logged in, then we don't need
+	# to check the AC's downmods by user ID;  they pass the tests.
+	return 0 if $user->{is_anon};
+
 	# Check for downmods by user ID.
 	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
 	($downmods) = $self->sqlSelect("sum(val)",
