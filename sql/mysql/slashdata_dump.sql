@@ -177,7 +177,7 @@ INSERT INTO commentmodes VALUES ('nocomment','No Comments','');
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','208.163.7.213','First Post!','This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!',-1,0,-1,0);
+INSERT INTO comments VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','208.163.7.213','First Post!','This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!',1,0,1,0);
 
 #
 # Dumping data for table 'content_filters'
