@@ -222,7 +222,7 @@ sub varEdit {
 	my $slashdb = getCurrentDB();
 	my $varsref;
 
-	my $vars = $slashdb->getDescriptions('vars');
+	my $vars = $slashdb->getDescriptions('vars', '', 1);
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
 	if($name) {
@@ -483,10 +483,10 @@ sub blockEdit {
 		$blockdelete_flag = 1;
 	} else { 
 		# get the static blocks
-		my $blocks = $slashdb->getDescriptions('static_block', $seclev);
+		my $blocks = $slashdb->getDescriptions('static_block', $seclev, 1);
 		$block_select1 = createSelect('bid1', $blocks, $bid, 1);
 
-		$blocks = $slashdb->getDescriptions('portald_block', $seclev);
+		$blocks = $slashdb->getDescriptions('portald_block', $seclev, 1);
 		$block_select2 = createSelect('bid2', $blocks, $bid, 1);
 
 	}
@@ -592,7 +592,7 @@ sub colorEdit {
 
        	$title = getTitle('colorEdit-title');
 
-	$block = $slashdb->getDescriptions('color_block');
+	$block = $slashdb->getDescriptions('color_block', '', 1);
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
 	
 	slashDisplay('admin-colorEdit', {
@@ -639,7 +639,7 @@ sub topicEdit {
 
 	closedir(DIR);
 
-	$topics_menu = $slashdb->getDescriptions('topics');
+	$topics_menu = $slashdb->getDescriptions('topics', '', 1);
 	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid},1);
 
 	if (!$form->{topicdelete}) {

@@ -430,7 +430,7 @@ Return value
 
 
 
-=item getDescriptions(KEY)
+=item getDescriptions(KEY, OPTIONAL, FLAG)
 
 Creates a drop-down list in HTML.
 
@@ -439,9 +439,17 @@ Parameters
 	KEY
 	The name for the HTML entity.
 
+	OPTIONAL
+	Any other arguments to pass such as a where
+	clause.
+
+	FLAG
+	0 - Cache the codebank key
+	1 - refresh the codebank key 
+
 Return value
 
-	No value is returned.
+	Hashref to codebank KEY.
 
 =cut
 

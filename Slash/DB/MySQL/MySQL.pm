@@ -87,7 +87,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates') },
 
 	'templatesbypage'
-		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates', "page = '$_[3]'") },
+		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates', "page = '$_[2]'") },
 
 	'templatepages'
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
@@ -520,7 +520,7 @@ sub createAccessLog {
 
 ########################################################
 sub getDescriptions {
-	my($self, $codetype, $flag) =  @_;
+	my($self, $codetype, $optional, $flag) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $cache = '_getDescriptions_' . $codetype;
