@@ -93,7 +93,7 @@ sub handler {
 		if ($uid) {
 			# password in cookie was not encrypted, so
 			# save new cookie
-			setCookie('user', bakeUserCookie($uid, $cookpasswd))
+			setCookie('user', bakeUserCookie($uid, $cookpasswd), $slashdb->getUser($uid, 'session_login'))
 				if $cookpasswd ne $password;
 		} else {
 			$uid = $constants->{anonymous_coward_uid};
