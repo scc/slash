@@ -218,10 +218,11 @@ httpd.conf, or you can just C<Include> it in your httpd.conf.
 B<WARNING!>
 
 Please be aware that if you include F<$SLASH_PREFIX/slash.conf>
-more than once, or if this file shares contents with directives
-in httpd.conf, that your slash site WILL break. The directives
-in F<$SLASH_PREFIX/slash.conf> should be run only ONCE
-in any any site context.
+or F<$SLASH_PREFIX/sites/sitename/sitename.conf> more than once,
+or if this file shares contents with directives in httpd.conf,
+that your Slash site WILL break. The directives in
+F<$SLASH_PREFIX/slash.conf> should be run only ONCE in any any
+site context.
 
 =item 6.
 

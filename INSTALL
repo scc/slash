@@ -31,7 +31,7 @@ SYNOPSIS
 INSTALLATION
   Installation Notes
 
-    *   For slashd (see utils/slashd, which starts slashd), mod_perl (see
+    *   For slashd (see utils/slash, which starts slashd), mod_perl (see
         httpd/httpd.conf), and MySQL, we set all processes to run in GMT.
         Then it is easy to convert dates to whatever the user's local time
         is. If you have date offset problems, check that all of these are
@@ -184,6 +184,14 @@ INSTALLATION
         $SLASH_PREFIX/slash.conf. You can put its contents into your
         httpd.conf, or you can just "Include" it in your httpd.conf.
 
+        WARNING!
+
+        Please be aware that if you include $SLASH_PREFIX/slash.conf or
+        $SLASH_PREFIX/sites/sitename/sitename.conf more than once, or if
+        this file shares contents with directives in httpd.conf, that your
+        Slash site WILL break. The directives in $SLASH_PREFIX/slash.conf
+        should be run only ONCE in any any site context.
+
     6.  Install your Slash site.
 
         Go to your installation directory (by default, /usr/local/slash) and
@@ -238,6 +246,24 @@ INSTALLATION OPTIONS
     use the same HTML pages for SSL and non-SSL. You don't have to do
     anything special to the code or preferences to allow it to work with SSL
     by itself, SSL and non-SSL together, or non-SSL by itself.
+
+  Non-Root
+
+    It is possible to install and run everything here without root.
+
+    Describing the process for a non-root install would take up significant
+    space and time, having to account for differences in various systems,
+    and all the workarounds necessary for it to work.
+
+    If you must have a non-root install, consult the various documentation
+    for Apache, MySQL, and perl about running and installing without root
+    access. Then, for Slash, you simply need to set the make variables
+    PREFIX, SLASH_PREFIX, and INIT appropriately for your needs.
+
+    Note: Slash (or, more accurately, Apache + mod_perl and MySQL) take up a
+    lot of system resources. It is *not advisable* for anyone to run Slash
+    at all on a system, without the permission of the administrator of that
+    system.
 
 REQUIREMENTS
   Software
@@ -318,11 +344,12 @@ REQUIREMENTS
     There are no specific hardware requirements. Apache (with mod_perl) and
     MySQL both take up a lot of RAM; running a complete system with 128MB
     might be possible, if you do some tuning of the configuration, but a
-    practical minimum 256MB is recommended. Storage space depends on how
-    busy you expect the site to be; 250MB is possible, but a minimum 1GB is
-    recommended. Necessary processor speed is also dependent on how busy the
-    site is; Pentium 133 or equivalent might work, but less than a Pentium
-    II/200 is not recommended.
+    practical minimum 256MB is recommended, though less could be sufficient
+    with some tuning.Storage space depends on how busy you expect the site
+    to be; 250MB is possible, but a minimum 1GB is recommended. Necessary
+    processor speed is also dependent on how busy the site is; Pentium 133
+    or equivalent might work, but less than a Pentium II/200 is not
+    recommended.
 
     For the curious, Slashdot (as of January 2001) runs on eight machines:
     six webservers (each is Pentium III/600, 1GB RAM, 9GB hard drive), one

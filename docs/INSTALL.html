@@ -26,6 +26,7 @@
 		<LI><A HREF="#multiple_servers">Multiple Servers</A></LI>
 		<LI><A HREF="#virtual_hosts">Virtual Hosts</A></LI>
 		<LI><A HREF="#ssl">SSL</A></LI>
+		<LI><A HREF="#nonroot">Non-Root</A></LI>
 	</UL></LI>
 
 	<LI><A HREF="#requirements">REQUIREMENTS</A>
@@ -74,7 +75,7 @@ document, because we know you want to get right into the installation.</P>
 <H2><A NAME="installation_notes">Installation Notes</A></H2>
 <UL>
 <LI>
-For slashd (see <EM>utils/slashd</EM>, which starts slashd),
+For slashd (see <EM>utils/slash</EM>, which starts slashd),
 mod_perl (see <EM>httpd/httpd.conf</EM>), and MySQL, we set all processes
 to run in GMT.  Then it is easy to convert dates to whatever the
 user's local time is.  If you have date offset problems, check that all of
@@ -208,6 +209,13 @@ is _strongly_ recommended):</P>
 <P>When done, a configuration file for Apache will be created at
 <EM>$SLASH_PREFIX/slash.conf</EM>.  You can put its contents into your
 httpd.conf, or you can just <CODE>Include</CODE> it in your httpd.conf.</P>
+<P><STRONG>WARNING!</STRONG></P>
+<P>Please be aware that if you include <EM>$SLASH_PREFIX/slash.conf</EM>
+or <EM>$SLASH_PREFIX/sites/sitename/sitename.conf</EM> more than once,
+or if this file shares contents with directives in httpd.conf,
+that your Slash site WILL break. The directives in
+<EM>$SLASH_PREFIX/slash.conf</EM> should be run only ONCE in any any
+site context.</P>
 <P></P>
 <LI>
 <STRONG>Install your Slash site.</STRONG>
@@ -264,6 +272,20 @@ is the URL without protocol:</P>
 way, you can use the same HTML pages for SSL and non-SSL.  You don't
 have to do anything special to the code or preferences to allow it to
 work with SSL by itself, SSL and non-SSL together, or non-SSL by itself.</P>
+<P>
+<H2><A NAME="nonroot">Non-Root</A></H2>
+<P>It is possible to install and run everything here without root.</P>
+<P>Describing the process for a non-root install would take up significant
+space and time, having to account for differences in various systems,
+and all the workarounds necessary for it to work.</P>
+<P>If you must have a non-root install, consult the various documentation
+for Apache, MySQL, and perl about running and installing without root
+access.  Then, for Slash, you simply need to set the make variables PREFIX,
+SLASH_PREFIX, and INIT appropriately for your needs.</P>
+<P><STRONG>Note</STRONG>: Slash (or, more accurately, Apache + mod_perl and MySQL) take
+up a lot of system resources.  It is <EM>not advisable</EM> for anyone to
+run Slash at all on a system, without the permission of the administrator
+of that system.</P>
 <P>
 <HR>
 <H1><A NAME="requirements">REQUIREMENTS</A></H1>
@@ -370,14 +392,15 @@ distribution.</P>
 </DL>
 <P>
 <H2><A NAME="hardware">Hardware</A></H2>
-<P>There are no specific hardware requirements.  Apache (with mod_perl)
-and MySQL both take up a lot of RAM; running a complete system with
-128MB might be possible, if you do some tuning of the configuration,
-but a practical minimum 256MB is recommended.  Storage space depends
-on how busy you expect the site to be; 250MB is possible, but a minimum
-1GB is recommended.  Necessary processor speed is also dependent on how
-busy the site is; Pentium 133 or equivalent might work, but less than a
-Pentium II/200 is not recommended.</P>
+<P>There are no specific hardware requirements.  Apache (with mod_perl) and
+MySQL both take up a lot of RAM; running a complete system with 128MB
+might be possible, if you do some tuning of the configuration, but a
+practical minimum 256MB is recommended, though less could be sufficient
+with some tuning.Storage space depends on how busy you expect the site
+to be; 250MB is possible, but a minimum 1GB is recommended.  Necessary
+processor speed is also dependent on how busy the site is; Pentium 133
+or equivalent might work, but less than a Pentium II/200 is not
+recommended.</P>
 <P>For the curious, Slashdot (as of January 2001) runs on eight machines:
 six webservers (each is Pentium III/600, 1GB RAM, 9GB hard drive), one
 NFS server (dual PIII/600, 2GB RAM, 2 x 9GB hard drive), and one

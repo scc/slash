@@ -24,17 +24,14 @@ Before asking any questions, please read the relevant documentation.
 	    <A HREF="http://slashcode.com/docs/INSTALL.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Templates [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.txt">ASCII</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.html">HTML</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Themes [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.txt">ASCII</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.html">HTML</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Plugins [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.txt">ASCII</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.html">HTML</A> |
 	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.pod">POD</A>
 	]</LI>
@@ -46,8 +43,19 @@ Before asking any questions, please read the relevant documentation.
 	    <A HREF="http://slashcode.com/docs/slasherd_bender.pdf">PDF</A> |
 	    <A HREF="http://slashcode.com/docs/slasherd_bender.ps">PostScript</A>
 	]</LI>
+	<LI>Slash API Docs<UL>
+		<LI><A HREF="http://slashcode.com/docs/Slash.html">Slash</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-DB.html">Slash::DB</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Display.html">Slash::Display</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility.html">Slash::Utility</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Template.html">Template</A></LI>
+	</UL></LI>
 
-	<LI><A HREF="http://slashcode.com/docs/1.0/">Slash 1.0 Documentation</A></LI>
+	<LI><A HREF="http://slashcode.com/docs/1.0/">(Old) Slash 1.0 Documentation</A></LI>
+
+	<LI><A HREF="http://www.template-toolkit.org/">Template Toolkit</A></LI>
+	<LI><A HREF="http://purl.org/rss/1.0/">RSS</A></LI>
+	<LI><A HREF="http://slashcode.com/rss/1.0/modules/Slash/">RSS Slash Module</A></LI>
 </UL>
 
 <P>
@@ -124,7 +132,7 @@ porting Slashdot to Slash 2.0 (which will result in Slash 2.2).
 <P>
 Well, Slashcode is one.  Look at the <A HREF="http://slashcode.com/sites.shtml">list of Slash sites we know about</A>
 (including sites that host other Slash sites),
-and please <A HREF="http://slashcode.com/submit.pl?tid=slashsites&section=yass">tell us</A> about any other sites
+and please <A HREF="http://slashcode.com/submit.pl?tid=slashsites&amp;section=yass">tell us</A> about any other sites
 we don't know about.
 </P>
 
@@ -189,20 +197,20 @@ or setup, read the <A HREF="#Troubleshooting"
 
 <UL>
 	<LI>Bug reports - Submit bug reports
-	at <A HREF="http://sourceforge.net/tracker/?atid=104421&group_id=4421">SourceForge</A>.</LI>
+	at <A HREF="http://sourceforge.net/tracker/?atid=104421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>Mailing lists -
 	Join the various
-	<A HREF="http://lists.slashdot.org/mailman/listinfo.cgi">mailing lists</A>.
+	<A HREF="http://sourceforge.net/mail/?group_id=4421">mailing lists</A>.
         </LI>
 
 	<LI>Patches - 
 	Please submit patches at
-	<A HREF="http://sourceforge.net/tracker/?atid=304421&group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sourceforge.net/tracker/?atid=304421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>Feature Requests - 
 	Please submit feature requests at
-	<A HREF="http://sourceforge.net/tracker/?atid=354421&group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sourceforge.net/tracker/?atid=354421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>IRC -
 	You'll often find us on <A HREF="http://slashnet.org/">SlashNET</A>
@@ -259,7 +267,7 @@ much we, as lowly application programmers, can do about that :-).
 MySQL and your Perl processes must run in GMT.  That way, it is easy for
 users around the world to set their own timezone in their preferences.
 Read the INSTALL directions about getting MySQL in GMT, and see the supplied
-httpd.conf and util/slashd files about keeping Perl in GMT.
+httpd.conf and util/slash files about keeping Perl in GMT.
 </P>
 
 
@@ -453,6 +461,6 @@ information on how to contact us.  And thank you!
 
 
 
-<P><EM>Last updated Tue Mar  6 18:31:57 2001 GMT</EM></P>
+<P><EM>Last updated Tue Mar 13 20:42:50 2001 GMT</EM></P>
 
 <!--#include virtual="/slashfoot.inc"-->
