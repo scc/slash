@@ -39,7 +39,7 @@ In this issue:[% FOR story = stories.reverse %]
 
 [% story.asciitext; IF story.refs.size %]
 
-[% IF !constants.newsletter_body && story.bodytext %]
+[% IF !constants.newsletter_body && story.bodytext -%]
 This story continues at:
     [% constants.absolutedir %]/article.pl?sid=[% story.sid %]
 
@@ -56,7 +56,7 @@ END %]
 
 
 [% END %]
-Copyright 1997-2001 [% constants.publisher %].  All rights reserved.
+Copyright 1997-2001 [% constants.sitepublisher %].  All rights reserved.
 
 __seclev__
 500

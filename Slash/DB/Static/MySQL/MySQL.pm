@@ -683,8 +683,6 @@ sub setDiscussionHitParade {
 	}
 }
 
-
-
 ########################################################
 # For moderation scripts. 
 #
@@ -711,7 +709,6 @@ sub clearM2Flag {
 		-flag => '0',
 	}, "where flag=10 and id=$id");
 }
-
 
 ########################################################
 # For freshneup.pl
