@@ -114,14 +114,15 @@ sub getSubmissionForUser {
 
 
 ########################################################
-sub getNewstoryTitle {
-	my($self, $storyid, $sid) = @_;
-	my($title) = $self->sqlSelect("title", "newstories",
-		"sid=" . $self->{_dbh}->quote($sid)
-	);
-
-	return $title;
-}
+# This isn't used anywhere and it's obsoleted by story_heap stuff. -Jamie
+#sub getNewstoryTitle {
+#	my($self, $storyid, $sid) = @_;
+#	my($title) = $self->sqlSelect("title", "newstories",
+#		"sid=" . $self->{_dbh}->quote($sid)
+#	);
+#
+#	return $title;
+#}
 
 
 

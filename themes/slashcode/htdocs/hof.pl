@@ -30,7 +30,7 @@ sub main {
 	slashDisplay('main', {
 		width		=> '98%',
 		actives		=> $slashdb->countStories(),
-		visited		=> $slashdb->countStoriesStuff(),
+		visited		=> $slashdb->countStoriesTopHits(),
 		activea		=> $slashdb->countStoriesAuthors(),
 		activep		=> $slashdb->countPollquestions(),
 		currtime	=> scalar localtime,

@@ -48,7 +48,7 @@ sub topTopics {
 			? 3 : $top->{cnt};
 
 		$top->{stories} = getOlderStories(
-			$slashdb->getNewStories($section, $limit, $top->{tid}),
+			$slashdb->getStoriesEssentials($section, $limit, $top->{tid}),
 			$section
 		);
 	}

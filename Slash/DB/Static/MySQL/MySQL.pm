@@ -51,7 +51,7 @@ sub getBackendStories {
 }
 
 ########################################################
-# This is only call if ssi is set
+# This is only called if ssi is set
 sub updateCommentTotals {
 	my($self, $sid, $comments) = @_;
 	my $hp = join ',', @{$comments->[0]{totals}};
@@ -61,42 +61,49 @@ sub updateCommentTotals {
 			commentcount	=> $comments->[0]{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
-	$self->sqlUpdate("newstories", {
-			hitparade	=> $hp,
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $self->{_dbh}->quote($sid)
-	);
+	if (getCurrentStatic('mysql_heap_table')) {
+		$self->sqlUpdate("story_heap", {
+				hitparade	=> $hp,
+				writestatus	=> 0,
+				commentcount	=> $comments->[0]{totals}[0]
+			}, 'sid=' . $self->{_dbh}->quote($sid)
+		);
+	}
 }
 
 ########################################################
 # For slashd
-sub setStoryIndex {
-	my($self, @sids) = @_;
-
-	my %stories;
-
-	for my $sid (@sids) {
-		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
-	}
-	$self->sqlTransactionStart("LOCK TABLES newstories WRITE");
-
-	foreach my $sid (keys %stories) {
-		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
-	}
-
-	$self->sqlTransactionFinish();
-}
+# Does nothing. Back when this was a copy of stories that needed to be
+# periodically updated, this did something.  We should probably just delete
+# this instead of comment it out. -Jamie 2001/06/21
+#
+#sub setStoryIndex {
+#	my($self, @sids) = @_;
+#
+#	my %stories;
+#
+#	for my $sid (@sids) {
+#		$stories{$sid} = $self->sqlSelectHashref("*", "stories", "sid='$sid'");
+#	}
+#	$self->sqlTransactionStart("LOCK TABLES story_heap WRITE");
+#
+#	foreach my $sid (keys %stories) {
+#		$self->sqlReplace("story_heap", $stories{$sid}, "sid='$sid'");
+#	}
+#
+#	$self->sqlTransactionFinish();
+#}
 
 ########################################################
 # For slashd
 sub getNewStoryTopic {
 	my($self) = @_;
 
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $sth = $self->sqlSelectMany(
-				"alttext,image,width,height,newstories.tid",
-				"newstories,topics",
-				"newstories.tid=topics.tid
+				"alttext,image,width,height,$table.tid",
+				"$table,topics",
+				"$table.tid=topics.tid
 				AND displaystatus = 0
 				AND writestatus >= 0
 				AND time < now()
@@ -139,10 +146,10 @@ sub deleteDaily {
 	my $delay2 = $constants->{archive_delay} * 9;
 	$constants->{defaultsection} ||= 'articles';
 
-	$self->sqlDo("DELETE FROM newstories WHERE
-			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
-			or (to_days(now()) - to_days(time) > $delay2)");
-
+# We no longer delete stories or comments that are too old.
+#	$self->sqlDo("DELETE FROM newstories WHERE
+#			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
+#			or (to_days(now()) - to_days(time) > $delay2)");
 #	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 	# Now for some random stuff

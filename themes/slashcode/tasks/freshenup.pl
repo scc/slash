@@ -28,7 +28,7 @@ $task{$me}{code} = sub {
 		push @updatedsids, $sid;
 	}
 
-	$slashdb->setStoryIndex(@updatedsids);
+#	$slashdb->setStoryIndex(@updatedsids); # no longer needed with story_heap
 
 	my $x = 0;
 	# this deletes stories that have a writestatus of 5,

@@ -136,10 +136,6 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Rece
 
 
 
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the slashdotrc.pl to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','',0,0,'articles',0,0,'0,0,0,0,0,0,0','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46','So it took some doing, but it looks like you\'ve got Slash installed and ready to rock.  You can now login using <A href=/admin.pl>backSlash</A>, the Slash Code Administration tool.  The default account is God and whatever password you set during the install.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,1,0,0,0,0','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
-
-
 INSERT INTO pollanswers (qid, aid, answer, votes) VALUES ('icecream',1,'Chocolate',3);
 INSERT INTO pollanswers (qid, aid, answer, votes) VALUES ('icecream',2,'Vanilla',1);
 INSERT INTO pollanswers (qid, aid, answer, votes) VALUES ('icecream',3,'Strawberry',0);
@@ -170,22 +166,6 @@ INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VAL
 
 INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the slashdotrc.pl to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','',1,0,'articles',0,0,'0,0,0,0,0,0,0','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
 INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46','So it took some doing, but it looks like you\'ve got Slash installed and ready to rock.  You can now login using <A href=/admin.pl>backSlash</A>, the Slash Code Administration tool.  The default account is God and whatever password you set during the install.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,1,0,0,0,0','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
-
-
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/17/1440252',24);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/14/1737203',5);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/14/1737236',8);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0035257',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0037255',8);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0042250',0);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1133238',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134204',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134221',0);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134241',22);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/25/1430236',36);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/25/1236215',2);
-
-
 
 
 INSERT INTO submissions (subid, email, name, time, subj, story, tid, note, section, comment, uid, del) VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ','topic1',NULL,'articles',NULL,2,0);

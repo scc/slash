@@ -2214,9 +2214,10 @@ Fixed KEY.
 
 =back
 
-=head2 getNewStories(KEY)
+=head2 getStoriesEssentials(KEY)
 
-I am the default documentation, short and stout.
+Get basic information about stories, suitable for displaying headline type information
+and designed to be fed to getOlderStories.
 
 =over 4
 

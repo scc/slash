@@ -66,13 +66,23 @@ sub selectComments {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $num_scores = $constants->{comment_maxscore} - $constants->{comment_minscore} + 1;
 
 	my $comments; # One bigass struct full of comments
-	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
+	foreach my $x (0..$num_scores-1) {
+		$comments->[0]{totals}[$x] = $comments->[0]{natural_totals}[$x] = 0
+	}
 
 	my $thisComment = $slashdb->getCommentsForUser($header, $cid);
 	for my $C (@$thisComment) {
+		# Let's think about whether we really want to set pid to 0 here.  It may
+		# be a friendlier UI to allow bouncing up to parent comments even though
+		# the comment sort is set to flat. -jamie 2001/06/19
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
+
+		# Tally up this comment in its "natural" score category (before the user's
+		# preferences get a chance to knock it up or down).
+		$comments->[0]{natural_totals}[$C->{points} - $constants->{comment_minscore}]++;
 
 		$C->{points}++ if length($C->{comment}) > $user->{clbig}
 			&& $C->{points} < $constants->{comment_maxscore} && $user->{clbig} != 0;
@@ -86,6 +96,9 @@ sub selectComments {
 		$C->{points} = $constants->{comment_maxscore}
 			if $C->{points} > $constants->{comment_maxscore};
 
+		# Also tally up this comment for the user's personal score.
+		$comments->[0]{totals}[$C->{points} - $constants->{comment_minscore}]++;
+
 		my $tmpkids = $comments->[$C->{cid}]{kids};
 		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
 		$comments->[$C->{cid}] = $C;
@@ -93,7 +106,6 @@ sub selectComments {
 		$comments->[$C->{cid}]{visiblekids} = $tmpvkids;
 
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
-		$comments->[0]{totals}[$C->{points} - $constants->{comment_minscore}]++;  # invert minscore
 		$comments->[$C->{pid}]{visiblekids}++
 			if $C->{points} >= ($user->{threshold} || $constants->{comment_minscore});
 
@@ -102,34 +114,27 @@ sub selectComments {
 
 	my $count = @$thisComment;
 
-	getCommentTotals($comments);
+	# Cascade comment point totals down to the lowest score, so
+	# (2, 1, 3, 5, 4, 2, 1) becomes (18, 16, 15, 12, 7, 3, 1).
+	for my $x (reverse(0..$num_scores-2)) {
+		$comments->[0]{totals}[$x]		+= $comments->[0]{totals}[$x+1];
+		$comments->[0]{natural_totals}[$x]	+= $comments->[0]{natural_totals}[$x+1];
+	}
 
-	#This is broke -Brian
-	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
-
-	my $hp = join ',', @{$comments->[0]{totals}};
-
-	#This is broke -Brian
-	if ($sid) {
+	if ($sid and $form->{ssi}) {
+		my $hp = join ',', @{$comments->[0]{natural_totals}};
+		# could try the hitparade separate column thing by just assigning keys
+		# to its values, it would create params ...
 		$slashdb->setStory($sid, {
 			hitparade	=> $hp,
 			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
+			commentcount	=> $comments->[0]{natural_totals}[0]
 		});
 	}
 
 	reparentComments($comments);
 	return($comments, $count);
 }
-
-########################################################
-sub getCommentTotals {
-	my($comments) = @_;
-	for my $x (0..5) {
-		$comments->[0]{totals}[5-$x] += $comments->[0]{totals}[5-$x+1];
-	}
-}
-
 
 ########################################################
 sub reparentComments {
@@ -760,7 +765,9 @@ Get older stories for older stories box.
 
 =item STORIES
 
-Array ref of the older stories.
+Array ref of the "essentials" of the stories to display, gotten from
+getStoriesEssentials. If empty, pulls the appropriate data from the
+specified section.
 
 =item SECTION
 
@@ -781,43 +788,36 @@ The 'getOlderStories' template block.
 =cut
 
 sub getOlderStories {
-	my($stories, $section) = @_;
-	my($count, $newstories, $today, $stuff);
+	my($stories_essentials, $section) = @_;
+	my($count, $stories_bigarray, $today, $stuff);
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories ||= $slashdb->getNewStories($section);
-	for (@$stories) {
-		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_};
-		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
-		push @$newstories, {
-			sid		=> $sid,
-			section		=> $sect,
-			title		=> $title,
-			'time'		=> $time,
-			commentcount	=> $commentcount,
-			day		=> $day,
-			w		=> $w,
-			'm'		=> $m,
-			d		=> $d,
-			h		=> $h,
-			min		=> $min,
-			ampm		=> $ampm,
-			'link'		=> linkStory({
-				'link'	=> $title,
-				sid	=> $sid,
-				section	=> $sect
-			})
-		};
+	$stories_essentials ||= $slashdb->getStoriesEssentials($section);
+	for $sr (@$stories_essentials) {
+
+		my @wordy_split = split / /, $sr->{wordytime};
+		my %wordy_split = map {
+		for my $i (0..5) {
+			$sr->{ qw( w m d h min ampm )[$_] } = $wordy_split[$_]
+		}
+		$sr->{link} = linkStory({
+			link	=> $sr->{title},
+			sid	=> $sr->{sid},
+			section	=> $sr->{section},
+		});
+warn "Ready for bigarray: %$sr";
+		push @$stories_bigarray, $sr;
+
 	}
 
 	my $yesterday = $slashdb->getDay() unless $form->{issue} > 1 || $form->{issue};
 	$yesterday ||= int($form->{issue}) - 1;
 
 	slashDisplay('getOlderStories', {
-		stories		=> $newstories,
+		stories		=> $stories_bigarray,
 		section		=> $section,
 		yesterday	=> $yesterday,
 		start		=> $section->{artcount} + $form->{start},

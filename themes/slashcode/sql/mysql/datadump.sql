@@ -200,14 +200,6 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Rece
 
 
 #
-# Dumping data for table 'newstories'
-#
-
-
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0', 1);
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0', 2);
-
-#
 # Dumping data for table 'pollanswers'
 #
 
@@ -258,8 +250,16 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0', 1);
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0', 2);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 1);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 2);
+
+#
+# Dumping data for table 'story_heap'
+#
+
+
+INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 1);
+INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 2);
 
 #
 # Dumping data for table 'story_text'
@@ -267,22 +267,6 @@ INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus
 
 INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES ('00/01/25/1236215','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the variables (in the admin menu) to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>');
 INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES ('00/01/25/1430236','So it took some doing (hopefully not too much), and it looks like you\'ve got Slash installed and ready to rock.  You can now use <A href="/admin.pl">backSlash</A>, the Slash Code Administration tool, if you are logged in as the admin user you set up during installation.  And you might wanna start posting some stories too.','','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>');
-#
-# Dumping data for table 'storiestuff'
-#
-
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/17/1440252',24);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/14/1737203',5);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/14/1737236',8);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0035257',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0037255',8);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/0042250',0);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1133238',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134204',1);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134221',0);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/16/1134241',22);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/25/1430236',36);
-INSERT INTO storiestuff (sid, hits) VALUES ('00/01/25/1236215',2);
 
 #
 # Dumping data for table 'story_param'

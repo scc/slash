@@ -546,9 +546,14 @@ sub createAccessLog {
 	}, 2);
 
 	if ($dat =~ /\//) {
-		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' },
+		$self->sqlUpdate('stories', { -hits => 'hits+1' },
 			'sid=' . $self->{_dbh}->quote($dat)
 		);
+		if (getCurrentStatic('mysql_heap_table')) {
+			$self->sqlUpdate('story_heap', { -hits => 'hits+1' },
+				'sid=' . $self->{_dbh}->quote($dat)
+			);
+		}
 	}
 }
 
@@ -1033,7 +1038,7 @@ sub setStoryCount {
 	}, 'sid=' . $self->sqlQuote($sid));
 
 	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlUpdate('newstories', {
+		$self->sqlUpdate('story_heap', {
 			-commentcount	=> "commentcount-$count",
 			writestatus	=> 1
 		}, 'sid=' . $self->sqlQuote($sid));
@@ -1435,7 +1440,7 @@ sub deleteStoryAll {
 	$self->sqlDo("DELETE from stories where sid=$db_sid");
 	$self->sqlDo("DELETE from story_text where sid=$db_sid");
 	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlDo("DELETE from newstories where sid=$db_sid");
+		$self->sqlDo("DELETE from story_heap where sid=$db_sid");
 	}
 }
 
@@ -1471,7 +1476,7 @@ sub setStory {
 		}
 		$self->sqlUpdate($table, \%minihash, 'sid=' . $sid, 1);
 		if (getCurrentStatic('mysql_heap_table') and $table eq 'stories') {
-			$self->sqlUpdate('newstories', \%minihash, 'sid=' . $sid, 1);
+			$self->sqlUpdate('story_heap', \%minihash, 'sid=' . $sid, 1);
 		}
 	}
 
@@ -1818,7 +1823,7 @@ sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt", "topics,$table",
 		"topics.tid=$table.tid
 		$when
@@ -2038,7 +2043,7 @@ sub getStoryByTime {
 	$where .= "   AND sid != '$story->{'sid'}'";
 
 	my $time = $story->{'time'};
-	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $returnable = $self->sqlSelectHashref(
 			'title, sid, section', $table,
 			"time $sign '$time' AND writestatus >= 0 AND time < now() $where",
@@ -2142,10 +2147,10 @@ sub countUsers {
 }
 
 ########################################################
-sub countStoriesStuff {
+sub countStoriesTopHits {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,users.nickname",
-		"stories,storiestuff,users", "stories.sid=storiestuff.sid AND stories.uid=users.uid",
+	my $stories = $self->sqlSelectAll("sid,title,section,hits,users.nickname",
+		"stories,users", "stories.uid=users.uid",
 		"ORDER BY hits DESC LIMIT 10"
 	);
 	return $stories;
@@ -2346,7 +2351,7 @@ sub getComments {
 }
 
 ########################################################
-sub getNewStories {
+sub getStoriesEssentials {
 	my($self, $section, $limit, $tid, $section_display) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -2358,8 +2363,8 @@ sub getNewStories {
 		? $user->{maxstories}
 		: $self->getSection($section, 'artcount');
 
-	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
-	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $columns = 'sid, uid, commentcount, title, section, time, hits, hitparade';
 
 	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
 	$where .= "AND displaystatus=0 " unless $form->{section};
@@ -2377,14 +2382,30 @@ sub getNewStories {
 	# We need to check up on this later for performance -Brian
 	my(@stories, $count);
 	my $cursor = $self->sqlSelectMany($columns, $table, $where, $other)
-		or errorLog("error in getStories columns $columns table $table where $where other $other");
+		or errorLog("error in getStoriesEssentials columns $columns table $table where $where other $other");
 
-	while (my(@data) = $cursor->fetchrow) {
-		formatDate([\@data], 3, 3, '%A %B %d %I %M %p');
-		formatDate([\@data], 5, 5, '%Q');
-		next if $form->{issue} && $data[5] > $form->{issue};
-		push @stories, [@data];
+	while (my $row = $cursor->fetchrow_hashref) {
+
+		# We'll end up with these keys (sample values):
+		# yyyy (2001)		MM (06)		dd (21)
+		# hh (13)		mm (27)		ss (11)
+		# mon ("Jun")		day (20010621)	wordytime ("Sunday June 21 12:34 PM")
+		my @timesplit = split /\D+/, $row->{'time'};
+		for my $i (0..$#timesplit) {
+			$row->{ qw( yyyy MM dd hh mm ss )[$i] } = $timesplit[$i];
+		}
+		formatDate([ $row ], 'time', 'day', '%Q');
+warn "Essentials1: " . join(" ", %$row);
+
+		# If we're not back to the day the user asked for, skip it.
+		next if $form->{issue} and $row->{day} > $form->{issue};
+
+		$row->{mon} = $Date$Date$row->{MM}-1];
+		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
+warn "Essentials2: " . join(" ", %$row);
+		push @stories, [ $row ];
 		last if ++$count >= $limit;
+
 	}
 	$cursor->finish;
 
@@ -2545,8 +2566,6 @@ sub createStory {
 	my $sid = sprintf('%02d/%02d/%02d/%02d%0d2%02d',
 		$year, $mon+1, $mday, $hour, $min, $sec);
 
-	$self->sqlInsert('storiestuff', { sid => $sid });
-
 	# If this came from a submission, update submission and grant
 	# Karma to the user
 	my $suid;
@@ -2600,7 +2619,7 @@ sub createStory {
 	$self->sqlInsert('stories', $data);
 	$self->sqlInsert('story_text', $text);
 	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlInsert('newstories', $data);
+		$self->sqlInsert('story_heap', $data);
 	}
 	$self->_saveExtras($story);
 
@@ -2794,6 +2813,7 @@ sub getTime {
 # Should this really be in here? -- krow
 # dunno ... sigh, i am still not sure this is best
 # (see getStories()) -- pudge
+# As of now, getDay is only used in Slash.pm getOlderStories() -- jamie
 sub getDay {
 #	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
@@ -2808,11 +2828,12 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, uid, time, tid, section,
+	my $sql = q[SELECT hits, commentcount, sid, title, uid, time, tid, section,
 			displaystatus,writestatus
-			FROM stories,storiestuff
-			WHERE storiestuff.sid=stories.sid];
+			FROM $table
+			WHERE 1=1];
 	$sql .= "	AND section='$user->{section}'" if $user->{section};
 	$sql .= "	AND section='$form->{section}'" if $form->{section} && !$user->{section};
 	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
@@ -2848,14 +2869,12 @@ sub _saveExtras {
 }
 
 ########################################################
-#I will rewrite this later -Brian
-# We make use of newstories if it exists since it will
-# be heap. Throw out what you know about newstories
-# BTW. This works quite differently. -Brian
+# We make use of story_heap if it exists, it will be much
+# faster than stories.
 sub getStory {
 	my($self, $id, $val, $cache_flag) = @_;
-	# Lets see if we can use newstories
-	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	# Lets see if we can use story_heap
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# We need to expire stories
 	_genericCacheRefresh($self, $table, getCurrentStatic('story_expire'));
 	my $table_cache = '_' . $table . '_cache';
@@ -2914,7 +2933,7 @@ sub getStory {
 # wanted the meta data, didn't want to worry
 # about cache. -Brian
 sub getNewStory {
-	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $answer = _genericGet($table, 'sid', '', @_);
 	return $answer;
 }

@@ -319,31 +319,6 @@ CREATE TABLE moderatorlog (
 
 
 #
-# Table structure for table 'newstories'
-#
-
-DROP TABLE IF EXISTS newstories;
-CREATE TABLE newstories (
-  sid char(16) DEFAULT '' NOT NULL,
-  tid int(10) NOT NULL,
-  uid int(11) NOT NULL,
-  commentcount int(1) DEFAULT '0',
-  title varchar(100) DEFAULT '' NOT NULL,
-  dept varchar(100),
-  time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  writestatus int(1) DEFAULT '0' NOT NULL,
-  hits int(1) DEFAULT '0' NOT NULL,
-  section varchar(30) DEFAULT '' NOT NULL,
-  displaystatus int(1) DEFAULT '0' NOT NULL,
-  commentstatus int(1),
-  hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-  discussion int(16),
-  PRIMARY KEY (sid),
-  KEY time (time),
-  KEY searchform (displaystatus,time)
-) TYPE=heap;
-
-#
 # Table structure for table 'pollanswers'
 #
 
@@ -446,6 +421,7 @@ CREATE TABLE stories (
   dept varchar(100),
   time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   writestatus int(1) DEFAULT '0' NOT NULL,
+  hits int(1) DEFAULT '0' NOT NULL,
   section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
@@ -455,6 +431,31 @@ CREATE TABLE stories (
   KEY time (time),
   KEY searchform (displaystatus,time)
 );
+
+#
+# Table structure for table 'story_heap'
+#
+
+DROP TABLE IF EXISTS story_heap;
+CREATE TABLE story_heap (
+  sid char(16) DEFAULT '' NOT NULL,
+  tid int(10) NOT NULL,
+  uid int(11) NOT NULL,
+  commentcount int(1) DEFAULT '0',
+  title varchar(100) DEFAULT '' NOT NULL,
+  dept varchar(100),
+  time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  writestatus int(1) DEFAULT '0' NOT NULL,
+  hits int(1) DEFAULT '0' NOT NULL,
+  section varchar(30) DEFAULT '' NOT NULL,
+  displaystatus int(1) DEFAULT '0' NOT NULL,
+  commentstatus int(1),
+  hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
+  discussion int(16),
+  PRIMARY KEY (sid),
+  KEY time (time),
+  KEY searchform (displaystatus,time)
+) TYPE=heap;
 
 #
 # Table structure for table 'stories'
@@ -481,17 +482,6 @@ CREATE TABLE story_param (
   value varchar(254) DEFAULT '' NOT NULL,
   UNIQUE story_key (sid,name),
   PRIMARY KEY (param_id)
-);
-
-#
-# Table structure for table 'storiestuff'
-#
-
-DROP TABLE IF EXISTS storiestuff;
-CREATE TABLE storiestuff (
-  sid char(16) DEFAULT '' NOT NULL,
-  hits int(1) DEFAULT '0' NOT NULL,
-  PRIMARY KEY (sid)
 );
 
 #

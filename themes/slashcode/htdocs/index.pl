@@ -40,9 +40,9 @@ sub main {
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section});
 
-	my $stories = $slashdb->getNewStories($section->{section});
-	my $Stories = displayStories($stories);
-	my $StandardBlocks = displayStandardBlocks($section, $stories);
+	my $stories_essentials = $slashdb->getStoriesEssentials($section->{section});
+	my $Stories = displayStories($stories_essentials);
+	my $StandardBlocks = displayStandardBlocks($section, $stories_essentials);
 
 	slashDisplay('index', {
 		is_moderator	=> scalar $slashdb->checkForMetaModerator($user),
@@ -116,7 +116,7 @@ sub rmBid {
 
 #################################################################
 sub displayStandardBlocks {
-	my($section, $olderStuff) = @_;
+	my($section, $older_stories_essentials) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -143,13 +143,13 @@ sub displayStandardBlocks {
 				$bid
 			);
 
-		} elsif ($bid =~ /_more$/ && $olderStuff) {
+		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				getData('morehead'),
-				getOlderStories($olderStuff, $section),
+				getOlderStories($older_stories_essentials, $section),
 				$bid
-			) if @$olderStuff;
+			) if @$older_stories_essentials;
 
 		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
 			# do nothing!
@@ -189,7 +189,7 @@ sub displayStandardBlocks {
 #################################################################
 # pass it how many, and what.
 sub displayStories {
-	my($stories) = @_;
+	my($stories_essentials) = @_;
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form      = getCurrentForm();
@@ -202,8 +202,9 @@ sub displayStories {
 	# shift them off, so we do not display them in the Older
 	# Stuff block later (simulate the old cursor-based
 	# method)
-	while ($_ = shift @{$stories}) {
-		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
+	for my $story_essentials (@$stories_essentials) {
+		my($sid, $thissection, $title, $time, $cc, $d, $hp) =
+			@$story_essentials{qw( sid section title time commentcount day hitparade )};
 		my @links;
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
 		my($storytext, $story) = displayStory($sid);
