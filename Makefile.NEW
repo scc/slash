@@ -36,6 +36,9 @@ SBINFILES = `find sbin -name CVS -prune -o -type f -print`
 THEMEFILES = `find themes -name CVS -prune -o -name \*.pl -print`
 PLUGINFILES = `find plugins -name CVS -prune -o -name \*.pl -print`
 
+# What do we use to invoke perl?
+REPLACEWITH = `$(PERL) -MConfig -e 'print $$Config{startperl}' | sed 's/@/\\@/g'`
+
 #   install the shared object file into Apache 
 # We should run a script on the binaries to get the right
 # version of perl. 
@@ -60,22 +63,22 @@ plugins:
 
 all: install
 
-install: slash plugins
+install: #slash plugins
 # Need to toss in a script here that will fix prefix so
 # that if someone wants to install in a different
 # directory it will be easy
 	# Lets go install the libraries
-	(cd Slash; make install)
+	#(cd Slash; make install)
 	# Lets go install the plugin's libraries
-	if ! [ $(RPM) ] ; then \
-		(cd plugins/Search; $(PERL) Makefile.PL; make install); \
-		(cd plugins/Journal; $(PERL) Makefile.PL; make install); \
-		(cd plugins/Ladybug; $(PERL) Makefile.PL; make install); \
+	#if ! [ $(RPM) ] ; then \
+		#(cd plugins/Search; $(PERL) Makefile.PL; make install); \
+		#(cd plugins/Journal; $(PERL) Makefile.PL; make install); \
+		#(cd plugins/Ladybug; $(PERL) Makefile.PL; make install); \
 	else \
-		(cd plugins/Search; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
-                (cd plugins/Journal; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
-                (cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
-	fi
+		#(cd plugins/Search; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
+    	#(cd plugins/Journal; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
+		#(cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
+	#fi
 
 	# Create all necessary directories.
 	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/ $(PREFIX)/httpd/
@@ -85,17 +88,23 @@ install: slash plugins
 	# may or may not exist on any given system.
 	# <jamie> I would suggest, Cliff, instead of using sed to write temp files to /tmp, use perl -i.bak -pe, and delete the .bak files immediately afterwards.
 	# <jamie> Writing files with predictable names to /tmp and then assuming they still contain the same data 140 microseconds later is a small but nonzero security risk...
-	(if [ "$(PERL)" != "perl" ]; then \
-		replacewith=`$(PERL) -MConfig -e 'print $$Config{startperl}' | sed -e 's/\([.?/*]\)/\\\\\1/g'`; \
-		echo "REPLACEWITH=$$replacewith"; \
-		for f in $(BINFILES) $(SBINFILES) $(THEMEFILES) $(PLUGINFILES); do \
+	(replacewith=$(REPLACEWITH); \
+	 binfiles=$(BINFILES); \
+	 sbinfiles=$(SBINFILES); \
+	 themefiles=$(THEMEFILES); \
+	 pluginfiles=$(PLUGINFILES); \
+	 echo "$$replacewith"; \
+	 if [ "$$replacewith" != "#!/usr/bin/perl" ]; then \
+		for f in $$binfiles $$sbinfiles $$themefiles $$pluginfiles; do \
 			b=`echo $$f | $(PERL) -MFile::Basename -e 'print basename(<STDIN>)'`; \
 			d=`echo $$f | $(PERL) -MFile::Basename -e 'print dirname(<STDIN>)'`; \
-			cat $$f | sed -e "s|#!/usr/bin/perl|$$replacewith|" > \
-				/tmp/$$b.temp; \
-			install -D /tmp/$$b.temp $(PREFIX)/$$d/$$b; \
-			rm /tmp/$$b.temp; \
-			echo "Installing $$f in $(PREFIX)/$$d"; \
+			$(PERL) -i.bak -pe "s@#!/usr/bin/perl@$$replacewith@ if $$. == 1" $$f; \
+			if [ -f "$$f.bak" ]; then \
+				echo "Installing '$$f' in $(PREFIX)/$$d"; \
+				install -d $(PREFIX)/$$d; \
+				install $$f $(PREFIX)/$$d/$$b; \
+				rm $$f; mv $$f.bak $$f; \
+			fi; \
 		done; \
 	fi)
 
