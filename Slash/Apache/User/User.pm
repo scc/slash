@@ -16,7 +16,7 @@ use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
 use URI ();
-use vars qw($REVISION $VERSION @ISA);
+use vars qw($REVISION $VERSION @ISA @QUOTES);
 
 ($REVISION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 $VERSION = '0.01';
@@ -51,6 +51,8 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $slashdb = $dbcfg->{slashdb};
 
+	$r->header_out('X-Powered-By' => 'Slashcode');
+	random($r);
 	# let pass unless / or .pl
 	my $uri = $r->uri;
 	if ($constants->{rootdir}) {
@@ -59,7 +61,8 @@ sub handler {
 	}
 
 	unless ($cfg->{auth}) {
-		unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) {
+		#unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) 
+		unless ($uri =~ m[(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			createCurrentUser();
 			createCurrentForm();
@@ -103,6 +106,8 @@ sub handler {
 					: $uri
 			);
 			# not working ... move out into users.pl and index.pl
+			# I may know why this is the case, we may need
+			# to send a custom errormessage. -Brian
 #			$r->err_header_out(Location => $newurl);
 #			return REDIRECT;
 		}
@@ -112,6 +117,9 @@ sub handler {
 		# well, uid is undef here ... can't use it to test
 		# until it is defined :-) -- pudge
 		# Went boom without if. --Brian
+		# When did we comment out this? This means that even
+		# if an author logs out, the other authors will
+		# not know about it. Bad....
 		#$slashdb->deleteSession(); #  if $slashdb->getUser($uid, 'seclev') >= 99;
 		delete $cookies->{user};
 		setCookie('user', '');
@@ -141,11 +149,15 @@ sub handler {
 	# or just a cheesy CGI, they would never see it.
 	$r->subprocess_env(SLASH_USER => $uid);
 
+	# This is only used if you have used the directive
+	# to disallow logins to your site.
+	# I need to complete this as a feature. -Brian
 	return DECLINED if $cfg->{auth} && isAnon($uid);
 
 	createCurrentUser(prepareUser($uid, $form, $uri, $cookies));
 	createCurrentForm($form);
 	createEnv($r) if $cfg->{env};
+	authors($r) if $form->{'slashcode_authors'};
 
 	return OK;
 }
@@ -165,6 +177,20 @@ sub createEnv {
 		$r->subprocess_env("FORM_$key" => $val);
 	}
 
+}
+
+########################################################
+# These are very import, do not delete these
+sub random {
+	my($r) = @_;
+	$r->header_out(BENDER => $QUOTES[int(rand(@QUOTES))]);
+}
+
+sub authors {
+	my($r) = @_;
+	$r->header_out('X-Author-Krow' => "You can't grep a dead tree");
+	$r->header_out('X-Author-Pudge' => "I like CHEESE");
+	$r->header_out('X-Author-CaptTofu' => "I like Tofu");
 }
 
 ########################################################
@@ -190,6 +216,27 @@ sub userLogin {
 ########################################################
 #
 sub DESTROY { }
+
+@QUOTES = (
+'Fry, of all the friends I\'ve had ... you\'re the first.',
+'I hate people who love me.  And they hate me.',
+'Oh no! Not the magnet! ',
+'Bender\'s a genius! ',
+'Well I don\'t have anything else planned for today, let\'s get drunk!',
+'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackOh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blToo much work!  I say we burn it, then *say* we dumped it in the sewer!',
+'Oh, so, just \'cause a robot wants to kill humans that makes him a radical?',
+'There\'s nothing wrong with murder, just as long as you let Bender whet his beak.Naw, she\'ll probably have me do it.',
+'Bite my shiny, metal ass!',
+'The laws of science be a harsh mistress.',
+'In the event of an emergency, my ass can be used as a flotation device. ',
+'Like most of life\'s problems, this one can be solved with bending.',
+'Honey, I wouldn\'t talk about taste if I was wearing a lime green tank top.',
+'A woman like that you gotta romance first!',
+'OK, but I don\'t want anyone thinking we\'re robosexuals.',
+'Hey Fry, I\'m steering with my ass! ',
+'Care to contribute to the Anti-Mugging-You Fund?',
+);
+
 
 1;
 

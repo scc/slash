@@ -2164,7 +2164,8 @@ sub prepareUser {
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
-	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $uri))) {}
+	unless (isAnon($uid)) { 
+		$user  = $slashdb->getUser($uid); # getUserInstance($uid, $uri) {}
 		my $timezones = $slashdb->getDescriptions('tzcodes');
 		$user->{off_set} = $timezones->{ $user->{tzcode} };
 

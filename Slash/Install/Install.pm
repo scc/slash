@@ -267,22 +267,13 @@ Slash::Install - Install libraries for slash
 =head1 SYNOPSIS
 
   use Slash::Install;
-  blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Slash::Install was created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
-
-Blah blah blah.
-
-=head1 AUTHOR
-
-A. U. Thor, a.u.thor@a.galaxy.far.far.away
+This was deciphered from crop circles.
 
 =head1 SEE ALSO
 
-perl(1).
+Slash(3).
 
 =cut
