@@ -223,7 +223,7 @@ sub getRDF {
 	} else {
 		my $str;
 		foreach my $item (@{$rss->{items}}) {
-			$str .= qq!<LI><A HREF="$item->{'link'}">$item->{title}</A> [?]</LI>\n!;
+			$str .= qq!<LI><A HREF="$item->{'link'}">$item->{title}</A></LI>\n!;
 		}
 		setblock($bid, "$str$other");
 		return 1;
