@@ -47,9 +47,11 @@ __template__
 
 				[% INCLUDE formLabel value => "No images were found in the topic images directory" %]
 					([% constants.basedir %]/images/topics).<BR>
-					<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]"><BR><BR>
+					<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]">
 
 				[% END %]
+			Or enter image URL:
+			<INPUT TYPE="TEXT" LENGTH="40" NAME="image2"><BR>
 
 			<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic">
 			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">

@@ -21,7 +21,7 @@ getUserAdmin
 __template__
 
 [% IF userinfo_flag %]
-	[% IF checked.ip || checked.subnet %]
+	[% IF uidstruct %]
 <BR>
 <TABLE BORDER="0">
 	<TR>
@@ -29,7 +29,7 @@ __template__
 	</TR>
 		[% FOREACH tmpuid = uidstruct.keys %]
 	<TR>
-		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield_flag=uid&amp;userfield=[% tmpuid %]"
+		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield=[% tmpuid %]"
 		>[% tmpuid %] &nbsp; [% uidstruct.$tmpuid %]</A>	
 		</TD>
 	</TR>
@@ -37,7 +37,7 @@ __template__
 </TABLE>
 	[% END %]
 
-	[% IF checked.uid|| checked.nickname %]
+	[% IF iplist %]
 <BR>
 <TABLE BORDER="0">
 	<TR>
@@ -45,7 +45,7 @@ __template__
 	</TR>
 		[% FOREACH tmpip = iplist %]
 	<TR>
-		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield_flag=ip&amp;userfield=[% tmpip.0 %]"
+		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield=[% tmpip.0 %]"
 		>[% tmpip.0 %]</A>	
 		</TD>
 	</TR>
@@ -79,37 +79,8 @@ __template__
 	        <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
 [% END %]
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="admin">
-		<TD>
-		<TABLE>
-			<TR>
-				<TD>
-				<TABLE>
-					<TR>
-						<TD><B>User ID</B></TD>
-						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="uid"[% checked.uid %]></TD>
-					</TR>
-					<TR>
-						<TD><B>Nickname</B></TD>
-						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="nickname"[% checked.nickname %]></TD>
-					</TR>
-				</TABLE>
-				</TD>
-				<TD>
-				<TABLE>
-					<TR>
-						<TD><B>IP</B></TD>
-						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="ip"[% checked.ip %]></TD>
-					</TR>
-					<TR>
-						<TD><B>Subnet</B></TD>
-						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="subnet"[% checked.subnet %]></TD>
-					</TR>
-				</TABLE>
-				</TD>
-			</TR>
-		</TABLE>
-		</TD>			
-		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; userfield; END %]"></TD>
+		<TD VALIGN="MIDDLE"><B>UID/NetID/Nickname:</B> 
+		<INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
 		<TD VALIGN="MIDDLE">
 		<TABLE>
 			<TR>

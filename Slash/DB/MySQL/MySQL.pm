@@ -851,7 +851,7 @@ sub getCommentsByUID {
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE uid=$uid "
-			. " ORDER BY date DESC LIMIT $min,50 ";
+			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -867,7 +867,7 @@ sub getCommentsByNetID {
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE ipid='$id' "
-			. " ORDER BY date DESC LIMIT $min,50 ";
+			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -883,7 +883,7 @@ sub getCommentsBySubnetID{
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE subnetid='$subnetid' "
-			. " ORDER BY date DESC LIMIT $min,50 ";
+			. " ORDER BY date DESC LIMIT $min ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -1369,9 +1369,10 @@ sub saveTopic {
 	my($self, $topic) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'topics', "tid=$topic->{tid}");
 	if ($rows == 0) {
+		my $image = $topic->{image2} ? $topic->{image2} : $topic->{image};
 		$self->sqlInsert('topics', {
 			name	=> $topic->{name},
-			image	=> $topic->{image},
+			image	=> $image,
 			alttext	=> $topic->{alttext},
 			width	=> $topic->{width},
 			height	=> $topic->{height}
@@ -1857,6 +1858,8 @@ sub checkResponseTime {
 
 #	if ($constants->{DEBUG}) {
 	if (1) { # this looks fishy to me, let's check it - Jamie
+		# what? huh? - Patrick. If you wanna test, just
+		# set a var called DEBUG, to 1
 		print STDERR "SQL select $now - ts from formkeys where formkey = '$form->{formkey}'\n";
 		print STDERR "LIMIT REACHED $response_time\n";
 	}
