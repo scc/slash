@@ -286,7 +286,6 @@ while(my $dir = readdir(TEMPLATEDIR)) {
 	next if $dir =~ /^\.$/;
 	next if $dir =~ /^\.\.$/;
 	next if $dir =~ /^CVS$/;
-print "Trying $theme/templates/$dir\n";
 	my $template = $install->readTemplateFile("$theme/templates/" . $dir);
 	next unless $template;
 	$slashdb->createTemplate($template);

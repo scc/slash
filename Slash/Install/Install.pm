@@ -9,6 +9,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use DBIx::Password;
 use Slash;
 use Slash::DB::Utility;
+use Slash::DB;
 use File::Copy;
 use File::Find;
 use File::Path;
@@ -192,8 +193,10 @@ sub _install {
 		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images";
 	}
 	if($plugin->{'template'}) {
+		my $slash = Slash::DB->new($self->{virtual_user});
 		for(@{$plugin->{'template'}}) {
-			my $template = $self->readTemplateFile();
+			my $template = $self->readTemplateFile("$plugin->{'dir'}/$_");
+			$slash->createTemplate($template) if $template;
 		}
 	}
 	if ($plugin->{note}) {
@@ -226,7 +229,10 @@ sub getPluginList {
 			$key = lc($key);
 			if( $key eq 'htdoc' ) {
 				push (@{$plugins{$dir}->{$key}}, $val);
+			} elsif ( $key eq 'template' ){
+				push (@{$plugins{$dir}->{$key}}, $val);
 			} elsif ( $key eq 'image' ){
+				push (@{$plugins{$dir}->{$key}}, $val);
 			} else {
 				$plugins{$dir}->{$key} = $val;
 			}
