@@ -817,7 +817,7 @@ sub listtopics {
 	my $x = 0;
 
 	print qq[\n<!-- begin listtopics -->\n<TABLE WIDTH="600" ALIGN="CENTER">];
-	for my $topic (%$topics) {
+	for my $topic (values %$topics) {
 		if ($x == 0) {
 			print "<TR>\n";
 		} elsif ($x++ % 6) {
