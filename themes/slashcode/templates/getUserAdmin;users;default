@@ -50,8 +50,8 @@ __template__
 		[% FOREACH tmpip = iplist %]
 	<TR>
 		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield=[% tmpip.0 %]"
-		>[% tmpip.4 %]</A> ([% tmpip.3 %], [% tmpip.1 %]
-		[% IF tmpip.1 != tmpip.2 %] to [% tmpip.2; END %])
+		>[% tmpip.4 %]</A> ([% tmpip.3 %], [% tmpip.1;
+		IF tmpip.1 != tmpip.2 %] to [% tmpip.2; END %])
 		</TD>
 	</TR>
 		[% END %]
