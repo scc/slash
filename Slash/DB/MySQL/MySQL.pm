@@ -130,6 +130,9 @@ my %descriptions = (
 	'forms'
 		=> sub { $_[0]->sqlSelectMany('value,value', 'site_info', "name = 'form'") },
 
+	'journal_discuss'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='journal_discuss'") },
+
 );
 
 ########################################################
@@ -610,6 +613,7 @@ sub getDescriptions {
 
 	$altdescs ||= {};
 	my $descref = $altdescs->{$codetype} || $descriptions{$codetype};
+	return $codeBank_hash_ref unless $descref;
 
 	my $sth = $descref->(@_);
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -3036,9 +3040,9 @@ sub autoUrl {
 }
 
 #################################################################
-# link to Everything2 nodes
+# link to Everything2 nodes --- should be elsewhere (as should autoUrl)
 sub linkNode {
-	my ($title) = @_;
+	my($title) = @_;
 	my $link = URI->new("http://www.everything2.com");
 	$link->query("node=$title");
 
