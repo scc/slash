@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '2.10';
+$Bundle::Slash::VERSION = '2.11';
 
 1;
 
@@ -35,13 +35,17 @@ MIME::Base64            - why after URI if URI needs it?
 
 Bundle::LWP		- URI,HTML::Parser,MIME::Base64
 
+HTML::Element           - For doing HTML-to-text
+
+Font::AFM               - ditto
+
+HTML::FormatText        - ditto
+
 XML::Parser
 
 XML::RSS
 
 DBI
-
-DBI::FAQ
 
 Data::ShowTable
 
@@ -70,8 +74,6 @@ Image::Size
 Date::Manip             - Still needed, but not for long
 
 Date::Parse		- TimeDate
-
-Time::ParseDate         - Time-modules
 
 Time::HiRes
 

@@ -77,7 +77,7 @@ sub findComments {
 
 	# Welcome to the join from hell -Brian
 	my $where;
-	$where .= " AND comments.sid = discussions.id ";
+	$where .= " comments.sid = discussions.id ";
 	$where .= " AND discussions.sid = stories.sid ";
 	$where .= "	  AND $key "
 			if $form->{query};

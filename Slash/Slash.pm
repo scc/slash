@@ -526,7 +526,6 @@ sub displayThread {
 			$return .= $const->{indentend} if $indent;
 			$return .= $const->{cageend} if $cagedkids;
 		}
-		
 
 		$return .= $const->{commentend} if $finish_list;
 

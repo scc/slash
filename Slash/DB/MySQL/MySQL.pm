@@ -358,7 +358,7 @@ sub getMetamodComments {
 	# of comments.
 	if ($num) {
 		my @list = @{$M2mods};
-		map { $_ = $_->{id} } @list;
+		$_ = $_->{id} for @list;
 		local $" = ', ';
 		errorLog(<<EOT);
 M2 - Gave U#$user->{uid} less than $num_comments comments: [@list]
