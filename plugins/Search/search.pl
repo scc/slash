@@ -68,7 +68,7 @@ sub main {
 		# Here, panic mode is handled without needing to call the
 		# individual search subroutines;  we're going to tell the
 		# user the same thing in each case anyway.
-		if ($constants->{panic} >= 1) {
+		if ($constants->{panic} >= 1 or $constants->{search_google}) {
 			slashDisplay('nosearch');
 		} else {
 			slashDisplay('searchform', {
@@ -253,7 +253,7 @@ sub commentSearchRSS {
 
 	my $start = $form->{start} || 0;
 	my $comments;
-	if ($constants->{panic} >= 1) {
+	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$comments = [ ];
 	} else {
 		$comments = $searchDB->findComments($form, $start, 15);
@@ -285,7 +285,7 @@ sub userSearchRSS {
 
 	my $start = $form->{start} || 0;
 	my $users;
-	if ($constants->{panic} >= 1) {
+	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$users = [ ];
 	} else {
 		$users = $searchDB->findUsers($form, $start, 15);
@@ -317,7 +317,7 @@ sub storySearchRSS {
 
 	my $start = $form->{start} || 0;
 	my $stories;
-	if ($constants->{panic} >= 1) {
+	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$stories = [ ];
 	} else {
 		$stories = $searchDB->findStory($form, $start, 15);
