@@ -128,24 +128,31 @@ CREATE TABLE commentmodes (
 DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
   sid char(16) DEFAULT '' NOT NULL,
-  cid int(15) DEFAULT '0' NOT NULL,
+  cid int(15) NOT NULL auto_increment,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
-  comment text DEFAULT '' NOT NULL,
   uid int(11) NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
-  lastmod int(1),
+  lastmod int(1) DEFAULT '-1',
   reason int(11) DEFAULT '0',
-  PRIMARY KEY (sid,cid),
+	signature char(32),
+  PRIMARY KEY (cid),
   KEY display (sid,points,uid),
   KEY byname (uid,points),
   KEY ipid (ipid),
   KEY subnetid (subnetid),
   KEY theusual (sid,uid,points,cid),
   KEY countreplies (sid,pid)
+);
+
+DROP TABLE IF EXISTS comment_text;
+CREATE TABLE comment_text (
+	cid int(15) NOT NULL,
+	comment text NOT NULL,
+	PRIMARY KEY (cid)
 );
 
 #

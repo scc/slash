@@ -89,7 +89,13 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, comment, uid, points, lastmod, reason) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!','This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!',1,0,-1,0);
+INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000')
+
+#
+# Dumping data for table 'comments'
+#
+
+INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!');
 
 #
 # Dumping data for table 'content_filters'

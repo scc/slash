@@ -202,43 +202,29 @@ sub sqlTransactionCancel {
 ########################################################
 # Bad need of rewriting....
 sub createComment {
-	my($self, $form, $user, $pts, $default_user) = @_;
-	my $sid_db = $self->{_dbh}->quote($form->{sid});
+	my($self, $comment, $user, $pts, $default_user) = @_;
+	my $sid_db = $self->{_dbh}->quote($comment->{sid});
+	my $cid;
 
-	$self->sqlTransactionStart("LOCK TABLES comments WRITE");
-	my($maxCid) = $self->sqlSelect(
-		"max(cid)", "comments", "sid=$sid_db"
-	);
+	my $signature = md5_hex($comment->{postercomment});
+	my $uid = $comment->{postanon} ? $default_user : $user->{uid};
 
-	$maxCid++; # This is gonna cause troubles, fixed in altcomments
-	my $insline = "INSERT into comments values ($sid_db,$maxCid," .
-		$self->{_dbh}->quote($form->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
-		$self->{_dbh}->quote($form->{postersubj}) . "," .
-		$self->{_dbh}->quote($form->{postercomment}) . "," .
-		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
-
-	# We subtract one from current comment expiry count.
-	$self->setUser($user->{uid}, 'expiry_comm', {
-		'-expiry_comm'	=> 'expiry_comm-1',
-	}) if allowExpiry();
-
-	$self->sqlTransactionFinish();
-
-	# don't allow pid to be passed in the form.
-	# This will keep a pid from being replace by
-	# with other comment's pid
-	if ($form->{pid} >= $maxCid || $form->{pid} < 0) {
-		return;
-	}
+	my $insline = "INSERT into comments (sid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db," .
+		$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
+		$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
 
 	if ($self->sqlDo($insline)) {
-
-		return $maxCid;
-
+		$cid = $self->getLastInsertId();
 	} else {
 		errorLog("$DBI::errstr $insline");
 		return -1;
 	}
+
+	$self->sqlInsert('comment_text',{
+			cid => $cid,
+			comment =>  $comment->{postercomment},
+	});
+ 
 }
 
 ########################################################
@@ -264,7 +250,7 @@ sub getMetamodComments {
 		sig,pid,comments.sid as sid,
 		moderatorlog.id as id,title,moderatorlog.reason as modreason,
 		comments.reason',
-		'comments,users,users_info,moderatorlog,stories',
+		'comments,comment_text,users,users_info,moderatorlog,stories',
 		"stories.sid=comments.sid AND moderatorlog.sid=comments.sid AND
 		moderatorlog.cid=comments.cid AND moderatorlog.id>$id AND
 		comments.uid!=$uid AND users.uid=comments.uid AND
@@ -905,13 +891,11 @@ sub getCommentCid {
 sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	if ($cid) {
-		$self->sqlDo("delete from comments WHERE sid=" .
-			$self->{_dbh}->quote($sid) . " and cid=" . $self->{_dbh}->quote($cid)
-		);
+		$self->sqlDo("delete from comments WHERE cid=" . $self->sqlQuote($cid));
+		$self->sqlDo("delete from comment_text WHERE cid=" . $self->sqlQuote($cid));
 	} else {
-		$self->sqlDo("delete from comments WHERE sid=" .
-			$self->{_dbh}->quote($sid));
-
+	#Revist this Brian, this will Orphan comments.
+		$self->sqlDo("delete from comments WHERE sid=" .  $self->{_dbh}->quote($sid));
 		$self->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
 	}
 }
@@ -1794,9 +1778,13 @@ sub countCommentsBySidPid {
 }
 
 ##################################################################
+# Search on block comparison! No way, easier on everything
+# if we just do a match on the signature (AKA MD5 of the comment) 
+# -Brian
 sub findCommentsDuplicate {
 	my($self, $sid, $comment) = @_;
-	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
+	my $signature = md5_hex($comment);
+	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid) . " AND signature='$signature'");
 }
 
 ##################################################################
@@ -2079,13 +2067,14 @@ sub countUsersIndexExboxesByBid {
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
 	my $reply = $self->sqlSelectHashref("date, subject,comments.points as points,
-		comment,realname,nickname,
-		fakeemail,homepage,cid,sid,users.uid as uid",
-		"comments,users,users_info,users_comments",
+		comment_text.comment as comment,realname,nickname,
+		fakeemail,homepage,comments.cid as cid,sid,users.uid as uid",
+		"comments,comment_text,users,users_info,users_comments",
 		"sid=" . $self->{_dbh}->quote($sid) . "
-		AND cid=" . $self->{_dbh}->quote($pid) . "
+		AND comments.cid=" . $self->{_dbh}->quote($pid) . "
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
+		AND comments.cid=comment_text.cid
 		AND users.uid=comments.uid"
 	) || {};
 
@@ -2098,8 +2087,7 @@ sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 	my $user = getCurrentUser();
 	my $sql = "SELECT cid,date,
-				subject,comment,
-				nickname,homepage,fakeemail,
+				subject,nickname,homepage,fakeemail,
 				users.uid as uid,sig,
 				comments.points as points,pid,sid,
 				lastmod, reason
@@ -2121,10 +2109,23 @@ sub getCommentsForUser {
 	$thisComment->execute or errorLog($sql);
 	my $comments = [];
 	while (my $comment = $thisComment->fetchrow_hashref){
+		$comment->{comment} = $self->_getCommentText($comment->{cid});
 		push @$comments, $comment;
 	}
 	formatDate($comments);
 	return $comments;
+}
+
+########################################################
+# This is here to save us a database lookup when drawing comment pages.
+sub _getCommentText {
+	my($self, $cid) = @_;
+	if($self->{_comment_text}) {
+		return $self->{_comment_text}{$cid} if $self->{_comment_text}{$cid};
+	}
+
+	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
+	return $self->{_comment_text}{$cid};
 }
 
 ########################################################
@@ -2467,7 +2468,7 @@ sub getSlashConf {
 		[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
 	$conf{lonetags} = $fixup->($conf{lonetags}) ||
-		undef;
+		[];
 
 	$conf{reasons} = $fixup->($conf{reasons}) ||
 		[

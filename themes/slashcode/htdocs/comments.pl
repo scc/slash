@@ -391,6 +391,11 @@ sub submitComment {
 	# It would be nice to have an arithmatic if right here
 	my $maxCid = $slashdb->createComment($form, $user, $pts, $constants->{anonymous_coward_uid});
 
+	$slashdb->setUser($user->{uid}, 'expiry_comm', {
+		'-expiry_comm'	=> 'expiry_comm-1',
+	}) if allowExpiry();
+
+
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
 		slashDisplay('errors', {
