@@ -31,8 +31,8 @@ use File::Path;
 use Slash;
 use Slash::Utility;
 
-my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my($constants, $slashdb) = createEnvironment($virtual_user);
+my $constants = getCurrentStatic();
+my $slashdb = getCurrentDB();
 
 my $count = $slashdb->countDaily();
 
