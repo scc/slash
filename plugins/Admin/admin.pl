@@ -912,7 +912,6 @@ sub editStory {
 		$sid = $form->{sid};
 	}
 
-
 	my($authoredit_flag, $extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
 		$sections, $topic_select, $section_select, $author_select,
@@ -1001,18 +1000,17 @@ sub editStory {
 		$storyref->{$key} = $form->{$key} || $storyref->{$key};
 	}
 
-	
-	my $newestthree = $slashdb->getBlock('newestthree','block'); 
+	my $newestthree = $slashdb->getBlock('newestthree','block');
 	my $nextthree = $slashdb->getNextThree($storyref->{time});
 	my $nextstories = {};
 
-	for(@$nextthree) {
+	for (@$nextthree) {
 		my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
 		my $author = $slashdb->getUser($tmpstory->{uid},'nickname');
 		$nextstories->{$_->[0]}{title} = $tmpstory->{title};
 	}
 
-	my $nextblock = slashDisplay('three', { stories => $nextstories}, { Return => 1, Page => 'misc', Section => 'default'});
+	my $nextblock = slashDisplay('three', { stories => $nextstories }, { Return => 1, Page => 'misc', Section => 'default' });
 	$authorbox = $newestthree . $nextblock;
 
 	$sections = $slashdb->getDescriptions('sections');
