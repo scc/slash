@@ -20,18 +20,6 @@ sub main {
 		undef $form->{aid};
 	}
 
-	# add to admin menu before calling header()
-	# remove this, maybe, and just add it to the database?
-	# -- pudge
-	if ($user->{is_admin}) {
-		my @menu = split /\|/, getData('admin');
-		addToMenu('admin', 'newpoll', {
-			value	=> $menu[0],
-			label	=> $menu[1],
-			seclev	=> $menu[2]
-		});
-	}
-
 	header(getData('title'), $form->{section});
 
 	if ($user->{seclev} > 99 && $op eq 'edit') {

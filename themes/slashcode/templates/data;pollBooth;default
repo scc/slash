@@ -20,9 +20,6 @@ __template__
 [% CASE 'title' %]
 	[% constants.sitename %] Poll
 
-[% CASE 'admin' %]
-	[% env.script_name %]?op=edit|New Poll|100
-
 [% CASE 'invalid' %]
 	Invalid poll!<BR>
 
