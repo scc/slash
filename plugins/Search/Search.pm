@@ -64,16 +64,13 @@ sub findComments {
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $query = $self->sqlQuote($form->{query});
-	my $columns = "stories.section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.writestatus as writestatus, time, date, comments.uid as uid, comments.cid as cid ";
+	my $columns = "section, discussions.url, discussions.uid as author, discussions.title as title, pid, subject, ts, date, comments.uid as uid, comments.cid as cid ";
 	$columns .= ", TRUNCATE((MATCH (comments.subject) AGAINST($query)), 1) as score "
 		if $form->{query};
 
-	my $tables = "stories, comments, discussions";
+	my $tables = "comments, discussions";
 
 	my $key = " MATCH (comments.subject) AGAINST ($query) ";
-
-
-	$limit = " LIMIT $start, $limit" if $limit;
 
 	# Welcome to the join from hell -Brian
 	my $where;
@@ -82,22 +79,23 @@ sub findComments {
 	$where .= "	  AND $key "
 			if $form->{query};
 
-	$where .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
+	$where .= "     AND discussions.sid=" . $self->sqlQuote($form->{sid})
 			if $form->{sid};
 	$where .= "     AND points >= $form->{threshold} "
 			if $form->{threshold};
-	$where .= "     AND stories.section=" . $self->sqlQuote($form->{section})
+	$where .= "     AND section=" . $self->sqlQuote($form->{section})
 			if $form->{section};
 
 	my $other;
 	if ($form->{query}) {
-		$other = " ORDER BY score DESC, time DESC ";
+		$other = " ORDER BY score DESC ";
 	} else {
-		$other = " ORDER BY date DESC, time DESC ";
+		$other = " ORDER BY id DESC ";
 	}
 
 
-	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
+	$sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
+	$sql .= " LIMIT $start, $limit" if $limit;
 
 	$self->sqlConnect();
 	my $cursor = $self->{_dbh}->prepare($sql);

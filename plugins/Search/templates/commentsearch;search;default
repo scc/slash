@@ -27,7 +27,7 @@ __template__
 
 			by <A HREF="mailto:[% user_email.fakeemail | fixparam %]">[% user_email.nickname %]</A> on [% Slash.timeCalc(comment.8) %]<BR>
 			<FONT SIZE="2">attached to 
-			<A HREF="[% constants.rootdir %]/article.pl?sid=[% comment.1 %]">[% comment.3 %]</A> 
+			<A HREF="[% comment.1 %]">[% comment.3 %]</A> 
 			posted on [% Slash.timeCalc(comment.7) %] by [% Slash.db.getAuthor(comment.2, 'nickname') %]</FONT><BR>
 		[% x = x + 1 %]
 	[% END %]
