@@ -368,7 +368,7 @@ INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Las
 INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/www.example.com/logs','Where should the logs be found?');
 INSERT INTO vars (name, value, description) VALUES ('m1_pointgrant_end', '0.167', 'Starting percentage into the pool of eligible moderators (used by moderatord');
 INSERT INTO vars (name, value, description) VALUES ('m1_pointgrant_start', '0.8888', 'Ending percentage into the pool of eligible moderators (used by moderatord');
-INSERT INTO vars (name, value, description) VALUES ('m2_batchsize', 800, 'Maximum number of moderations processed for M2 reconciliation per execution of moderation daemon.');
+INSERT INTO vars (name, value, description) VALUES ('m2_batchsize', 650, 'Maximum number of moderations processed for M2 reconciliation per execution of moderation daemon.');
 INSERT INTO vars (name, value, description) VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation');
 INSERT INTO vars (name, value, description) VALUES ('m2_comments','10','Number of comments for meta-moderation');
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus_trigger', '0.75', 'Weighted average of consensus votes to dissentor votes which determines a "clear victory" in M2.');
@@ -403,6 +403,7 @@ INSERT INTO vars (name, value, description) VALUES ('minkarma','-25','Minimum ka
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_comm','10','Lowest value for comment expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_days','7','Lowest value for duration expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
+INSERT INTO vars (name, value, description) VALUES ('moderatord_debug_info', '1', 'Add in more detailed information into slashd.log for moderation task info. This WILL increase the size by slashd.log quite a bit, so use only if you need to.');
 INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','1','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('newsletter_body','0','Print bodytext, not merely introtext, in newsletter.');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');

@@ -46,11 +46,12 @@ sub reconcileM2 {
 
 	my $m2ids = $slashdb->getMetamodIDs();
 	slashdLog(
-		sprintf "$me - Iterating from %ld to %ld in lots of (%d)",
-			$m2ids->[0], $m2ids->[-1], $constants->{m2_batchsize}
-	);
+		sprintf "$me - Iterating from %ld to %ld - (Batch of %d)",
+			$m2ids->[0]{id}, $m2ids->[-1]{id},
+			$constants->{m2_batchsize}
+	) if @{$m2ids};
 	for my $m2id (@{$m2ids}) {
-		my $m2_list = $slashdb->getMetaModerations($m2id);
+		my $m2_list = $slashdb->getMetaModerations($m2id->{mmid});
 		my %m2_votes;
 		my(@con, @dis);
 
@@ -98,9 +99,10 @@ sub reconcileM2 {
 			}
 		}
 		
-		slashdLog(sprintf <<EOT, $con, $con_avg, $dis,$dis_avg);
-$me - $m2id: CON=%d (%6.4f) DIS=%d (%6.4f)
-EOT
+		slashdLog(
+			sprintf "$me - %ld: CON=%d (%6.4f) DIS=%d (%6.4f)",
+				$m2id->{id}, $con, $con_avg, $dis, $dis_avg
+		) if $constants->{moderatord_debug_info};
 
 		# Dole out reward among the consensus if there is a clear
 		# victory. Note that a user only gets the optional message
@@ -131,7 +133,8 @@ EOT
 				$slashdb->getModeratorLog($m2_list->[0]{mmid});
 			if ($modlog->{val} eq $rank[0]) {
 				my $mod_karma =
-					$slashdb->getUser($m2_list->[0]{uid}, 'karma');
+					$slashdb->getUser($m2_list->[0]{uid},
+							  'karma');
 				$slashdb->setUser($m2_list->[0]{uid}, {
 					karma => $mod_karma + 1,
 				});
@@ -172,10 +175,6 @@ EOT
 		# been processed.
 		#$slashdb->clearM2Flag($m2id);
 	}
-	slashdLog(<<EOT) if scalar @{$m2ids};
-$me - Metamoderation processed @{[scalar @{$m2ids}]} discussions.
-EOT
-
 }
 
 1;
