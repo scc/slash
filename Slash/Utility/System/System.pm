@@ -217,6 +217,7 @@ sub doLogInit {
 	mkpath $dir, 0, 0775;
 	doLogPid($fname, $nopid);
 	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
+	doLog($fname, ["Starting $fname with pid $$"]);
 }
 
 sub doLogExit {
