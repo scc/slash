@@ -84,7 +84,6 @@ sub main {
 	footer();
 }
 
-
 ##################################################################
 sub pleaseLogin {
 	return unless getCurrentUser('is_anon');
@@ -150,8 +149,12 @@ sub nextStory {
 	# Slightly less efficient then the way it had worked, but
 	# a heck of a lot easier to understand
 	if (my $next = $I{dbobject}->getStoryByTime($sign, $story, $SECT->{isolate})) {
-		return if ($next->{title} eq  $story->{title});
-		return linkStory({ 'link' => $next->{'title'}, sid => $next->{'sid'}, section => $next->{'section'} });
+		return if $next->{title} eq $story->{title};
+		return linkStory({
+			'link'	=> $next->{'title'},
+			sid	=> $next->{'sid'},
+			section	=> $next->{'section'}
+		});
 	}
 }
 

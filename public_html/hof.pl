@@ -118,7 +118,7 @@ sub topComments {
 		my($section, $sid, $aid, $title, $pid, $subj, $cdate, $sdate,
 				$uid, $cid, $score) = @$_;
 		my $user_email = $I{dbobject}->getUser($uid, ['fakeemail', 'nickname']);
-	
+
 		print <<EOT;
 <BR><B>$score</B>
 	<A HREF="$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid">$subj</A>

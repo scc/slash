@@ -191,7 +191,6 @@ sub main {
 	footer();
 }
 
-
 ##################################################################
 # Misc
 sub adminLoginForm {	
@@ -216,7 +215,7 @@ sub varEdit {
 	my $vars = $I{dbobject}->getDescriptions('vars');
 	createSelect('name', $vars, $name);
 
-	my($value, $desc) = $I{dbobject}->getVar($name,['value','description']);
+	my($value, $desc) = $I{dbobject}->getVar($name, ['value', 'description']);
 	print "Next<BR>\n",
 		formLabel('Variable Name'),
 		CGI::textfield(-name => 'thisname', -default => $name),
@@ -429,7 +428,7 @@ EOT
 	# or this is a block edit via sections.pl
 	if (! $I{F}{blocknew} && $bid ) {
 		# getSection() is cached so you might as well grab it all
-		$section = $I{dbobject}->getSection($bid,'','1');
+		$section = $I{dbobject}->getSection($bid, '', 1);
 
 		if ($section->{'bid'}) {
 			$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$section->{'title'}"></TD>\n\t</TR>];
@@ -461,7 +460,7 @@ EOT
 
 	my $bidblock;
 	if ($bid) {
-		$bidblock = $I{dbobject}->getBlock($bid,'','1');
+		$bidblock = $I{dbobject}->getBlock($bid, '', 1);
 	}
 
 	my $description_ta = stripByMode($bidblock->{'description'}, 'literal', 1);
@@ -1007,9 +1006,9 @@ EOT
 		$sid = $I{F}{sid};
 
 		if (!$I{F}{'time'} || $I{F}{fastforward}) {
-			$S->{time} = $I{dbobject}->getTime();
+			$S->{'time'} = $I{dbobject}->getTime();
 		} else {
-			$S->{time} = $I{F}{'time'};
+			$S->{'time'} = $I{F}{'time'};
 		}
 
 		print '<TABLE><TR><TD>';
@@ -1050,7 +1049,7 @@ EOT
 		$S->{displaystatus} = $I{dbobject}->getVar('defaultdisplaystatus', 'value');
 		$S->{commentstatus} = $I{dbobject}->getVar('defaultcommentstatus', 'value');
 
-		$S->{time} = $I{dbobject}->getTime();
+		$S->{'time'} = $I{dbobject}->getTime();
 		$S->{tid} ||= 'news';
 		$S->{section} ||= 'articles';
 		$S->{aid} = $I{U}{aid};
@@ -1106,7 +1105,7 @@ EOT
 	my $description = $I{dbobject}->getDescriptions('commentcodes');
 	createSelect('commentstatus', $description, $S->{commentstatus});
 
-	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{time}" size="16"> <BR>!;
+	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{'time'}" size="16"> <BR>!;
 
 	printf "\t[ %s | %s", CGI::checkbox('fixquotes'), CGI::checkbox('autonode');
 	printf(qq! | %s | <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid&op=edit">Related Poll</A>!,
@@ -1313,7 +1312,7 @@ sub editFilter {
 EOT
 	my @values = qw(regex modifier field ratio minimum_match
 		minimum_length maximum_length err_message);
-	my $filter = $I{dbobject}->getContentFilter($filter_id, \@values, '1');
+	my $filter = $I{dbobject}->getContentFilter($filter_id, \@values, 1);
 
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
@@ -1397,7 +1396,7 @@ sub updateStory {
 ##################################################################
 sub saveStory {
 	$I{F}{sid} = getsid();
-	$I{F}{displaystatus} ||= '1' if $I{U}{asection};
+	$I{F}{displaystatus} ||= 1 if $I{U}{asection};
 	$I{F}{section} = $I{U}{asection} if $I{U}{asection};
 	$I{F}{dept} =~ s/ /-/g;
 	$I{F}{relatedtext} = getRelated(
