@@ -8,7 +8,7 @@ A plugin is an extension to the Slash system
 that adds some sort of functionality to
 the site. It should inherit its basic look
 and feel from the currently running theme
-(for example, backgroun/foreground colors, calling
+(for example, background/foreground colors, calling
 header and footer components, etc. will be handled
 by the installed theme).
 
