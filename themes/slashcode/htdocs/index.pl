@@ -33,18 +33,23 @@ sub main {
 		redirect($ENV{SCRIPT_NAME}), return if $c;
 	}
 
-	my $section = $slashdb->getSection($form->{section} ? $form->{section} : $constants->{defaultsection});
+	my $section;
+	if($form->{section}) {
+		$section = $slashdb->getSection($form->{section}) ? $form->{section} : 'index';
+	} else {
+		$section->{section} = 'index';
+	}
+
 	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
 	$section->{mainsize} = int($section->{artcount} / 3);
 
-	my $title = getData('head', { section => $section });
+	my $title = getData('head', { section => $section->{section} });
 	header($title, $section->{section});
 
 	my $limit ||= $section->{section} eq 'index' ?
 	    $user->{maxstories} : $section->{artcount};
 
-	my $stories_essentials = 
-		$slashdb->getStoriesEssentials($section, $limit);
+	my $stories_essentials = $slashdb->getStoriesEssentials($section, $limit);
 
 	my $Stories = displayStories($stories_essentials);
 	my $StandardBlocks = displayStandardBlocks($section, $stories_essentials);
