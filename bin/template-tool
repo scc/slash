@@ -68,8 +68,8 @@ if ($opts{'c'}) {
 }
 
 if ($opts{'O'}) {
-	if ( ! -d $opts{'O'}) {
-		if ($opts{'d'} || $opts{'e'} || ( $opts{'l'} && $opts{'f'})) {
+	if (! -d $opts{'O'}) {
+		if ($opts{'d'} || $opts{'e'} || ($opts{'l'} && $opts{'f'})) {
 			# needs to use File::Path::mkpath(); and
 			# even if you wanted mkdir, why not use Perl's
 			# mkdir()?  fix please.

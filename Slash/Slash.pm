@@ -239,9 +239,9 @@ sub printComments {
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
 
-	my ($discussion, $header);
+	my($discussion, $header);
 	#Backwards compatibility
-	if($sid !~ /^\d+$/) {
+	if ($sid !~ /^\d+$/) {
 		$discussion = $slashdb->getDiscussionBySid($sid);
 		$header = $discussion->{id};
 	} else {

@@ -45,7 +45,7 @@ sub main {
 	}
 
 	$section = 'admin' if $user->{submit_admin};
-	header(getData('header', { tbtitle => $tbtitle } ), $section);
+	header(getData('header', { tbtitle => $tbtitle }), $section);
 
 	if ($op eq 'list' && ($user->{submit_admin} || $constants->{submiss_view})) {
 		submissionEd();
@@ -273,7 +273,7 @@ sub displayForm {
 		titlebar('100%', getData('filtererror', { err_message => $error_message}));
 		print getData('filtererror', { err_message => $error_message });
 	} else {
-		for ( keys %$form ) {
+		for (keys %$form) {
 			my $message = "";
 			# run through filters
 			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
@@ -324,7 +324,7 @@ sub saveSub {
 			return;
 		}
 
-		for ( keys %$form ) {
+		for (keys %$form) {
 			my $message = "";
 			# run through filters
 			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {

@@ -1432,7 +1432,7 @@ The decoded string.
 		my($text) = @_;
 
 		# do & only _after_ the others
-		for my $chr ( (grep !/^&$/, keys %e), "&") {
+		for my $chr ((grep !/^&$/, keys %e), "&") {
 			$text =~ s/$e{$chr}/$chr/g;
 		}
 

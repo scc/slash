@@ -85,7 +85,7 @@ sub handler {
 	my $uid;
 	my $op = $form->{op} || '';
 
-	if (($op eq 'userlogin' || $op eq 'rlogin' ) && length($form->{upasswd}) > 1) {
+	if (($op eq 'userlogin' || $op eq 'rlogin') && length($form->{upasswd}) > 1) {
 		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 
@@ -107,7 +107,7 @@ sub handler {
 #			return REDIRECT;
 		}
 
-	} elsif ($op eq 'userclose' ) {
+	} elsif ($op eq 'userclose') {
 		# It may be faster to just let the delete fail then test -Brian
 		# well, uid is undef here ... can't use it to test
 		# until it is defined :-) -- pudge

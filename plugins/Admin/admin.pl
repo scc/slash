@@ -454,7 +454,7 @@ sub templateEdit {
 		$templateedit_flag = 1;
 	}
 
-	$templateform_flag = 1 if ( (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
+	$templateform_flag = 1 if ((! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
 
 	slashDisplay('templateEdit', {
 		tpid 			=> $tpid,
@@ -492,7 +492,7 @@ sub templateSave {
 
 	if ($form->{save_new}) {
 		if ($id->{tpid} || $exists) {
-			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $name } );
+			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $name });
 			return;
 		} else {
 			print "trying to insert $name<br>\n";
@@ -577,7 +577,7 @@ sub blockEdit {
 	# if the pulldown has been selected and submitted
 	# or this is a block save and the block is a portald block
 	# or this is a block edit via sections.pl
-	if (! $form->{blocknew} && $bid ) {
+	if (! $form->{blocknew} && $bid) {
 		if ($blockref->{bid}) {
 			$blockedit_flag = 1;
 			$blockref->{ordernum} = "NA" if $blockref->{ordernum} eq '';
@@ -586,7 +586,7 @@ sub blockEdit {
 		}
 	}
 
-	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
+	$blockform_flag = 1 if ((! $form->{blockdelete_confirm} && $bid) || $form->{blocknew});
 
 	slashDisplay('blockEdit', {
 		bid 			=> $bid,
@@ -614,7 +614,7 @@ sub blockSave {
 	my $saved = $slashdb->saveBlock($bid);
 
 	if (getCurrentForm('save_new') && $saved > 0) {
-		print getMessage('blockSave-exists-message', { bid => $bid } );
+		print getMessage('blockSave-exists-message', { bid => $bid });
 		return;
 	}
 
@@ -1153,7 +1153,7 @@ sub get_ispell_comments {
 		warn "could not pipe to $ispell from $tmptext, $!";
 		return "could not pipe to $ispell from $tmptext, $!";
 	}
-	my %w = ( );
+	my %w;
 	while (defined(my $line = <ISPELL>)) {
 		# Grab all ispell's flagged words and put them in the hash
 		$w{$1}++ if $line =~ /^[#?&]\s+(\S+)/;

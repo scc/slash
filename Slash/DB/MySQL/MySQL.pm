@@ -299,7 +299,7 @@ sub getModeratorCommentLog {
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
-	my $comments = $self->sqlSelectMany(  "$table.sid as sid,
+	my $comments = $self->sqlSelectMany("$table.sid as sid,
 				 $table.cid as cid,
 				 $table.points as score,
 				 subject, moderatorlog.uid as uid,
@@ -340,7 +340,7 @@ sub unsetModeratorlog {
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
 		$self->sqlDo("delete from moderatorlog where
-			cid=$cid and uid=$uid" 
+			cid=$cid and uid=$uid"
 		);
 
 		# If moderation wasn't actually performed, we should not change
@@ -846,9 +846,9 @@ sub createUser {
 		uid 			=> $uid,
 		-lastaccess		=> 'now()',
 	});
-	$self->sqlInsert("users_prefs", { uid => $uid } );
-	$self->sqlInsert("users_comments", { uid => $uid } );
-	$self->sqlInsert("users_index", { uid => $uid } );
+	$self->sqlInsert("users_prefs", { uid => $uid });
+	$self->sqlInsert("users_comments", { uid => $uid });
+	$self->sqlInsert("users_index", { uid => $uid });
 
 	# All param fields should be set here, as some code may not behave
 	# properly if the values don't exist.
@@ -1586,7 +1586,7 @@ sub checkExpired {
 sub checkReadOnly {
 	my($self, $formname, $user) = @_;
 
-	my $curuser = getCurrentUser();	
+	my $curuser = getCurrentUser();
 	my $constants = getCurrentStatic();
 
 	my $where = '';
@@ -1596,7 +1596,7 @@ sub checkReadOnly {
 	if ($user->{uid} && $user->{uid} =~ /^\d+$/) {
 		if (!isAnon($user->{uid})) {
 			$where = "uid = $user->{uid}";
-		} else { 
+		} else {
 			$where = "ipid = '$curuser->{ipid}'";
 		}
 	} elsif ($user->{md5id}) {
@@ -1611,7 +1611,7 @@ sub checkReadOnly {
 		$where = "ipid = '$curuser->{ipid}'";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'"; 
+	$where .= " AND readonly = 1 AND formname = '$formname'";
 
 	$self->sqlSelect("readonly", "accesslist", $where);
 }
@@ -1622,15 +1622,15 @@ sub getReadOnlyReason {
 
 	my $constants = getCurrentStatic();
 	my $ref = {};
-	my ($reason,$where) = ('','');
+	my($reason,$where) = ('','');
 
 	if ($user) {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where = "WHERE uid = $user->{uid}";
 		} elsif ($user->{ipid}) {
-			$where = "WHERE ipid = '$user->{ipid}'"; 
-		} elsif ($user->{subnetid}) { 
-			$where = "WHERE subnetid = '$user->{subnetid}'"; 
+			$where = "WHERE ipid = '$user->{ipid}'";
+		} elsif ($user->{subnetid}) {
+			$where = "WHERE subnetid = '$user->{subnetid}'";
 		} else {
 			$where = "WHERE uid = $user->{uid}";
 		}
@@ -1667,9 +1667,9 @@ sub setReadOnly {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where = "uid = $user->{uid}";
 		} elsif ($user->{ipid}) {
-			$where = "ipid = '$user->{ipid}'"; 
+			$where = "ipid = '$user->{ipid}'";
 		} elsif ($user->{subnetid}) {
-			$where = "subnetid = '$user->{subnetid}'"; 
+			$where = "subnetid = '$user->{subnetid}'";
 		}
 
 	} else {
@@ -1677,7 +1677,7 @@ sub setReadOnly {
 		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND formname = '$formname'"; 
+	$where .= " AND formname = '$formname'";
 
 
 	if ($self->checkReadOnly($formname, $user) && $flag == 0) {
@@ -1698,7 +1698,7 @@ sub setReadOnly {
 		$user->{subnetid} = '' if ! $user->{subnetid};
 
 		# find out if they're in the list
-		my ($rows) = $self->sqlSelect(
+		my($rows) = $self->sqlSelect(
 		 	"count(*)",
 		 	"accesslist", $where
 		);
@@ -1708,11 +1708,11 @@ sub setReadOnly {
 				$self->sqlUpdate("accesslist", {
 						-readonly => $flag,
 						reason => $reason,
-				}, $where );
+				}, $where);
 			} else {
 				my $return = $self->sqlUpdate("accesslist", {
 					-readonly => $flag,
-				}, $where );
+				}, $where);
 				return $return ? 1 : 0;
 			}
 		} else {
@@ -2208,7 +2208,7 @@ sub getCommentReply {
 		comment_text.comment as comment,realname,nickname,
 		fakeemail,homepage,$table.cid as cid,sid,users.uid as uid",
 		"$table,comment_text,users,users_info,users_comments",
-		"sid=$sid 
+		"sid=$sid
 		AND $table.cid=$pid
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
@@ -2242,7 +2242,7 @@ sub getCommentsForUser {
 	$sql .= "		$table.uid=$user->{uid} OR " unless $user->{is_anon};
 	$sql .= "		cid=$cid OR " if $cid;
 	$sql .= "		$table.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
-	$sql .= "		  1=1 )   ";
+	$sql .= "		  1=1)   ";
 	$sql .= "	  ORDER BY ";
 	$sql .= "$table.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
@@ -3471,7 +3471,7 @@ sub _genericGet {
 
 		} else {
 			$answer = $self->sqlSelectHashref('*', $table, "$table_prime=$id_db");
-			my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=$id_db" );
+			my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=$id_db");
 			for (@$append) {
 				$answer->{$_->[0]} = $_->[1];
 			}

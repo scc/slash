@@ -299,7 +299,7 @@ sub saveArticle {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
 			my $time = $slashdb->sqlTime();
-			$slashdb->createDiscussion('', $description, $time, 
+			$slashdb->createDiscussion('', $description, $time,
 				"$rootdir/journal.pl?sid=$sid"
 			);
 		}

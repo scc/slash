@@ -155,9 +155,8 @@ sub createDiscussion {
 
 	my $time = $slashdb->sqlTime();
 
-	$slashdb->createDiscussion('', $form->{title}, 
-		$time, 
-		$ENV{HTTP_REFERER}, 1
+	$slashdb->createDiscussion('', $form->{title},
+		$time, $ENV{HTTP_REFERER}, 1
 	);
 
 	commentIndex(@_);
@@ -424,7 +423,7 @@ sub submitComment {
 
 	my $pts = 0;
 
-	if (!$user->{is_anon} && !$form->{postanon} ) {
+	if (!$user->{is_anon} && !$form->{postanon}) {
 		$pts = $user->{defaultpoints};
 		$pts-- if $user->{karma} < $constants->{badkarma};
 		$pts++ if $user->{karma} > $constants->{goodkarma} && !$form->{nobonus};
@@ -459,11 +458,11 @@ sub submitComment {
 		undoModeration($maxCid);
 		printComments($form->{sid}, $maxCid, $maxCid);
 
-		my $tc = $slashdb->getVar('totalComments', 'value' );
+		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
 
 		my $sid;
-		if($sid = $slashdb->getDiscussion($form->{sid}, 'sid')) {
+		if ($sid = $slashdb->getDiscussion($form->{sid}, 'sid')) {
 			if ($slashdb->getStory($sid, 'writestatus') == 0) {
 				$slashdb->setStory($sid, { writestatus => 1 });
 			}
