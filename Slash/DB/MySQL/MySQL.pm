@@ -2623,7 +2623,8 @@ sub getKeys {
 sub getStory {
 	my($self) = @_;
 	# We need to expire stories
-	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
+	# _genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
+	_genericCacheRefresh('stories', getCurrentStatic('story_expire'));
 	my $answer = _genericGetCache('stories', 'sid', @_);
 	return $answer;
 }
@@ -2648,7 +2649,8 @@ sub getPollQuestion {
 
 ########################################################
 sub getBlock {
-	_genericCacheRefresh($self, 'blocks', getCurrentStatic('block_expire'));
+	# _genericCacheRefresh($self, 'blocks', getCurrentStatic('block_expire'));
+	_genericCacheRefresh('blocks', getCurrentStatic('block_expire'));
 	my $answer = _genericGetCache('blocks', 'bid', @_);
 	return $answer;
 }
