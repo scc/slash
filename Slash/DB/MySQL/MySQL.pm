@@ -2473,6 +2473,12 @@ sub getTopics {
 }
 
 ########################################################
+sub getTemplates {
+	my $answer = _genericGetsCache('templates', 'tpid', '', @_);
+	return $answer;
+}
+
+########################################################
 sub getContentFilter {
 	my $answer = _genericGet('content_filters', 'filter_id', '', @_);
 	return $answer;
