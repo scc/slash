@@ -735,6 +735,12 @@ CREATE TABLE users_info (
 	upmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	downmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	session_login tinyint DEFAULT '0' NOT NULL,
+	registered tinyint UNSIGNED DEFAULT '1' NOT NULL,
+	reg_id char(32) DEFAULT '' NOT NULL,
+	expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
+	expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
+	user_expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
+	user_expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
 ) TYPE = myisam;
