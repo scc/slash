@@ -34,9 +34,9 @@ __template__
 [% END %]
 	<TR>
 		<TD ALIGN="RIGHT"><B>User ID</B><BR><B>Nickname</B></TD>
-		<TD ALGIN="RIGHT"><INPUT TYPE="radio" NAME="userfield_flag" VALUE="userid"[% uid_checked %]><BR>
+		<TD ALIGN="RIGHT"><INPUT TYPE="radio" NAME="userfield_flag" VALUE="userid"[% uid_checked %]><BR>
 		<INPUT TYPE="radio" NAME="userfield_flag" VALUE="nickname"[% nickname_checked %]></TD>
-		<TD VALIGN="TOP"><IMG SRC="/images/admin_bracket.jpg"></TD>
+		<TD VALIGN="TOP"><IMG SRC="[% constants.imagedir %]/admin_bracket.jpg"></TD>
 		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
 		<TD VALIGN="BOTTOM"><INPUT TYPE="SUBMIT" NAME="useredit" VALUE="Edit User"></TD>
 	</TR>

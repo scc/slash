@@ -14,7 +14,11 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	redirect('/users.pl') if $user->{seclev} < 100;
+	if ($user->{seclev} < 100) {
+		my $rootdir = getCurrentStatic('rootdir');
+		redirect('/users.pl');
+		return;
+	}
 
 	my($tbtitle);
 	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
