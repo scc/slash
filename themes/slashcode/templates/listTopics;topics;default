@@ -23,7 +23,7 @@ __template__
 [% FOREACH topic = topics.sort("alttext"); x = x + 1; "</TR><TR>" IF (x mod 6) == 1 %]
 	<TD ALIGN="CENTER">
 		<A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]"><IMG
-			SRC="[% topic.image %]"
+			SRC="[% constants.imagedir %]/topics/[% topic.image %]"
 			ALT="[% topic.alttext %]" WIDTH="[% topic.width %]"
 			HEIGHT="[% topic.height %]" BORDER="0">[% IF topic_admin %]</A>
 			<A HREF="[% constants.rootdir %]/admin.pl?op=topics&amp;nexttid="[% topic.tid %]"
