@@ -31,7 +31,7 @@ $task{$me}{code} = sub {
 		$slashdb->createTemplate(\%template);
 	}
 
-	slashdLog("$me: %d sections refreshed");
+	slashdLog(sprintf "$me: %d sections refreshed", scalar @{$sections});
 };
 
 1;
