@@ -51,8 +51,8 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $slashdb = $dbcfg->{slashdb};
 
-	$r->header_out('X-Powered-By' => 'Slash');
-	$r->err_header_out('X-Powered-By' => 'Slash');
+	$r->header_out('X-Powered-By' => "Slash $Slash::VERSION");
+	$r->err_header_out('X-Powered-By' => "Slash $Slash::VERSION");
 	random($r);
 
 	# let pass unless / or .pl
