@@ -426,7 +426,7 @@ sub filterOk {
 		my $err_message		= $_->[8];
 		my $isTrollish		= 0;
 
-		my $text_to_test = decode_entities($content);
+		my $text_to_test = decode_entities(Slash::Utility::Data::strip_nohtml($content));
 
 		$text_to_test		=~ s/\xA0/ /g;
 		$text_to_test		=~ s/\<br\>/\n/gi;
@@ -507,7 +507,7 @@ sub compressOk {
 
 			# if is >= the ratio, then it's most likely a
 			# troll comment
-			my $comlen = length(Compress::Zlib::compress($content));
+			my $comlen = length(Compress::Zlib::compress(Slash::Utility::Data::strip_nohtml($content)));
 			if (($comlen / $length) <= $_) {
 				$slashdb->createAbuse("content compress", $formname, $content);
 				return 0;
