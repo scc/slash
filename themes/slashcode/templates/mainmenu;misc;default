@@ -16,6 +16,8 @@ __template__
 		- <A HREF="[% constants.rootdir %]/about.shtml">About</A><BR>
 		- <A HREF="[% constants.rootdir %]/faq.shtml">FAQ</A><BR>
 		- <A HREF="[% constants.rootdir %]/comments.pl">Discussions</A><BR>
+		- <A HREF="[% constants.rootdir %]/journal.pl">Journals</A><BR>
+		- <A HREF="[% constants.rootdir %]/messages.pl">Messages</A><BR>
 		- <A HREF="[% constants.rootdir %]/topics.pl">Topics</A><BR>
 		- <A HREF="[% constants.rootdir %]/authors.pl">Authors</A><BR>
 		<HR NOSHADE SIZE="1">
