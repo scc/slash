@@ -122,8 +122,6 @@ sub IndexHandler {
 		my $filename  = $r->filename;
 		my $basedir   = $constants->{basedir};
 
-# 		if ($r->header_in('Cookie') =~ /\b(?:user)=[%\w]/) {
-# 		if ($r->header_in('Cookie') =~ /(?:user)/) {
 		# $USER_MATCH defined above
 		if ($r->header_in('Cookie') =~ $USER_MATCH) {
 			$r->uri('/index.pl');
@@ -135,6 +133,28 @@ sub IndexHandler {
 			writeLog('shtml');
 			return OK;
 		}
+	}
+
+	if ($uri eq '/authors.pl') {
+		my $filename  = $r->filename;
+		my $basedir   = $constants->{basedir};
+
+		if ($r->header_in('Cookie') =~ $USER_MATCH) {
+			$r->uri('/authors.shtml');
+			$r->filename("$basedir/authors.shtml");
+			writeLog('shtml');
+			return OK;
+		}
+	}
+
+	if ($uri eq '/hof.pl') {
+		my $filename  = $r->filename;
+		my $basedir   = $constants->{basedir};
+
+		$r->uri('/hof.shtml');
+		$r->filename("$basedir/hof.shtml");
+		writeLog('shtml');
+		return OK;
 	}
 
 	return DECLINED;
