@@ -37,7 +37,7 @@ By running this I realize that there is no warranty, expressed or implied.
 Any data loss as a result of running this program is my responsibility.
 I have read the documentation for this program, I understand it, and I
 have taken the necessary precautions and done the required preparation.
-[yes/no]
+[yes/No]
 EOT
 	exit unless $answer eq 'yes';
 }
@@ -59,10 +59,15 @@ END {
 	$dbh_new->disconnect if $dbh_new;
 }
 
+my @user_tables = qw(
+	users users_comments users_info users_index users_prefs users_param
+);
+
+
 
 ####################################
 # Questions: fix AC UID, heaps.
-my($ac_uid, $del_uid2, $do_heaps);
+my($ac_data, $ac_uid, $del_uid2, $do_heaps);
 {
 	$ac_uid = ask(<<'EOT');
 Please select a UID for the anonymous user of the site.  It is probably
@@ -76,21 +81,30 @@ EOT
 Should we delete uid 2, the new admin user created by the installation?
 In theory, your other admin accounts will be copied from the old site,
 and you can use those.  If you choose not to do this, make sure uid 2
-is not a conflict from your other site.  [yes/no]
+is not a conflict from your other site.  [yes/No]
 EOT
 
 	if ($ac_uid != 1) {
-		$dbh_new->do("UPDATE vars SET value=$ac_uid WHERE name='anonymous_coward_uid'");
-		for (qw(users users_comments users_info users_index
-			users_prefs users_param)) {
-			$dbh_new->do("DELETE FROM $_ WHERE uid=$ac_uid");
-			$dbh_new->do("UPDATE $_ SET uid=$ac_uid WHERE uid=1");
+		for (@user_tables) {
+			$ac_data->{$_} = $dbh_new->selectall_hashref(<<EOT);
+SELECT * FROM $_ WHERE uid=1
+EOT
+
+		}
+					
+		$dbh_new->do(<<EOT);
+UPDATE vars SET value=$ac_uid WHERE name='anonymous_coward_uid'
+EOT
+
+		for (@user_tables) {
+			$dbh_new->do("DELETE FROM $_ WHERE uid=1");
+			# This is now done in the cleanup phase.
+			#$dbh_new->do("UPDATE $_ SET uid=$ac_uid WHERE uid=1");
 		}
 	}
 
 	if ($del_uid2) {
-		for (qw(users users_comments users_info users_index
-			users_prefs users_param)) {
+		for (@user_tables) {
 			$dbh_new->do("DELETE FROM $_ WHERE uid=2");
 		}
 	}
@@ -98,7 +112,7 @@ EOT
 	$do_heaps = ask(<<'EOT') =~ /^y/i;
 Should we populate the heap tables during this conversion? 
 (Recommended: Only answer NO to this question if you know what you are doing)
-[yes/no]
+[yes/No]
 EOT
 
 	
@@ -108,6 +122,8 @@ EOT
 # main body
 my(%topics, %discussions, %polls, %storystuff, %comments);
 {
+
+if (0) {
 	# Ignoring: abusers
 	duplicate('sections', 1);
 
@@ -149,12 +165,14 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 		return $data
 	});
 	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
+}
 
-	# no more uid == -1
+	# no more uid == -1, but we do now copy the AC UID. The AC issues
+	# will be resolved at cleanup.
 	my $usersub = sub {
 		my($data) = @_;
-		return if $data->{uid} == -1 || $data->{uid} == $ac_uid
-		      || (!$del_uid2 && $data->{uid} == 2);
+		return if $data->{uid} == -1 ||
+			  (!$del_uid2 && $data->{uid} == 2);
 
 		$data->{seclev} = 1
 			if exists $data->{seclev} && $data->{seclev} == 0;
@@ -185,7 +203,9 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 
 		return $data;
 	};
-	for (qw(users users_comments users_index users_info users_prefs)) {
+	for (@user_tables) {
+		# users_param does not exist in MAIN.
+		next if $_ eq 'users_param';
 		# This should even handle the cases of new additions to MAIN
 		# code (read: Slashdot-only) -- IE users_info.rtbl. -- If 
 		# the MAIN based site uses these fields, they'll get copied
@@ -196,6 +216,7 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 	# put keys into users_param
 	users_keys();
 
+if (0) {
 	# update aid's etc.
 	my $story_authors = fix_authors();
 
@@ -314,6 +335,10 @@ EOT
 	fill_heaps() if $do_heaps;
 }
 
+	# Cleanup phase. Create AC user at appropriate UID position.
+	insert_ac() if $ac_uid != 1;
+}
+
 
 ####################################
 sub ask {
@@ -327,65 +352,156 @@ sub ask {
 	return $answer;
 }
 
+sub insert_ac {
+	# Define helper sub ref.
+	my $insert_sub = sub {
+		my($table, $rec, $uid)= @_;
+		$rec->{uid} = $uid if $uid;
+		my $sql = sprintf "INSERT INTO $table (%s) VALUES (%s)", 
+				join(', ', keys %{$rec}), 
+				join(', ', map { $dbh_new->quote($_) }
+					values %{$rec});
+		my $err;
+		$dbh_new->do($sql);
+		$err = $dbh_new->errstr;
+		print "$table TRAP->'$err'\n" if $err;
+		if ($err && ($err =~ /^Duplicate entry/)) {
+			print "** Caught a duplicate, updating instead!\n";
+			#print "SQL: $sql\n";
+			delete $rec->{uid};
+			$sql = "UPDATE $table SET ";
+			my @keys = keys %{$rec};
+			for (@keys) {
+				$sql .= sprintf "\n\t$_ = %s%s",
+						$dbh_new->quote($rec->{$_}),
+						($_ ne $keys[-1]) ? ',' : '';
+			}
+			$sql .= "\nWHERE uid=$uid";
+			$dbh_new->do($sql);
+			(print "SQL: $sql\n" and die "\n") if $DBI::errstr;
+		}
+	};
+
+	# First, check to see if the desired UID is occupied...
+	my $sth_d = $dbh_new->prepare("SELECT uid FROM users WHERE uid=$ac_uid");
+	$sth_d->execute;
+	my ($uid) = $sth_d->fetchrow_array;
+	$sth_d->finish;
+
+	if ($uid) {
+		# Copy our dear user, so that it's belongings may be moved
+		# elsewhere.
+		print "-- Copying user at AC UID #$ac_uid\n";
+		my %user_data;
+		for (@user_tables) {
+			$user_data{$_} = $dbh_new->selectall_hashref(<<EOT);
+SELECT * FROM $_ WHERE uid=$ac_uid
+EOT
+
+			$dbh_new->do("DELETE FROM $_ WHERE uid=$ac_uid");
+		}
+		
+		# Now do a user count.
+		$sth_d = $dbh_new->prepare("SELECT max(uid) FROM users");
+		$sth_d->execute;
+		my($maxuid) = $sth_d->fetchrow_array;
+		$sth_d->finish;
+		
+		# If so, we must find the first free UID.
+		$sth_d = $dbh_new->prepare("SELECT uid FROM users ORDER BY uid");
+		$sth_d->execute;
+		my $lastuid;
+		while (my $c = $sth_d->fetchrow_arrayref) {
+			if (! $lastuid) {
+				$lastuid = $c->[0];
+				next;
+			}
+			last if $c->[0] != $lastuid + 1;
+			$lastuid = $c->[0];
+		}
+		$lastuid = undef if $lastuid == $maxuid;
+		$lastuid++ if $lastuid;
+		printf "Preserved user now %s\n", 
+			($lastuid) ?	"moved to UID #$lastuid" : 
+					"apppended to the user database";
+
+		# Now we move our preserved user into the gap (or to the end).
+		for my $table (@user_tables) {
+			for (@{$user_data{$table}}) {
+				$insert_sub->($table, $_, $lastuid);
+			}
+		}
+	}
+
+    # Move  AC data into it's proper place.
+    for my $table (@user_tables) {
+    	for (@{$ac_data->{$table}}) {
+    		$insert_sub->($table, $_, $ac_uid);
+    	}
+    }
+    print "AC User now known as UID #$ac_uid\n";
+}
+    	
+
 ####################################
 sub fill_heaps {
-	print "Populating the Story heap table...\n";
-	$dbh_new->do('INSERT INTO story_heap SELECT * FROM stories');
-	print "Popylating the Comments heap table...\n";
-	$dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
+    print "Populating the Story heap table...\n";
+    $dbh_new->do('INSERT INTO story_heap SELECT * FROM stories');
+    print "Popylating the Comments heap table...\n";
+    $dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
 }
 
 ####################################
 # get vars out of slashdotrc.pl
 sub fix_vars {
-	print "Processing vars\n";
+    print "Processing vars\n";
 
-	# Some of these 'm2_*' vars should be removed.
-	for (qw(mailfrom siteadmin siteadmin_name smtp_server
-		sitename slogan mainfontface updatemin
-		archive_delay submiss_ts articles_only
-		allow_anonymous use_dept max_depth
-		defaultsection http_proxy fancyboxwidth
-		story_expire titlebar_width run_ads
-		authors_unlimited m2_comments m2_maxunfair
-		m2_toomanyunfair m2_bonus m2_penalty
-		m2_userpercentage comment_minscore
-		comment_maxscore submission_bonus goodkarma
-		badkarma maxkarma metamod_sum maxtokens
-		tokensperpoint maxpoints stir tokenspercomment
-		down_moderations post_limit max_posts_allowed
-		max_submissions_allowed submission_speed_limit
-		formkey_timeframe m2_mincheck m2_maxbonus
-	)) {
-		my $value = $dbh_new->quote($my_conf{$_});
-		$dbh_new->do("UPDATE vars SET value=$value WHERE name='$_'");
-	}
+    # Some of these 'm2_*' vars should be removed.
+    for (qw(mailfrom siteadmin siteadmin_name smtp_server
+    	sitename slogan mainfontface updatemin
+    	archive_delay submiss_ts articles_only
+    	allow_anonymous use_dept max_depth
+    	defaultsection http_proxy fancyboxwidth
+    	story_expire titlebar_width run_ads
+    	authors_unlimited m2_comments m2_maxunfair
+    	m2_toomanyunfair m2_bonus m2_penalty
+    	m2_userpercentage comment_minscore
+    	comment_maxscore submission_bonus goodkarma
+        badkarma maxkarma metamod_sum maxtokens
+    	tokensperpoint maxpoints stir tokenspercomment
+    	down_moderations post_limit max_posts_allowed
+    	max_submissions_allowed submission_speed_limit
+    	formkey_timeframe m2_mincheck m2_maxbonus
+    )) {
+    	my $value = $dbh_new->quote($my_conf{$_});
+    	$dbh_new->do("UPDATE vars SET value=$value WHERE name='$_'");
+    }
 
-	# don't overwrite new vars descriptions with old ones
-	my $vars = $dbh_old->selectall_arrayref("SELECT name,value FROM vars");
-	for my $var (@$vars) {
-		my @data = map { $dbh_new->quote($_) } @$var;
-		$dbh_new->do("UPDATE vars SET value=$data[1] WHERE name=$data[0]");
-	}
+    # don't overwrite new vars descriptions with old ones
+    my $vars = $dbh_old->selectall_arrayref("SELECT name,value FROM vars");
+    for my $var (@$vars) {
+    	my @data = map { $dbh_new->quote($_) } @$var;
+    	$dbh_new->do("UPDATE vars SET value=$data[1] WHERE name=$data[0]");
+    }
 }
 
 ####################################
 # copy blocks, skipping certain blocks and excluding some fields,
 # fixing some data
 sub copy_blocks {
-	my $nc = '[^,]+,?';
-	my %skip_blocks = map { ($_, 1) } qw(
-		admin_footer admin_header comment commentswarning
-		edit_filter emailsponsor fancybox footer header
-		index index2 light_comment light_fancybox
-		light_footer light_header light_index light_story
-		light_story_link light_story_trailer light_titlebar
-		list_filters_footer list_filters_header mainmenu
-		menu motd newusermsg organisation pollitem
-		portalmap postvote story story_link story_trailer
-		storymore submit_after submit_before titlebar
-		userlogin
-	);
+    my $nc = '[^,]+,?';
+    my %skip_blocks = map { ($_, 1) } qw(
+    	admin_footer admin_header comment commentswarning
+    	edit_filter emailsponsor fancybox footer header
+    	index index2 light_comment light_fancybox
+    	light_footer light_header light_index light_story
+    	light_story_link light_story_trailer light_titlebar
+    	list_filters_footer list_filters_header mainmenu
+    	menu motd newusermsg organisation pollitem
+    	portalmap postvote story story_link story_trailer
+    	storymore submit_after submit_before titlebar
+    	userlogin
+    );
 
 	duplicate('blocks', 'bid', sub {
 		my($data, $skip_blocks) = @_;
@@ -653,7 +769,7 @@ sub usage {
 
 Usage: $PROGNAME [OPTIONS] RCFILE
 
-Converts Slash 1.0 data to Slash 1.1/2.0 data.  Type
+Converts Slash 1.0 data to Slash 1.1/2.2 data.  Type
 "perldoc $PROGNAME" or "perldoc `which $PROGNAME`
 for instructions on use.
 
@@ -687,7 +803,7 @@ __END__
 
 =head1 NAME
 
-slash1toslash2 - Convert Slash 1.0 database to Slash 2.0
+slash1toslash2 - Convert Slash 1.0 database to Slash 2.2
 
 =head1 SYNOPSIS
 
@@ -696,12 +812,12 @@ slash1toslash2 - Convert Slash 1.0 database to Slash 2.0
 
 =head1 DESCRIPTION
 
-Please read these instructions before starting a new Slash 2.0
+Please read these instructions before starting a new Slash 2.2
 site.  They are designed to convert a site from scratch; they
-will not work with a Slash 2.0 site that's been used.
+will not work with a Slash 2.2 site that's been used.
 
 This program will copy data from your old Slash 1.0 database
-to your new Slash 2.0 database, making direct connections to
+to your new Slash 2.2 database, making direct connections to
 both databases and copying the data directly between them.
 
 It will copy over your data, but if you've done any customizations to
@@ -715,7 +831,7 @@ any schema changes you've made, or incompatible changes from
 earlier versions of Slash, may break this program.
 
 Please follow these instructions precisely to convert your Slash 1.0
-site to Slash 2.0.
+site to Slash 2.2.
 
 
 =head2 Requirements
@@ -728,19 +844,19 @@ You will need a new database to copy the new data to.  This could be
 on the same database server as the Slash 1.0 data, but because
 the installed modules (specifically, Slash.pm) are not compatible
 between the sites, you will most likely want to have the installed
-code for 1.0 and 2.0 on separate boxes.
+code for 1.0 and 2.2 on separate boxes.
 
 =item *
 
-You will need Slash 2.0 installed on some box.
+You will need Slash 2.2 installed on some box.
 
 =item *
 
-You will need access to both the 1.0 and 2.0 databases from the same
-box.  The program will be run from the box that has Slash 2.0 installed,
+You will need access to both the 1.0 and 2.2 databases from the same
+box.  The program will be run from the box that has Slash 2.2 installed,
 so if that box does not have access to the Slash 1.0 database, you will
 need to either temporarily edit the mysql.user table of the 1.0 server
-to grant access, or copy the database from the 1.0 server to the 2.0
+to grant access, or copy the database from the 1.0 server to the 2.2
 server.
 
 =back
@@ -783,7 +899,7 @@ to check before starting.
 Make sure that there are no author/user nickname conflicts.  In
 Slash 1.0, users (nicknames) and authors (AID) were separate,
 so you could have a user named timothy and an author named timothy,
-who were not the same person.  This is not allowed in Slash 2.0,
+who were not the same person.  This is not allowed in Slash 2.2,
 as those tables have been combined.
 
 Also, every author must have a matching user, or this will fail.
@@ -817,18 +933,18 @@ user (as you would create any user, through users.pl) and use that UID.
 =item *
 
 Decide whether or not you want to keep the new admin account created
-in your Slash 2.0 database.  Chances are, you won't want to or need
+in your Slash 2.2 database.  Chances are, you won't want to or need
 to.
 
 However, if you do want to keep it, then you need to delete/modify all
 references to that user's uid in your Slash 1.0 database.  It is easier
-if you just allow this program to delete that uid from your Slash 2.0
+if you just allow this program to delete that uid from your Slash 2.2
 database, though, so there is no conflict.
 
 =back
 
 
-=head2 Install Slash 2.0 Slash Site
+=head2 Install Slash 2.2 Slash Site
 
 Run the C<install-slashsite> program as described in that program's
 documentation.  Remember which I<virtual user> you used to install
@@ -838,8 +954,8 @@ the site.  Do not make any changes to the database.
 =head2 Copy Slash 1.0 RC File
 
 Get the F<slashdotrc.pl> file from your Slash 1.0 site and copy it
-to some directory on your Slash 2.0 box.  At this point, make sure
-you can access the Slash 1.0 database from the Slash 2.0 box.
+to some directory on your Slash 2.2 box.  At this point, make sure
+you can access the Slash 1.0 database from the Slash 2.2 box.
 
 You may need to modify the slashdotrc.pl file's dbhost, dbuser,
 and dbpass variables to make sure the database can be accessed
@@ -895,7 +1011,7 @@ those will be overwritten later.
 =item *
 
 For the following tables, the contents are copied directly from
-the 1.0 database to the 2.0 database:
+the 1.0 database to the 2.2 database:
 
 	abusers content_filters discussions pollanswers
 	pollquestions sections storiestuff topics
@@ -969,7 +1085,7 @@ The blocks table is copied over, excluding the blocks that
 were converted to templates (like header, footer, etc.).
 Note that any blocks that are now templates, that were
 customized in the 1.0 site, need to be re-customized in
-the 2.0 site.
+the 2.2 site.
 
 The "aid" and "blockbak" columns are skipped.
 
@@ -986,8 +1102,8 @@ The skipped blocks, that are now templates, are:
 	storymore submit_after submit_before titlebar
 	
 Also, the "userlogin" block is skipped.  It is still in
-the Slash 2.0 database as a block _and_ a template, and
-as such the block is not copied from 1.0 to 2.0, since
+the Slash 2.2 database as a block _and_ a template, and
+as such the block is not copied from 1.0 to 2.2, since
 it has changed substantially.  See the code for details.
 
 The colors blocks are fixed; there were previously
@@ -1001,13 +1117,13 @@ The backup_blocks table is populated from the blocks table.
 =item *
 
 The data from the Slash 1.0 sectionblocks table, which
-does not exist in Slash 2.0, is copied to the blocks
+does not exist in Slash 2.2, is copied to the blocks
 table.
 
 =item *
 
 Selected variables from slashdotrc.pl are copied to the
-vars table of the Slash 2.0 database.  These are:
+vars table of the Slash 2.2 database.  These are:
 
 	mailfrom siteadmin siteadmin_name smtp_server
 	sitename slogan mainfontface updatemin
@@ -1032,7 +1148,7 @@ the source of this program.
 =item *
 
 The existing values from the 1.0 database vars table are copied
-to the 2.0 database.
+to the 2.2 database.
 
 =back
 
