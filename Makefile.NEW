@@ -108,8 +108,6 @@ install: #slash plugins
 		done; \
 	fi)
 
-	#install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(PREFIX)/bin/
-	#install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
 	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
 	if [ -f $(PREFIX)/httpd/slash.conf ]; then\
@@ -120,8 +118,9 @@ install: #slash plugins
 
 	$(CP) httpd/slash.conf $(PREFIX)/httpd/slash.conf.def 
 
-	# Note the use of -u in the copy commands below. We don't want to overwrite
-	# any of the perl scritps we've already modified and put into place!
+	# Note the use of -u in the copy commands below. We don't want to
+	# overwrite any of the perl scritps we've already modified and put
+	# into place!
 
 	# Now for the default theme (be nice when this goes in themes)
 	cp -ruv plugins/* $(PREFIX)/plugins/
