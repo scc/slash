@@ -2326,29 +2326,7 @@ Fixed KEY.
 
 =back
 
-=head2 getTrollAddress(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 getTrollUID(KEY)
+=head2 getIsTroll(KEY)
 
 I am the default documentation, short and stout.
 

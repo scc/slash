@@ -3586,36 +3586,56 @@ sub getSubmissionForUser {
 }
 
 ########################################################
-sub getTrollAddress {
-	my($self) = @_;
-	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
-	my $days_back = int($hours_back / 24);
-	my $ipid = getCurrentUser('ipid');
-	my($badIP) = $self->sqlSelect("sum(val)", "comments, moderatorlog",
-			"comments.cid = moderatorlog.cid AND
-			 ipid ='$ipid' AND moderatorlog.active=1 AND
-			 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
-	);
-	$badIP = 0 if !$badIP; # make sure it's not undef
-
-	return $badIP;
-}
-
-########################################################
-sub getTrollUID {
-	my($self) = @_;
-	my $hours_back = getCurrentStatic('istroll_uid_hours') || 72;
-	my $days_back = int($hours_back / 24);
+sub getIsTroll {
+	my($self, $good_behavior) = @_;
+	$good_behavior ||= 0;
 	my $user = getCurrentUser();
-	my($badUID) = $self->sqlSelect("sum(val)",
-		"comments,moderatorlog",
-		"comments.cid=moderatorlog.cid
-		AND comments.uid=$user->{uid} AND moderatorlog.active=1
-		AND TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
-	);
-	$badUID = 0 if !$badUID; # make sure it's not undef
+	my $constants = getCurrentStatic();
 
-	return $badUID;
+	my $days_back_ip = int($constants->{istroll_ipid_hours} || 72) / 24;
+	my $days_back_user = int($constants->{istroll_uid_hours} || 72) / 24;
+	my($downmods, $trollpoint);
+my $time = time;
+print STDERR "gIT $time gb $good_behavior dbi $days_back_ip dbu $days_back_user\n";
+
+	# Check for downmods by IPID.
+	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior;
+	($downmods) = $self->sqlSelect("sum(val)",
+		"comments, moderatorlog",
+		"comments.cid = moderatorlog.cid
+		AND ipid = '$user->{ipid}'
+		AND moderatorlog.active=1
+		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_ip"
+	);
+print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " ip downmods $downmods trollpoint $trollpoint ipid '$user->{subnetid}'\n";
+	return 1 if $downmods <= $trollpoint;
+
+	# Check for downmods by subnet.
+	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior;
+	($downmods) = $self->sqlSelect("sum(val)",
+		"comments, moderatorlog",
+		"comments.cid = moderatorlog.cid
+		AND subnetid = '$user->{subnetid}'
+		AND moderatorlog.active=1
+		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_ip"
+	);
+print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " subnet downmods $downmods trollpoint $trollpoint subnetid '$user->{subnetid}'\n";
+	return 1 if $downmods <= $trollpoint;
+
+	# Check for downmods by user ID.
+	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
+	($downmods) = $self->sqlSelect("sum(val)",
+		"comments, moderatorlog",
+		"comments.cid = moderatorlog.cid
+		AND comments.uid = $user->{uid}
+		AND moderatorlog.active=1
+		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_user"
+	);
+print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " user downmods $downmods trollpoint $trollpoint\n";
+	return 1 if $downmods <= $trollpoint;
+
+	# All tests passed, user is not a troll.
+	return 0;
 }
 
 ########################################################

@@ -485,7 +485,7 @@ sub validateComment {
 		return unless $preview;
 	}
 
-	if (isTroll($user, $constants, $slashdb)) {
+	if (isTroll()) {
 		$$error_message = getError('troll message');
 		return;
 	}
@@ -1075,31 +1075,34 @@ sub undoModeration {
 
 
 ##################################################################
-# Troll Detection: essentially checks to see if this IP or UID has been
+# Troll Detection: checks to see if this IP or UID has been
 # abusing the system in the last 24 hours.
 # 1=Troll 0=Good Little Goober
-# This maybe should go into DB package -Brian
 sub isTroll {
 	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	return if $user->{seclev} > 99;
+	return 0 if $user->{seclev} > 99;
 
-	my($badIP, $badUID) = (0, 0);
-	return 0 if !$user->{is_anon} && $user->{karma} > -1;
-
-	# Anonymous only checks HOST
-	my $downMods = $constants->{down_moderations};
-	$badIP = $slashdb->getTrollAddress();
-	return 1 if $badIP < $downMods;
-
-	unless ($user->{is_anon}) {
-		$badUID = $slashdb->getTrollUID();
+	my $good_behavior = 0;
+	if (!$user->{is_anon} and $user->{karma} >= 1) {
+		if ($form->{postanon}) {
+			# If the user is signed in but posting anonymously,
+			# their karma helps a little bit to offset their
+			# trollishness.  But not much.
+			$good_behavior = int(log($user->{karma}));
+		} else {
+			# If the user is signed in and posting under their
+			# own name, their karma can help to offset quite a
+			# bit of their trollishness.
+			$good_behavior = getCurrentStatic('goodkarma');
+			$good_behavior = $user->{karma}
+				if $user->{karma} < $good_behavior;
+		}
 	}
 
-	return 1 if $badUID < $downMods;
-	return 0;
+	return $slashdb->getIsTroll($good_behavior);
 }
 
 ##################################################################

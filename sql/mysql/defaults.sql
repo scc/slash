@@ -385,6 +385,9 @@ INSERT INTO vars (name, value, description) VALUES ('goodkarma','25','Users get 
 INSERT INTO vars (name, value, description) VALUES ('http_proxy','','http://proxy.www.example.com');
 INSERT INTO vars (name, value, description) VALUES ('id_md5_vislength','5','Num chars to display for ipid/subnetid (0 for all)');
 INSERT INTO vars (name, value, description) VALUES ('imagedir','//www.example.com/images','Absolute URL for image directory');
+INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_ip','4','Downmods at which an IP is considered a troll');
+INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_subnet','6','Downmods at which a subnet is considered a troll');
+INSERT INTO vars (name, value, description) VALUES ('istroll_downmods_user','4','Downmods at which a user is considered a troll');
 INSERT INTO vars (name, value, description) VALUES ('istroll_ipid_hours','72','Hours back that getTrollAddress checks for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('istroll_uid_hours','72','Hours back that getTrollUID checks for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
