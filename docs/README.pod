@@ -89,6 +89,9 @@ StarOffice, and PostScript)
 
 See F<INSTALL>.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
-Patrick Galbraith, Chris Nandor and Brian Aker.  Last Modified May 18, 2000.
+Patrick Galbraith, Chris Nandor, Brian Aker, Daniel "Yazz" Atlass,
+Dave Olszewski and Cliff Wood.  
+
+Last Modified May 18, 2000.
