@@ -18,9 +18,10 @@ use HTML::Entities;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
-use vars qw($VERSION @ISA);
+use vars qw($VERSION);
+use base 'Slash::DB';
+use base 'Slash::DB::Utility';
 
-@ISA = qw( Slash::DB::Utility );
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: I hate people who love me.  And they hate me.
