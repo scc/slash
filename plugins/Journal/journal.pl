@@ -105,16 +105,14 @@ sub displayArticle {
 		if($date eq $date_current) {
 			push @{$collection->{article}} , { article =>  $article->[1], date =>  $article->[0], description => $article->[2]};
 		}else {
-			push @sorted_articles, $collection if $date;
+			push @sorted_articles, $collection if ($date and (keys %$collection));
 			$collection = {};
 			$date = $date_current;
 			$collection->{day} = $date;
 			push @{$collection->{article}} , { article =>  $article->[1], date =>  $article->[0], description => $article->[2]};
 		}
 	}
-	for(@sorted_articles) {
-		print STDERR "$_->{day}\n";
-	}
+	push @sorted_articles, $collection;
 	my $theme = $slashdb->getUser($uid, 'journal-theme');
 	$theme ||= 'generic';
 	slashDisplay($theme, {
