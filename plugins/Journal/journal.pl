@@ -28,11 +28,13 @@ sub main {
 	my $user_ok   = $user->{state}{post} && !$user->{is_anon};
 
 	# if top 10 are allowed
-	my $top_ok    = $constants->{journal_top} && (
+	# My feeling is that an admin should be able to use the
+	# feature even if the site does not use it. -Brian
+	my $top_ok    = ($constants->{journal_top} && (
 		$constants->{journal_top_posters} ||
 		$constants->{journal_top_friend}  ||
 		$constants->{journal_top_recent}
-	);
+	)) or $user->{is_admin};
 
 	# possible value of "op" parameter in form
 	my %ops = (

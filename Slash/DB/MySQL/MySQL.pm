@@ -1120,7 +1120,17 @@ sub getCommentPid {
 }
 
 ########################################################
+# Ugly yes, needed at the moment, yes
+sub checkStoryViewable {
+	my ($self, $sid) = @_;
+	return unless $sid;
+
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	return $self->sqlSelect('sid', $story_table, "sid='$sid' displaystatus != -1 AND time < now()");
+}
+
 sub setSection {
+########################################################
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
 	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;

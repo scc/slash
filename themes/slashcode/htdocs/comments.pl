@@ -120,7 +120,7 @@ sub main {
 		# there will only be a discussions creation form if 
 		# the user is anon, or if there's an sid, therefore, we don't want 
 		# a formkey if it's not a form 
-		default		=> { 
+		display		=> { 
 			function		=> \&displayComments,
 			seclev			=> 0,
 			formname		=> 'discussions',
@@ -204,6 +204,7 @@ sub main {
 				formkey_check ) ],
 		},
 	};
+	$ops->{default} = $ops->{display} ;
 	
 	# This is here to save a function call, even though the
 	# function can handle the situation itself
@@ -214,6 +215,13 @@ sub main {
 			$discussion = $slashdb->getDiscussionBySid($form->{sid});
 		} else {
 			$discussion = $slashdb->getDiscussion($form->{sid});
+		}
+		if(!$user->{is_admin} && $discussion->{sid}) {
+			my $status = $slashdb->getStory($discussion->{sid}, 'writestatus');
+			if ($slashdb->checkStoryViewable($discussion->{sid})) {
+				$form->{sid} = '';
+				$discussion = '';
+			}
 		}
 	}
 
@@ -285,6 +293,7 @@ sub main {
 #################################################################
 # this groups all the errors together in
 # one template, called "errors;comments;default"
+# Why not just getData??? -Brian
 sub getError {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};

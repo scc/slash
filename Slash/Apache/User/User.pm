@@ -284,6 +284,10 @@ sub userdir_handler {
 			$r->args("nick=$nick&op=creator_index");
 			$r->uri('/comments.pl');
 			$r->filename($constants->{basedir} . '/comments.pl');
+		} elsif ($op eq 'pubkey') {
+			$r->args("nick=$nick");
+			$r->uri('/pubkey.pl');
+			$r->filename($constants->{basedir} . '/pubkey.pl');
 		} else {
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
