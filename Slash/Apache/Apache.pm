@@ -46,6 +46,7 @@ sub SlashVirtualUser ($$$) {
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
+	$cfg->{slashdb}->{_dbh}->disconnect;
 }
 
 sub IndexHandler {
@@ -67,15 +68,6 @@ sub IndexHandler {
 			return OK;
 		}
 	}
-	
-	return DECLINED;
-}
-
-sub DBInitHandler {
-	my($r) = @_;
-	my $cfg = Apache::ModuleConfig->get($r);
-	my $slashdb = $cfg->{slashdb};
-	$slashdb->sqlConnect('1');
 	
 	return DECLINED;
 }
