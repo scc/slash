@@ -12,8 +12,9 @@ __name__
 journalhead
 __template__
 [% USE Slash %]
-[% INCLUDE titlebar width => "100%" %]
+[% Slash.createMenu("users") %]
 [% Slash.createMenu("journal") %]
+[% INCLUDE titlebar width => "100%" %]
 
 __seclev__
 500
