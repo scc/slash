@@ -240,7 +240,6 @@ CREATE TABLE discussions (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (topic) REFERENCES topics(tid),
 	INDEX (type,uid,ts),
-	PRIMARY KEY (id)
 ) TYPE = myisam;
 
 #
@@ -424,7 +423,7 @@ CREATE TABLE sections (
 	issue tinyint DEFAULT '0' NOT NULL,
 	extras mediumint DEFAULT '0',
 	KEY (section),
-	FOREIGN KEY (qid) REFERENCES discussions(qid),
+	FOREIGN KEY (qid) REFERENCES pollquestions(qid),
 	PRIMARY KEY (id)
 ) TYPE = myisam;
 
