@@ -285,8 +285,8 @@ sub authorEdit {
 	my $author = $slashdb->getAuthor($aid) if $aid;
 
 	$author_select = createSelect('myuid', $authors, $aid, 1);
-	$section_select = selectSection('section', $author->{section}, {}, 1) ;
-	$deletebutton_flag = 1 if (! $authornew && $aid ne $user->{uid}) ;
+	$section_select = selectSection('section', $author->{section}, {}, 1, 1);
+	$deletebutton_flag = 1 if !$authornew && $aid ne $user->{uid};
 
 	for ($author->{email}, $author->{copy}) {
 		$_ = strip_literal($_);

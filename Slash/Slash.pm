@@ -47,7 +47,7 @@ use vars qw($VERSION @ISA @EXPORT);
 # this is the worst damned warning ever, so SHUT UP ALREADY!
 $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
-$VERSION = '1.001016';	# v1.1.16
+$VERSION = '2.000000';	# v2.0.0
 @ISA	 = 'Exporter';
 @EXPORT  = qw(
 	checkSubmission createMenu createSelect
@@ -141,7 +141,7 @@ sub createSelect {
 
 #========================================================================
 
-=head2 selectTopic(LABEL [, DEFAULT, RETURN])
+=head2 selectTopic(LABEL [, DEFAULT, RETURN, ALL])
 
 Creates a drop-down list of topics in HTML.  Calls C<createSelect>.
 
@@ -163,6 +163,10 @@ Default topic for the list.
 
 See "Return value" below.
 
+=item ALL
+
+Boolean for including "All Topics" item.
+
 =back
 
 =item Return value
@@ -176,20 +180,21 @@ true/false if operation is successful.
 =cut
 
 sub selectTopic {
-	my($label, $default, $return) = @_;
+	my($label, $default, $return, $all) = @_;
 	my $slashdb = getCurrentDB();
 
 	my $topicbank = $slashdb->getTopics();
 	my %topics = map {
 		($_, $topicbank->{$_}{alttext})
 	} keys %$topicbank;
+	delete $topics{''} unless $all;
 
 	createSelect($label, \%topics, $default, $return);
 }
 
 #========================================================================
 
-=head2 selectSection(LABEL [, DEFAULT, SECT, RETURN])
+=head2 selectSection(LABEL [, DEFAULT, SECT, RETURN, ALL])
 
 Creates a drop-down list of sections in HTML.  Calls C<createSelect>.
 
@@ -216,6 +221,10 @@ list is not created, but hidden value is returned instead.
 
 See "Return value" below.
 
+=item ALL
+
+Boolean for including "All Topics" item.
+
 =back
 
 =item Return value
@@ -233,7 +242,7 @@ The 'sectionisolate' template block.
 =cut
 
 sub selectSection {
-	my($label, $default, $SECT, $return) = @_;
+	my($label, $default, $SECT, $return, $all) = @_;
 	my $slashdb = getCurrentDB();
 
 	$SECT ||= {};
@@ -250,6 +259,7 @@ sub selectSection {
 	} grep {
 		!($sectionbank->{$_}{isolate} && $seclev < 500)
 	} keys %$sectionbank;
+	delete $sections{''} unless $all;
 
 	createSelect($label, \%sections, $default, $return);
 }

@@ -359,10 +359,11 @@ themes/slashcode/templates/users;menu;default
 themes/slashcode/templates/vote;pollBooth;default
 themes/slashcode/templates/yourPendingSubs;submit;default
 utils/MAIN2bender
-utils/convertDBfrommain2bender.pl
 utils/convert-dump
+utils/convertDBfrommain2bender.pl
 utils/excessiveHits
 utils/replaceblock
-utils/slashcode-dearchive
 utils/slash
+utils/slash1toslash2
+utils/slashcode-dearchive
 utils/sqlps

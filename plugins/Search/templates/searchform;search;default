@@ -36,7 +36,7 @@ __template__
 	[% END %]
 
 	[% UNLESS op == 'users' %]
-		[% Slash.selectSection("section", form.section, section, 1) %]
+		[% Slash.selectSection("section", form.section, section, 1, 1) %]
 	[% END %]
 
 	<P>

@@ -40,7 +40,7 @@ __template__
 		>[% sub.strs.0 %]&nbsp;</A>
 	</TD><TD><FONT SIZE="2">[% sub.strs.1 %]
 	[% UNLESS sub.is_anon %]
-		([% karma or 0 %])
+		([% sub.karma or 0 %])
 	[% END %]
 		<BR>[% sub.strs.2 %]</FONT></TD></TR>
 [% END %]

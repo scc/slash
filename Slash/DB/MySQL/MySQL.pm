@@ -738,7 +738,7 @@ sub createUser {
 # Do not like this method -Brian
 sub setVar {
 	my($self, $name, $value) = @_;
-	if(ref($value)) {
+	if (ref($value)) {
 		$self->sqlUpdate('vars', {
 			value => $value->{'value'},
 			description => $value->{'desc'}
