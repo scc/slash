@@ -209,7 +209,7 @@ sub selectMode {
 
 	my $html_to_display .= qq!<SELECT NAME="mode">\n!;
 	foreach my $id (keys %$commentcode) {
-		my $selected = $id eq $getCurrentUser('mode') ? ' SELECTED' : '';
+		my $selected = $id eq getCurrentUser('mode') ? ' SELECTED' : '';
 		$html_to_display .= qq!<OPTION VALUE="$id"$selected>$commentcode->{$id}</OPTION>\n!;
 	}
 	$html_to_display .= "</SELECT>";
@@ -2103,7 +2103,7 @@ sub getFormkeyId {
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
 	if ($user->{uid} > 0 && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
-		getAnonCookie($user->);
+		getAnonCookie($user);
 		$id = $user->{anon_id};
 	} elsif ($uid > 0) {
 		$id = $uid;
