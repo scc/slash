@@ -5,50 +5,96 @@
 # $Id$
 
 use strict;
+use File::Basename;
+use Getopt::Std;
 use Slash;
 use Slash::DB;
 
-my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my $slashdb = Slash::DB->new($virtual_user);
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
 
-if ($ARGV[1] eq "today") {
-	my($total, $today);
-	my $pages = $slashdb->pagesServed();
-	for (@$pages) {
-		my($cnt, $h, $d) = @$_;
-		$total = 0 unless $today == $d;
-		$today = $d;
-		$total += $cnt;
-		print "| $h | $cnt  \t| $total  \t| " . sprintf("%.2f", $cnt/3600) . "\n";
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hvu:y:', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+$opts{'u'} ||= 'slash';
+
+{
+	my $slashdb = Slash::DB->new($opts{'u'});
+
+	if ($opts{'y'} eq "today") {
+		my($total, $today);
+		my $pages = $slashdb->pagesServed();
+		for (@$pages) {
+			my($cnt, $h, $d) = @$_;
+			$total = 0 unless $today == $d;
+			$today = $d;
+			$total += $cnt;
+			print "| $h | $cnt  \t| $total  \t| ",
+				sprintf("%.2f", $cnt/3600), "\n";
+		}
+		print "$total pages served so far today.\n";
+
+		exit;
 	}
-	print "$total pages served so far today.\n";
 
+	my $id = $slashdb->maxAccessLog();
+	my $total;
+	my $starttime = time;
+
+	while (1) {
+		sleep 3;
+		my $info = $slashdb->getAccessLogInfo($id);
+
+		my $sec = time - $starttime;
+		$total += @$info;
+
+		print "$sec\t| " . @$info . "\t| " . sprintf("%.2f", $total/$sec) . "\n"
+			if $opts{'y'} eq "sec";
+		for (@$info) {
+			my($host_addr, $uid, $op, $dat, $ts, $id) = @$_;
+			my $w="$ts $host_addr ($uid)";
+			$w .= "\t" if length $w < 24;
+			$w .= "\t$op";
+			$w .= "\t" if length($op) < 8;
+			$w .= "\t$dat\n";
+			print $w unless $opts{'y'} eq "sec";
+			$id = $id if $id > $id;
+		}
+	}
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] ... [FILES]
+
+SHORT PROGRAM DESCRIPTION
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+	-y	Period of time ("today" or "sec"); if "today", ...
+
+EOT
 	exit;
 }
 
-my $id = $slashdb->maxAccessLog();
-my $total;
-my $starttime = time;
+sub version {
+	print <<EOT;
 
-while (1) {
-	sleep 3;
-	my $info = $slashdb->getAccessLogInfo($id);
+$PROGNAME $VERSION
 
-	my $sec = time - $starttime;
-	$total += @$info;
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
 
-	print "$sec\t| " . @$info . "\t| " . sprintf("%.2f", $total/$sec) . "\n"
-		if $ARGV[1] eq "sec";
-	for (@$info) {
-		my($host_addr, $uid, $op, $dat, $ts, $id) = @$_;
-		my $w="$ts $host_addr ($uid)";
-		$w .= "\t" if length $w < 24;
-		$w .= "\t$op";
-		$w .= "\t" if length($op) < 8;
-		$w .= "\t$dat\n";
-		print $w unless $ARGV[1] eq "sec";
-		$id = $id if $id > $id;
-	}
-
+EOT
+	exit;
 }
 
+__END__
