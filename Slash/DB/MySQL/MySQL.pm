@@ -37,7 +37,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('code,name', 'issuemodes') },
 
 	'vars'
-		=> sub { $_[0]->sqlSelectMany('name,description', 'vars') },
+		=> sub { $_[0]->sqlSelectMany('name,name', 'vars') },
 
 	'topics'
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
@@ -1893,7 +1893,9 @@ sub saveVars {
 		}
 		$self->sqlUpdate("vars", {
 			value => $form->{value},
-			description => $form->{desc}
+			description => $form->{desc},
+			datatype => $form->{datatype},
+			dataop	=> $form->{dataop}
 			}, "name=" . $self->{dbh}->quote($form->{thisname})
 		);
 	} else {
