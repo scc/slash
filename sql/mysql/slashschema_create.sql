@@ -172,7 +172,7 @@ CREATE TABLE comments_hash (
   KEY subnetid (subnetid),
   KEY theusual (sid,uid,points,cid),
   KEY countreplies (sid,pid)
-) TYPE = hash;
+) TYPE = heap;
 
 DROP TABLE IF EXISTS comment_text;
 CREATE TABLE comment_text (
