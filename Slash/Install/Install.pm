@@ -201,6 +201,44 @@ sub _install {
 		}
 	}
 
+        if ($hash->{htdoc_code}){
+		mkpath "$prefix_site/htdocs/code", 0, 0775;
+                my $filename;
+                for (@{$hash->{htdoc_code}}) {
+                        if (/\//) {
+                                /.*\/(.*)$/;
+                                $filename = $1;
+                        } else {
+                                $filename = $_;
+                        }
+
+                        if ($symlink) {
+                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/code/$filename";
+                        } else {
+                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/code/$filename";
+                        }
+                }
+        }
+
+        if ($hash->{htdoc_faq}){
+		mkpath "$prefix_site/htdocs/faq", 0, 0775;
+                my $filename;
+                for (@{$hash->{htdoc_faq}}) {
+                        if (/\//) {
+                                /.*\/(.*)$/;
+                                $filename = $1;
+                        } else {
+                                $filename = $_;
+                        }
+
+                        if ($symlink) {
+                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/faq/$filename";
+                        } else {
+                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/faq/$filename";
+                        }
+                }
+        }
+
 	if ($hash->{task}){
 		my $filename;
 		for (@{$hash->{task}}) {
@@ -257,6 +295,44 @@ sub _install {
 			}
 		}
 	}
+
+        if ($hash->{image_award}){
+		mkpath "$prefix_site/htdocs/images/awards", 0, 0775;
+                my $filename;
+                for (@{$hash->{image_award}}) {
+                        if (/\//) {
+                                /.*\/(.*)$/;
+                                $filename = $1;
+                        } else {
+                                $filename = $_;
+                        }
+
+                        if ($symlink) {
+                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/awards/$filename";
+                        } else {
+                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/awards/$filename";
+                        }
+                }
+        }
+
+        if ($hash->{image_banner}){
+		mkpath "$prefix_site/htdocs/images/banners", 0, 0775;
+                my $filename;
+                for (@{$hash->{image_banner}}) {
+                        if (/\//) {
+                                /.*\/(.*)$/;
+                                $filename = $1;
+                        } else {
+                                $filename = $_;
+                        }
+
+                        if ($symlink) {
+                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/banners/$filename";
+                        } else {
+                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/banners/$filename";
+                        }
+                }
+        }
 
 	if ($hash->{topic}){
 		my $filename;
