@@ -3,10 +3,10 @@
 use strict;
 my $me = 'run_portald.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '30 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '30 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

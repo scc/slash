@@ -8,10 +8,10 @@ use XML::RSS 0.95;
 use strict;
 my $me = 'open_backend.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '10 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '10 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

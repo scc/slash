@@ -3,10 +3,10 @@
 use strict;
 my $me = 'set_recent_topics.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '1-59/15 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '1-59/15 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

@@ -5,12 +5,12 @@ use File::Path;
 use strict;
 my $me = 'freshenup.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
 my $total_changed_stories = 0;
 
-$cron{$me}{timespec} = '*/5 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '*/5 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

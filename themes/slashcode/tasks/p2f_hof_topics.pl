@@ -3,10 +3,10 @@
 use strict;
 my $me = 'p2f_hof_topics.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '50 */2 * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '50 */2 * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

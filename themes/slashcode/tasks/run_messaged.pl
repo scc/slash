@@ -3,10 +3,10 @@
 use strict;
 my $me = 'run_messaged.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '5-59/10 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '5-59/10 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

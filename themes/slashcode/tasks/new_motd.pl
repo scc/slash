@@ -3,10 +3,10 @@
 use strict;
 my $me = 'new_motd.pl';
 
-use vars qw( %cron );
+use vars qw( %task );
 
-$cron{$me}{timespec} = '5 * * * *';
-$cron{$me}{code} = sub {
+$task{$me}{timespec} = '5 * * * *';
+$task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
