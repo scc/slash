@@ -5,6 +5,7 @@
 # Server version	3.23.26-beta
 #
 # $Id$
+#
 
 #
 # Table structure for table 'abusers'

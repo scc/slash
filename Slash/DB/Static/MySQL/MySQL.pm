@@ -140,9 +140,9 @@ sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
-	my $delay1 = $constants->{archive_delay} * 2;
-	my $delay2 = $constants->{archive_delay} * 9;
-	$constants->{defaultsection} ||= 'articles';
+#	my $delay1 = $constants->{archive_delay} * 2;
+#	my $delay2 = $constants->{archive_delay} * 9;
+#	$constants->{defaultsection} ||= 'articles';
 
 # We no longer delete stories or comments that are too old.
 #	$self->sqlDo("DELETE FROM newstories WHERE
@@ -648,8 +648,8 @@ sub getMetaModerations {
 	my($self, $mmid) = @_;
 
 	my $mmid_quoted = $self->sqlQuote($mmid);
-	my $ret = $self->sqlSelectAllHashref(
-		'id','*','metamodlog', "mmid=$mmid_quoted"
+	my $ret = $self->sqlSelectAllHashrefArray(
+		'*','metamodlog', "mmid=$mmid_quoted"
 	);
 
 	return $ret;
@@ -702,7 +702,7 @@ sub updateMMFlag {
 #
 #
 sub clearM2Flag {
-	my($self, $id);
+	my($self, $id) = @_;
 
 	# Note that we only update flags that are in the:
 	#	10 - M2 Pending
