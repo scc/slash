@@ -21,7 +21,6 @@ print "ok 1\n";
 # of the test code):
 
 use strict;
-use Data::Dumper;
 use Slash 2.001;
 use Slash::Utility;
 $ARGV[0] ||= 'virtual_user=slash';

@@ -443,7 +443,13 @@ illegal characters to the proper escape sequences.
 It should be used on every URL that we get from I<inside> Slash
 that might contain unknown data.  For example:
 
-	$url = "http://www.example.com/~" . fixurl($data) . "/";
+	$url = fixurl($url);
+
+This should generally not be called; normally, either fudgeurl is
+called internally, or fixparam is called for portions of URLs.
+Since fixurl will not encode things like & etc., that are not allowed
+to appear in the path part of the URL, often fixparam() will be the
+best bet, since it encodes almost everything.
 
 =item fixparam
 
@@ -1014,6 +1020,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.9  2001/09/19 14:50:19  pudge
+	Some encoding fixes
+	
 	Revision 1.1.2.8  2001/09/11 01:26:34  pudge
 	fixurl fixes, including new fudgeurl (mostly) internal function, and new code for parsing ~username stuff (which should be created with fixparam from now on); also the author displaying for users who are no longer authors
 	

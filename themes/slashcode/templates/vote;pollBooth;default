@@ -46,7 +46,7 @@ __template__
 		<FONT SIZE="4"><B>[% voters %] total votes.</B></FONT>
 	</TD></TR><TR><TD COLSPAN="2"><P ALIGN="CENTER">
 		[
-			<A HREF="[% env.script_name %]?qid=[% FILTER strip_attribute; qid; END %]">Voting Booth</A> |
+			<A HREF="[% env.script_name %]?qid=[% FILTER fixparam; qid; END %]">Voting Booth</A> |
 			<A HREF="[% env.script_name %]">Other Polls</A> |
 			<A HREF="[% constants.rootdir %]/">Back Home</A>
 		]

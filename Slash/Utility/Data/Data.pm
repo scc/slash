@@ -467,7 +467,9 @@ sub stripByMode {
 
 	# insert whitespace into long words, convert <>& to HTML entities
 	if ($fmode == LITERAL || $fmode == EXTRANS || $fmode == ATTRIBUTE || $fmode == CODE) {
-		$str = breakHtml($str) unless $no_white_fix;
+		# attributes are inside tags, and don't need to be
+		# broken up
+		$str = breakHtml($str) unless $no_white_fix || $fmode == ATTRIBUTE;
 		# Encode all HTML tags
 		$str =~ s/&/&amp;/g;
 		$str =~ s/</&lt;/g;

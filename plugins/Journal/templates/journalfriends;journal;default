@@ -25,9 +25,9 @@ __template__
 <INPUT TYPE="hidden" NAME="op" VALUE="delete">[% END %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH friend = friends %]
-    <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/~[% FILTER strip_attribute; friend.0; END %]">[% friend.0 %]</A></TD>
+    <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/~[% FILTER fixparam; friend.0; END %]">[% friend.0 %]</A></TD>
 [% IF friend.2 %]
-    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/~[% FILTER strip_attribute; friend.0; END %]/journal/"><B>[% friend.3 %]</B></A></TD>
+    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/~[% FILTER fixparam; friend.0; END %]/journal/"><B>[% friend.3 %]</B></A></TD>
     <TD VALIGN="TOP"><EM>[% Slash.timeCalc(friend.2) %]</EM></TD>
 [% ELSE %]
     <TD VALIGN="TOP">&nbsp;</TD>
