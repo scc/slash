@@ -226,12 +226,12 @@ sub updateStamps {
 # For dailystuff
 sub getDailyMail {	
 	my ($self) = @_;
-	my $columns = "sid,title,section,users.nickname,tid,time,dept";
+	my $columns = "sid,title,section,users.nickname,tid,time,dept,introtext,bodytext";
 	my $tables = "stories,users";
 	my $where = "users.uid = stories.uid AND to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
 	my $other = " ORDER BY time DESC";
 
-	my $email = $self->sqlSelectAll($columns,$tables,$where,$other);
+	my $email = $self->sqlSelectAll($columns, $tables, $where, $other);
 
 	return $email;
 }
@@ -241,12 +241,12 @@ sub getDailyMail {
 sub getMailingList {
 	my($self) = @_;
 
-	my $columns ="realemail,mode,nickname";
-	my $tables = "users,users_comments,users_info";
-	my $where = "users.uid=users_comments.uid AND users.uid=users_info.uid AND maillist=1";
-	my $other = "order by realemail";
+	my $columns = "realemail,nickname,users.uid";
+	my $tables  = "users,users_comments,users_info";
+	my $where   = "users.uid=users_comments.uid AND users.uid=users_info.uid AND maillist=1";
+	my $other   = "order by realemail";
 
-	my $users = $self->sqlSelectAll($columns,$tables,$where,$other);
+	my $users = $self->sqlSelectAll($columns, $tables, $where, $other);
 
 	return $users;
 }

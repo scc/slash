@@ -33,6 +33,9 @@ use Apache::ModuleConfig;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
+use HTML::FormatText;
+use HTML::TreeBuilder;
+use Mail::Sendmail;
 use URI;
 use XML::Parser;
 require Exporter;
@@ -73,9 +76,11 @@ use vars qw($VERSION @ISA @EXPORT);
 	getCurrentVirtualUser
 	getFormkey
 	getObject
+	html2text
 	isAnon
 	prepareUser
 	root2abs
+	sendEmail
 	setCookie
 	setCurrentForm
 	setCurrentUser
@@ -1348,6 +1353,80 @@ sub setCookie {
 
 #========================================================================
 
+=head2 sendEmail(ADDR, SUBJECT, CONTENT [, FROM, PRECEDENCE])
+
+Takes the address, subject and an email, and does what it says.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ADDR
+
+Mail address to send to.
+
+=item SUBJECT
+
+Subject of mail.
+
+=item CONTENT
+
+Content of mail.
+
+=item FROM
+
+Optional separate "From" address instead of "mailfrom" constant.
+
+=item PRECEDENCE
+
+Optional, set to "bulk" for "bulk" precedence.  Not standard,
+but widely supported.
+
+=item
+
+=back
+
+=item Return value
+
+True if successful, false if not.
+
+=item Dependencies
+
+Need From address and SMTP server from vars table,
+'mailfrom' and 'smtp_server'.
+
+=back
+
+=cut
+
+sub sendEmail {
+	my($addr, $subject, $content, $from, $pr) = @_;
+	my $constants = getCurrentStatic();
+
+	my %data = (
+		smtp	=> $constants->{smtp_server},
+		subject	=> $subject,
+		to	=> $addr,
+		body	=> $content,
+		from	=> $from || $constants->{mailfrom}
+	);
+
+	if ($pr && $pr eq 'bulk') {
+		$data{precedence} = 'bulk';
+	}
+
+	if (sendmail(%data)) {
+		return 1;
+	} else {
+		errorLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
+		return 0;
+	}
+}
+
+#========================================================================
+
 =head2 stripByMode(STRING [, MODE, NO_WHITESPACE_FIX])
 
 Private function.  Fixes up a string based on what the mode is.  This
@@ -1968,6 +2047,94 @@ sub chopEntity {
 	$text =~ s/<[^>]*$//;
 	return $text;
 }
+
+
+# DOCUMENT
+
+sub html2text {
+	my($html, $col) = @_;
+	my($text, $tree, $form, $refs);
+
+	my $constants = getCurrentStatic();
+	my $user      = getCurrentUser();
+
+	$col = $Text::Wrap::columns = $col || 74;
+
+	$tree = new HTML::TreeBuilder;
+	$form = new HTML::FormatText (leftmargin => 0, rightmargin => $col-2);
+	$refs = new HTML::FormatText::AddRefs;
+
+	$tree->parse($html);
+	$tree->eof;
+	$refs->parse_refs($tree);
+	$text = $form->format($tree);
+	1 while chomp($text);
+
+	return $text, $refs->get_refs($constants->{absolutedir});
+}
+
+sub HTML::FormatText::AddRefs::new {
+	bless { HH => {}, HA => [], HS => 0 }, $_[0];
+};
+
+sub HTML::FormatText::AddRefs::parse_refs {
+	my($ref, $self, $format) = @_;
+	$format ||= '[%d]%s';
+
+	# find all the HREFs where the tag is "a"
+	if (exists $self->{'href'} && $self->{'_tag'} =~ /^[aA]$/) {
+		my $href = $self->{'href'};
+
+		# only increment number in hash and add to array if
+		# not already in array/hash
+		if (!exists $ref->{'HH'}{$href}) {
+			$ref->{'HH'}{$href} = $$ref{'HS'}++;
+			push(@{$ref->{'HA'}}, $href);
+		}
+
+		# get nested elements
+		my $con = $self->{'_content'};
+ 		while (ref($con->[0]) eq 'HTML::Element') {
+ 			$con = $con->[0]{'_content'};
+ 		}
+
+		# add "footnote" to text
+		$con->[0] = sprintf(
+			$format, $ref->{'HH'}{$href}, $con->[0]
+		) if defined $con->[0];
+
+	# get nested elements
+	} elsif (exists $self->{'_content'}) {
+		foreach (@{$self->{'_content'}}) {
+			if (ref($_) eq 'HTML::Element') {
+				$ref->parse_refs($_);
+			}
+		}
+	}
+}
+
+sub HTML::FormatText::AddRefs::add_refs {
+	my($ref, $url) = @_;
+
+	my $count = 0;
+	my $ascii = "\n\nReferences\n";
+	foreach ($ref->get_refs($url, $count)) {
+		$ascii .= sprintf("%4d. %s\n", $count++, $_);
+	}
+	return $ascii;
+}
+
+
+sub HTML::FormatText::AddRefs::get_refs {
+	my($ref, $url) = @_;
+
+	my @refs;
+	foreach (@{$ref->{'HA'}}) {
+		push @refs, URI->new_abs($_, $url);
+	}
+	return @refs;
+}
+
 
 #========================================================================
 
