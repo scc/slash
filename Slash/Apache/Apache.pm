@@ -71,6 +71,15 @@ sub IndexHandler {
 	return DECLINED;
 }
 
+sub DBInitHandler {
+	my($r) = @_;
+	my $cfg = Apache::ModuleConfig->get($r);
+	my $slashdb = $cfg->{slashdb};
+	$slashdb->sqlConnect('1');
+	
+	return DECLINED;
+}
+
 sub DESTROY {
 }
 

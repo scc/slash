@@ -24,7 +24,8 @@ sub sqlConnect {
 # What we are going for here, is the ability to reuse
 # the database connection.
 # Ok, first lets see if we already have a connection
-	my($self) = @_;
+	my($self, $restart) = @_;
+	$self->{_dbh}->disconnect if $restart;
 
 	if (defined $self->{_dbh} && $self->{_dbh}->ping) {
 		unless ($self->{_dbh}) {
