@@ -4496,11 +4496,12 @@ sub fzGetStories {
 		$story_table  = "stories";
 	}
 
+#,MAX($comment_table.date) AS lastcommentdate
+#LEFT OUTER JOIN $comment_table ON discussions.id = $comment_table.sid
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-$story_table.sid, $story_table.title, time, commentcount,
-MAX($comment_table.date) AS lastcommentdate
+$story_table.sid, $story_table.title, time, commentcount
 S
-discussions LEFT OUTER JOIN $comment_table ON discussions.id = $comment_table.sid, $story_table
+discussions, $story_table
 F
 $story_table.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
