@@ -1822,10 +1822,10 @@ sub getComments {
 ########################################################
 sub getNewStories {
 	my($self, $section, $limit, $tid, $section_display) = @_;
-
-	$section ||= $user->{currentSection};
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+
+	$section ||= $user->{currentSection};
 	$section_display ||= $form->{section};
 
 	$limit ||= $section eq 'index'
