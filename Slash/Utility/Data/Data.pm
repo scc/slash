@@ -1332,7 +1332,7 @@ sub _url_to_domain_tag {
 		} elsif ($info =~ m/([\w-]+\.[a-z]{2,4}\.[a-z]{2})$/) {
 			# a.b.c.d.co.uk -> d.co.uk
 			$info = $1;
-		} elsif ($info =~ m/([a-z]+\.[a-z]{2})$/) {
+		} elsif ($info =~ m/([\w-]+\.[a-z]{2})$/) {
 			# a.b.c.realdomain.gr -> realdomain.gr
 			$info = $1;
 		} else {
