@@ -38,8 +38,9 @@ slash:
 	(cd Slash; $(PERL) Makefile.PL; make)
 
 plugins: 
-	(cd plugins/Slash-Search; $(PERL) Makefile.PL; make)
-	(cd plugins/Slash-Journal; $(PERL) Makefile.PL; make)
+	(cd plugins/Search; $(PERL) Makefile.PL; make)
+	(cd plugins/Journal; $(PERL) Makefile.PL; make)
+	(cd plugins/Ladybug; $(PERL) Makefile.PL; make install)
 
 all: install
 
@@ -50,8 +51,8 @@ install: slash plugins
 	# Lets go install the libraries
 	(cd Slash; make install)
 	# Lets go install the plugin's libraries
-	(cd plugins/Slash-Search; $(PERL) Makefile.PL; make install)
-	(cd plugins/Slash-Journal; $(PERL) Makefile.PL; make install)
+	(cd plugins/Search; $(PERL) Makefile.PL; make install)
+	(cd plugins/Journal; $(PERL) Makefile.PL; make install)
 	(cd plugins/Ladybug; $(PERL) Makefile.PL; make install)
 
 	# First we do the default sutff
