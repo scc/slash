@@ -116,6 +116,11 @@ sub _deleteThread {
 	my($self, $cid, $level, $comments_deleted) = @_;
 	$level ||= 0;
 
+	if (!$cid) {
+		errorLog("_deleteThread called with no cid");
+		return 0;
+	}
+
 	my $count = 1;
 	my @delList;
 	$comments_deleted = \@delList if !$level;
