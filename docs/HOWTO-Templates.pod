@@ -60,6 +60,8 @@ to the vars table to set your own preferences.
 
 =head1 Why does whitespace keep disappearing between Template tags?
 
+[* THIS IS IN PROGRESS.  IGNORE IT FOR NOW. *]
+
 We have the POST_CHOMP, PRE_CHOMP, and TRIM options turned on.
 L<Template::Context>.  L<Template::Parser>.  TRIM essentially removes leading
 and trailing whitespace from the output of templates and BLOCKs.  So if you

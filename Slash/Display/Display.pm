@@ -322,8 +322,8 @@ sub _template {
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
 			TRIM		=> 1,
-			PRE_CHOMP	=> 1,
-			POST_CHOMP	=> 1,
+			PRE_CHOMP	=> 0,
+			POST_CHOMP	=> 0,
 			CACHE_SIZE	=> $cache_size,
 		})],
 	});

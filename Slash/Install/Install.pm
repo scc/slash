@@ -122,30 +122,45 @@ sub writeTemplateFile {
 }
 
 sub installPlugin {
-	my ($self, $answers, $plugins) = @_;
+	my($self, $answers, $plugins, $symlink) = @_;
 	$plugins ||= $self->{'_plugins'};
-	for(@$answers) {
-		my $answer = $_;
-		for(keys %$plugins) {
-			if($answer eq $plugins->{$_}{order}) {
-				_install($self,$plugins->{$_});
+
+	for my $answer (@$answers) {
+		for (keys %$plugins) {
+			if ($answer eq $plugins->{$_}{order}) {
+				$self->_install($plugins->{$_}, $symlink);
 			}
 		}
 	}
 }
 
 sub _install {
-	my ($self, $plugin) = @_;
+	my($self, $plugin, $symlink) = @_;
 	# Yes, performance wise this is questionable, if getValue() was
 	# cached.... who cares this is the install. -Brian
 	my $hostname = $self->getValue('basedomain');
 	my $email = $self->getValue('adminmail');
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
-	for(@{$plugin->{'htdoc'}}) {
-		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs";
-		chmod(0755, "$prefix_site/htdocs/$_");
+
+	for (@{$plugin->{'htdoc'}}) {
+		if ($symlink) {
+			symlink "$plugin->{'dir'}/$_", "$prefix_site/htdocs/$_";
+		} else {
+			copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/$_";
+			chmod(0755, "$prefix_site/htdocs/$_");
+		}
 	}
+
+	for (@{$plugin->{'image'}}) {
+		if ($symlink) {
+			symlink "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images/$_";
+		} else {
+			copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images/$_";
+			chmod(0755, "$prefix_site/htdocs/images/$_");
+		}
+	}
+
 	my($sql, @sql, @create);
 
 	if ($plugin->{"${driver}_schema"}) {
@@ -186,13 +201,6 @@ sub _install {
 		}
 	}
 
-	for(@{$plugin->{'htdoc'}}) {
-		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs";
-	}
-
-	for(@{$plugin->{'image'}}) {
-		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images";
-	}
 	if($plugin->{'template'}) {
 		my $slash = Slash::DB->new($self->{virtual_user});
 		for(@{$plugin->{'template'}}) {
@@ -220,7 +228,7 @@ sub getPluginList {
 		next if $dir =~ /^\.\.$/;
 		next if $dir =~ /^CVS$/;
 		open(PLUGIN,"<$prefix/plugins/$dir/PLUGIN") or next; 
-		$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir/";
+		$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir";
 		$plugins{$dir}->{'name'} = $dir;
 		my @info = <PLUGIN>;
 		chomp(@info);

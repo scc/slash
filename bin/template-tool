@@ -445,14 +445,11 @@ sub usage {
 Usage: template-tool [OPTIONS] <template templateN>
 
 OPTIONS
-<<<<<<< template-tool
 
 	-g generates a blank template (specify the name of the file after the option)
-=======
 
 	-u virtual user to use (default is "slash")
 
->>>>>>> 1.1.2.15
 	-d dump templates
 	-i use tpid (template id) instead of template name
 

@@ -27,7 +27,7 @@ my $prefix_site = "/usr/local/slash/site";
 my(	$user, $owner, $owner_id, $group, $group_id, $password,
 	$sitename, $username, $realname, $email, $dbh, @create, $sql,
 	@sql, $hostname, $hostname_f, $host_noport, $httpd, %slash_sites,
-	$driver, $theme
+	$driver, $theme, $symlink
 );
 
 my %drivers = (
@@ -114,9 +114,10 @@ if ($opts{'r'}) {
 	$sitename = $host_noport;
 } else {
 	unless ($opts{'s'}) {
-		print "\nOK, I am planning on user $host_noport as the unique name
-		for the slash site.  If this is not ok, you need to fill in
-		something else here. [$host_noport] ";
+		print "
+OK, I am planning on user $host_noport as the unique name
+for the slash site.  If this is not ok, you need to fill in
+something else here. [$host_noport] ";
 		chomp($sitename = <STDIN>);
 		$sitename ||= $host_noport;
 	} else {
@@ -138,7 +139,7 @@ while(my $dir = readdir(THEMEDIR)) {
 	next if $dir =~ /^CVS$/;
 	$x++;
 	$themes{$x}->{'order'} = $x;
-	$themes{$x}->{'dir'} = "$prefix/themes/$dir/";
+	$themes{$x}->{'dir'} = "$prefix/themes/$dir";
 	$themes{$x}->{'name'} = $dir;
 	print "$themes{$x}->{'order'}.\t$dir\n";
 	open(THEME,"<$prefix/themes/$dir/PLUGIN") or next; 
@@ -180,9 +181,21 @@ while($select ne 'q'){
 	}
 }
 
+unless ($opts{'l'}) {
+	print "
+Would you like to install all the files as symlinks
+to the original?  (If not, each file will be copied to
+your Slash directories). [Y] ";
+	chomp(my $ans = <STDIN>);
+	$ans ||= 'Y';
+	$symlink = $ans =~ /^\s*[Yy]/;
+}
+
+
 unless ($opts{'a'}) {
-	print "\nOK, we need to create an admin account;
-	give us a name (8 characters only please). [$owner] ";
+	print "
+OK, we need to create an admin account;
+give us a name (8 characters only please). [$owner] ";
 	chomp($username = <STDIN>);
 	$username ||= $owner;
 } else {
@@ -261,8 +274,12 @@ find(sub {
 	if (-d $f1) {
 		mkpath $f2, 0, 0775;
 	} else {
-		copy $f1, $f2;
-		chmod((stat(_))[2], $f2);
+		if ($symlink) {
+			symlink $f1, $f2;
+		} else {
+			copy $f1, $f2;
+			chmod((stat(_))[2], $f2);
+		}
 	}
 }, "$theme/htdocs/");
 $install->create({ name => 'admin', value => $username});
@@ -297,11 +314,15 @@ closedir(TEMPLATEDIR);
 
 for (keys %$plugins) {
 	if ($answers[$plugins->{$_}{'order'}]) {
-		$install->create({ name => 'plugin', value => $plugins->{$_}{'order'}, description => $plugins->{$_}{'description'} });
+		$install->create({
+			name		=> 'plugin',
+			value		=> $plugins->{$_}{'order'},
+			description	=> $plugins->{$_}{'description'},
+		});
 	}
 }
 
-$install->installPlugin(\@answers);
+$install->installPlugin(\@answers, 0, $symlink);
 
 my $uid = $slashdb->createUser($username, $email, $username);
 $slashdb->setUser($uid, { 
@@ -327,14 +348,16 @@ unless (exists $slash_sites{$user}) {
 	close(SLASHSITES);
 }
 
-find(sub { chown $owner_id, $group_id, $_ }, "$prefix_site/$sitename");
+find(sub { chown $owner_id, $group_id, $_ unless -l $_ }, "$prefix_site/$sitename");
 
 apache_site_conf();
 $dbh->disconnect;
 install_message();
 
 sub usage {
-usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
+# should this really be here?  the options are out of date (and
+# need to be changed anyway)
+# usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 	print "Usage:install-slashsite  [OPTIONS] <DBIx:Password Virtual User>\n";
 	print "\t?: Gives you this list.\n";
 	print "\th: Hostname to use.\n";
@@ -347,6 +370,7 @@ usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 	print "\tr: Reuse the hostname minus the port as the sitename.\n";
 	print "\tt: Choose your theme.\n";
 	print "\ti: Install all plugins.\n";
+	print "\tl: Install everything using symlinks instead of copying files.\n";
 	print "\n\tIf no virtual user is given the install will not run\n\n";
 	exit();
 }
