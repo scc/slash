@@ -195,11 +195,7 @@ sub genQuickies {
 #################################################################
 sub submissionEd {
 	# mmmm, code comments in here sure would be nice
-	my($contants, $slashdb, $user, $form, $title) = @_;
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my($constants, $slashdb, $user, $form, $title) = @_;
 	my($def_section, $cur_section, $def_note, $cur_note,
 		$sections, @sections, @notes,
 		%all_sections, %all_notes, %sn);
