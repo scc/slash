@@ -218,7 +218,7 @@ sub displayStories {
 		print eval $execme;
 
 		if ($@) {
-			print "<!-- story_link eval failed!\n$@\n-->\n";
+			print STDERR "<!-- story_link eval failed!\n$@\n-->\n";
 		}
 
 		print linkStory({

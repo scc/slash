@@ -595,10 +595,10 @@ sub freshenup {
 	}
 	$c->finish;
 
-	my($w) = getvar("writestatus");
+	my($w) = $I{dbobject}->getVar("writestatus");
 
 #	if ($updates{articles} ne "" || $w ne "0") {
-		setvar("writestatus", "0");
+		$I{dbobject}->setVar("writestatus", "0");
 		prog2file("$I{basedir}/index.pl ssi=yes", "$I{basedir}/index.shtml");
 		# prog2file("$I{basedir}/index.pl ssi=yes\\\&mode=flat","$I{basedir}/index_F.shtml");
 #	}
@@ -700,10 +700,10 @@ sub main {
 			sleep(60 * 2);
 
 			my($today) = sqlSelect("to_days(now())");
-			my($yesterday) = getvars("today");
+			my($yesterday) = $I{dbobject}->getVars("today");
 
 			if ($today ne $yesterday) {
-				setvar("today", $today);
+				$I{dbobject}->setVar("today", $today);
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
 				system("$I{datadir}/dailyStuff &");
 			}

@@ -48,12 +48,12 @@ BEGIN {
 		sqlSelectHashref sqlUpdate sqlInsert sqlReplace sqlConnect
 		sqlTableExists sqlSelectColumns getSlash linkStory getSection
 		selectForm selectGeneric selectTopic selectSection fixHref
-		getvars getvar setvar newvar getblock getsid getsiddir getWidgetBlock
+		getblock getsid getsiddir getWidgetBlock
 		anonLog pollbooth stripByMode header footer pollItem
 		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc 
-		getEvalBlock getTopic getAuthor dispStory lockTest getSlashConf
+		getEvalBlock getTopic dispStory lockTest getSlashConf
 		getDateFormat dispComment getDateOffset linkComment redirect
 		getFormkey getFormkeyId checkFormkey intervalString
 	);
@@ -630,20 +630,6 @@ sub getTopic {
 	return $I{topicBank}{$topic};
 }
 
-########################################################
-sub getAuthor {
-	my $aid = shift;
-
-	return $I{authorBank}{$aid} if $I{authorBank}{$aid};
-	# Get all the authors and throw them in a hash for later use:
-	my $c = sqlSelectMany('*', 'authors');
-	while (my $A = $c->fetchrow_hashref) {
-		$I{authorBank}{ $A->{aid} } = $A;
-	}
-	$c->finish;
-	return $I{authorBank}{$aid};
-}
-
 
 ################################################################################
 # SQL Timezone things
@@ -682,7 +668,7 @@ sub latestpoll {
 sub pollbooth {
 	my($qid, $notable) = @_;
 
-	($qid) = getvar("currentqid") unless $qid;
+	$qid = $I{dbobject}->getVar("currentqid") unless $qid;
 	my $cursor = $I{dbh}->prepare_cached("
 		SELECT question,answer,aid  from pollquestions, pollanswers
 		WHERE pollquestions.qid=pollanswers.qid AND
@@ -1373,11 +1359,12 @@ sub printComments {
 		print qq!\t<TR><TD BGCOLOR="$I{bg}[3]" ALIGN="CENTER">!,
 			qq!<FONT SIZE="${\( $I{fontbase} + 2 )}" COLOR="$I{fg}[3]">!;
 
-		my($title, $section);
+
+		my ($title, $section);
 		# Print Story Name if Applicable
-		if ($I{storyBank}{$sid}) {
-			my $TS = $I{storyBank}{$sid};
-			($title, $section) = ($TS->{title}, $TS->{section});
+		if ($I{dbobject}->getStoryBySid($sid)) {
+			$title = $I{dbobject}->getStoryBySid($sid, 'title');
+			$section = $I{dbobject}->getStoryBySid($sid, 'section');
 		} else {
 			($title, $section) = sqlSelect('title,section', 'newstories',
 				'sid=' . $I{dbh}->quote($sid));
@@ -1863,32 +1850,30 @@ sub displayStory {
 	if ($I{code_time} - $I{storyBank}{timestamp} > $I{story_expire} && $I{story_refresh} != 1) {
 		$I{story_refresh} = 1;
 
-		# gotta toast it because there may be sid keys that aren't part 
-		# of the upcoming query (old stories) and it could end up 
-		# getting bigger, and bigger, and bigger
-		undef $I{storyBank};
+		# This clears the stories from the cache (doesn't harm the database)
+		$I{dbobject}->clearStory();
 
 		# smack a time stamp on it with the current time (this is the new timestamp)
 		$I{storyBank}{timestamp} = $I{code_time}; 
 	}
 
-	# query the database only if there's not member in storyBank with this sid and it's not time to refresh storyBank 
-	$I{storyBank}{$sid} = sqlSelectHashref(
-		'title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid,' .
-		'tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
-		'stories', 'stories.sid=' . $I{dbh}->quote($sid)
-	) unless $I{storyBank}{$sid} && $I{story_refresh} != 1;
-
 	# give this member of storyBank the current iteration of 
 	# StoryCount if it's not already defined and the calling page is 
 	# index.pl 
-	$I{storyBank}{$sid}{story_order} = $I{StoryCount}
-		if !$I{storyBank}{$sid}{story_order} && $caller eq 'index';
+
+	$I{dbobject}->setStoryBySid($sid, 'story_order',$I{StoryCount})
+	    if !$I{dbobject}->getStoryBySid($sid, 'story_order') && $caller eq 'index';
+
 
 	# increment if the calling page was index.pl 
 	$I{StoryCount}++ if $caller eq 'index';
 
-	my $S = $I{storyBank}{$sid};
+	my $S = $I{dbobject}->getStoryBySid($sid);
+	print STDERR "Sid $sid \nType ref($S)\b";
+	while(my ($key, $val) = each %$S) {
+		print STDERR ("\tStory:$key = $val \n");
+	}
+	
 
 	# convert the time of the story (this is mysql format) 
 	# and convert it to the user's prefered format 
@@ -1903,10 +1888,8 @@ sub displayStory {
 	}
 
 	getTopic($S->{tid});
-	getAuthor($S->{aid});
-
-	dispStory($S, $I{authorBank}{$S->{aid}}, $I{topicBank}{$S->{tid}}, $full);
-	return($S, $I{authorBank}{$S->{aid}}, $I{topicBank}{$S->{tid}});
+	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $I{topicBank}{$S->{tid}}, $full);
+	return($S, $I{dbobject}->getAuthor($S->{aid}), $I{topicBank}{$S->{tid}});
 }
 
 #######################################################################
@@ -2030,7 +2013,6 @@ sub selectStories {
 	# Order
 	$s .= "	ORDER BY time DESC ";
 	
-	print STDERR "Limit is :$limit:\n";
 	if ($limit) {
 		$s .= "	LIMIT $limit";
 	} elsif ($I{currentSection} eq 'index') {
@@ -2077,9 +2059,17 @@ EOT
 
 	if ($SECT->{issue}) {
 		# KLUDGE:Should really get previous issue with stories;
-		my($yesterday) = sqlSelect('to_days(now())-1')
-			unless $I{F}{issue} > 1 || $I{F}{issue};
-		$yesterday ||= int($I{F}{issue}) - 1;
+		# my($yesterday) = sqlSelect('to_days(now())-1')
+		my $yesterday;
+		unless ($I{F}{issue} > 1 || $I{F}{issue}) {
+			my @date = localtime();
+			$date[4] += 1;
+			$date[5] += 1;
+			$date[6] += 1900;
+			$yesterday = Date_DaysSince1BC($date[5], $date[4], $date[6])
+		} else {
+			$yesterday = int($I{F}{issue}) - 1;
+		}
 
 		my $min = $SECT->{artcount} + $I{F}{min};
 
@@ -2269,26 +2259,4 @@ sub sqlSelectColumns {
 	$I{dbobject}->sqlSelectColumns(@_);
 }
 
-###############################################################################
-# Functions for dealing with vars (system config variables)
 
-########################################################
-sub getvars {
-	$I{dbobject}->getVars(@_);
-}
-
-########################################################
-sub getvar {
-	$I{dbobject}->getVar(@_);
-}
-
-########################################################
-sub setvar {
-	$I{dbobject}->setVar(@_);
-}
-
-########################################################
-sub newvar {
-	$I{dbobject}->newVar(@_);
-}
-1;

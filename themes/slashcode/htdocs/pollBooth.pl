@@ -64,7 +64,7 @@ sub main {
 
 	} else {
 		vote($I{F}{qid}, $I{F}{aid});
-		printComments($I{F}{qid}) unless getvar("nocomment");
+		printComments($I{F}{qid}) unless $I{dbobject}->getVar("nocomment");
 	}
 
 	$I{dbobject}->writelog($I{U}{uid}, "pollbooth", $I{F}{qid});
@@ -81,7 +81,7 @@ sub editpoll {
 
 	$voters = 0 if ! defined $voters;
 
-	my($currentqid) = getvar("currentqid");
+	my($currentqid) = $I{dbobject}->getVar("currentqid");
 	printf <<EOT, $currentqid eq $qid ? " CHECKED" : "";
 
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
@@ -139,7 +139,7 @@ sub savepoll {
 		-date		=>'now()'
 	});
 
-	setvar("currentqid", $I{F}{qid}) if $I{F}{currentqid};
+	$I{dbobject}->setVar("currentqid", $I{F}{qid}) if $I{F}{currentqid};
 
 	# Loop through 1..8 and insert/update if defined
 	for (my $x = 1; $x < 9; $x++) {

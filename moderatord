@@ -151,12 +151,12 @@ sub comments2tokens {
 	$I{dbh}->do("UNLOCK TABLES");
 }
 
-my($tc, $lc) = getvars("totalComments", "lastComments");
+my($tc, $lc) = $I{dbobject}->getVars("totalComments", "lastComments");
 my $newcomments = $tc - $lc;
 #$newcomments+=1000;
 
 if ($newcomments > 0) {
-	setvar("lastComments", $tc);
+	$I{dbobject}->setVar("lastComments", $tc);
 	comments2tokens($newcomments);
 	tokens2points();
 }

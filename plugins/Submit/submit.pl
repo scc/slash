@@ -142,7 +142,7 @@ sub previewForm {
 
 	my $admin = $I{U}{aseclev} > 99;
 
-	my($writestatus) = getvars("defaultwritestatus");
+	my $writestatus = $I{dbobject}->getVar("defaultwritestatus");
 	($subid, my($email, $name, $title, $tid, $introtext,$time,$comment)) =
 		sqlSelect("subid,email,name,subj,tid,story,time,comment",
 		"submissions","subid='$subid'");

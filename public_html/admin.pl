@@ -1102,7 +1102,7 @@ EOT
 		);
 
 		($S->{writestatus}, $S->{displaystatus}, $S->{commentstatus}) =
-			getvars('defaultwritestatus','defaultdisplaystatus',
+			$I{dbobject}->getVars('defaultwritestatus','defaultdisplaystatus',
 			'defaultcommentstatus');
 
 		$S->{aid} ||= $I{U}{aid};
@@ -1165,9 +1165,9 @@ EOT
 		print '</TD></TR></TABLE>';
 
 	} else { # New Story
-		($S->{writestatus}) = getvars('defaultwritestatus');
-		($S->{displaystatus}) = getvars('defaultdisplaystatus');
-		($S->{commentstatus}) = getvars('defaultcommentstatus');
+		$S->{writestatus} = $I{dbobject}->getVar('defaultwritestatus');
+		$S->{displaystatus} = $I{dbobject}->getVar('defaultdisplaystatus');
+		$S->{commentstatus} = $I{dbobject}->getVar('defaultcommentstatus');
 
 		($S->{sqltime}) = sqlSelect('now()');
 		$S->{tid} ||= 'news';

@@ -804,13 +804,13 @@ EOT
 				comment_length	=> length($I{F}{postercomment})
 			}, "formkey=".$I{dbh}->quote($I{F}{formkey}));
 
-		my($tc, $mp, $cpp) = getvars(
+		my($tc, $mp, $cpp) = $I{dbobject}->getVars(
 			"totalComments",
 			"maxPoints",
 			"commentsPerPoint"
 		);
 
-		setvar("totalComments", ++$tc);
+		$I{dbobject}->setVar("totalComments", ++$tc);
 
 		undoModeration($I{F}{sid});
 		printComments($I{F}{sid}, $maxCid, $maxCid);

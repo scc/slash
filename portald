@@ -36,6 +36,8 @@ Slashdot.  Exciting?  Nope.
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
+use Slash::Utility;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
@@ -43,7 +45,7 @@ use XML::Parser;
 
 *I = getSlashConf();
 my %savedBlocks;
-#my ($basedir,$datadir)=getvars("basedir","datadir");
+#my ($basedir,$datadir)=$I{dbobject}->getVars("basedir","datadir");
 
 sub makeTmp {
 	if (-f "$I{datadir}/logs/portald.pid") {
@@ -178,7 +180,7 @@ sub getUptime {
 
 	my($today) = $c->fetchrow;
 	my($yesterday) = $c->fetchrow;
-	my($th, $tc) = getvars("totalhits", "totalComments");
+	my($th, $tc) = ${dbobject}->getVar("totalhits", "totalComments");
 
 	$stats .= "<B>yesterday:</B> $yesterday<BR>
 		<B>today:</B> $today<BR>

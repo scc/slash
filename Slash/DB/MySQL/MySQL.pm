@@ -10,6 +10,8 @@ use Slash::Utility;
 
 my ($dsn ,$dbuser, $dbpass, $dbh);
 my $timeout = 30; #This should eventualy be a parameter that is configurable
+my %authorBank; # This is here to save us a database call
+my %storyBank; # This is here to save us a database call
 
 ########################################################
 sub sqlConnect {
@@ -230,9 +232,10 @@ sub getACTz{
 # Functions for dealing with vars (system config variables)
 
 ########################################################
-sub getvars {
-	my($self, @invars, @vars) = @_;
+sub getVars {
+	my($self, @invars) = @_;
 
+	my @vars;
 	for (@invars) {
 		push @vars, $self->sqlSelect('value', 'vars', "name='$_'");
 	}
@@ -241,19 +244,19 @@ sub getvars {
 }
 
 ########################################################
-sub getvar {
-	my ($self) = @_;
-	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$_[0]'");
+sub getVar {
+	my ($self, $var) = @_;
+	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$var'");
 }
 
 ########################################################
-sub setvar {
+sub setVar {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
 }
 
 ########################################################
-sub newvar {
+sub newVar {
 	my($self, $name, $value, $desc) = @_;
 	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
 }
@@ -288,7 +291,7 @@ sub getNicknameByUID {
 
 ########################################################
 sub getBlockBank {
-my ($self, $iHashRef) = @_;
+	my ($self, $iHashRef) = @_;
 	return if $iHashRef->{blockBank}{cached};
 	$iHashRef->{blockBank}{cached} = localtime;
 
@@ -301,7 +304,7 @@ my ($self, $iHashRef) = @_;
 
 ########################################################
 sub getSectionBank {
-my ($self, $sectionbank) = @_;
+	my ($self, $sectionbank) = @_;
 	unless ($sectionbank) {
 		my $sth = $self->sqlSelectMany('*', 'sections');
 		while (my $S = $sth->fetchrow_hashref) {
@@ -310,6 +313,59 @@ my ($self, $sectionbank) = @_;
 		$sth->finish;
 	}
 }
+
+########################################################
+sub getAuthor {
+  my ($self, $aid) = @_;
+
+	return $authorBank{$aid} if $authorBank{$aid};
+	# Get all the authors and throw them in a hash for later use:
+	my $sth = $self->sqlSelectMany('*', 'authors');
+	while (my $author = $sth->fetchrow_hashref) {
+		$authorBank{ $author->{aid} } = $author;
+	}
+	$sth->finish;
+	return $authorBank{$aid};
+}
+
+########################################################
+sub getStoryBySid {
+	my ($self, $sid, $member) = @_;
+	
+	if($member) {
+		return $storyBank{$sid}->{$member} if $storyBank{$sid}->{$member};
+	}
+
+#	return $storyBank{$sid} if defined($storyBank{$sid});
+	my $hashref = $self->sqlSelectHashref('title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid, tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
+		'stories', 'sid=' . $self->{dbh}->quote($sid)
+		);
+	$storyBank{$sid} = $hashref;
+	if($member) {
+		$storyBank{$sid}->{$member};
+	} else {
+		return $storyBank{$sid};
+	}
+}
+########################################################
+sub clearStory {
+	my ($self, $sid) = @_;
+	print "clearStory() was called\n";
+	if($sid) {
+		undef $storyBank{$sid};
+	} else {
+		undef %storyBank;
+	}
+}
+
+########################################################
+sub setStoryBySid {
+	my ($self, $sid, $key, $value, $perm) = @_;
+	# The idea with $perm, is that at some point, if you set it
+	# it will update the database with the change you requested
+	$storyBank{$sid}{$key} = $value;
+}
+
 1;
 
 =head1 NAME
