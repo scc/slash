@@ -489,7 +489,7 @@ sub createAccessLog {
 
 	my $uid;
 	if ($ENV{SLASH_USER}) {
-		$uid = getCurrentUser('uid')
+		$uid = $ENV{SLASH_USER};
 	} else {
 		$uid = getCurrentStatic('anonymous_coward_uid');
 	}
