@@ -232,6 +232,7 @@ sub main {
 		},
 	} ;
 
+
 	if ($op eq 'userlogin' && ! isAnon($curuser->{uid})) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
 		redirect($refer);

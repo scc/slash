@@ -95,9 +95,11 @@ sub handler {
 		# GET, and the user has logged in successfully
 
 		if ($method eq 'GET' && $uid && ! isAnon($uid)) {
+			$form->{returnto} =~ s/\%3D/=/;
+			$form->{returnto} =~ s/\%3F/?/;
 			$form->{returnto} = url2abs($newpass
-				? "$constants->{rootdir}/users.pl?op=edit" .
-				  "user&note=Please+change+your+password+now!"
+				? "$constants->{rootdir}/users.pl?op=changepasswd" .
+				  "&note=Please+change+your+password+now!"
 				: $form->{returnto}
 					? $form->{returnto}
 					: $uri

@@ -27,8 +27,6 @@ __template__
 	<P>This story has been submitted anonymously.</P>
 [% END %]
 
-<P><B>There are currently [% submissioncount %] submissions pending.</B></P>
-
 <P>Thanks for the submission.</P>
 
 __seclev__

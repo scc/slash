@@ -37,7 +37,16 @@ __template__
 	[% constants.sitename %] Submissions
 
 [% CASE 'maxallowed' %]
-	<P><B>Warning! you've exceeded max allowed submissions for the day : [% constants.max_submissions_allowed %]</B></P>
+	<P><B>Warning! you've exceeded max allowed submissions for the day : 
+	[% constants.max_submissions_allowed %]</B></P>
+
+[% CASE 'max_submissionsize_title' %]
+	<B>Submission too large!</B>
+
+[% CASE 'max_submissionsize_err' %]
+	<P><B>Warning! You submission has exceeded the max allowable size 
+	that can be inserted into the system: [% size %] bytes.</B></P>
+	<P>If you try to save your submission as it is, it could be truncated</P>
 
 [% CASE 'error' %]
 	Error

@@ -151,6 +151,7 @@ sub yourPendingSubmissions {
 		my $count = $slashdb->getSubmissionCount();
 		slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
+			submissioncount	=> $slashdb->getSubmissionCount(),
 			title		=> "Your Recent Submissions (total:$count)",
 			width		=> '100%',
 			totalcount	=> $count,
@@ -326,6 +327,11 @@ sub displayForm {
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
+	if (length($form->{story}) > $constants->{max_submission_size}) {
+		titlebar('100%', getData('max_submissionsize_title'));
+		print getData('max_submissionsize_err', { size => $constants->{max_submission_size}});
+	}
+		
 	if ($error_message ne '') {
 		titlebar('100%', getData('filtererror', { err_message => $error_message}));
 		print getData('filtererror', { err_message => $error_message });
@@ -437,7 +443,6 @@ sub saveSub {
 		width		=> '100%',
 		missingemail	=> length($form->{email}) < 3,
 		anonsubmit	=> length($form->{name}) < 3,
-		submissioncount	=> $slashdb->getSubmissionCount(),
 	});
 	yourPendingSubmissions(@_);
 
