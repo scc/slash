@@ -30,6 +30,3 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Topic
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','User Admin','/users.pl?op=edituser',10000,13);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Variables','/admin.pl?op=vars',10000,14);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','[% USE Slash %][% Slash.db.getSubmissionCount(constants.articles_only) %] Submissions','/submit.pl?op=list',499,8);
-
-INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends');
-INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu');
