@@ -8,8 +8,8 @@ require DynaLoader;
 require AutoLoader;
 use vars qw($VERSION @ISA);
 
-@Slash::Apache::ISA = qw(DynaLoader);
-$Slash::Apache::VERSION = '1.00';
+@ISA = qw(DynaLoader);
+$VERSION = '1.00';
 
 bootstrap Slash::Apache $VERSION;
 

@@ -339,7 +339,10 @@ sub getBackendStories {
 sub newrdf {
 	my $section = shift;
 	my $c = getBackendStories($section);
-	my $rss = XML::RSS->new($I->{rdfencoding} ? (encoding => $I->{rdfencoding}) : ());
+	my $rss = XML::RSS->new(
+		version => '0.9',
+		$I->{rdfencoding} ? (encoding => $I->{rdfencoding}) : ()
+	);
 
 	my $SECT = getSection($section);
 	$SECT->{title} = "$I->{sitename}: $SECT->{title}" unless $SECT->{isolate};
@@ -352,7 +355,7 @@ sub newrdf {
 	$rss->channel(
 		title		=> xmlEncodeStr($SECT->{title}),
 		'link'		=> $I->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
-		language	=> $I->{rdflanguage},
+#		language	=> $I->{rdflanguage},
 		description	=> $I->{slogan},
 	);
 

@@ -12,21 +12,20 @@ use vars qw($VERSION @ISA);
 require DynaLoader;
 require AutoLoader;
 
-
-@Slash::Apache::User::ISA = qw(DynaLoader);
+@ISA = qw(DynaLoader);
 $VERSION = '0.01';
 
 bootstrap Slash::Apache::User $VERSION;
 
-sub SlashUserInit ($$){
-	my ($cfg, $params) = @_;
+sub SlashUserInit ($$) {
+	my($cfg, $params) = @_;
 	$cfg->{user} = '';
 	$cfg->{form} = '';
 }
 
 # handler method
-sub handler{
-	my ($r) = @_;
+sub handler {
+	my($r) = @_;
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	# Lets do this to make it a bit easier to handle
@@ -86,25 +85,28 @@ sub handler{
 	# the form, a cookie, or they will be anonymous
 	my $uid;
 	my $op = $form{'op'} || '';
-	if (($op eq 'userlogin' || $form{'rlogin'} )&& length($form{upasswd}) > 1){
+	if (($op eq 'userlogin' || $form{'rlogin'} ) && length($form{upasswd}) > 1) {
 		my $user = $dbslash->getUserUID($form{unickname});
 		print STDERR "FORM_AUTH: $user:$form{upasswd}\n";
 		$uid = userLogin($dbcfg, $user, $form{upasswd});
+
 	} elsif ($op eq 'userclose' ) {
 		setCookie('user', '');
+
 	} elsif ($op eq 'adminclose') {
 		setCookie('session', ' ');
+
 	#This is icky, should be simplified
 	} elsif ($cookies{'user'}) {
 		my($user, $password) = userCheckCookie($dbcfg, $cookies{'user'}->value);
 		print STDERR "COOKIE_AUTH: $user:$password\n";
-		unless($uid = $dbslash->getUserAuthenticate($user, $password)) {
-			$uid = $dbcfg->{constants}->{'anonymous_coward_uid'}; 
+		unless ($uid = $dbslash->getUserAuthenticate($user, $password)) {
+			$uid = $dbcfg->{constants}{'anonymous_coward_uid'}; 
 			setCookie('user', ' ');
 		}
 	} 
 
-	$uid = $dbcfg->{constants}->{'anonymous_coward_uid'} unless defined($uid);
+	$uid = $dbcfg->{constants}{'anonymous_coward_uid'} unless defined($uid);
 
 	#Ok, yes we could use %ENV here, but if we did and 
 	#if someone ever wrote a module in another language
@@ -119,7 +121,7 @@ sub handler{
 
 # This should be turned into a private method at some point
 sub fixint {
-	my ($int) = @_;
+	my($int) = @_;
 	$int =~ s/^\+//;
 	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
 	return $int;
@@ -134,26 +136,26 @@ sub userCheckCookie {
 	my($cfg, $cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
 	my($uid, $passwd) = split('::', $cookie);
-	return ($cfg->{constants}->{'anonymous_coward_uid'}, '')  unless $uid && $passwd;
-	return ($uid, $passwd);
+	return($cfg->{constants}->{'anonymous_coward_uid'}, '') unless $uid && $passwd;
+	return($uid, $passwd);
 }
 
 
 
 ########################################################
 sub userLogin {
-  my($cfg, $name, $passwd) = @_;
+	my($cfg, $name, $passwd) = @_;
 
 	$passwd = substr $passwd, 0, 20;
 	my $uid = $cfg->{'dbslash'}->getUserAuthenticate($name, $passwd);
 
-	if ($uid != $cfg->{constants}->{anonymous_coward_uid}) {
+	if ($uid != $cfg->{constants}{anonymous_coward_uid}) {
 		my $cookie = $uid . '::' . $passwd;
 		#$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
 		setCookie('user', $cookie);
 		return $uid ;
 	} else {
-		return $cfg->{constants}->{'anonymous_coward_uid'};
+		return $cfg->{constants}{'anonymous_coward_uid'};
 	}
 }
 
@@ -163,6 +165,13 @@ sub userLogin {
 sub setCookie {
 	my($name, $val, $session) = @_;
 	my $servername = Apache->server->server_hostname;
+
+	# this goes back in as soon as vars / slashdotrc
+	# stuff is done
+# 	my $domain = ($I{cookiedomain} && $I{cookiedomain} =~ /^\..+\./)
+# 		? $I{cookiedomain}
+# 		: '';
+
 	my %cookie = (
 			-name   => $name,
 # Add path back in when slashdotrc.pl is completed
@@ -171,10 +180,15 @@ sub setCookie {
 			-value    => $val,
 	);
 	$cookie{-expires} = '+1y' unless $session;
-	# $cookie{-domain}  = $domain if $domain; Lets not support this quite yet
+
+	# this goes back in as soon as vars / slashdotrc
+	# stuff is done
+# 	$cookie{-domain}  = $domain if $domain;
 
 	my $bakedcookie = CGI::Cookie->new(\%cookie);
 	my $r = Apache->request;
+
+	# huh? what is err_header?
 #	$r->header_out('Set-Cookie' => $bakedcookie);
 	$r->err_header_out('Set-Cookie' => $bakedcookie);
 }

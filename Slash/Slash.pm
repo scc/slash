@@ -90,7 +90,7 @@ sub getSlashConf {
 	#*I = $Slash::conf{$constants->{basedomain}};
 	#Yes this is ugly and should go away
 	#Just as soon as the last of %I is gone, this is gone
-	for(keys %$constants) {
+	for (keys %$constants) {
 		$I{$_} = $constants->{$_};
 	}
 
@@ -271,7 +271,7 @@ sub getEvalBlock {
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists
 sub getSectionBlock {
-	my ($name) = @_;
+	my($name) = @_;
 	my $thissect = getCurrentUser('light')? 'light' : $I{currentSection};
 	my $block;
 	if ($thissect) {
@@ -284,7 +284,7 @@ sub getSectionBlock {
 ########################################################
 # Get a Block based on mode, section & name, and prep it for evaling
 sub getWidgetBlock {
-	my ($name) = @_;
+	my($name) = @_;
 	my $block = getSectionBlock($name);
 	my $execme = prepBlock($block);
 	return $execme;
@@ -313,7 +313,8 @@ sub getUser {
 	#Ok, lets build user
 	my $user;
 
-	if (($uid != $I{anonymous_coward_uid}) && ($user = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
+	if (($uid != $I{anonymous_coward_uid})
+		&& ($user = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
 	# should the below just be done in the library call for getUser?
 
 		# Get the Timezone Stuff
@@ -332,8 +333,8 @@ sub getUser {
 		$I{SETCOOKIE} = setCookie('anon', $user->{anon_id}, 1);
 		#Now, we copy $coward into user
 		#Probably should improve on this
-		for(keys %{$coward}) {
-			$user->{$_} =  $coward->{$_};
+		for (keys %$coward) {
+			$user->{$_} = $coward->{$_};
 		}
 
 	}
@@ -341,7 +342,8 @@ sub getUser {
 	# Add On Admin Junk
 	if ($I{F}{op} eq 'adminlogin') {
 		my $sid;
-		($user->{aseclev}, $sid) = $I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
+		($user->{aseclev}, $sid) =
+			$I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
 		if ($user->{aseclev}) {
 			$user->{aid} = $I{F}{aaid};
 			$I{SETCOOKIE} = setCookie('session', $sid);
@@ -351,7 +353,9 @@ sub getUser {
 
 	} elsif (length($I{query}->cookie('session')) > 3) {
 		(@{$user}{qw[aid aseclev asection url]}) =
-			$I{dbobject}->getAdminInfo($I{query}->cookie('session'), $I{admin_timeout});
+			$I{dbobject}->getAdminInfo(
+				$I{query}->cookie('session'), $I{admin_timeout}
+			);
 
 	} else { 
 		$user->{aid} = '';
@@ -379,13 +383,13 @@ sub getUser {
 	}
 
 	# All sorts of checks on user data
-	$user->{tzcode}	= uc($user->{tzcode});
-	$user->{clbig}	||= 0;
+	$user->{tzcode}		= uc($user->{tzcode});
+	$user->{clbig}		||= 0;
 	$user->{clsmall}	||= 0;
-	$user->{exaid}	= testExStr($user->{exaid}) if $user->{exaid};
+	$user->{exaid}		= testExStr($user->{exaid}) if $user->{exaid};
 	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
-	$user->{extid}	= testExStr($user->{extid}) if $user->{extid};
-	$user->{points}	= 0 unless $user->{willing}; # No points if you dont want 'em
+	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
+	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
 
 	return $user;
 }
@@ -465,7 +469,7 @@ sub anonLog {
 	$data =~ s/_F//;
 	$op =~ s/_F//;
 
-	$I{dbobject}->writelog($op,$data);
+	$I{dbobject}->writelog($op, $data);
 }
 
 
@@ -487,7 +491,7 @@ sub sendEmail {
 ########################################################
 # The generic "Link a Story" function, used wherever stories need linking
 sub linkStory {
-	my ($c) = (@_);
+	my($c) = @_;
 	my($l, $dynamic);
 
 	if ($I{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
@@ -912,7 +916,7 @@ EOT
 
 ########################################################
 sub redirect {
-	my ($url) = @_;
+	my($url) = @_;
 
 	if ($I{rootdir}) {	# rootdir strongly recommended
 		$url = URI->new_abs($url, $I{rootdir})->canonical->as_string;
@@ -1913,7 +1917,7 @@ sub pollItem {
 
 ########################################################
 sub testExStr {
-	local ($_) = @_;
+	local($_) = @_;
 	$_ .= "'" unless m/'$/;
 	return $_;
 }
@@ -2070,7 +2074,7 @@ EOT
 
 ########################################################
 sub getAnonCookie {	
-	my ($user) = @_;
+	my($user) = @_;
 	if (my $cookie = $I{query}->cookie('anon')) {
 		$user->{anon_id} = $cookie;
 		$user->{anon_cookie} = 1;
@@ -2289,5 +2293,3 @@ sub sqlTableExists {
 sub sqlSelectColumns {
 	$I{dbobject}->sqlSelectColumns(@_);
 }
-
-

@@ -31,6 +31,7 @@ use Slash::Utility;
 #################################################################
 my $user = getCurrentUser();
 my $form = getCurrentForm();
+
 #################################################################
 sub main {
 	*I = getSlashConf();

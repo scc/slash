@@ -320,6 +320,7 @@ sub createPollVoter {
 	$self->{dbh}->do("update pollanswers set votes=votes+1 where 
 		qid=$qid and aid=" . $self->{dbh}->quote($aid));
 }
+
 ########################################################
 sub createSubmission {
 	my($self) = @_;
@@ -329,17 +330,17 @@ sub createSubmission {
 	my $subid = "$hour$min$sec.$mon$mday$year";
 
 	$self->sqlInsert("submissions", {
-			email => $form->{email},
-			uid => $uid,
-			name  => $form->{from},
-			story => $form->{story},
-			-'time' => 'now()',
-			subid => $subid,
-			subj  => $form->{subj},
-			tid => $form->{tid},
-			section => $form->{section}
+			email	=> $form->{email},
+			uid	=> $uid,
+			name	=> $form->{from},
+			story	=> $form->{story},
+			-'time'	=> 'now()',
+			subid	=> $subid,
+			subj	=> $form->{subj},
+			tid	=> $form->{tid},
+			section	=> $form->{section}
 	});
-	$self->formSuccess($form->{formkey},0,length($form->{subj}));
+	$self->formSuccess($form->{formkey}, 0, length($form->{subj}));
 }
 
 ########################################################
@@ -420,18 +421,19 @@ sub getAdminInfo {
 
 ########################################################
 sub setContentFilter {
-my ($self) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
 	$self->sqlUpdate("content_filters", {
-			regex => $form->{regex},
-			modifier => $form->{modifier},
-			field => $form->{field},
-			ratio => $form->{ratio},
-			minimum_match => $form->{minimum_match},
-			minimum_length => $form->{minimum_length},
-			maximum_length => $form->{maximum_length},
-			err_message => $form->{err_message},
-		}, "filter_id=$form->{filter_id}");
+			regex		=> $form->{regex},
+			modifier	=> $form->{modifier},
+			field		=> $form->{field},
+			ratio		=> $form->{ratio},
+			minimum_match	=> $form->{minimum_match},
+			minimum_length	=> $form->{minimum_length},
+			maximum_length	=> $form->{maximum_length},
+			err_message	=> $form->{err_message},
+		}, "filter_id=$form->{filter_id}"
+	);
 }
 
 ########################################################
@@ -524,13 +526,13 @@ sub getDescriptions {
 	my $self = shift; # Shift off to keep things clean
 	my $codetype = shift; # Shift off to keep things clean
 	my $codeBank_hash_ref = {};
-	my $sth = &{$descriptions{$codetype}}($self);
+	my $sth = $descriptions{$codetype}->($self);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 	$sth->finish;
 
-	return  $codeBank_hash_ref;
+	return $codeBank_hash_ref;
 }
 
 ########################################################
@@ -541,13 +543,13 @@ sub getUser {
 	my($self, $uid, $script) = @_;
 
 	my $user;
-	unless($script) {
+	unless ($script) {
 		$user = $self->sqlSelectHashref('*',
 			'users, users_index, users_comments, users_prefs',
 			"users.uid=$uid AND users_index.uid=$uid AND " .
 			"users_comments.uid=$uid AND users_prefs.uid=$uid"
 		);
-		return $user ? $user : undef;
+		return $user || undef;
 	}
 
 	$user = $self->sqlSelectHashref('*', 'users',
@@ -697,18 +699,18 @@ sub getUserInfoByNickname {
 #################################################################
 # Just create an empty content_filter
 sub createContentFilter {
-	my ($self) = @_;
+	my($self) = @_;
 
 	$self->sqlInsert("content_filters", {
-			regex => "",
-			modifier => "",
-			field => "",
-			ratio => 0,
-			minimum_match => 0,
-			minimum_length => 0,
-			maximum_length => 0,
-			err_message => ""
-		});
+		regex		=> '',
+		modifier	=> '',
+		field		=> '',
+		ratio		=> 0,
+		minimum_match	=> 0,
+		minimum_length	=> 0,
+		maximum_length	=> 0,
+		err_message	=> ''
+	});
 
 	my($filter_id) = $self->sqlSelect("max(filter_id)", "content_filters");
 
@@ -744,7 +746,6 @@ sub createUser {
 
 	return $uid;
 }
-
 
 ########################################################
 # This method should be questioned long term
@@ -790,6 +791,7 @@ sub setSessionByAid {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
 }
+
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
@@ -955,7 +957,7 @@ sub deleteSubmission {
 
 	foreach (keys %{$form}) {
 		next unless /(.*)_(.*)/;
-		my($t,$n) = ($1,$2);
+		my($t, $n) = ($1, $2);
 		if ($t eq "note" || $t eq "comment" || $t eq "section") {
 			$form->{"note_$n"} = "" if $form->{"note_$n"} eq " ";
 			if ($form->{$_}) {
@@ -984,6 +986,7 @@ sub deleteSubmission {
 		}
 	}
 }
+
 ########################################################
 sub deleteSession {
 	my($self, $aid) = @_;
@@ -1009,10 +1012,8 @@ sub deleteTopic {
 
 ########################################################
 sub revertBlock {
-	my ($self, $bid) = @_;
-
+	my($self, $bid) = @_;
 	$self->sqlDo("update blocks set block = blockbak where bid = '$bid'");
-
 }
 
 ########################################################
@@ -1027,27 +1028,26 @@ sub deleteSection {
 	my($self, $section) = @_;
 	$self->sqlDo("DELETE from sections WHERE section='$section'");
 }
+
 ########################################################
 sub deleteContentFilter {
 	my($self, $id) = @_;
 	$self->sqlDo("DELETE from content_filters WHERE filter_id = $id");
 }
 
-
 ########################################################
 sub saveTopic {
-	my ($self) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
 	my($rows) = $self->sqlSelect('count(*)', 'topics', 'tid=' . $self->{dbh}->quote($form->{tid}));
-	if($rows == 0 ) {
+	if ($rows == 0) {
 		$self->sqlInsert('topics', {
 			tid	=> $form->{tid},
 			image	=> $form->{image},
 			alttext	=> $form->{alttext},
 			width	=> $form->{width},
 			height	=> $form->{height}
-		}
-		);
+		});
 	}
 
 	$self->sqlUpdate('topics', {
@@ -1058,11 +1058,13 @@ sub saveTopic {
 		}, 'tid=' . $self->{dbh}->quote($form->{tid})
 	);
 }
+
 ##################################################################
 sub saveBlock {
-	my ($self, $bid) = @_;
-	my ($rows) = 
-			$self->sqlSelect('count(*)', 'blocks', 'bid=' . $self->{dbh}->quote($bid));
+	my($self, $bid) = @_;
+	my($rows) = $self->sqlSelect('count(*)', 'blocks',
+		'bid=' . $self->{dbh}->quote($bid)
+	);
 
 	my $form = getCurrentForm();
 	if ($form->{save_new} && $rows > 0) {
@@ -1075,7 +1077,7 @@ sub saveBlock {
 		$self->sqlInsert('sectionblocks', { bid => $bid });
 	}
 
-	my ($portal,$retrieve) = (0,0);
+	my($portal, $retrieve) = (0, 0);
 
 	# this is to make sure that a  static block doesn't get
 	# saved with retrieve set to true
@@ -1085,55 +1087,49 @@ sub saveBlock {
 
 	if ($rows == 0 || $form->{blocksavedef}) {
 		$self->sqlUpdate('blocks', {
-			seclev	=> $form->{bseclev}, 
-			block	=> $form->{block},
-			blockbak => $form->{block},
-			description => $form->{description},
-			type 	=> $form->{type},
-
-			}, 'bid=' . $self->{dbh}->quote($bid)
-		);
+			seclev		=> $form->{bseclev}, 
+			block		=> $form->{block},
+			blockbak	=> $form->{block},
+			description	=> $form->{description},
+			type		=> $form->{type},
+		}, 'bid=' . $self->{dbh}->quote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
-			seclev	=> $form->{bseclev}, 
-			block	=> $form->{block},
-			description => $form->{description},
-			type 	=> $form->{type},
-
-			}, 'bid=' . $self->{dbh}->quote($bid)
-		);
+			seclev		=> $form->{bseclev}, 
+			block		=> $form->{block},
+			description	=> $form->{description},
+			type		=> $form->{type},
+		}, 'bid=' . $self->{dbh}->quote($bid));
 	}
 
 	$self->sqlUpdate('sectionblocks', {
-			ordernum=> $form->{ordernum}, 
-			title 	=> $form->{title},
-			url	=> $form->{url},	
-			rdf	=> $form->{rdf},	
-			section => $form->{section},	
-			retrieve=> $form->{retrieve}, 
-			portal => $form->{portal}, 
-		}, 'bid=' . $self->{dbh}->quote($bid)
-	);
+		ordernum	=> $form->{ordernum}, 
+		title		=> $form->{title},
+		url		=> $form->{url},	
+		rdf		=> $form->{rdf},	
+		section		=> $form->{section},	
+		retrieve	=> $form->{retrieve}, 
+		portal		=> $form->{portal}, 
+	}, 'bid=' . $self->{dbh}->quote($bid));
 
 	return $rows;
 }
 
 ########################################################
 sub saveColorBlock {
-	my ($self, $colorblock) = @_;
+	my($self, $colorblock) = @_;
 	my $form = getCurrentForm();
 
 	$form->{color_block} ||= 'colors';
 
-	if($form->{colorsave}) {
+	if ($form->{colorsave}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock, 
 			}, "bid = '$form->{color_block}'"
 		);
 		
-	}
-	elsif($form->{colorsavedef}) {
+	} elsif ($form->{colorsavedef}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock, 
@@ -1141,12 +1137,12 @@ sub saveColorBlock {
 			}, "bid = '$form->{color_block}'"
 		);
 		
-	}
-	elsif($form->{colororig}) {
+	} elsif ($form->{colororig}) {
 		# reload original version of colors
 		$self->{dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
 	}
 }
+
 ########################################################
 sub getSectionBlock {
 	my($self, $section) = @_;
@@ -1204,22 +1200,22 @@ sub getAuthorNameByAid {
 	return  $author_hash_ref;
 }
 
-
 ########################################################
 # This method does not follow basic guidlines
 sub getPollVoter {
 	my($self, $id) = @_;
-	my ($voters) = $self->sqlSelect('id', 'pollvoters', 
-			"qid=" . $self->{dbh}->quote($id) .
-			"AND id=" . $self->{dbh}->($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
-			"AND uid=" . $ENV{REMOTE_USER}
-			);
+	my($voters) = $self->sqlSelect('id', 'pollvoters', 
+		"qid=" . $self->{dbh}->quote($id) .
+		"AND id=" . $self->{dbh}->($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
+		"AND uid=" . $ENV{REMOTE_USER}
+	);
 
 	return $voters;
 }
+
 ########################################################
 sub savePollQuestion {
-	my ($self) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
 	$form->{voters} ||= "0";
 	$self->sqlReplace("pollquestions", {
@@ -1247,14 +1243,16 @@ sub savePollQuestion {
 		}
 	}
 }
+
 ########################################################
-sub getPollQuestionList{
-	my ($self, $time) = @_;
+sub getPollQuestionList {
+	my($self, $time) = @_;
 	my $questions = sqlSelectAll("qid, question, date_format(date,\"W M D\")",
 		"pollquestions order by date DESC LIMIT $time,20");
 
 	return $questions;
 }
+
 ########################################################
 sub getPollAnswers {
 	my($self, $id, @val) = @_;
@@ -1343,14 +1341,15 @@ sub getUserBio {
 }
 
 ########################################################
-sub deleteStory{
-	my ($self, $sid) = @_;
+sub deleteStory {
+	my($self, $sid) = @_;
 	$self->sqlUpdate('stories', { writestatus => 5 }, 
 		'sid=' . $self->{dbh}->quote($sid)
 	);
 
 	$self->{dbh}->do("DELETE from discussions WHERE sid = '$sid'");
 }
+
 ########################################################
 # This needs to be made to look like other methods so
 # you can request multiple objects
@@ -1472,7 +1471,6 @@ sub getLock {
 	return $locks;
 }
 
-
 ########################################################
 sub updateFormkeyId {
 	my($self, $formname, $formkey, $anon, $uid, $rlogin, $upasswd) = @_;
@@ -1569,7 +1567,6 @@ sub formAbuse {
 		-ts   => 'now()',
 	});
 }
-
 
 ##################################################################
 # Check to see if the form already exists
@@ -1671,7 +1668,6 @@ sub getPoll {
 	return $polls;
 }
 
-
 ##################################################################
 sub getPollComments {
 	my($self, $qid) = @_;
@@ -1680,10 +1676,9 @@ sub getPollComments {
 	return $comments;
 }
 
-
 ##################################################################
 sub getSubmissionsSections {
-	my ($self) = @_;
+	my($self) = @_;
 	my $del = getCurrentForm('del');
 	
 	my $hash = $self->sqlSelectAll("section,note,count(*)", "submissions WHERE del=$del GROUP BY section,note");
@@ -1697,7 +1692,7 @@ sub getSubmissionsPending {
 	my($self, $uid) = @_;
 	my $submissions;
 
-	if($uid) {
+	if ($uid) {
 		$submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
 	} else {
 		$uid = getCurrentUser('uid');
@@ -1942,13 +1937,14 @@ sub countPollquestions {
 	);
 	return $pollquestions;
 }
+
 ########################################################
 sub saveVars {
 #this is almost copied verbatium. Needs to be cleaned up
-	my ($self) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
-	if($form->{desc}) {
-		my ($exists) = $self->sqlSelect('count(*)', 'vars',
+	if ($form->{desc}) {
+		my($exists) = $self->sqlSelect('count(*)', 'vars',
 			"name='$form->{thisname}'"
 		);
 		if ($exists == 0) {
@@ -1963,10 +1959,11 @@ sub saveVars {
 		$self->sqlDo("DELETE from vars WHERE name='$form->{thisname}'");
 	}
 }
+
 ########################################################
 # I'm not happy with this method at all
 sub setCommentCleanup {
-	my ($self, $val, $sid, $reason, $modreason, $cid) = @_;
+	my($self, $val, $sid, $reason, $modreason, $cid) = @_;
 	# Grab the user object.
 	my $user = getCurrentUser();
 	my $constants = getSlashConstants();
@@ -2015,16 +2012,17 @@ sub setCommentCleanup {
 }
 
 ########################################################
-sub countUsersIndexExboxesByBid{
-	my ($self, $bid) = @_;
-	my ($count) = $self->sqlSelect("count(*)","users_index",
-			qq!exboxes like "%'$bid'%" !
-			);
+sub countUsersIndexExboxesByBid {
+	my($self, $bid) = @_;
+	my($count) = $self->sqlSelect("count(*)", "users_index",
+		qq!exboxes like "%'$bid'%" !
+	);
 
 	return $count;
 }
+
 ########################################################
-sub getCommentReply{	
+sub getCommentReply {	
 	my($self, $time, $sid, $pid) = @_;
 	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
 		comment,realname,nickname,
@@ -2123,7 +2121,7 @@ sub getSubmissionForUser {
 
 ########################################################
 sub getSearch {
-	my($self, $form, $user) =  @_;
+	my($self, $form, $user) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
@@ -2225,10 +2223,11 @@ EOT
 
 	return $stories;
 }
+
 ########################################################
-sub getTrollAddress{
-	my ($self) = @_;
-  my ($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+sub getTrollAddress {
+	my($self) = @_;
+	my($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
 			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
 			AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
 			AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
@@ -2236,11 +2235,12 @@ sub getTrollAddress{
 
 	return $badIP;
 }
+
 ########################################################
-sub getTrollUID{
-	my ($self) = @_;
+sub getTrollUID {
+	my($self) = @_;
 	my $user =  getCurrentUser();
-	my ($badUID) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+	my($badUID) = $self->sqlSelect("sum(val)","comments,moderatorlog",
 		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
 		AND comments.uid=$user->{uid} AND moderatorlog.active=1
 		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
@@ -2248,9 +2248,10 @@ sub getTrollUID{
 
 	return $badUID;
 }
+
 ########################################################
-sub setCommentCount{
-	my ($self, $delCount) = @_;
+sub setCommentCount {
+	my($self, $delCount) = @_;
 	my $form =  getCurrentForm();
 	$self->sqlDo("UPDATE stories SET commentcount=commentcount-$delCount,
 	      writestatus=1 WHERE sid=" . $self->{dbh}->quote($form->{sid})
@@ -2258,9 +2259,9 @@ sub setCommentCount{
 }
 
 ########################################################
-sub saveStory{
-	my ($self) = @_;
-	my $form =  getCurrentForm();
+sub saveStory {
+	my($self) = @_;
+	my $form = getCurrentForm();
 	my $constants = getSlashConstants();
 	$self->sqlInsert('storiestuff', { sid => $form->{sid} });
 	$self->sqlInsert('discussions', {
@@ -2275,7 +2276,7 @@ sub saveStory{
 	# Karma to the user
 	my $suid;
 	if ($form->{subid}) {
-		my ($suid) = $self->sqlSelect(
+		my($suid) = $self->sqlSelect(
 			'uid','submissions',
 			'subid=' . $self->{dbh}->quote($form->{subid})
 		);
@@ -2314,9 +2315,9 @@ sub saveStory{
 # cache elsewhere (namely in %Slash::Apache::constants)
 # Getting populated with my info for the moment
 sub getSlashConf {
-	my ($self) = @_;
+	my($self) = @_;
 	my %conf; # We are going to populate this and return a reference
-	my @keys = qw (
+	my @keys = qw(
 		anonymous_coward_uid
 		adminmail
 		mailfrom
@@ -2370,8 +2371,8 @@ sub getSlashConf {
 		m2_maxbonus
 	);
 
-	for(@keys) {
-		my ($value, $desc) = $self->getVar($_);
+	for (@keys) {
+		my($value, $desc) = $self->getVar($_);
 		$conf{$_} = $value;
 	}
 
@@ -2445,18 +2446,19 @@ sub getUrlFromTitle {
 	my $rootdir = getCurrentStatic('rootdir');
 	return "$rootdir/article.pl?sid=$sid";
 }
+
 ##################################################################
 # Should this really be in here?
-sub getTime{
-	my ($self) = @_;
-	my ($now) = $self->sqlSelect('now()');
+sub getTime {
+	my($self) = @_;
+	my($now) = $self->sqlSelect('now()');
 
 	return $now;
 }
 
 ##################################################################
 sub getStoryList {
-	my ($self) = @_;
+	my($self) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -2479,9 +2481,10 @@ sub getStoryList {
 
 	return $list;
 }
+
 ##################################################################
 sub updateStory {
-	my ($self) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 	$self->sqlUpdate('discussions',{
@@ -2517,14 +2520,15 @@ sub updateStory {
 
 ##################################################################
 sub getPollVotesMax {
-	my ($self, $id) = @_;
-	my ($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{dbh}->quote($id));
+	my($self, $id) = @_;
+	my($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{dbh}->quote($id));
 	return $answer;
 }
+
 ##################################################################
 # Probably should make this private at some point
 sub saveExtras {
-	my ($self, $form) = @_;
+	my($self, $form) = @_;
 	return unless $self->sqlTableExists($form->{section});
 	my @extras = $self->sqlSelectColumns($form->{section});
 	my $E;
@@ -2535,17 +2539,17 @@ sub saveExtras {
 		sqlInsert($form->{section}, $E);
 	}
 }
+
 ##################################################################
 # This should be rewritten so that at no point do we 
 # pass along an array -Brian
-sub getKeys{
-  my ($self, $table) = @_;
+sub getKeys {
+	my($self, $table) = @_;
 	my @keys = $self->sqlSelectColumns($table)
 		if $self->sqlTableExists($table);
 
 	return \@keys;
 }
-
 
 ########################################################
 # This is protected and don't call it from your
@@ -2554,7 +2558,7 @@ sub _genericGet {
 	my($table, $table_prime, $self, $id, @val) = @_;
 	my $members = @val;
 	my $answer;
-	if($members == 1) {
+	if ($members == 1) {
 		($answer) = $self->sqlSelect('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
@@ -2577,32 +2581,40 @@ sub getPollAnswer {
 	my $answer = _genericGet('pollanswers', 'qid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getBlockByBid {
 	my $answer = _genericGet('blocks', 'bid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getTopicByTid {
 	my $answer = _genericGet('topics', 'tid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getContentFilter {
 	my $answer = _genericGet('content_filters', 'filter_id', @_);
 	return $answer;
 }
+
 ########################################################
 sub getSubmission {
 	my $answer = _genericGet('submissions', 'subid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getSectionBlockByBid {
 	my $answer = _genericGet('sectionblocks', 'bid', @_);
 	return $answer;
 }
+
 1;
+
+__END__
 
 =head1 NAME
 

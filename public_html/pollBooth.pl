@@ -58,7 +58,7 @@ sub main {
 		print "</CENTER>";
 
 	} else {
-	print "<H1>Got here coments :$op:$I{F}{qid}:</H1>\n";
+		print "<H1>Got here coments :$op:$I{F}{qid}:</H1>\n";
 		my $vote = vote($I{F}{qid}, $I{F}{aid});
 		printComments($I{F}{qid})
 			if $vote && ! $I{dbobject}->getVar("nocomment");
@@ -93,10 +93,9 @@ sub editpoll {
 	<BR><B>The Answers</B> (voters)<BR>
 EOT
 
-
 	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
 	my $x = 0;
-	for(@$answers) {
+	for (@$answers) {
 		my($answers, $votes) = @$_;
 		$x++;
 		print <<EOT;
@@ -104,7 +103,6 @@ EOT
 	<INPUT TYPE="text" NAME="votes$x" VALUE="$votes" SIZE="5"><BR>
 EOT
 	}
-
 
 	while ($x < 8) {
 		$x++;
@@ -156,7 +154,7 @@ sub vote {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
 	} elsif ($aid > 0) {
-		my $id  = $I{dbobject}->getPollVoter($qid);
+		my $id = $I{dbobject}->getPollVoter($qid);
 
 		if ($id) {
 			$notes = "$I{U}{nickname} at $ENV{REMOTE_ADDR} has already voted.";
@@ -186,10 +184,14 @@ EOT
 
 	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
 
-	for(@$answers) {
+	for (@$answers) {
 		my($answer, $votes) = @$_;
-		my $imagewidth	= $maxvotes ? int (350 * $votes / $maxvotes) + 1 : 0;
-		my $percent	= $question->{'totalvotes'} ? int (100 * $votes / $question->{'totalvotes'}) : 0;
+		my $imagewidth	= $maxvotes
+			? int(350 * $votes / $maxvotes) + 1
+			: 0;
+		my $percent	= $question->{'totalvotes'}
+			? int(100 * $votes / $question->{'totalvotes'})
+			: 0;
 		pollItem($answer, $imagewidth, $votes, $percent);
 	}
 

@@ -100,36 +100,36 @@ sub main {
 		colorSave();
 		colorEdit($I{U}{aseclev});
 
-	} elsif($I{F}{blockdelete_cancel} || $op eq "blocked") {
+	} elsif ($I{F}{blockdelete_cancel} || $op eq "blocked") {
 		blockEdit($I{U}{aseclev},$I{F}{bid});
 
-	} elsif($I{F}{blocknew}) {
+	} elsif ($I{F}{blocknew}) {
 		blockEdit($I{U}{aseclev});
 
-	} elsif($I{F}{blocked1}) {
+	} elsif ($I{F}{blocked1}) {
 		blockEdit($I{U}{aseclev}, $I{F}{bid1});
 
-	} elsif($I{F}{blocked2}) {
+	} elsif ($I{F}{blocked2}) {
 		blockEdit($I{U}{aseclev}, $I{F}{bid2});
 
-	} elsif($I{F}{blocksave} || $I{F}{blocksavedef}) {
+	} elsif ($I{F}{blocksave} || $I{F}{blocksavedef}) {
 		blockSave($I{F}{thisbid});
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
-	} elsif($I{F}{blockrevert}) {
+	} elsif ($I{F}{blockrevert}) {
 		$I{dbobject}->revertBlock($I{F}{thisbid}) if $I{U}{aseclev} < 500;
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
-	} elsif($I{F}{blockdelete}) {
+	} elsif ($I{F}{blockdelete}) {
 		blockEdit($I{U}{aseclev},$I{F}{thisbid});
 
-	} elsif($I{F}{blockdelete1}) {
+	} elsif ($I{F}{blockdelete1}) {
 		blockEdit($I{U}{aseclev},$I{F}{bid1});
 
-	} elsif($I{F}{blockdelete2}) {
+	} elsif ($I{F}{blockdelete2}) {
 		blockEdit($I{U}{aseclev},$I{F}{bid2});
 
-	} elsif($I{F}{blockdelete_confirm}) {
+	} elsif ($I{F}{blockdelete_confirm}) {
 		blockDelete($I{F}{deletebid});
 		blockEdit($I{U}{aseclev});
 
@@ -237,8 +237,8 @@ sub varEdit {
 ##################################################################
 sub varSave {
 	if ($I{F}{thisname}) {
-	$I{dbobject}->saveVars();
-		if($I{F}{desc}) {
+		$I{dbobject}->saveVars();
+		if ($I{F}{desc}) {
 			print "Saved $I{F}{thisname}<BR>\n";
 		} else {
 			print "<B>Deleted $I{F}{thisname}!</B><BR>\n";
@@ -249,13 +249,12 @@ sub varSave {
 ##################################################################
 # Author Editor
 sub authorEdit {
-	my ($aid) = @_;
+	my($aid) = @_;
 
 	return if $I{U}{aseclev} < 500;
 
 	$aid ||= $I{U}{aid};
 	$aid = '' if $I{F}{authornew};
-
 
 	print qq!<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">!;
 	my $authors = $I{dbobject}->getAuthorNameByAid();
@@ -329,15 +328,15 @@ sub authorSave {
 		if ($I{F}{thisaid}) {
 			print "Saved $I{F}{thisaid}<BR>";
 			my %author = (
-					name	=> $I{F}{name},
-					pwd	=> $I{F}{pwd},
-					email	=> $I{F}{email},
-					url	=> $I{F}{url},
-					seclev	=> $I{F}{seclev},
-					copy	=> $I{F}{copy},
-					quote	=> $I{F}{quote},
-					section => $I{F}{section}
-				);
+				name	=> $I{F}{name},
+				pwd	=> $I{F}{pwd},
+				email	=> $I{F}{email},
+				url	=> $I{F}{url},
+				seclev	=> $I{F}{seclev},
+				copy	=> $I{F}{copy},
+				quote	=> $I{F}{quote},
+				section => $I{F}{section}
+			);
 			$I{dbobject}->setAuthor($I{F}{thisaid}, \%author);
 		} else {
 			print "<B>Deleted $I{F}{thisaid}!</B><BR>";
@@ -361,11 +360,11 @@ EOT
 		if ($I{F}{authordelete_confirm}) {
 			$I{dbobject}->deleteAuthor($aid);
 			print "<B>Deleted $aid!</B><BR>" if ! DBI::errstr;
-		}
-		elsif($I{F}{authordelete_cancel}) {
+		} elsif ($I{F}{authordelete_cancel}) {
 			print "<B>Canceled Deletion of $aid!</B><BR>";
 		}
 }
+
 ##################################################################
 # Block Editing and Saving 
 # 020300 PMG modified the heck out of this code to allow editing
@@ -390,7 +389,7 @@ sub blockEdit {
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 EOT
 
-	if(! $I{F}{blockdelete} && ! $I{F}{blockdelete1} && ! $I{F}{blockdelete2}) {
+	if (! $I{F}{blockdelete} && ! $I{F}{blockdelete1} && ! $I{F}{blockdelete2}) {
 		print <<EOT;
 <P>Select a block to edit. 
 <UL>
@@ -418,7 +417,7 @@ EOT
 	}
 
 
-	if($I{F}{blockdelete} || $I{F}{blockdelete1} || $I{F}{blockdelete2}) {
+	if ($I{F}{blockdelete} || $I{F}{blockdelete1} || $I{F}{blockdelete2}) {
 		print <<EOT;
 <INPUT TYPE="HIDDEN" NAME="deletebid" VALUE="$bid">
 <TABLE BORDER="0">
@@ -478,8 +477,9 @@ EOT
 	print <<EOT;
 <TABLE BORDER="0">
 EOT
+
 	# if there's a block description, print it
-	print <<EOT if ($bidblock->{'description'});
+	print <<EOT if $bidblock->{'description'};
 	<TR>
 		<TD COLSPAN="3">
 		<TABLE BORDER="2" CELLPADDING="4" CELLSPACING="0" BGCOLOR="$I{fg}[1]" WIDTH="80%">
@@ -569,7 +569,7 @@ EOT
 
 ##################################################################
 sub blockSave {
-	my ($bid) = @_;
+	my($bid) = @_;
 	return if $I{U}{aseclev} < 500;
 	return unless $bid;
 	my $saved = $I{dbobject}->saveBlock($bid);
@@ -587,10 +587,10 @@ sub blockSave {
 
 ##################################################################
 sub blockDelete {
-		my ($bid) = @_;
-		return if $I{U}{aseclev} < 500;
-		print "<B>Deleted $bid!</B><BR>";
-		$I{dbobject}->deleteBlock($bid);
+	my($bid) = @_;
+	return if $I{U}{aseclev} < 500;
+	print "<B>Deleted $bid!</B><BR>";
+	$I{dbobject}->deleteBlock($bid);
 }
 
 ##################################################################
@@ -600,7 +600,7 @@ sub colorEdit {
 	my $colorblock;
 	$I{F}{color_block} ||= 'colors';
 
-	if($I{F}{colorpreview}) {
+	if ($I{F}{colorpreview}) {
 		$colorblock = 
 		"$I{F}{fg0},$I{F}{fg1},$I{F}{fg2},$I{F}{fg3},$I{F}{bg0},$I{F}{bg1},$I{F}{bg2},$I{F}{bg3}";
 
@@ -615,8 +615,7 @@ sub colorEdit {
 	
 EOT
 	} else {
-		my $block = $I{dbobject}->getBlockByBid($I{F}{color_block}, 'block'); 
-		($colorblock) = $block;
+		$colorblock = $I{dbobject}->getBlockByBid($I{F}{color_block}, 'block'); 
 	}
 
 	my @colors = split m/,/, $colorblock;
@@ -704,11 +703,11 @@ print <<EOT if $I{F}{color_block};
 </FORM>
 EOT
 }
+
 ##################################################################
 sub colorSave {
 	return if $I{U}{aseclev} < 500;
-	my $colorblock = 
-			"$I{F}{fg0},$I{F}{fg1},$I{F}{fg2},$I{F}{fg3},$I{F}{bg0},$I{F}{bg1},$I{F}{bg2},$I{F}{bg3}";
+	my $colorblock = join ',', @{$I{F}}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
 	$I{dbobject}->saveColorBlock($colorblock);
 }
 
@@ -734,8 +733,8 @@ EOT
 	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
 	print '<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>';
 
-	if(! $I{F}{topicdelete}) {
-		if(! $I{F}{topicnew}) {
+	if (!$I{F}{topicdelete}) {
+		if (!$I{F}{topicnew}) {
 			my @values = qw (tid width height alttext image);
 			$topic = $I{dbobject}->getTopicByTid($I{F}{nexttid}, @values);
 		} else {
@@ -744,7 +743,7 @@ EOT
 		}
 
 		print qq|<BR>Image as seen: <BR><BR><IMG SRC="$I{imagedir}/topics/$topic->{'image'}" ALT="$topic->{'alttext'}" WIDTH="$topic->{'width'}" HEIGHT="$topic->{'height'}">|
-			if ( $I{F}{nexttid} && ! $I{F}{topicnew} && ! $I{F}{topicdelete});
+			if ($I{F}{nexttid} && ! $I{F}{topicnew} && ! $I{F}{topicdelete});
 
 		print <<EOT;
 		<BR><BR>Tid<BR><INPUT TYPE="TEXT" NAME="tid" VALUE="$topic->{'tid'}"><BR>
@@ -761,7 +760,7 @@ EOT
 			print qq|<SELECT name="image">|;
 			print qq|<OPTION value="">Select an image</OPTION>| if $I{F}{topicnew};
 			for (@available_images) {
-				my ($selected);
+				my($selected);
 				$selected = "SELECTED" if ($_ eq $topic->{'image'});
 				print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
 				$selected = '';
@@ -791,7 +790,7 @@ print qq|</FORM>\n<!-- end topic editor form -->\n|;
 
 ##################################################################
 sub topicDelete {
-		my ($tid) = @_ || $I{F}{tid};
+		my $tid = $_[0] || $I{F}{tid};
 		print "<B>Deleted $tid!</B><BR>";
 		$I{dbobject}->deleteTopic($I{F}{tid});
 		$I{F}{tid} = '';
@@ -808,6 +807,7 @@ sub topicSave {
 	print "<B>Saved $I{F}{tid}!</B><BR>" if ! DBI::errstr;
 	$I{F}{nexttid} = $I{F}{tid};
 }
+
 ##################################################################
 sub listtopics {
 	my($seclev) = @_;
@@ -909,7 +909,6 @@ sub linkNode {
 		. $I{query}->escape($n) . '">[?]</A></SUP>';
 }
 
-
 ##################################################################
 # Generated the 'Related Links' for Stories
 sub getRelated {
@@ -953,7 +952,7 @@ sub getRelated {
 
 ##################################################################
 sub otherLinks {
-	my ($aid, $tid) = @_;
+	my($aid, $tid) = @_;
 
 	my $topic = $I{dbobject}->getTopic($tid);
 
@@ -1187,7 +1186,7 @@ EOT
 
 	for (@$storylist) {
 		my($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
-				$displaystatus, $writestatus, $td, $td2) = @$_;
+			$displaystatus, $writestatus, $td, $td2) = @$_;
 
 		$x++;
 		$storiestoday++;
@@ -1274,7 +1273,7 @@ EOT
 
 ##################################################################
 sub rmStory {
-	my ($sid) = @_;
+	my($sid) = @_;
 	$I{dbobject}->deleteStory($sid);
 	
 	titlebar('100%', "$sid will probably be deleted in 60 seconds.");
@@ -1283,12 +1282,12 @@ sub rmStory {
 ##################################################################
 sub listFilters {
 	my $filter_hashref = $I{dbobject}->getContentFilters();
-	my ($header,$footer);
+	my($header, $footer);
 
 	$header = getWidgetBlock('list_filters_header');
 	print eval $header;
 
-        for(@$filter_hashref) {
+        for (@$filter_hashref) {
                 print <<EOT;
         <TR>
                 <TD>[<A HREF="$ENV{SCRIPT_NAME}?editfilter=1&filter_id=$_->[0]">$_->[0]</A>]</TD>
@@ -1311,14 +1310,15 @@ EOT
 
 ##################################################################
 sub editFilter {
-	my ($filter_id) = @_;
+	my($filter_id) = @_;
 	$filter_id ||= $I{F}{filter_id};
 
 	print <<EOT;
 <!-- begin editFilter -->
 <FORM ENCTYPE="multipart/form-data" action="$ENV{SCRIPT_NAME}" method="POST">
 EOT
-	my @values = qw (regex modifier field ratio minimum_match minimum_length maximum_length err_message);
+	my @values = qw(regex modifier field ratio minimum_match
+		minimum_length maximum_length err_message);
 	my $filter = $I{dbobject}->getContentFilter($filter_id, @values);
 
 	# this has to be here - it really screws up the block editor
@@ -1336,7 +1336,7 @@ EOT
 
 ##################################################################
 sub updateFilter {
-	my ($filter_action) = @_;
+	my($filter_action) = @_;
 
 	if ($filter_action eq "new") {
 		my $filter_id = $I{dbobject}->createContentFilter();
@@ -1346,8 +1346,8 @@ sub updateFilter {
 		titlebar("100%", "New filter# $filter_id.", "c");
 		editFilter($filter_id);
 
-	} elsif($filter_action eq "update") {
-		if(! $I{F}{regex} || ! $I{F}{regex}) {
+	} elsif ($filter_action eq "update") {
+		if (!$I{F}{regex} || !$I{F}{regex}) {
 			print "<B>You haven't typed in a regex.</B><BR>\n" if ! $I{F}{regex};
 			print "<B>You haven't typed in a form field.</B><BR>\n" if ! $I{F}{field};
 
@@ -1364,7 +1364,7 @@ sub updateFilter {
 
 		titlebar("100%","<B>Deleted filter# $I{F}{filter_id}!</B>","c");
 		listFilters();
-	}7
+	}
 }
 
 ##################################################################
@@ -1377,7 +1377,6 @@ sub editbuttons {
 		qq[<INPUT TYPE="SUBMIT" NAME="op" VALUE="delete">] unless $newarticle;
 	print "\n\n<!-- end editbuttons -->\n\n";
 }
-
 
 ##################################################################
 sub updateStory {

@@ -75,7 +75,7 @@ sub sqlSelectArrayRef {
 }
 ########################################################
 sub sqlSelectHash {
-	my ($self) = @_;
+	my($self) = @_;
 	my $hash = $self->sqlSelectHashref(@_);
 	return map { $_ => $hash->{$_} } keys %$hash;
 }
@@ -87,7 +87,7 @@ sub sqlSelectHash {
 # Simple little function to get the count of a table
 ##########################################################
 sub selectCount  {
-	my ($self, $table, $where) = @_;
+	my($self, $table, $where) = @_;
 
 	my $sql = "SELECT count(*) AS count FROM $table $where";
 	# we just need one stinkin value - count
@@ -215,15 +215,15 @@ sub sqlInsert {
 }
 
 ########################################################
-sub getKeys{
-	my ($self, $table) = @_;
+sub getKeys {
+	my($self, $table) = @_;
 	$self->sqlSelectColumns($table)
 		if $self->sqlTableExists($table);
 
 }
 ########################################################
 sub sqlTableExists {
-	my ($self, $table) = @_;
+	my($self, $table) = @_;
 	return unless $table;
 
 	my $sth = $self->{dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
@@ -236,7 +236,7 @@ sub sqlTableExists {
 
 ########################################################
 sub sqlSelectColumns {
-	my ($self, $table) = @_;
+	my($self, $table) = @_;
 	return unless $table;
 
 	my $sth = $self->{dbh}->prepare_cached("SHOW COLUMNS FROM $table");
@@ -253,7 +253,7 @@ sub sqlSelectColumns {
 ########################################################
 # Get a unique string for an admin session
 sub generatesession {
-  my $newsid = crypt(rand(99999), shift);
+	my $newsid = crypt(rand(99999), $_[0]);
 	$newsid =~ s/[^A-Za-z0-9]//i;
 
 	return $newsid;
@@ -261,7 +261,7 @@ sub generatesession {
 
 #################################################################
 sub getSectionBlocksByBid {
-	my ($self, $bid) = @_;
+	my($self, $bid) = @_;
 	$self->sqlConnect();
 	$self->sqlSelect(
 		"title,block,url", "blocks, sectionblocks",
@@ -271,7 +271,7 @@ sub getSectionBlocksByBid {
 }
 #################################################################
 sub sqlDo {
-	my ($self, $sql) = @_;
+	my($self, $sql) = @_;
 	$self->sqlConnect();
 	$self->{dbh}->do($sql);
 }

@@ -53,7 +53,7 @@ sub main {
 	
 	header("$SECT->{title}: $title", $SECT->{section});
 
-	if ($I{U}{uid} < 1 and length($I{F}{upasswd}) > 1) {
+	if ($I{U}{uid} < 1 && length($I{F}{upasswd}) > 1) {
 		print "<P><B>Login for \"$I{F}{unickname}\" has failed</B>.  
 			Please try again. $I{F}{op}<BR><P>";
 		$I{F}{op} = "Preview";
@@ -77,11 +77,14 @@ sub main {
 			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid});	
 		} else {
 			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey},
-				$I{anonymous_coward_uid}, $I{U}{uid}, $I{query}->param('rlogin'), $I{F}{upasswd});
+				$I{anonymous_coward_uid}, $I{U}{uid},
+				$I{query}->param('rlogin'), $I{F}{upasswd}
+			);
 		}
 
 		# find out their Karma
-		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
+		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
+			if $I{U}{uid} != $I{anonymous_coward_uid};
 		editComment($id);
 
 
@@ -289,12 +292,12 @@ EOT
 
 	my $checked = $I{F}{nobonus} ? ' CHECKED' : '';
 	print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="nobonus"> No Score +1 Bonus\n!
-		if $I{U}{karma} > $I{goodkarma} and $I{U}{uid} != $I{anonymous_coward_uid};
+		if $I{U}{karma} > $I{goodkarma} && $I{U}{uid} != $I{anonymous_coward_uid};
 
         if ($I{allow_anonymous}) {
 	    $checked = $I{F}{postanon} ? ' CHECKED' : '';
 	    print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="postanon"> Post Anonymously<BR>\n!
-		if $I{U}{karma} > -1 and $I{U}{uid} != $I{anonymous_coward_uid};
+		if $I{U}{karma} > -1 && $I{U}{uid} != $I{anonymous_coward_uid};
         }
 
 	print <<EOT;
@@ -398,7 +401,7 @@ EOT
 				$tags{$tag}++;
 
 				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-					editComment() and return unless $preview;
+					editComment(), return unless $preview;
 					print <<EOT;
 You can only post nested lists and blockquotes four levels deep.
 Please fix your UL, OL, and BLOCKQUOTE tags.
@@ -423,7 +426,7 @@ EOT
 	if ($dupRows || !$I{F}{sid}) { 
 		# $I{r}->log_error($ENV{SCRIPT_NAME} . " " . $insline);
 
-		editComment() and return unless $preview;
+		editComment(), return unless $preview;
 		print <<EOT;
 Something is wrong: parent=$I{F}{pid} dups=$dupRows discussion=$I{F}{sid}
 <UL>
@@ -446,7 +449,7 @@ EOT
 		$br++ while m/<BR>/gi;
 
 		if (($w / ($br + 1)) < 7) {
-			editComment() and return unless $preview;
+			editComment(), return unless $preview;
 			return;
 		}
 	}
@@ -499,7 +502,7 @@ EOT
 			if (((length($I{F}{$field}) <= $maximum_length)
 				&& $maximum_length) || $isTrollish) {
 
-				editComment() and return unless $preview;
+				editComment(), return unless $preview;
 				print <<EOT;
 <BR>Lameness filter encountered.  Post aborted.<BR><BR><B>$err_message</B><BR>
 EOT
@@ -507,7 +510,7 @@ EOT
 			}
 
 		} elsif ($isTrollish) {
-			editComment() and return unless $preview;
+			editComment(), return unless $preview;
 			print <<EOT;
 <BR>Lameness filter encountered.  Post aborted.<BR><BR><B>$err_message</B><BR>
 EOT
@@ -544,7 +547,7 @@ EOT
 				if ((length(compress($I{F}{postercomment})) /
 					length($I{F}{postercomment})) <= $_) {
 
-					editComment() and return unless $preview;
+					editComment(), return unless $preview;
 					# blammo luser
 					print <<EOT;
 
@@ -616,7 +619,7 @@ sub submitComment {
 	if ($I{U}{uid} != $I{anonymous_coward_uid} && !$I{F}{postanon} ) {
 		$pts = $I{U}{defaultpoints};
 		$pts-- if $I{U}{karma} < $I{badkarma};
-		$pts++ if $I{U}{karma} > $I{goodkarma} and !$I{F}{nobonus};
+		$pts++ if $I{U}{karma} > $I{goodkarma} && !$I{F}{nobonus};
 		# Enforce proper ranges on comment points.
 		$pts = $I{comment_minscore} if $pts < $I{comment_minscore};
 		$pts = $I{comment_maxscore} if $pts > $I{comment_maxscore};
@@ -761,7 +764,8 @@ sub deleteThread {
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
 	my($sid) = @_;
-	return if $I{U}{uid} == $I{anonymous_coward_uid} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
+	return if $I{U}{uid} == $I{anonymous_coward_uid}
+		|| ($I{U}{aseclev} > 99 && $I{authors_unlimited});
 	my $removed = $I{dbobject}->unsetModeratorlog($I{U}{uid}, $sid, $I{comment_maxscore},$I{comment_minscore});
 
 	for my $cid (@$removed) {

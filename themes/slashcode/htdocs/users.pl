@@ -37,7 +37,7 @@ sub main {
 	my $op = $I{F}{op};
 print STDERR "OP $I{F}{op}\n";
 
-	if ($op eq "userlogin" and $I{U}{uid} != $I{anonymous_coward_uid}) {
+	if ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward_uid}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
@@ -872,7 +872,7 @@ EOT
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
-	if ($uid != $I{anonymous_coward_uid}){
+	if ($uid != $I{anonymous_coward_uid}) {
 		$I{dbobject}->setUsersComments($uid, $users_comments)
 			unless $I{F}{willing};
 	}

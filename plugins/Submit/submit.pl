@@ -235,7 +235,6 @@ EOT
 
 	$I{F}{del} = 0 if $admin;
 
-
 	print qq!\n<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" BGCOLOR="$I{bg}[2]"><TR>\n\t!;
 
 	my $cur_section_str = $I{F}{section} || 'All Sections'; # Unfortunately, "articles" seems to be hardcoded
@@ -245,7 +244,7 @@ EOT
 
 	my $sections = $I{dbobject}->getSubmissionsSections();
 
-	for(@$sections) {
+	for (@$sections) {
 		my($section, $note, $cnt) = @$_;
 		my $section_str = $section;
 		$all_sections{$section_str} = 1;

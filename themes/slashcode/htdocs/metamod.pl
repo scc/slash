@@ -32,7 +32,8 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward_uid};
+	$I{U}{karma} = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
+		if $I{U}{uid} != $I{anonymous_coward_uid};
 	header("Meta Moderation");
 
 	my $id = isEligible();
@@ -319,6 +320,7 @@ sub isEligible {
 		"uid=$I{U}{uid}"
 	);
 
+	# must be eq "0", since == 0 might return true improperly
 	if ($lastmm eq "0") {
 		print "You have recently meta moderated.";
 		return 0;

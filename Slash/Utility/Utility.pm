@@ -70,13 +70,14 @@ sub changePassword {
 
 #################################################################
 sub getCurrentUser {
-	my ($value) = @_;
+	my($value) = @_;
 	my $r = Apache->request;
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 	my $user = $user_cfg->{'user'};
 
-	if($value) {
-		return $user->{$value}
+	# i think we want to test defined($foo), not just $foo, right?
+	if ($value) {
+		return defined($user->{$value})
 			? $user->{$value}
 			: undef;
 	} else {
@@ -85,13 +86,13 @@ sub getCurrentUser {
 }
 #################################################################
 sub getCurrentForm {
-	my ($value) = @_;
+	my($value) = @_;
 	my $r = Apache->request;
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 	my $form = $user_cfg->{'form'};
 
-	if($value) {
-		return $form->{$value}
+	if ($value) {
+		return defined($form->{$value})
 			? $form->{$value}
 			: undef;
 	} else {
@@ -101,13 +102,13 @@ sub getCurrentForm {
 
 #################################################################
 sub getCurrentStatic {
-	my ($value) = @_;
+	my($value) = @_;
 	my $r = Apache->request;
 	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $const_cfg->{'constants'};
 
-	if($value) {
-		return $constants->{$value}
+	if ($value) {
+		return defined($constants->{$value})
 			? $constants->{$value}
 			: undef;
 	} else {
