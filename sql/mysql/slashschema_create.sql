@@ -73,6 +73,7 @@ DROP TABLE IF EXISTS blocks;
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
+	aid varchar(20),
   seclev int(1),
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
