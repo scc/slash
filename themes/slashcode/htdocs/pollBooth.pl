@@ -25,220 +25,172 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
+use Slash::Display;
+use Slash::Utility;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
+	getSlashConf();
 	getSlash();
 
-	if (defined $I{F}{aid} && $I{F}{aid} !~ /^\-?\d$/) {
-		undef $I{F}{aid};
+	my $dbslash = getCurrentDB();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+
+	my $op = $form->{op};
+	if (defined $form->{aid} && $form->{aid} !~ /^\-?\d$/) {
+		undef $form->{aid};
 	}
 
-	header("$I{sitename} Poll", $I{F}{section});
+	header(getData('title'), $form->{section});
 
-	if ($I{U}{aseclev} > 99) { 
-		print qq!<FONT SIZE="2">[ <A HREF="$ENV{SCRIPT_NAME}?op=edit">New Poll</A> ]!;
+	if ($user->{aseclev} > 99) { 
+		print getData('admin');
 	}
-	my $op = $I{F}{op};
-	if ($I{U}{aseclev} > 99 && $op eq "edit") {
-		editpoll($I{F}{qid});
 
-	} elsif ($I{U}{aseclev} > 99 && $op eq "save") {
+	if ($user->{aseclev} > 99 && $op eq 'edit') {
+		editpoll($form->{qid});
+
+	} elsif ($user->{aseclev} > 99 && $op eq 'save') {
 		savepoll();
 
-	} elsif (! defined $I{F}{qid}) {
-		listPolls();
+	} elsif (! defined $form->{qid}) {
+		listpolls();
 
-	} elsif (! defined $I{F}{aid}) {
-		print "<CENTER><P>";
-		pollbooth($I{F}{qid});
-		print "</CENTER>";
+	} elsif (! defined $form->{aid}) {
+		pollbooth($form->{qid}, 0, 1);
 
 	} else {
-		my $vote = vote($I{F}{qid}, $I{F}{aid});
-		printComments($I{F}{qid})
-			if $vote && ! $I{dbobject}->getVar('nocomment', 'value');
+		my $vote = vote($form->{qid}, $form->{aid});
+		printComments($form->{qid})
+			if $vote && ! $dbslash->getVar('nocomment', 'value');
 	}
 
-	writeLog("pollbooth", $I{F}{qid});
+	writeLog('pollbooth', $form->{qid});
 	footer();
 }
 
 #################################################################
 sub editpoll {
 	my($qid) = @_;
-	my $qid_htm = stripByMode($qid, 'attribute');
+	my $slashdb = getCurrentDB();
 
-	# Display a form for the Question
-	my $question = $I{dbobject}->getPollQuestion($qid, ['question', 'voters']);
+	my($currentqid) = $slashdb->getVar('currentqid', 'value');
+	my $question = $slashdb->getPollQuestion($qid, ['question', 'voters']);
+	$question->{voters} ||= 0;
 
-	$question->{'voters'} = 0 if ! defined $question->{'voters'};
+	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
 
-	my($currentqid) = $I{dbobject}->getVar('currentqid', 'values');
-	printf <<EOT, $currentqid eq $qid ? " CHECKED" : "";
-
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	<B>id</B> (if this matches a story's ID, it will appear with the story,
-		else just pick a unique string)<BR>
-	<INPUT TYPE="TEXT" NAME="qid" VALUE="$qid_htm" SIZE="20">
-	<INPUT TYPE="CHECKBOX" NAME="currentqid"%s> (appears on homepage)
-
-	<BR><B>The Question</B> (followed by the total number of voters so far)<BR>
-	<INPUT TYPE="TEXT" NAME="question" VALUE="$question->{'question'}" SIZE="40">
-	<INPUT TYPE="TEXT" NAME="voters" VALUE="$question->{'voters'}" SIZE="5">
-	<BR><B>The Answers</B> (voters)<BR>
-EOT
-
-	my $answers = $I{dbobject}->getPollAnswers($qid, ['answer', 'votes']);
-	my $x = 0;
-	for (@$answers) {
-		my($answers, $votes) = @$_;
-		$x++;
-		print <<EOT;
-	<INPUT TYPE="text" NAME="aid$x" VALUE="$answers" SIZE="40">
-	<INPUT TYPE="text" NAME="votes$x" VALUE="$votes" SIZE="5"><BR>
-EOT
-	}
-
-	while ($x < 8) {
-		$x++;
-		print <<EOT;
-	<INPUT TYPE="text" NAME="aid$x" VALUE="" SIZE="40">
-	<INPUT TYPE="text" NAME="votes$x" VALUE="0" SIZE="5"><BR>
-EOT
-	}
-
-	print <<EOT;
-	<INPUT TYPE="SUBMIT" VALUE="Save">
-	<INPUT TYPE="HIDDEN" NAME="op" VALUE="save">
-</FORM>
-
-EOT
-
+	slashDisplay('pollBooth-editpoll', {
+		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
+		qid		=> stripByMode($qid, 'attribute'),
+		question	=> $question,
+		answers		=> $answers,
+	});
 }
 
 #################################################################
 sub savepoll {
-	return unless $I{F}{qid};
-	for (my $x = 1; $x < 9; $x++) {
-		if ($I{F}{"aid$x"}) {
-			print qq!<BR>Answer $x '$I{F}{"aid$x"}' $I{F}{"votes$x"}!;
-		}
-	}
-	$I{dbobject}->savePollQuestion();
+	return unless getCurrentForm('qid');
+	my $slashdb = getCurrentDB();
+	slashDisplay('pollBooth-savepoll');
+	$slashdb->savePollQuestion();
 }
 
 #################################################################
 sub vote {
 	my($qid, $aid) = @_;
+	return unless $qid;
 
-	my $qid_htm = stripByMode($qid, 'attribute');
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	my $slashdb = getCurrentDB();
 
-	# get valid answer IDs
 	my(%all_aid) = map { ($_->[0], 1) }
-		@{$I{dbobject}->getPollAnswers($qid,'aid')} if $qid;
+		@{$slashdb->getPollAnswers($qid, ['aid'])};
 
 	if (! keys %all_aid) {
-		print "Invalid poll!<BR>";
+		print getData('invalid');
 		# Non-zero denotes error condition and that comments should not be 
 		# printed.
 		return;
 	}
 
-	my $notes = "Displaying poll results";
-	if ($I{U}{is_anon} && ! $I{allow_anonymous}) {
-		$notes = "You may not vote anonymously.  " .
-		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
-	} elsif ($aid > 0) {
-		my $id = $I{dbobject}->getPollVoter($qid);
+	my $question = $slashdb->getPollQuestion($qid, ['voters', 'question']);
+	my $answers  = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
+	my $maxvotes = $slashdb->getPollVotesMax($qid);
+
+	# static text?
+	my $notes = getData('display');
+	if ($user->{is_anon} && ! $constants->{allow_anonymous}) {
+		$notes = getData('anon');
+	} elsif (! isAnon($aid)) {
+		my $id = $slashdb->getPollVoter($qid);
 
 		if ($id) {
-			$notes = "$I{U}{nickname} at $ENV{REMOTE_ADDR} has already voted.";
-			if ($ENV{HTTP_X_FORWARDED_FOR}) { 
-				$notes .= " (proxy for $ENV{HTTP_X_FORWARDED_FOR})";
-			}
-
+			$notes = getData('uid_voted');
 		} elsif (exists $all_aid{$aid}) {
-			$notes = "Your vote ($aid) has been registered.";
-			$I{dbobject}->createPollVoter($qid, $aid);
+			$notes = getData('success', { aid => $aid });
+			$slashdb->createPollVoter($qid, $aid);
+			$question->{voters}++;
 		} else {
-			$notes = "Your vote ($aid) was rejected.";
+			$notes = getData('reject', { aid => $aid });
 		}
-	} 
+	}
 
-	my $question = $I{dbobject}->getPollQuestion($qid, ['voters', 'question']);
-
-	my $maxvotes  = $I{dbobject}->getPollVotesMax($qid);
-
-	print <<EOT;
-<CENTER><TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="500">
-	<TR><TD> </TD><TD COLSPAN="1">
-EOT
-
-	titlebar("99%", $question->{'question'});
-	print qq!\t<FONT SIZE="2">$notes</FONT></TD></TR>!;
-
-	my $answers = $I{dbobject}->getPollAnswers($qid, ['answer', 'votes']);
-
+	my @pollitems;
 	for (@$answers) {
 		my($answer, $votes) = @$_;
 		my $imagewidth	= $maxvotes
 			? int(350 * $votes / $maxvotes) + 1
 			: 0;
-		my $percent	= $question->{'voters'}
-			? int(100 * $votes / $question->{'voters'})
+		my $percent	= $question->{voters}
+			? int(100 * $votes / $question->{voters})
 			: 0;
-		pollItem($answer, $imagewidth, $votes, $percent);
+		push @pollitems, [$answer, $imagewidth, $votes, $percent];
 	}
 
-	my $postvote = $I{dbobject}->getBlock("$I{currentSection}_postvote", 'block')
-		|| $I{dbobject}->getBlock("postvote", 'block');
+	my $postvote = $slashdb->getBlock("$constants->{currentSection}_postvote", 'block')
+		|| $slashdb->getBlock('postvote', 'block');
 
-	print <<EOT;
-	<TR><TD COLSPAN="2" ALIGN="RIGHT">
-		<FONT SIZE="4"><B>$question->{'voters'} total votes.</B></FONT>
-	</TD></TR><TR><TD COLSPAN="2"><P ALIGN="CENTER">
-		[
-			<A HREF="$ENV{SCRIPT_NAME}?qid=$qid_htm">Voting Booth</A> |
-			<A HREF="$ENV{SCRIPT_NAME}">Other Polls</A> |
-			<A HREF="$I{rootdir}/">Back Home</A>
-		]
-	</TD></TR><TR><TD COLSPAN="2">$postvote</TD></TR>
-</TABLE></CENTER>
-
-EOT
+	slashDisplay('pollBooth-vote', {
+		qid		=> stripByMode($qid, 'attribute'),
+		width		=> '99%',
+		title		=> $question->{question},
+		voters		=> $question->{voters},
+		pollitems	=> \@pollitems,
+		postvote	=> $postvote,
+		notes		=> $notes
+	});
 }
 
 #################################################################
-sub listPolls {
-	$I{F}{min} ||= "0";
+sub listpolls {
+	my $slashdb = getCurrentDB();
+	my $min = getCurrentForm('min') || 0;
+	my $questions = $slashdb->getPollQuestionList($min);
+	my $sitename = getCurrentStatic('sitename');
 
-	my $questions = $I{dbobject}->getPollQuestionList($I{F}{min});
+	slashDisplay('pollBooth-listpolls', {
+		questions	=> $questions,
+		startat		=> $min + @$questions,
+		admin		=> getCurrentUser('aseclev') >= 100,
+		title		=> "$sitename Polls",
+		width		=> '99%'
+	});
+}
 
-	titlebar("99%", "$I{sitename} Polls");
-	for (@$questions) {
-		my($qid, $question, $date) = @$_;
-		my $href = $I{U}{aseclev} >= 100
-			? qq! (<A HREF="$ENV{SCRIPT_NAME}?op=edit&qid=$qid">Edit</A>)!
-			: '';
-
-		print <<EOT;
-<BR><LI><A HREF="$ENV{SCRIPT_NAME}?qid=$qid">$question</A> $date$href</LI>
-EOT
-
-	}
-
-	my $number = @$questions;
-	my $startat = $I{F}{min} + $number;
-	print <<EOT;
-<P><FONT SIZE="4"><B><A HREF="$ENV{SCRIPT_NAME}?min=$startat">More Polls</A></B></FONT>
-EOT
-
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "pollbooth-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('pollBooth-data', $hashref, 1);
 }
 
 main();
-#$I{dbh}->disconnect if $I{dbh};
+
 1;
