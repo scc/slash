@@ -188,7 +188,6 @@ template=templates/userlogin;misc;default
 template=templates/users;menu;default
 template=templates/vote;pollBooth;default
 template=templates/yourPendingSubs;submit;default
-template=templates/pendingTitle;submit;default
 template=templates/listAbuses;admin;default
 template=templates/topAbusers;users;default
 template=templates/listReadOnly;users;default

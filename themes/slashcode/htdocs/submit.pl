@@ -88,10 +88,8 @@ sub main {
 	$ops->{default} = $ops->{blankform};
 
 	my $op = lc($form->{op});
-	print STDERR "OP1 $op\n";
 	$op ||= 'default';
 	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
-	print STDERR "OP2 $op\n";
 
 	$section = 'admin' if $user->{is_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
@@ -108,7 +106,6 @@ sub main {
 
 	# call the method
 	$success = $ops->{$op}{function}->($constants, $slashdb, $user, $form) if ! $error_flag;
-	print STDERR "SUCCESS $success\n";
 
 	if ($ops->{$op}{update_formkey} && $success && ! $error_flag) {
 		my $updated = $slashdb->updateFormkey($formkey, $form->{tid}, length($form->{story}));
@@ -145,18 +142,17 @@ sub previewStory {
 sub yourPendingSubmissions {
 	my($constants, $slashdb, $user, $form) = @_;
 
+	my $summary;
 	return if $user->{is_anon};
 
 	if (my $submissions = $slashdb->getSubmissionsPending()) {
-		my $count = $slashdb->getSubmissionCount();
-		my $title = slashDisplay('pendingTitle', { count => $count}, 
-				{ Return => 1, Nocomm => 1 });
+		for my $submission (@$submissions) {
+			$summary->{$submission->[4]}++;
+		}
 		slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
-			submissioncount	=> $slashdb->getSubmissionCount(),
-			title		=> $title, 
 			width		=> '100%',
-			totalcount	=> $count,
+			summary		=> $summary,
 		});
 	}
 }

@@ -6,7 +6,6 @@ Display user's pending submissions
 * title = passed to titlebar
 * width = passed to titlebar
 * submissions = arrayref of submissions
-* totalcount = total submissions pending
 __title__
 
 __page__
@@ -18,7 +17,7 @@ yourPendingSubs
 __template__
 [% USE Slash %]
 [% topics = Slash.db.getTopics(); # sigh %]
-[% INCLUDE titlebar %]
+[% INCLUDE titlebar title = "Your recent submissons" %]
 
 <P>Here are your recent submissions to [% constants.sitename %],
 and their staus within the system:</P>
@@ -39,7 +38,14 @@ and their staus within the system:</P>
 	</LI>
 [% END %]
 </UL>
-	<P>[% submissioncount %] submissions pending.</P>
+
+Summary:&nbsp; 
+<UL>
+[% FOREACH status = summary.keys %]
+	<LI>[% status == 1 ? ' rejected ' : status == 2 ? ' accepted' : ' pending' %]&nbsp;
+	([% summary.$status %])</LI>
+[% END %]
+</UL>
 
 __seclev__
 10000
