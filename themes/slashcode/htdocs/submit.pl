@@ -122,7 +122,7 @@ sub previewForm {
 
 	$sub->{story} =~ s/\n\n/\n<P>/gi;
 	$sub->{story} .= ' ';
-	$introtext =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
+	my $introtext =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
 		my($proto, $url) = ($1, $2);
 		my $extra = '';
 		$extra = ',' if $url =~ s/,$//;
