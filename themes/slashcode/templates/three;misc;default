@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+__title__
+newest three template (gets written to blocks)
+__page__
+misc
+__lang__
+en_US
+__name__
+three
+__template__
+[% FOREACH story = stories.keys.sort %]
+<A HREF="[% constants.rootdir %]/admin.pl?title=new%20story&op=edit&sid=[% story %]">[% stories.$story.title %] by [% stories.$story.author %] on [% stories.$story.time %]</A><BR>
+[% END %]
+
+
+__seclev__
+100

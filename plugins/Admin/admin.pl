@@ -1251,7 +1251,6 @@ sub editFilter {
 		minimum_length err_message);
 	my $filter = $slashdb->getContentFilter($filter_id, \@values, 1);
 
-	print STDERR "FILTER form $filter->{form} formname $formname\n";
 	my $form_list = $slashdb->getDescriptions('forms');
 	my $form_select = createSelect('formname', $form_list, $filter->{form}, 1);
 
@@ -1320,6 +1319,20 @@ sub saveStory {
 		listStories(@_);
 		return;
 	}
+
+	my $newestthree = $slashdb->getNewestThree();
+	my $newstories = {};
+	for(@$newestthree) {
+		my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
+		$newstories->{$_->[0]}{author} = $slashdb->getUser($tmpstory->{uid},'nickname');
+		$newstories->{$_->[0]}{title} = $tmpstory->{title};
+		$newstories->{$_->[0]}{time} = $tmpstory->{time};
+	}
+	my $newblock = slashDisplay('three', { stories => $newstories }, { Return => 1, Page => 'misc', Section => 'default'});
+	$slashdb->sqlUpdate('blocks', {
+                        block => $newblock,
+    		}, "bid='newestthree'"
+	);  
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories(@_);

@@ -4794,6 +4794,27 @@ sub getStories {
 }
 
 ########################################################
+# this is.. yes.
+sub getNewestThree {
+	my ($self) = @_;
+	my $sth = $self->{_dbh}->prepare("SELECT sid from stories ORDER BY time DESC LIMIT 3");
+	$sth->execute;
+	my $sids = $sth->fetchall_arrayref;
+	return $sids;
+
+}
+
+########################################################
+# ok, yeah, I know
+sub getNextThree {
+	my ($self,$sid_time) = @_;
+	my $sth = $self->{_dbh}->prepare("SELECT sid from stories WHERE time > '$sid_time' ORDER BY time ASC LIMIT 3");
+	$sth->execute;
+	my $sids = $sth->fetchall_arrayref;
+	return $sids;
+}
+
+########################################################
 sub getRelatedLinks {
 	my $answer = _genericGets('related_links', 'id', '', @_);
 	return $answer;
