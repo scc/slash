@@ -150,16 +150,13 @@ sub sqlSelectAll {
 ########################################################
 sub sqlUpdate
 {
-	my($self, $table, $data, $where, $lp) = @_;
-	$lp = 'LOW_PRIORITY' if $lp;
-	$lp = '';
-	my $sql = "UPDATE $lp $table SET";
+	my($self, $table, $data, $where) = @_;
+	my $sql = "UPDATE $table SET";
 	foreach (keys %$data) {
 		if (/^-/) {
 			s/^-//;
 			$sql .= "\n  $_ = $data->{-$_},";
 		} else { 
-			# my $d=$self->{dbh}->quote($data->{$_}) || "''";
 			$sql .= "\n $_ = " . $self->{dbh}->quote($data->{$_}) . ',';
 		}
 	}
@@ -197,7 +194,7 @@ sub sqlReplace {
 
 ########################################################
 sub sqlInsert {
-	my($self, $table, $data, $delay) = @_;
+	my($self, $table, $data) = @_;
 	my($names, $values);
 
 	foreach (keys %$data) {
@@ -213,8 +210,7 @@ sub sqlInsert {
 	chop($names);
 	chop($values);
 
-	my $p = 'DELAYED' if $delay;
-	my $sql = "INSERT $p INTO $table ($names) VALUES($values)\n";
+	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
 	return $self->{dbh}->do($sql) or apacheLog($sql) && kill 9, $$;
 }
