@@ -96,7 +96,7 @@ sub countDaily {
 
 	my $c = $self->sqlSelectMany("count(*)","accesslog",
 		"to_days(now()) - to_days(ts)=1 GROUP BY host_addr");
-	returnable{'unique'} = $c->rows;
+	$returnable{'unique'} = $c->rows;
 	$c->finish;
 
 #	my ($comments) = $self->sqlSelect("count(*)","accesslog",
