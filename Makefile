@@ -37,10 +37,11 @@ install: slash
 # directory it will be easy
 	(cd Slash; make install)
 	install -d $(PREFIX)/bin/ $(PREFIX)/sql/ $(PREFIX)/default/ $(PREFIX)/backups $(PREFIX)/logs
-	install -CD slashd portald moderatord dailyStuff bin/install-slashsite $(PREFIX)/bin/
+	install -D bin/install-slashsite $(PREFIX)/bin/
+	install -D slashd portald moderatord dailyStuff $(PREFIX)/sbin/
 	cp -r public_html/* $(PREFIX)/default/
 	cp -r sql/* $(PREFIX)/sql/
-	install -CD utils/slashd /etc/rc.d/init.d/
+	install -D utils/slashd /etc/rc.d/init.d/
 	ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd
 	ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/K99slashd
 	touch $(PREFIX)/slash.sites

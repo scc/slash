@@ -18,9 +18,8 @@
 # Dumping data for table 'authors'
 #
 
-INSERT INTO authors VALUES ('author2','test author 2','http://www.example.com','author2@www.example.com','test quote','test copy','change',10000,'','',0,'author2');
-INSERT INTO authors VALUES ('author1','test author','http://www.example.com','author1@www.example.com','test quote','test copy','change',10000,'','',0,'author1');
-INSERT INTO authors VALUES ('God','God','mailto:god@god.gov','god@god.gov','','','pete',10000,'','',0,'god');
+INSERT INTO authors VALUES ('God','God','mailto:god@god.gov','god@god.gov','','','HACKME',10000,'','',0,'god');
+
 INSERT INTO authors VALUES ('','All Authors',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL);
 
 #
@@ -447,7 +446,7 @@ INSERT INTO menus VALUES (18,'admin','Variables','/admin.pl?op=vars',10000,13);
 #
 
 INSERT INTO newstories VALUES ('00/01/25/1236215','slash','God',0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the slashdotrc.pl to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.  \r\n','',0,0,'articles',0,0,'0,0,0,0,0,0,0','<LI><A HREF=http://www.example.com>Slashdot</A>\n<LI><A href=http://www.fsf.org>FSF</A>\n<LI><A href=http://slashdot.org>Read Slashdot</A>\n<LI><A href=\"http://www.example.com/search.pl?topic=slash\">More \n                        on Slash </A> \n                   <LI><A href=\"http://www.example.com/search.pl?author=God\">Also \n                        by God </A>\n',NULL);
-INSERT INTO newstories VALUES ('00/01/25/1430236','slash','God',1,'You\'ve Installed Slash!','congratulations-dude','2000-01-25 10:13:31','So it took some doing, but it looks like you\'ve got Slash installed and ready to rock.  You can now login using <A href=/admin.pl>backSlash</A>, the Slash Code Administration tool.  The default l/p is God/pete, but I\'d suggest you change that.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,0,0,0,0,0','<LI><A href=/admin.pl>backSlash</A>\n<LI><A href=\"http://www.example.com/search.pl?topic=slash\">More \n                        on Slash </A> \n                   <LI><A href=\"http://www.example.com/search.pl?author=God\">Also \n                        by God </A>\n',NULL);
+INSERT INTO newstories VALUES ('00/01/25/1430236','slash','God',1,'You\'ve Installed Slash!','congratulations-dude','2000-01-25 10:13:31','So it took some doing, but it looks like you\'ve got Slash installed and ready to rock.  You can now login using <A href=/admin.pl>backSlash</A>, the Slash Code Administration tool.  The default account is God and whatever password you set during the install.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,0,0,0,0,0','<LI><A href=/admin.pl>backSlash</A>\n<LI><A href=\"http://www.example.com/search.pl?topic=slash\">More \n                        on Slash </A> \n                   <LI><A href=\"http://www.example.com/search.pl?author=God\">Also \n                        by God </A>\n',NULL);
 
 #
 # Dumping data for table 'pollanswers'
@@ -637,72 +636,36 @@ INSERT INTO tzcodes VALUES ('iss',7200,'Israel Standard');
 #
 
 INSERT INTO users VALUES (1,'Anonymous Coward','','','','eb399bcaca686f8609137153307eecf1','',0,'anonymouscoward',NULL);
-INSERT INTO users VALUES (2,'author1','','','','eb399bcaca686f8609137153307eecf1','',0,'author1','');
-INSERT INTO users VALUES (3,'user1','user1@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user1',NULL);
-INSERT INTO users VALUES (4,'user2','user2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user2',NULL);
-INSERT INTO users VALUES (5,'user3','user3@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user3',NULL);
-INSERT INTO users VALUES (6,'user4','user4@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user4',NULL);
-INSERT INTO users VALUES (7,'author2','author2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'author2',NULL);
 
 #
 # Dumping data for table 'users_comments'
 #
 
 INSERT INTO users_comments VALUES (1,0,'html',0,4,4096,0,0,0,1,0,50000,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (5,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (4,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (3,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (2,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (6,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (7,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 
 #
 # Dumping data for table 'users_index'
 #
 
 INSERT INTO users_index VALUES (1,'','','','',30,0);
-INSERT INTO users_index VALUES (2,'','','','',1,0);
-INSERT INTO users_index VALUES (3,NULL,NULL,NULL,NULL,30,0);
-INSERT INTO users_index VALUES (4,NULL,NULL,NULL,NULL,30,0);
-INSERT INTO users_index VALUES (5,NULL,NULL,NULL,NULL,30,0);
-INSERT INTO users_index VALUES (6,NULL,NULL,NULL,NULL,30,0);
-INSERT INTO users_index VALUES (7,NULL,NULL,NULL,NULL,30,0);
 
 #
 # Dumping data for table 'users_info'
 #
 
-INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0,0,0,0,0);
-INSERT INTO users_info VALUES (2,0,'','',0,'0000-00-00',0,0,0,'0000-00-00','2000-01-28',0,0,0,0,0);
-INSERT INTO users_info VALUES (3,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0,0,0,0,0);
-INSERT INTO users_info VALUES (4,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-18',0,0,0,0,0);
-INSERT INTO users_info VALUES (5,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0,0,0,0,0);
-INSERT INTO users_info VALUES (6,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0,0,0,0,0);
-INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0,0,0,0,0);
+INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
 
 #
 # Dumping data for table 'users_key'
 #
 
 INSERT INTO users_key VALUES (1,NULL);
-INSERT INTO users_key VALUES (2,'');
-INSERT INTO users_key VALUES (3,NULL);
-INSERT INTO users_key VALUES (4,NULL);
-INSERT INTO users_key VALUES (5,NULL);
-INSERT INTO users_key VALUES (6,NULL);
-INSERT INTO users_key VALUES (7,NULL);
 
 #
 # Dumping data for table 'users_prefs'
 #
 
 INSERT INTO users_prefs VALUES (1,1,0,'est',0,0,'');
-INSERT INTO users_prefs VALUES (2,1,1,'adt',0,0,'');
-INSERT INTO users_prefs VALUES (3,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (4,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (5,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (6,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (7,1,0,'edt',0,0,'');
 
 #
 # Dumping data for table 'vars'

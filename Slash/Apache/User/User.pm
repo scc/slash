@@ -49,9 +49,6 @@ sub handler {
 	$dbslash->sqlConnect;
 
 	# Don't remove this. This solves a known bug in Apache -- brian
-	# and it creates a new one!  after this, $r is unreliable for some
-	# reason.  leave it out for now, seems not to be needed?  -- pudge
-#	$r->header_in('Content-Length' => '0');
 	$r->method('GET');
 
 	my $form = filter_params($r->args, $r->content);

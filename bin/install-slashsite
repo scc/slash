@@ -134,3 +134,13 @@ sub siteadd {
 	open(CONF, ">>$httpd");
 	close(CONF);
 }
+
+my $slashdb = Slash::DB->new($ARGV[0]);
+
+print "Ok, we need a password for the God account (8 characters only please)\n";
+my $password = <STDIN>;
+chomp($password);
+
+$slashdb->setAuthor('God', {pwd => $password});
+
+
