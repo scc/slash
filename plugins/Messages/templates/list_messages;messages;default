@@ -12,8 +12,9 @@ __name__
 list_messages
 __template__
 [% USE Slash %]
-[% INCLUDE titlebar title => "$constants.sitename Messages for $user.nickname", width => "100%" %]
+[% Slash.createMenu("users") %]
 [% Slash.createMenu("messages") %]
+[% INCLUDE titlebar title => "$constants.sitename Messages for $user.nickname", width => "100%" %]
 
 [% IF note %]<H2>[% note %]</H2>[% END %]
 

@@ -15,9 +15,9 @@ display_prefs
 __template__
 [% USE Slash %]
 [% messages = Slash.getObject("Slash::Messages") %]
-[% INCLUDE titlebar title => "Message Preferences", width => "100%" %]
-[% Slash.createMenu("user") %]
+[% Slash.createMenu("users") %]
 [% Slash.createMenu("messages") %]
+[% INCLUDE titlebar title => "Message Preferences", width => "100%" %]
 
 <P><B>[% note %]</B></P>
 
