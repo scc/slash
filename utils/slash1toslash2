@@ -53,7 +53,7 @@ END {
 
 ####################################
 # fix AC UID
-my $ac_uid;
+my($ac_uid, $del_uid2);
 {
 	$ac_uid = ask(<<'EOT');
 Please select a UID for the anonymous user of the site.  It is probably
@@ -63,7 +63,7 @@ EOT
 
 	die "[$ac_uid] is not an integer.\n" unless $ac_uid =~ /^\d+$/;
 
-	my $answer = ask(<<'EOT');
+	$del_uid2 = ask(<<'EOT') =~ /^y/i;
 Should we delete uid 2, the new admin user created by the installation?
 In theory, your other admin accounts will be copied from the old site,
 and you can use those.  If you choose not to do this, make sure uid 2
@@ -79,7 +79,7 @@ EOT
 		}
 	}
 
-	if ($answer =~ /^y/i) {
+	if ($del_uid2) {
 		for (qw(users users_comments users_info users_index
 			users_prefs users_param)) {
 			$dbh_new->do("delete from $_ where uid=2");
@@ -109,7 +109,8 @@ EOT
 	# no more uid == -1
 	my $usersub = sub {
 		my($data) = @_;
-		return if $data->{uid} == -1 || $data->{uid} == $ac_uid;
+		return if $data->{uid} == -1 || $data->{uid} == $ac_uid
+		      || (!$del_uid2 && $data->{uid} == 2);
 
 		$data->{seclev} = 1
 			if exists $data->{seclev} && $data->{seclev} == 0;
@@ -143,19 +144,21 @@ EOT
 	# update aid's etc.
 	my $story_authors = fix_authors();
 
+	# find null stories
+	my $null_uid = null_stories($story_authors);
+
 	# aid -> uid
 	my $fixauthor_sub = sub {
-		my($data, $story_authors) = @_;
-		$data->{uid} = $story_authors->{$data->{aid}};
+		my($data, $story_authors, $null_uid) = @_;
+		$data->{uid} = $data->{aid}
+			? $story_authors->{$data->{aid}}
+			: $null_uid;
 		delete $data->{aid};
 		return $data;
 	};
 	for (qw(stories sessions)) {
-		duplicate($_, 1, $fixauthor_sub, $story_authors);
+		duplicate($_, 1, $fixauthor_sub, $story_authors, $null_uid);
 	}
-
-	# find null stories
-	null_stories($story_authors);
 
 	# populate newstories
 	fill_newstories();
@@ -206,6 +209,13 @@ sub fix_vars {
 	)) {
 		my $value = $dbh_new->quote($my_conf{$_});
 		$dbh_new->do("UPDATE vars SET value=$value WHERE name='$_'");
+	}
+
+	# don't overwrite new vars descriptions with old ones
+	my $vars = $dbh_old->selectall_arrayref("SELECT name,value FROM vars");
+	for my $var (@$vars) {
+		my @data = map { $dbh_new->quote($_) } @$var;
+		$dbh_new->do("UPDATE vars SET name=$data[0], value=$data[1]");
 	}
 }
 
@@ -326,14 +336,17 @@ sub null_stories {
 			print "Authors $_ : $story_authors->{$_}\n";
 		}
 		chomp(my $uid = <STDIN>);
-		$dbh_new->do("UPDATE stories SET uid=$uid WHERE uid IS NULL");
+		return $uid;
 	}
 }
 
 ####################################
 # the main function to copy data from old DB to new DB
+# if $opt is 1, delete table contents before inserting
+# if $opt is 0, do nothing with table before inserting
+# if $opt is a string, delete that specific column before inserting
 sub duplicate {
-	my($table, $opt, $filter, $extra) = @_;
+	my($table, $opt, $filter, @extra) = @_;
 
 	print "Processing $table\n";
 
@@ -345,7 +358,7 @@ sub duplicate {
 	}
 
 	while (my $data = $sth_s->fetchrow_hashref) {
-		$data = $filter->($data, $extra) if $filter;
+		$data = $filter->($data, @extra) if $filter;
 		next unless $data;
 		
 		my $insert = sprintf("INSERT INTO $table (%s) VALUES (%s)",
@@ -596,7 +609,11 @@ to the new UID.
 
 If you chose to delete the new admin user account created by
 C<install-slashsite>, it is deleted from each of the users*
-tables.  We do not bother deleting comments and stories, because
+tables.  If you choose not to, then UID 2 will not be copied
+from the 1.0 database; however, all stories, comments, etc.
+assigned to UID 2 I<will> still be copied.
+
+We do not bother deleting comments and stories, because
 those will be overwritten later.
 
 =item *
@@ -735,6 +752,11 @@ vars table of the Slash 2.0 database.  These are:
 Any values you don't want copied, or want to be additionally
 copied, can be taken care of either by hand, or by editing
 the source of this program.
+
+=item *
+
+The existing values from the 1.0 database vars table are copied
+to the 2.0 database.
 
 =back
 
