@@ -61,6 +61,14 @@ my @user_tables = qw(
 	users users_comments users_info users_index users_prefs users_param
 );
 
+my %plugins = (
+	journals => {
+		tables => [qw(
+			journals journals_text journal_friends journal_themes
+		)],
+	},
+);
+
 my($del_users);
 my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%vars, %story_authors);
@@ -77,6 +85,12 @@ my (%conversions) = (
 	'users_param'		=> undef,
 	'users_prefs'		=> undef,
 	'vars'			=> undef,
+
+	# Plugin tables.
+	'journals'		=> undef,
+	'journals_text'		=> undef,
+	'journal_friends'	=> undef,
+	'journal_themes'	=> undef,
 
 	# Processed tables.
 	'blocks'		=> sub {
@@ -444,6 +458,34 @@ EOT
 }
 
 
+# This doesn't yet support incremental mode.
+sub convert_plugins {
+	my($new_plugins, $old_plugins);
+
+	print "\nConverting PLUGINS...\n\n";
+	$new_plugins = $dbh_new->selectall_arrayref(
+		'value, name', 'site_info', "name='plugin'"
+	);
+	$_ = $_->[0] for @{$new_plugins};
+
+	$old_plugins = $dbh_old->selectall_arrayref(
+		'value, name', 'site_info', "name='plugin'"
+	);
+	$_ = $_->[0] for @{$old_plugins};
+
+	for (@{$new_plugins}) {
+		local $" = '|';
+		my $alit = "(@{$old_plugins})";
+		if (/^$alit$/) {
+			next if ! $plugins{$_}->{tables};
+			for (@{$plugins{$_}->{tables}}) {
+				duplicate($_, 1);
+			}
+		}
+	}
+}
+		
+
 sub load_vars {
 	my($db, $varhash) = @_;
 
@@ -689,6 +731,8 @@ EOT
 
 	# Ignoring: formkeys, accesslog 
 	duplicate('metamodlog', 1);
+
+	convert_plugins();
 }
 
 
@@ -1319,6 +1363,16 @@ the 1.0 database to the 2.2 database:
 
 The existing values from the 2.0 database vars table are copied
 to the 2.2 database.
+
+=item *
+
+Templates are NOT copied, and there is a good reason for this. Templates are 
+going to be the most volatile element of your site's design, it's impossible
+for us to plan for what changes there may be so no specific upgrade path for 
+templates exists except to update them by hand, as necessary. Use the 
+template-check tool to compare templates before upgrading your site, and make
+whatever changes are necessary once you have your converted site back in place.
+I know it's a pain, but you'll be _much_ happier with the results.
 
 =back
 
