@@ -645,7 +645,7 @@ sub colorEdit {
 	$user->{fg} = [@colors[0..4]];
 	$user->{bg} = [@colors[5..9]];
 
-       	$title = getTitle('colorEdit-title');
+	$title = getTitle('colorEdit-title');
 
 	$block = $slashdb->getDescriptions('color_block', '', 1);
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
