@@ -80,25 +80,29 @@ for instructions. (<B>updated 9.9!</B>)
 	IF user.uid; name = "$name &nbsp;($user.uid)"; END;
 	INCLUDE fancybox
 		title		= name
-		contents	= M;
+		contents	= M
+		center		= 1;
 END %]
 
 [% IF show_poll;
 	INCLUDE fancybox
 		title		= 'Article Poll'
-		contents	= poll;
+		contents	= poll
+		center		= 1;
 END;
 
 INCLUDE fancybox
 	title		= 'Related Links'
-	contents	= story.relatedtext;
+	contents	= story.relatedtext
+	center		= 1;
 
 IF section_block.block;
 	INCLUDE fancybox
 		title		= section.title
-		contents	= section_block.block;
+		contents	= section_block.block
+		center		= 1;
 END %]
-</TD></TR><TR><TD>&nbsp;</TD><TD COLSPAN="3">
+</TD></TR><TR><TD COLSPAN="3">
 
 [% BLOCK nextStory;
 	IF !s;

@@ -117,12 +117,13 @@ $werder = new Silly::Werder;
 			$score = 2;
 		}
 		my $score_rand = rand(1);
-		   if ($score_rand < 0.05 )	{ $score -= 1	}
+		   if ($score_rand < 0.08 )	{ $score  = -1	}
+		elsif ($score_rand < 0.15 )	{ $score += -1	}
 		elsif ($score_rand < 0.75 )	{		}
-		elsif ($score_rand < 0.90 )	{ $score += 1	}
-		elsif ($score_rand < 0.94 )	{ $score += 2	}
-		elsif ($score_rand < 0.98 )	{ $score += 3	}
-		else				{ $score  = 5	}
+		elsif ($score_rand < 0.90 )	{ $score +=  1	}
+		elsif ($score_rand < 0.94 )	{ $score +=  2	}
+		elsif ($score_rand < 0.98 )	{ $score +=  3	}
+		else				{ $score  =  5	}
 
 		my $subj = make_werds(1 + rand 5);
 		$subj =~ s/\W+$// if rand(1) < 0.1;

@@ -20,48 +20,52 @@ use Slash::Utility;
 my $PROGNAME = 'spamarmor.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-$task{$PROGNAME}{timespec} = '30 */1 * * *';
+$task{$PROGNAME}{timespec} = '30 0 * * *';
 
 # Handles rotation of fakeemail address of all users.
 $task{$PROGNAME}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	slashdLog("$PROGNAME begin");
+#	# Loop over all users. The call to iterateUsers gets a block of 
+#	# users and iterates over that. As opposed to trying to grab all
+#	# of the ENTIRE USERBASE at once. Since a statement handle would
+#	# be the best way to get this data, but the API doesn't return 
+#	# statement handles, we'll have to use a few tricks.
+#	my ($count, $usr_block) = (0, 0);
+#	do {
+#		my $usr_block = $slashdb->iterateUsers(1000);
+#
+#		for my $user (@{$usr_block}) {
+#	# Should be a constant somewhere, probably. The naked '1' below
+#	# refers to the code in $users->{emaildisplay} corresponding to
+#	# random rotation of $users->{fakeemail}.
+#			next if !defined($user->{emaildisplay})
+#				or $user->{emaildisplay} != 1;
+#
+#	# Randomize the email armor.
+#			$user->{fakeemail} = getArmoredEmail($_);
+#
+#	# If executed properly, $user->{fakeemail} should have a value.
+#	# If so, save the result.
+#			if ($user->{fakeemail}) {
+#				$slashdb->setUser($user->{uid}, {
+#					fakeemail	=> $user->{fakeemail},
+#				});
+#				$count++;
+#			}
+#		}
+#	} while $usr_block;
 
-	# Loop over all users. The call to iterateUsers gets a block of 
-	# users and iterates over that. As opposed to trying to grab all
-	# of the ENTIRE USERBASE at once. Since a statement handle would
-	# be the best way to get this data, but the API doesn't return 
-	# statement handles, we'll have to use a few tricks.
-	my ($count, $usr_block) = (0, 0);
-	do {
-		my $usr_block = $slashdb->iterateUsers(1000);
+	my $count = 0;
+	my $hr = $slashdb->getTodayArmorList();
+	for my $uid (sort { $a <=> $b } keys %$hr) {
+		my $fakeemail = getArmoredEmail($uid, $hr->{$uid}{realemail});
+		$slashdb->setUser($uid, { fakeemail => $fakeemail });
+		++$count;
+		sleep 1 if ($count % 20) == 0;
+	}
 
-		for my $user (@{$usr_block}) {
-	# Should be a constant somewhere, probably. The naked '1' below
-	# refers to the code in $users->{emaildisplay} corresponding to
-	# random rotation of $users->{fakeemail}.
-			next if $user->{emaildisplay} != 1;
-
-	# Randomize the email armor.
-			$user->{fakeemail} = getArmoredEmail($_);
-
-	# If executed properly, $user->{fakeemail} should have a value.
-	# If so, save the result.
-			if ($user->{fakeemail}) {
-				$slashdb->setUser($user->{uid}, {
-					fakeemail	=> $user->{fakeemail},
-				});
-				$count++;
-			}
-		}
-	} while $usr_block;
-
-	slashdLog(
-		sprintf "$PROGNAME: Rotated armoring on %d user accounts.",
-			$count
-	);
-	slashdLog("$PROGNAME end");
+	slashdLog("$PROGNAME: Rotated armoring on $count user accounts");
 };
 
 

@@ -153,7 +153,7 @@ sub getRandomAuthorID {
 	# Yes, inefficient.  I do not care.
 	my $rand_uid = 1;
 	my $n_tries = 100;
-	my $uids = $slashdb->sqlSelectAll("uid", "users", "seclev > 0");
+	my $uids = $slashdb->sqlSelectAll("uid", "users", "seclev >= 100");
 	my @uids = map { $_->[0] } @$uids;
 	my $ok = 0;
 	while (!$ok) {

@@ -1480,16 +1480,18 @@ The user's ID whose email address you wish to randomize.
 =cut
 
 sub getArmoredEmail {
-	my($uid) = @_;
+	my($uid, $realemail) = @_;
+	# If the caller knows realemail, pass it in to maybe save a DB query
+	$realemail ||= '';
 
 	my $slashdb = getCurrentDB();
-
 	my $armor = $slashdb->getRandomSpamArmor();
 
 	# Execute the retrieved code in a Safe compartment. We do this
 	# in an anonymous block to enable local scoping for some variables.
 	{
-		local $_ = $slashdb->getUser($uid, 'realemail');
+		local $_ = $realemail;
+		$_ ||= $slashdb->getUser($uid, 'realemail');
 
 		# maybe this should be cached, something like the template
 		# cache in Slash::Display?  it has some significant

@@ -750,24 +750,56 @@ sub getStoriesWithFlag {
 #
 # Please note use of closure. This is not an error.
 #
-{
-my($usr_block_size, $usr_start_point);
+#{
+#my($usr_block_size, $usr_start_point);
+#
+#sub iterateUsers {
+#	my($self, $blocksize, $start) = @_;
+#
+#	$start ||= 0;
+#
+#	($usr_block_size, $usr_start_point) = ($blocksize, $start)
+#		if $blocksize && $blocksize != $usr_block_size;
+#	$usr_start_point += $usr_block_size  + 1 if !$blocksize;
+#
+#	return $self->sqlSelectAllHashrefArray(
+#		'*',
+#		'users', '',
+#		"ORDER BY uid LIMIT $usr_start_point,$usr_block_size"
+#	);
+#}
+#}
 
-sub iterateUsers {
-	my($self, $blocksize, $start) = @_;
-
-	$start ||= 0;
-
-	($usr_block_size, $usr_start_point) = ($blocksize, $start)
-		if $blocksize && $blocksize != $usr_block_size;
-	$usr_start_point += $usr_block_size  + 1 if !$blocksize;
-
-	return $self->sqlSelectAllHashrefArray(
-		'*',
-		'users', '',
-		"ORDER BY uid LIMIT $usr_start_point,$usr_block_size"
+########################################################
+# For tasks/spamarmor.pl
+#
+# This returns a hashref of uid and realemail for 1/nth of the users
+# whose emaildisplay param is set to 1 (armored email addresses).
+# By default 1/7th, and which 1/7th determined by date.
+#
+# If emaildisplay is moved from users_param into the schema proper,
+# this code will have to be changed.
+#
+sub getTodayArmorList {
+	my($self, $buckets, $which_bucket) = @_;
+	$buckets = 7 if !defined($buckets); # default to 7 for weekly rotation
+	$buckets =~ /(\d+)/; $buckets = $1;
+	$which_bucket = (localtime)[7] if !defined($which_bucket); # default to day of year
+	$which_bucket =~ /(\d+)/; $which_bucket = $1;
+	$which_bucket %= $buckets;
+	my $uid_aryref = $self->sqlSelectColArrayref(
+		"uid",
+		"users_param",
+		"MOD(uid, $buckets) = $which_bucket AND name='emaildisplay' AND value=1",
+		"ORDER BY uid"
 	);
-}
+	my $uid_list = join(",", @$uid_aryref);
+	return $self->sqlSelectAllHashref(
+		"uid",
+		"uid, realemail",
+		"users",
+		"uid IN ($uid_list)"
+	);
 }
 
 1;

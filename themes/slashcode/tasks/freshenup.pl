@@ -77,7 +77,7 @@ $task{$me}{code} = sub {
 	}
 
 	# Delete stories marked as needing such
-	$storyes = [];
+	$stories = [];
 	$stories = $slashdb->getStoriesWithFlag("delete_me")
 		if $constants->{delete_old_stories};
 	for my $i (0..$#$stories) {

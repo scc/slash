@@ -1316,9 +1316,11 @@ sub saveComm {
 	# Do the right thing with respect to the chosen email display mode
 	# and the options that can be displayed.
 	my $user = $slashdb->getUser($uid);
-	$user_fakeemail = ($user->{emaildisplay} == 1) ?
-		$user->{fakeemail} : getArmoredEmail($uid);
-	my @email_choices = ('', $user_fakeemail, $user->{realemail});
+	my $new_fakeemail = '';		# at emaildisplay 0, don't show any email address
+	if ($user->{emaildisplay}) {
+		$new_fakeemail = getArmoredEmail($uid)	if $user->{emaildisplay} == 1;
+		$new_fakeemail = $user->{realemail}	if $user->{emaildisplay} == 2;
+	}
 
 	my $name = $curuser->{seclev} && $form->{name} ?
 		$form->{name} : $curuser->{nickname};
@@ -1343,7 +1345,7 @@ sub saveComm {
 		commentspill	=> $form->{commentspill},
 		domaintags	=> $form->{domaintags},
 		emaildisplay	=> $form->{emaildisplay},
-		fakeemail	=> $email_choices[$form->{emaildisplay}],
+		fakeemail	=> $new_fakeemail,
 		highlightthresh	=> $form->{highlightthresh},
 		maxcommentsize	=> $form->{maxcommentsize},
 		mode		=> $form->{umode},
