@@ -355,7 +355,7 @@ There are a few options to <CODE>make</CODE> and <CODE>make install</CODE> you m
         ====================================================
         PREFIX  /usr/local/slash        Location for
                                         installed files
-        INIT    /etc/rc.d               Location for init
+        INIT    /etc               Location for init
                                         scripts
         USER    nobody                  User to own files
         GROUP   nobody                  Group to own files
@@ -374,8 +374,8 @@ So, for example, you might type:
 
 <P>
 
-<PRE>        make INIT=/etc PREFIX=/home/slash
-        make install INIT=/etc PREFIX=/home/slash
+<PRE>        make INIT=/etc/rc.d PREFIX=/home/slash
+        make install INIT=/etc/rc.d PREFIX=/home/slash
 </PRE>
 
 <P>
