@@ -123,9 +123,6 @@ sub bulkEmail {
 	my($addrs, $subject, $content) = @_;
 	my $constants = getCurrentStatic();
 
-	my $valid = Email::Valid->new();
-	my @list = grep { $valid->rfc822($_) } @$addrs;
-
 	my $goodfile = catfile($constants->{logdir}, 'bulk-good.log');
 	my $badfile  = catfile($constants->{logdir}, 'bulk-bad.log');
 	my $errfile  = catfile($constants->{logdir}, 'bulk-error.log');
@@ -138,6 +135,9 @@ sub bulkEmail {
 			$subject, scalar localtime;
 		close $fh;
 	}
+
+	my $valid = Email::Valid->new();
+	my @list = grep { $valid->rfc822($_) } @$addrs;
 
 	my $bulk = Mail::Bulkmail->new(
 		From    => $constants->{mailfrom},
@@ -159,6 +159,8 @@ sub bulkEmail {
 			$subject, scalar localtime;
 		close $fh;
 	}
+
+	return $return;
 }
 
 sub doEmail {

@@ -102,7 +102,7 @@ sub prog2file {
 		$err_str .= " no data";
 	} else {
 		my $fh = gensym();
-		if (!open $fh, ">$f\0") {
+		if (!open $fh, "> $f\0") {
 			$err_str .= " could not write to '$f': '$!'";
 		} else {
 			print $fh $data;
@@ -183,7 +183,7 @@ sub slashdPid {
 		die "$file already exists; you will"
 			. " need to remove it before slashd can start";
 	}
-	open $fh, ">$file\0" or die "Can't open $file: $!";
+	open $fh, "> $file\0" or die "Can't open $file: $!";
 	print $fh $$;
 	close $fh;
 }
@@ -192,7 +192,7 @@ sub slashdLogInit {
 	my $ld = $constants->{logdir};
 	mkpath $ld, 0, 0775;
 	my $file = catfile($ld, "slashd.log");
-	open(STDERR, ">>$file\0") or die "Can't append STDERR to $file: $!";
+	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
 	my $oldfh = select(STDERR); $| = 1; select($oldfh);
 }
 
