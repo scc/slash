@@ -220,11 +220,13 @@ CREATE TABLE dateformats (
 
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
+  id int(10) NOT NULL auto_increment, 
   sid char(16) DEFAULT '' NOT NULL,
   title varchar(128),
   url varchar(128),
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  PRIMARY KEY (sid)
+  KEY (sid),
+  PRIMARY KEY (id)
 );
 
 #

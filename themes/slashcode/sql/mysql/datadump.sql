@@ -158,8 +158,8 @@ INSERT INTO dateformats (id, format, description) VALUES (17,'%Y.%m.%d %k:%M','1
 # Dumping data for table 'discussions'
 #
 
-INSERT INTO discussions (sid, title, url, ts) VALUES ('00/01/25/1430236','You\'ve Installed Slash!','http://slashcode.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36');
-INSERT INTO discussions (sid, title, url, ts) VALUES ('00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15');
+INSERT INTO discussions (id, sid, title, url, ts) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','http://slashcode.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36');
+INSERT INTO discussions (id, sid, title, url, ts) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15');
 
 #
 # Dumping data for table 'formkeys'

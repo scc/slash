@@ -2709,10 +2709,10 @@ sub getStory {
 	$db_id = $self->sqlQuote($id);
 	$answer = $self->sqlSelectHashref('*', $table, "sid=$db_id");
 	$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
-	for (@$append) {
-		$answer->{$_->[0]} = $_->[1];
+	for (keys %$append) {
+		$answer->{$_} = $append->{$_};
 	}
-	$append = $self->sqlSelectAll('name,value', 'stories_param', "sid=$db_id");
+	$append = $self->sqlSelectAll('name,value', 'story_param', "sid=$db_id");
 	for (@$append) {
 		$answer->{$_->[0]} = $_->[1];
 	}

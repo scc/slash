@@ -20,6 +20,20 @@ sub main {
 	my $user = getCurrentUser();
 	my $id = getFormkeyId($user->{uid});
 
+	my %ops = (
+		default => \&displayComments,
+		index => \&commentIndex,
+		moderate => \&moderate,
+		reply => \&reply,
+		Reply => \&reply,
+		Edit => \&edit,
+		edit => \&edit,
+		post => \&edit,
+		Preview => \&edit,
+		preview => \&edit,
+		submit => \&submitComment,
+	);
+
 	my $stories;
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
@@ -39,75 +53,70 @@ sub main {
 		});
 		$form->{op} = "Preview";
 	}
+	my $op = $form->{'op'};
+	$op = 'default' unless $ops{$op};
+	$ops{$op}->($form, $slashdb, $user, $constants, $id);
 
-	if ($form->{op} eq "Submit") {
-		my $err_message = '';
-		if (checkFormPost("comments",
-			$constants->{post_limit},
-			$constants->{max_posts_allowed},
-			$id,
-			\$err_message))
+	writeLog($form->{sid});
 
-		{
-			submitComment(); 
-		} else {
-			print $err_message;
-		}
+	footer();
+}
 
-	} elsif ($form->{op} eq "Edit" || $form->{op} eq "post" ||
-		$form->{op} eq "Preview" || $form->{op} eq "Reply") {
+sub edit {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
 
-		if ($form->{op} eq 'Reply') {
-			$form->{formkey} = getFormkey();
-			$slashdb->createFormkey("comments", $id, $form->{sid});
-		} else {
-			$slashdb->updateFormkeyId('comments',
-				$form->{formkey},
-				$constants->{anonymous_coward_uid},
-				$user->{uid},
-				$form->{'rlogin'},
-				$form->{upasswd}
-			);
-		}
+	$slashdb->updateFormkeyId('comments',
+		$form->{formkey},
+		$constants->{anonymous_coward_uid},
+		$user->{uid},
+		$form->{'rlogin'},
+		$form->{upasswd}
+	);
+	editComment($id);
+}
+sub reply {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
 
-		editComment($id);
+	$form->{formkey} = getFormkey();
+	$slashdb->createFormkey("comments", $id, $form->{sid});
+	editComment($id);
+}
 
-	} elsif ($form->{op} eq "delete" && $user->{seclev}) {
-		titlebar("99%", "Delete $form->{cid}");
+sub delete {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
 
-		my $delCount = deleteThread($form->{sid}, $form->{cid});
-		# This does not exist in the API. Once
-		# I know what it was supposed to do I can
-		# create it. -Brian
-		$slashdb->setStoryCount($delCount);
+	titlebar("99%", "Delete $form->{cid}");
 
-	} elsif ($form->{op} eq "moderate") {
-		titlebar("99%", "Moderating $form->{sid}");
-		moderate();
-		printComments($form->{sid}, $form->{pid}, $form->{cid});
+	my $delCount = deleteThread($form->{sid}, $form->{cid});
+	# This does not exist in the API. Once
+	# I know what it was supposed to do I can
+	# create it. -Brian
+	$slashdb->setStoryCount($delCount);
+}
 
-	} elsif ($form->{op} eq "Change") {
-		if (defined $form->{'savechanges'} && !$user->{is_anon}) {
-			$slashdb->setUser($user->{uid}, {
-				threshold	=> $user->{threshold},
-				mode		=> $user->{mode},
-				commentsort	=> $user->{commentsort}
-			});
-		}
+sub change {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
+
+	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
+		$slashdb->setUser($user->{uid}, {
+			threshold	=> $user->{threshold},
+			mode		=> $user->{mode},
+			commentsort	=> $user->{commentsort}
+		});
+	}
+	printComments($form->{sid}, $form->{cid}, $form->{cid});
+}
+
+sub displayComments {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
+
+	if ($form->{cid}) {
 		printComments($form->{sid}, $form->{cid}, $form->{cid});
-
-	} elsif ($form->{cid}) {
-		printComments($form->{sid}, $form->{cid}, $form->{cid});
-
 	} elsif ($form->{sid}) {
 		printComments($form->{sid}, $form->{pid});
 	} else {
 		commentIndex();
 	}
-
-	writeLog($form->{sid});
-
-	footer();
 }
 
 
@@ -115,7 +124,8 @@ sub main {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
-	my $slashdb = getCurrentDB();
+	my ($form, $slashdb, $user, $constants, $id) = @_;
+
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $slashdb->getDiscussions();
 	slashDisplay('discuss_list', {
@@ -357,11 +367,17 @@ sub previewForm {
 ##################################################################
 # Saves the Comment
 sub submitComment {
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my ($form, $slashdb, $user, $constants, $id) = @_;
 	my $error_message;
+
+	unless (checkFormPost("comments",
+		$constants->{post_limit},
+		$constants->{max_posts_allowed},
+		$id,
+		\$error_message)) {
+		print $error_message;
+		return;
+	}
 
 	$form->{postersubj} = strip_nohtml($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
@@ -435,12 +451,12 @@ sub submitComment {
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my ($form, $slashdb, $user, $constants, $id) = @_;
+
 	my $total_deleted = 0;
 	my $hasPosted;
+
+	titlebar("99%", "Moderating $form->{sid}");
 
 	unless ($user->{seclev} > 99 && $constants->{authors_unlimited}) {
 		$hasPosted = $slashdb->countCommentsBySidUID($form->{sid}, $user->{uid});
@@ -472,6 +488,7 @@ sub moderate {
 			comment_count	=> $slashdb->countCommentsBySid($form->{sid}),
 		});
 	}
+	printComments($form->{sid}, $form->{pid}, $form->{cid});
 }
 
 
