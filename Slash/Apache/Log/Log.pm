@@ -33,9 +33,12 @@ sub handler {
 	} elsif ($uri =~ /\.shtml$/) {
 		$uri =~ s/^\/(.*)\.shtml$/$1/;
 		$dat = $uri if $uri =~ /\d{2}\/\d{2}\/\d{2}\/\d{4,7}/;	
+		$uri =~ s/^\/?(\w+)\/?.*/$1/;
 		$slashdb->createAccessLog($uri, $dat);
 	} elsif ($uri =~ /\.html$/) {
 		$uri =~ s/^\/(.*)\.html$/$1/;
+		$dat = $uri if $uri =~ /\d{2}\/\d{2}\/\d{2}\/\d{4,7}/;	
+		$uri =~ s/^\/?(\w+)\/?.*/$1/;
 		$slashdb->createAccessLog($uri, $dat);
 	}
 
