@@ -22,21 +22,21 @@ __template__
 <I>[% Slash.timeCalc(diatribe.date) %]</I>
 	</TD><TD BGCOLOR="[% user.bg.2 %]" VALIGN="TOP" ALIGN="RIGHT">
 
-[
+[% UNLESS user.is_anon %][
 [% IF user.uid == uid %]
 <A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Edit</A> |
 <A HREF="[% constants.rootdir %]/journal.pl?op=removemeta&amp;id=[% diatribe.id %]">Delete</A> |
 [% END; IF is_friend %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=deletemeta&amp;uid=[% uid %]">Remove Friend</A> |
-[% ELSIF user.uid != uid %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=addmeta&amp;uid=[% uid %]">Add Friend</A> |
+<A HREF="[% constants.rootdir %]/journal.pl?op=deletemeta&amp;uid=[% uid %]">Remove Friend</A>
+[% ELSE %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=addmeta&amp;uid=[% uid %]">Add Friend</A>
 [% END %]
 [% IF diatribe.discussion %]
-<A HREF="[% constants.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Comments</A>
-[% ELSE %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Enable Comments</A>
+| <A HREF="[% constants.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">[% diatribe.commentcount %] Comment[% diatribe.commentcount != 1 ? "s" : "" %]</A>
+[% ELSIF user.uid == uid %]
+| <A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Enable Comments</A>
 [% END %]
-]
+][% END %]
 
 	</TD></TR><TR><TD COLSPAN="2">
 [%# at some point, this needs to be linked to the topic lookup by discussion %]

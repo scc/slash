@@ -18,7 +18,7 @@ __template__
 [% SWITCH value %]
 
 [% CASE 'nousers' %]
-	No users found matching "[% FILTER strip_literal; form.nickname; END %]".
+	No users with journals found matching "[% FILTER strip_literal; form.nickname; END %]".
 
 [% CASE 'noentries' %]
 	[% nickname ? "$nickname has" : "You have" %] not created any journal entries.

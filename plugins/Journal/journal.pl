@@ -266,6 +266,10 @@ sub displayArticle {
 			$collection->{day} = $article->[0];
 		}
 
+		my $commentcount = $article->[6]
+			? $slashdb->getDiscussion($article->[6], 'commentcount')
+			: 0;
+
 		# should get comment count, too -- pudge
 		push @{$collection->{article}}, {
 			article		=> strip_mode($article->[1], $article->[4]),
@@ -274,6 +278,7 @@ sub displayArticle {
 			topic		=> $topics->{$article->[5]},
 			discussion	=> $article->[6],
 			id		=> $article->[3],
+			commentcount	=> $commentcount,
 		};
 	}
 
@@ -349,8 +354,10 @@ sub saveArticle {
 				$description = $article->{description};
 				$form->{tid} = $article->{tid};
 			}
-			my $did = $slashdb->createDiscussion('', $description, $slashdb->getTime(), 
-				"$rootdir/journal.pl?op=display&id=$form->{id}", $form->{tid}
+			my $did = $slashdb->createDiscussion(
+				$description,
+				"$rootdir/journal.pl?op=display&id=$form->{id}",
+				$form->{tid}
 			);
 			$update{discussion}  = $did;
 
@@ -378,8 +385,10 @@ sub saveArticle {
 
 		if ($constants->{journal_comments} && $form->{journal_discuss}) {
 			my $rootdir = $constants->{'rootdir'};
-			my $did = $slashdb->createDiscussion('', $description, $slashdb->getTime(), 
-				"$rootdir/journal.pl?op=display&id=$id", $form->{tid}
+			my $did = $slashdb->createDiscussion(
+				$description,
+				"$rootdir/journal.pl?op=display&id=$id",
+				$form->{tid}
 			);
 			$journal->set($id, { discussion => $did });
 		}
@@ -481,12 +490,19 @@ sub editArticle {
 	if ($article->{article}) {
 		my $strip_art = strip_mode($article->{article}, $posttype);
 		my $strip_desc = strip_nohtml($article->{description});
+
+		my $commentcount = $article->{discussion}
+			? $slashdb->getDiscussion($article->{discussion}, 'commentcount')
+			: 0;
+
 		my $disp_article = {
-			date		=> $article->{date},
 			article		=> $strip_art,
+			date		=> $article->{date},
 			description	=> $strip_desc,
+			topic		=> $slashdb->getTopic($article->{tid}),
 			id		=> $article->{id},
-			topic		=> $slashdb->getTopic($article->{tid})
+			discussion	=> $article->{discussion},
+			commentcount	=> $commentcount,
 		};
 
 		my $theme = $user->{'journal_theme'};

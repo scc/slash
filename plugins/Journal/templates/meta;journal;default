@@ -17,34 +17,33 @@ __template__
 		op	= "add";
 		name	= "uid";
 		val	= friend.uid;
-		submit	= "Add Friend";
+		submit	= "Yup, I'm positive";
 		text	= BLOCK %]
-<P>To prevent abuse, we want to confirm that you actually want to make
-friends with [% FILTER strip_literal; friend.nickname; END %]
-([% friend.uid %]).  Please click "[% submit %]" to continue.</P>
+<P>Alright, before we do this thing, I just want to really make
+sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</B>
+([% friend.uid %]) your friend.</P>
 		[% END;
 	CASE "deletemeta";
 		title	= "Removing Friend";
 		op	= "delete";
 		name	= "del_$friend.uid";
 		val	= 1;
-		submit	= "Remove Friend";
+		submit	= "Yup, I'm positive";
 		text	= BLOCK %]
-<P>To prevent abuse, we want to confirm that you actually want to
-remove [% FILTER strip_literal; friend.nickname; END %]
-([% friend.uid %]) as a friend.  Please click "[% submit %]"
-to continue.</P>
+<P>Alright, before we do this thing, I just want to really make
+sure that you want to remove <B>[% FILTER strip_literal; friend.nickname; END %]</B>
+([% friend.uid %]) as your friend.</P>
 		[% END;
 	CASE "removemeta";
 		title	= "Deleting Article";
 		op	= "remove";
 		name	= "del_$article.id";
 		val	= 1;
-		submit	= "Delete Article";
+		submit	= "Yup, I'm positive";
 		text	= BLOCK %]
-<P>To prevent abuse, we want to confirm that you actually want to
-delete "[% FILTER strip_literal; article.description; END %]".
-Please click "[% submit %]" to continue.</P>
+<P>Alright, before we do this thing, I just want to really make
+sure that you want to delete your journal entry
+<B>[% FILTER strip_literal; article.description; END %]</B>.</P>
 		[% END;
 END %]
 

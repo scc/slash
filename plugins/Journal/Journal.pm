@@ -174,6 +174,7 @@ sub add {
 sub is_friend {
 	my($self, $friend) = @_;
 	my $uid   = $ENV{SLASH_USER};
+	return unless $uid && $friend;
 	my $cols  = "jf.uid";
 	my $table = "journal_friends AS jf";
 	my $where = "jf.uid=$uid AND jf.friend=$friend";
@@ -256,7 +257,8 @@ sub searchUsers {
 	my($data, @users);
 
 	if (my $uid = $self->getUserUID($nickname)) {
-		$data = [[ '', '', $uid ]];
+		$data = [[ '', '', $uid ]]
+			if $self->sqlSelect('uid', 'journals', "uid=$uid");
 	}
 
 	if (!$data) {

@@ -32,8 +32,9 @@ __template__
 [% END %]
 </TR>
 [% END %]
+[% IF !user.is_anon && !search %]<TR><TD ALIGN="RIGHT" COLSPAN="4"><INPUT TYPE="submit" VALUE="Remove Friends"></TD></TR>[% END %]
 </TABLE>
-[% IF !user.is_anon && !search %]<INPUT TYPE="submit" VALUE="Remove Friends"></FORM>[% END %]
+[% IF !user.is_anon && !search %]</FORM>[% END %]
 <BR><BR>
 
 [% INCLUDE searchusers %]
