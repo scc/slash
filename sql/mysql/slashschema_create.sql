@@ -386,7 +386,7 @@ CREATE TABLE story_param (
   param_id int(11) NOT NULL auto_increment,
   sid char(16) DEFAULT '' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
-  value text,
+  value varchar(254) DEFAULT '' NOT NULL,
   UNIQUE story_key (sid,name),
   PRIMARY KEY (param_id)
 );
@@ -569,7 +569,7 @@ CREATE TABLE users_param (
   param_id int(11) NOT NULL auto_increment,
   uid int(11) DEFAULT '1' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
-  value text,
+  value varchar(254) DEFAULT '' NOT NULL,
   UNIQUE uid_key (uid,name),
   KEY (uid),
   PRIMARY KEY (param_id)
