@@ -64,8 +64,7 @@ if ($opts{'D'}) {
 
 if ($opts{'S'} and $opts{'P'}) {
 	$sectionpage_flag = 1;
-} 
-elsif ($opts{'S'}) {
+} elsif ($opts{'S'}) {
 	$section_flag = 1;
 } elsif ($opts{'P'}) {
 	$page_flag = 1;
@@ -79,11 +78,9 @@ if ($opts{'s'}) {
 
 	if ($opts{'D'} and $opts{'f'}) {
 		$file = $opts{'D'} . "/" . $opts{'f'};
-	} 
-	elsif ($opts{'f'}) {
+	} elsif ($opts{'f'}) {
 		$file = $opts{'f'}; 
-	}
-	elsif ($opts{'D'}) {
+	} elsif ($opts{'D'}) {
 		$file = $opts{'D'};
 	} else {
 		$file = cwd;
