@@ -96,13 +96,13 @@ install: slash plugins
 
 	# this needs BSD support
 	if [ -d /etc/init.d ]; then \
-		install utils/slashd /etc/init.d/; \
-		ln -s -f /etc/init.d/slashd /etc/rc3.d/S99slashd; \
-		ln -s -f /etc/init.d/slashd /etc/rc6.d/K99slashd; \
+		install utils/slash /etc/init.d/; \
+		ln -s -f /etc/init.d/slash /etc/rc3.d/S99slash; \
+		ln -s -f /etc/init.d/slash /etc/rc6.d/K99slash; \
 	elif [ -d /etc/rc.d ]; then \
-		install utils/slashd /etc/rc.d/init.d/; \
-		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd; \
-		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc6.d/K99slashd; \
+		install utils/slash /etc/rc.d/init.d/; \
+		ln -s -f /etc/rc.d/init.d/slash /etc/rc.d/rc3.d/S99slash; \
+		ln -s -f /etc/rc.d/init.d/slash /etc/rc.d/rc6.d/K99slash; \
 	else \
 		echo "This is either BSD or some other OS I do not understand"; \
 		echo "You will need to look at how to install utils/slash"; \

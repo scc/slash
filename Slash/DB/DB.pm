@@ -884,7 +884,7 @@ Fixed KEY.
 
 =back
 
-=head2 setStoryCount(SID, COUNT)
+=head2 setStoriesCount(SID, COUNT)
 
 You should call this whenever you delete comments
 belonging to a story with the count of the number
@@ -1462,7 +1462,7 @@ Fixed KEY.
 
 =back
 
-=head2 insertFormkey(KEY)
+=head2 createFormkey(KEY)
 
 I am the default documentation, short and stout.
 
@@ -1572,7 +1572,7 @@ Fixed KEY.
 
 =back
 
-=head2 formAbuse(KEY)
+=head2 createAbuse(KEY)
 
 I am the default documentation, short and stout.
 
@@ -1836,7 +1836,7 @@ Fixed KEY.
 
 =back
 
-=head2 checkForModerator(KEY)
+=head2 checkForMetaModerator(KEY)
 
 I am the default documentation, short and stout.
 

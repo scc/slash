@@ -41,7 +41,7 @@ sub main {
 		rss => 1,
 		);
 
-	my $journal = Slash::Journal->new(getCurrentSlashUser());
+	my $journal = Slash::Journal->new(getCurrentVirtualUser());
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 

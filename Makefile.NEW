@@ -173,7 +173,7 @@ install: slash plugins
 				ln -s -f ../init.d/slash $$init/rc6.d/K99slash; 	\
 			 else 								\
 				echo "*** This is either BSD or some other OS I do not understand"; \
-				echo "*** You will need to look at how to install utils/slashd"; \
+				echo "*** You will need to look at how to install utils/slash"; \
 				echo "*** on your own.";			\
 			 fi							\
 			 ;;							\

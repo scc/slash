@@ -40,6 +40,12 @@ upgrading from a 1.0.x site soon.
 
 =head1 DOCUMENTATION
 
+The F<.pod> documentation included with Slash can be read with the
+C<perldoc> program, included with perl, or translated using one of
+the many C<pod2*> translators.
+
+Most of the documentation is also available online on the Slash FAQ.
+
 =over 4
 
 =item Slash FAQ
@@ -73,8 +79,6 @@ The details on how to install Slash.
 
 F<INSTALL>
 
-(We should post this online, too.)
-
 
 =item API
 
@@ -85,14 +89,36 @@ The details of the API available in Slash.
 	perldoc Slash::Display
 	perldoc Slash::DB
 
-(We should post these online, too.)
+
+=item HOWTOs
+
+There are currently the beginnings of HOWTO documents
+for templates, plugins, and themes.
+
+F<docs/HOWTO-Plugins.pod>
+
+F<docs/HOWTO-Templates.pod>
+
+F<docs/HOWTO-Themes.pod>
+
+
+=item Schema
+
+The layout and description of the database.
+
+F<docs/slasherd_bender.fig>
+
+F<docs/slasherd_bender.pdf>
+
+F<docs/slasherd_bender.ps>
+
+F<docs/slashtables_bender.txt>
 
 
 =item Other
 
-We need docs for schema, upgrading.  We need to upgrade
-the Getting Started doc.  We need to have docs on how to
-do a plugin or theme.  Anything else?
+We need docs for upgrading.  We need to upgrade
+the Getting Started doc. 
 
 
 =item Authors

@@ -42,7 +42,7 @@ L<Template> for more information about templates.
 
 use strict;
 use base 'Exporter';
-use vars qw($VERSION @EXPORT $CONTEXT);
+use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
 use Exporter ();
 use Slash::Display::Provider ();
 use Slash::Utility;
@@ -50,6 +50,7 @@ use Template;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(slashDisplay);
+@EXPORT_OK = qw(get_template);
 
 # BENDER: Well I don't have anything else planned for today, let's get drunk!
 

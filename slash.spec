@@ -32,9 +32,9 @@ rm -rf $RPM_BUILD_ROOT
 %defattr (-,nobody,nobody)
 %doc AUTHORS CHANGES COPYING INSTALL MANIFEST MANIFEST.SKIP README
 
-/etc/rc.d/init.d/slashd
-/etc/rc.d/rc3.d/S99slashd
-/etc/rc.d/rc6.d/K99slashd
+/etc/rc.d/init.d/slash
+/etc/rc.d/rc3.d/S99slash
+/etc/rc.d/rc6.d/K99slash
 /usr/local/slash
 /usr/local/slash/bin
 /usr/local/slash/bin/install-slashsite

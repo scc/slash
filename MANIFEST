@@ -362,5 +362,5 @@ utils/convert-dump
 utils/excessiveHits
 utils/replaceblock
 utils/slashcode-dearchive
-utils/slashd
+utils/slash
 utils/sqlps

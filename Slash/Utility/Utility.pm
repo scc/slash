@@ -42,7 +42,6 @@ use vars qw($VERSION @ISA @EXPORT);
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
-	addToMenu
 	bakeUserCookie
 	balanceTags
 	changePassword
@@ -68,7 +67,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	getCurrentDB
 	getCurrentForm
 	getCurrentMenu
-	getCurrentSlashUser
+	getCurrentVirtualUser
 	getCurrentStatic
 	getCurrentUser
 	getFormkey
@@ -109,7 +108,8 @@ use constant CODE	=> 4;
 # These are file-scoped variables that are used when you need to use the
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
-	$static_anonymous_coward, $static_cookie);
+	$static_anonymous_coward, $static_cookie,
+	$static_virtual_user);
 
 #========================================================================
 
@@ -423,46 +423,6 @@ Random password.
 	}
 }
 
-
-#========================================================================
-
-=head2 addToMenu( [, ])
-
-I dunno, maybe remove this function.  Come back to it.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item
-
-=back
-
-=item Return value
-
-
-=item Side effects
-
-
-=item Dependencies
-
-=back
-
-=cut
-
-sub addToMenu {
-	my($menu, $name, $data) = @_;
-	my $user = getCurrentUser();
-
-	return unless ref $data eq 'HASH';
-
-	my $menus = getCurrentMenu($menu);
-	$data->{menuorder} = @$menus;
-
-	$user->{menus}{$menu}{$name} = $data;
-}
 
 #========================================================================
 
@@ -1007,32 +967,6 @@ sub getCurrentAnonymousCoward {
 
 #========================================================================
 
-=head2 getCurrentSlashUser()
-
-Returns the current Slash user.
-
-=over 4
-
-=item Return value
-
-Returns the current Slash user.
-
-=back
-
-=cut
-
-sub getCurrentSlashUser {
-	my $slashdb;
-
-	my $r = Apache->request;
-	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $user = $const_cfg->{VirtualUser};
-
-	return $user;
-}
-
-#========================================================================
-
 =head2 createCurrentAnonymousCoward(HASH)
 
 Creates the current anonymous coward for non Apache scripts.
@@ -1060,6 +994,63 @@ Returns no value.
 
 sub createCurrentAnonymousCoward {
 	($static_anonymous_coward) = @_;
+}
+
+#========================================================================
+
+=head2 getCurrentVirtualUser()
+
+Returns the current virtual user that the site is running under.
+
+=over 4
+
+=item Return value
+
+The current virtual user that the site is running under.
+
+=back
+
+=cut
+
+sub getCurrentVirtualUser {
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		return $cfg->{'VirtualUser'};
+	} else {
+		return $static_virtual_user;
+	}
+}
+
+#========================================================================
+
+=head2 createCurrentVirtualUser(VIRTUAL_USER)
+
+Creates the current virtual user for non Apache scripts.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item VIRTUAL_USER
+
+The current virtual user that is to be used in scripts not running in Apache
+to simulate a script running under Apache.
+
+=back
+
+=item Return value
+
+Returns no value.
+
+=back
+
+=cut
+
+sub createCurrentVirtualUser {
+	($static_virtual_user) = @_;
 }
 
 #========================================================================
@@ -2532,6 +2523,8 @@ sub createEnvironment {
 		}
 		$virtual_user = $form{'virtual_user'};
 	}
+
+	createCurrentVirtualUser($virtual_user);
 	createCurrentForm(filter_params(%form));
 
 	my $slashdb = Slash::DB->new($virtual_user);
@@ -2543,7 +2536,7 @@ sub createEnvironment {
 	createCurrentStatic($constants);
 
 	$ENV{SLASH_USER} = $constants->{anonymous_coward_uid};
-	my $user = prepareUser($constants->{anonymous_coward_uid}, getCurrentForm(), $0);
+	my $user = prepareUser($constants->{anonymous_coward_uid}, $form, $0);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 }

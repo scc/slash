@@ -91,7 +91,7 @@ sub commentSearch {
 	my ($form) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $searchDB = Slash::Search->new(getCurrentSlashUser());
+	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $comments = $searchDB->findComments($form);
 	slashDisplay('commentsearch', {
@@ -109,7 +109,7 @@ sub commentSearch {
 sub userSearch {
 	my ($form) = @_;
 	my $constants = getCurrentStatic();
-	my $searchDB = Slash::Search->new(getCurrentSlashUser());
+	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $users = $searchDB->findUsers($form);
 	slashDisplay('usersearch', {
@@ -129,7 +129,7 @@ sub userSearch {
 #################################################################
 sub storySearch {
 	my ($form) = @_;
-	my $searchDB = Slash::Search->new(getCurrentSlashUser());
+	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 
 	my($x, $cnt) = 0;
