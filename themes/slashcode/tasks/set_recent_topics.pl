@@ -17,7 +17,8 @@ $task{$me}{code} = sub {
 	while (my $cur_story = $sth->fetchrow_hashref) {
 		my $cur_tid = $cur_story->{tid};
 		# We only want unique topics to be shown.
-		next if exists $tid_list{$cur_story->{tid}}++;
+		next if exists $tid_list{$cur_story->{tid}};
+		$tid_list{$cur_story->{tid}}++;
 		if ($cur_story->{image} =~ /^\w+\.\w+$/) {
 			$cur_story->{image} =
 			"$constants->{imagedir}/topics/$cur_story->{image}";

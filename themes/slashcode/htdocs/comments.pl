@@ -775,7 +775,7 @@ sub moderate {
 		if ($user->{seclev} > 100 and $key =~ /^del_(\d+)$/) {
 			$total_deleted += deleteThread($sid, $1);
 		} elsif (!$hasPosted and $key =~ /^reason_(\d+)$/) {
-			$was_touched ||= moderateCid($sid, $1, $form->{$key});
+			$was_touched += moderateCid($sid, $1, $form->{$key});
 		}
 	}
 	$slashdb->setDiscussionDelCount($sid, $total_deleted);

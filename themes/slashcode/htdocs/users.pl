@@ -534,9 +534,15 @@ sub showInfo {
 		# ...however, the "sid" parameter here must be the string
 		# based SID from either the "stories" table or from 
 		# pollquestions.
-		my $story_sid = ($slashdb->getDiscussion($sid))->{sid};
-		my $story = $slashdb->getStory($story_sid);
-		my $question = $slashdb->getPollQuestion($story_sid, 'question');
+		my($discussion, $story_sid) = ($slashdb->getDiscussion($sid), 0);
+		$story_sid = $discussion->{sid} if $discussion;
+		my($story, $question);
+		if ($story_sid) {
+			$story = $slashdb->getStory($story_sid);
+			$question = $slashdb->getPollQuestion(
+				$story_sid, 'question'
+			);
+		}
 
 		push @$commentstruct, {
 			pid 		=> $pid,
@@ -550,10 +556,13 @@ sub showInfo {
 			replies		=> $replies,
 		};
 	}
-	my $storycount = $slashdb->countStoriesBySubmitter($requested_user->{uid})
-		unless $requested_user->{nonuid};
-	my $stories = $slashdb->getStoriesBySubmitter($requested_user->{uid}, $constants->{user_submitter_display_default})
-		unless !$storycount || $requested_user->{nonuid};
+	my $storycount =
+		$slashdb->countStoriesBySubmitter($requested_user->{uid})
+	unless $requested_user->{nonuid};
+	my $stories = $slashdb->getStoriesBySubmitter(
+		$requested_user->{uid},
+		$constants->{user_submitter_display_default}
+	) unless !$storycount || $requested_user->{nonuid};
 
 	if ($requested_user->{nonuid}) {
 		slashDisplay('netIDInfo', {
