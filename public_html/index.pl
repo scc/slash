@@ -24,7 +24,6 @@
 ###############################################################################
 # pre stories cache update
 use strict;
-use lib '../';
 use vars '%I';
 use Slash;
 

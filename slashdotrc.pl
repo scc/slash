@@ -28,15 +28,15 @@ require URI;
 # change this according to site specifics
 
 my %my_conf = (
-	adminmail	=> 'admin@example.com',
-	mailfrom	=> 'reply-to@example.com',
+	adminmail	=> 'admin@tanget.org',
+	mailfrom	=> 'reply-to@tangent.org',
 	siteowner	=> 'slash',
 	datadir		=> '/usr/local/slash',
-	basedomain	=> 'www.example.com',    # add ":PORT" here if required
-	cookiedomain	=> '', # ".example.com', # off by default
+	basedomain	=> 'slash.tangent.org',    # add ":PORT" here if required
+	cookiedomain	=> '', # ".tangent.org', # off by default
 	siteadmin	=> 'admin',
 	siteadmin_name	=> 'Slash Admin',
-	smtp_server	=> 'smtp.example.com',
+	smtp_server	=> 'mail.tangent.org',
 	sitename	=> 'Slash Site',
 	slogan		=> 'Slashdot Like Automated Storytelling Homepage',
 	breaking	=> 100,
@@ -61,7 +61,7 @@ my %my_conf = (
 	titlebar_width	=> '100%',
 	dsn		=> 'DBI:mysql:database=slash;host=localhost',
 	dbuser		=> 'slash',
-	dbpass		=> 'yourpassword',
+	dbpass		=> 'newpassword',
 
 # this is up to you to your own ad system. Sorry :-)
 	adfu_dsn	=> 'DBI:mysql:database=yourdb;host=youraddbhost',

@@ -27,7 +27,6 @@ use strict;
 use Date::Manip;
 use Compress::Zlib;
 use vars '%I';
-use lib '../';
 use Slash;
 
 
