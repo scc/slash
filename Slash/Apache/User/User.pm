@@ -249,8 +249,8 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
-	if ($r->header_in('Cookie') =~ $USER_MATCH) {
-		if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
+	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
+		if ($r->header_in('Cookie') =~ $USER_MATCH) {
 			my($toss,$op) = split /\//, $1, 3;
 			# Its past five, and the below makes it go -Brian
 			$op ||= $toss;
@@ -271,6 +271,9 @@ sub userdir_handler {
 				$r->filename($constants->{basedir} . '/users.pl');
 			}
 			return OK;
+		} else {
+			$r->uri('/users.pl');
+			$r->filename($constants->{basedir} . '/users.pl');
 		}
 	}
 
