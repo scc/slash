@@ -15,7 +15,178 @@ use vars qw($VERSION);
 # BENDER: Oh no! Not the magnet! 
 
 my $timeout = 30; #This should eventualy be a parameter that is configurable
+
+########################################################
+# Generic methods for libraries.
+########################################################
 #Class variable that stores the database handle
+sub new {
+	my($class, $user, $val) = @_;
+	my $self = {};
+	my $where;
+
+	bless ($self,$class);
+	$self->{_virtual_user} = $user;
+	$self->sqlConnect();
+	$self->init($val);
+	for(keys (%{$self->{'_where'}})){
+		$where .= "$_=$self->{'_where'}->{$_}"; 
+		$where .= " AND "; 
+	}
+	$where =~ s/ AND $//g if $where;
+	$self->{_wheresql} = $where;
+
+	return $self;
+}
+
+##################################################################
+sub set {
+	my($self, $id, $value) = @_;
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+	my $id_db = $self->{_dbh}->quote($id);
+	my $where;
+	if ($self->{_wheresql}) {
+		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+	} else {
+		$where = "$prime=$id_db";
+	}
+	$self->sqlUpdate($table, $value, $where);
+}
+
+##################################################################
+sub get {
+	my($self, $id, $val) = @_;
+	my($answer, $type);
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+	my $id_db = $self->{_dbh}->quote($id);
+	my $where;
+	if ($self->{_wheresql}) {
+		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+	} else {
+		$where = "$prime=$id_db";
+	}
+
+	if (ref($val) eq 'ARRAY') {
+		my $values = join ',', @$val;
+		$answer = $self->sqlSelectHashref($values, $table, $where);
+	} elsif ($val) {
+		($answer) = $self->sqlSelect($val, $table, $where);
+	} else {
+		$answer = $self->sqlSelectHashref('*', $table, $where);
+	}
+
+	return $answer;
+}
+
+##################################################################
+sub gets {
+	my($self, $val) = @_;
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+
+	my %return;
+	my $sth;
+
+	my $where = $self->{_wheresql};
+
+	if (ref($val) eq 'ARRAY') {
+		my $values = join ',', @$val;
+		$sth = $self->sqlSelectMany($values, $table, $where);
+	} elsif ($val) {
+		$sth = $self->sqlSelectMany($val, $table, $where);
+	} else {
+		$sth = $self->sqlSelectMany('*', $table, $where);
+	}
+
+	while (my $row = $sth->fetchrow_hashref) {
+		$return{ $row->{$prime} } = $row;
+	}
+	$sth->finish;
+
+	return \%return;
+}
+
+
+##################################################################
+sub list {
+	my($self, $val) = @_;
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+
+	$val ||= $prime;
+	$self->sqlConnect();
+	my $list = $self->{_dbh}->selectcol_arrayref("SELECT $val FROM $table");
+
+	return $list;
+}
+
+##################################################################
+sub create {
+	my($self, $id, $val) = @_;
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+	my $id_db = $self->{_dbh}->quote($id);
+	my $where;
+	if ($self->{_wheresql}) {
+		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+	} else {
+		$where = "$prime=$id_db";
+	}
+
+	my($found) = $self->sqlSelect($prime, $table, $where);
+	return if $found;
+
+	for(keys %{$self->{'_where'}}) {
+		$val->{$_} = $self->{'_where'}->{$_};
+	}
+	$val->{$prime} = $id if $id;
+	$self->sqlInsert($table, $val);
+
+	# We need if/else in here for different DB
+	my($rid) = $self->sqlSelect("LAST_INSERT_ID()");
+
+	return $rid;
+}
+
+##################################################################
+sub delete {
+	my($self, $id) = @_;
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+	my $id_db = $self->{_dbh}->quote($id);
+	my $where;
+	if ($self->{_wheresql}) {
+		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+	} else {
+		$where = "$prime=$id_db";
+	}
+
+	$self->sqlDo("DELETE FROM $table WHERE $where");
+}
+
+##################################################################
+sub exists {
+	my($self, $id) = @_;
+
+	my $table = $self->{'_table'};
+	my $prime = $self->{'_prime'};
+	my $id_db = $self->{_dbh}->quote($id);
+
+	my $where;
+	if ($self->{_wheresql}) {
+		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+	} else {
+		$where = "$prime=$id_db";
+	}
+
+	my $sql = "SELECT count(*) FROM $table WHERE $where";
+	# we just need one stinkin value to see if this exists
+	$self->sqlConnect();
+	my $count = $self->{_dbh}->selectrow_array($sql);
+	return $count;  # count
+}
 
 ########################################################
 # This should be inherited by all 3rd party modules
