@@ -1,4 +1,6 @@
 #!/usr/bin/perl -w
+#
+# $Id$
 
 use strict;
 my $me = 'run_moderatord.pl';
