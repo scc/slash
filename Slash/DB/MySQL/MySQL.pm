@@ -272,7 +272,7 @@ sub unsetModeratorlog{
 ########################################################
 sub getContentFilters {
 	my ($self) = @_;
-	my $filters = sqlSelectAll("*","content_filters","regex != '' and field != ''");
+	my $filters = $self->sqlSelectAll("*","content_filters","regex != '' and field != ''");
 	return $filters;
 }
 ########################################################
