@@ -106,23 +106,23 @@ sub listTopics {
 
 	print qq!\n<TABLE ALIGN="CENTER">\n\t<TR>\n!;
 
-	my $topics = $I{dbobject}->getTopic();
+	my $topics = $I{dbobject}->getTopics;
 	# Somehow sort by the alttext? Need to return to this -Brian
-	for my $topic (%{$topics}) {
+	for (values %$topics) {
 		unless ($x++ % 6) {
 			print "\t</TR><TR>";
 		}
 
-		my $href = $I{U}{aseclev} > 500 ? <<EOT : '';
-</A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$topic->{'tid'}">
+		my $href = $I{U}{'aseclev'} > 500 ? <<EOT : '';
+</A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$_->{'tid'}">
 EOT
 
 		print <<EOT;
 <TD ALIGN="CENTER">
-		<A HREF="$I{rootdir}/search.pl?topic=$topic->{'tid'}"><IMG
-			SRC="$I{imagedir}/topics/$topic->{'image'}" ALT="$topic->{'alttext'}"
-			WIDTH="$topic->{'width'}" HEIGHT="$topic->{'height'}"
-			BORDER="0">$href<BR>$topic->{'alttext'}</A>
+		<A HREF="$I{rootdir}/search.pl?topic=$_->{'tid'}"><IMG
+			SRC="$I{imagedir}/topics/$_->{'image'}" ALT="$_->{'alttext'}"
+			WIDTH="$_->{'width'}" HEIGHT="$_->{'height'}"
+			BORDER="0">$href<BR>$_->{'alttext'}</A>
 		</TD>
 EOT
 	}
