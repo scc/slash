@@ -1060,7 +1060,7 @@ sub editStory {
 
 	} elsif (defined $sid) { # Loading an existing SID
 		my $tmp = $user->{currentSection};
-		$user->{currentSection} = $slashdb->getStory($sid, 'section');
+		$user->{currentSection} = $slashdb->getStory($sid, 'section', 1);
 		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
 		$extracolumns = $slashdb->getSectionExtras($user->{currentSection}) || [ ];
 		$user->{currentSection} = $tmp;
@@ -1374,7 +1374,7 @@ sub updateStory {
 
 	$form->{dept} =~ s/ /-/g;
 
-	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid')
+	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid', 1)
 		unless $form->{aid};
 	$form->{relatedtext} = getRelated("$form->{title} $form->{bodytext} $form->{introtext}")
 		. otherLinks($slashdb->getAuthor($form->{uid}, 'nickname'), $form->{tid}, $form->{uid});
