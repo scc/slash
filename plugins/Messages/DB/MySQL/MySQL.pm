@@ -89,10 +89,11 @@ sub init {
 sub log {
 	my($self, $msg, $mode) = @_;
 	my $table = $self->{_log_table};
+	$msg->{user} ||= {};
 
 	$self->sqlInsert($table, {
 		id	=> $msg->{id},
-		user	=> $msg->{user}{uid},
+		user	=> $msg->{user}{uid} || 0,
 		fuser	=> (ref($msg->{fuser}) ? $msg->{fuser}{uid} : $msg->{fuser}),
 		code	=> $msg->{code},
 		mode	=> $mode,
@@ -279,11 +280,12 @@ sub _delete_all {
 sub _getMailingUsers {
 	my($self, $code) = @_;
 	return unless $code =~ /^-?\d+$/;
-	my $cols  = "nickname,users.uid";
+	my $cols  = "nickname,users.uid,realemail";
 	my $table = "users,users_comments,users_info,users_param";
 	my $where = "users.uid=users_comments.uid AND users.uid=users_info.uid AND " .
 		"users.uid=users_param.uid AND users_param.name='messagecodes_$code' AND " .
-		"users_param.value=1";
+		"users_param.value=1 AND " .
+		"realemail != ''";
 
 	my $users = $self->sqlSelectAll($cols, $table, $where);
 	return $users;

@@ -123,16 +123,12 @@ sub mailingList {
 	my $h_users = $messages->getHeadlineUsers();
 	my $n_users = $messages->getNewsletterUsers();
 
-	for (@{$h_users}) {
-		my $head_subj = "24 Hours of $constants->{sitename} Headlines For $_->[0]";
-		$messages->quicksend($_->[1], $head_subj, $headlines,  1);
-	}
+	# check for well-formed addresses
+	my @h_email = map { $_->[2] } @$h_users;
+	my @n_email = map { $_->[2] } @$n_users;
 
-	for (@{$n_users}) {
-		my $news_subj = "24 Hours of $constants->{sitename} Stories For $_->[0]";
-		$messages->quicksend($_->[1], $news_subj, $newsletter, 0);
-	}
-
+	$messages->bulksend(\@h_email, "Daily Headlines", $headlines,  1);
+	$messages->bulksend(\@n_email, "Daily Stories",   $newsletter, 0);
 }
 
 sub urlize {

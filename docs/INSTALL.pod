@@ -619,6 +619,12 @@ the Bundle::Slash distribution.
 
 =item Mail-Sendmail
 
+=item MailTools
+
+=item Email-Valid
+
+=item Mail-Bulkmail
+
 =item Compress-Zlib
 
 =item Image-Size

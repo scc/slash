@@ -36,6 +36,7 @@ More to come.
 use strict;
 use base qw(Slash::Messages::DB::MySQL);
 use vars qw($VERSION);
+use Email::Valid;
 use Slash 2.001;	# require Slash 2.1
 use Slash::Display;
 use Slash::Utility;
@@ -385,6 +386,15 @@ sub send {
 		}
 
 		$addr    = $msg->{altto} || $msg->{user}{realemail};
+		unless (Email::Valid->rfc822($addr)) {
+			messagedLog(getData("send mail error", {
+				addr	=> $addr,
+				uid	=> $msg->{user}{uid},
+				error	=> "Invalid address"
+			}, "messages"));
+			return 0;
+		}
+
 		$content = $self->callTemplate('msg_email', $msg);
 		$subject = $self->callTemplate('msg_email_subj', $msg);
 
@@ -429,18 +439,17 @@ sub getWebCount {
 # allowed to get this particular email type
 sub quicksend {
 	my($self, $uid, $subj, $message, $code, $pr) = @_;
+	my $slashdb = getCurrentDB();
 
 	($code, my($type)) = $self->getDescription('messagecodes', $code);
 	$code = -1 unless defined $code;
-
-	my $slashdb = getCurrentDB();
 
 	my %msg = (
 		id		=> 0,
 		fuser		=> 0,
 		altto		=> '',
 		user		=> $slashdb->getUser($uid),
-		subj		=> $subj,
+		subject		=> $subj,
 		message		=> $message,
 		code		=> $code,
 		type		=> $type,
@@ -450,6 +459,48 @@ sub quicksend {
 	);
 
 	$self->send(\%msg);
+}
+
+sub bulksend {
+	my($self, $addrs, $subj, $message, $code) = @_;
+	my $constants = getCurrentStatic();
+	my $slashdb = getCurrentDB();
+
+	unless ($constants->{send_mail}) {
+		messagedLog(getData("send_mail false", 0, "messages"));
+		return 0;
+	}
+
+	($code, my($type)) = $self->getDescription('messagecodes', $code);
+	$code = -1 unless defined $code;
+
+	my $msg = {
+		id		=> 0,
+		fuser		=> 0,
+		altto		=> '',
+		user		=> 0,
+		subject		=> $subj,
+		message		=> $message,
+		code		=> $code,
+		type		=> $type,
+		date		=> time(),
+		mode		=> MSG_MODE_EMAIL,
+	};
+
+	my $content = $self->callTemplate('msg_email', $msg);
+	my $subject = $self->callTemplate('msg_email_subj', $msg);
+
+	if (bulkEmail($addrs, $subject, $content)) {
+		$self->log($msg, MSG_MODE_EMAIL);
+		return 1;
+	} else {
+		messagedLog(getData("send mail error", {
+			addr	=> "[bulk]",
+			uid	=> $msg->{user}{uid},
+			error	=> "unknown error",
+		}, "messages"));
+		return 0;
+	}
 }
 
 sub getWeb {

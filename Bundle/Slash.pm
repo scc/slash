@@ -39,6 +39,12 @@ Date::Manip
 
 Mail::Sendmail
 
+Mail::Address
+
+Email::Valid
+
+Mail::Bulkmail
+
 Apache::DBI
 
 Apache::Cookie

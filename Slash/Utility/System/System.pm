@@ -25,6 +25,8 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
+use Email::Valid;
+use Mail::Bulkmail;
 use Mail::Sendmail;
 use Slash::Utility::Environment;
 
@@ -33,6 +35,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
+	bulkEmail
 	doEmail
 	sendEmail
 );
@@ -90,12 +93,17 @@ sub sendEmail {
 	my($addr, $subject, $content, $pr) = @_;
 	my $constants = getCurrentStatic();
 
+	unless (Email::Valid->rfc822($addr)) {
+		errorLog("Can't send mail '$subject' to $addr: Invalid address");
+		return 0;
+	}
+
 	my %data = (
+		from	=> $constants->{mailfrom},
 		smtp	=> $constants->{smtp_server},
 		subject	=> $subject,
-		to	=> $addr,
 		body	=> $content,
-		from	=> $constants->{mailfrom}
+		to	=> $addr,
 	);
 
 	if ($pr && $pr eq 'bulk') {
@@ -110,6 +118,22 @@ sub sendEmail {
 	}
 }
 
+sub bulkEmail {
+	my($addrs, $subject, $content) = @_;
+	my $constants = getCurrentStatic();
+
+	my $valid = Email::Valid->new();
+	my @good = grep { $valid->rfc822($_) } @$addrs;
+
+	my $bulk = Mail::Bulkmail->new(
+		From    => $constants->{mailfrom},
+		Smtp	=> $constants->{smtp_server},
+		Subject => $subject,
+		Message => $content,
+		'LIST'  => \@good,
+	);
+	$bulk->bulkmail;
+}
 
 sub doEmail {
 	my($uid, $subject, $content, $code, $pr) = @_;
