@@ -263,8 +263,7 @@ sub getModeratorCommentLog {
 				 moderatorlog.val as val,
 				 moderatorlog.reason as reason",
 				"moderatorlog, users, comments",
-				"moderatorlog.active=1
-				 AND moderatorlog.sid='$sid'
+				"moderatorlog.sid='$sid'
 			     AND moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
 			     AND comments.sid=moderatorlog.sid
@@ -853,9 +852,15 @@ sub getCommentCid {
 ########################################################
 sub deleteComment {
 	my($self, $sid, $cid) = @_;
-	$self->sqlDo("delete from comments WHERE sid=" .
-		$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
-	);
+	if($cid) {
+		$self->sqlDo("delete from comments WHERE sid=" .
+			$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
+		);
+	} else {
+		$self->sqlDo("delete from comments WHERE sid=" .
+			$self->{dbh}->quote($sid));
+		$self->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
+	}
 }
 
 ########################################################
@@ -863,14 +868,6 @@ sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 	$self->sqlSelect('pid', 'comments',
 		"sid='$sid' and cid=$cid");
-}
-
-########################################################
-# This method will go away when I am finished with the
-# user methods
-sub getNicknameByUID {
-	my($self, $uid) = @_;
-	$self->sqlSelect('nickname', 'users', "uid=$uid");
 }
 
 ########################################################
@@ -2953,6 +2950,12 @@ sub _genericGetsCache {
 }
 
 ########################################################
+sub createMenuItem {
+	my ($self, $hash) = @_;
+	$self->sqlInsert('menus', $hash);
+}
+
+########################################################
 sub getMenuItems {
 	my ($self, $script) = @_;
 	my $sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
@@ -2990,6 +2993,11 @@ sub getMenus {
 	}
 
 	return $menus;
+}
+
+sub DESTROY {
+	my($self) = @_;
+	$self->{dbh}->disconnect;
 }
 
 1;

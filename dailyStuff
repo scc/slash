@@ -86,7 +86,7 @@ my $columns = "sid,time,section,title";
 my $tables = "stories";
 my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $constants->{archive_delay}";
 
-my $E = $slashdb->sqlSelectAll($columns, $tables, $where); #, $other);
+my $E = $slashdb->getOldStories($constants->{archive_delay});
 
 for (@{$E}) {
 	my($sid, $date, $section, $title) = ($_->[0], $_->[1], $_->[2], $_->[3]);
@@ -98,8 +98,7 @@ for (@{$E}) {
 		or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
 	symlink("$constants->{basedir}/$section/${sid}_F.shtml", "$constants->{basedir}/$section/$sid.shtml")
 		or die "Can't symlink $constants->{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
-	$slashdb->sqlDo("DELETE FROM comments WHERE sid='$sid'");
-	$slashdb->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
+	$slashdb->deleteComment($sid);
 }
 $slashdb->setUser($anonymous_coward_uid, { commentlimit=>$comlim });
 

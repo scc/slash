@@ -43,39 +43,6 @@ sub moderatordLog {
 	close LOG;
 }
 
-sub tokens2points {
-	my $c = $dbslash->sqlSelectMany("uid,tokens", "users_info", "tokens >= $I{maxtokens}");
-	$slashdb->sqlDo("LOCK TABLES users READ, 
-		users_info WRITE, 
-		users_comments WRITE");
-
-	while (my($uid, $tokens) = $c->fetchrow) {
-		moderatordLog("Giving $I{maxtokens}/$I{tokensperpoint} " .
-			($I{maxtokens}/$I{tokensperpoint}) . " to $uid");
-			$dbslash->setUser($uid, {
-				-lastgranted	=> 'now()',
-				-tokens		=> "tokens - $I{maxtokens}",
-				-points		=> "points +" . ($I{maxtokens} / $I{tokensperpoint})
-			});
-	}
-
-	$c->finish;
-
-	$c = $dbslash->sqlSelectMany("users.uid as uid", "users,users_comments,users_info",
-		"karma > -1 AND
-		 points > 5 AND 
-		 seclev < 100 AND
-		 users.uid=users_comments.uid AND
-		 users.uid=users_info.uid");
-	$slashdb->sqlDo("UNLOCK TABLES");
-
-	$slashdb->sqlDo("LOCK TABLES users_comments WRITE");
-	while (my($uid) = $c->fetchrow) {
-		$dbslash->sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
-	}
-	$slashdb->sqlDo("UNLOCK TABLES");
-}
-
 sub stirpool {
 	my $c = $dbslash->sqlSelectMany("points,users.uid as uid",
 			"users,users_comments,users_info",
@@ -98,7 +65,6 @@ sub stirpool {
 	$slashdb->sqlDo("UNLOCK TABLES");
 	$c->finish;
 	return 0;
-	# return $revoked;
 }
 
 sub comments2tokens {
@@ -170,5 +136,5 @@ my $newcomments = $tc - $lc;
 if ($newcomments > 0) {
 	$dbslash->setVar("lastComments", $tc);
 	comments2tokens($newcomments);
-	tokens2points();
+	$dbslash->tokens2points();
 }

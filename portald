@@ -86,18 +86,7 @@ sub geturl {
 ################################################################################
 
 sub getTop10Comments {
-	my $c = $slashdb->sqlSelectMany("stories.sid, title,
-		cid, subject,".
-		getDateFormat("date", "d").",
-		nickname,comments.points",
-		"comments,stories,users",
-		"comments.points >= 4
-		AND users.uid=comments.uid
-		AND comments.sid=stories.sid
-		ORDER BY date DESC limit 10");
-
-	my $A = $c->fetchall_arrayref;
-	$c->finish;
+	my $A =	$slashdb->getTop10Comments();
 
 	my $block;
 	foreach (@$A) {
@@ -114,31 +103,6 @@ EOT
 }
 
 
-
-################################################################################
-
-sub randomBlock {
-	my $c = $slashdb->sqlSelectMany("blocks.bid,title,url,block",
-		"blocks,sectionblocks",
-		"blocks.bid=sectionblocks.bid
-		AND sectionblocks.section='index'
-		AND portal=1
-		AND ordernum < 0");
-
-	my $A = $c->fetchall_arrayref;
-	$c->finish;
-
-	my $R = $A->[rand @$A];
-	my($bid, $title, $url, $block) = @$R;
-
-	$slashdb->sqlUpdate("sectionblocks", {
-		title	=> "rand($title);",
-		url	=> $url
-	}, "bid='rand'");
-
-	setblock("rand", $block);
-
-}
 
 #################################################################
 sub getSlashdotPoll {
@@ -179,17 +143,12 @@ sub getUptime {
 
 	my $stats = $x;
 
-	my $c = $slashdb->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",
-		"accesslog","","GROUP by d order by d asc");
-
-	my($today) = $c->fetchrow;
-	my($yesterday) = $c->fetchrow;
+	my($today,$yesterday) = $slashdb->getAccesLogCountTodayAndYestarday();
 	my($th, $tc) = $slashdb->getVar("totalhits", "totalComments");
 
 	$stats .= "<B>yesterday:</B> $yesterday<BR>
 		<B>today:</B> $today<BR>
 		<B>ever:</B> $th<BR>";
-	$c->finish;
 
 	setblock('uptime', $stats);
 }
@@ -235,23 +194,13 @@ sub getRDF {
 #################################################################
 sub getSectionMenu2 {
 	my $menu = "\n\n<!-- begin section index block -->\n\n";
-
-	my $c = $slashdb->sqlSelectMany("section","sections",
-		"isolate=0 and (section != '' and section != 'articles') 
-		ORDER BY section");
-
-	while (my($s) = $c->fetchrow) {
-		my($month, $day) = $slashdb->{dbh}->selectrow_array(
-			"select month(time), dayofmonth(time) from stories where " .
-			"section='$s' and time < now() and displaystatus > -1 order by ".
-			"time desc limit 1");
-		my @count = $slashdb->{dbh}->selectrow_array(
-			"select count(*) from stories where section='$s' and " .
-			"to_days(now()) - to_days(time) <= 2 and time < now() and " .
-			"displaystatus > -1");
+	my $section_menu = $slashdb->getSectionMenu2();
+	for (@$section_menu) {
+		my ($s) = $_->[0];
+		my ($month, $day, $count) = $slashdb->getSectionMenu2Info($s);
 
 		$menu .= "\n$month/$day" if $month && $day;
-		$menu .= " ($count[0])" if $count[0] > 1;
+		$menu .= " ($count)" if $count > 1;
 		$menu .= <<EOT;
 <BR>
 <B><A HREF="$constants->{rootdir}/index.pl?section=$s">$s</A></B><BR>
@@ -276,11 +225,7 @@ portaldLog("Updating Portal Box Thingees");
 getSectionMenu2();
 
 # loop through all the RDF sites
-my $columns = "bid,url,rdf,retrieve";
-my $tables = "sectionblocks";
-my $where = "rdf != '' and retrieve=1";
-my $other = "";
-my $RDFlist = $slashdb->sqlSelectAll($columns, $tables, $where, $other);
+my $RDFlist = $slashdb->getSitesRDF();
 
 for (@{$RDFlist}) {
 	my($bid, $url, $rdf) = ($_->[0], $_->[1], $_->[2]);
@@ -288,7 +233,7 @@ for (@{$RDFlist}) {
 }
 
 getTop10Comments();
-randomBlock();
+setblock("rand", $slashdb->randomBlock());
 getSlashdotPoll();
 getUptime();
 

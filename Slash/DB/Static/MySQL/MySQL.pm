@@ -183,6 +183,7 @@ sub getDailyMail {
 
 	return $email;
 }
+
 ########################################################
 # For dailystuff
 sub getMailingList {
@@ -196,6 +197,186 @@ sub getMailingList {
 	my $users = $self->sqlSelectAll($columns,$tables,$where,$other);
 
 	return $users;
+}
+
+########################################################
+# For dailystuff
+sub getOldStories {
+	my($self, $delay) = @_;
+
+
+	my $columns = "sid,time,section,title";
+	my $tables = "stories";
+	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $delay";
+
+	my $stories = $self->sqlSelectAll($columns,$tables,$where);
+
+	return $stories;
+}
+
+########################################################
+# For portald
+sub getTop10Comments {
+my ($self) = @_;
+	my $c = $self->sqlSelectMany("stories.sid, title,
+		cid, subject,".
+		getDateFormat("date", "d").",
+		nickname,comments.points",
+		"comments,stories,users",
+		"comments.points >= 4
+		AND users.uid=comments.uid
+		AND comments.sid=stories.sid
+		ORDER BY date DESC limit 10");
+
+	my $comments = $c->fetchall_arrayref;
+	$c->finish;
+
+	return $comments
+}
+
+########################################################
+# For portald
+sub randomBlock {
+	my ($self) = @_;
+	my $c = $self->sqlSelectMany("blocks.bid,title,url,block",
+		"blocks,sectionblocks",
+		"blocks.bid=sectionblocks.bid
+		AND sectionblocks.section='index'
+		AND portal=1
+		AND ordernum < 0");
+
+	my $A = $c->fetchall_arrayref;
+	$c->finish;
+
+	my $R = $A->[rand @$A];
+	my($bid, $title, $url, $block) = @$R;
+
+	$self->sqlUpdate("sectionblocks", {
+		title	=> "rand($title);",
+		url	=> $url
+	}, "bid='rand'");
+
+	return $block;
+
+}
+
+########################################################
+# For portald
+# ugly method name
+sub getAccesLogCountTodayAndYestarday {
+	my ($self) = @_;
+	my $c = $self->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",    "accesslog","","GROUP by d order by d asc");
+
+	my($today) = $c->fetchrow;
+	my($yesterday) = $c->fetchrow;
+	$c->finish;
+	
+	return ($today, $yesterday);
+
+}
+
+########################################################
+# For portald
+sub getSitesRDF {
+	my ($self) = @_;
+	my $columns = "bid,url,rdf,retrieve";
+	my $tables = "sectionblocks";
+	my $where = "rdf != '' and retrieve=1";
+	my $other = "";
+	my $rdf = $self->sqlSelectAll($columns, $tables, $where, $other);
+
+	return $rdf;
+}
+
+########################################################
+# For portald
+sub getSectionMenu2{
+	my ($self) = @_;
+	my $menu = $self->sqlSelectAll("section","sections",
+	    "isolate=0 and (section != '' and section != 'articles')
+			    ORDER BY section");
+
+	return $menu;
+}
+########################################################
+# For portald
+sub getSectionMenu2Info{
+	my ($self, $section) = @_;
+	my($month, $day) = $self->{dbh}->selectrow_array(
+			"select month(time), dayofmonth(time) from stories where " .
+			"section='$section' and time < now() and displaystatus > -1 order by ".
+			"time desc limit 1");
+	my ($count) = $self->{dbh}->selectrow_array(
+			"select count(*) from stories where section='$section' and " .
+			"to_days(now()) - to_days(time) <= 2 and time < now() and " .
+			"displaystatus > -1");
+
+	return ($month, $day, $count);
+}
+
+########################################################
+# For moderatord
+sub tokens2points {
+my ($self) = @_;
+my $constants = getCurrentStatic();
+	my $c = $self->sqlSelectMany("uid,tokens", "users_info", "tokens >= $constants->{maxtokens}");
+	$self->sqlDo("LOCK TABLES users READ, 
+		users_info WRITE, 
+		users_comments WRITE");
+
+	while (my($uid, $tokens) = $c->fetchrow) {
+		moderatordLog("Giving $constants->{maxtokens}/$constants->{tokensperpoint} " .
+			($constants->{maxtokens}/$constants->{tokensperpoint}) . " to $uid");
+			$self->setUser($uid, {
+				-lastgranted	=> 'now()',
+				-tokens		=> "tokens - $constants->{maxtokens}",
+				-points		=> "points +" . ($constants->{maxtokens} / $constants->{tokensperpoint})
+			});
+	}
+
+	$c->finish;
+
+	$c = $self->sqlSelectMany("users.uid as uid", "users,users_comments,users_info",
+		"karma > -1 AND
+		 points > 5 AND 
+		 seclev < 100 AND
+		 users.uid=users_comments.uid AND
+		 users.uid=users_info.uid");
+	$self->sqlDo("UNLOCK TABLES");
+
+	$self->sqlDo("LOCK TABLES users_comments WRITE");
+	while (my($uid) = $c->fetchrow) {
+		$self->sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
+	}
+	$self->sqlDo("UNLOCK TABLES");
+}
+
+########################################################
+# For moderatord
+sub stirpool {
+	my ($self) = @_;
+	my $stir = getCurrentStatic('stir');
+	my $c = $self->sqlSelectMany("points,users.uid as uid",
+			"users,users_comments,users_info",
+			"users.uid=users_comments.uid AND
+			 users.uid=users_info.uid AND
+			 seclev = 0
+			 AND points > 0
+			 AND to_days(now())-to_days(lastgranted) > $stir");
+
+	my $revoked = 0;
+
+	$self->sqlDo("LOCK TABLES users_comments WRITE");
+
+	while (my($p, $u) = $c->fetchrow) {
+		moderatordLog("Taking $p points from $u");
+		$revoked += $p;
+		$self->sqlUpdate("users_comments", { points => '0' }, "uid=$u");
+	}
+
+	$self->sqlDo("UNLOCK TABLES");
+	$c->finish;
+	return 0;
 }
 
 1;
