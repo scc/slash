@@ -1,10 +1,11 @@
 DROP TABLE IF EXISTS message_drop;
 CREATE TABLE message_drop (
-	id INT(11) NOT NULL auto_increment,
-	uid INT(11) NOT NULL,
-	fid INT(11) DEFAULT '0' NOT NULL,
-	code INT(1) DEFAULT '0' NOT NULL,
-	date TIMESTAMP NOT NULL,
+	id      INT(11) NOT NULL auto_increment,
+	user    INT(11) NOT NULL,
+	fuser   INT(11) DEFAULT '0' NOT NULL,
+	code    INT(11) DEFAULT '0' NOT NULL,
+	date    TIMESTAMP NOT NULL,
+	altto   VARCHAR(50) DEFAULT '' NOT NULL,
 	message BLOB DEFAULT '' NOT NULL,
 	PRIMARY KEY (id)
-);
+) TYPE=MYISAM;

@@ -62,21 +62,22 @@ sub getDescriptions {
 sub init {
 	my($self, @args) = @_;
 	$self->{_drop_table} = 'message_drop';
-	$self->{_drop_cols}  = 'id,uid,code,message,fid,date';
+	$self->{_drop_cols}  = 'id,user,code,message,fuser,altto,date';
 	$self->{_drop_prime} = 'id';
-	$self->{_drop_store} = 3;
+	$self->{_drop_store} = 'message';
 }
 
 
 sub _create {
-	my($self, $uid, $type, $message, $fid) = @_;
+	my($self, $user, $type, $message, $fuser, $altto) = @_;
 	my $table = $self->{_drop_table};
 
 	# fix scalar to be a ref for freezing
 	my $frozen = freeze(ref $message ? $message : \$message);
 	$self->sqlInsert($table, {
-		uid	=> $uid,
-		fid	=> $fid,
+		user	=> $user,
+		fuser	=> $fuser,
+		altto	=> $altto || '',
 		code	=> $type,
 		message	=> $frozen,
 	});
@@ -94,14 +95,11 @@ sub _get {
 
 	my $id_db = $self->sqlQuote($msg_id);
 
-	my $data = $self->sqlSelectAll(
+	my $data = $self->sqlSelectHashref(
 		$cols, $table, "$self->{_drop_prime}=$id_db"
 	);
 
-	$data = $data->[0];
-	$data->[$store] = thaw($data->[$store]);
-	# return scalar as scalar, not ref
-	$data->[$store] = ${$data->[$store]} if ref($data->[$store]) eq 'SCALAR';
+	$self->_thaw($data);
 	return $data;
 }
 
@@ -115,16 +113,23 @@ sub _gets {
 	my $other = "ORDER BY date ASC";
 	$other .= " LIMIT $count" if $count;
 
-	my $all = $self->sqlSelectAll(
+	my $all = $self->sqlSelectAllHashrefArray(
 		$cols, $table, '', $other
 	);
 
 	for my $data (@$all) {
-		$data->[$store] = thaw($data->[$store]);
-		$data->[$store] = ${$data->[$store]} if ref($data->[$store]) eq 'SCALAR';
+		$self->_thaw($data);
 	}
 
 	return $all;
+}
+
+sub _thaw {
+	my($self, $data) = @_;
+	my $store = $self->{_drop_store};
+	$data->{$store} = thaw($data->{$store});
+	# return scalar as scalar, not ref
+	$data->{$store} = ${$data->{$store}} if ref($data->{$store}) eq 'SCALAR';
 }
 
 sub _delete {
@@ -137,6 +142,13 @@ sub _delete {
 	$self->sqlDo("DELETE FROM $table WHERE $where");
 }
 
+sub _delete_all {
+	my($self) = @_;
+	my $table = $self->{_drop_table};
+
+	# this will preserve auto_increment count
+	$self->sqlDo("DELETE FROM $table WHERE 1=1");
+}
 
 1;
 

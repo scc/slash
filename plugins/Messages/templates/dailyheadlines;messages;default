@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+dailyheadlines
+__template__
+[% USE Slash %]
+[% constants.sitename %] Daily Headline Mailer
+
+======================================================================
+[% INCLUDE emailsponsor %]
+======================================================================
+
+[% FOR story = stories.reverse %][% story.title %][% IF constants.use_dept %]
+    from the [% story.dept %] dept.[% END %]
+    posted by [% story.author %] on [% Slash.timeCalc(story.time, "%A %B %d, @%H:%M") %] ([% story.tid %])
+    <URL:[% constants.absolutedir %]/article.pl?sid=[% story.sid %]>
+
+[% END %]
+
+
+Copyright 1997-2001 [% constants.siteadmin_name %].  All rights reserved.
+
+__seclev__
+500

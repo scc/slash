@@ -1,0 +1,54 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+dailynews
+__template__
+[% USE Slash %]
+[% USE num = format("\n%5d. %s") %]
+[% USE box = format("| %-67.67s|\n") %]
+[% constants.sitename %] Daily Newsletter
+
+======================================================================
+[% INCLUDE emailsponsor %]
+======================================================================
+
+In this issue:[% FOR story = stories.reverse %]
+    * [% story.title %][% END %]
+
+[% FOR story = stories.reverse;
+%]+--------------------------------------------------------------------+
+[% 
+	box(story.title);
+	IF constants.use_dept;
+		box("  from the $story.dept dept.");
+	END;
+
+	stime = Slash.timeCalc(story.time, "%A %B %d, @%H:%M");
+	box("  posted by $story.author on $stime ($story.tid)");
+	box("  $constants.absolutedir/article.pl?sid=$story.sid");
+%]+--------------------------------------------------------------------+
+
+[% story.asciitext; IF story.refs.size %]
+
+Links:[%
+  count = -1;
+  FOR ref = story.refs;
+    count = count + 1;
+    num(count, urlize(ref));
+ END;
+END %]
+
+
+[% END %]
+Copyright 1997-2001 [% constants.siteadmin_name %].  All rights reserved.
+
+__seclev__
+500

@@ -12,7 +12,17 @@ Slash::Messages - Send messages for Slash
 
 =head1 SYNOPSIS
 
-	# basic example of usage
+	use Slash::Utility;
+	my $messages = getObject('Slash::Messages');
+	my $msg_id = $messages->create($uid, $message_type, $message);
+
+	# ...
+	my $msg = $messages->get($msg_id);
+	$messages->send($msg);
+	$messages->delete($msg_id);
+
+	# ...
+	$messages->process($msg_id);
 
 
 =head1 DESCRIPTION
@@ -25,18 +35,20 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use base 'Exporter';
+use base qw(Slash::Messages::DB::MySQL);
 use vars qw($VERSION);
 use Slash::Display;
 use Slash::Utility;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-use base qw(Slash::Messages::DB::MySQL);
+
+use constant MSG_MODE_EMAIL => 0;
+use constant MSG_MODE_WEB   => 1;
 
 
 #========================================================================
 
-=head2 create(TO_ID, TYPE, MESSAGE [, FROM_ID])
+=head2 create(TO_ID, TYPE, MESSAGE [, FROM_ID, ALTTO])
 
 Will drop a serialized message into message_drop.
 
@@ -68,6 +80,11 @@ key.
 Either the UID of the user sending the message, or 0 to denote
 a system message (0 is default).
 
+=item ALTTO
+
+This is an alternate "TO" address (e.g., to send a message from
+a user of the system to a user outside the system).
+
 =back
 
 =item Return value
@@ -83,8 +100,10 @@ Whatever templates are passed in.
 =cut
 
 sub create {
-	my($self, $uid, $type, $data, $fid) = @_;
+	my($self, $uid, $type, $data, $fid, $altto) = @_;
 	my $message;
+
+	# check well-formedness of $altto!
 
 	# must not contain non-numeric
 	if (!defined($fid) || $fid =~ /\D/) {
@@ -94,13 +113,13 @@ sub create {
 	my $codes = $self->getDescriptions('messagecodes');
 	if ($type =~ /^\d+$/) {
 		unless (exists $codes->{$type}) {
-			errorLog("message type $type not found");
+			messagedLog("message type $type not found");
 			return;
 		}
 	} else {
 		my $rcodes = { map { ($codes->{$_}, $_) } %$codes };
 		unless (exists $rcodes->{$type}) {
-			errorLog("message type $type not found");
+			messagedLog("message type $type not found");
 			return;
 		}
 		$type = $rcodes->{$type};
@@ -109,7 +128,7 @@ sub create {
 	# check for $uid existence
 	my $slashdb = getCurrentDB();
 	unless ($slashdb->getUser($uid)) {
-		errorLog("User $uid not found");
+		messagedLog("User $uid not found");
 		return;
 	}
 
@@ -117,18 +136,96 @@ sub create {
 		$message = $data;
 	} elsif (ref $data eq 'HASH') {
 		unless ($data->{template_name}) {
-			errorLog("No template name"), return;
+			messagedLog("No template name"), return;
 		}
 		$message = $data;
 	} else {
-		errorLog("Cannot accept data of type " . ref($data));
+		messagedLog("Cannot accept data of type " . ref($data));
 		return;
 	}
 
-	my($msg_id) = $self->_create($uid, $type, $message, $fid);
+	my($msg_id) = $self->_create($uid, $type, $message, $fid, $altto);
 	return $msg_id;
 }
 
+# takes message refs or message IDs or a combination of both
+sub process {
+	my($self, @msgs) = @_;
+
+	my(@success);
+	for my $msg (@msgs) {
+		# if $msg is ref, assume we have the message already
+		$msg = $self->get($msg) unless ref($msg);
+		if ($self->send($msg)) {
+			push @success, $msg->{id}
+				; #if $self->delete($msg->{id});
+		}
+	}
+	return @success;
+}
+
+# takes message ref or message ID
+sub send {
+	my($self, $msg) = @_;
+
+	my $constants = getCurrentStatic();
+
+	# if $msg is ref, assume we have the message already
+	$msg = $self->get($msg) unless ref($msg);
+
+	my $mode = $msg->{user}{deliverymodes};
+
+	# Can only get mail sent if Real Email set
+# 	if ($mode == MSG_MODE_EMAIL && !$msg->{user}{realemail_valid}) {
+# 		$mode = MSG_MODE_WEB;
+# 	}
+
+	# if sending to someone outside the system, must be email
+	$mode = MSG_MODE_EMAIL if $msg->{altto};
+	# if newsletter or headline mailer, must be email
+	$mode = MSG_MODE_EMAIL if $msg->{code} =~ /^(?:0|1)$/;
+
+	if (!defined($mode) || $mode eq '' || $mode =~ /\D/) {
+		messagedLog("No delivery mode for user $msg->{user}{uid}");
+		return 0;
+
+	} elsif ($mode == MSG_MODE_EMAIL) {
+		my($addr, $subject, $content, $opt);
+		$opt = { 
+			Return	=> 1,
+			Nocomm	=> 1,
+			Page	=> 'messages',
+			Section => 'NONE',
+		};
+
+		$addr    = $msg->{altto} || $msg->{user}{realemail};
+		$content = slashDisplay('msg_email',      { msg => $msg }, $opt);
+		if (exists $msg->{subj}) {
+			if (ref($msg->{subj}) eq 'HASH' && exists($msg->{subj}{template_name})) {
+				my $name = delete($msg->{subj}{template_name});
+				$subject = slashDisplay($name, { msg => $msg }, $opt);
+			} else {
+				$subject = $msg->{subj};
+			}
+		} else {
+			$subject = slashDisplay('msg_email_subj', { msg => $msg }, $opt);
+		}
+
+		if (sendEmail($addr, $subject, $content)) {
+			return 1;
+		} else {
+			messagedLog("Error sending to '$addr' for user $msg->{user}{uid}: $Mail::Sendmail::error");
+			return 0;
+		}
+
+	} elsif ($mode == MSG_MODE_WEB) {
+
+	} else {
+		messagedLog("Unknown delivery mode '$mode' for user $msg->{user}{uid}");
+		return 0;
+	}
+
+}
 
 sub get {
 	my($self, $msg_id) = @_;
@@ -139,7 +236,7 @@ sub get {
 }
 
 sub gets {
-	my($self, $count, $delete) = @_;
+	my($self, $count) = @_;
 
 	my $msgs = $self->_gets($count) or return;
 	$self->render($_) for @$msgs;
@@ -159,37 +256,37 @@ sub render {
 	my($self, $msg) = @_;
 	my $slashdb = getCurrentDB();
 	my $codes = $self->getDescriptions('messagecodes');
-	$msg->[1] = $slashdb->getUser($msg->[1]);
-	$msg->[4] = $msg->[4] ? $slashdb->getUser($msg->[4]) : 0;
-	$msg->[6] = $codes->{$msg->[2]};
+
+	$msg->{user}  = $slashdb->getUser($msg->{user});
+	$msg->{fuser} = $msg->{fuser} ? $slashdb->getUser($msg->{fuser}) : 0;
+	$msg->{type}  = $codes->{ $msg->{code} };
 
 	# optimize these calls for getDescriptions ... ?
 	# they are cached already, but ...
 	my $timezones   = $slashdb->getDescriptions('tzcodes');
 	my $dateformats = $slashdb->getDescriptions('datecodes');
-	$msg->[1]{off_set}  = $timezones->{ $msg->[1]{tzcode} };
-	$msg->[1]{'format'} = $dateformats->{ $msg->[1]{dfid} };
+	$msg->{user}{off_set}  = $timezones -> { $msg->{user}{tzcode} };
+	$msg->{user}{'format'} = $dateformats->{ $msg->{user}{dfid}   };
 
-	if (ref($msg->[3]) eq 'HASH') {
-		my $name = delete($msg->[3]{template_name});
-		my $data = {
-			%{$msg->[3]},
-			msg_id	=> $msg->[0],
-			uid	=> $msg->[1],
-			code	=> $msg->[2],
-			fid	=> $msg->[4],
-			date	=> $msg->[5],
-			type	=> $msg->[6],
-		};
+	if (ref($msg->{message}) eq 'HASH') {
+		my $name = delete($msg->{message}{template_name});
+		my $data = { %{$msg->{message}}, %$msg };
 
-		$msg->[3] = slashDisplay($name, $data, {
+		$msg->{message} = slashDisplay($name, $data, {
 			Return	=> 1,
 			Nocomm	=> 1,
 			Page	=> 'messages',
 			Section => 'NONE',
 		});
 	}
+
 	return;
+}
+
+# dispatch to proper logging function
+sub messagedLog {
+	goto &main::messagedLog if defined &main::messagedLog;
+	goto &errorLog;
 }
 
 1;
