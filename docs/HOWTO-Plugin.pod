@@ -15,8 +15,8 @@ by the installed theme).
 =head1 How do I get my plugin into the install system?
 
 There are two ways to do this. First, you can put it in the
-plugin directory with the distribution. During the install it
-will be copied to the plugin directory in (by default,
+plugins directory with the distribution. During the install it
+will be copied to the plugins directory in (by default,
 F</usr/local/slash/plugins/>. The second option is to copy it in
 there yourself and make sure that your library files (perl modules)
 are installed. If you decide to go the first route you
