@@ -468,7 +468,7 @@ sub stirPool {
 			"users,users_comments,users_info",
 			"users.uid=users_comments.uid AND
 			 users.uid=users_info.uid AND
-			 seclev = 0 AND
+			 seclev <= 1 AND
 			 points > 0 AND
 			 to_days(now())-to_days(lastgranted) > $stir");
 
