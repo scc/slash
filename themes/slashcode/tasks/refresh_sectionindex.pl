@@ -23,7 +23,7 @@ $task{$me}{code} = sub {
 	}, 1);
 
 	my $tpid = $slashdb->getTemplateByName('sectionindex_display','tpid');
-	my %template = ( 
+	my(%template) = ( 
 		name => 'sectionindex_display',
 		tpid => $tpid, 
 		template => $new_template,

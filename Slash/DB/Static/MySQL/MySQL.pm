@@ -370,33 +370,32 @@ sub getSectionInfo {
 	my($self) = @_;
 	my $story_table = getCurrentStatic('mysql_heap_table') ?
 		'story_heap' : 'stories';
-	my $menu = $self->sqlSelectAll(
+	my $sections = $self->sqlSelectAll(
 		"section", "sections",
 		"isolate=0 and (section != '' and section != 'articles')
 		ORDER BY section"
 	);
 
-	my $sectioninfo;
-	for (@{$menu}) {
-		@{%{$sectioninfo->{$_->[0]}}}{qw(month day)} =
+	for (@{$sections}) {
+		@{%{$_}}{qw(month day)} =
 			$self->{_dbh}->selectrow_array(<<EOT);
 SELECT MONTH(time), DAYOFMONTH(time)
 FROM $story_table
-WHERE section='$_->[0]' AND time < NOW() AND displaystatus > -1
+WHERE section='$_->{section}' AND time < NOW() AND displaystatus > -1
 ORDER BY time DESC LIMIT 1
 EOT
 
-		$sectioninfo->{$_->[0]}{count} =
+		$_->{count} =
 			$self->{_dbh}->selectrow_array(<<EOT);
 SELECT COUNT(*) FROM $story_table
-WHERE 	section='$_->[0]' AND
+WHERE 	section='$_->{section}' AND
 	TO_DAYS(NOW()) - TO_DAYS(time) <= 2 AND time < NOW() AND
 	displaystatus > -1
 EOT
 
 	}
 
-	return $sectioninfo;
+	return $sections;
 }
 
 
