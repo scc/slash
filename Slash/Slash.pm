@@ -57,7 +57,7 @@ $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 ########################################################
 # Behold, the beast that is threaded comments
 sub selectComments {
-	my($header, $cid, $sid) = @_;
+	my($header, $cid) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -70,7 +70,7 @@ sub selectComments {
 		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
 	}
 
-	my $thisComment = $slashdb->getCommentsForUser($header, $cid);
+	my $thisComment = $slashdb->getCommentsForUser($header, $cid, ($header->{writestatus} eq 'archived' ? 1 : 0 ));
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
@@ -132,16 +132,16 @@ sub selectComments {
 		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
 	}
 
-	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi} && $sid;
+	$slashdb->updateCommentTotals($header->{sid}, $comments) if $form->{ssi} && $header->{sid};
 
 	my $hp = join ',', @{$comments->{0}{totals}};
 
-	$slashdb->setStory($sid, {
+	$slashdb->setStory($header->{sid}, {
 			hitparade => $hp,
 			writestatus => "ok",
 			commentcount  => $count,
 		}
-	) if $form->{ssi} && $sid;
+	) if $form->{ssi} && $header->{sid};
 
 
 	reparentComments($comments, $header);
@@ -150,7 +150,7 @@ sub selectComments {
 
 ########################################################
 sub reparentComments {
-	my($comments, $header) = @_;
+	my($comments) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -272,7 +272,7 @@ sub printComments {
 	my $lvl = 0;
 
 	# Get the Comments
-	my($comments, $count) = selectComments($discussion->{id}, $cid || $pid, $discussion->{sid});
+	my($comments, $count) = selectComments($discussion->{id}, $cid || $pid);
 
 	# Should I index or just display normally?
 	my $cc = 0;

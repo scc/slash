@@ -2735,7 +2735,7 @@ sub getCommentReply {
 
 ########################################################
 sub getCommentsForUser {
-	my($self, $sid, $cid) = @_;
+	my($self, $sid, $cid, $archive) = @_;
 
 	my $sid_quoted = $self->sqlQuote($sid);
 #	my $comment_table = getCurrentStatic('mysql_heap_table') ?
@@ -2789,7 +2789,7 @@ sub getCommentsForUser {
 	# ($comment->{points} < $user->{threshold}). - Jamie
 	# That has side effects and doesn't do that much good anyway,
 	# see SF bug 452558. - Jamie
-	my $comment_texts = $self->_getCommentText($cids);
+	my $comment_texts = $self->_getCommentText($cids, $archive);
 	# Now distribute those texts into the $comments hashref.
 
 	for my $comment (@$comments) {
@@ -2816,7 +2816,7 @@ sub getCommentsForUser {
 # than calling it 100 times with one cid.  Works fine with an arrayref
 # of 0 or 1 entries, of course.  - Jamie
 sub _getCommentText {
-	my($self, $cid) = @_;
+	my($self, $cid, $archive) = @_;
 	# If this is the first time this is called, create an empty comment text
 	# cache (a hashref).
 	$self->{_comment_text} ||= { };
@@ -2830,6 +2830,22 @@ print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(key
 		if (ref $cid ne "ARRAY") {
 			errorLog("_getCommentText called with ref to non-array: $cid");
 			return { };
+		}
+		#Archive, means it is doubtful this is useful in the cache. -Brian
+		if($archive) {
+			my %return;
+			my $in_list = join(",", @$cid);
+			my $comment_array = $self->sqlSelectAll(
+				"cid, comment",
+				"comment_text",
+				"cid IN ($in_list)"
+			);
+			# Now we cache them so we never fetch them again
+			for my $comment_hr (@$comment_array) {
+				$return{$comment_hr->[0]} = $comment_hr->[1];
+			}
+
+			return \%return;
 		}
 		# We need a list of comments' text.  First, eliminate the ones we
 		# already have in cache.

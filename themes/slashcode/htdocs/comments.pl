@@ -753,8 +753,8 @@ sub submitComment {
 		# in it then it belongs to stories and we should
 		# update to help with stories/hitparade.
 		# -Brian
-		if ($form->{sid} !~ /^\d+$/) {
-			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		if ($discussion->{sid}) {
+			$slashdb->setStory($discussion->{sid}, { writestatus => 'dirty' });
 		}
 
 		$slashdb->setUser($user->{uid}, {
@@ -869,7 +869,7 @@ sub moderateCid {
 	my $superAuthor = $constants->{authors_unlimited};
 
 	if ($user->{points} < 1) {
-		unless ($user->{seclev} > 99 && $superAuthor) {
+		unless ($user->{is_admin} && $superAuthor) {
 			print getError('no points');
 			return 0;
 		}
@@ -884,16 +884,18 @@ sub moderateCid {
 	# or without us presenting them the menu options.  So do the
 	# tests again.
 
-	# Do not allow moderation of any comments with the same UID as the
-	# current user (duh!).
-	return if $user->{uid} == $cuid;
-	# Do not allow moderation of any comments (anonymous or otherwise)
-	# with the same IP as the current user.
-	return if $user->{ipid} eq $ipid;
-	# If the var forbids it, do not allow moderation of any comments
-	# with the same *subnet* as the current user.
-	return if $constants->{mod_same_subnet_forbid}
-		and $user->{subnetid} == $subnetid;
+	unless ($user->{is_admin}) {
+		# Do not allow moderation of any comments with the same UID as the
+		# current user (duh!).
+		return if $user->{uid} == $cuid;
+		# Do not allow moderation of any comments (anonymous or otherwise)
+		# with the same IP as the current user.
+		return if $user->{ipid} eq $ipid;
+		# If the var forbids it, do not allow moderation of any comments
+		# with the same *subnet* as the current user.
+		return if $constants->{mod_same_subnet_forbid}
+			and $user->{subnetid} == $subnetid;
+	}
 
 	my $dispArgs = {
 		cid	=> $cid,
@@ -930,6 +932,7 @@ sub moderateCid {
 	my $active = 1;
 	# If the resulting score is out of comment score range, no further
 	# actions need be performed.
+  # Should we return here and go no further?
 	if (	$scorecheck < $constants->{comment_minscore} ||
 		$scorecheck > $constants->{comment_maxscore})
 	{
@@ -1034,7 +1037,10 @@ sub moderateCid {
 	# Now display the template with the moderation results.
 	slashDisplay('moderation', $dispArgs);
 
-	return $comment_changed;
+# Now in theory if we are here this is ok.
+# I think there is kludge in the above logic at the moment.
+# -Brian
+	return 1;
 }
 
 
