@@ -524,7 +524,7 @@ sub stirPool {
 
 	my $revoked = 0;
 
-	$self->sqlTransactionStart("LOCK TABLES users_info,users_comments WRITE");
+	$self->sqlTransactionStart("LOCK TABLES users_info WRITE,users_comments WRITE");
 
 	while (my($p, $u) = $cursor->fetchrow) {
 		$revoked += $p;
