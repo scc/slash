@@ -77,7 +77,7 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check valid_check 
+			[ qw (max_post_check valid_check 
 				interval_check formkey_check regen_formkey) ],
 		},
 		saveuseradmin	=> { 
@@ -93,7 +93,7 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check valid_check 
+			[ qw (max_post_check valid_check 
 				interval_check formkey_check regen_formkey) ],
 		},
 		savecomm	=> {
@@ -102,7 +102,7 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check valid_check 
+			[ qw (max_post_check valid_check 
 				interval_check formkey_check regen_formkey) ],
 		},	
 		saveuser	=> {
@@ -111,7 +111,7 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check valid_check 
+			[ qw (max_post_check valid_check 
 				interval_check formkey_check regen_formkey) ],
 		},
 		changepasswd	=> {
@@ -119,14 +119,14 @@ sub main {
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> $savepass_flag ? [] :
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		edituser	=> {
 			function	=> \&editUser,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		authoredit	=> {
 			function	=> \&editUser,
@@ -139,21 +139,21 @@ sub main {
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		editcomm	=> {
 			function	=> \&editComm,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		newuser		=> {
 			function	=> \&newUser,
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check valid_check 
+			[ qw (max_post_check valid_check 
 				interval_check formkey_check regen_formkey) ],
 		},
 		newuseradmin	=> {
@@ -191,21 +191,21 @@ sub main {
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		mailpasswdform 	=> {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		displayform	=> {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 		listabuses 	=> {
 			function	=> \&listAbuses,
@@ -218,7 +218,7 @@ sub main {
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> 
-			[ qw (max_reads_check max_post_check generate_formkey) ],
+			[ qw (max_post_check generate_formkey) ],
 		},
 	} ;
 
