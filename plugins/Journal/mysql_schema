@@ -3,7 +3,6 @@ CREATE TABLE journals (
 	id int(5) NOT NULL auto_increment,
 	uid int(11) NOT NULL,
 	date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	article text,
 	description varchar(80),
 	PRIMARY KEY (id),
 	KEY uidarticle (uid),

@@ -130,7 +130,7 @@ sub get {
 		my $values = join ',', @$val;
 		$answer = $self->sqlSelectHashref($values, 'journals', "id=$id");
 	} elsif ($val) {
-		if($key eq 'article') {
+		if($val eq 'article') {
 			($answer) = $self->sqlSelect('article', 'journals', "id=$id");
 		} else {
 			($answer) = $self->sqlSelect($val, 'journals', "id=$id");
