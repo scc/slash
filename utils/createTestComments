@@ -1,127 +1,190 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
 
+BEGIN {
+	{
+		require Silly::Werder;
+		Silly::Werder->import;
+	}
+	die "Installation of Silly::Werder is required for this util, sorry!\n"
+		if $@;
+}
+
+use strict;
+use File::Basename;
+use FindBin '$Bin';
+use Getopt::Std;
 use Slash;
 use Slash::Utility;
-use Slash::DB;
-use Getopt::Std;
 use Benchmark;
 
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
+my (%opts, %family_tree);
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hI:RTu:U:v', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+usage('No user specified') unless $opts{U};
+usage('No story ID specified') unless $opts{I};
+$opts{'u'} ||= 'slash';
+$opts{num_comments} = $ARGV[0];
+usage('Invalid number of comments') 
+	if $opts{num_comments} !~ /^\d+$/ || $opts{num_comments} < 0;
+					
+# main program logic (in braces to offset nicely)
 {
-	require Silly::Werder;
-	Silly::Werder->import;
-}
-die "Installation of Silly::Werder is required for this util. Sorry.\n"
-	if $@;
+	my $story_id = $opts{I};
+	my $werder = new Silly::Werder;
 
-# Parameters
-#
-# Virtual User			-u
-# User to post as		-U
-# Use a random user		-R
-# StoryID			-I
-# Do not post as threads	-T
-# Number of comments		(num_comments)
-
-my %opts;
-getopts('u:U:I:R', \%opts);
-my $story_id = $opts{I};
-my ($num_comments) = @ARGV;
-my $werder = new Silly::Werder;
-
-createEnvironment($opts{u});
-$slashdb = getCurrentDB();
-$constants = getCurrentStatic();
-
-# Check to see if story is valid.
-if ($story_id !~ /^\d+$/) {
-	my $discussion = $slashdb->getDiscussionBySid($story_id);
-	$story_id = $discussion->{id};
-}
-my $story = $slashdb->getDiscussion($story_id); 
-die "Story ID '$opts{I}' is invalid!" unless $story;
-
-# Determine user list size (for -R)
-my $max_uid = $slashdb->sqlSelect('count(*)', 'users'); 
-
-# Initialize the werder.
-$werder->set_werds_num(5,20);
-
-# Initialize the user.
-my $user;
-if (!$opts{R}) {
-	$user = $slashdb->getUser($opts{U});
-	die "Invalid user! ($opts{u})\n" if ! $user;
-}
-
-
-# Before we start creating comments, we should take a look at the thread
-# structure (if we care about threading...)
-my %family_tree;
-if (!$opts{T}) {
-	my $comments = $slashdb->sqlSelectAllHashref(
-		'cid',
-		'cid, pid',
-		'comments',
-		"sid=$story_id"
-	);
-
-	map { $family_tree{$_->{cid}} = $_->{pid} } @{$comments};
-}
-
-my $t0 = new Benchmark;
-my $count = $num_comments;
-while ($count) {
-	my $werds = 20 + rand 80;
-	my $cur_werds = 0;
-	my $comment;
-
-	while ($cur_werds < $werds) {
-		$comment .= ' ' . $werder->sentence;
-
-		@werds = ($comment =~ /(\w+)\b/g);
-		$cur_werds = scalar @werds;
+	createEnvironment($opts{u});
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+ 
+	# Check to see if story is valid.
+	if ($story_id !~ /^\d+$/) {
+	   	my $discussion = $slashdb->getDiscussionBySid($story_id);
+		$story_id = $discussion->{id};
 	}
-	$comment =~ s/^\s*(.+)\s*$/$1/;
 
-	$user = $slashdb->getUser(getRandomUserID()) if $opts{R};
-	my $pid = getRandomParent();
-	my $cid = $slashdb->createComment(
-		{
-			postercomment 	=> $comment,
-			sid	 	=> $story_id,
-			pid		=> $pid,
-			postersubj	=> $werder->sentence,
-			postanon	=> 0,
-		},
-		$user,
-		1
-	);
-	$family_tree{$cid} = $pid if ! $opts{T};
-	print "($count) Comment created ($cur_werds words)\n";
-
-	$count--;
+	my $story = $slashdb->getDiscussion($story_id);
+	die "Story ID '$opts{I}' is invalid!" unless $story;
+ 
+	# Determine user list size (for -R)
+	my $max_uid = $slashdb->sqlSelect('count(*)', 'users');
+ 
+	# Initiaize the werder.
+	$werder->set_werds_num(5,20);
+ 
+	# Initialize the user.
+	my $user;
+	if (!$opts{R}) {
+        	$user = $slashdb->getUser($opts{U});
+	        die "Invalid user! ($opts{u})\n" if ! $user;
+	}
+ 
+	# Before we start creating comments, we should take a look at the thread
+	# structure (if we care about threading...)
+	my (@werds);
+	if (!$opts{T}) {
+	        my $comments = $slashdb->sqlSelectAllHashref(
+        	        'cid',
+	                'cid, pid',
+	                'comments',
+	                "sid=$story_id"
+	        );
+ 
+	        map { $family_tree{$_->{cid}} = $_->{pid} } @{$comments};
+	}
+ 
+	my $t0 = new Benchmark;
+	my $count = $opts{num_comments};
+	while ($count) {
+	        my $werds = 20 + rand 80;
+	        my $cur_werds = 0;
+	        my $comment;
+ 
+	        while ($cur_werds < $werds) {
+        	        $comment .= ' ' . $werder->sentence;
+ 
+	                @werds = ($comment =~ /(\w+)\b/g);
+	                $cur_werds = scalar @werds;
+	        }
+	        $comment =~ s/^\s*(.+)\s*$/$1/;
+ 
+	        $user = $slashdb->getUser(getRandomUserID($constants, $max_uid))
+			if $opts{R};
+	        my $pid = getRandomParent();
+	        my $cid = $slashdb->createComment(
+			{
+	                        postercomment   => $comment,
+        	                sid             => $story_id,
+                	        pid             => $pid,
+	                        postersubj      => $werder->sentence,
+        	                postanon        => 0,
+                	},
+	                $user, 1
+        	);
+	        $family_tree{$cid} = $pid if ! $opts{T};
+	        print "($count) Comment created ($cur_werds words)\n";
+ 
+        	$count--;
+	}
+	my $t1 = new Benchmark;
+	print "$opts{num_comments} comments created in: ",
+        	timestr(timediff($t1, $t0), 'noc'),"\n";
 }
-my $t1 = new Benchmark;
-print "$num_comments comments created in: ",
-	timestr(timediff($t1, $t0), 'noc'),"\n";
 
+# subroutines
 
 sub getRandomParent {
-	return 0 if $opts{T};
-
-	my @a = keys %family_tree;
-	# The extra "60" slots is our fudge for TRUE PID 0 which means
-	# "the top of the thread".
-	my $random_index = rand ($#a + 60)
-	return (exists $a[$random_index] && $a[$random_index]) ? 
-		$a[$random_index] : 0;
+        return 0 if $opts{T};
+ 
+        my (@a) = keys %family_tree;
+        # The extra "60" slots is our fudge for TRUE PID 0 which means
+        # "the top of the discussion".
+        my $random_index = rand ($#a + 60);
+        return (exists $a[$random_index] && $a[$random_index]) ?
+                $a[$random_index] : 0;
 }
-
-
+ 
+ 
 sub getRandomUserID {
-	my $rand_uid = 1 + rand ($max_uid - 1);
+	my ($constants, $max_uid) = @_;
 
-	return getRandomUserID()
-		if $rand_uid == $constants->{anonymous_coward_uid};
-	return $rand_uid;
+        my $rand_uid = 1 + rand ($max_uid - 1);
+ 
+        return getRandomUserID($constants, $max_uid)
+                if $rand_uid == $constants->{anonymous_coward_uid};
+        return $rand_uid;
 }
+
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] [#comments]
+
+This utility creates test comments for a given Slash site. This program is for
+testing purposes, only, particularly for those ambitious Slash users out there
+who want to try their hand at modifying the comment or moderation systems.
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+	-I	Story ID to post into.
+
+Identity options (specify one): 
+	-U	User to post as.
+	-R	Post as random users.
+
+Posting options:
+	-T	Do NOT post with threads.
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__
