@@ -397,20 +397,13 @@ sub apache_site_conf {
 	print FILE $text;
 	close(FILE);
 	open(FILE, "< $PREFIX/httpd/slash.conf");
-	local $/ = undef;
-	my $filecontents = <FILE>;
-	if ($filecontents =~ s/Include .*\n/Include $file/) {
-		close(FILE);
-		rename("$PREFIX/httpd/slash.conf","$PREFIX/httpd/slash.conf.bak");
-		open(FILE, "> $PREFIX/httpd/slash.conf");
-		print FILE $filecontents;
-		close(FILE);
-	} else {
+
+	unless (grep /\bInclude $file\b/, <FILE>) {
 		close(FILE);
 		open(FILE, ">> $PREFIX/httpd/slash.conf");
 		print FILE "Include $file\n";
-		close(FILE);
 	}
+	close(FILE);
 }
 
 sub install_message {
