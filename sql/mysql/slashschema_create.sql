@@ -456,6 +456,7 @@ CREATE TABLE submissions (
 #
 # Table structure for table 'templates'
 #
+DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
   tpid varchar(30) DEFAULT '' NOT NULL,
   template text,
