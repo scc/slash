@@ -19,6 +19,9 @@ __template__
 
 <FORM ACTION="[% env.script_name %]" METHOD="GET">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="mailpasswd">
+[% IF form.formkey %]
+<INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
 
 <TABLE WIDTH="75%">
 	<TR>

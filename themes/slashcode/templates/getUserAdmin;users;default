@@ -92,6 +92,9 @@ __template__
 		[% ELSIF useredit.ipid %]
 		<INPUT TYPE="HIDDEN" NAME="ipid" value="[% useredit.ipid %]"></TD>
 
+		[% ELSIF useredit.md5id %]
+		<INPUT TYPE="HIDDEN" NAME="md5id" value="[% useredit.md5id %]"></TD>
+
 		[% ELSIF useredit.subnetid %]
 		<INPUT TYPE="HIDDEN" NAME="subnetid" value="[% useredit.subnetid %]"></TD>
 		[% END %]

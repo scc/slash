@@ -146,16 +146,16 @@ my %descriptions = (
 
 ########################################################
 sub _whereFormkey {
-	my($self, $formkey_id) = @_;
-	my $where;
+	my($self) = @_;
 
 	my $user = getCurrentUser();
-	# anonymous user without cookie, check host, not formkey id
-	#if ($user->{anon_id} && ! $user->{anon_cookie}) {
+	my $where;
+
+	# anonymous user without cookie, check host, not ipid
 	if (isAnon($user->{uid})) {
 		$where = "ipid = '$user->{ipid}'";
 	} else {
-		$where = "id='$formkey_id'";
+		$where = "uid = '$user->{uid}'";
 	}
 
 	return $where;
@@ -1604,9 +1604,9 @@ sub setStory {
 ########################################################
 # the the last time a user submitted a form successfuly
 sub getSubmissionLast {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
@@ -1620,10 +1620,10 @@ sub getSubmissionLast {
 # get the last timestamp user created  or
 # submitted a formkey
 sub getLastTs {
-	my($self, $formname, $id, $submitted) = @_;
+	my($self, $formname, $submitted) = @_;
 
 	my $tscol = $submitted ? 'submit_ts' : 'ts';
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	$where .= " AND formname =  '$formname'";
 	$where .= ' AND value = 1' if $submitted;
 
@@ -1636,9 +1636,9 @@ sub getLastTs {
 
 ########################################################
 sub _getLastFkCount {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	my($idcount) = $self->sqlSelect(
 		"max(idcount)",
 		"formkeys",
@@ -1652,11 +1652,11 @@ sub _getLastFkCount {
 # out more than the allowed unused formkeys per form
 # over the formkey timeframe
 sub getUnsetFkCount {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 	my $constants = getCurrentStatic();
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	$where .=  " AND formname = '$formname'";
 	$where .= " AND ts >= $formkey_earliest";
 	$where .= " AND value = 0";
@@ -1680,20 +1680,22 @@ sub getUnsetFkCount {
 
 ########################################################
 sub updateFormkeyId {
-	my($self, $formname, $formkey, $anon, $uid, $rlogin, $upasswd) = @_;
+	my($self, $formname, $formkey, $uid, $rlogin, $upasswd) = @_;
+	my $constants = getCurrentStatic();
 
-	if ($uid != $anon && $rlogin && length($upasswd) > 1) {
+	my $last_count = $self->_getLastFkCount($formname);
+	if (! isAnon($uid) && $rlogin && length($upasswd) > 1) {
 		$self->sqlUpdate("formkeys", {
-			id	=> $uid,
 			uid	=> $uid,
-		}, "formname='$formname' AND uid = $anon AND formkey=" .
+			idcount	=> $last_count,
+		}, "formname='$formname' AND uid = $constants->{anonymous_coward_uid} AND formkey=" .
 			$self->sqlQuote($formkey));
 	}
 }
 
 ########################################################
 sub createFormkey {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1702,15 +1704,14 @@ sub createFormkey {
 	# save in form object for printing to user
 	$form->{formkey} = getFormkey();
 
-	my $last_count = $self->_getLastFkCount($formname, $id);
-	my $last_submitted = $self->getLastTs($formname, $id, 1);
+	my $last_count = $self->_getLastFkCount($formname);
+	my $last_submitted = $self->getLastTs($formname, 1);
 
 	# print STDERR "createFormkey time() $now\n";
 	# insert the fact that the form has been displayed, but not submitted at this point
 	$self->sqlInsert('formkeys', {
 		formkey		=> $form->{formkey},
 		formname 	=> $formname,
-		id 		=> $id,
 		uid		=> $ENV{SLASH_USER},
 		ipid		=> $ipid,
 		value		=> 0,
@@ -1723,7 +1724,7 @@ sub createFormkey {
 
 ########################################################
 sub checkResponseTime {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1749,7 +1750,7 @@ sub checkResponseTime {
 
 ########################################################
 sub validFormkey {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1759,7 +1760,7 @@ sub validFormkey {
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	my($is_valid) = $self->sqlSelect(
 		'COUNT(*)',
 		'formkeys',
@@ -1860,15 +1861,14 @@ sub updateFormkey {
 
 ##################################################################
 sub checkPostInterval {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 	$formname ||= getCurrentUser('currentPage');
-	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $constants = getCurrentStatic();
 	my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	$where .= " AND formname = '$formname' ";
 	$where .= "AND ts >= $formkey_earliest";
 
@@ -1886,13 +1886,13 @@ sub checkPostInterval {
 
 ##################################################################
 sub checkMaxReads {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 	my $constants = getCurrentStatic();
 
 	my $maxreads = $constants->{"max_${formname}_viewings"} || 0;
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	$where .= " AND formname = '$formname'";
 	$where .= " AND ts >= $formkey_earliest";
 	$where .= " HAVING count >= $maxreads";
@@ -1907,15 +1907,14 @@ sub checkMaxReads {
 
 ##################################################################
 sub checkMaxPosts {
-	my($self, $formname, $id) = @_;
+	my($self, $formname) = @_;
 	my $constants = getCurrentStatic();
 	$formname ||= getCurrentUser('currentPage');
-	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	$where .= " AND submit_ts >= $formkey_earliest";
 	$where .= " AND formname = '$formname'",
 	$where .= " HAVING count >= $maxposts";
@@ -1935,9 +1934,9 @@ sub checkMaxPosts {
 
 ##################################################################
 sub checkTimesPosted {
-	my($self, $formname, $max, $id, $formkey_earliest) = @_;
+	my($self, $formname, $max, $formkey_earliest) = @_;
 
-	my $where = $self->_whereFormkey($id);
+	my $where = $self->_whereFormkey();
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		'formkeys',
@@ -2039,7 +2038,7 @@ sub checkExpired {
 sub checkReadOnly {
 	my($self, $formname, $user) = @_;
 
-	my $curuser = getCurrentUser();
+	$user ||= getCurrentUser();
 	my $constants = getCurrentStatic();
 
 	my $where = '';
@@ -2050,7 +2049,7 @@ sub checkReadOnly {
 		if (!isAnon($user->{uid})) {
 			$where = "uid = $user->{uid}";
 		} else {
-			$where = "ipid = '$curuser->{ipid}'";
+			$where = "ipid = '$user->{ipid}'";
 		}
 	} elsif ($user->{md5id}) {
 		$where = "(ipid = '$user->{md5id}' OR subnetid = '$user->{md5id}')";
@@ -2061,7 +2060,7 @@ sub checkReadOnly {
 	} elsif ($user->{subnetid}) {
 		$where = "subnetid = '$user->{subnetid}'";
 	} else {
-		$where = "ipid = '$curuser->{ipid}'";
+		$where = "ipid = '$user->{ipid}'";
 	}
 
 	$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";

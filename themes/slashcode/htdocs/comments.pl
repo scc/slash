@@ -21,7 +21,6 @@ sub main {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 
-	my $formkeyid = getFormkeyId($user->{uid});
 	my $error_flag = 0;
 	my $postflag = $user->{state}{post};
 
@@ -36,7 +35,7 @@ sub main {
 	# the formkey checks are handled by formkeyHandler. Formkey handler 
 	# is called:
 	#	$error_flag = 
-	#		formkeyHandler($check, $formname, $formkeyid, $formkey);
+	#		formkeyHandler($check, $formname, $formkey);
 	#
 	# 		example of what the args would actually be:
 	#
@@ -47,7 +46,7 @@ sub main {
 	# to save the error message into "$note"
 	#
 	#	$error_flag = 
-	#		formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
+	#		formkeyHandler($check, $formname, $formkey, \$note);
 	#  
 	# This way, since '$note' is being passwd, note gets the error message from the 
 	# formkey checks (if there's and error) but won't print the error, which happens
@@ -65,7 +64,7 @@ sub main {
 	# the var for the form is max_<formname>_viewings (just make sure it matches 
 	# the message in formkeyErrors is triggered by '<formname>_maxreads' 
 	# 
-	# max_post_check - checks how many times formkeyid has successfully 
+	# max_post_check - checks how many times ipid or uid has successfully 
 	# posted and returns and error if that number has been exceded
 	# calls checkMaxPosts
 	# the var for the form is max_<formname>_allowed (just make sure it matches 
@@ -186,7 +185,7 @@ sub main {
 			seclev			=> 0,
 			formname 		=> 'comments',
 			checks			=> 
-			[ qw ( max_post_check update_formkeyid ) ], 
+			[ qw ( update_formkeyid max_post_check ) ], 
 		},
 		post 			=> {
 			function		=> \&editComment,
@@ -201,7 +200,7 @@ sub main {
 			post			=> 1,
 			formname 		=> 'comments',
 			checks			=> 
-			[ qw ( max_post_check valid_check interval_check response_check 
+			[ qw ( response_check update_formkeyid max_post_check valid_check interval_check 
 				formkey_check ) ],
 		},
 	};
@@ -245,7 +244,7 @@ sub main {
 		for my $check (@{$ops->{$op}{checks}}) {
 			$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
 			my $formname = $ops->{$op}{formname}; 
-			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+			$error_flag = formkeyHandler($check, $formname, $formkey);
 
 			last if $error_flag;
 		}
@@ -253,7 +252,7 @@ sub main {
 
 	if (! $error_flag) {
 		# CALL THE OP
-		my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants, $formkeyid, $discussion);
+		my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants, $discussion);
 
 		# this has to happen - if this is a form that you updated the formkey val ('formkey_check')
 		# you need to call updateFormkey to update the timestamp (time of successful submission) and
@@ -296,7 +295,7 @@ sub getError {
 
 ##################################################################
 sub delete {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	titlebar("99%", "Delete $form->{cid}");
 
@@ -309,7 +308,7 @@ sub delete {
 
 ##################################################################
 sub displayComments {
-	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
+	my($form, $slashdb, $user, $constants, $discussion) = @_;
 
 	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
 		$slashdb->setUser($user->{uid}, {
@@ -333,7 +332,7 @@ sub displayComments {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	titlebar("90%", getData('active_discussions'));
 	if ($form->{all}) {
@@ -353,7 +352,7 @@ sub commentIndex {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndexCreator {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my($uid, $nickname);
 	if($form->{uid} or $form->{nick}) {
@@ -380,7 +379,7 @@ sub commentIndexCreator {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndexPersonal {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	titlebar("90%", getData('user_discussion', { name => $user->{nickname}}));
 	my $discussions = $slashdb->getDiscussionsByCreator($user->{uid});
@@ -398,7 +397,7 @@ sub commentIndexPersonal {
 # "The Slash job, keeping trolls on their toes"
 # -Brian
 sub createDiscussion {
-	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		$form->{url}   = fixurl($form->{url} || $ENV{HTTP_REFERER});
@@ -457,7 +456,7 @@ sub createDiscussion {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($form, $slashdb, $user, $constants, $formkeyid, $discussion, $error_message) = @_;
+	my($form, $slashdb, $user, $constants, $discussion, $error_message) = @_;
 
 	print STDERR "ERROR MESSAGE $error_message OP $form->{op}\n";
 
@@ -677,7 +676,7 @@ sub previewForm {
 # A note, right now form->{sid} is a discussion id, not a
 # story id.
 sub submitComment {
-	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
+	my($form, $slashdb, $user, $constants, $discussion) = @_;
 	if ($discussion->{type} eq 'archived') {
 		print getError('archive_error');
 		return;
@@ -792,7 +791,7 @@ sub submitComment {
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
+	my($form, $slashdb, $user, $constants, $discussion) = @_;
 
 	my $sid = $form->{sid};
 	my $was_touched = 0;

@@ -19,7 +19,6 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $formkeyid = getFormkeyId($user->{uid});
 	my $formkey = $form->{formkey};
 	my $formname = 'submissions';
 
@@ -42,8 +41,6 @@ sub main {
 		$tbtitle = "- $tbtitle";
 	}
 
-	# this is just skeletal right now
-	# not fully used
 	my $ops = {
 		# initial form, no formkey needed due to 'preview' requirement
 		blankform		=> {
@@ -98,7 +95,7 @@ sub main {
 		if ($ops->{$op}{checks}) {
 			for my $check (@{$ops->{$op}{checks}}) {
 				$ops->{$op}{update_formkey} = 1 if ($check eq 'formkey_check');
-				$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+				$error_flag = formkeyHandler($check, $formname, $formkey);
 				last if $error_flag;
 			}
 		}

@@ -19,7 +19,6 @@ sub main {
 	my $form = getCurrentForm();
 	my $formname = $0;
 	$formname =~ s/.*\/(\w+)\.pl/$1/;
-	my $formkeyid = getFormkeyId($user->{uid});
 
 	my $error_flag = 0;
 	my $formkey = $form->{formkey};
@@ -165,7 +164,9 @@ sub main {
 			function	=> \&mailPasswd,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> ['generate_formkey'],
+			checks		=>
+			[ qw (max_post_check valid_check
+				interval_check formkey_check ) ],
 		},
 		validateuser	=> {
 			function	=> \&validateUser,
@@ -238,7 +239,7 @@ sub main {
 				# the only way to save the error message is to pass by ref
 				# $note and add the message to note (you can't print it out
 				#  before header is called)
-				$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
+				$error_flag = formkeyHandler($check, $formname, $formkey, \$note);
 				last if $error_flag;
 			}
 		}
@@ -277,7 +278,7 @@ sub main {
 	if ($user->{seclev} < 100) {
 		for my $check (@{$ops->{$op}{checks}}) {
 			last if $op eq 'savepasswd';
-			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+			$error_flag = formkeyHandler($check, $formname, $formkey);
 			$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
 			last if $error_flag;
 		}
@@ -477,9 +478,9 @@ sub showInfo {
 			}
 
 		} elsif (length($id) == 32) {
-			$fieldkey = 'ipid';
+			$fieldkey = 'md5id';
 			$requested_user->{nonuid} = 1;
-			$requested_user->{ipid} = $id;
+			$requested_user->{md5id} = $id;
 
 		} elsif ($id =~ /^(\d+\.\d+.\d+\.0)$/) {
 			$fieldkey = 'subnetid';
@@ -1091,6 +1092,11 @@ sub saveUserAdmin {
 		$user_edit->{subnetid} = md5_hex($user_edit->{subnetid});
 		$user_edit->{uid} = $constants->{anonymous_coward_uid};
 		$user_edit->{nonuid} = 1;
+
+	} elsif ($form->{md5id}) {
+		$user_editfield_flag = 'md5id';
+		($id, $user_edit->{ipid}, $user_edit->{subnetid})  
+			= ($form->{md5id}, $form->{md5id}, $form->{md5id});
 
 	} else { # a bit redundant, I know
 		$user_edit = $user;

@@ -229,7 +229,7 @@ sub intervalString {
 sub formkeyHandler {
 	# ok, I know we don't like refs, but I don't wanna rewrite the 
 	# whole damned system
-	my($formkey_op, $formname, $formkeyid, $formkey, $message_ref) = @_;
+	my($formkey_op, $formname, $formkey, $message_ref) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
@@ -239,32 +239,34 @@ sub formkeyHandler {
 
 	$formname	||= $user->{currentPage};
 	print STDERR "FORMNAME $formname\n";
-	$formkeyid	||= getFormkeyId($user->{uid});
 	$formkey	||= $form->{formkey};
 
 	if ($formkey_op eq 'max_reads_check') {
-		if (my $limit = $slashdb->checkMaxReads($formname, $formkeyid)) {
+		if (my $limit = $slashdb->checkMaxReads($formname)) {
 			$msg = formkeyError('maxreads', $formname, $limit);
 			$error_flag++;
                 }
 	} elsif ($formkey_op eq 'max_post_check') {
-		if (my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
+		if (my $limit = $slashdb->checkMaxPosts($formname)) {
 			$msg = formkeyError('maxposts', $formname, $limit);
 			$error_flag++;
 		}
+	} elsif ($formkey_op eq 'update_formkeyid') {
+		$slashdb->updateFormkeyId($formname, $formkey,$user->{uid}, $form->{rlogin}, $form->{upasswd});	
+		
 	} elsif ($formkey_op eq 'valid_check') {
-		if (! $slashdb->validFormkey($formname, $formkeyid)) {	
+		if (! $slashdb->validFormkey($formname)) {	
 			$msg = formkeyError('invalid', $formname);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'response_check') {
-		if (my $interval = $slashdb->checkResponseTime($formname, $formkeyid)) {
+		if (my $interval = $slashdb->checkResponseTime($formname)) {
 			$msg = formkeyError('response', $formname, $interval);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'interval_check') {
 		# check interval from this attempt to last successful post
-		if (my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
+		if (my $interval = $slashdb->checkPostInterval($formname)) {	
 			$msg = formkeyError('speed', $formname, $interval);
 			$error_flag++;
 		}
@@ -284,7 +286,7 @@ sub formkeyHandler {
 	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
 		# another nobel attempt at trying to prevent abusers from saving up formkeys
 		# more trouble than it's worth. I'll leave it in for now Patrick 8/16/01
-		# if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
+		# if ( my $unused = $slashdb->getUnsetFkCount($formname)) { 
 		#	my $max_unused	= $constants->{"max_${formname}_unusedfk"};
 		#	$msg = formkeyError('unused', $formname, $max_unused);
 		#	$error_flag++;
@@ -294,7 +296,7 @@ sub formkeyHandler {
 
 			# screw it. This was a nobel attempt to limit the creation, but too
 			# many people don't like this. Se La Vie
-			# my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
+			# my $last_created =  $slashdb->getLastTs($formname);
 			# my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
 			# my $interval = time() - $last_created;
 			# if ( $interval < $speedlimit) {
@@ -304,7 +306,7 @@ sub formkeyHandler {
 		# }
 
 		if (! $error_flag) {
-			$slashdb->createFormkey($formname, $formkeyid);
+			$slashdb->createFormkey($formname);
 		}
 	}
 		
