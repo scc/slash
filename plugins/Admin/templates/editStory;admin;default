@@ -29,7 +29,7 @@ __template__
 			[% storycontent %]
 		</TD>
 
-		<TD WIDTH="210">
+		<TD WIDTH="220">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
 		 [% authorbox %]
@@ -40,11 +40,11 @@ __template__
 
 [% ELSIF sid %]
 <TABLE>
-	<TR>
+	<TR VALIGN=TOP>
 		<TD>
 		[% story %]
 		</TD>
-		<TD WIDTH="220" VALIGN="TOP">
+		<TD WIDTH="220">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
 		 [% authorbox %]
