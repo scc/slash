@@ -19,6 +19,7 @@ use FindBin '$Bin';
 use Getopt::Std;
 use Slash;
 use Slash::Utility;
+use Digest::MD5 'md5_hex';
 use Benchmark;
 
 use vars qw( $slashdb $werder $constants $junk );
@@ -93,6 +94,7 @@ $werder = new Silly::Werder;
 			$uid = $min_uid;
 		}
 		my $user = $slashdb->getUser($uid);
+		setRandomIPID($user);
 	 
 		# Before we start creating comments, we should take a look at
 		# the thread structure (if we care about threading...)
@@ -156,7 +158,9 @@ $werder = new Silly::Werder;
         	);
 		$slashdb->setStory($sid, { writestatus => 'dirty' }) if $sid;
 	        $family_tree{$cid} = $pid if ! $opts{T};
-	        print "($count) Comment created (user $uid discussion $discussion_id cid $cid pid $pid)\n";
+	        print <<EOT;
+($count) Comment created (user=$uid discussion=$discussion_id cid=$cid pid=$pid)
+EOT
  
         	$count--;
 	}
@@ -203,6 +207,29 @@ sub getRandomUserID {
         }
         return $rand_uid;
 }
+
+# CLOSURE!
+{
+my(@subnets) = ();
+sub setRandomIPID {
+	my $user = shift;
+
+	if (!@subnets) {
+		# We now generate 10 random subnets which we will use for
+		# the rest of this execution.
+		while (@subnets < 10) {
+			my $subnet = sprintf "%d:%d", rand 256, rand 256;
+			next if $subnet =~ /^0/;
+			push @subnets, $subnet;
+		}
+	}
+
+	my $quad3 = $subnets[rand($#subnets + 1)] . rand 256;
+	$user->{subnetid} = md5_hex($quad3 . '0');
+	$user->{ipid} = md5_hex($quad3 . (rand 254 + 1));
+}
+}
+		
 
 sub make_werds {
         my($werds, $link_prob) = @_;
