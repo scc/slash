@@ -19,37 +19,23 @@ __template__
 
 <FORM ACTION="[% constants.rootdir %]/messages.pl" METHOD="POST">
 [% IF message_list.size %]
-<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-	<TR BGCOLOR="[% user.bg.2 %]">
-		<TD><B>Delete</B></TD><TD WIDTH="20">&nbsp;</TD>
-		<TD><B>New</B></TD><TD WIDTH="20">&nbsp;</TD>
-		<TD><B>Date</B></TD><TD WIDTH="20">&nbsp;</TD>
-		<TD><B>Subject</B></TD>
-	</TR>
-[% x = 0;
-	FOREACH message = message_list;
-		IF x % 2;
-			color = user.bg.2;
-		ELSE;
-			color = user.bg.1;
-		END %]
-	<TR VALIGN="TOP" BGCOLOR="[% color %]">
-		<TD><INPUT TYPE="checkbox" NAME="del_[% message.id %]"></TD></TD><TD WIDTH="20">&nbsp;</TD>
-		<TH>[% IF ! message.readed %]<FONT COLOR="[% user.bg.3 %]">*</FONT>[%
-			ELSE
-		%]&nbsp;[% END %]</TH><TD WIDTH="20">&nbsp;</TD>
-		<TD>[% Slash.timeCalc(message.date) %]</TD><TD WIDTH="20">&nbsp;</TD>
-		<TD><A HREF="[% constants.rootdir %]/messages.pl?op=display&amp;id=[%
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+[% FOREACH message = message_list %]
+  <TR>
+    <TD VALIGN="TOP">[% IF ! message.readed
+      %]<FONT COLOR="[% user.bg.3 %]">*</FONT>[% ELSE
+      %]&nbsp;[% END %]</TD>
+    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/messages.pl?op=display&amp;id=[%
 			message.id
-		%]">[% FILTER strip_literal; # think more on this filter here!
-			message.subject || 'Message'; END %]</A></TD>
-	</TR>
-
-[% x = x + 1; END %]
+		%]"><B>[% message.subject || 'Message' %]</B></A></TD>
+    <TD VALIGN="TOP"><EM>[% Slash.timeCalc(message.date) %]</EM></TD>
+    <TD VALIGN="TOP" ALIGN="CENTER"><INPUT TYPE="checkbox" NAME="del_[% message.id %]" VALUE="1"></TD>
+  </TR>
+[% END %]
+  <TR><TD COLSPAN="3">&nbsp;</TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="Delete Messages"></TD></TR>
 </TABLE>
 
 <INPUT TYPE="hidden" NAME="op" VALUE="deletemsgs">
-<INPUT TYPE="submit" VALUE="Delete Selected Messages">
 </FORM>
 
 [% ELSE %]

@@ -24,18 +24,19 @@ sub main {
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
 
+	# require POST and logged-in user for these ops
+	my $user_ok   = $user->{state}{post} && !$user->{is_anon};
+
 	# possible value of "op" parameter in form
 	my %ops = (
 		display_prefs	=> [ !$user->{is_anon},	\&display_prefs		],
-		saveprefs	=> [ !$user->{is_anon},	\&save_prefs		],
-		save_prefs	=> [ !$user->{is_anon},	\&save_prefs		],
+		save_prefs	=> [ $user_ok,		\&save_prefs		],
 		list_messages	=> [ !$user->{is_anon},	\&list_messages		],
 		list		=> [ !$user->{is_anon},	\&list_messages		],
 		display_message	=> [ !$user->{is_anon},	\&display_message	],
 		display		=> [ !$user->{is_anon},	\&display_message	],
-		delete_message	=> [ !$user->{is_anon},	\&delete_message	],
-		'delete'	=> [ !$user->{is_anon},	\&delete_message	],
-		deletemsgs	=> [ !$user->{is_anon},	\&delete_messages	],
+		delete_message	=> [ $user_ok,		\&delete_message	],
+		deletemsgs	=> [ $user_ok,		\&delete_messages	],
 		# ????
 		default		=> [ 1,			\&list_messages		]
 	);
