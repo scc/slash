@@ -8,6 +8,7 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
 use URI;
 
 #################################################################
@@ -16,6 +17,11 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+
+	if(($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}){
+		displayRSS($slashdb, $constants, $user, $form);
+		return;
+	}
 
 	my $id = getFormkeyId($user->{uid});
 	my($section, $op) = (
@@ -218,6 +224,34 @@ sub submissionEd {
 		selection	=> \%selection,
 	});
 }	
+
+#################################################################
+sub	displayRSS {
+	my ($slashdb, $constants, $user, $form) = @_;
+	my($submissions, @items);
+	$submissions = $slashdb->getSubmissionForUser();
+
+	for (@$submissions) {
+		my ($subid, $subj, $time, $tid, $note, $email, $name, $section, $comment, $uid, $karma) = @$_;
+
+		# title should be cleaned up
+		push(@items, {
+				title => $subj,
+				'link' => ($constants->{rootdir} . '/submit.pl?op=viewsub\&subid=' . $subid),
+			}
+		);
+	}
+
+	xmlDisplay {
+	'rss', {
+		channel => {
+			title => "$constants->{rootdir}'s submissions",
+			'link' => "$constants->{rootdir}/submit.pl?op=list",
+			},
+		item => \@items,
+		}, { apache => 1},
+	}
+}
 
 
 #################################################################
