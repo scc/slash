@@ -37,7 +37,7 @@ my $user = getCurrentUser();
 
 sub slashdPid {
 	my $fh = gensym();
-	if(-e "$constants->{logdir}/slashd.pid") {
+	if (-e "$constants->{logdir}/slashd.pid") {
 		die "$constants->{logdir}/slashd.pid already exists, you will need to remove it before slashd can start"
 	}
 	open $fh, ">$constants->{logdir}/slashd.pid"
@@ -227,12 +227,7 @@ sub main {
 			"slashd with the init script?"
 		));
 	}
-	local $SIG{TERM} = sub {
-		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
-		unlink("$constants->{logdir}/slashd.pid");
-		exit 0;
-	};
-	local $SIG{STOP} = sub {
+	local $SIG{TERM} = local $SIG{STOP} = sub {
 		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
 		unlink("$constants->{logdir}/slashd.pid");
 		exit 0;

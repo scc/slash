@@ -44,22 +44,22 @@ sub main {
 
 	# this is just skeletal right now
 	# not fully used
-	my $ops = {		
+	my $ops = {
 		# initial form, no formkey needed due to 'preview' requirement
 		blank		=> {
-			seclev		=> 0, 
-			checks		=> ['max_post_check','generate_formkey'],
-			function  => &blankForm,
+			seclev		=> 0,
+			checks		=> ['max_post_check', 'generate_formkey'],
+			function 	=> &blankForm,
 		},
 		previewstory	=> {
 			seclev		=>  0,
 			checks		=> ['update_formkeyid'],
-			function  => &previewStory,
+			function 	=> &previewStory,
 		},
 		submitstory	=> {
-			function  => &saveStory,
+			function	=> &saveStory,
 			seclev		=> 0,
-			post		  => 1,
+			post		=> 1,
 			checks		=> [ qw (max_post_check valid_check response_check
 						interval_check formkey_check) ],
 		},
@@ -89,13 +89,13 @@ sub main {
 
 	$section = 'admin' if $user->{is_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
-	
+
 	if ($ops->{$op}{checks}) {
 		for my $check (@{$ops->{$op}{checks}}) {
 			$ops->{$op}{update_formkey} = 1 if ($check eq 'formkey_check');
 			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
 			last if $error_flag;
-		}	
+		}
 	}
 
 	if ($op eq 'list' && ($user->{is_admin} || $constants->{submiss_view})) {
@@ -108,6 +108,7 @@ sub main {
 	} elsif ($op eq 'GenQuickies' && $user->{is_admin}) {
 		genQuickies();
 		submissionEd(getData('quickieshead'));
+
 	} elsif ($op eq 'PreviewStory') {
 		displayForm($form->{from}, $form->{email}, $form->{section},
 			$formkeyid, getData('previewhead')) if ! $error_flag;
@@ -125,8 +126,8 @@ sub main {
 			$formkeyid, getData('defaulthead')) if ! $error_flag;
 	}
 
-	if ($ops->{$pop}{update_formkey} && $subsaved && ! $error_flag ) {
-		my $updated = $slashdb->updateFormkey($formkey, $form->{tid},length($form->{story})); 
+	if ($ops->{$pop}{update_formkey} && $subsaved && ! $error_flag) {
+		my $updated = $slashdb->updateFormkey($formkey, $form->{tid}, length($form->{story}));
 	}
 
 	footer();

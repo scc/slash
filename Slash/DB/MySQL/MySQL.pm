@@ -980,7 +980,7 @@ sub createUser {
 	#	- Cliff
 	# Initialize the expiry variables...
 	# ...users start out as registered...
-	# ...the default email view is to SHOW email address... 
+	# ...the default email view is to SHOW email address...
 	#	(not anymore - Jamie)
 	my $constants = getCurrentStatic();
 
@@ -992,7 +992,7 @@ sub createUser {
 		'expiry_days'		=> $constants->{min_expiry_days},
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
-#		'emaildisplay'		=> 2, 
+#		'emaildisplay'		=> 2,
 	});
 
 	return $uid;
@@ -1603,12 +1603,12 @@ sub getSubmissionLast {
 }
 
 ########################################################
-# get the last timestamp user created  or 
-# submitted a formkey 
+# get the last timestamp user created  or
+# submitted a formkey
 sub getLastTs {
 	my($self, $formname, $id, $submitted) = @_;
 
-	my $tscol = $submitted ? 'submit_ts' : 'ts'; 
+	my $tscol = $submitted ? 'submit_ts' : 'ts';
 	my $where = $self->_whereFormkey($id);
 	$where .= " AND formname =  '$formname'";
 	$where .= ' AND value = 1' if $submitted;
@@ -1643,7 +1643,7 @@ sub getUnsetFkCount {
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $where = $self->_whereFormkey($id);
-	$where .=  " AND formname = '$formname'"; 
+	$where .=  " AND formname = '$formname'";
 	$where .= " AND ts >= $formkey_earliest";
 	$where .= " AND value = 0";
 
@@ -1656,7 +1656,7 @@ sub getUnsetFkCount {
 			"count(*) >= $max_unused",
 			"formkeys",
 			$where);
-		
+
 		return $unused;
 
 	} else {
@@ -1785,7 +1785,7 @@ sub updateFormkeyVal {
 	my $speed_limit = $constants->{"${formname}_speed_limit"};
 	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
 
-	my $min = time() - $speed_limit; 
+	my $min = time() - $speed_limit;
 	my $where = "idcount < $maxposts ";
 	$where .= "AND last_ts <= $min ";
 	$where .= "AND value = 0";
@@ -1906,10 +1906,10 @@ sub checkMaxPosts {
 	$where .= " AND formname = '$formname'",
 	$where .= " HAVING count >= $maxposts";
 
-	my ($limit_reached) = $self->sqlSelect(
+	my($limit_reached) = $self->sqlSelect(
 		"COUNT(*) AS count",
 		"formkeys",
-		$where );
+		$where);
 
 	if ($constants->{DEBUG}) {
 		print STDERR "LIMIT REACHED (times posted) $limit_reached\n";
@@ -2077,7 +2077,7 @@ sub getNetIDList {
 
 ##################################################################
 sub getReadOnlyList {
-	my ($self, $min) = @_;
+	my($self, $min) = @_;
 	$min ||= 0;
 	my $max = $min + 100;
 
@@ -2104,8 +2104,9 @@ sub getAbuses {
 	};
 
 	$self->sqlSelectAll("ts,uid,ipid,subnetid,pagename,reason", "abusers WHERE $where->{$key} ORDER by ts DESC");
-	
+
 }
+
 ##################################################################
 sub getReadOnlyReason {
 	my($self, $formname, $user) = @_;
@@ -2852,10 +2853,10 @@ sub getStoriesBySubmitter {
 		'story_heap' : 'stories';
 
 	$limit = 'LIMIT ' . $limit if $limit;
-	my $answer = $self->sqlSelectAllHashrefArray('sid,title,time', 
-																								$story_table, 
-																								"submitter='$id'",
-																								"ORDER by time DESC $limit");
+	my $answer = $self->sqlSelectAllHashrefArray(
+		'sid,title,time',
+		$story_table, "submitter='$id'",
+		"ORDER by time DESC $limit");
 	return $answer;
 }
 
@@ -2883,7 +2884,7 @@ sub getStoriesEssentials {
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "time < NOW() ";
-	# Added this to narrow the query a bit more, I need 
+	# Added this to narrow the query a bit more, I need
 	# see about the impact on this -Brian
 	$where .= "AND writestatus != 'delete' AND writestatus != 'archived' ";
 	$where .= "AND displaystatus=0 " unless $form->{section};
@@ -3184,7 +3185,7 @@ sub createStory {
 		commentstatus	=> $story->{commentstatus},
 		submitter	=> $story->{submitter} ?
 			$story->{submitter} : $story->{uid},
-		writestatus		=> 'dirty',
+		writestatus	=> 'dirty',
 	};
 
 	my $text = {
@@ -3237,7 +3238,7 @@ sub updateStory {
 			section		=> $form->{section},
 			displaystatus	=> $form->{displaystatus},
 			commentstatus	=> $form->{commentstatus},
-			writestatus		=> $form->{writestatus},
+			writestatus	=> $form->{writestatus},
 		}, 'sid=' . $self->sqlQuote($form->{sid}));
 	}
 
@@ -3250,7 +3251,7 @@ sub updateStory {
 		section		=> $form->{section},
 		displaystatus	=> $form->{displaystatus},
 		commentstatus	=> $form->{commentstatus},
-		writestauts		=> $form->{writestauts},
+		writestatus	=> $form->{writestatus},
 	}, 'sid=' . $self->sqlQuote($form->{sid}));
 
 	$self->sqlUpdate('story_text', {
@@ -3938,15 +3939,15 @@ sub setUser {
 	for (@param)  {
 		if ($_->[0] eq "acl") {
 			$self->sqlReplace('users_acl', {
-				uid => $uid, 
-				name => $_->[1]->{name}, 
-				value => $_->[1]->{value},
+				uid	=> $uid,
+				name	=> $_->[1]->{name},
+				value	=> $_->[1]->{value},
 			});
 		} else {
 			$self->sqlReplace('users_param', {
-				uid => $uid,
-				name => $_->[0], 
-				value => $_->[1],
+				uid	=> $uid,
+				name	=> $_->[0],
+				value	=> $_->[1],
 			}) if defined $_->[1];
 		}
 	}
@@ -4404,7 +4405,7 @@ F
 $story_table.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
 OR ($story_table.section=$section_dbi and displaystatus > -1))
-AND time < NOW()  $story_table.writestatus != 'delete' AND  $story_table.writestatus != 'archived')
+AND time < NOW()  $story_table.writestatus != 'delete' AND $story_table.writestatus != 'archived')
 W
 GROUP BY $story_table.sid
 ORDER BY time DESC
@@ -4564,22 +4565,22 @@ sub getRandomSpamArmor {
 
 ########################################################
 sub sqlShowProcessList {
-        my($self) = @_;
+	my($self) = @_;
 
-        $self->sqlConnect();
-        my $proclist = $self->{_dbh}->prepare("SHOW PROCESSLIST");
+	$self->sqlConnect();
+	my $proclist = $self->{_dbh}->prepare("SHOW PROCESSLIST");
 
-        return $proclist;
+	return $proclist;
 }
 
 ########################################################
 sub sqlShowStatus {
-        my($self) = @_;
+	my($self) = @_;
 
-        $self->sqlConnect();
-        my $status = $self->{_dbh}->prepare("SHOW STATUS");
+	$self->sqlConnect();
+	my $status = $self->{_dbh}->prepare("SHOW STATUS");
 
-        return $status;
+	return $status;
 }
 
 ########################################################

@@ -55,7 +55,7 @@ sub topTopics {
 		if ($top->{image} =~ /^\w+\.\w+$/) {
 			$top->{imageclean} = "$constants->{imagedir}/topics/$top->{image}";
 		} else {
-			$top->{imageclean} = "$top->{image}";
+			$top->{imageclean} = $top->{image};
 		}
 	}
 
@@ -78,7 +78,7 @@ sub listTopics {
 		if ($_->{image} =~ /^\w+\.\w+$/) {
 			$_->{imageclean} = "$constants->{imagedir}/topics/$_->{image}";
 		} else {
-			$_->{imageclean} = "$_->{image}";
+			$_->{imageclean} = $_->{image};
 		}
 	}
 
@@ -86,7 +86,7 @@ sub listTopics {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') > 500,
-		topics		=> [ values %$topics],
+		topics		=> [ values %$topics ],
 	});
 
 }

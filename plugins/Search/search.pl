@@ -181,7 +181,7 @@ sub userSearch {
 	}
 
 	slashDisplay('usersearch', {
-		users => $users,
+		users		=> $users,
 		back		=> $back,
 		forward		=> $forward,
 		args		=> _buildargs($form),

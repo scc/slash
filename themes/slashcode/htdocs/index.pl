@@ -242,8 +242,8 @@ sub displayStories {
 			}
 
 			$cclink[1] = linkStory({
-				sid		=> $sid, 
-				threshold	=> -1, 
+				sid		=> $sid,
+				threshold	=> -1,
 				'link'		=> $cc || 0
 			});
 
@@ -273,6 +273,7 @@ sub displayStories {
 
 	return $return;
 }
+
 #################################################################
 createEnvironment();
 main();

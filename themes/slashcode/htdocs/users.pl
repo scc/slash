@@ -42,13 +42,13 @@ sub main {
 
 	my $note;
 
-	my $ops = { 
+	my $ops = {
 		admin		=>  {
 			function 	=> \&adminDispatch,
 			seclev		=> 100,
 			formname	=> $formname,
 			checks		=> [],
-		}, 
+		},
 		userlogin	=>  {
 			function	=> \&showInfo,
 			seclev		=> 1,
@@ -74,11 +74,11 @@ sub main {
 			seclev		=> 1,
 			post		=> 1,
 			formname	=> $formname,
-			checks		=> 
-			[ qw (max_post_check valid_check 
+			checks		=>
+			[ qw (max_post_check valid_check
 				formkey_check regen_formkey) ],
 		},
-		saveuseradmin	=> { 
+		saveuseradmin	=> {
 			function	=> \&saveUserAdmin,
 			seclev		=> 10000,
 			post		=> 1,
@@ -90,8 +90,8 @@ sub main {
 			seclev		=> 1,
 			post		=> 1,
 			formname	=> $formname,
-			checks		=> 
-			[ qw (max_post_check valid_check 
+			checks		=>
+			[ qw (max_post_check valid_check
 				interval_check formkey_check regen_formkey) ],
 		},
 		savecomm	=> {
@@ -99,17 +99,17 @@ sub main {
 			seclev		=> 1,
 			post		=> 1,
 			formname	=> $formname,
-			checks		=> 
-			[ qw (max_post_check valid_check 
+			checks		=>
+			[ qw (max_post_check valid_check
 				interval_check formkey_check regen_formkey) ],
-		},	
+		},
 		saveuser	=> {
 			function	=> \&saveUser,
 			seclev		=> 1,
 			post		=> 1,
 			formname	=> $formname,
-			checks		=> 
-			[ qw (max_post_check valid_check 
+			checks		=>
+			[ qw (max_post_check valid_check
 				interval_check formkey_check regen_formkey) ],
 		},
 		changepasswd	=> {
@@ -123,7 +123,7 @@ sub main {
 			function	=> \&editUser,
 			seclev		=> 1,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		authoredit	=> {
@@ -136,22 +136,22 @@ sub main {
 			function	=> \&editHome,
 			seclev		=> 1,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		editcomm	=> {
 			function	=> \&editComm,
 			seclev		=> 1,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		newuser		=> {
 			function	=> \&newUser,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> 
-			[ qw (max_post_check valid_check 
+			checks		=>
+			[ qw (max_post_check valid_check
 				interval_check formkey_check regen_formkey) ],
 		},
 		newuseradmin	=> {
@@ -166,13 +166,13 @@ sub main {
 			formname	=> $formname,
 			checks		=> [],
 		},
-		mailpasswd	=> { 
+		mailpasswd	=> {
 			function	=> \&mailPasswd,
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=> ['generate_formkey'],
 		},
-		validateuser	=> { 
+		validateuser	=> {
 			function	=> \&validateUser,
 			seclev		=> 1,
 			formname	=> $formname,
@@ -188,21 +188,21 @@ sub main {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		mailpasswdform 	=> {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		displayform	=> {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 		listreadonly => {
@@ -223,11 +223,11 @@ sub main {
 			formname	=> $formname,
 			checks		=> [],
 		},
-		default		=> { 
+		default		=> {
 			function	=> \&displayForm,
 			seclev		=> 0,
 			formname	=> $formname,
-			checks		=> 
+			checks		=>
 			[ qw (max_post_check generate_formkey) ],
 		},
 	} ;
@@ -239,23 +239,23 @@ sub main {
 
 	} elsif ($op eq 'savepasswd') {
 		my $error_flag = 0;
-		if ($curuser->{seclev} < 100) { 
-			for my $check (@{$ops->{savepasswd}{checks}}) {	
-				# the only way to save the error message is to pass by ref 
+		if ($curuser->{seclev} < 100) {
+			for my $check (@{$ops->{savepasswd}{checks}}) {
+				# the only way to save the error message is to pass by ref
 				# $note and add the message to note (you can't print it out
 				#  before header is called)
 				$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
 				last if $error_flag;
 			}
 		}
-	
+
 		if (! $error_flag) {
 			$note .= savePasswd($form->{uid}) ;
 		}
 		# change op to edituser and let fall through;
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
-		if ($curuser->{seclev} < 100 && ! $error_flag) { 
+		if ($curuser->{seclev} < 100 && ! $error_flag) {
 			# why assign to an unused variable? -- pudge
 			$slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
 		}
@@ -266,7 +266,7 @@ sub main {
 	print getMessage('note', { note => $note }) if defined $note;
 	print createMenu($formname) if ! $curuser->{is_anon};
 
-			
+
 	if ($curuser->{is_anon} && $ops->{$op}{seclev} > 0) {
 		$op = 'default';
 	} elsif ($curuser->{seclev} < $ops->{$op}{seclev}) {
@@ -275,9 +275,9 @@ sub main {
 
 	if ($ops->{$op}{post} && !$postflag) {
 		$op = isAnon($curuser->{uid}) ? 'default' : 'userinfo';
-	} 
+	}
 
-	if ($curuser->{seclev} < 100) { 
+	if ($curuser->{seclev} < 100) {
 		for my $check (@{$ops->{$op}{checks}}) {
 			last if $op eq 'savepasswd';
 			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
@@ -294,8 +294,8 @@ sub main {
 	if ($ops->{$op}{update_formkey} && $curuser->{seclev} < 100 && ! $error_flag) {
 		# successful save action, no formkey errors, update existing formkey
 		# why assign to an unused variable? -- pudge
-		my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING})); 
-	} 
+		my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
+	}
 	# if there were legit error levels returned from the save methods
 	# I would have it clear the formkey in case of an error, but that
 	# needs to be sorted out later
@@ -378,7 +378,7 @@ sub newUser {
 			mailPasswd($uid);
 
 			return;
-		} else { 
+		} else {
 			print getError('duplicate_user', { nick => $form->{usernick}});
 			return;
 		}
@@ -438,7 +438,7 @@ sub showInfo {
 	my $user = getCurrentUser();
 
 	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
-	my($title, $admin_block, $fieldkey) = ('','','');
+	my($title, $admin_block, $fieldkey) = ('', '', '');
 	my $comments;
 	my $commentcount = 0;
 	my $commentstruct = [];
@@ -454,19 +454,19 @@ sub showInfo {
 		$uid = $requested_user->{uid};
 		$nick = $requested_user->{nickname};
 
-	} elsif (length($form->{userfield}) == 32) { 
+	} elsif (length($form->{userfield}) == 32) {
 		$fieldkey = 'ipid';
 		$requested_user->{nonuid} = 1;
 		$requested_user->{ipid} = $form->{userfield};
 		$id ||= $form->{userfield};
 
-	} elsif ($form->{userfield} =~ /^(\d+\.\d+.\d+\.0)$/) { 
+	} elsif ($form->{userfield} =~ /^(\d+\.\d+.\d+\.0)$/) {
 		$fieldkey = 'subnetid';
 		$requested_user->{nonuid} = 1;
 		$requested_user->{subnetid} = md5_hex($1);
 		$id ||= $form->{userfield};
 
-	} elsif ($form->{userfield} =~ /^([\d+\.]+)$/) { 
+	} elsif ($form->{userfield} =~ /^([\d+\.]+)$/) {
 		$fieldkey = 'ipid';
 		$requested_user->{nonuid} = 1;
 		$id ||= $1;
@@ -489,7 +489,7 @@ sub showInfo {
 
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
-		
+
 		my $netid = $requested_user->{ipid} ? $requested_user->{ipid} : $requested_user->{subnetid} ;
 
 		$title = getTitle('user_netID_user_title', {
@@ -499,15 +499,15 @@ sub showInfo {
 
 		$admin_block = getUserAdmin($netid, $fieldkey, 1, 0) if $admin_flag;
 
-		$commentcount = $requested_user->{ipid} ? 
+		$commentcount = $requested_user->{ipid} ?
 			$slashdb->countCommentsByIPID($netid) :
 			$slashdb->countCommentsBySubnetID($netid);
 
 		if ($commentcount) {
-			$comments = $requested_user->{ipid} ? 
+			$comments = $requested_user->{ipid} ?
 				$slashdb->getCommentsByNetID(
 					$netid, $constants->{user_comment_display_default}
-				) : 
+				) :
 				$slashdb->getCommentsBySubnetID(
 					$netid, $constants->{user_comment_display_default}
 				);
@@ -661,12 +661,18 @@ sub validateUser {
 		my $exp = $constants->{expiry_exponent};
 
 		# Increment only the trigger that was used.
-		my $new_comment_expiry = ($maxComm > 0 && $userComm > $maxComm) ?
-			$maxComm : $userComm *
-				   (($user->{expiry_comm} < 0) ? $exp : 1);
-		my $new_days_expiry = ($maxDays > 0 && $userDays > $maxDays) ?
-			$maxDays : $userDays *
-				   (($user->{expiry_days} < 0) ? $exp : 1);
+		my $new_comment_expiry = ($maxComm > 0 && $userComm > $maxComm)
+			? $maxComm
+			: $userComm * (($user->{expiry_comm} < 0)
+				? $exp
+				: 1
+		);
+		my $new_days_expiry = ($maxDays > 0 && $userDays > $maxDays)
+			? $maxDays
+			: $userDays * (($user->{expiry_days} < 0)
+				? $exp
+				: 1
+		);
 
 		# Reset re-registration triggers for user.
 		$slashdb->setUser($user->{uid}, {
@@ -698,7 +704,7 @@ sub editKey {
 sub adminDispatch {
 	my $form = getCurrentForm();
 
-	if ($form->{op} eq 'authoredit') {	
+	if ($form->{op} eq 'authoredit') {
 		editUser($form->{authoruid});
 
 	} elsif ($form->{saveuseradmin}) {
@@ -761,10 +767,9 @@ sub tildeEd {
 
 	my $sections_description = $slashdb->getSectionBlocks();
 
-  	# repeated from above?
+	# repeated from above?
 	$customize_title = getTitle('tildeEd_customize_title');
 
-	#for (sort {$::b->[1] <=> $::a->[1]} @$sections_description) {
 	for (sort { lc $b->[1] cmp lc $a->[1]} @$sections_description) {
 		my($bid, $title, $boldflag) = @$_;
 
@@ -840,7 +845,7 @@ sub editUser {
 
 	return if $curuser->{is_anon};
 
-	if ($form->{userfield} ) {
+	if ($form->{userfield}) {
 		$id ||= $form->{userfield};
 		if ($form->{userfield} =~ /^\d+$/) {
 			$user = $slashdb->getUser($id);
@@ -854,7 +859,7 @@ sub editUser {
 		$fieldkey = 'uid';
 		$id = $user->{uid};
 	}
-	return if isAnon($user->{uid}) && ! $admin_flag; 
+	return if isAnon($user->{uid}) && ! $admin_flag;
 
 	$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 	$user->{homepage} ||= "http://";
@@ -933,7 +938,7 @@ sub editHome {
 
 	slashDisplay('editHome', {
 		title			=> $title,
-		admin_block		=> $admin_block,	
+		admin_block		=> $admin_block,
 		user_edit		=> $user,
 		tzformat_select		=> $tzformat_select,
 		tzcode_select		=> $tzcode_select,
@@ -1040,7 +1045,6 @@ sub saveUserAdmin {
 	my $note = '';
 	my $userfield_flag;
 
-
 	my $id = $curuser->{seclev} >= 100 ? shift : $curuser->{uid};
 	if (! $id) {
 		$id = $form->{userfield} ? $form->{userfield} : $curuser->{uid};
@@ -1098,7 +1102,7 @@ sub saveUserAdmin {
 				$slashdb->setReadOnly($formname, $user, $form->{$keyname});
 			}
 		} elsif ("$existing_reason" ne "$form->{$reason_keyname}") {
-                                $slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
+			$slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
 		}
 
 		# $note .= getError('saveuseradmin_notsaved', { field => $userfield_flag, id => $id });
@@ -1237,7 +1241,7 @@ sub saveUser {
 		} else {
 			return();
 		}
-	} 
+	}
 
 	$note .= getMessage('savenickname_msg', {
 		nickname => $user->{nickname},
@@ -1367,7 +1371,7 @@ sub saveComm {
 	$form->{commentlimit} = 0 if $form->{commentlimit} < 1;
 	$form->{commentspill} = 0 if $form->{commentspill} < 1;
 
-	# This has NO BEARING on the table the data goes into now. 
+	# This has NO BEARING on the table the data goes into now.
 	# setUser() does the right thing based on the key name.
 	my $users_comments_table = {
 		clbig		=> $form->{clbig},
@@ -1493,7 +1497,7 @@ sub listReadOnly {
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,
 	});
-	
+
 }
 
 #################################################################
@@ -1506,6 +1510,7 @@ sub topAbusers {
 		topabusers => $topabusers,
 	});
 }
+
 #################################################################
 sub listAbuses {
 	my $curuser = getCurrentUser();
@@ -1513,8 +1518,8 @@ sub listAbuses {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
-	my $abuses = $slashdb->getAbuses($form->{key},$form->{abuseid});
-	
+	my $abuses = $slashdb->getAbuses($form->{key}, $form->{abuseid});
+
 	slashDisplay('listAbuses', {
 		abuseid	=> $form->{abuseid},
 		abuses	=> $abuses,
@@ -1556,12 +1561,12 @@ sub displayForm {
 			: getTitle('displayForm_title');
 	} elsif ($op eq 'mailpasswdform') {
 		$title = getTitle('mailPasswdForm_title');
-	} elsif ($op eq 'newuserform') { 
+	} elsif ($op eq 'newuserform') {
 		$title = getTitle('newUserForm_title');
 	} else {
 		$title = getTitle('displayForm_title');
 	}
-	
+
 	$form->{unickname} ||= $form->{newusernick};
 
 	if ($form->{newusernick}) {
@@ -1572,9 +1577,9 @@ sub displayForm {
 
 	$msg1 = getMessage('dispform_new_msg_1');
 	if (! $form->{newusernick} && $op eq 'newuserform') {
-		$msg2 = getMessage('dispform_new_msg_2') 
-	} elsif ($op eq 'displayform' || $op eq 'userlogin') { 
-		$msg2 = getMessage('newuserform_msg') 
+		$msg2 = getMessage('dispform_new_msg_2');
+	} elsif ($op eq 'displayform' || $op eq 'userlogin') {
+		$msg2 = getMessage('newuserform_msg');
 	}
 
 	slashDisplay($ops->{$op}, {
@@ -1635,7 +1640,7 @@ sub getUserAdmin {
 	my($checked, $uidstruct, $readonly, $readonly_reasons);
 	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select, $topabusers);
 	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
-	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
+	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0;
 
 	if ($field eq 'uid') {
 		if (! isAnon($id)) {
@@ -1673,12 +1678,11 @@ sub getUserAdmin {
 		$uidlist = $slashdb->getUIDList('subnetid', $user->{subnetid});
 
 	} else {
-		$user = $id ? $slashdb->getUser($id) : $curuser; 
+		$user = $id ? $slashdb->getUser($id) : $curuser;
 		$userfield = $user->{uid};
 		$checked->{uid} = ' CHECKED';
 		$iplist = $slashdb->getNetIDList($user->{uid});
 	}
-
 
 	$authors = $slashdb->getDescriptions('authors');
 

@@ -77,7 +77,6 @@ sub updateCommentTotals {
 	}
 }
 
-
 ########################################################
 # For slashd
 # "LIMIT 10" chosen arbitrarily, actually could be LIMIT 5 but doesn't
@@ -106,8 +105,8 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type=2  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 0 ");
 	# Optimize later to use heap table -Brian
-	for($self->sqlSelect('cid', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 1 AND discussion.pid = 0")) {
-		$self->deleteComments('',$_);
+	for ($self->sqlSelect('cid', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 1 AND discussion.pid = 0")) {
+		$self->deleteComments('', $_);
 	}
 }
 
@@ -120,7 +119,7 @@ sub deleteDaily {
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
 	$self->sqlDo("DELETE from moderatorlog WHERE
-	  to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 	$self->sqlDo("DELETE from metamodlog WHERE
 		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 	# Formkeys
@@ -140,15 +139,15 @@ sub countDaily {
 	($returnable{'total'}) = $self->sqlSelect("count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1");
 
-	my $c = $self->sqlSelectMany("count(*)","accesslog",
+	my $c = $self->sqlSelectMany("count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1 GROUP BY host_addr");
 	$returnable{'unique'} = $c->rows;
 	$c->finish;
 
-#	my($comments) = $self->sqlSelect("count(*)","accesslog",
+#	my($comments) = $self->sqlSelect("count(*)", "accesslog",
 #		"to_days(now()) - to_days(ts)=1 AND op='comments'");
 
-	$c = $self->sqlSelectMany("dat,count(*)","accesslog",
+	$c = $self->sqlSelectMany("dat,count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1 AND
 		(op='index' OR dat='index')
 		GROUP BY dat");
@@ -373,7 +372,7 @@ sub tokens2points {
 	my $cursor = $self->sqlSelectMany('uid,tokens,value as rtbl',
 		'users_info, users_param',
 		"tokens >= $constants->{maxtokens}
-		 AND users_param.uid = users_info.uid 
+		 AND users_param.uid = users_info.uid
 		 AND name='rtbl' AND value=1");
 	$self->sqlTransactionStart('LOCK TABLES users READ,
 		users_info WRITE, users_comments WRITE');
@@ -399,7 +398,7 @@ sub tokens2points {
 		$userFields{'-points'} =
 			($constants->{maxtokens} / $constants->{tokensperpoint})
 			if ! $rtbl;
-			
+
 		$self->setUser($uid, \%userFields);
 	}
 
@@ -554,7 +553,7 @@ sub checkUserExpiry {
 	# Now grab all UIDs that look to be expired, we explicitly exclude
 	# authors from this search.
 	$ret = $self->sqlSelectAll(
-		'distinct uid', 
+		'distinct uid',
 		'users_info',
 		'expiry_days < 0 or expiry_comm < 0'
 	);
@@ -584,9 +583,9 @@ sub getMetamodIDs {
 
 	# The previous code was shite because I let myself get distracted
 	# due to a silly logic error. The way to REALLY do this is to wait a
-	# day LATER than the life of a discussion. This way, YOU KNOW that 
-	# no further M2 records will show up in the database after 
-	# reconciliation. 
+	# day LATER than the life of a discussion. This way, YOU KNOW that
+	# no further M2 records will show up in the database after
+	# reconciliation.
 	#
 	# Cliff == B4K4!
 	#
@@ -595,8 +594,8 @@ sub getMetamodIDs {
 	#					- Cliff 7/12/01
 	my $num_days = $constants->{archive_delay} + 1;
 	my $list = $self->sqlSelectAllHashrefArray(
-		'metamodlog.id as id, mmid', 'metamodlog,moderatorlog', 
-		"TO_DAYS(CURDATE())-TO_DAYS(metamodlog.ts) >= $num_days AND 
+		'metamodlog.id as id, mmid', 'metamodlog,moderatorlog',
+		"TO_DAYS(CURDATE())-TO_DAYS(metamodlog.ts) >= $num_days AND
 		flag=10 AND moderatorlog.id=metamodlog.mmid",
 		"order by id LIMIT $constants->{m2_batchsize}"
 	);
@@ -614,15 +613,14 @@ sub getMetaModerations {
 	my($self, $mmid) = @_;
 
 	my $ret = $self->sqlSelectAllHashrefArray(
-		'*','metamodlog', "mmid=$mmid"
+		'*', 'metamodlog', "mmid=$mmid"
 	);
 
 	return $ret;
 }
 
-
 ########################################################
-# For moderation scripts. 
+# For moderation scripts.
 #
 #
 sub updateMMFlag {
@@ -634,7 +632,7 @@ sub updateMMFlag {
 }
 
 ########################################################
-# For moderation scripts. 
+# For moderation scripts.
 #
 #
 sub clearM2Flag {
@@ -660,7 +658,6 @@ sub getStoriesWithFlag {
 
 	return $returnable;
 }
-
 
 ########################################################
 # For tasks/spamarmor.pl
@@ -735,7 +732,6 @@ sub deleteStoryAll {
 	$self->sqlDo("DELETE from comments where sid=$db_sid");
 	$self->sqlDo("DELETE from comment_text where sid=$db_sid");
 }
-
 
 1;
 
