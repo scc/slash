@@ -6,3 +6,6 @@ update story_heap set writestatus = 1;
 update story_heap set time = date_add(now(), INTERVAL -2 day) where sid like '%14%';
 update story_heap set time = date_add(now(), INTERVAL -1 day) where sid like '%16%';
 update story_heap set time = now() where sid like '%17%';
+alter table stories modify sid char(20) NOT NULL;
+alter table story_heap modify sid char(20) NOT NULL;
+alter table story_text modify sid char(20) NOT NULL;

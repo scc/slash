@@ -13,9 +13,8 @@ topicEdit
 __template__
 <TABLE>
 	<TR>
+		<FORM ACTION="[% env.script_name %]" METHOD="POST">
 		<TD>
-			<FORM ACTION="[% env.script_name %]" METHOD="POST">
-
 			[% topics_select %]
 
 			<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
@@ -54,8 +53,13 @@ __template__
 
 			[% END %]
 
-			</FORM>
 		</TD>
+		<TD>
+		[% FOREACH section = sectionref.keys %]
+		    <INPUT TYPE="CHECKBOX" NAME="exsect_[% section %]"[% sectionref.$section.checked %]>[% sectionref.$section.title %]<BR>
+		[% END %]
+		</TD>
+		</FORM>
 	</TR>
 </TABLE>
 
