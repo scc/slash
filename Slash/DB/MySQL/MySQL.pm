@@ -869,7 +869,9 @@ sub deleteSection {
 sub getSectionBlockByBid {
 	my($self, $bid, @val) = @_;
 	my $values = join ',', @val;
-	my $section = $self->sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
+	my $block = $self->sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
+
+	return $block;
 }
 
 ##################################################################
@@ -931,11 +933,51 @@ sub saveBlock {
 
 	return $rows;
 }
+
+########################################################
+sub saveColorBlock {
+	my ($self, $colorblock) = @_;
+	my $form = getCurrentForm();
+
+	$form->{color_block} ||= 'colors';
+
+	if($form->{colorsave}) {
+		# save into colors and colorsback
+		$self->sqlUpdate('blocks', {
+				block => $colorblock, 
+			}, "bid = '$form->{color_block}'"
+		);
+		
+	}
+	elsif($form->{colorsavedef}) {
+		# save into colors and colorsback
+		$self->sqlUpdate('blocks', {
+				block => $colorblock, 
+				blockbak => $colorblock, 
+			}, "bid = '$form->{color_block}'"
+		);
+		
+	}
+	elsif($form->{colororig}) {
+		# reload original version of colors
+		$self->{dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
+	}
+}
 ########################################################
 sub getBlockByBid {
 	my($self, $bid, @val) = @_;
 	my $values = join ',', @val;
-	my $section = $self->sqlSelectHashref($values, 'blocks', "bid='$bid'");
+	my $block = $self->sqlSelectHashref($values, 'blocks', "bid='$bid'");
+
+	retunr $block;
+}
+########################################################
+sub getTopicByTid {
+	my($self, $tid, @val) = @_;
+	my $values = join ',', @val;
+	my $topic = $self->sqlSelectHashref($values, 'topics', "tid='$tid'");
+
+	retunr $topic;
 }
 ########################################################
 sub getSectionBlock {

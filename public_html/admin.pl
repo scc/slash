@@ -380,7 +380,8 @@ sub blockEdit {
 
 	return if $seclev < 500;
 	my($hidden_bid) = "";
-	my($title,$url,$rdf,$ordernum,$retrieve,$section,$portal,$saveflag,$isabid);
+	my $saveflag;
+	my $section = {};
 
         titlebar("100%","Site Block Editor","c");
 
@@ -435,58 +436,56 @@ EOT
 	# or this is a block edit via sections.pl
 	if (! $I{F}{blocknew} && $bid ) {
 		my @values = qw (bid title url rdf ordernum retrieve section portal);
-		($isabid,$title,$url,$rdf,$ordernum,$retrieve,$section,$portal) = 
-				$I{dbobject}->getSectionBlockByBid($bid, @values);
-		if ($isabid) {
-			$title = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$title"></TD>\n\t</TR>];
-			$url = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$url"></TD>\n\t</TR>];
-			$rdf = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE="$rdf"></TD>\n\t</TR>];
-			$section = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE="$section"></TD>\n\t</TR>];
-			$ordernum = "NA" if $ordernum eq '';
-			$ordernum = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE="$ordernum"></TD>\n\t</TR>];
-			my $checked = "CHECKED" if $retrieve == 1; 
-			$retrieve = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve" $checked></TD>\n\t</TR>];
+		$section = $I{dbobject}->getSectionBlockByBid($bid, @values);
+		if ($section->{'isabid'}) {
+			$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$section->{'title'}"></TD>\n\t</TR>];
+			$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$section->{'url'}"></TD>\n\t</TR>];
+			$section->{'rdf'} = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE="$section->{'rdf'}"></TD>\n\t</TR>];
+			$section->{'section'} = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE="$section->{'section'}"></TD>\n\t</TR>];
+			$section->{'ordernum'} = "NA" if $section->{'ordernum'} eq '';
+			$section->{'ordernum'} = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE="$section->{'ordernum'}"></TD>\n\t</TR>];
+			my $checked = "CHECKED" if $section->{'retrieve'} == 1; 
+			$section->{'retrieve'} = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve" $checked></TD>\n\t</TR>];
 			$checked = "";
-			$checked = "CHECKED" if $portal == 1; 
-			$portal = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox.</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal" $checked></TD>\n\t</TR>];
+			$checked = "CHECKED" if $section->{'portal'} == 1; 
+			$section->{'portal'} = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox.</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal" $checked></TD>\n\t</TR>];
 			$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_existing" VALUE="1">];
 			$checked = "";
 		}	
 	}	
 	# if this is a new block, we want an empty form 
 	else {
-		$title = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE=""></TD>\n\t</TR>];
-		$url = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE=""></TD>\n\t</TR>];
-		$rdf = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE=""></TD>\n\t</TR>];
-		$section = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE=""></TD>\n\t</TR>];
-		$ordernum = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE=""></TD>\n\t</TR>];
-		$retrieve = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve"></TD>\n\t</TR>];
-		$portal = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox. </B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal"></TD>\n\t</TR>];
+		$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE=""></TD>\n\t</TR>];
+		$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE=""></TD>\n\t</TR>];
+		$section->{'rdf'} = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE=""></TD>\n\t</TR>];
+		$section->{'section'} = qq[<TR>\n\t\t<TD><B>Section</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="10" NAME="section" VALUE=""></TD>\n\t</TR>];
+		$section->{'ordernum'} = qq[<TR>\n\t\t<TD><B>Ordernum</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE=""></TD>\n\t</TR>];
+		$section->{'retrieve'} = qq[<TR>\n\t\t<TD><B>Retrieve</B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve"></TD>\n\t</TR>];
+		$section->{'portal'} = qq[<TR>\n\t\t<TD><B>Portal - check if this is a slashbox. </B></TD><TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal"></TD>\n\t</TR>];
 		$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_new" VALUE="1">];
 	}
 
-	my($block, $bseclev, $type, $description);
+	my $bidblock;
 	if ($bid) {
 		my @values = qw (block seclev type description);
-		($block, $bseclev, $type, $description) =
-				$I{dbobject}->getBlockByBid($bid, @values);
+		$bidblock = $I{dbobject}->getBlockByBid($bid, @values);
 	}
 
-	my $description_ta = stripByMode($description, 'literal', 1);
-	$block = stripByMode($block, 'literal', 1);
+	$bidblock->{'description'} = stripByMode($bidblock->{'description'}, 'literal', 1);
+	$bidblock->{'block'} = stripByMode($bidblock->{'block'}, 'literal', 1);
 
 	# main table
 	print <<EOT;
 <TABLE BORDER="0">
 EOT
 	# if there's a block description, print it
-	print <<EOT if ($description);
+	print <<EOT if ($bidblock->{'description'});
 	<TR>
 		<TD COLSPAN="3">
 		<TABLE BORDER="2" CELLPADDING="4" CELLSPACING="0" BGCOLOR="$I{fg}[1]" WIDTH="80%">
 			<TR>
 				<TD BGCOLOR="$I{bg}[2]"><BR><B>Block ID: $bid</B><BR>
-				<P>$description</P><BR>
+				<P>$bidblock->{'description'}</P><BR>
 				</TD>
 			</TR>
 		</TABLE>
@@ -501,24 +500,24 @@ EOT
 		<TD><B>Block ID</B></TD>
 		<TD><INPUT TYPE="TEXT" NAME="thisbid" VALUE="$bid"></TD>
 	</TR>
-		$title
+		$section->{'title'}
 	<TR>	
-		<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="$bseclev" SIZE="6"></TD>
+		<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="$bidblock->{'bseclev'}" SIZE="6"></TD>
 	</TR>
 	<TR>	
-		<TD><B>Type</B></TD><TD><INPUT TYPE="TEXT" NAME="type" VALUE="$type" SIZE="10"></TD>
+		<TD><B>Type</B></TD><TD><INPUT TYPE="TEXT" NAME="type" VALUE="$bidblock->{'type'}" SIZE="10"></TD>
 	</TR>
-		$section
-		$ordernum
-		$portal
-		$retrieve
-		$url
-		$rdf
+		$section->{'section'}
+		$section->{'ordernum'}
+		$section->{'portal'}
+		$section->{'retrieve'}
+		$section->{'url'}
+		$section->{'rdf'}
 		$saveflag
 	<TR>
 		<TD VALIGN="TOP"><B>Description</B></TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">$description_ta</TEXTAREA>
+		<TEXTAREA ROWS="6" COLS="70" NAME="description">$bidblock->{'description'}_ta</TEXTAREA>
 		</TD>
 	</TR>
 	<TR>	
@@ -531,7 +530,7 @@ EOT
 		</P>
 		</TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="15" COLS="100" NAME="block">$block</TEXTAREA>
+		<TEXTAREA ROWS="15" COLS="100" NAME="block">$bidblock->{'block'}</TEXTAREA>
 		</TD>
 	</TR>
 EOT
@@ -561,9 +560,9 @@ print <<EOT;
 <!-- end block editing form -->
 EOT
 
-	my ($section) = $I{dbobject}->getSectionBlockByBid($bid, 'section');
+	my $sectionbid = $I{dbobject}->getSectionBlockByBid($bid, 'section');
 	print <<EOT;
-<B><A HREF="$I{rootdir}/sections.pl?section=$section&op=editsection">$section</A></B>
+<B><A HREF="$I{rootdir}/sections.pl?section=$sectionbid->{'section'}&op=editsection">$sectionbid->{'section'}</A></B>
 (<A HREF="$I{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
 EOT
 }
@@ -625,7 +624,8 @@ sub colorEdit {
 	
 EOT
 	} else {
-		($colorblock) = sqlSelect('block', 'blocks', "bid='$I{F}{color_block}'"); 
+		my $block = $I{dbobject}->getBlockByBid($I{F}{color_block}, 'block'); 
+		($colorblock) = $block->{'block'};
 	}
 
 	my @colors = split m/,/, $colorblock;
@@ -717,38 +717,15 @@ EOT
 sub colorSave {
 	return if $I{U}{aseclev} < 500;
 	my $colorblock = 
-	"$I{F}{fg0},$I{F}{fg1},$I{F}{fg2},$I{F}{fg3},$I{F}{bg0},$I{F}{bg1},$I{F}{bg2},$I{F}{bg3}";
-
-	$I{F}{color_block} ||= 'colors';
-
-	if($I{F}{colorsave}) {
-		# save into colors and colorsback
-		sqlUpdate('blocks', {
-				block => $colorblock, 
-			}, "bid = '$I{F}{color_block}'"
-		);
-		
-	}
-	elsif($I{F}{colorsavedef}) {
-		# save into colors and colorsback
-		sqlUpdate('blocks', {
-				block => $colorblock, 
-				blockbak => $colorblock, 
-			}, "bid = '$I{F}{color_block}'"
-		);
-		
-	}
-	elsif($I{F}{colororig}) {
-		# reload original version of colors
-		$I{dbh}->do("update blocks set block = blockbak where bid = '$I{F}{color_block}'");
-	}
-		
+			"$I{F}{fg0},$I{F}{fg1},$I{F}{fg2},$I{F}{fg3},$I{F}{bg0},$I{F}{bg1},$I{F}{bg2},$I{F}{bg3}";
+	$I{dbobject}->saveColorBlock($colorblock);
 }
+
 ##################################################################
 # Topic Editor
 sub topicEd {
 	return if $I{U}{aseclev} < 1;
-	my($tid, $width, $height, $alttext, $image, @available_images);
+	my($topic, @available_images);
 
 	local *DIR;
 	opendir(DIR, "$I{basedir}/images/topics");
@@ -760,30 +737,31 @@ sub topicEd {
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 EOT
 
-	my $topics = $I{dbobject}->getDescriptions('vars');
-	createSelect('nexttid', $topics, $I{F}{nexttid});
+	my $topics_menu = $I{dbobject}->getDescriptions('vars');
+	createSelect('nexttid', $topics_menu, $I{F}{nexttid});
 
 	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
 	print '<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>';
 
 	if(! $I{F}{topicdelete}) {
 		if(! $I{F}{topicnew}) {
-			($tid, $width, $height, $alttext, $image) = 
-			sqlSelect( 'tid,width,height,alttext,image', 'topics', "tid='$I{F}{nexttid}'");
+			my @values = qw (tid width height alttext image);
+			$topic = $I{dbobject}->getTopicByTid($I{F}{nexttid}, @values);
 		} else {
-			($tid, $width, $height, $alttext, $image) = ('new topic','','','','');
+			$topic = {};
+			$topic->{'tid'} = 'new topic';
 		}
 
-		print qq'<BR>Image as seen: <BR><BR><IMG SRC="$I{imagedir}/topics/$image" ALT="$alttext" WIDTH="$width" HEIGHT="$height">'
+		print qq|<BR>Image as seen: <BR><BR><IMG SRC="$I{imagedir}/topics/$topic->{'image'}" ALT="$topic->{'alttext'}" WIDTH="$topic->{'width'}" HEIGHT="$topic->{'height'}">|
 			if ( $I{F}{nexttid} && ! $I{F}{topicnew} && ! $I{F}{topicdelete});
 
 		print <<EOT;
-		<BR><BR>Tid<BR><INPUT TYPE="TEXT" NAME="tid" VALUE="$tid"><BR>
+		<BR><BR>Tid<BR><INPUT TYPE="TEXT" NAME="tid" VALUE="$topic->{'tid'}"><BR>
 		<BR>Dimensions (leave blank to determine automatically)<BR>
-		Width: <INPUT TYPE="TEXT" NAME="width" VALUE="$width" SIZE="4">
-		Height: <INPUT TYPE="TEXT" NAME="height" VALUE="$height" SIZE="4"><BR>
+		Width: <INPUT TYPE="TEXT" NAME="width" VALUE="$topic->{'width'}" SIZE="4">
+		Height: <INPUT TYPE="TEXT" NAME="height" VALUE="$topic->{'height'}" SIZE="4"><BR>
 		<BR>Alt Text<BR>
-		<INPUT TYPE="TEXT" NAME="alttext" VALUE="$alttext"><BR>
+		<INPUT TYPE="TEXT" NAME="alttext" VALUE="$topic->{'alttext'}"><BR>
 		<BR>Image<BR>
 		<SELECT name="image">
 EOT
@@ -793,7 +771,7 @@ EOT
 			print qq|<OPTION value="">Select an image</OPTION>| if $I{F}{topicnew};
 			for (@available_images) {
 				my ($selected);
-				$selected = "SELECTED" if ($_ eq $image);
+				$selected = "SELECTED" if ($_ eq $topic->{'image'});
 				print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
 				$selected = '';
 			}
@@ -803,7 +781,7 @@ EOT
 			# and use a regular text input field.
 			print <<EOT;
 <P>No images were found in the topic images directory (&lt;basedir&gt;/images/topics).<BR>
-<INPUT TYPE="TEXT" NAME="image" VALUE="$image"><BR><BR>
+<INPUT TYPE="TEXT" NAME="image" VALUE="$topic->{'image'}"><BR><BR>
 EOT
 		}
 
