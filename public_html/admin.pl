@@ -404,8 +404,6 @@ EOT
 
 		# get the static blocks
 		my $block = $I{dbobject}->getStaticBlock($seclev);
-		print STDERR "BLOCK $block\n";
-		print STDERR "BID $bid\n";
 		createSelect('bid1', $block, $bid);
 
 		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked1"></TD>

@@ -109,6 +109,7 @@ sub getSlash {
 	# what do we do about when this is called from the command line,
 	# so there is no Apache?  cf. prog2file in slashd, when index.pl
 	# is called without Apache -- pudge
+	# Seperate method? -Brian
 
 	#Ok, I hate single character variables, but 'r' is a bit
 	#of a tradition in apache stuff -Brian
@@ -401,6 +402,8 @@ sub getUser {
 sub setCookie {
 	my($name, $val, $session) = @_;
 
+	return unless $name;
+	return unless $val;
 	# domain must start with a . and have one more .
 	# embedded in it, else we ignore it
 	my $domain = $I{cookiedomain} &&
