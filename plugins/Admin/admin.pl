@@ -913,7 +913,8 @@ sub editStory {
 		$sections, $topic_select, $section_select, $author_select,
 		$extracolumns, $displaystatus_select, $commentstatus_select, $description);
 	my $extracolref = {};
-	my($fixquotes_check, $autonode_check, $fastforward_check) = ('off', 'off', 'off');
+	my ($fixquotes_check,   $autonode_check, 
+	    $fastforward_check, $shortcuts_check) = qw(off off off off);
 
 	for (keys %{$form}) { $storyref->{$_} = $form->{$_} }
 
@@ -928,15 +929,24 @@ sub editStory {
 		$storyref->{uid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
 
-		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
-		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
-		$storyref->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
+		$storyref->{writestatus} = $form->{writestatus}
+			if exists $form->{writestatus};
+		$storyref->{displaystatus} = $form->{displaystatus}
+			if exists $form->{displaystatus};
+		$storyref->{commentstatus} = $form->{commentstatus}
+			if exists $form->{commentstatus};
 		$storyref->{dept} =~ s/[-\s]+/-/g;
 		$storyref->{dept} =~ s/^-//;
 		$storyref->{dept} =~ s/-$//;
 
-		$storyref->{introtext} = $slashdb->autoUrl($form->{section}, $storyref->{introtext});
-		$storyref->{bodytext} = $slashdb->autoUrl($form->{section}, $storyref->{bodytext});
+		$storyref->{introtext} = $slashdb->autoUrl(
+			$form->{section}, 
+			$storyref->{introtext}
+		);
+		$storyref->{bodytext} = $slashdb->autoUrl(
+			$form->{section}, 
+			$storyref->{bodytext}
+		);
 
 		$topic = $slashdb->getTopic($storyref->{tid});
 		$form->{uid} ||= $user->{uid};
@@ -1008,9 +1018,10 @@ sub editStory {
 	$description = $slashdb->getDescriptions('commentcodes');
 	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus}, 1);
 
-	$fixquotes_check = "on" if $form->{fixquotes};
-	$autonode_check = "on" if $form->{autonode};
-	$fastforward_check = "on" if $form->{fastforward};
+	$fixquotes_check =   'on' if $form->{fixquotes};
+	$autonode_check =    'on' if $form->{autonode};
+	$fastforward_check = 'on' if $form->{fastforward};
+	$shortcuts_check =   'on' if $form->{shortcuts};
 
 	$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
@@ -1035,6 +1046,7 @@ sub editStory {
 		fixquotes_check		=> $fixquotes_check,
 		autonode_check		=> $autonode_check,
 		fastforward_check	=> $fastforward_check,
+		shortcuts_check		=> $shortcuts_check,
 		user			=> $user,
 		authoredit_flag		=> $authoredit_flag,
 		ispell_comments		=> $ispell_comments,
