@@ -16,6 +16,9 @@ __template__
 [% INCLUDE titlebar title=title width="100%" %]
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
+[% IF form.formkey %]
+<INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
 	<TR>
 		<TD>
 		<B>Nick Name</B><BR>

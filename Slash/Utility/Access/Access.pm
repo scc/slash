@@ -37,6 +37,8 @@ use vars qw($VERSION @EXPORT);
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	checkFormPost
+	formkeyError
+	formkeyHandler
 	compressOk
 	filterOk
 	getFormkey
@@ -97,6 +99,82 @@ sub getFormkey {
 	return getAnonId(1);
 }
 
+#========================================================================
+
+=head2 formkeyError()
+
+generates proper error message based on formkey error and 
+also logs to abuse log if the error warrants it
+
+=over 4
+
+=item Return value
+
+Returns an error message to be printed out by calling script
+
+=back
+
+=cut
+##################################################################
+sub formkeyError {
+	my ($value, $formname, $limit, $nocomm) = @_;
+
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $abuse_reasons = { usedform => 1, invalid => 1, maxposts => 1};
+	my $hashref = {};
+
+	if ($value eq 'response' || $value eq 'speed') {
+		my $limit_key = $formname . '_' . $value . '_limit';
+		$hashref->{limit} = intervalString($constants->{$limit_key});
+		$hashref->{interval} = intervalString($limit);
+		$hashref->{value} = $formname . "_" . $value;
+
+	} elsif ($value eq 'invalid') {
+		$hashref->{formkey} = $form->{formkey};
+		$hashref->{value} = $value;
+
+	} elsif ($value eq 'maxposts') {
+		$hashref->{limit} = $limit;	
+		$hashref->{interval} = intervalString($constants->{formkey_timeframe});
+		$hashref->{value} = $formname . "_" . $value;
+
+	} elsif ($value eq 'maxreads') {
+		$hashref->{limit} = $limit;	
+		$hashref->{interval} = intervalString($constants->{formkey_timeframe});
+		$hashref->{value} = $formname . "_" . $value;
+
+	} elsif ($value eq 'usedform') {
+		$hashref->{interval} = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
+		$hashref->{value} = $value;
+	}
+
+	if ($abuse_reasons->{$value}) {
+		# this is to keep from overwriting $hashref, since
+		# $hashref->{value} has already been set
+		my $tmpvalue = $hashref->{value};
+		$hashref->{no_error_comment} = 1;
+		$hashref->{value} = 'formabuse_' . $value;
+		$hashref->{formname} = $formname; 
+		$hashref->{formkey} = $form->{formkey}; 
+
+		my $error_message = slashDisplay('formkeyErrors', $hashref, 
+			{ Return => 1, Nocomm => 1 });
+
+		$slashdb->createAbuse($error_message, $formname, $ENV{QUERY_STRING}, 
+			$user->{uid}, $user->{ipid}, $user->{subnetid} );
+
+		# set it back
+		$hashref->{value} = $tmpvalue; 
+	}
+		
+
+	return slashDisplay('formkeyErrors', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
+}
 ## NEED DOCS
 #========================================================================
 sub intervalString {
@@ -135,6 +213,76 @@ sub intervalString {
 	return $interval_string;
 }
 
+#========================================================================
+sub formkeyHandler {
+	# ok, I know we don't like refs, but I don't wanna rewrite the 
+	# whole damned system
+	my ($formkey_op, $formname, $formkeyid, $formkey, $message_ref) = @_;
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $error_flag = 0;
+	my $msg = '';
+	
+
+	if ($formkey_op eq 'max_reads_check') {
+		if (my $limit = $slashdb->checkMaxReads($formname, $formkeyid)) {
+			$msg = formkeyError("maxreads", $formname, $limit);
+			$error_flag++;
+                }
+	}
+	elsif ($formkey_op eq 'max_post_check') {
+		if ( my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
+			$msg = formkeyError("maxposts", $formname, $limit);
+			$error_flag++;
+		}
+	} elsif ($formkey_op eq 'valid_check') {
+		if (! $slashdb->validFormkey($formname, $formkeyid)) {	
+			$msg = formkeyError('invalid', $formname);
+			$error_flag++;
+		}
+	} elsif ($formkey_op eq 'response_check') {
+		if ( my $interval = $slashdb->checkResponseTime($formname, $formkeyid)) {
+			$msg = formkeyError("response", $formname, $interval);
+			$error_flag++;
+		}
+	} elsif ($formkey_op eq 'interval_check') {
+		# check interval from this attempt to last successful post
+		if ( my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
+			$msg = formkeyError("speed", $formname, $interval);
+			$error_flag++;
+		}
+	} elsif ($formkey_op eq 'formkey_check') {
+		# check if form already used
+		unless (  my $increment_val = $slashdb->updateFormkeyVal($formkey)) {	
+			$msg = formkeyError('usedform', $formname);
+			$error_flag++;
+		}
+	} elsif ($formkey_op eq 'updateformkeyid') {
+		$slashdb->updateFormkeyId($formname, $formkey, 
+			$constants->{anonymous_coward_uid},
+			$user->{uid},
+			$form->{'rlogin'},
+			$form->{upasswd}
+		);
+	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
+			my $sid = $form->{sid} ? $form->{sid} : '';
+			$slashdb->createFormkey($formname, $formkeyid, $sid);
+	}
+		
+	if ($error_flag == 1) {
+		if ($message_ref) {
+			$$message_ref .= $msg;
+		} else {
+			print $msg;
+		}
+		return(1);
+	} else {
+		return(0);
+	}
+
+}
 #========================================================================
 sub submittedAlready {
 	my($formkey, $formname, $err_message) = @_;

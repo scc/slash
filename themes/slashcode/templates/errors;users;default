@@ -18,144 +18,64 @@ errors
 __template__
 [% SWITCH value %]
 
-[% 
-
-CASE 'note' %]
+[% CASE 'note' %]
 
 	[% FOREACH n = note %]
 <H2>[% n %]</H2>
 	[% END %]
 
-[% 
-
-CASE 'userinfo_nicknf_err' %]
+[% CASE 'userinfo_nicknf_err' %]
 [% INCLUDE titlebar width="95%" title="Nickname not found" %]
 	[% nick %] not found.
 
-[% 
-
-CASE 'saveuseradmin_notsaved' %]
+[% CASE 'saveuseradmin_notsaved' %]
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] Admin settings
 
-[% 
-
-CASE 'saveuseradmin_notsaveduser' %]
+[% CASE 'saveuseradmin_notsaveduser' %]
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] User settings
  
-[% 
-
-CASE 'saveuseradmin_uid_notnumeric' %]
+[% CASE 'saveuseradmin_uid_notnumeric' %]
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] : a uid must be all numeric 
  
-[% 
-
-CASE 'cookie_err' %]
+[% CASE 'cookie_err' %]
 [% INCLUDE titlebar width="95%" title="Cookie Error" %]
 	<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 	eliminates them, you are using a browser that doesn't support them, or you rejected it.
 
-[% 
-
-CASE 'mailpasswd_notmailed_err' %]
+[% CASE 'mailpasswd_notmailed_err' %]
 [% INCLUDE titlebar width="95%" title="Nickname not found" %]
 	Nickname was not found. No Password was mailed.<BR>
 
-[% 
+[% CASE 'duplicate_user' %]
+[% INCLUDE titlebar width="95%" title="User already exists" %]
+	The nickname [% nick %] has already been taken. Please try another
+	choice<BR>
 
-CASE 'checklist_err' %]
+[% CASE 'checklist_err' %]
 [% INCLUDE titlebar width="95%" title="Too many options" %]
 	You selected too many options<BR>
 
-[% 
-
-CASE 'saveuser_passnomatch_err' %]
+[% CASE 'saveuser_passnomatch_err' %]
 [% INCLUDE titlebar width="95%" title="Password fields don't match" %]
 	Passwords don't match. Password not changed.<BR>
 
-[% 
-
-CASE 'saveuser_passtooshort_err' %]
+[% CASE 'saveuser_passtooshort_err' %]
 [% INCLUDE titlebar width="95%" title="Password too short" %]
 	Password is too short and was not changed.<BR>
 
-[% 
-
-CASE 'anon_validation_attempt' %]
+[% CASE 'anon_validation_attempt' %]
 [% INCLUDE titlebar width="95%" title="Anonymous User validation attempt" %]
 	<P>I'm sorry. Anonymous users have no accounts that need to be validated.
 	If you do have an account on [% constants.sitename %] that you would like
 	to re-register, then please log in as that user, first.<BR>
 
-[% 
-
-CASE 'emailexists_err' %]
+[% CASE 'emailexists_err' %]
 	Sorry, [% FILTER strip_literal; form.realemail; END %] already exists in our userbase.<BR>
 
-[%
-
-# MAX POSTS.
-CASE "max userchanges" %]
-[% INCLUDE titlebar width="95%" title="Maximum User changes reached" %]
-<BR><P><B>You've reached your maximum number of user settings you can perform: [% max_userchanges %] modifications over [% timeframe %].
-</B></P>
-
-[% 
-
-# MAX READS.
-CASE "max reads" %]
-[% INCLUDE titlebar width="95%" title="Maximum User viewings reached" %]
-<BR><P><B>You've reached the maximum number of times you can access users.pl: [% max_users_viewings %] accesses over [% timeframe %].
-</B></P>
-
-[% 
-
-# INVALID FORMKEY
-CASE "invalid formkey" %]
-[% INCLUDE titlebar width="95%" title="Invalid form key!" %]
-<BR><P><B>form key: [% formkey %] !</B></P>
- 
-[%
-
-# POST LIMIT
-CASE "speed limit" %]
-[% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
-<P>[% constants.sitename %] requires you to wait [% limit %] between
-each change of user settings.</P>
-<P>It's been [% interval %] since you last changed a user setting</P>
-
-[%
-
-# USED FORM
-CASE "used form" %]
-[% INCLUDE titlebar width="95%" title="Form Error!" %]
-This form has been used already to submit a user setting change 
-[% IF interval %] [% interval %] ago [% END %].
-You can not use a form and hit the back button to use it again.
-
-[%
-
-# FORMABUSE MAX POSTS 
-CASE "formabuse_maxuserchanges" %]
-maxposts [% maxposts %] reached!
- 
-[%
-
-# FORMABUSE INVALID FORMKEY
-CASE "formabuse_invalidformkey" %]
-invalid formkey [% formkey %]
-
-[%
-
-# FORMABUSE USED FORM
-CASE "formabuse_usedform" %]
-form [% formkey %] already submitted
-
-[%
-
-CASE DEFAULT %]
+[% CASE DEFAULT %]
 	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>
 
 [% END %]

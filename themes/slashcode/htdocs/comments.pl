@@ -24,88 +24,178 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
+
 	my $formkeyid = getFormkeyId($user->{uid});
 	my $error_flag = 0;
+	my $postflag = $user->{state}{post};
 
-	# post and edit don't look like they're used anywhere
-	my %ops = (
-		default			=> \&displayComments,
-		index			=> \&commentIndex,
-		moderate		=> \&moderate,
-		reply			=> \&editComment,
-		Reply			=> \&editComment,
-		Edit			=> \&editComment,
-		edit			=> \&editComment,
-		post			=> \&editComment,
-		creatediscussion	=> \&createDiscussion,
-		Preview			=> \&editComment,
-		preview			=> \&editComment,
-		submit			=> \&submitComment,
-		Submit			=> \&submitComment,
-	);
+	my $op = lc($form->{op});
 
-	my $formkey_form = { 
-		edit		=> 1, 
-		default		=> 1,
-		index		=> 1,
-		reply		=> 1,
-	};
+	my ($formkey,$stories,$SECT);
 
-	my $formname = {
-		edit			=> 'comments',
-		post			=> 'comments',
-		reply			=> 'comments',
-		submit 			=> 'comments',
-		creatediscussion 	=> 'discussions',
-		index			=> 'discussions',
-		default			=> 'discussions',
-	};
-
-
-	my $max_post_check = {
-		edit			=> 1,
-		reply			=> 1,
-		submit 			=> 1,
-		creatediscussion	=> 1,
-	};
-
-	my $formkey_check = { 
-		submit 			=> 1,
-		creatediscussion	=> 1,
-	};
-
-	my $interval_check = {
-		submit 			=> 1,
-		creatediscussion	=> 1,
-	};
-
-	my $response_check = { 
-		submit 			=> 1,
+	######################################################
+	#
+	# this really should be in the db... all the op stuff...
+	#
+	# the formkey checks are handled by formkeyHandler. Formkey handler 
+	# is called:
+	#	$error_flag = 
+	#		formkeyHandler($check, $formname, $formkeyid, $formkey);
+	#
+	# 		example of what the args would actually be:
+	#
+	# 		formkeyHandler('max_post_check','comments', 3, 'xd2i2u3o2u45');
+	# 
+	# in the case such as in users, where you have to check the formkey 
+	# on 'savepasswd', which happens before "header" is called, you need 
+	# to save the error message into "$note"
+	#
+	#	$error_flag = 
+	#		formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
+	#  
+	# This way, since '$note' is being passwd, note gets the error message from the 
+	# formkey checks (if there's and error) but won't print the error, which happens
+	# by default without that 5th argument.
+	# 
+	# These are the major checks that formkeyHandler deals with:
+	# 
+	# generate_formkey - generates the formkey by populating $form->{formkey} 
+	# which automagically shows up in the form
+	# no message in formkeyErrors
+	# 
+	# max_read_check - checks how many times the form has been access
+	# and returns and error if that number has been exceded
+	# calls checkMaxReads
+	# the var for the form is max_<formname>_viewings (just make sure it matches 
+	# the message in formkeyErrors is triggered by '<formname>_maxreads' 
+	# 
+	# max_post_check - checks how many times formkeyid has successfully 
+	# posted and returns and error if that number has been exceded
+	# calls checkMaxPosts
+	# the var for the form is max_<formname>_allowed (just make sure it matches 
+	# the message in formkeyErrors is triggered by '<formname>_maxposts' 
+	#
+	# interval_check - checks the interval between last successful post
+	# calls checkPostInterval
+	# the var for the form is <forname>_speed_limit 
+	# (check hashref in checkPostInterval) to make sure
+	# the message in formkeyErrors is triggered by '<formname>_speed'
+	# 
+	# response_check - check the response between reply and post (only
+	# used on comments so far)
+	# calls checkResponseTime
+	# the var is <formname>_response_limit (check hashref in checkResponseTime) 
+	# the message in formkeyErrors is triggered by '<formname>_response'
+	# 
+	# valid_check - checks whether a formkey is valid
+	# calls validFormkey
+	# not form specific, no var
+	# the message in formkeyErrors is triggered by 'valid', no need to add 
+	# another message per form
+	#
+	# formkey_check - updates the formkey val to indicate the formkey has
+	# been used
+	# calls updateFormkeyVal
+	# not form specific, just keys on the formkey itself
+	# the message in formkeyErrors is triggered by 'usedform' no need to add
+	# another message per form 
+	#
+	# regen_formkey - creates a new formkey in the case with functions that 
+	# regenerate a form after submitting (without going through the op hashref)
+	# just need to check the calling function and see if it generates a new form
+	# outside the op hashref
+	# calls createFormkey which populates $form->{formkey}
+	#
+	# generate_formkey - creates a new formkey. make sure this is the last call 
+	# if your checking max_post_check, update_formkeyid 
+	# calls createFormkey which populates $form->{formkey}
+	# if you want the formkey in the form, you'll need to put
+	# <INPUT TYPE="HIDDEN" NAME="FORMKEY" VALUE="[% form.formkey %]">
+	# in the template for the form that you want it to be in
+	# 
+	# update_formkeyid - some forms require the formkey id to be updated
+	# as in the case with comments where a user might reply as anon and 
+	# then log in and then post
+	# calls updateFormkeyID
+	# 
+	# note: post and edit don't look like they're used anywhere
+	#
+	######################################################
+	my $ops	= {
+		default		=> { 
+			function		=> \&displayComments,
+			seclev			=> 0,
+			formname		=> 'discussions',
+			checks			=> ['generate_formkey'],
+		},
+		index			=> {
+			function		=> \&commentIndex,
+			seclev			=> 0,
+			formname 		=> 'discussions',
+			checks			=> ['generate_formkey'],
+		},
+		moderate		=> {
+			function		=> \&moderate,
+			seclev			=> 1,
+			post			=> 1,
+			formname		=> 'moderate',
+			checks			=> ['generate_formkey'],	
+		},
+		creatediscussion	=> {
+			function		=> \&createDiscussion,
+			seclev			=> 1,
+			post			=> 1,
+			formname 		=> 'discussions',
+			checks			=> 
+			[ qw ( max_post_check valid_check interval_check 
+				formkey_check regen_formkey ) ],
+		},
+		reply			=> {
+			function		=> \&editComment,
+			formname 		=> 'comments',
+			seclev			=> 0,
+			checks			=> 
+			[ qw ( max_post_check generate_formkey ) ],
+		},
+		edit 			=> {
+			function		=> \&editComment,
+			seclev			=> 0,
+			formname 		=> 'comments',
+			checks			=> 
+			[ qw ( max_post_check update_formkeyid generate_formkey ) ],
+		},
+		preview			=> {
+			function		=> \&editComment,
+			seclev			=> 0,
+			formname 		=> 'comments',
+			checks			=> 
+			[ qw ( max_post_check update_formkeyid ) ], 
+		},
+		post 			=> {
+			function		=> \&editComment,
+			seclev			=> 0,
+			formname 		=> 'comments',
+			checks			=> 
+			[ qw ( update_formkeyid max_post_check generate_formkey	) ],
+		},
+		submit			=> {
+			function		=> \&submitComment,
+			seclev			=> 0,
+			post			=> 1,
+			formname 		=> 'comments',
+			checks			=> 
+			[ qw ( max_post_check valid_check response_check 
+				interval_check formkey_check ) ],
+		},
 	};
 	
-	my $updateFormkeyID = {
-		edit		=> 1,
-		post		=> 1,
-		preview		=> 1,
-	};
-
-
-	# maybe do an $op = lc($form->{'op'}) to make it simpler?
-	# just a thought.  -- pudge
-	# Not a bad idea actually --Brian
-	# why's that? The ops are already lowercase, and should be. --Patrick
-	# there are four ops above that are just upper
-	# case aliases to the lower case versions -- pudge
-	# yeah, I missed that - I'm so used to users
-
-	my $stories;
-	#This is here to save a function call, even though the
+	# This is here to save a function call, even though the
 	# function can handle the situation itself
 	$stories = $slashdb->getNewStory($form->{sid},
 				['section', 'title', 'commentstatus']);
 	$stories->{'title'} ||= "Comments";
 
-	my $SECT = $slashdb->getSection($stories->{'section'});
+	$SECT = $slashdb->getSection($stories->{'section'});
 
 	$form->{pid} ||= "0";
 
@@ -113,142 +203,50 @@ sub main {
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
 		print getError('login error');
-		$form->{op} = "Preview";
+		$op = 'preview';
 	}
-	my $op = lc($form->{'op'});
-	$op = 'default' unless $ops{$op};
+	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
+	$op = 'default' if (! $postflag && $ops->{$op}{post});
 
-	# authors shouldn't jump thourh formkey hoops? right?	
+	# authors shouldn't jump through formkey hoops? right?	
 	if ($user->{seclev} < 100) {
-		if ($max_post_check->{$op} ) { 
-			if ( my $maxposts = $slashdb->checkMaxPosts($formname->{$op}, $formkeyid)) {
-
-				$slashdb->createAbuse( ( getError('formabuse_maxposts', {
-									no_error_comment 	=> 1,
-									type 			=> 'formabuse_maxposts', 
-									formname		=> $formname->{$op},
-									maxposts 		=> $maxposts, 
-									}, 1)),
-								$formname->{$op},
-								$ENV{QUERY_STRING},
-								$user->{uid},
-								$user->{ipid},
-								$user->{subnetid} 
-					) if $formkey_check->{$op} ;
-
-				my $timeframe_string = intervalString($constants->{formkey_timeframe});
-
-				print getError("$formname->{$op} max posts", {
-							max_posts => $maxposts,
-							timeframe => $timeframe_string 
-				});
-	
-				$error_flag++;
-			}
-		}
-
-		if ($formkey_check->{$op} && ! $error_flag) {
-			if (! $slashdb->validFormkey($formname->{$op}, $formkeyid)) {	
-				$slashdb->createAbuse( getError('formabuse_invalidformkey', {
-									no_error_comment	=> 1,
-									formname		=> $formname->{$op},
-									formkey 		=> $form->{formkey},
-									}, 1),
-						$formname->{$op},
-						$ENV{QUERY_STRING},
-						$user->{uid},
-						$user->{ipid},
-						$user->{subnetid} 
-				);
-
-				print getError('invalid formkey', {
-						formkey => $form->{formkey}
-				});
-
-				$error_flag++;
-			}
-		}
-
-		if ($interval_check->{$op} && ! $error_flag) {
-			# check interval from this attempt to last successful post
-			if ( my $interval = $slashdb->checkPostInterval($formname->{$op}, $formkeyid)) {	
-				my $speed_limit_key = $formname->{$op} . '_speed_limit';
-				my $limit_string = intervalString($constants->{$speed_limit_key});
-				my $interval_string = intervalString($interval);
-
-				print getError("$formname->{$op} post limit", {
-					limit 		=> 	$limit_string,
-					interval 	=> 	$interval_string
-				});
-				$error_flag++;
-			}
-		}
-			
-		if ($response_check->{$op} && ! $error_flag) {
-			# check response time
-			if ( my $response_time = $slashdb->checkResponseTime($formname->{$op}, $formkeyid)) {
-				my $response_limit_key = $formname->{$op} . '_response_limit';
-				my $limit_string = intervalString($constants->{$response_limit_key});
-				my $response_string = intervalString($response_time);
-				# make sure you have the error message for the form
-				print getError("$formname->{$op} response limit", {
-					limit		=> 	$limit_string,
-					response 	=> 	$response_string
-				});
-				$error_flag++;
-			}
-		}
-		if ($formkey_check->{$op} && ! $error_flag) {
-			# check if form already used
-			unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
-				my $interval_string = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
-		
-				print getError('used form', {
-					interval	=>	$interval_string
-				});
-		
-				$slashdb->createAbuse( getError('formabuse_usedform', {
-							no_error_comment 	=> 1,
-							formname		=> $formname->{$op},
-							formkey 		=> $form->{formkey}
-							}, 1),
-					$formname->{$op},
-					$ENV{QUERY_STRING},
-					$user->{uid},
-					$user->{ipid},
-					$user->{subnetid} 
-				);
-				$error_flag++;
-			}
-		}
-
-		if ($updateFormkeyID->{$op}) {
-			$slashdb->updateFormkeyId($formname->{$op},
-				$form->{formkey},
-				$constants->{anonymous_coward_uid},
-				$user->{uid},
-				$form->{'rlogin'},
-				$form->{upasswd}
-			);
-		}
-
-		if ($formkey_form->{$op}) {
-			my $sid = $form->{sid};
-			$sid ||= 'discussions'; 
-			$slashdb->createFormkey($formname->{$op}, $formkeyid, $sid);
+		$formkey = $form->{formkey};
+		# this is needed for formkeyHandler to print the correct messages 
+		# yeah, the next step is to loop through the array of $ops->{$op}{check}
+		for my $check (@{$ops->{$op}{checks}}) {
+			my $formname = $ops->{$op}{formname}; 
+			# next if $_ eq 'formname';
+			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+			last if $error_flag;
 		}
 	} 
-	
 
 	if (! $error_flag) {
-		$ops{$op}->($form, $slashdb, $user, $constants, $formkeyid);
-		# do something with updated? ummm.
+		# CALL THE OP
+		my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants, $formkeyid);
 
-		if ( $formkey_check->{$op}) {
-			if ($formname->{$op} eq 'comments')  { 
-				my $updated = $slashdb->updateFormkey($form->{formkey}, $form->{maxCid}, length($form->{postercomment})); 
-			} else {
-				my $updated = $slashdb->updateFormkey($form->{formkey}, '', length($form->{title})); 
+		# this has to happen - if this is a form that you updated the formkey val ('formkey_check')
+		# you need to call updateFormkey to update the timestamp (time of successful submission) and
+		# note: maxCid and length aren't really required - this is legacy from when formkeys was 
+		# comments specific, but it can't hurt to put some sort of length in there.. perhaps
+		# the length of the primary field in your form would be a good choice.
+		for my $check (@{$ops->{$op}{checks}}) {
+			if ( $check eq 'formkey_check') {
+				if($retval) {
+					my $id = $form->{maxCid} ? $form->{maxCid} : '';
+					my $field_length= $form->{postercomment} ? 
+						length($form->{postercomment}) : length($form->{postercomment});
+
+					# do something with updated? ummm.
+					my $updated = $slashdb->updateFormkey($formkey, $id, $field_length); 
+
+				# updateFormkeyVal updated the formkey before the function call, 
+				# but the form somehow had an error in the function it called 
+				# unrelated to formkeys so reset the formkey because this is 
+				# _not_ a successful submission
+				} else {
+					my $updated = $slashdb->resetFormkey($formkey);
+				}
 			}
 		}
 	}
@@ -524,7 +522,7 @@ sub previewForm {
 	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
 	my $tempSubject = strip_nohtml($form->{postersubj});
 
-	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return;
+	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return();
 
 	my $preview = {
 		nickname	=> $form->{postanon}
@@ -565,7 +563,7 @@ sub submitComment {
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
 	validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)
-		or return;
+		or return(0);
 
 	return if $error_message || !$form->{postercomment} || !$form->{postersubj};
 
@@ -604,6 +602,7 @@ sub submitComment {
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
 		print getError('submission error');
+		return(0);
 
 	} elsif (!$maxCid) {
 		# What vars should be accessible here?
@@ -611,6 +610,7 @@ sub submitComment {
 		# What are the odds on this happening? Hmmm if it is we should
 		# increase the size of int we used for cid.
 		print getError('maxcid exceeded');
+		return(0);
 	} else {
 		slashDisplay('comment_submit');
 		undoModeration($form->{sid});
@@ -648,6 +648,7 @@ sub submitComment {
 			}
 		}
 	}
+	return(1);
 }
 
 

@@ -102,6 +102,7 @@ template=templates/edit_comment;comments;default
 template=templates/editpoll;pollBooth;default
 template=templates/errors;comments;default
 template=templates/errors;users;default
+template=templates/formkeyErrors;misc;default
 template=templates/fancybox;misc;default
 template=templates/fancybox;misc;light
 template=templates/footer;misc;admin

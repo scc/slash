@@ -476,7 +476,7 @@ INSERT INTO vars (name, value, description) VALUES ('comment_maxscore','5','Maxi
 INSERT INTO vars (name, value, description) VALUES ('comment_minscore','-1','Minimum score for a specific comment');
 INSERT INTO vars (name, value, description) VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');
 INSERT INTO vars (name, value, description) VALUES ('comments_response_limit','20','interval between reply and submit');
-INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','10','seconds delay before repeat posting');
+INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','120','seconds delay before repeat posting');
 INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)');
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
@@ -525,7 +525,6 @@ INSERT INTO vars (name, value, description) VALUES ('max_depth','7','max depth f
 INSERT INTO vars (name, value, description) VALUES ('max_discussions_allowed','3','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_expiry_comm','250','Largest value for comment expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('max_expiry_days','365','Largest value for duration expiry trigger.');
-INSERT INTO vars (name, value, description) VALUES ('max_posts_allowed','30','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_userchanges_allowed','50','How many changes a user can submit');
 INSERT INTO vars (name, value, description) VALUES ('max_users_viewings','30','how many times users.pl can be viewed');
@@ -582,5 +581,5 @@ INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total n
 INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
-INSERT INTO vars (name, value, description) VALUES ('userchange_speed_limit','10','How fast a user can change their prefs');
+INSERT INTO vars (name, value, description) VALUES ('users_speed_limit','20','How fast a user can change their prefs');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');

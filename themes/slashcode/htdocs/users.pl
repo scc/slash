@@ -19,237 +19,241 @@ sub main {
 	my $form = getCurrentForm();
 	my $formname = $0;
 	$formname =~ s/.*\/(\w+)\.pl/$1/;
+	my $formkeyid = getFormkeyId($curuser->{uid});
+
 	my $error_flag = 0;
-	my $previous_formkey;
+	my $formkey = $form->{formkey};
 
 	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
 	my $postflag = $curuser->{state}{post};
-	print STDERR "postflag: $postflag\n";
-	my $op = $form->{op};
+	my $op = lc($form->{op});
 	$op ||= 'userinfo';
 
 	# my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
 	my $note;
 
-	if ($op eq 'userlogin' && !$curuser->{is_anon}) {
+	my $ops = { 
+		admin		=>  {
+			function 	=> \&adminDispatch,
+			seclev		=> 100,
+			formname	=> $formname,
+			checks		=> [],
+		}, 
+		userlogin	=>  {
+			function	=> \&showInfo,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> ['generate_formkey'],
+		},
+		userinfo	=>  {
+			function	=> \&showInfo,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> ['max_reads_check'],
+		},
+		savepasswd	=> {
+			function	=> \&savePasswd,
+			seclev		=> 1,
+			post		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check valid_check 
+				interval_check formkey_check ) ],
+		},
+		saveuseradmin	=> { 
+			function	=> \&saveUserAdmin,
+			seclev		=> 10000,
+			post		=> 1,
+			formname	=> $formname,
+			checks		=> [],
+		},
+		savehome	=> {
+			function	=> \&saveHome,
+			seclev		=> 1,
+			post		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check valid_check 
+				interval_check formkey_check regen_formkey) ],
+		},
+		savecomm	=> {
+			function	=> \&saveComm,
+			seclev		=> 1,
+			post		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check valid_check 
+				interval_check formkey_check regen_formkey) ],
+		},	
+		saveuser	=> {
+			function	=> \&saveUser,
+			seclev		=> 1,
+			post		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check valid_check 
+				interval_check formkey_check regen_formkey) ],
+		},
+		changepasswd	=> {
+			function	=> \&changePasswd,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		edituser	=> {
+			function	=> \&editUser,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		authoredit	=> {
+			function	=> \&editUser,
+			seclev		=> 10000,
+			formname	=> $formname,
+			checks		=> [],
+		},
+		edithome	=> {
+			function	=> \&editHome,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		editcomm	=> {
+			function	=> \&editComm,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		newuser		=> {
+			function	=> \&newUser,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check valid_check 
+				interval_check formkey_check regen_formkey) ],
+		},
+		newuseradmin	=> {
+			function	=> \&newUserForm,
+			seclev		=> 10000,
+			formname	=> $formname,
+			checks		=> [],
+		},
+		previewbox	=> {
+			function	=> \&previewSlashbox,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> [],
+		},
+		mailpasswd	=> { 
+			function	=> \&mailPasswd,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> ['generate_formkey'],
+		},
+		validateuser	=> { 
+			function	=> \&validateUser,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> ['regen_formkey'],
+		},
+		userclose	=>  {
+			function	=> \&displayForm,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> [],
+		},
+		newuserform	=> {
+			function	=> \&displayForm,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		mailpasswdform 	=> {
+			function	=> \&displayForm,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		displayform	=> {
+			function	=> \&displayForm,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		default		=> { 
+			function	=> \&displayForm,
+			seclev		=> 0,
+			formname	=> $formname,
+			checks		=> 
+			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+	} ;
+
+	if ($op eq 'userlogin' && ! isAnon($curuser->{uid})) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
-		# print STDERR "refer $refer\n";
 		redirect($refer);
 		return;
 
 	} elsif ($op eq 'savepasswd') {
-		$note = savePasswd($form->{uid});
+		my $error_flag = 0;
+		for my $check (@{$ops->{savepasswd}{checks}}) {	
+			# damnit to hell! the only way to save the error message
+			# is to pass by ref $note and add the message to note....
+			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
+			last if $error_flag;
+		}
+		$note .= savePasswd($form->{uid}) if ! $error_flag;
 		# change op to edituser and let fall through;
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
-		$op = 'edituser';
+		my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})) if ! $error_flag; 
+		$op = 'changepasswd';
 	}
 
 	header(getMessage('user_header'));
 	print getMessage('note', { note => $note }) if defined $note;
-	# print STDERR "note $note\n";
 	print createMenu($formname) if ! $curuser->{is_anon};
 
-	my $ops = { 
-		admin		=> \&adminDispatch,
-		userlogin	=> \&showInfo,
-		userinfo	=> \&showInfo,
-		saveuseradmin	=> \&saveUserAdmin,
-		savehome	=> \&saveHome,
-		savecomm	=> \&saveComm,
-		saveuser	=> \&saveUser,
-		changepasswd	=> \&changePasswd,
-		edituser	=> \&editUser,
-		authoredit	=> \&editUser,
-		edithome	=> \&editHome,
-		editcomm	=> \&editComm,
-		newuser		=> \&newUser,
-		newuseradmin	=> \&newUserForm,
-		previewbox	=> \&previewSlashbox,
-		mailpasswd	=> \&mailPasswd,
-		validateuser	=> \&validateUser,
-		userclose	=> \&displayForm,
-		newuserform	=> \&displayForm,
-		mailpasswdform 	=> \&displayForm,
-		displayform	=> \&displayForm,
-		default		=> \&displayForm,
-	};
 
-	my $user_calls = {
-		userinfo	=> 1,
-		changepasswd	=> 1,
-		userlogin 	=> 1,
-		newuserform	=> 1,
-		mailpasswdform	=> 1,
-		displayform	=> 1,
-		savehome	=> 1,
-		saveuser	=> 1,
-		savecomm	=> 1,
-		edithome	=> 1,
-		editcomm	=> 1,
-		default		=> 1,
-	};
-
-	my $admin_calls = {
-		saveuseradmin	=> 1,
-		newuseradmin	=> 1,
-		default		=> 1,
-	};
-
-	my $post_calls = {
-		savepasswd	=> 1,
-		saveuser	=> 1,
-		savehome	=> 1,
-		savecomm	=> 1,
-		saveuseradmin	=> 1,
-	};
-
- 	my $formkey_forms = {
- 		userlogin	=> 1, 
- 		changepasswd	=> 1, 
- 		edituser	=> 1, 
- 		edithome	=> 1, 
- 		editcomm	=> 1, 
- 		newuser		=> 1, 
- 		mailpasswd	=> 1, 
- 		newuserform	=> 1, 
- 		mailpasswdform 	=> 1,
- 		displayform	=> 1, 
- 	};
-
-	my $formkey_check = {
-		savepasswd	=> 'changepasswd',
- 		saveuser	=> 'edituser',
-		savehome	=> 'edithome',
-		savecomm	=> 'editcomm',
-	};
-
-	if ($curuser->{is_anon}) {
-		$op = 'default' if $user_calls->{$op};
-
-	} elsif (! $suadmin_flag) {
-		$op = 'userinfo' if $admin_calls->{$op};
-		# $op = 'userinfo' if $post_calls->{$op}  && ! $postflag ;
+			
+	if ( isAnon($curuser->{uid}) && $ops->{$op}{seclev} > 0) {
+		$op = 'default';
+	} elsif ( $curuser->{seclev} < $ops->{$op}{seclev} ) {
+		$op = 'userinfo';
 	}
 
-	print STDERR "----------------\nOP $op\n-----------------\n";
-
-	# here goes it
-
-
-	my $formkeyid = getFormkeyId($curuser->{uid});
-	
-
-	# check to see if they've hit max user viewings, and if they have, null
-	# out the op.
-	if ($curuser->{seclev} < 100) {
-		if (my $max_users_viewings = $slashdb->checkMaxReads($formname, $formkeyid)) {
-	             		my $timeframe_string = intervalString($constants->{formkey_timeframe});
-				print getError('max reads', {
-					max_users_viewings => $max_users_viewings,
-					timeframe => $timeframe_string, 
-				});
-	
-				$op = 'noop';
-				$error_flag++;
-		}
-	
-		if ($formkey_check->{$op} && $curuser->{seclev} < 100) {
-			# this is all you need to add to have max user changes work
-			my $tmp = $slashdb->checkMaxPosts($formname, $formkeyid) ;
-			if (my $max_userchanges = $slashdb->checkMaxPosts($formname, $formkeyid)) {
-	                	$slashdb->createAbuse( ( getError('formabuse_maxuserchanges', {
-					no_error_comment 	=> 	1,
-					type 			=> 	'formabuse_maxposts', 
-					max_userchanges		=> 	$max_userchanges,
-					}, 1)),
-				$formname,
-				$ENV{QUERY_STRING},
-				$curuser->{uid},
-				$curuser->{ipid},
-				$curuser->{subnetid} 
-			);
-	             		my $timeframe_string = intervalString($constants->{formkey_timeframe});
-	      			print getError('max userchanges', { 
-					max_userchanges => $max_userchanges,
-					timeframe => $timeframe_string, 
-				});
-	
-				$error_flag++;
-			}
-			# verify a valid formkey
-			if (! $slashdb->validFormkey($formname, $formkeyid)) {	
-				$slashdb->createAbuse( getError('formabuse_invalidformkey', {
-							no_error_comment 	=> 1,
-							formkey 		=> $form->{formkey},
-							}, 1),
-						$formname,
-						$ENV{QUERY_STRING},
-						$curuser->{uid},
-						$curuser->{ipid},
-						$curuser->{subnetid} 
-				);
-	
-				print getError('invalid formkey', { formkey => $form->{formkey} });
-	
-				$error_flag++;
-			}
-			# check interval from this attempt to last successful post
-			if ( my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
-				my $limit_string = intervalString($constants->{userchange_speed_limit});
-				my $interval_string = intervalString($interval);
-		
-				print getError('speed limit', {
-					limit 		=> 	$limit_string,
-					interval 	=> 	$interval_string
-				});
-	
-				$error_flag++;
-			}
-			# check if form already used
-			unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
-				my $interval = time() - $slashdb->getFormkeyTs($form->{formkey},1);
-				
-				my $interval_string = intervalString($interval) if $interval < $constants->{formkey_timeframe};
-		
-				print getError('used form', {
-					interval => $interval_string
-				});
-		
-				$slashdb->createAbuse( getError('formabuse_usedform', {
-							no_error_comment	=> 1,
-							formkey 		=> $form->{formkey}
-							}, 1),
-					$formname,
-					$ENV{QUERY_STRING},
-					$curuser->{uid},
-					$curuser->{ipid},
-					$curuser->{subnetid} 
-				);
-	
-				$error_flag++;
-			}
-	
-			$previous_formkey = $form->{formkey};
-	
-			# if there's an error, change the op that will give them
-			# the form they submitted from, which requires a new formkey
-			$op = $formkey_check->{$op} if $error_flag; 
-		} 
+	if ( $ops->{$op}{post} && ! $postflag) {
+		$op eq isAnon($curuser->{uid}) ? 'default' : 'userinfo';
 	} 
 
-	# create the formkey if called for
-	if ($formkey_forms->{$op} || (! $error_flag && $formkey_check->{$op})) {
-		$slashdb->createFormkey($formname, $formkeyid, $op);
+	for my $check (@{$ops->{$op}{checks}}) {
+		last if $op eq 'savepasswd';
+		$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+		last if $error_flag;
 	}
 
 	# call the method
-	$ops->{$op}->() if $op ne 'noop';
+	$ops->{$op}{function}->() if ! $error_flag;
 
-	# successful save action, no formkey errors, update existing formkey
-	if ($formkey_check->{$op} && $curuser->{seclev} < 100 && ! $error_flag) {
-		my $updated = $slashdb->updateFormkey($previous_formkey, $op, length($ENV{QUERY_STRING})); 
-	}
+	if ($curuser->{seclev} < 100 && ! $error_flag) {
+		for my $check (@{$ops->{$op}{checks}}) {
+			# successful save action, no formkey errors, update existing formkey
+			if ($check eq 'formkey_check') {
+				my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})); 
+			}
+		}
+	} 
+	# if there were legit error levels returned from the save methods
+	# I would have it clear the formkey in case of an error, but that
+	# needs to be sorted out later
+	# else { resetFormkey($formkey); }
 
 	writeLog($curuser->{nickname});
 	footer();
@@ -328,10 +332,14 @@ sub newUser {
 			mailPasswd($uid);
 
 			return;
+		} else { 
+			print getError('duplicate_user', { nick => $form->{usernick}});
+			return;
 		}
+	} else {
+		print getError('duplicate_user', { nick => $form->{usernick}});
+			return;
 	}
-	# Duplicate User
-	displayForm();
 }
 
 #################################################################
@@ -1036,6 +1044,7 @@ sub savePasswd {
 	my $curuser = getCurrentUser();
 	my $constants = getCurrentStatic();
 	my $uid;
+	my $error_flag = 0;
 	my($note, $author_flag, $user_fakeemail, $formname);
 	my $user = {};
 
@@ -1072,6 +1081,7 @@ sub savePasswd {
 
 	if (!$user->{nickname}) {
 		$note .= getError('cookie_err', 0, 1);
+		$error_flag++;
 	}
 
 	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
@@ -1084,12 +1094,14 @@ sub savePasswd {
 
 	} elsif ($form->{pass1} ne $form->{pass2}) {
 		$note .= getError('saveuser_passnomatch_err', 0, 1);
+		$error_flag++;
 
 	} elsif (length $form->{pass1} < 6 && $form->{pass1}) {
 		$note .= getError('saveuser_passtooshort_err', 0, 1);
+		$error_flag++;
 	}
 
-	$slashdb->setUser($uid, $users_table);
+	$slashdb->setUser($uid, $users_table) if ! $error_flag;
 
 	return $note;
 }

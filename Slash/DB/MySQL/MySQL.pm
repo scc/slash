@@ -1801,6 +1801,23 @@ sub updateFormkeyVal {
 }
 
 ##################################################################
+# use this in case the function you call fails prior to updateFormkey
+# but after updateFormkeyVal
+sub resetFormkey {
+	my($self, $formkey) = @_;
+
+	my $constants = getCurrentStatic();
+
+	# reset the formkey to 0, and reset the ts
+	my $updated = $self->sqlUpdate("formkeys", {
+		-value		=> 0,
+		ts		=> time(),
+	}, "formkey=" . $self->sqlQuote($formkey));
+
+	print STDERR "RESET formkey $updated\n" if $constants->{DEBUG};
+	return($updated);
+}
+##################################################################
 sub updateFormkey {
 	my($self, $formkey, $cid, $length) = @_;
 
@@ -1830,7 +1847,7 @@ sub checkPostInterval {
 		comments 	=> $constants->{comments_speed_limit},
 		discussions	=> $constants->{discussions_speed_limit},
 		submit		=> $constants->{submission_speed_limit},
-		users		=> $constants->{userchange_speed_limit},
+		users		=> $constants->{users_speed_limit},
 	};
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
