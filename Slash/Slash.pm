@@ -1886,7 +1886,8 @@ sub displayStory {
 
 	my $slashdb = getCurrentDB();
 	my $story = $slashdb->getStory($sid);
-	my $author = $slashdb->getUser($story->{uid}, ['nickname', 'fakeemail']);
+#	my $author = $slashdb->getUser($story->{uid}, ['nickname', 'fakeemail']);
+	my $author = $slashdb->getAuthor($story->{uid}, ['nickname', 'fakeemail']);
 	my $topic = $slashdb->getTopic($story->{tid});
 	
 	# convert the time of the story (this is database format) 
@@ -1898,6 +1899,8 @@ sub displayStory {
 	# (if exists)
 	# this only needs to run for slashdot
 	# why is this commented out?  -- pudge
+	# Its basically an undocumented feature
+	# that slash uses.
 	#$slashdb->setSectionExtra($full, $story);
 
 	my $return = dispStory($story, $author, $topic, $full);
