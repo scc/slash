@@ -1321,7 +1321,7 @@ sub deleteStory {
 # for slashd
 sub deleteStoryAll {
 	my($self, $sid) = @_;
-	my $db_sid $self->sqlQuote($sid);
+	my $db_sid =  $self->sqlQuote($sid);
 
 	$self->sqlDo("DELETE from stories where sid=$db_sid");
 	$self->sqlDo("DELETE from story_text where sid=$db_sid");
@@ -1694,7 +1694,7 @@ sub getTopNewsstoryTopics {
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
 	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
 	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,$table",
-		"topics.tid=$topics.tid
+		"topics.tid=$table.tid
 		$when
 		GROUP BY topics.tid
 		$order"
