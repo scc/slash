@@ -39,8 +39,10 @@ $task{$me}{code} = sub {
 		}
 		my($comments, $count) = Slash::selectComments($discussion_id, 0);
 		my $hp = { };
-		for my $score (0 .. $num_scores-1) {
-			$hp->{$score + $min} = $comments->[0]{natural_totals}[$score];
+		for my $score (reverse (0 .. $num_scores-1)) {
+			my $adjscore = $score+$min;
+			$hp->{$adjscore} = $comments->[0]{natural_totals}[$score];
+			$hp->{$adjscore} += $hp->{$adjscore+1} if $hp->{$adjscore+1};
 		}
 		# This will clear the flag, too.
 		$slashdb->setDiscussionHitParade($discussion_id, $hp);

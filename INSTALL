@@ -185,6 +185,16 @@ INSTALLATION
         default, we normally set the user to have all permissions, but that
         might not be appropriate for your site).
 
+	You should have a my.cnf file somewhere, probably /etc/my.cnf.
+	And there is probably a [mysqld] section in it.  Add this line:
+
+		init-file=/usr/local/slash/sql/mysql/init.sql
+
+	If you do not have a my.cnf file, create one at /etc/my.cnf and
+	give it just two lines, "[mysqld]" and the above.  (Technically
+	you don't need to use the init.sql file unless you want to use
+	the *_heap tables.)
+
     2.  Install perl.
 
         perl is likely already installed on your machine; make sure its
@@ -340,9 +350,16 @@ INSTALLATION
 
     7.  Start it up.
 
-        After installation of the site is done, and Apache has been stopped
-        and started (do NOT try to restart Apache, but do a full stop and
-        start), run slashd. This should be done via the init script:
+        After installation of the site is done, do these steps in this
+	order:
+
+	Stop Apache.
+	Stop mysqld.
+	Start mysqld.
+	Start Apache.
+	Start slashd.
+
+	Slashd should be started with the init script:
 
                 /etc/init.d/slash start
 
@@ -350,6 +367,12 @@ INSTALLATION
         including sending out daily mailings, cleaning up the database, and
         updating stories. The init script above will start up an individual
         slashd daemon process process for each installed site.
+
+	You should not need to restart mysqld from here out (this time was
+	to make sure the init.sql was properly processed).  When you
+	restart Apache, you will always want to stop it, pause a few
+	seconds, and start it -- we don't trust the "graceful" or "restart"
+	and we don't recommend that you do either.
 
 INSTALLATION OPTIONS
   Multiple Servers

@@ -1218,7 +1218,7 @@ sub setDiscussionHitParade {
 		if ($hp->{-1}) {
 			$self->sqlUpdate("discussions",
 				{ commentcount => $hp->{-1} },
-				"discussion=$discussion_id AND commentcount=0"
+				"id=$discussion_id AND commentcount=0"
 			);
 		}
 	}

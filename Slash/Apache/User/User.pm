@@ -277,6 +277,8 @@ Fry:Augh, I am so unlucky. I've run over black cats that were luckier than me.
 Fry:That's it! You can only take my money for so long before you take it all and I say enough! 
 Fry:Leela, Bender, we're going grave-robbing.
 Fry:Where's Captain Bender? Off catastrophizing some other planet?
+Fry:Would you cram a sock in it, Bender? Those aren't even medals! They're bottle caps and pepperoni slices.
+Fry:To Captain Bender! He's the best! ...at being a big jerk who's stupid and his big ugly face is as dumb as a butt!
 Fry:People said I was dumb but I proved them!
 Fry:It's like a party in my mouth and everyone's throwing up.
 Fry:Nowadays people aren't interested in art that's not tattooed on fat guys.
