@@ -128,10 +128,7 @@ sub main {
 	} elsif ($form->{templatedelete_cancel}) {
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
-	} elsif ($form->{templatenew}) {
-		templateEdit($user->{seclev});
-
-	} elsif ($form->{templatepage} || $form->{templatesection}) {
+	} elsif ($form->{templatenew} || $form->{templatepage} || $form->{templatesection}) {
 		templateEdit($user->{seclev}, '', $form->{page}, $form->{section});
 
 	} elsif ($form->{templateed}) {
