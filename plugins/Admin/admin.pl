@@ -33,8 +33,6 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	getSection('admin');
-
 	redirect('/users.pl') if $user->{seclev} < 100;
 
 	my($tbtitle);

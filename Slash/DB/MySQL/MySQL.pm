@@ -2929,11 +2929,12 @@ sub _genericGetsCache {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('*', $table);
-	while (my $row = $sth->fetchrow_hashref) {
-		$row->{'_modtime'} = time();
-		$self->{$table_cache}{ $row->{$table_prime} } = $row;
-	}
+#	my $sth = $self->sqlSelectMany('*', $table);
+#	while (my $row = $sth->fetchrow_hashref) {
+#		$row->{'_modtime'} = time();
+#		$self->{$table_cache}{ $row->{$table_prime} } = $row;
+#	}
+	$self->{$table_cache} = _genericGets(@_);
 	$self->{$table_cache_full} = 1;
 	$sth->finish;
 	$self->{$table_cache_time} = time();
@@ -2948,26 +2949,77 @@ sub _genericGetsCache {
 sub _genericGets {
 	my($table, $table_prime, $param_table, $self, $values) = @_;
 
-	my %return;
-	my $sth;
+	my (%return, $sth, $params);
+
 
 	if (ref($values) eq 'ARRAY') {
-		my $val = join ',', @$values;
-		$val .= ",$table_prime" unless grep $table_prime, @$values;
+		my $get_values;
+
+		if($param_table) {
+			my $cache = _genericGetCacheName($self, $table);
+			for(@$values) {
+				(my $clean_val = $values) =~ s/^-//;
+				if($self->{$cache}{$clean_val}) {
+					push @$get_values, $_;
+				} else {
+					my $val = $self->sqlSelectAll('$table_prime, name, value', $param_table, "name='$_'");
+					for my $row (@$val) {
+						push (@$params, $row);
+					}
+				}
+			}
+		} else {
+			$get_values = $values;
+		}
+		my $val = join ',', @$get_values;
+		$val .= ",$table_prime" unless grep $table_prime, @$get_values;
 		$sth = $self->sqlSelectMany($val, $table);
 	} elsif ($values) {
-		$values .= ",$table_prime" unless $values eq $table_prime;
-		$sth = $self->sqlSelectMany($values, $table);
+		if($param_table) {
+			my $cache = _genericGetCacheName($self, $table);
+			(my $clean_val = $values) =~ s/^-//;
+			my $use_table = $self->{$cache}{$clean_val};
+
+			if($use_table) {
+				$values .= ",$table_prime" unless $values eq $table_prime;
+				$sth = $self->sqlSelectMany($values, $table);
+			} else {
+				my $val = $self->sqlSelectAll("$table_prime, name, value", $param_table, "name=$values");
+				for my $row (@$val) {
+					push @$params, $row;
+				}
+			}
+		} else {
+			$values .= ",$table_prime" unless $values eq $table_prime;
+			$sth = $self->sqlSelectMany($values, $table);
+		}
 	} else {
 		$sth = $self->sqlSelectMany('*', $table);
+		if($param_table) {
+			$params = $self->sqlSelectAll("$table_prime, name, value", $param_table);
+		}
 	}
 
-	while (my $row = $sth->fetchrow_hashref) {
-		$return{ $row->{$table_prime} } = $row;
+	if($sth) {
+		while (my $row = $sth->fetchrow_hashref) {
+			$return{ $row->{$table_prime} } = $row;
+		}
+		$sth->finish;
 	}
-	$sth->finish;
+
+	if($params) {
+		for(@$params) {
+			${return->{$_->[0]}->{$_->[1]}} = $_->[2]
+		}
+	}
 
 	return \%return;
+}
+
+########################################################
+sub getStories {
+	my $answer = _genericGets('stories', 'sid', 'story_param', @_);
+	return $answer;
 }
 
 ########################################################
