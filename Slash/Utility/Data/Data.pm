@@ -291,23 +291,21 @@ sub timeCalc {
 
 	$off_set = $user->{off_set} unless defined $off_set;
 
-	# find out the user's time based on personal offset
-	# in seconds
-# 	$date = DateCalc($date, "$off_set SECONDS", \$err) if $off_set;
+	# massage data for YYYYMMDDHHmmSS
+	$date =~ s/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/$1-$2-$3 $4:$5:$6/;
+
+	# find out the user's time based on personal offset in seconds
 	$date = str2time($date) + $off_set;
 
 	# set user's language
 	my $lang = getCurrentStatic('datelang') || 'English';
-# 	Date_Init("Language=$lang") if $lang && $lang ne 'English';
 	Date::Format->language($lang) if $lang && $lang ne 'English';
 
 	# convert the raw date to pretty formatted date
-# 	$date = UnixDate($date, $format || $user->{'format'});
 	$date = time2str($format || $user->{'format'}, $date);
 
 	# so we can handle database dates properly; maybe
 	# check database engine behavior?
-# 	Date_Init('Language=English') if $lang && $lang ne 'English';
 	Date::Format->language('English') if $lang && $lang ne 'English';
 
 	# return the new pretty date
