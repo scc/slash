@@ -68,7 +68,7 @@ __template__
 	}, 1);
 	comment = "$comment_shrunk<P><B>$linkComment</B>";
 	ELSIF not user.nosigs && sig;
-	comment = "$comment<BR>$sig";
+	comment = "$comment$sig";
 	END
 %]
 [% comment %]

@@ -27,7 +27,7 @@ __template__
 		[% END %]
 		<P>[% comment %]
 		[% UNLESS user.nosigs %]
-			<BR>[% sig %]
+			[% sig %]
 		[% END %]
 		</TD>
 	</TR>

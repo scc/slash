@@ -617,7 +617,7 @@ sub dispComment {
 	}
 
 	if ($user->{sigdash} && $comment->{sig} && !isAnon($comment->{uid})) {
-		$comment->{sig} = "<BR>--<BR>$comment->{sig}";
+		$comment->{sig} = "--<BR>$comment->{sig}";
 	}
 
 	my @reasons = ( );

@@ -152,13 +152,6 @@ sub main {
 	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
 	$op = 'default' if (! $postflag && $ops->{$op}{post});
 
-	print STDERR "OP $op\n" if $constants->{DEBUG};
-	if ($constants->{DEBUG}) {
-		for (keys %{$form}) {
-			print STDERR "FORM key $_ value $form->{$_}\n";
-		}
-	}
-
 	# authors shouldn't jump through formkey hoops? right?	
 	if ($user->{seclev} < 100) {
 		$formkey = $form->{formkey};
@@ -412,11 +405,6 @@ sub createDiscussion {
 sub editComment {
 	my($form, $slashdb, $user, $constants, $discussion, $error_message) = @_;
 
-	print STDERR "ERROR MESSAGE $error_message OP $form->{op}\n";
-
-	# Why is this here? It's not referred to again in this scope.
-	# - Cliff 7/26/01
-	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $preview;
 	my $error_flag = 0;
 
@@ -471,7 +459,6 @@ sub validateComment {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	print STDERR "ERROR MESSAGE beginning of validate comment $$error_message\n";
 
 	my $form_success = 1;
 	my $message = '';
@@ -498,7 +485,6 @@ sub validateComment {
 
 	unless ($$comm && $$subj) {
 		$$error_message = getError('no body');
-		print STDERR "NO BODY MESSAGE $$error_message\n";
 		return;
 	}
 
@@ -578,7 +564,6 @@ sub validateComment {
 
 
 	$$error_message ||= '';
-	print STDERR "ERROR MESSAGE end of validate comment $$error_message\n";
 	# Return false if error condition...
 	return if ! $form_success;
 
@@ -597,10 +582,20 @@ sub previewForm {
 
 	$user->{sig} = "" if $form->{postanon};
 
-	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
 	my $tempSubject = strip_notags($form->{postersubj});
+	my $tempComment = $form->{postercomment};
 
 	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return;
+
+	$tempComment = strip_mode($form->{postercomment}, $form->{posttype});
+	$tempComment = addDomainTags($tempComment);
+	$tempComment = parseDomainTags($tempComment,
+		!$form->{postanon} && $user->{fakeemail});
+
+	my $sig = $user->{sig};
+	if ($user->{sigdash} && $user->{sig}) {
+		$sig = "--<BR>$sig";
+	}
 
 	my $preview = {
 		nickname	=> $form->{postanon}
@@ -612,7 +607,7 @@ sub previewForm {
 		'time'		=> $slashdb->getTime(),
 		subject		=> $tempSubject,
 		comment		=> $tempComment,
-		sig		=> $user->{sig},
+		sig		=> $sig,
 	};
 
 	my $tm = $user->{mode};
@@ -644,13 +639,16 @@ sub submitComment {
 	$form->{postersubj} = strip_notags($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
+	my $tempComment = $form->{postercomment};
+
 	unless (validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {
 		$slashdb->resetFormkey($form->{formkey});
 		editComment(@_, $error_message);
 		return(0);
 	}
 
-	$form->{postercomment} = addDomainTags($form->{postercomment});
+	$tempComment = strip_mode($form->{postercomment}, $form->{posttype});
+	$form->{postercomment} = addDomainTags($tempComment);
 
 #	# Slash is not a file exchange system
 #	# still working on this...stay tuned for real commit

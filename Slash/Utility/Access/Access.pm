@@ -593,8 +593,9 @@ sub compressOk {
 			# OK, we have the right numbers for the size of this slice.
 			# Compress it and check its size.
 			my $comlen = length(Compress::Zlib::compress($content_slice));
-			if (($comlen / $length) <= $_) {
-				$slashdb->createAbuse("content compress", $formname, $content);
+			if (($comlen / $length) <= ($_ * 1.3)) {
+				# It either compresses too well, or it's close;
+				# drop a line to the debug log.
 				my $report = "compressOk_report ss=$slice_size leno=$orig_length len1=$length";
 				$report .= " comlen=$comlen field=$field";
 				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
@@ -604,6 +605,9 @@ sub compressOk {
 				$report .= " content=".substr($content, 0, 200);
 				$report =~ s/\s+/ /gs;
 				print STDERR "$report\n";
+			}
+			if (($comlen / $length) <= $_) {
+				$slashdb->createAbuse("content compress", $formname, $content);
 				return 0;
 			}
 		}

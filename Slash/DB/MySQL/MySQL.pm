@@ -2416,7 +2416,7 @@ sub setAccessList {
 	return if $reason eq 'expired';
 
 	my $insert_hashref = {};
-	print STDERR "banned $column\n";
+#	print STDERR "banned $column\n";
 	$insert_hashref->{"-$column"} = 1;
 	my $constants = getCurrentStatic();
 	my $rows;
@@ -3112,8 +3112,6 @@ sub getCommentsForUser {
 
 	if ($constants->{comment_cache_debug}) {
 		my $duration = Time::HiRes::time - $start_time;
-		printf STDERR "_getCommentTextOld $$ time %0.3f\n",
-			$duration;
 		$self->{_comment_text}{totalcomments} += scalar @$cids;
 		$self->{_comment_text}{secs} += $duration;
 		my $secs = $self->{_comment_text}{secs};

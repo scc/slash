@@ -112,7 +112,6 @@ template=templates/editUser;users;default
 template=templates/edit_comment;comments;default
 template=templates/editpoll;pollBooth;default
 template=templates/errors;comments;default
-template=templates/errors;metamod;default
 template=templates/errors;users;default
 template=templates/fancybox;misc;default
 template=templates/fancybox;misc;light

@@ -105,7 +105,7 @@ sit in the timeout corner. If it's someone else, this is a chance to
 hunt them down.
 If you think this is unfair, please email
 [% IF constants.adminmail_mod; constants.adminmail_mod;
-ELSE constants.adminmail %].
+ELSE; constants.adminmail; END %].
 
 [% # NESTING TOO DEEP
 CASE "nesting too deep" %]
