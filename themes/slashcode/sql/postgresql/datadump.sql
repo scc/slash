@@ -346,7 +346,7 @@ INSERT INTO vars (name, value, description) VALUES ('reasons','Normal|Offtopic|F
 INSERT INTO vars (name, value, description) VALUES ('rootdir','//www.example.com','Base URL of site; used for creating on-site links that need protocol-inspecific URL (so site can be used via HTTP and HTTPS at the same time)');
 INSERT INTO vars (name, value, description) VALUES ('run_ads','0','Should we be running ads?');
 INSERT INTO vars (name, value, description) VALUES ('sbindir','/usr/local/slash/sbin','Where are the sbin scripts kept');
-INSERT INTO vars (name, value, description) VALUES ('send_mail','0','Turn On/Off the mailing list');
+INSERT INTO vars (name, value, description) VALUES ('send_mail','1','Turn On/Off to allow the system to send email messages.');
 INSERT INTO vars (name, value, description) VALUES ('siteadmin','admin','The admin for the site');
 INSERT INTO vars (name, value, description) VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site');
 INSERT INTO vars (name, value, description) VALUES ('siteid','www.example.com','The unique ID for this site');
