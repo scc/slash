@@ -15,7 +15,7 @@ __template__
 [% showopts = !user.is_anon && (!uid || uid == user.uid) %]
 [% INCLUDE journaloptions IF showopts %]
 
-[% INCLUDE titlebar title => "$nickname's Journal Entries" %]
+[% INCLUDE titlebar title => "$nickname's Journal Entries", width => "90%" %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH article = articles %]
   <TR>

@@ -16,7 +16,10 @@ journalfriends
 __template__
 [% USE Slash %]
 [% IF search; nickstrip = BLOCK; FILTER strip_literal; form.nickname; END; END; END %]
-[% INCLUDE titlebar title => (search ? "User Search Results for \"$nickstrip\"" : "Your Friends") %]
+[% INCLUDE titlebar
+	title => (search ? "User Search Results for \"$nickstrip\"" : "Your Friends"),
+	width => "90%"
+%]
 
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH friend = friends %]
