@@ -36,11 +36,11 @@ $task{$me}{code} = sub {
 	# If it exists, we update it, if not, we create it.  The final "1" arg
 	# means to ignore errors.
 	my $tpid = $slashdb->getTemplateByName(
-		'sectionindex_display', 'tpid', 0, '', '', 1
+		'sectionindexd', 'tpid', 0, '', '', 1
 	);
 
 	my(%template) = ( 
-		name => 'sectionindex_display',
+		name => 'sectionindexd',
 		tpid => $tpid, 
 		template => $new_template,
 	);
