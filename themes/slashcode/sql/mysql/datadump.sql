@@ -180,12 +180,13 @@ INSERT INTO discussions (id, sid, title, url, ts, topic) VALUES (4, '','Are you 
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','User Info','[% constants.rootdir %]/users.pl?op=userinfo',1,1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','New User','[% constants.rootdir %]/users.pl?op=newuseradmin',10000,2);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Homepage','[% constants.rootdir %]/users.pl?op=edithome',1,3);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Edit User Info','[% constants.rootdir %]/users.pl?op=edituser',1,4);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Comments','[% constants.rootdir %]/users.pl?op=editcomm',1,5);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Logout','[% constants.rootdir %]/users.pl?op=userclose',1,6);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Change Password','[% constants.rootdir %]/users.pl?op=changepasswd',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','User Info','[% constants.rootdir %]/users.pl?op=userinfo',1,2);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','New User','[% constants.rootdir %]/users.pl?op=newuseradmin',10000,3);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Homepage','[% constants.rootdir %]/users.pl?op=edithome',1,4);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Edit User Info','[% constants.rootdir %]/users.pl?op=edituser',1,5);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Comments','[% constants.rootdir %]/users.pl?op=editcomm',1,6);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Logout','[% constants.rootdir %]/users.pl?op=userclose',1,7);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Recent Topics','[% constants.rootdir %]/topics.pl?op=toptopics',0,1);
 
 #

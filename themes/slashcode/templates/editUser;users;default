@@ -79,10 +79,12 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 	[% editkey %]
 
-	<P><B>Password</B> Enter new passwd twice to change it.
+	<!-- 
+		<P><B>Password</B> Enter new passwd twice to change it.
 		(must be 6-32 chars long)<BR>
 		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="32" MAXLENGTH="32">
 		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="32" MAXLENGTH="32"><P>
+	 -->
 
 	</TD></TR></TABLE><P>
 

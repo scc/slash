@@ -38,6 +38,9 @@ __template__
 [% CASE 'editUser_title' %]
 	Editing [% user_edit.nickname %] ( [% user_edit.uid %]) [% user_edit.realemail %]
 
+[% CASE 'changePasswd_title' %]
+	Change password for [% user_edit.nickname %] ( [% user_edit.uid %]) 
+
 [% CASE 'tildeEd_title' %]
 	Exclude Stories from the Homepage
 
