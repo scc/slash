@@ -20,6 +20,19 @@ __template__
 	HEIGHT="[% tref.height %]">
 [% END %]
 
+[% IF 1 %]
+	<blockquote><p><hr><br><b>Please note:</b> Search is down
+	at the moment while we update our database, so don't bother
+	trying. In the meantime, you may wish to search Slashdot
+	through Google:<br>
+	<FORM METHOD="GET" ACTION="http://www.google.com/search">
+	<INPUT TYPE="NAME" NAME="query" VALUE="" WIDTH="20" SIZE="20" LENGTH="20">
+	<INPUT TYPE="HIDDEN" NAME="as_sitesearch" VALUE="slashdot.org">
+	<INPUT TYPE="SUBMIT" VALUE="Google Slashdot">
+	</FORM>
+	<hr></blockquote><p>&nbsp;<p>
+[% END %]
+
 <FORM ACTION="[% env.script_name %]" METHOD="GET">
 	<INPUT TYPE="TEXT" SIZE="40" NAME="query" VALUE="[% form.query %]">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
