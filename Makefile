@@ -25,7 +25,6 @@ PREOP = @$(NOOP)
 POSTOP = @$(NOOP)
 TO_UNIX = @$(NOOP)
 PREFIX = /usr/local/slash
-INIT = /etc
 USER = nobody
 GROUP = nobody
 CP = cp
@@ -93,15 +92,15 @@ install: slash plugins
 	# Now all other themes
 	$(CP) -r themes/* $(PREFIX)/themes
 
-	# this needs BSD support (and Solaris)
+	# this needs BSD support
 	if [ -d /etc/init.d ]; then\
-		install utils/slash /etc/init.d/; \
-		ln -s -f ../init.d/slash $(INIT)/rc3.d/S99slash; \
-		ln -s -f ../init.d/slash $(INIT)/rc6.d/K99slash; \
-	elif [ -d /etc/rc.d/init.d/ ]; then \
-		install utils/slash /etc/rc.d/init.d/; \
-		ln -s -f ../init.d/slash /etc/rc.d/rc3.d/S99slash; \
-		ln -s -f ../init.d/slash /etc/rc.d/rc6.d/K99slash; \
+		install utils/slashd /etc/init.d/; \
+		ln -s -f /etc/init.d/slashd /etc/rc3.d/S99slashd; \
+		ln -s -f /etc/init.d/slashd /etc/rc6.d/K99slashd; \
+	elif [ -d /etc/init.d/rc.d/]; then \
+		install utils/slashd /etc/rc.d/init.d/ \
+		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd; \
+		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc6.d/K99slashd; \
 	else \
 		echo "This is either BSD or some other OS I do not understand"; \
 		echo "You will need to look at how to install utils/slash"; \

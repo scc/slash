@@ -74,7 +74,6 @@ $dbh->do('UPDATE users_prefs SET tzcode=UCASE(tzcode)');
 # This is what pudge will probably want to change :) 		-Brian
 $dbh->do('ALTER TABLE users change passwd passwd varchar(32)');
 $dbh->do('UPDATE users SET passwd=MD5(passwd)');
-$dbh->do('CREATE TABLE newcomments SELECT * from comments');
 $dbh->do('CREATE TABLE newstories SELECT * from stories');
 
 #cleanup time

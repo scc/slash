@@ -38,7 +38,7 @@ sub gets {
 	my ($self, $uid, $values, $limit) = @_;
 	my $keys = join ',', @$values if $values;
 	$keys ||= '*';
-	my $order = " ORDER BY date DESC";
+	my $order = "ORDER BY date DESC";
 	my $answer = $self->sqlSelectAll($keys, 'journals', "uid = $uid", $order);
 	return $answer;
 }

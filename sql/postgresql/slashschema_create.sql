@@ -320,7 +320,7 @@ CREATE TABLE story_param (
 	param_id SERIAL,
 	sid char(16) DEFAULT '' NOT NULL,
 	name varchar(32) NOT NULL,
-	value text,
+	value varchar(254) NOT NUL,
 	UNIQUE (sid, name),
 	PRIMARY KEY (param_id)
 );
@@ -456,7 +456,7 @@ CREATE TABLE users_param (
 	param_id SERIAL,
 	uid int4 DEFAULT '1' NOT NULL,
 	name varchar(32) NOT NULL,
-	value text,
+	value varchar(254) NOT NUL,
 	UNIQUE (uid, name),
 	PRIMARY KEY (param_id)
 );

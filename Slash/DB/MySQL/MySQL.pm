@@ -756,7 +756,7 @@ sub setDiscussion {
 
 ########################################################
 sub setTemplate {
-	for(qw| page name section |) {
+	for (qw| page name section |) {
 		next unless $_[2]->{$_};
 		if ($_[2]->{$_} =~ /;/) {
 			errorLog("A semicolon was found in the $_ while trying to update a template");
@@ -3009,7 +3009,7 @@ sub createBlock {
 ########################################################
 sub createTemplate {
 	my($self, $hash) = @_;
-	for(qw| page name section |) {
+	for (qw| page name section |) {
 		next unless $hash->{$_};
 		if ($hash->{$_} =~ /;/) {
 			errorLog("A semicolon was found in the $_ while trying to create a template");
