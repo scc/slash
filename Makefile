@@ -32,7 +32,7 @@ GROUP = nobody
 CP = cp
 
 # Plugins (any directory in plugins/)
-PLUGINS = `find . -name CVS -prune -o -type d -maxdepth 1 -print`
+PLUGINS = `find . -name CVS -prune -o -type d -name [a-zA-Z]\* -maxdepth 1 -print`
 
 # Perl scripts, grouped by directory.
 BINFILES = `find bin -name CVS -prune -o -name [a-zA-Z]\* -type f -print`
@@ -52,6 +52,8 @@ INSTALLSITEARCH=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installsitear
 INSTALLSITELIB=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installsitelib}"'`
 INSTALLMAN3DIR=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installman3dir}"'`
 
+.PHONY : all plugins slash install
+
 #   install the shared object file into Apache 
 # We should run a script on the binaries to get the right
 # version of perl. 
@@ -59,10 +61,10 @@ INSTALLMAN3DIR=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installman3dir
 slash:
 	@echo "=== INSTALLING SLASH MODULES ==="
 	@if [ ! "$(RPM)" ] ; then \
-		(cd Slash; $(PERL) Makefile.PL; make); \
+		(cd Slash; $(PERL) Makefile.PL; make install UNINST=1); \
 	else \
 		echo " - Performing an RPM build"; \
-		(cd Slash; $(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make); \
+		(cd Slash; $(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make install UNINST=1); \
 	fi
 
 plugins: 
@@ -70,44 +72,22 @@ plugins:
 	@(cd plugins; \
 	 for a in $(PLUGINS); do \
 	 	(cd $$a; \
-		 if ! [ -f Makefile.PL ]; then \
+		 echo == $$PWD; \
+		 if [ -f Makefile.PL ]; then \
 		 	if [ ! "$(RPM)" ] ; then \
-				$(PERL) Makefile.PL; make;\
+				$(PERL) Makefile.PL; \
+				make install UNINST=1;\
 			else \
 				echo " - Performing an RPM build."; \
-				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make; \
-			fi;
-		 fi);
-	fi)
+				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
+				make install UNINST=1; \
+			fi; \
+		 fi); \
+	done)
 
 all: install
 
 install: slash plugins
-	# Lets go install the libraries, remember to clean out old versions.
-	(cd Slash; make install UNINST=1)
-	# Lets go install the plugin libraries
-	#
-	# This tries to intelligently install plugins based on whether or not
-	# they have a Makefile. Not all current plugins have the "install" target
-	# so we shouldn't track them for errors, at this time. This should be 
-	# fixed, eventually.
-	#
-	# If 'plugins' is already a dependency, why do we need to regenerate the
-	# Makefile? - Cliff
-	-(cd plugins; \
-	 for a in $(PLUGINS); do \
-	 	(cd $$a; \
-	 	if [ -f Makefile ]; then \
-			make install UNINST=1; \
-		elif [ -f Makefile.PL ]; then \
-			if ! [ $(RPM) ] ; then \
-				$(PERL) Makefile.PL; \
-			else \
-				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
-			fi; \
-			make install UNINST=1; \
-		fi); \
-	done)
 
 	# Create all necessary directories.
 	install -d $(SLASH_PREFIX)/bin/ $(SLASH_PREFIX)/sbin \
