@@ -28,9 +28,10 @@ and COPYING for more information, or see http://slashcode.com/.
 EOT
 
 my %opts;
-getopts('cdilrsvD:O:P:S:p:f:u:?', \%opts);
+usage('options used incorrectly') unless getopts('cdilrsvg:D:O:P:S:p:f:u:?', \%opts);
 usage('no options supplied to program') unless keys %opts;
 usage('help requested') if $opts{'?'};
+boiler() if $opts{'g'};
 
 # if deleting, then there should be no other operation or file flags
 usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
@@ -444,9 +445,14 @@ sub usage {
 Usage: template-tool [OPTIONS] <template templateN>
 
 OPTIONS
+<<<<<<< template-tool
+
+	-g generates a blank template (specify the name of the file after the option)
+=======
 
 	-u virtual user to use (default is "slash")
 
+>>>>>>> 1.1.2.15
 	-d dump templates
 	-i use tpid (template id) instead of template name
 
@@ -502,3 +508,28 @@ EOT
 	exit();
 }
 
+sub boiler {
+	open(FILE, ">$opts{'g'}") or die "Could not open file for blank template";
+	print FILE <<EOT;
+__section__
+default
+__description__
+You should describe stuff here.
+__title__
+Useless title to template
+__page__
+misc
+__lang__
+en_US
+__name__
+generic
+__template__
+This is where you would
+put all of your html and such to be displayed. See
+Template(3) for more information about syntax.
+__seclev__
+10000
+EOT
+	close(FILE);
+	exit;
+}
