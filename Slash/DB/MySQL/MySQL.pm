@@ -297,16 +297,19 @@ sub getModeratorCommentLog {
 	my $comments = $self->sqlSelectMany("$table.sid as sid,
 				 $table.cid as cid,
 				 $table.points as score,
-				 subject, moderatorlog.uid as uid,
+				 moderatorlog.uid as uid,
 				 users.nickname as nickname,
 				 moderatorlog.val as val,
-				 moderatorlog.reason as reason",
+				 moderatorlog.reason as reason,
+				 moderatorlog.ts as ts,
+				 moderatorlog.active as active",
 				"moderatorlog, users, $table",
 				"moderatorlog.sid='$sid'
 			     AND moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
 			     AND $table.sid=moderatorlog.sid
-			     AND $table.cid=moderatorlog.cid"
+			     AND $table.cid=moderatorlog.cid",
+				"ORDER BY ts"
 	);
 	my(@comments, $comment);
 	push @comments, $comment while ($comment = $comments->fetchrow_hashref);

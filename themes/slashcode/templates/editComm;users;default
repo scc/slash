@@ -27,6 +27,8 @@ editComm
 __template__
 [% INCLUDE titlebar width="100%" %]
 
+[% admin_block %]
+
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 
 <INPUT TYPE="HIDDEN" NAME="formname"  VALUE="editcomm">

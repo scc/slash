@@ -18,12 +18,13 @@ sub main {
 	my $curuser = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $suadminflag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
+	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
 	my $postflag = $ENV{REQUEST_METHOD} eq 'POST' ? 1 : 0 ;
 	my $op = $form->{op};
 	$op ||= 'userinfo';
 
-	my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
+	# my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
+	my $note;
 
 	if ($op eq 'userlogin' && !$curuser->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
@@ -94,7 +95,7 @@ sub main {
 	if ($curuser->{is_anon}) {
 		$op = 'default' if $user_calls->{$op};
 
-	} elsif (! $suadminflag) {
+	} elsif (! $suadmin_flag) {
 		$op = 'userinfo' if $admin_calls->{$op};
 		# $op = 'userinfo' if $post_calls->{$op} ; # && ! $postflag ;
 	}
@@ -259,8 +260,11 @@ sub showInfo {
 		$id ||= $form->{userfield};
 		$user->{ipid} = $id =~ /\d+\.\d+\.\d+\.?\d+?/ ?
 		md5_hex($id) : $id;
-		$user->{nonid} = 1;
-		print getMessage('userinfo_netID_msg', { id => $user->{ipid}});
+
+		$user->{nonuid} = 1;
+		$user->{fg} = $curuser->{fg};
+		$user->{bg} = $curuser->{bg};
+
 		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
 		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
 		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
@@ -274,9 +278,10 @@ sub showInfo {
 			$user->{subnetid} = $id;
 		}
 
-		$user->{nonid} = 1;
+		$user->{nonuid} = 1;
+		$user->{fg} = $curuser->{fg};
+		$user->{bg} = $curuser->{bg};
 
-		print getMessage('userinfo_netID_msg', { id => $user->{subnetid}});
 		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{subnetid}});
 		$admin_block = $admin_flag ? getUserAdmin($user->{subnetid}, 1, 0) : '';
 		$comments = $slashdb->getCommentsBySubnetID($user->{subnetid}, $form->{min});
@@ -318,7 +323,7 @@ sub showInfo {
 		};
 	}
 
-	if ($user->{nonid}) {
+	if ($user->{nonuid}) {
 		slashDisplay('netIDInfo', {
 			title			=> $title,
 			id			=> $id,
@@ -555,23 +560,12 @@ sub changePasswd {
 	return if $curuser->{is_anon};
 
 	my $user = {};
-	my($admin_block, $title);
-	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
+	my $title ;
+	my $suadmin_flag = ($curuser->{seclev} >= 10000) ? 1 : 0;
 
-	if ($form->{userfield} ) {
-		$id ||= $form->{userfield};
-		if ($form->{userfield_flag} eq 'nickname') {
-			$user = $slashdb->getUser($slashdb->getUserUID($id));
-		} elsif ($form->{userfield_flag} eq 'uid') {
-			$user = $slashdb->getUser($id);
-		} else {
-			$user = $slashdb->getCurrentUser();
-		}
-	} else {
-		$user = $id eq '' ? $slashdb->getCurrentUser() : $slashdb->getUser($id);
-	}
-	return if isAnon($user->{uid}) && ! $admin_flag; 
-	$admin_block = getUserAdmin($user->{uid}, 1, 1) if $admin_flag;
+	$user = $id eq '' ? $curuser : $slashdb->getUser($id);
+
+	return if isAnon($user->{uid});
 
 	print getMessage('note', { note => $form->{note}}) if $form->{note};
 
@@ -582,24 +576,23 @@ sub changePasswd {
 
 	slashDisplay('changePasswd', {
 		useredit 		=> $user,
-		admin_flag		=> $admin_flag,
+		admin_flag		=> $suadmin_flag,
 		title			=> $title,
 		session 		=> $session_select,
-		admin_block		=> $admin_block
 	});
 }
 
 #################################################################
 sub editUser {
-	my($id, $note) = @_;
+	my($id) = @_;
 
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
 	my $curuser = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my $user = {};
-	my($admin_block, $title);
+	my ($user, $session) = ({}, {});
+	my ($admin_block, $title, $description, $maillist, $session_select);
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
 
 	return if $curuser->{is_anon};
@@ -618,19 +611,17 @@ sub editUser {
 	}
 	print STDERR "user id $user->{uid}\n";
 	return if isAnon($user->{uid}) && ! $admin_flag; 
+	$admin_block = getUserAdmin() if $admin_flag;
 
 	$user->{homepage} ||= "http://";
 
-	# print getMessage('note', { note => $form->{note}}) if $form->{note};
-	print getMessage('note', { note => $note}) if $note;
-
 	$title = getTitle('editUser_title', { user_edit => $user});
 
-	my $description = $slashdb->getDescriptions('maillist');
-	my $maillist = createSelect('maillist', $description, $user->{maillist}, 1);
+	$description = $slashdb->getDescriptions('maillist');
+	$maillist = createSelect('maillist', $description, $user->{maillist}, 1);
 
-	my $session = $slashdb->getDescriptions('session_login');
-	my $session_select = createSelect('session_login', $session, $user->{session_login}, 1);
+	$session = $slashdb->getDescriptions('session_login');
+	$session_select = createSelect('session_login', $session, $user->{session_login}, 1);
 
 	slashDisplay('editUser', {
 		useredit 		=> $user,
@@ -654,6 +645,7 @@ sub editHome {
 	my($formats, $title, $tzformat_select, $tzcode_select);
 	my $user = {};
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
+	my $admin_block = '';
 
 	return if $curuser->{is_anon};
 
@@ -672,6 +664,7 @@ sub editHome {
 
 	return if isAnon($curuser->{uid});
 	return if isAnon($user->{uid}) && ! $admin_flag;
+	$admin_block = getUserAdmin() if $admin_flag;
 
 	$title = getTitle('editHome_title');
 
@@ -695,6 +688,7 @@ sub editHome {
 
 	slashDisplay('editHome', {
 		title			=> $title,
+		admin_block		=> $admin_block,	
 		user_edit		=> $user,
 		tzformat_select		=> $tzformat_select,
 		tzcode_select		=> $tzcode_select,
@@ -714,6 +708,11 @@ sub editComm {
 	my $form = getCurrentForm();
 	my $curuser = getCurrentUser();
 	my $user = {};
+	my($formats, $commentmodes_select, $commentsort_select, $title,
+		$uthreshold_select, $highlightthresh_select, $posttype_select);
+
+	my $admin_block = '';
+
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
 
 	if ($form->{userfield}) {
@@ -731,11 +730,9 @@ sub editComm {
 
 	return if isAnon($curuser->{uid});
 	return if isAnon($user->{uid}) && ! $admin_flag;
+	$admin_block = getUserAdmin() if $admin_flag;
 
-	my($formats, $commentmodes_select, $commentsort_select,
-		$uthreshold_select, $highlightthresh_select, $posttype_select);
-
-	my $title = getTitle('editComm_title');
+	$title = getTitle('editComm_title');
 
 	$formats = $slashdb->getDescriptions('commentmodes');
 	$commentmodes_select = createSelect('umode', $formats, $user->{mode}, 1);
@@ -759,6 +756,7 @@ sub editComm {
 
 	slashDisplay('editComm', {
 		title			=> $title,
+		admin_block		=> $admin_block,
 		user_edit		=> $user,
 		h_check			=> $h_check,
 		r_check			=> $r_check,
@@ -863,6 +861,7 @@ sub savePasswd {
 	my $user = {};
 
 	my $users_table = {};
+	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0;
 
 	if ($curuser->{seclev} >= 100) {
 		$uid = shift;
@@ -900,7 +899,9 @@ sub savePasswd {
 		$note .= getMessage('saveuser_passchanged_msg', 0, 1);
 
 		$users_table->{passwd} = $form->{pass1};
-		setCookie('user', bakeUserCookie($uid, encryptPassword($users_table->{passwd})));
+		if ($form->{uid} eq $curuser->{uid}) {
+			setCookie('user', bakeUserCookie($uid, encryptPassword($users_table->{passwd})));
+		}
 
 	} elsif ($form->{pass1} ne $form->{pass2}) {
 		$note .= getMessage('saveuser_passnomatch_msg', 0, 1);
@@ -1051,24 +1052,11 @@ sub saveUser {
 		doEmail($uid, $saveuser_emailtitle, $saveuser_email_msg);
 	}
 
-#	delete $users_table->{passwd};
-#	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
-#		$note .= getMessage('saveuser_passchanged_msg', 0, 1);
-#
-#		$users_table->{passwd} = $form->{pass1};
-#		setCookie('user', bakeUserCookie($uid, encryptPassword($users_table->{passwd})));
-#
-#	} elsif ($form->{pass1} ne $form->{pass2}) {
-#		$note .= getMessage('saveuser_passnomatch_msg', 0, 1);
-#
-#	} elsif (length $form->{pass1} < 6 && $form->{pass1}) {
-#		$note .= getMessage('saveuser_passtooshort_msg', 0, 1);
-#	}
-
 	$slashdb->setUser($uid, $users_table);
 
-	# return $note;
-	editUser($uid,$note);
+	print getMessage('note', { note => $note}) if $note;
+
+	editUser($uid);
 }
 
 #################################################################
@@ -1356,6 +1344,7 @@ sub getUserAdmin {
 
 	$author_flag = ($user->{author} == 1) ? ' CHECKED' : '';
 
+	print STDERR "userinfo flag $userinfo_flag\n";
 	return slashDisplay('getUserAdmin', {
 		useredit		=> $user,
 		userinfo_flag		=> $userinfo_flag,

@@ -519,4 +519,5 @@ INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total num
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
+INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
 

@@ -106,8 +106,16 @@ __template__
 		</TD>			
 		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; userfield; END %]"></TD>
 		<TD VALIGN="MIDDLE">
-		<INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info">
-		<INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User">
+		<TABLE>
+			<TR>
+				<TD><INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info"></TD>
+				<TD><INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User"></TD>
+			</TR>
+			<TR>
+				<TD><INPUT TYPE="SUBMIT" NAME="edithome" VALUE="Customise Homepage"></TD>
+				<TD><INPUT TYPE="SUBMIT" NAME="editcomm" VALUE="Customise Comments"></TD>
+			</TR>
+		</TABLE>
 		</TD>
 	</TR>
 

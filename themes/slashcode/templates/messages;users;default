@@ -32,9 +32,6 @@ __template__
 [% CASE 'userinfo_nicknf_msg' %]
 	[% nick %] not found.
 
-[% CASE 'userinfo_netID_msg' %]
-	[% md5_id %] ([% id %]) not found.
-
 [% CASE 'newuser_msg' %]
 	[% INCLUDE titlebar title=title width="100%" %]
 	<B>email</B>=[% form.email %]<BR>

@@ -352,8 +352,10 @@ The 'modCommentLog' template block.
 sub moderatorCommentLog {
 	my($sid, $cid) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 
 	my $seclev = getCurrentUser('seclev');
+	my $mod_admin = $seclev >= $constants->{modviewseclev} ? 1 : 0;
 	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
 
@@ -363,7 +365,8 @@ sub moderatorCommentLog {
 	}
 
 	slashDisplay('modCommentLog', {
-		mod_admin	=> getCurrentUser('seclev') > 1000,
+		# modviewseclev
+		mod_admin	=> $mod_admin, 
 		comments	=> $comments,
 		reasonTotal	=> $reasonTotal,
 		reasonHist	=> \@reasonHist,

@@ -19,21 +19,27 @@ modCommentLog
 __template__
 [% IF mod_admin %]
 <TABLE BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	[% IF comments.size > 0  %]
 	<TR BGCOLOR="[% user.bg.3 %]">
 		<TH><FONT COLOR="[% user.fg.3 %]"> val </FONT></TH>
 		<TH><FONT COLOR="[% user.fg.3 %]"> reason </FONT></TH>
 		<TH><FONT COLOR="[% user.fg.3 %]"> moderator </FONT></TH>
+		<TH><FONT COLOR="[% user.fg.3 %]"> time </FONT></TH>
+		<TH>&nbsp;</FONT></TH>
 	</TR>
 
-	[% FOREACH comment = comments %]
+		[% FOREACH comment = comments %]
 	<TR>
-		<TD> <B>[% comment.val %]</B> </TD>
+		<TD ALIGN="RIGHT"> <B>[% comment.val %]</B> </TD>
 		<TD> [% constants.reasons.${comment.reason} %] </TD>
-		<TD> [% comment.nickname %] ([% comment.uid %]) </TD>
+		<TD> [% comment.nickname %] (<A HREF="[% constants.rootdir%]/users.pl?op=userinfo&userfield_flag=uid&userfield=[% comment.uid %]">[% comment.uid %]</A>)</TD>
+		<TD> [% comment.ts %]</TD>
+		<TD>[% IF comment.active %] &nbsp; [% ELSE %] <i>inactive</i> [% END %] </TD>
 	</TR>
+		[% END %]
 	[% END %]
 
-	</TABLE>
+</TABLE>
 [% END %]
 
 [% IF reasonTotal %]
