@@ -134,10 +134,11 @@ change your password, or just click pretty widgets to kill time.
 [% CASE 'saveuser_passchanged_msg' %]
 	Password changed for [% nick %], UID [% uid %].<BR>
 
-[% CASE 'saveparam_msg' %]
-	[% PROCESS titlebar title="Parameter Changed." width="100%" %]
-	Your user parameter <TT>[% param | strip_literal %]</TT>
-	was set to "<TT>[% paramvalue | strip_literal %]</TT>".<BR>
+[% CASE 'savemiscopts_msg' %]
+	[% PROCESS titlebar title="Option(s) Changed." width="100%" %]
+[% FOREACH opt = update.keys %]
+        <BR>Your option [% opt %] was set to [% update.opt %].
+[% END %]
 
 [% CASE 'no_registration_needed' %]
 	<P>Hello, [% user.nickname %]. Your account is currently registered with

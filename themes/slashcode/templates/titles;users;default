@@ -53,6 +53,9 @@ __template__
 [% CASE 'editComm_title' %]
 	Comment Options
 
+[% CASE 'editMiscOpts_title' %]
+	Miscellaneous Options
+
 [% CASE 'displayForm_new_title' %]
 	I'm a New User!
 

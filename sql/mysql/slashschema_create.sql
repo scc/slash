@@ -306,6 +306,23 @@ CREATE TABLE metamodlog (
 ) TYPE = myisam;
 
 #
+# Table structure for table 'misc_user_opts'
+#
+
+DROP TABLE IF EXISTS misc_user_opts;
+CREATE TABLE misc_user_opts (
+	name varchar(32) NOT NULL,
+	optorder mediumint(5),
+	seclev mediumint UNSIGNED NOT NULL,
+	default_val text DEFAULT '' NOT NULL,
+	vals_regex text DEFAULT '',
+	short_desc text DEFAULT '',
+	long_desc text DEFAULT '',
+	opts_html text DEFAULT '',
+	PRIMARY KEY (name)
+) TYPE = myisam;
+
+#
 # Table structure for table 'moderatorlog'
 #
 

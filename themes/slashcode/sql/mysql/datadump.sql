@@ -122,6 +122,7 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Homep
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Comments','[% constants.rootdir %]/users.pl?op=editcomm',1,50);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','You','[% constants.rootdir %]/users.pl?op=edituser',1,60);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Password','[% constants.rootdir %]/users.pl?op=changepasswd',1,70);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','[% USE Slash %][% IF Slash.db.getMiscUserOpts.size %]Misc[% END %]', '[% constants.rootdir %]/users.pl?op=editmiscopts',1,75);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Recent Topics','[% constants.rootdir %]/topics.pl?op=toptopics',0,80);
 
 #

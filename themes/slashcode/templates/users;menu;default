@@ -17,9 +17,13 @@ __template__
 <TABLE BGCOLOR="[% user.bg.2 %]" BORDER="0"  WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
 	<TR>
 		<TD>
-[ [% FOR i = items %]
-	[% IF i.value %]<A HREF="[% i.value %]">[% END %][% i.label %][% IF i.value %]</A>[% END %]
-	[% " | " IF !loop.last AND i.value %]
+[ [% needbar = 0; FOR i = items %]
+	[% IF i.label %]
+		[% " | " IF needbar; needbar = 0 %]
+		[% IF i.value; needbar = 1 %]<A HREF="[% i.value %]">[% END
+		%][% i.label
+		%][% IF i.value %]</A>[% END %]
+	[% END %]
 [% END %] ]
 		</TD>
 	</TR>

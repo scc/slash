@@ -106,18 +106,24 @@ sub main {
 			[ qw (valid_check
 				formkey_check regen_formkey) ],
 		},
-		saveparam	=> {
-			function	=> \&saveParam,
-			seclev		=> 1,
-			formname	=> $formname,
-			checks		=> [ ],
-		},
 		changepasswd	=> {
 			function	=> \&changePasswd,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> $savepass_flag ? [] :
 			[ qw (generate_formkey) ],
+		},
+		editmiscopts	=> {
+			function	=> \&editMiscOpts,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [ ],
+		},
+		savemiscopts	=> {
+			function	=> \&saveMiscOpts,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [ ],
 		},
 		edituser	=> {
 			function	=> \&editUser,
@@ -1577,75 +1583,69 @@ sub saveHome {
 # A generic way for a site to allow users to edit data about themselves.
 # Most useful when your plugin or theme wants to let the user change
 # minor settings but you don't want to write a whole new version
-# of users.pl to provide a user interface.  But the user can't edit
-# just anything about themself;  only the keywords listed in the
-# var "saveparams" can be saved to users_param, by the user accessing
-# /users.pl?op=saveparam&param=theparamname&value=thenewvalue.  This is
-# *not* protected by formkeys, so assume trolls can make users click
-# and accidentally edit their own settings:  no really important data
-# should be stored in this way.
-sub saveParam {
+# of users.pl to provide a user interface.  The user can save any
+# param of the format "opt_foo", as long as "foo" shows up in
+# getMiscUserOpts which lists all the misc opts that this user can edit.
+# This is *not* protected by formkeys (yet), so assume attackers can make
+# users click and accidentally edit their own settings: no really important
+# data should be stored in this way.
+sub editMiscOpts {
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser(); 
+	my $constants = getCurrentStatic();
+
+	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
+
+	my $edit_user = $slashdb->getUser($user->{uid});
+	my $title = getTitle('editMiscOpts_title');
+
+	my $opts = $slashdb->getMiscUserOpts();
+	for my $opt (@$opts) {
+		my $opt_name = "opt_" . $opt->{name};
+		$opt->{checked} = $edit_user->{$opt_name} ? 1 : 0;
+	}
+#{ use Data::Dumper; my $form = getCurrentForm(); print STDERR "editMiscOpts " . Dumper({ form=>$form, user=>$user, edit_user=>$edit_user, opts=>$opts }); }
+
+	slashDisplay('editMiscOpts', {
+#		useredit	=> $user_edit,
+		title		=> $title,
+		opts		=> $opts,
+	});
+}
+
+#################################################################
+#
+sub saveMiscOpts {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	# Make sure this is a param the user is allowed to edit.
-	my($param, $value) = ($form->{param} || "", $form->{value} || "");
-	if (!$param) {
-		print getError('bad_saveparam');
-		return ;
-	}
-	# It has to be on the "saveparams" constant's list.
-	my %param_ok =
-		map { ( $_, 1) }
-		split(" ", $constants->{saveparams} || "");
-	if (!$param_ok{$param}) {
-		print getError('bad_saveparam');
-		return ;
+	return if $user->{is_anon}; # shouldn't be, but can't hurt to check
+
+	my $edit_user = $slashdb->getUser($user->{uid});
+	my %opts_ok_hash = ( );
+	my $opts = $slashdb->getMiscUserOpts();
+	for my $opt (@$opts) {
+		$opts_ok_hash{"opt_$opt->{name}"} = 1;
 	}
 
-	# As a safety precaution against stupid site admins, we
-	# prohibit any keys in "real" tables from being affected
-	# here.  This is paranoia but it might save someone's
-	# butt someday.
-	if ($param_ok{acl}) {
-		warn "You don't want 'acl' as a saveparams key";
-		print getError('bad_saveparam');
+	my $update = { };
+	for my $opt (grep /^opt_/, keys %$form) {
+		next unless $opts_ok_hash{$opt};
+		$update->{$opt} = $form->{$opt} ? 1 : 0;
 	}
-#	my(@users_tables) = $slashdb->sqlTableExists("users%");
-	my @users_tables = qw(
-		users users_comments users_index
-		users_info users_prefs
-	);
-	for my $table (grep !/^users_param$/, @users_tables) {
-		my $keys = $slashdb->getKeys($table);
-		for my $key (@$keys) {
-			if ($param eq $key) {
-				# Site admin did something lame!
-				warn join(" ",
-					"There's a REAL KEY in your",
-					"'saveparams' var, take it",
-					"out: '$key'"
-				);
-				print getError('bad_saveparam');
-				return ;
-			}
-		}
-	}
+#{ use Data::Dumper; print STDERR "saveMiscOpts " . Dumper({ opts => $opts, ok => \%opts_ok_hash, update=>$update, form=>$form, user=>$user, edit_user=>$edit_user }); }
 
-	# Set it.
-	$value = substr($value, 0, 255);
-	$slashdb->setUser($user->{uid}, { $param => $value });
+	# Make the changes.
+	$slashdb->setUser($edit_user->{uid}, $update);
 
 	# Inform the user the change was made.  Since we don't
 	# require formkeys, we always want to print a message to
 	# make sure the user sees what s/he did.
-	print getMessage('saveparam_msg', {
-		param		=> $param,
-		paramvalue	=> $value,
-	});
+	print getMessage('savemiscopts_msg', $update);
 
+	editMiscOpts();
 }
 
 #################################################################
@@ -1719,7 +1719,8 @@ sub displayForm {
 		newuserform	=> 'newUserForm',
 		userclose	=> 'loginForm',
 		userlogin	=> 'loginForm',
-		saveparam	=> 'loginForm',
+		editmiscopts	=> 'loginForm',
+		savemiscopts	=> 'loginForm',
 		default		=> 'loginForm'
 	};
 

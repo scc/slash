@@ -462,7 +462,6 @@ INSERT INTO vars (name, value, description) VALUES ('rootdir','//www.example.com
 INSERT INTO vars (name, value, description) VALUES ('runtask_verbosity','3','How much information runtask should write to slashd.log: 0-3 or empty string to use slashd_verbosity');
 INSERT INTO vars (name, value, description) VALUES ('run_ads','0','Should we be running ads?');
 INSERT INTO vars (name, value, description) VALUES ('sbindir','/usr/local/slash/sbin','Where are the sbin scripts kept');
-INSERT INTO vars (name, value, description) VALUES ('saveparams','','Space-separated list of params the user can edit with users.pl?op=saveparam');
 INSERT INTO vars (name, value, description) VALUES ('search_google','0','Turn on to disable local search (and invite users to use google.com)');
 INSERT INTO vars (name, value, description) VALUES ('send_mail','1','Turn On/Off to allow the system to send email messages.');
 INSERT INTO vars (name, value, description) VALUES ('siteadmin','admin','The admin for the site');
