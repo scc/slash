@@ -515,7 +515,8 @@ sub getSectionColors {
 # Look at this for a rewrite
 sub getSection {
 	my($section) = @_;
-	return { title => getCurrentStatic('slogan'), artcount => getCurrentUser('maxstories') || 30, issue => 3 }
+	return { title => getCurrentStatic('sitename').": ".getCurrentStatic('slogan'),
+		artcount => getCurrentUser('maxstories') || 30, issue => 3 }
 		unless $section;
 	my $slashdb = getCurrentDB();
 	return $slashdb->getSection($section);
