@@ -117,7 +117,7 @@ sub writeTemplateFile {
 	my($self, $filename, $template) = @_;
 	my $fh = gensym;
 	open($fh, "> $filename\0") or die "Can't open $filename to write to: $!";
-	for (keys %$template) {
+	for (qw(section description title page lang name template seclev)) { #(keys %$template) {
 		next if ($_ eq 'tpid');
 		print $fh "__${_}__\n";
 		$template->{$_} =~ s/\015\012/\n/g;
