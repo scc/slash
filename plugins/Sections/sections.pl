@@ -82,7 +82,7 @@ sub listSections {
 		return;
 	}
 
-	slashDisplay('sections-listSections', {
+	slashDisplay('listSections', {
 		sections => $slashdb->getSectionTitle()
 	});
 }
@@ -94,15 +94,15 @@ sub delSection {
 	my $form = getCurrentForm();
 
 	if ($form->{deletesection}) {
-		slashDisplay('sections-delSection', {
+		slashDisplay('delSection', {
 			section	=> $section
 		});
 	} elsif ($form->{deletesection_cancel}) {
-		slashDisplay('sections-delSectionCancel', {
+		slashDisplay('delSectionCancel', {
 			section	=> $section
 		});
 	} elsif ($form->{deletesection_confirm}) {
-		slashDisplay('sections-delSectionConfirm', {
+		slashDisplay('delSectionConfirm', {
 			section	=> $section,
 			title	=> "Deleted $section Section",
 			width	=> '100%'
@@ -140,7 +140,7 @@ sub editSection {
 	my $issue = createSelect('issue', $slashdb->getDescriptions('issuemodes'),
 		$this_section->{issue}, 1);
 
-	slashDisplay('sections-editSection', {
+	slashDisplay('editSection', {
 		section		=> $section,
 		seclev		=> $user->{seclev},
 		this_section	=> $this_section,
@@ -173,17 +173,6 @@ sub saveSection {
 	unless ($ok2) {
 		print getData('update', { section => $section });
 	}
-}
-
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "sections-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('sections-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

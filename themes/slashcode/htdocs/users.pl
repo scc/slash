@@ -189,7 +189,7 @@ sub previewSlashbox {
 	my $is_editable = $user->{seclev} > 999;
 
 	my $title = getTitle('previewslashbox_title', { cleantitle => $cleantitle });
-	slashDisplay('users-previewSlashbox', {
+	slashDisplay('previewSlashbox', {
 		width		=> '100%',
 		title		=> $title,
 		cleantitle 	=> $cleantitle,
@@ -202,7 +202,7 @@ sub previewSlashbox {
 
 #################################################################
 sub miniAdminMenu {
-	slashDisplay('users-miniAdminMenu');
+	slashDisplay('miniAdminMenu');
 }
 
 #################################################################
@@ -341,7 +341,7 @@ sub userInfo {
 		$n++;
 	}
 
-	slashDisplay('users-userInfo', {
+	slashDisplay('userInfo', {
 		title			=> $title,
 		uid			=> $uid,
 		nick			=> $nick,
@@ -369,7 +369,7 @@ sub editKey {
 	my $pubkey = $slashdb->getUser($uid, 'pubkey');
 
 	my $key = strip_literal($pubkey);
-	my $editkey = slashDisplay('users-editKey', { key => $key }, 1);	
+	my $editkey = slashDisplay('editKey', { key => $key }, 1);	
 	return $editkey;
 }
 
@@ -401,7 +401,7 @@ sub editUser {
 	my $author_flag = ($user_edit->{seclev} >= 100) ? 1 : 0; 
 	$admin_block = getUserAdmin($user_edit->{uid}, $currentuser->{seclev}, 0, 1) if $author_flag;
 
-	slashDisplay('users-editUser', { 
+	slashDisplay('editUser', { 
 		user_edit 		=> $user_edit, 
 		author_flag		=> $author_flag,
 		author_select		=> $author_select,
@@ -471,7 +471,7 @@ sub tildeEd {
 	}
 
 	my $tilded_box_msg = getMessage('tilded_box_msg');
-	$tilde_ed = slashDisplay('users-tildeEd', { 
+	$tilde_ed = slashDisplay('tildeEd', { 
 		title			=> $title,
 		tilded_box_msg		=> $tilded_box_msg,
 		aidref			=> $aidref,
@@ -513,7 +513,7 @@ sub editHome {
 		$user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks}
 	);
 
-	slashDisplay('users-editHome', {
+	slashDisplay('editHome', {
 		title			=> $title,
 		user_edit		=> $user_edit,
 		tzformat_select		=> $tzformat_select,
@@ -557,7 +557,7 @@ sub editComm {
 	$formats = $slashdb->getDescriptions('postmodes');
 	$posttype_select = createSelect('posttype', $formats, $user_edit->{posttype}, 1);
 
-	slashDisplay('users-editComm', {
+	slashDisplay('editComm', {
 		title			=> $title,
 		user_edit		=> $user_edit,
 		h_check			=> $h_check,			
@@ -786,7 +786,7 @@ sub displayForm {
 	my $msg = getMessage('dispform_new_msg_1');
 	$msg .= getMessage('dispform_new_msg_2') if ! $form->{newuser};
 
-	slashDisplay('users-displayForm', {
+	slashDisplay('displayForm', {
 		newnick		=> fixNickname($form->{newuser}),
 		title 		=> $title,
 		title2 		=> $title2,
@@ -801,7 +801,7 @@ sub getMessage {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('users-messages', $hashref,
+	return slashDisplay('messages', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
 
@@ -812,7 +812,7 @@ sub getTitle {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('users-titles', $hashref,
+	return slashDisplay('titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
 
@@ -843,7 +843,7 @@ sub getUserAdmin {
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
 	$author_select =~ s/\s{2,}//g;
 
-	return slashDisplay('users-admin', { 
+	return slashDisplay('admin', { 
 		user			=> $user,
 		seclev_field		=> $display_seclev,
 		uid_checked 		=> $uid_checked,

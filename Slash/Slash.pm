@@ -51,7 +51,7 @@ $VERSION = '1.0.9';
 	header horizmenu linkComment linkStory lockTest
 	moderatorCommentLog pollbooth portalbox printComments
 	redirect selectMode selectSection selectSortcode
-	selectThreshold selectTopic sendEmail titlebar
+	selectThreshold selectTopic sendEmail titlebar getData
 );  # anonLog
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
@@ -2196,7 +2196,12 @@ sub createMenu {
 	}
 
 	if (@$menu_items) {
-		return slashDisplay("menu-$menu", { items => $items }, 1);
+		return slashDisplay($menu, {
+			items	=> $items
+		}, {
+			Return	=> 1,
+			Page	=> 'menu'
+		});
 	} else {
 		return;
 	}
@@ -2205,12 +2210,12 @@ sub createMenu {
 
 #################################################################
 # this gets little snippets of data all in grouped together in
-# one template, called "Slash-data"
+# one template, called "data"
 sub getData {
 	my($value, $hashref, $page) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay($page . '-data', $hashref,
+	return slashDisplay('data', $hashref,
 		{ Return => 1, Nocomm => 1 });
 }
 

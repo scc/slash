@@ -35,31 +35,35 @@ sub fetch {
 	my($name, $data, $error, $slot, $size);
 	$size = $self->{ SIZE };
 
+	# if reference, then get a unique name to cache by
 	if (ref $text eq 'SCALAR') {
 		$text = $$text;
 		$name = _get_anon_name($text);
+
+	# if regular scalar, get proper template ID ("name") from DB
 	} else {
-		$name = $text;
+		my $slashdb = getCurrentDB();
+		$name = $slashdb->getTemplate($text, 'tpid');
 		undef $text;
 	}
 
 	print STDERR "fetch($name)\n" if $DEBUG;
 
+	# caching disabled so load and compile but don't cache
 	if (defined $size && !$size) {
-		# caching disabled so load and compile but don't cache
 		($data, $error) = $self->_load($name, $text);
-		($data, $error) = $self->_compile($data) unless $error; # , $compfile
+		($data, $error) = $self->_compile($data) unless $error;
 		$data = $data->{ data } unless $error;
 
+	# cached entry exists, so refresh slot and extract data
 	} elsif ($name && ($slot = $self->{ LOOKUP }{ $name })) {
-		# cached entry exists, so refresh slot and extract data
 		($data, $error) = $self->_refresh($slot);
 		$data = $slot->[ DATA ] unless $error;
 
+	# nothing in cache so try to load, compile and cache
 	} else {
-		# nothing in cache so try to load, compile and cache
 		($data, $error) = $self->_load($name, $text);
-		($data, $error) = $self->_compile($data) unless $error; # , $compfile
+		($data, $error) = $self->_compile($data) unless $error;
 		$data = $self->_store($name, $data) unless $error;
 	}
 
@@ -72,10 +76,12 @@ sub _load {
 	$now = time;
 	$time = 0;
 
+	print STDERR "_load(@_[1 .. $#_])\n" if $DEBUG;
+
 	if (! defined $text) {
 		$slashdb = getCurrentDB();
 		# in arrayref so we also get _modtime
-		my $temp = $slashdb->getTemplate($name, ['template']);
+		my $temp = $slashdb->getTemplateByID($name, ['template']);
 		$text = $temp->{template};
 		$time = $temp->{_modtime};
 	}

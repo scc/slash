@@ -73,7 +73,7 @@ sub topTopics {
 		);
 	}
 
-	slashDisplay('topics-topTopics', {
+	slashDisplay('topTopics', {
 		title		=> 'Recent Topics',
 		width		=> '90%',
 		topics		=> \@topics,
@@ -87,24 +87,13 @@ sub topTopics {
 sub listTopics {
 	my $slashdb = getCurrentDB();
 
-	slashDisplay('topics-listTopics', {
+	slashDisplay('listTopics', {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') > 500,
 		topics		=> $slashdb->getTopics()
 	});
 
-}
-
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "topics-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('topics-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

@@ -53,7 +53,7 @@ EOT
 		"$constants->{sitename} | $story->{title}";
 
 	header($title, $story->{section});
-	slashDisplay('article-display', {
+	slashDisplay('display', {
 		poll			=> pollbooth($story->{sid}, 1),
 		section			=> $SECT,
 		section_block	=> $dbslash->getBlock($SECT->{section}),

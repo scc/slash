@@ -100,7 +100,7 @@ sub yourPendingSubmissions {
 
 	if (my $submissions = $slashdb->getSubmissionsPending()) {
 		my $count = $slashdb->getSubmissionCount();
-		slashDisplay('submit-yourPendingSubmissions', {
+		slashDisplay('yourPendingSubmissions', {
 			submissions	=> $submissions,
 			title		=> "Your Recent Submissions (total:$count)",
 			width		=> '100%',
@@ -139,7 +139,7 @@ sub previewForm {
 
 	$slashdb->setSession($user->{uid}, { lasttitle => $sub->{subj} });
 
-	slashDisplay('submit-previewForm', {
+	slashDisplay('previewForm', {
 		submission	=> $sub,
 		subid		=> $subid,
 		lockTest	=> lockTest($sub->{subj}),
@@ -151,7 +151,7 @@ sub previewForm {
 sub genQuickies {
 	my $slashdb = getCurrentDB();
 	my $submissions = $slashdb->getQuickies();
-	my $stuff = slashDisplay('submit-genQuickies', { submissions => $submissions },
+	my $stuff = slashDisplay('genQuickies', { submissions => $submissions },
 		{ Return => 1, Nocomm => 1 });
 	$slashdb->setQuickies($stuff);
 }
@@ -202,7 +202,7 @@ sub submissionEd {
 			map  { [$_, ($_ eq $def_note ? '' : $_)] }
 			keys %all_notes;
 
-	slashDisplay('submit-submissionEdTable', {
+	slashDisplay('submissionEdTable', {
 		cur_section	=> $cur_section,
 		cur_note	=> $cur_note,
 		def_section	=> $def_section,
@@ -247,7 +247,7 @@ sub submissionEd {
 	);
 
 	my $template = $user->{submit_admin} ? 'Admin' : 'User';
-	slashDisplay('submit-submissionEd' . $template, {
+	slashDisplay('submissionEd' . $template, {
 		submissions	=> \@submissions,
 		selection	=> \@selection,
 	});
@@ -268,7 +268,7 @@ sub displayForm {
 		errorMessage(getData('maxallowed'));
 	}
 
-	slashDisplay('submit-displayForm', {
+	slashDisplay('displayForm', {
 		savestory	=> $form->{story} && $form->{subj},
 		username	=> $form->{from} || $username,
 		fakeemail	=> $form->{email} || $fakeemail,
@@ -299,7 +299,7 @@ sub saveSub {
 
 		$slashdb->createSubmission();
 
-		slashDisplay('submit-saveSub', {
+		slashDisplay('saveSub', {
 			title		=> 'Saving',
 			width		=> '100%',
 			missingemail	=> length($form->{email}) < 3,
@@ -310,16 +310,6 @@ sub saveSub {
 }
 
 #################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "submit-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('submit-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
-}
-
 createEnvironment();
 main();
 

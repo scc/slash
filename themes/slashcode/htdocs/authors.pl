@@ -38,7 +38,7 @@ sub main {
 	my $authors = $slashdb->getAuthors();
 
 	header("$constants->{sitename}: Authors", $section->{section});
-	slashDisplay('authors-main', {
+	slashDisplay('main', {
 		aids	=> $list,
 		authors	=> $authors,
 		title	=> "The Authors",

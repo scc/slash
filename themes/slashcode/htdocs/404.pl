@@ -40,13 +40,13 @@ sub main {
 	my($new_url, $errnum) = fixHref($url, 1);
 
 	if ($errnum && $errnum !~ /^\d+$/) {
-		slashDisplay('404-main', {
+		slashDisplay('main', {
 			url	=> $new_url,
 			origin	=> $url,
 			message	=> $errnum,
 		});
 	} else {
-		slashDisplay('404-main', {
+		slashDisplay('main', {
 			error	=> $errnum,
 			url	=> $new_url,
 			origin	=> $url,

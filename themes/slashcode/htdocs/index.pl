@@ -262,7 +262,7 @@ sub displayStories {
 			push @links, getData('editstory', { sid => $sid }) if $user->{seclev} > 100;
 		}
 
-		$return .= slashDisplay('index-storylink', {
+		$return .= slashDisplay('storylink', {
 			links	=> \@links,
 		}, 1);
 
@@ -272,17 +272,6 @@ sub displayStories {
 	}
 
 	return $return;
-}
-
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "index-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('index-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

@@ -63,7 +63,7 @@ sub main {
 		push @portals, $portal;
 	}
 
-	slashDisplay('cheesyportal-main', {
+	slashDisplay('main', {
 		title	=> "Cheesy $constants->{sitename} Portal Page",
 		width	=> '100%',
 		portals	=> \@portals,
@@ -72,17 +72,6 @@ sub main {
 	footer();
 
 	writeLog('cheesyportal') unless $form->{ssi};
-}
-
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "cheesyportal-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('cheesyportal-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

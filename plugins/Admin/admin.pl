@@ -227,7 +227,7 @@ sub varEdit {
 		$varsref = $slashdb->getVar($name);
 	}
 
-	slashDisplay('admin-varEdit', { 
+	slashDisplay('varEdit', { 
 		vars_select 	=> $vars_select,
 		varsref		=> $varsref,
 	});
@@ -287,7 +287,7 @@ sub authorEdit {
 		$_ = strip_literal($_);
 	}
 
-	slashDisplay('admin-authorEdit', {
+	slashDisplay('authorEdit', {
 		author 			=> $author,
 		author_select		=> $author_select,
 		section_select		=> $section_select,
@@ -391,7 +391,7 @@ sub templateEdit {
 
 	$templateform_flag = 1 if ( (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
 
-	slashDisplay('admin-templateEdit', {
+	slashDisplay('templateEdit', {
 		tpid 			=> $tpid,
 		title 			=> $title,
 		description_ta		=> $description_ta,
@@ -516,7 +516,7 @@ sub blockEdit {
 
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
-	slashDisplay('admin-blockEdit', {
+	slashDisplay('blockEdit', {
 		bid 			=> $bid,
 		title 			=> $title,
 		blockref		=> $blockref,
@@ -600,7 +600,7 @@ sub colorEdit {
 	$block = $slashdb->getDescriptions('color_block', '', 1);
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
 	
-	slashDisplay('admin-colorEdit', {
+	slashDisplay('colorEdit', {
 		title 			=> $title,
 		colorblock_clean	=> $colorblock_clean,
 		colors			=> \@colors,
@@ -663,7 +663,7 @@ sub topicEdit {
 		} 
 	}
 
-	slashDisplay('admin-topicEdit', {
+	slashDisplay('topicEdit', {
 		imageseen_flag		=> $imageseen_flag,
 		images_flag		=> $images_flag,
 		topic			=> $topic,
@@ -735,7 +735,7 @@ sub listTopics {
 		}
 	}
 
-	slashDisplay('admin-listTopics', {
+	slashDisplay('listTopics', {
 			topicref 	=> $topicref,
 			title		=> $title
 		}
@@ -865,7 +865,7 @@ sub otherLinks {
 
 	my $topic = $slashdb->getTopic($tid);
 
-	return slashDisplay('admin-otherLinks', {
+	return slashDisplay('otherLinks', {
 		aid		=> $aid,
 		tid		=> $tid,
 		topic		=> $topic,
@@ -1012,7 +1012,7 @@ sub editStory {
 #Import Image (don't even both trying this yet :)<BR>
 #	<INPUT TYPE="file" NAME="importme"><BR>
 
-	slashDisplay('admin-editStory', {
+	slashDisplay('editStory', {
 		storyref 		=> $storyref,
 		story			=> $story,
 		storycontent		=> $storycontent,
@@ -1121,7 +1121,7 @@ sub listStories {
 	$count = @$storylist;
 	$left = $count - $x;
 
-	slashDisplay('admin-listStories', {
+	slashDisplay('listStories', {
 		storylistref	=> $storylistref,
 		'x'		=> $x,
 		left		=> $left
@@ -1149,7 +1149,7 @@ sub listFilters {
 	my $title = getTitle('listFilters-title');
 	my $filter_ref = $slashdb->getContentFilters();
 
-	slashDisplay('admin-listFilters', { 
+	slashDisplay('listFilters', { 
 		title		=> $title, 
 		filter_ref	=> $filter_ref 
 	});
@@ -1170,7 +1170,7 @@ sub editFilter {
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = strip_literal($filter->{'err_message'});
 
-	slashDisplay('admin-editFilter', { 
+	slashDisplay('editFilter', { 
 		filter		=> $filter, 
 		filter_id	=> $filter_id 
 	});
@@ -1214,7 +1214,7 @@ sub updateFilter {
 ##################################################################
 sub editbuttons {
 	my($newarticle) = @_;
-	my $editbuttons = slashDisplay('admin-editbuttons',
+	my $editbuttons = slashDisplay('editbuttons',
 		{ newarticle => $newarticle }, 1);
 	return $editbuttons
 }
@@ -1263,9 +1263,9 @@ sub saveStory {
 
 	my $sid = $slashdb->createStory();
 	$slashdb->createDiscussion($sid, $form->{title}, 
-			$form->{'time'}, 
-			"$rootdir/article.pl?sid=$sid"
-			);
+		$form->{'time'}, 
+		"$rootdir/article.pl?sid=$sid"
+	);
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories();
@@ -1276,7 +1276,7 @@ sub getMessage {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('admin-messages', $hashref,
+	return slashDisplay('messages', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
 ##################################################################
@@ -1284,7 +1284,7 @@ sub getTitle {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('admin-titles', $hashref,
+	return slashDisplay('titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
 ##################################################################

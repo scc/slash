@@ -2520,13 +2520,21 @@ sub getBlock {
 
 ########################################################
 sub _getTemplateNameCache {
-	my ($self) = @_;
+	my($self) = @_;
 	my %cache;
 	my $templates = $self->sqlSelectAll('tpid,name,page,section', 'templates');
-	for(@$templates) {
-		$cache{$_->[1],$_->[2],$_->[3]} = $_->[0];
+	for (@$templates) {
+		$cache{$_->[1], $_->[2], $_->[3]} = $_->[0];
 	}
 	return \%cache;
+}
+
+########################################################
+sub getTemplateByID {
+	my($self) = @_;
+	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
+	my $answer = _genericGetCache('templates', 'tpid', '', @_);
+	return $answer;
 }
 
 ########################################################
@@ -2543,21 +2551,22 @@ sub getTemplate {
 	$self->{$table_cache_id} ||= _getTemplateNameCache($self);
 
 	#Now, lets determine what we are after
-	unless($page) {
+	unless ($page) {
 		$page = getCurrentUser('currentPage');
 		$page ||= 'misc';
 	}
-	unless($section) {
+	unless ($section) {
 		$section = getCurrentUser('currentSection');
 		$section ||= 'default';
 	}
+
 	#Now, lets figure out the id
 	#name|page|section => name|page|default => name|misc|section => name|misc|default
 	# That frat boy march with a paddle
-	my $id = $self->{$table_cache_id}->{$name,$page,$section};
-	$id ||= $self->{$table_cache_id}->{$name,$page,'default'};
-	$id ||= $self->{$table_cache_id}->{$name,'misc',$section};
-	$id ||= $self->{$table_cache_id}->{$name,'misc','default'};
+	my $id = $self->{$table_cache_id}{$name, $page,  $section };
+	$id  ||= $self->{$table_cache_id}{$name, $page,  'default'};
+	$id  ||= $self->{$table_cache_id}{$name, 'misc', $section };
+	$id  ||= $self->{$table_cache_id}{$name, 'misc', 'default'};
 	return unless $id;
 
 	my $type;
@@ -2569,7 +2578,7 @@ sub getTemplate {
 
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values}
-			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
+			if (keys %{$self->{$table_cache}{$id}} && !$cache_flag);
 	} else {
 		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
 			my %return = %{$self->{$table_cache}{$id}};

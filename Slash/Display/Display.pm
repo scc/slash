@@ -96,7 +96,18 @@ Boolean for whether to include (false) or not include (true)
 HTML comments surrounding template, stating what template
 block this is.  Default is to include comments.
 
-=item Section
+=item Section (REWRTIE)
+
+All templates named NAME may be overriden by a template named
+"SECTION_NAME" (e.g., the "header" template, may be overridden
+in the "tacohell" section with a template named "tacohell_header").
+
+By default, that section will be determined by whatever the current
+section is (or "light" if the user is in light mode).  However,
+the default can be overriden by the Section option.  Also, a Section
+value of "NONE" will cause no section to be used.
+
+=item Page (REWRTIE)
 
 All templates named NAME may be overriden by a template named
 "SECTION_NAME" (e.g., the "header" template, may be overridden
@@ -127,13 +138,12 @@ Compiles templates and caches them.
 sub slashDisplay {
 	# options: return, nocomm, section
 	my($name, $data, $opt) = @_;
-	my(@comments, $ok, $out);
+	my(@comments, $ok, $out, $origSection, $origPage);
 	return unless $name;
 
-	# this should be stored persistently, either for the request,
-	# or for the virtual host
-	my $slashdb = getCurrentDB();
-	my $templates = $slashdb->getDescriptions('templates');
+	my $user = getCurrentUser();
+	$origSection = $user->{currentSection};
+	$origPage = $user->{currentPage};	
 
 	# allow slashDisplay(NAME, DATA, RETURN) syntax
 	if (! ref $opt) {
@@ -141,14 +151,17 @@ sub slashDisplay {
 	}
 
 	if ($opt->{Section} eq 'NONE') {
-		delete $opt->{Section};
-	} else {
-		$opt->{Section} ||= getCurrentUser('light') ? 'light' :
-			getCurrentUser('currentSection');
+		$user->{currentSection} = 'default';
+	} elsif ($user->{light}) {
+		$user->{currentSection} = 'light';
+	} elsif ($opt->{Section}) {	
+		$user->{currentSection} = $opt->{Section};
 	}
 
-	if (!ref $name && $opt->{Section} && exists $templates->{"$opt->{Section}_$name"}) {
-		$name = "$opt->{Section}_$name";
+	if ($opt->{Page} eq 'NONE') {
+		$user->{currentPage} = 'misc';
+	} elsif ($opt->{Page}) {	
+		$user->{currentPage} = $opt->{Page};
 	}
 
 	$data ||= {};
@@ -173,6 +186,9 @@ sub slashDisplay {
 	}
 
 	errorLog($template->error) unless $ok;
+
+	$user->{currentSection}	= $origSection;
+	$user->{currentPage}	= $origPage;
 
 	return $opt->{Return} ? $out : $ok;
 }
@@ -264,9 +280,13 @@ my $filters = Template::Filters->new({
 # i don't think so, but cannot recall.
 # -- pudge
 sub _template {
-	my $r = Apache->request;
-	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	return $cfg->{template} if $cfg->{template};
+	my $cfg = {};
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		return $cfg->{template} if $cfg->{template};
+	}
 
 	my $constants = getCurrentStatic();
 	my $cache_size = $constants->{cache_enabled}

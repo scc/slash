@@ -340,7 +340,6 @@ sub testExStr {
 	return $_;
 }
 
-
 ########################################################
 # adjust path for non-rooted slash sites
 sub fixuri {
@@ -352,8 +351,7 @@ sub fixuri {
 	return $uri;
 }
 
-sub DESTROY {
-}
+sub DESTROY { }
 
 1;
 

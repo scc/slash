@@ -40,7 +40,7 @@ sub main {
 
 	my $id = isEligible($user, $dbslash, $constants);
 	if (!$id) {
-		slashDisplay('metamod-not-eligible');
+		slashDisplay('not-eligible');
 
 	} elsif ($op eq "MetaModerate") {
 		metaModerate($id, $form, $user, $dbslash, $constants);
@@ -112,7 +112,7 @@ sub metaModerate {
 
 	my $changes = $db->setMetaMod(\%m2victims, $flag, $ts);
 
-	slashDisplay('metamod-results', {
+	slashDisplay('results', {
 		changes => $changes,
 		count	=> $y,
 		metamod => \%metamod,
@@ -150,7 +150,7 @@ sub displayTheComments {
 	$u->{points} = 0;
 	my $comments = $db->getMetamodComments($id, $u->{uid}, $c->{m2_comments});
 
-	slashDisplay('metamod-display', {
+	slashDisplay('display', {
 		comments 	=> $comments,
 	});
 }
@@ -164,7 +164,7 @@ sub isEligible {
 	my $tuid = $db->countUsers();
 	my $last = $db->getModeratorLast($u->{uid});
 
-	my $result = slashDisplay('metamod-eligibility-tests', {
+	my $result = slashDisplay('eligibility-tests', {
 		user_count	=> $tuid,
 		'last'		=> $last,
 	}, { Return => 1, Nocomm => 1 });

@@ -460,13 +460,13 @@ DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
   tpid int(11) NOT NULL auto_increment,
   name varchar(30) DEFAULT '' NOT NULL,
+  page varchar(20) DEFAULT 'misc' NOT NULL,
+  section varchar(30) DEFAULT 'default' NOT NULL,
+  lang char(3) DEFAULT 'eng' NOT NULL,
   template text,
   seclev int(1),
   description text,
   title varchar(128),
-  page varchar(20) DEFAULT 'misc' NOT NULL,
-  section varchar(30) DEFAULT 'default' NOT NULL,
-  lang char(3) DEFAULT 'eng' NOT NULL,
   PRIMARY KEY (tpid),
   UNIQUE true_template (name,page,section,lang)
 );

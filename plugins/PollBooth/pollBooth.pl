@@ -87,7 +87,7 @@ sub editpoll {
 
 	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
 
-	slashDisplay('pollBooth-editpoll', {
+	slashDisplay('editpoll', {
 		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
 		qid		=> strip_attribute($qid),
 		question	=> $question,
@@ -99,7 +99,7 @@ sub editpoll {
 sub savepoll {
 	return unless getCurrentForm('qid');
 	my $slashdb = getCurrentDB();
-	slashDisplay('pollBooth-savepoll');
+	slashDisplay('savepoll');
 	$slashdb->savePollQuestion();
 }
 
@@ -157,7 +157,7 @@ sub vote {
 	my $postvote = $slashdb->getBlock("$user->{currentSection}_postvote", 'block')
 		|| $slashdb->getBlock('postvote', 'block');
 
-	slashDisplay('pollBooth-vote', {
+	slashDisplay('vote', {
 		qid		=> strip_attribute($qid),
 		width		=> '99%',
 		title		=> $question->{question},
@@ -175,7 +175,7 @@ sub listpolls {
 	my $questions = $slashdb->getPollQuestionList($min);
 	my $sitename = getCurrentStatic('sitename');
 
-	slashDisplay('pollBooth-listpolls', {
+	slashDisplay('listpolls', {
 		questions	=> $questions,
 		startat		=> $min + @$questions,
 		admin		=> getCurrentUser('seclev') >= 100,
@@ -185,16 +185,6 @@ sub listpolls {
 }
 
 #################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "pollbooth-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('pollBooth-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
-}
-
 createEnvironment();
 main();
 

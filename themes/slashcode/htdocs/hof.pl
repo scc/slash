@@ -45,7 +45,7 @@ sub main {
 		@{$top}{'fakeemail', 'nickname'} = @{$user_email}{'fakeemail', 'nickname'};
 	}
 
-	slashDisplay('hof-main', {
+	slashDisplay('main', {
 		width		=> '98%',
 		actives		=> $slashdb->countStories(),
 		visited		=> $slashdb->countStoriesStuff(),
@@ -88,17 +88,6 @@ sub main {
 
 	writeLog('hof');
 	footer($form->{ssi});
-}
-
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "hof-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('hof-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

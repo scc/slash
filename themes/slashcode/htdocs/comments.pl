@@ -53,7 +53,7 @@ sub main {
 	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
 
 	if ($user->{uid} < 1 && length($form->{upasswd}) > 1) {
-		slashDisplay('comments-error', {
+		slashDisplay('errors', {
 			type		=> 'login error',
 		});
 		$form->{op} = "Preview";
@@ -128,7 +128,7 @@ sub commentIndex {
 
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $db->getDiscussions();
-	slashDisplay('comments-discussion_list', {
+	slashDisplay('discussion_list', {
 		discussions => $discussions,
 	});
 }
@@ -148,7 +148,7 @@ sub editComment {
 	$reply->{no_moderation} = 1;
 
 	if (!$c->{allow_anonymous} && $u->{is_anon}) {
-		slashDisplay('comments-error', {
+		slashDisplay('errors', {
 			type	=> 'no anonymous posting',
 		});
 	    return;
@@ -158,7 +158,7 @@ sub editComment {
 	my $previewForm;
 	# Don't munge the current error_message if there already is one.
 	if (! $db->checkTimesPosted('comments',$mp,$id,$formkey_earliest)) {
-		$error_message ||= slashDisplay('comments-errors', {
+		$error_message ||= slashDisplay('errors', {
 			type		=> 'max posts',
 			max_posts 	=> $mp,
 		}, 1);
@@ -186,7 +186,7 @@ sub editComment {
 	my $approvedtags =
 		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$c->{approvedtags}};
 
-	slashDisplay('comments-edit_comment', {
+	slashDisplay('edit_comment', {
 		approved_tags => $approvedtags,
 		error_message => $error_message,
 		format_select => $formatSelect,
@@ -207,21 +207,21 @@ sub validateComment {
 	my $c = getCurrentStatic();
 
 	if (isTroll($u, $c, $db)) {
-		my $err_msg = slashDisplay('comments-errors', {
+		my $err_msg = slashDisplay('errors', {
 			type 		=> 'troll message',
 		}, 1);
 		return (undef, undef, $err_msg);
 	}
 
 	if (!$c->{allow_anonymous} && ($u->{uid} < 1 || $f->{postanon})) { 
-		my $err_msg = slashDisplay('comments-errors', {
+		my $err_msg = slashDisplay('errors', {
 			type	=> 'anonymous disallowed', 
 		}, 1);
 		return (undef, undef, $err_msg);
 	}
 
 	unless ($comm && $subj) {
-		my $err_msg = slashDisplay('comments-errors', {
+		my $err_msg = slashDisplay('errors', {
 			type	=> 'no body',
 		}, 1);
 		return (undef, undef, $err_msg);
@@ -281,7 +281,7 @@ sub validateComment {
 				push @stack, $tag;
 
 				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-					my $err_msg = slashDisplay('comments-errors', {
+					my $err_msg = slashDisplay('errors', {
 						type =>	'nesting_toodeep',
 					}, 1);
 					return (undef, undef, $err_msg);
@@ -300,7 +300,7 @@ sub validateComment {
 	my $dupRows = $db->countComments($f->{sid}, '', $f->{postercomment});
 
 	if ($dupRows || !$f->{sid}) { 
-		my $err_msg = slashDisplay('comments-errors', {
+		my $err_msg = slashDisplay('errors', {
 			type	=> 'validation error',
 			dups	=> $dupRows,
 		});
@@ -317,7 +317,7 @@ sub validateComment {
 		# Should the naked '7' be converted to a Slash Variable for return by
 		# getCurrentStatic(). 	- Cliff
 		if (($w / ($br + 1)) < 7) {
-			my $err_msg = slashDisplay('comments-error', {
+			my $err_msg = slashDisplay('errors', {
 				type	=> 'low words-per-line',
 				ratio 	=> $w / ($br + 1),
 			}, 1);
@@ -375,7 +375,7 @@ sub validateComment {
 			if (((length($f->{$field}) <= $maximum_length)
 				&& $maximum_length) || $isTrollish) {
 
-				my $err_msg = slashDisplay('comments-errors', {
+				my $err_msg = slashDisplay('errors', {
 					type		=> 'filter message',
 					err_message => $err_message,
 				}, 1);
@@ -387,7 +387,7 @@ sub validateComment {
 			}
 
 		} elsif ($isTrollish) {
-			my $err_msg = slashDisplay('comments-errors', {
+			my $err_msg = slashDisplay('errors', {
 				type		=> 'filter message',
 				err_message => $err_message,
 			}, 1);
@@ -430,7 +430,7 @@ sub validateComment {
 					     length($f->{postercomment})) <= $_) {
 	
 						# blammo luser
-						my $err_msg = slashDisplay('comments-error', {
+						my $err_msg = slashDisplay('errors', {
 							type	=> 'compress filter',
 							ratio	=> $_,
 						}, 1);
@@ -482,7 +482,7 @@ sub previewForm {
 	$user->{mode} = 'archive';
 	my $previewForm;
 	if ($tempSubject && $tempComment) {
-		$previewForm = slashDisplay('comments-preview_comment', {
+		$previewForm = slashDisplay('preview_comment', {
 			preview => $preview,
 		}, 1);	
 	}
@@ -524,17 +524,17 @@ sub submitComment {
 	my $maxCid = $db->setComment($f, $u, $pts, $c->{anonymous_coward_uid});
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
-		slashDisplay('comments-error', {
+		slashDisplay('errors', {
 			type	=> 'submission error',
 		});
 	} elsif (!$maxCid) {
 		# What vars should be accessible here?
 		#	- $maxCid?
-		slashDisplay('comments-error', {
+		slashDisplay('errors', {
 			type	=> 'maxcid exceeded',
 		});
 	} else {
-		slashDisplay('comments-comment_submitted');
+		slashDisplay('comment_submitted');
 		undoModeration($f->{sid}, $u, $db, $c);
 		printComments($f->{sid}, $maxCid, $maxCid);
 	}
@@ -553,7 +553,7 @@ sub moderate {
 		$hasPosted = $db->countComments($f->{sid}, '','', $u->{uid});
 	}
 
-	slashDisplay('comments-moderation_header');
+	slashDisplay('moderation_header');
 
 	# Handle Deletions, Points & Reparenting
 	for (sort keys %{$f}) {
@@ -567,15 +567,15 @@ sub moderate {
 		}
 	}
 
-	slashDisplay('comments-moderation_footer');
+	slashDisplay('moderation_footer');
 
 	if ($hasPosted && !$totalDel) {
-		slashDisplay('comments-errors', {
+		slashDisplay('errors', {
 			type	=> 'already posted',
 		});
 	} elsif ($u->{seclev} && $totalDel) {
 		my $count = $db->countComments($f->{sid});
-		slashDisplay('comments-deleted_message', {
+		slashDisplay('deleted_message', {
 			total_deleted => $totalDel,
 			comment_count => $count,
 		});
@@ -595,7 +595,7 @@ sub moderateCid {
 	
 	if ($u->{points} < 1) {
 		unless ($u->{seclev} > 99 && $superAuthor) {
-			slashDisplay('comments-errors', {
+			slashDisplay('errors', {
 				type	=> 'no points',
 			});
 			return;
@@ -617,7 +617,7 @@ sub moderateCid {
 		my $mid = $db->getModeratorLogID($cid, $sid, $u->{uid});
 		if ($mid) {
 			$dispArgs->{type} = 'already moderated';
-			slashDisplay('comments-moderation', $dispArgs);
+			slashDisplay('moderation', $dispArgs);
 			return;
 		}	
 	}
@@ -648,7 +648,7 @@ sub moderateCid {
 		# 'inactive' so we don't mistakenly undo it.
 		$db->setModeratorLog($cid, $sid, $u->{uid}, $val, $modreason);
 		$dispArgs->{type} = 'score limit';
-		slashDisplay('comments-moderation', $dispArgs);
+		slashDisplay('moderation', $dispArgs);
 		return;
 	}
 
@@ -656,7 +656,7 @@ sub moderateCid {
 		# Update points for display due to possible change in above line.
 		$dispArgs->{points} = $u->{points};
 		$dispArgs->{type} = 'moderated';
-		slashDisplay('comments-moderation', $dispArgs);
+		slashDisplay('moderation', $dispArgs);
 	}
 }
 
@@ -686,7 +686,7 @@ sub deleteThread {
 	$db->deleteComment($sid, $cid);
 
 	if (!$level) {
-		slashDisplay('comments-deleted_cids', {
+		slashDisplay('deleted_cids', {
 			sid => $sid,
 			count => $delCount,
 			comments_deleted => $deleted,
@@ -705,7 +705,7 @@ sub undoModeration {
 	my $removed = $db->unsetModeratorlog($u->{uid}, $sid,
 		$c->{comment_maxscore}, $c->{comment_minscore});
 
-	slashDisplay('comments-undo_moderation', {
+	slashDisplay('undo_moderation', {
 		removed => $removed,
 	});
 }
