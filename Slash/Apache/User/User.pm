@@ -28,23 +28,25 @@ sub SlashUserInit ($$) {
 # handler method
 sub handler {
 	my($r) = @_;
+
+	# Ok, this will make it so that we can reliably use Apache->request
+	Apache->request($r);
+
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $dbcfg->{constants};
 	my $dbslash = $dbcfg->{dbslash};
-	unless ($r->filename =~ /\.pl$/) {
-	# We are still missing a call to writeLog at this point
+
+	# let pass if / or .pl
+	unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
 		$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
 		$cfg->{user} = '';
 		$cfg->{form} = '';
 
 		return OK;
 	}
+
 	$dbslash->sqlConnect;
-
-	# Ok, this will make it so that we can reliably use Apache->request
-	Apache->request($r);
-
 
 	# Don't remove this. This solves a known bug in Apache -- brian
 	# and it creates a new one!  after this, $r is unreliable for some
@@ -61,7 +63,6 @@ sub handler {
 	my $op = $form->{op} || '';
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $dbslash->getUserUID($form->{unickname});
-		print STDERR "FORM_AUTH: $tmpuid:$form->{upasswd}\n";
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 		if ($newpass) {
 			$r->err_header_out(Location =>
@@ -81,7 +82,6 @@ sub handler {
 
 	} elsif ($cookies->{user}) {
 		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
-		print STDERR "COOKIE_AUTH: $tmpuid:$password\n";
 		($uid, my($cookpasswd)) =
 			$dbslash->getUserAuthenticate($tmpuid, $password);
 
@@ -99,14 +99,10 @@ sub handler {
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
-	# This is just here for testing. This should actually occur way before this
-	# It does work, but unless you have a shtml (and that means I get
-	# other things fixed) don't comment this in
-#	if (($r->filename =~ /index.pl$/) && (isAnon($constants->{anonymous_coward_uid}))) {
-#		$r->uri('/index.shtml');
-#		# We need to log this
-#		return OK;
-#	} 
+	if (!isAnon($uid) && $r->uri eq '/') {
+		$r->internal_redirect('/index.pl');
+		return OK;
+	}
 
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
@@ -115,8 +111,6 @@ sub handler {
 
 	$cfg->{user} = getUser($form, $cookies, $uid);
 	$cfg->{form} = $form;
-
-	print STDERR "UID: $uid\n";
 
 	return OK;
 }
@@ -183,6 +177,7 @@ sub getUser {
 		if ($user->{aseclev}) {
 			$user->{aid} = $form->{aaid};
 			setCookie('session', $sid);
+			$user->{is_admin} = 1;
 		} else {
 			undef $user->{aid};
 		}
@@ -193,6 +188,7 @@ sub getUser {
 				$cookies->{session}->value,
 				$constants->{admin_timeout}
 			);
+		$user->{is_admin} = $user->{aid} ne '';
 
 	} else {
 		$user->{aid} = '';

@@ -27,7 +27,7 @@ my $template = Template->new(
 sub template { $template }
 
 sub slashDisplay {
-	my($name, $hashref, $return) = @_;
+	my($name, $hashref, $return, $nocomm) = @_;
 	my(@comments, $ok, $out);
 	return unless $name;
 	$hashref ||= {};
@@ -40,12 +40,13 @@ sub slashDisplay {
 
 	if ($return) {
 		$ok = $template->process($name, $hashref, \$out);
-		$out = join '', $comments[0], $out, $comments[1];
+		$out = join '', $comments[0], $out, $comments[1]
+			unless $nocomm;
 		
 	} else {
-		print $comments[0];
+		print $comments[0] unless $nocomm;
 		$ok = $template->process($name, $hashref);
-		print $comments[1];
+		print $comments[1] unless $nocomm;
 	}
 
 	apacheLog($template->error) unless $ok;
@@ -57,6 +58,7 @@ sub _populate {
 	my($hashref) = @_;
 	$hashref->{user} = getCurrentUser() unless exists $hashref->{user};
 	$hashref->{form} = getCurrentForm() unless exists $hashref->{form};
+	$hashref->{dbslash} = getCurrentDB() unless exists $hashref->{dbslash};
 	$hashref->{constants} = getCurrentStatic()
 		unless exists $hashref->{constants};
 	$hashref->{env} = { map { (lc $_, $ENV{$_}) } keys %ENV }

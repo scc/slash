@@ -253,7 +253,6 @@ CREATE TABLE menus (
   value text,
   seclev int(1),
   menuorder int(5),
-  type varchar(20) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
   KEY page_labels (menu,label),
   UNIQUE page_labels_un (menu,label)
@@ -269,6 +268,7 @@ CREATE TABLE metamodlog (
   val int(11) DEFAULT '0' NOT NULL,
   ts datetime,
   id int(11) DEFAULT '0' NOT NULL auto_increment,
+  flag int(11) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -284,6 +284,7 @@ CREATE TABLE moderatorlog (
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   cid int(1) DEFAULT '0' NOT NULL,
   reason int(11) DEFAULT '0',
+  active int(1) DEFAULT '1' NOT NULL,
   PRIMARY KEY (id),
   KEY sid (sid,cid),
   KEY sid_2 (sid,uid,cid)
@@ -388,19 +389,6 @@ CREATE TABLE sessions (
   lasttime datetime,
   lasttitle varchar(50),
   PRIMARY KEY (session)
-);
-
-#
-# Table structure for table 'slashslices'
-#
-DROP TABLE IF EXISTS slashslices;
-CREATE TABLE slashslices (
-  ssID int(11) DEFAULT '0' NOT NULL auto_increment,
-  ssRank int(11) DEFAULT '0' NOT NULL,
-  ssRUID int(11),
-  ssLayer text,
-  PRIMARY KEY (ssID,ssRank),
-  KEY rank (ssRank)
 );
 
 #
@@ -593,6 +581,10 @@ CREATE TABLE users_info (
   lastmm date DEFAULT '0000-00-00' NOT NULL,
   lastaccess date DEFAULT '0000-00-00' NOT NULL,
   lastmmid int(11) DEFAULT '0' NOT NULL,
+  m2fair int(11) DEFAULT '0' NOT NULL,
+  m2unfair int(11) DEFAULT '0' NOT NULL,
+  m2fairvotes int(11) DEFAULT '0' NOT NULL,
+  m2unfairvotes int(11) DEFAULT '0' NOT NULL,
   PRIMARY KEY (uid)
 );
 

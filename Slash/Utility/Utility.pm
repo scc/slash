@@ -37,11 +37,8 @@ $Slash::Utility::VERSION = '0.01';
 
 # These are package variables that are used when you need to use the
 # set methods when not running under mod_perl
-my $static_user;
-my $static_form;
-my $static_constants;
-my $static_db;
-my $static_anonymous_coward;
+my($static_user, $static_form, $static_constants, $static_db,
+	$static_anonymous_coward);
 
 ########################################################
 sub getAnonId {
@@ -109,12 +106,17 @@ sub changePassword {
 sub getCurrentMenu {
 	my($script) = @_;
 
+	unless ($script) {
+		($script = $ENV{SCRIPT_NAME}) =~ s/\.pl$//;
+	}
+
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $menus = $cfg->{'menus'};
 
 	return $menus->{$script};
 }
+
 #################################################################
 sub getCurrentUser {
 	my($value) = @_;

@@ -17,11 +17,26 @@ use constant DATA => 2;
 use constant LOAD => 3;
 use constant NEXT => 4;
 
+# store names for non-named templates
+my($anon_num, %anon_template);
+sub _get_anon_name {
+	my($text) = @_;
+	return $anon_template{$text} if exists $anon_template{$text};
+	return $anon_template{$text} = 'anon_' . ++$anon_num; 
+}
+
 sub fetch {
-	my($self, $name) = @_;
-	my($data, $error, $slot);
+	my($self, $text) = @_;
+	my($name, $data, $error, $slot);
 
 	print STDERR "fetch($name)\n" if $DEBUG;
+
+	if (ref $text eq 'SCALAR') {
+		$name = _get_anon_name($text);
+	} else {
+		$name = $text;
+		undef $text;
+	}
 
 	if ($slot = $self->{ LOOKUP }{$name}) {
 		# cached entry exists, so refresh slot and extract data
@@ -33,7 +48,7 @@ sub fetch {
 		# a persistent cache ... so forget it for now
 
 		# nothing in cache so try to load, compile and cache
-		($data, $error) = $self->_load($name);
+		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless ($error); # , $compfile
 		$data = $self->_store($name, $data) unless $error;
 	}
@@ -42,14 +57,18 @@ sub fetch {
 }
 
 sub _load {
-	my($self, $name) = @_;
-	my($data, $error);
+	my($self, $name, $text) = @_;
+	my($data, $error, $dbslash);
 	my $now = time;
 
-	print STDERR "_load($name)\n" if $DEBUG;
+	if (defined $text) {
+		$text = $$text;
+	} else {
+		$dbslash = getCurrentDB();
+		$text = $dbslash->getBlock($name, 'block');
+	}
 
-	my $dbslash = getCurrentDB();
-	my $text = $dbslash->getBlock($name, 'block');
+	print STDERR "_load($name)\n" if $DEBUG;
 
 	if ($text) {
 		$data = {

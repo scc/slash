@@ -398,7 +398,7 @@ sub stripByMode {
 	$fmode ||= 'nohtml';
 
 	$str =~ s/(\S{90})/$1 /g unless $no_white_fix;
-	if ($fmode eq 'literal' || $fmode eq 'exttrans' || $fmode eq 'attribute') {
+	if ($fmode eq 'literal' || $fmode eq 'exttrans' || $fmode eq 'attribute' || $fmode eq 'code') {
 		# Encode all HTML tags
 		$str =~ s/&/&amp;/g;
 		$str =~ s/</&lt;/g;
@@ -406,13 +406,14 @@ sub stripByMode {
 	}
 
 	# this "if" block part of patch from Ben Tilly
-	if ($fmode eq 'plaintext' || $fmode eq 'exttrans') {
+	if ($fmode eq 'plaintext' || $fmode eq 'exttrans' || $fmode eq 'code') {
 		$str = stripBadHtml($str);
 		$str =~ s/\n/<BR>/gi;  # pp breaks
 		$str =~ s/(?:<BR>\s*){2,}<BR>/<BR><BR>/gi;
 		# Preserve leading indents
 		$str =~ s/\t/    /g;
 		$str =~ s/<BR>\n?( +)/"<BR>\n" . ("&nbsp; " x length($1))/ieg;
+		$str = '<CODE>' . $str . '</CODE>' if $fmode eq 'code';
 
 	} elsif ($fmode eq 'nohtml') {
 		$str =~ s/<.*?>//g;
@@ -619,52 +620,6 @@ sub ssiFoot {
 }
 
 ########################################################
-sub adminMenu {
-	my $dbslash = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $seclev = $user->{aseclev};
-	return unless $seclev;
-	print <<EOT;
-
-<TABLE BGCOLOR="$constants->{bg}[2]" BORDER="0" WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
-	<TR><TD><FONT SIZE="${\( $constants->{fontbase} + 2 )}">
-EOT
-
-	print <<EOT if $seclev > 0;
-	[ <A HREF="$constants->{rootdir}/admin.pl?op=adminclose">Logout $user->{aid}</A>
-	| <A HREF="$constants->{rootdir}/">Home</A>
-	| <A HREF="$constants->{rootdir}/getting_started.shtml">Help</A>
-	| <A HREF="$constants->{rootdir}/admin.pl">Stories</A>
-	| <A HREF="$constants->{rootdir}/topics.pl?op=listtopics">Topics</A>
-EOT
-
-	print <<EOT if $seclev > 10;
-	| <A HREF="$constants->{rootdir}/admin.pl?op=edit">New</A>
-EOT
-
-	my $cnt = $dbslash->getSubmissionCount($constants->{articles_only});
-
-	print <<EOT if $seclev > 499;
-	| <A HREF="$constants->{rootdir}/submit.pl?op=list">$cnt Submissions</A>
-	| <A HREF="$constants->{rootdir}/admin.pl?op=blocked">Blocks</A>
-	| <A HREF="$constants->{rootdir}/admin.pl?op=colored">Site Colors</A>
-EOT
-
-	print <<EOT if $seclev > 999 || ($user->{asection} && $seclev > 499);
-	| <A HREF="$constants->{rootdir}/sections.pl?op=list">Sections</A>
-	| <A HREF="$constants->{rootdir}/admin.pl?op=listfilters">Comment Filters</A>
-EOT
-
-	print <<EOT if $seclev >= 10000;
-	| <A HREF="$constants->{rootdir}/admin.pl?op=authors">Authors</A>
-	| <A HREF="$constants->{rootdir}/admin.pl?op=vars">Variables</A>
-EOT
-
-	print "] </FONT></TD></TR></TABLE>\n";
-}
-
-########################################################
 sub formLabel {
 	my $constants = getCurrentStatic();
 	return qq!<P><FONT COLOR="$constants->{bg}[3]"><B>!, shift, "</B></FONT>\n",
@@ -809,11 +764,9 @@ EOT
 
 	print eval $execme;
 	print "\nError:$@\n" if $@;
-	if($user->{seclev}) {
-		my $adminmenu  = getCurrentMenu('admin');
-		createMenu($adminmenu);
+	if ($user->{is_admin}) {
+		print createMenu('admin');
 	}
-	#adminMenu();
 }
 
 ########################################################
@@ -1969,28 +1922,22 @@ sub createEnvironment {
 
 ########################################################
 sub createMenu {
-	my ($menu) = @_;
-	my $user = getCurrentUser();
+	my($menu) = @_;
 	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
-	print '<br>[';
-	for my $item (@$menu) {
-		my ($value, $label); 
-		if($item->{type} eq 'eval') {
-			$value = eval $item->{value}; 
-			$label = eval $item->{label}; 
-			#$label = eval prepBlock($item->{label}); 
-if($@) {
-print "$@\n";
-}
-		} elsif ($item->{type} eq 'text') {
-			$value = $item->{value}; 
-			$label = $item->{label}; 
-		}
-		print "<A HREF=\"$value\">$label</A>|" 
-			if $user->{seclev} >= $item->{seclev};
+	my $user = getCurrentUser();
+	my $menu_items = getCurrentMenu($menu);
+	my $items = [];
+
+	for my $item (sort { $a->{menuorder} <=> $b->{menuorder} } @$menu_items) {
+		next unless $user->{seclev} >= $item->{seclev};
+		push @$items, {
+			value => slashDisplay(\$item->{value}, 0, 1, 1),
+			label => slashDisplay(\$item->{label}, 0, 1, 1)
+		};
 	}
-	print ']</br>';
+
+	return slashDisplay("menu-$menu", { items => $items, count => @$items - 1 }, 1);
 }
 
 1;

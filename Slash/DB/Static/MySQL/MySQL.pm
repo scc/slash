@@ -204,7 +204,6 @@ sub getMailingList {
 sub getOldStories {
 	my($self, $delay) = @_;
 
-
 	my $columns = "sid,time,section,title";
 	my $tables = "stories";
 	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $delay";
@@ -217,7 +216,7 @@ sub getOldStories {
 ########################################################
 # For portald
 sub getTop10Comments {
-my ($self) = @_;
+	my($self) = @_;
 	my $c = $self->sqlSelectMany("stories.sid, title,
 		cid, subject,".
 		getDateFormat("date", "d").",
@@ -237,7 +236,7 @@ my ($self) = @_;
 ########################################################
 # For portald
 sub randomBlock {
-	my ($self) = @_;
+	my($self) = @_;
 	my $c = $self->sqlSelectMany("blocks.bid,title,url,block",
 		"blocks,sectionblocks",
 		"blocks.bid=sectionblocks.bid
@@ -264,7 +263,7 @@ sub randomBlock {
 # For portald
 # ugly method name
 sub getAccesLogCountTodayAndYestarday {
-	my ($self) = @_;
+	my($self) = @_;
 	my $c = $self->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",    "accesslog","","GROUP by d order by d asc");
 
 	my($today) = $c->fetchrow;
@@ -278,7 +277,7 @@ sub getAccesLogCountTodayAndYestarday {
 ########################################################
 # For portald
 sub getSitesRDF {
-	my ($self) = @_;
+	my($self) = @_;
 	my $columns = "bid,url,rdf,retrieve";
 	my $tables = "sectionblocks";
 	my $where = "rdf != '' and retrieve=1";
@@ -291,7 +290,7 @@ sub getSitesRDF {
 ########################################################
 # For portald
 sub getSectionMenu2{
-	my ($self) = @_;
+	my($self) = @_;
 	my $menu = $self->sqlSelectAll("section","sections",
 	    "isolate=0 and (section != '' and section != 'articles')
 			    ORDER BY section");
@@ -301,24 +300,24 @@ sub getSectionMenu2{
 ########################################################
 # For portald
 sub getSectionMenu2Info{
-	my ($self, $section) = @_;
+	my($self, $section) = @_;
 	my($month, $day) = $self->{dbh}->selectrow_array(
 			"select month(time), dayofmonth(time) from stories where " .
 			"section='$section' and time < now() and displaystatus > -1 order by ".
 			"time desc limit 1");
-	my ($count) = $self->{dbh}->selectrow_array(
+	my($count) = $self->{dbh}->selectrow_array(
 			"select count(*) from stories where section='$section' and " .
 			"to_days(now()) - to_days(time) <= 2 and time < now() and " .
 			"displaystatus > -1");
 
-	return ($month, $day, $count);
+	return($month, $day, $count);
 }
 
 ########################################################
 # For moderatord
 sub tokens2points {
-my ($self) = @_;
-my $constants = getCurrentStatic();
+	my($self) = @_;
+	my $constants = getCurrentStatic();
 	my $c = $self->sqlSelectMany("uid,tokens", "users_info", "tokens >= $constants->{maxtokens}");
 	$self->sqlDo("LOCK TABLES users READ, 
 		users_info WRITE, 
@@ -354,7 +353,7 @@ my $constants = getCurrentStatic();
 ########################################################
 # For moderatord
 sub stirpool {
-	my ($self) = @_;
+	my($self) = @_;
 	my $stir = getCurrentStatic('stir');
 	my $c = $self->sqlSelectMany("points,users.uid as uid",
 			"users,users_comments,users_info",

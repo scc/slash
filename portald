@@ -143,7 +143,7 @@ sub getUptime {
 
 	my $stats = $x;
 
-	my($today,$yesterday) = $slashdb->getAccesLogCountTodayAndYestarday();
+	my($today, $yesterday) = $slashdb->getAccesLogCountTodayAndYestarday();
 	my($th, $tc) = $slashdb->getVar("totalhits", "totalComments");
 
 	$stats .= "<B>yesterday:</B> $yesterday<BR>
@@ -196,8 +196,8 @@ sub getSectionMenu2 {
 	my $menu = "\n\n<!-- begin section index block -->\n\n";
 	my $section_menu = $slashdb->getSectionMenu2();
 	for (@$section_menu) {
-		my ($s) = $_->[0];
-		my ($month, $day, $count) = $slashdb->getSectionMenu2Info($s);
+		my $s = $_->[0];
+		my($month, $day, $count) = $slashdb->getSectionMenu2Info($s);
 
 		$menu .= "\n$month/$day" if $month && $day;
 		$menu .= " ($count)" if $count > 1;

@@ -254,6 +254,10 @@ sub setModeratorLog {
 
 ########################################################
 sub getModeratorCommentLog {
+
+# why was this removed?  -- pudge
+#				"moderatorlog.active=1
+
 	my($self, $sid, $cid) = @_;
 	my $comments = $self->sqlSelectMany(  "comments.sid as sid,
 				 comments.cid as cid,
@@ -852,7 +856,7 @@ sub getCommentCid {
 ########################################################
 sub deleteComment {
 	my($self, $sid, $cid) = @_;
-	if($cid) {
+	if ($cid) {
 		$self->sqlDo("delete from comments WHERE sid=" .
 			$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
 		);
@@ -1561,14 +1565,15 @@ sub getSubmissionsPending {
 sub getSubmissionCount {
 	my($self, $articles_only) = @_;
 	my($count);
-print "Called getSubmissionCount\n";
 	if ($articles_only) {
-		$count = $self->sqlSelect('count(*)', 'submissions',
+		($count) = $self->sqlSelect('count(*)', 'submissions',
 			"(length(note)<1 or isnull(note)) and del=0" .
-			($articles_only ? " and section='articles'" : '')
+			" and section='articles'"
 		);
 	} else {
-		$count = $self->sqlSelect("count(*)", "submissions", "del=0");
+		($count) = $self->sqlSelect("count(*)", "submissions",
+			"(length(note)<1 or isnull(note)) and del=0"
+		);
 	}
 	return $count;
 }
@@ -2678,13 +2683,13 @@ sub getSubmission {
 
 ########################################################
 sub getSection {
-	my $answer = _genericGetCache('blocks', 'bid', @_);
+	my $answer = _genericGetCache('sections', 'section', @_);
 	return $answer;
 }
 
 ########################################################
 sub getSections {
-	my $answer = _genericGetsCache('blocks', 'bid', @_);
+	my $answer = _genericGetsCache('sections', 'section', @_);
 	return $answer;
 }
 
@@ -2951,25 +2956,24 @@ sub _genericGetsCache {
 
 ########################################################
 sub createBlock {
-	my ($self, $hash) = @_;
+	my($self, $hash) = @_;
 	$self->sqlInsert('blocks', $hash);
 }
 
 ########################################################
 sub createMenuItem {
-	my ($self, $hash) = @_;
+	my($self, $hash) = @_;
 	$self->sqlInsert('menus', $hash);
 }
 
 ########################################################
 sub getMenuItems {
-	my ($self, $script) = @_;
-	my $sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
-	my $sth =	$self->{dbh}->prepare($sql);
+	my($self, $script) = @_;
+	my $sql = "SELECT * FROM menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
+	my $sth = $self->{dbh}->prepare($sql);
 	$sth->execute();
-	my @menu;
-	my $row;
-	push (@menu, $row) while ($row = $sth->fetchrow_hashref);
+	my(@menu, $row);
+	push(@menu, $row) while ($row = $sth->fetchrow_hashref);
 	$sth->finish;
 
 	return \@menu;
@@ -2977,23 +2981,22 @@ sub getMenuItems {
 
 ########################################################
 sub getMenus {
-	my ($self) = @_;
+	my($self) = @_;
 
-	my $sql = "select distinct menu from menus order by menu";
-	my $sth =	$self->{dbh}->prepare($sql);
+	my $sql = "SELECT DISTINCT menu FROM menus ORDER BY menu";
+	my $sth = $self->{dbh}->prepare($sql);
 	$sth->execute;
 	my $menu_names = $sth->fetchall_arrayref;
 	$sth->finish;
 
 	my $menus;
-	for(@$menu_names) {
+	for (@$menu_names) {
 		my $script = $_->[0];
-		$sql = "SELECT * from menus WHERE menu=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
+		$sql = "SELECT * FROM menus WHERE menu=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
 		$sth =	$self->{dbh}->prepare($sql);
 		$sth->execute();
-		my @menu;
-		my $row;
-		push (@menu, $row) while ($row = $sth->fetchrow_hashref);
+		my(@menu, $row);
+		push(@menu, $row) while ($row = $sth->fetchrow_hashref);
 		$sth->finish;
 		$menus->{$script} = \@menu;
 	}

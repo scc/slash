@@ -45,7 +45,7 @@ INSERT INTO blocks VALUES ('footer','<!-- begin footer block -->\r\n\r\n\r\n</TD
 INSERT INTO blocks VALUES ('mainmenu','		- <A HREF=\"about.shtml\">About</A><BR>\r\n		- <A HREF=\"faq.shtml\">FAQ</A><BR>\r\n		- <A HREF=\"topics.shtml\">Topics</A><BR>\r\n		- <A HREF=\"authors.pl\">Authors</A>\r\n		<HR NOSHADE SIZE=\"1\">\r\n		- <A HREF=\"users.pl?op=preferences\">Preferences</A><BR>\r\n		- <A HREF=\"search.pl\">Older Stuff</A><BR>\r\n		- <A HREF=\"pollBooth.pl\">Past Polls</A><BR>\r\n		- <A HREF=\"submit.pl\">Submit Story</A><BR>\r\n\r\n',NULL,10000,'',NULL,'		- <A HREF=\"about.shtml\">About</A><BR>\r\n		- <A HREF=\"faq.shtml\">FAQ</A><BR>\r\n		- <A HREF=\"topics.shtml\">Topics</A><BR>\r\n		- <A HREF=\"authors.pl\">Authors</A>\r\n		<HR NOSHADE SIZE=\"1\">\r\n		- <A HREF=\"users.pl?op=preferences\">Preferences</A><BR>\r\n		- <A HREF=\"search.pl\">Older Stuff</A><BR>\r\n		- <A HREF=\"pollBooth.pl\">Past Polls</A><BR>\r\n		- <A HREF=\"submit.pl\">Submit Story</A><BR>\r\n\r\n','',0,'',0,NULL,NULL,0);
 INSERT INTO blocks VALUES ('slashdot','<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0837204\">5GB portable MP3 Player</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0827210\">1-GHz Pentium III Due This Month</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0846234\">E-Mail, Privacy and the Law</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0831204\">Importing PSX2 Illegal?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0833211\">Microsoft Invents Symbolic Links</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0851210\">Care To Register Your own TLD?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0825246\">Robust Hyperlinks: The End of 404s?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0834256\">Tera Will Buy Cray Research</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/02/27/1510217\">What Can Be Patented?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/01/092251\">Free Internet Access for Hamburgers</A></LI>\n',NULL,100,'portald','','<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0837204\">5GB portable MP3 Player</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0827210\">1-GHz Pentium III Due This Month</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0846234\">E-Mail, Privacy and the Law</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0831204\">Importing PSX2 Illegal?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0833211\">Microsoft Invents Symbolic Links</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0851210\">Care To Register Your own TLD?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0825246\">Robust Hyperlinks: The End of 404s?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/02/0834256\">Tera Will Buy Cray Research</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/02/27/1510217\">What Can Be Patented?</A></LI>\n<LI><A HREF=\"http://slashdot.org/article.pl?sid=00/03/01/092251\">Free Internet Access for Hamburgers</A></LI>\n','index',9,'Slashdot',1,'http://slashdot.org','http://slashdot.org/slashdot.rdf',1);
 INSERT INTO blocks VALUES ('pdabuzz','<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951982788,6623,\">QotW: Adding COM ports for PDA use</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951968596,2087,\">Palm IIIc battery life test results are impressive</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951941548,44,\">Casio Pocket PC showing up for sale online</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951934593,9548,\">IBM giving Palms an ear, and CF slot</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951933787,631,\">Palm targeted in another lawsuit</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951841524,2048,\">Symbian\'s Quartz devices at CeBIT 2000</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951837238,2170,\">Palm doubles IPO price</A></LI>\n',NULL,100,'portald','','<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951982788,6623,\">QotW: Adding COM ports for PDA use</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951968596,2087,\">Palm IIIc battery life test results are impressive</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951941548,44,\">Casio Pocket PC showing up for sale online</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951934593,9548,\">IBM giving Palms an ear, and CF slot</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951933787,631,\">Palm targeted in another lawsuit</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951841524,2048,\">Symbian\'s Quartz devices at CeBIT 2000</A></LI>\n<LI><A HREF=\"http://www.pdabuzz.com/#newsitem951837238,2170,\">Palm doubles IPO price</A></LI>\n','index',-1,'PDA Buzz',1,'http://www.pdabuzz.com','http://www.pdabuzz.com/netscape.txt',0);
-INSERT INTO blocks VALUES ('header','<!-- begin header block -->\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[0]\" TEXT=\"$I{fg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{fg}[1]\">\r\n<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"99%\" ALIGN=\"CENTER\">\r\n	<TR VALIGN=\"TOP\">\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\" WIDTH=\"100%\"><A HREF=\"$I{rootdir}/\"><IMG SRC=\"$I{imagedir}/slashhead.gif\" WIDTH=\"290\" HEIGHT=\"74\" BORDER=\"0\" ALT=\"$I{sitename}\"></A></TD>\r\n		<TD VALIGN=\"MIDDLE\" BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\">\r\n			<FORM ACTION=\"$I{rootdir}/search.pl\">\r\n			<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">search&nbsp;$I{sitename}:<BR></FONT>\r\n				<INPUT TYPE=\"text\" NAME=\"query\">&nbsp;<INPUT TYPE=\"submit\" VALUE=\" Go \">\r\n			</FORM>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" ALIGN=\"LEFT\" WIDTH=\"100%\"><IMG SRC=\"$I{imagedir}/slashslogan.gif\" WIDTH=\"290\" HEIGHT=\"20\" ALT=\"$I{slogan}\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD>  <!-- for some reason colspan=\"2\" doesn\'t cut it here -->\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"4\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n</TABLE>\r\n\r\n&nbsp;\r\n\r\n<TABLE WIDTH=\"99%\" ALIGN=\"CENTER\" CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">\r\n	<TR><TD VALIGN=\"TOP\" ROWSPAN=\"5\">\r\n\r\n<!-- begin menu block -->\r\n\r\n	<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR VALIGN=\"TOP\">\r\n			<TD BGCOLOR=\"$I{bg}[2]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><IMG SRC=\"$I{imagedir}/cl.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\" COLOR=\"$I{bg}[1]\"><B>$I{sitename}</B></FONT></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/cr.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[2]\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n       </TABLE>\r\n\r\n       <TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n		<TR>\r\n			<TD BACKGROUND=\"$I{imagedir}/sl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n				<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">\r\n\r\n$menu\r\n\r\n					</FONT>\r\n				</TD></TR></TABLE>\r\n			</TD>\r\n			<TD BACKGROUND=\"$I{imagedir}/sr.gif\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n<BR>\r\n\r\n<!-- end menu block -->\r\n\r\n<P>\r\n\r\n<!-- begin sectionmenu variable -->\r\n\r\n$sectionmenu\r\n\r\n<!-- end sectionmenu variable -->\r\n\r\n</P>\r\n\r\n	</TD><TD>&nbsp;</TD><TD VALIGN=\"TOP\" ALIGN=\"LEFT\"><FONT COLOR=\"$I{fg}[1]\">\r\n\r\n<!-- end header block -->\r\n\r\n',NULL,10000,'',NULL,'<!-- begin header block -->\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[0]\" TEXT=\"$I{fg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{fg}[1]\">\r\n<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"99%\" ALIGN=\"CENTER\">\r\n	<TR VALIGN=\"TOP\">\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\" WIDTH=\"100%\"><A HREF=\"$I{rootdir}/\"><IMG SRC=\"$I{imagedir}/slashhead.gif\" WIDTH=\"290\" HEIGHT=\"74\" BORDER=\"0\" ALT=\"$I{sitename}\"></A></TD>\r\n		<TD VALIGN=\"MIDDLE\" BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\">\r\n			<FORM ACTION=\"$I{rootdir}/search.pl\">\r\n			<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">search&nbsp;$I{sitename}:<BR></FONT>\r\n				<INPUT TYPE=\"text\" NAME=\"query\">&nbsp;<INPUT TYPE=\"submit\" VALUE=\" Go \">\r\n			</FORM>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" ALIGN=\"LEFT\" WIDTH=\"100%\"><IMG SRC=\"$I{imagedir}/slashslogan.gif\" WIDTH=\"290\" HEIGHT=\"20\" ALT=\"$I{slogan}\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD>  <!-- for some reason colspan=\"2\" doesn\'t cut it here -->\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"4\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n</TABLE>\r\n\r\n&nbsp;\r\n\r\n<TABLE WIDTH=\"99%\" ALIGN=\"CENTER\" CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">\r\n	<TR><TD VALIGN=\"TOP\" ROWSPAN=\"5\">\r\n\r\n<!-- begin menu block -->\r\n\r\n	<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR VALIGN=\"TOP\">\r\n			<TD BGCOLOR=\"$I{bg}[2]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><IMG SRC=\"$I{imagedir}/cl.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\" COLOR=\"$I{bg}[1]\"><B>$I{sitename}</B></FONT></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/cr.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[2]\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n       </TABLE>\r\n\r\n       <TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n		<TR>\r\n			<TD BACKGROUND=\"$I{imagedir}/sl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n				<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">\r\n\r\n$menu\r\n\r\n					</FONT>\r\n				</TD></TR></TABLE>\r\n			</TD>\r\n			<TD BACKGROUND=\"$I{imagedir}/sr.gif\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n<BR>\r\n\r\n<!-- end menu block -->\r\n\r\n<P>\r\n\r\n<!-- begin sectionmenu variable -->\r\n\r\n$sectionmenu\r\n\r\n<!-- end sectionmenu variable -->\r\n\r\n</P>\r\n\r\n	</TD><TD>&nbsp;</TD><TD VALIGN=\"TOP\" ALIGN=\"LEFT\"><FONT COLOR=\"$I{fg}[1]\">\r\n\r\n<!-- end header block -->\r\n\r\n','',0,'',0,NULL,NULL,0);
+INSERT INTO blocks VALUES ('header','<!-- begin header block -->\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[0]\" TEXT=\"$I{fg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{fg}[1]\">\r\n<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"99%\" ALIGN=\"CENTER\">\r\n	<TR VALIGN=\"TOP\">\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\" WIDTH=\"100%\"><A HREF=\"$I{rootdir}/\"><IMG SRC=\"$I{imagedir}/slashhead.gif\" WIDTH=\"300\" HEIGHT=\"74\" BORDER=\"0\" ALT=\"$I{sitename}\"></A></TD>\r\n		<TD VALIGN=\"MIDDLE\" BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\">\r\n			<FORM ACTION=\"$I{rootdir}/search.pl\">\r\n			<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">search&nbsp;$I{sitename}:<BR></FONT>\r\n				<INPUT TYPE=\"text\" NAME=\"query\">&nbsp;<INPUT TYPE=\"submit\" VALUE=\" Go \">\r\n			</FORM>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" ALIGN=\"LEFT\" WIDTH=\"100%\"><IMG SRC=\"$I{imagedir}/slashslogan.gif\" WIDTH=\"300\" HEIGHT=\"20\" ALT=\"$I{slogan}\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD>  <!-- for some reason colspan=\"2\" doesn\'t cut it here -->\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"4\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n</TABLE>\r\n\r\n&nbsp;\r\n\r\n<TABLE WIDTH=\"99%\" ALIGN=\"CENTER\" CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">\r\n	<TR><TD VALIGN=\"TOP\" ROWSPAN=\"5\">\r\n\r\n<!-- begin menu block -->\r\n\r\n	<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR VALIGN=\"TOP\">\r\n			<TD BGCOLOR=\"$I{bg}[2]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><IMG SRC=\"$I{imagedir}/cl.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\" COLOR=\"$I{bg}[1]\"><B>$I{sitename}</B></FONT></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/cr.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[2]\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n       </TABLE>\r\n\r\n       <TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n		<TR>\r\n			<TD BACKGROUND=\"$I{imagedir}/sl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n				<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">\r\n\r\n$menu\r\n\r\n					</FONT>\r\n				</TD></TR></TABLE>\r\n			</TD>\r\n			<TD BACKGROUND=\"$I{imagedir}/sr.gif\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n<BR>\r\n\r\n<!-- end menu block -->\r\n\r\n<P>\r\n\r\n<!-- begin sectionmenu variable -->\r\n\r\n$sectionmenu\r\n\r\n<!-- end sectionmenu variable -->\r\n\r\n</P>\r\n\r\n	</TD><TD>&nbsp;</TD><TD VALIGN=\"TOP\" ALIGN=\"LEFT\"><FONT COLOR=\"$I{fg}[1]\">\r\n\r\n<!-- end header block -->\r\n\r\n',NULL,10000,'',NULL,'<!-- begin header block -->\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[0]\" TEXT=\"$I{fg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{fg}[1]\">\r\n<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"99%\" ALIGN=\"CENTER\">\r\n	<TR VALIGN=\"TOP\">\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"LEFT\" WIDTH=\"100%\"><A HREF=\"$I{rootdir}/\"><IMG SRC=\"$I{imagedir}/slashhead.gif\" WIDTH=\"300\" HEIGHT=\"74\" BORDER=\"0\" ALT=\"$I{sitename}\"></A></TD>\r\n		<TD VALIGN=\"MIDDLE\" BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\">\r\n			<FORM ACTION=\"$I{rootdir}/search.pl\">\r\n			<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">search&nbsp;$I{sitename}:<BR></FONT>\r\n				<INPUT TYPE=\"text\" NAME=\"query\">&nbsp;<INPUT TYPE=\"submit\" VALUE=\" Go \">\r\n			</FORM>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/line-bg.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/line-corner.gif\" WIDTH=\"1\" HEIGHT=\"74\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\" ALIGN=\"LEFT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" ALIGN=\"LEFT\" WIDTH=\"100%\"><IMG SRC=\"$I{imagedir}/slashslogan.gif\" WIDTH=\"300\" HEIGHT=\"20\" ALT=\"$I{slogan}\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD>  <!-- for some reason colspan=\"2\" doesn\'t cut it here -->\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"4\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n</TABLE>\r\n\r\n&nbsp;\r\n\r\n<TABLE WIDTH=\"99%\" ALIGN=\"CENTER\" CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">\r\n	<TR><TD VALIGN=\"TOP\" ROWSPAN=\"5\">\r\n\r\n<!-- begin menu block -->\r\n\r\n	<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR VALIGN=\"TOP\">\r\n			<TD BGCOLOR=\"$I{bg}[2]\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><IMG SRC=\"$I{imagedir}/cl.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\"><FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\" COLOR=\"$I{bg}[1]\"><B>$I{sitename}</B></FONT></TD>\r\n			<TD BGCOLOR=\"$I{bg}[3]\" ALIGN=\"RIGHT\"><IMG SRC=\"$I{imagedir}/cr.gif\" WIDTH=\"7\" HEIGHT=\"10\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[2]\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n       </TABLE>\r\n\r\n       <TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n		<TR>\r\n			<TD BACKGROUND=\"$I{imagedir}/sl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n			<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n				<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">\r\n\r\n$menu\r\n\r\n					</FONT>\r\n				</TD></TR></TABLE>\r\n			</TD>\r\n			<TD BACKGROUND=\"$I{imagedir}/sr.gif\" ALIGN=\"right\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"3\" HEIGHT=\"3\" ALT=\"\"></TD>\r\n		</TR>\r\n		<TR><TD BGCOLOR=\"$I{bg}[3]\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n<BR>\r\n\r\n<!-- end menu block -->\r\n\r\n<P>\r\n\r\n<!-- begin sectionmenu variable -->\r\n\r\n$sectionmenu\r\n\r\n<!-- end sectionmenu variable -->\r\n\r\n</P>\r\n\r\n	</TD><TD>&nbsp;</TD><TD VALIGN=\"TOP\" ALIGN=\"LEFT\"><FONT COLOR=\"$I{fg}[1]\">\r\n\r\n<!-- end header block -->\r\n\r\n','',0,'',0,NULL,NULL,0);
 INSERT INTO blocks VALUES ('admin_header','<!-- begin admin header -->\r\n\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{bg}[3]\" TOPMARGIN=\"0\" LEFTMARGIN=\"0\" MARGINHEIGHT=\"0\" MARGINWIDTH=\"0\">\r\n\r\n<TABLE WIDTH=\"100%\" ALIGN=\"CENTER\" CELLPADDING=\"3\" CELLSPACING=\"0\" BORDER=\"0\" BGCOLOR=\"#C0C0C0\">\r\n	<TR><TD VALIGN=\"TOP\" BGCOLOR=\"#505050\" ALIGN=\"RIGHT\">\r\n		<FONT SIZE=\"${\\( $I{fontbase} + 4 )}\" COLOR=\"#FFFFFF\">$I{sitename} backSlash</FONT>\r\n	</TD></TR>\r\n	<TR><TD VALIGN=\"TOP\"><FONT COLOR=\"#000000\">\r\n\r\n<!-- end admin header -->\r\n\r\n',NULL,10000,'',NULL,'<!-- begin admin header -->\r\n\r\n\r\n</HEAD>\r\n<BODY BGCOLOR=\"$I{bg}[1]\" LINK=\"$I{bg}[3]\" VLINK=\"$I{bg}[3]\" TOPMARGIN=\"0\" LEFTMARGIN=\"0\" MARGINHEIGHT=\"0\" MARGINWIDTH=\"0\">\r\n\r\n<TABLE WIDTH=\"100%\" ALIGN=\"CENTER\" CELLPADDING=\"3\" CELLSPACING=\"0\" BORDER=\"0\" BGCOLOR=\"#C0C0C0\">\r\n	<TR><TD VALIGN=\"TOP\" BGCOLOR=\"#505050\" ALIGN=\"RIGHT\">\r\n		<FONT SIZE=\"${\\( $I{fontbase} + 4 )}\" COLOR=\"#FFFFFF\">$I{sitename} backSlash</FONT>\r\n	</TD></TR>\r\n	<TR><TD VALIGN=\"TOP\"><FONT COLOR=\"#000000\">\r\n\r\n<!-- end admin header -->\r\n\r\n','',0,'',0,NULL,NULL,0);
 INSERT INTO blocks VALUES ('pollitem','	<TR>\r\n		<TD WIDTH=\"100\" ALIGN=\"RIGHT\">$answer &nbsp;</TD>\r\n		<TD WIDTH=\"450\"><NOBR><IMG\r\n			SRC=\"$I{imagedir}/leftbar.gif\" WIDTH=\"4\" HEIGHT=\"20\" ALT=\"\"><IMG\r\n			SRC=\"$I{imagedir}/mainbar.gif\" HEIGHT=20\r\n			width=\"$imagewidth\" ALT=\"$percent%\"><IMG\r\n			SRC=\"$I{imagedir}/rightbar.gif\" WIDTH=\"4\" HEIGHT=\"20\" ALT=\"\">\r\n			$votes /\r\n			<FONT COLOR=\"#006666\">$percent%</FONT></NOBR>\r\n		</TD>\r\n	</TR>\r\n',NULL,10000,'',NULL,'	<TR>\r\n		<TD WIDTH=\"100\" ALIGN=\"RIGHT\">$answer &nbsp;</TD>\r\n		<TD WIDTH=\"450\"><NOBR><IMG\r\n			SRC=\"$I{imagedir}/leftbar.gif\" WIDTH=\"4\" HEIGHT=\"20\" ALT=\"\"><IMG\r\n			SRC=\"$I{imagedir}/mainbar.gif\" HEIGHT=20\r\n			width=\"$imagewidth\" ALT=\"$percent%\"><IMG\r\n			SRC=\"$I{imagedir}/rightbar.gif\" WIDTH=\"4\" HEIGHT=\"20\" ALT=\"\">\r\n			$votes /\r\n			<FONT COLOR=\"#006666\">$percent%</FONT></NOBR>\r\n		</TD>\r\n	</TR>\r\n','',0,'',0,NULL,NULL,0);
 INSERT INTO blocks VALUES ('story','\r\n\r\n<!-- begin story block -->\r\n	<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/gl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n		<TD BGCOLOR=\"#E6E6E6\" WIDTH=\"100%\">\r\n			<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR>\r\n				<TD BGCOLOR=\"#E6E6E6\">\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">posted by $author $I{U}{aton} $I{U}{storytime}</FONT><BR>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">from the <B>$section->{dept}</B> dept.</FONT>\r\n				</TD>\r\n			</TR></TABLE>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/gr.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"#006666\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n			<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD BGCOLOR=\"$I{bg}[1]\">\r\n				$topicicon\r\n				$section->{introtext}						\r\n			</TD></TR></TABLE>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR BGCOLOR=\"$I{bg}[3]\"><TD COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n\r\n<!-- end story block -->\r\n\r\n',NULL,10000,'','','\r\n\r\n<!-- begin story block -->\r\n	<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/gl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n		<TD BGCOLOR=\"#E6E6E6\" WIDTH=\"100%\">\r\n			<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR>\r\n				<TD BGCOLOR=\"#E6E6E6\">\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">posted by $author $I{U}{aton} $I{U}{storytime}</FONT><BR>\r\n					<FONT FACE=\"$I{mainfontface}\" SIZE=\"${\\( $I{fontbase} + 1 )}\">from the <B>$section->{dept}</B> dept.</FONT>\r\n				</TD>\r\n			</TR></TABLE>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/gr.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR><TD BGCOLOR=\"#006666\" COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	<TR>\r\n		<TD BACKGROUND=\"$I{imagedir}/wl.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n		<TD BGCOLOR=\"$I{bg}[1]\" WIDTH=\"100%\">\r\n			<TABLE WIDTH=\"100%\" BORDER=\"0\" CELLPADDING=\"5\" CELLSPACING=\"0\"><TR><TD BGCOLOR=\"$I{bg}[1]\">\r\n				$topicicon\r\n				$section->{introtext}						\r\n			</TD></TR></TABLE>\r\n		</TD>\r\n		<TD BACKGROUND=\"$I{imagedir}/wr.gif\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"11\" HEIGHT=\"11\" ALT=\"\"></TD>\r\n	</TR>\r\n	<TR BGCOLOR=\"$I{bg}[3]\"><TD COLSPAN=\"3\"><IMG SRC=\"$I{imagedir}/pix.gif\" WIDTH=\"1\" HEIGHT=\"1\"></TD></TR>\r\n	</TABLE>\r\n\r\n<!-- end story block -->\r\n\r\n','',0,'',0,NULL,NULL,0);
@@ -350,6 +350,7 @@ INSERT INTO dateformats VALUES (12,'%a %b %d, \'%y %I:%M %p','Sun Mar 21, \'99 1
 INSERT INTO dateformats VALUES (13,'%i ish','6 ish');
 INSERT INTO dateformats VALUES (14,'%y-%m-%d %k:%M','99-03-19 14:14');
 INSERT INTO dateformats VALUES (16,'%a %d %b %I:%M%p','Sun 21 Mar 10:00AM');
+INSERT INTO dateformats VALUES (17,'%Y.%m.%d %k:%M','1999.03.19 14:14');
 
 #
 # Dumping data for table 'discussions'
@@ -369,8 +370,6 @@ INSERT INTO displaycodes VALUES (-1,'Never Display');
 #
 # Dumping data for table 'formkeys'
 #
-
-INSERT INTO formkeys VALUES ('IlMlCsEIyV','comments','1','00/01/25/1430236',0,'209.192.240.124',0,0,968340911,0,0);
 
 #
 # Dumping data for table 'hitters'
@@ -401,11 +400,6 @@ INSERT INTO maillist VALUES (0,'Don\'t Email');
 INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
 
 #
-# Dumping data for table 'menus'
-#
-
-
-#
 # Dumping data for table 'metamodlog'
 #
 
@@ -419,24 +413,24 @@ INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus VALUES (1,'user','User Info','/users.pl',0,1,'text');
-INSERT INTO menus VALUES (2,'user','Customize Homepage','/users.pl?op=edithome',0,3,'text');
-INSERT INTO menus VALUES (3,'user','Edit User Info','/users.pl?op=edituser',0,2,'text');
-INSERT INTO menus VALUES (4,'user','Customize Comments','/users.pl?op=editcomm',0,4,'text');
-INSERT INTO menus VALUES (5,'user','Logout','/users.pl?op=userclose',0,5,'text');
-INSERT INTO menus VALUES (6,'admin','"Logout $user->{nickname}"','"/admin.pl?op=adminclose"',1,1,'eval');
-INSERT INTO menus VALUES (7,'admin','Home','/',1,2,'text');
-INSERT INTO menus VALUES (8,'admin','Help','/getting_started.shtml',1,3,'text');
-INSERT INTO menus VALUES (9,'admin','Stories','/admin.pl',1,4,'text');
-INSERT INTO menus VALUES (10,'admin','Topics','/topics.pl?op=listtopics',1,5,'text');
-INSERT INTO menus VALUES (11,'admin','New','/admin.pl?op=edit',10,6,'text');
-INSERT INTO menus VALUES (12,'admin','$dbslash->getSubmissionCount($constants->{articles_only}) . " Submissions"','"/submit.pl?op=edit"',499,7,'eval');
-INSERT INTO menus VALUES (13,'admin','Blocks','/admin.pl?op=blocked',499,8,'text');
-INSERT INTO menus VALUES (14,'admin','Site Colors','/admin.pl?op=colored',499,9,'text');
-INSERT INTO menus VALUES (15,'admin','Sections','/sections.pl?op=list',999,10,'text');
-INSERT INTO menus VALUES (16,'admin','Comment Filters','/admin.pl?op=listfilters',999,11,'text');
-INSERT INTO menus VALUES (17,'admin','Authors','/admin.pl?op=authors',10000,12,'text');
-INSERT INTO menus VALUES (18,'admin','Variables','/admin.pl?op=vars',10000,13,'text');
+INSERT INTO menus VALUES (1,'user','User Info','/users.pl',0,1);
+INSERT INTO menus VALUES (2,'user','Customize Homepage','/users.pl?op=edithome',0,3);
+INSERT INTO menus VALUES (3,'user','Edit User Info','/users.pl?op=edituser',0,2);
+INSERT INTO menus VALUES (4,'user','Customize Comments','/users.pl?op=editcomm',0,4);
+INSERT INTO menus VALUES (5,'user','Logout','/users.pl?op=userclose',0,5);
+INSERT INTO menus VALUES (6,'admin','Logout [% user.aid %]','/admin.pl?op=adminclose',1,1);
+INSERT INTO menus VALUES (7,'admin','Home','/',1,2);
+INSERT INTO menus VALUES (8,'admin','Help','/getting_started.shtml',1,3);
+INSERT INTO menus VALUES (9,'admin','Stories','/admin.pl',1,4);
+INSERT INTO menus VALUES (10,'admin','Topics','/topics.pl?op=listtopics',1,5);
+INSERT INTO menus VALUES (11,'admin','New','/admin.pl?op=edit',10,6);
+INSERT INTO menus VALUES (12,'admin','[% dbslash.getSubmissionCount(constants.articles_only) %] Submissions','/submit.pl?op=list',499,7);
+INSERT INTO menus VALUES (13,'admin','Blocks','/admin.pl?op=blocked',499,8);
+INSERT INTO menus VALUES (14,'admin','Site Colors','/admin.pl?op=colored',499,9);
+INSERT INTO menus VALUES (15,'admin','Sections','/sections.pl?op=list',999,10);
+INSERT INTO menus VALUES (16,'admin','Comment Filters','/admin.pl?op=listfilters',999,11);
+INSERT INTO menus VALUES (17,'admin','Authors','/admin.pl?op=authors',10000,12);
+INSERT INTO menus VALUES (18,'admin','Variables','/admin.pl?op=vars',10000,13);
 
 
 #
@@ -480,6 +474,7 @@ INSERT INTO pollquestions VALUES ('happy','Are you happy?',7,'2000-01-19 16:23:0
 INSERT INTO postmodes VALUES ('plaintext','Plain Old Text');
 INSERT INTO postmodes VALUES ('html','HTML Formatted');
 INSERT INTO postmodes VALUES ('exttrans','Extrans (html tags to text)');
+INSERT INTO postmodes VALUES ('code','Code');
 
 #
 # Dumping data for table 'sections'
@@ -492,11 +487,6 @@ INSERT INTO sections VALUES ('',30,'All Sections','',0,0,0);
 
 #
 # Dumping data for table 'sessions'
-#
-
-
-#
-# Dumping data for table 'slashslices'
 #
 
 
@@ -709,79 +699,86 @@ INSERT INTO users_prefs VALUES (7,1,0,'edt',0,0,'');
 # Dumping data for table 'vars'
 #
 
-INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting',NULL,NULL);
-INSERT INTO vars VALUES ('currentqid','happy','The Current Question on the homepage pollbooth',NULL,NULL);
-INSERT INTO vars VALUES ('totalhits','383','Total number of hits the site has had thus far',NULL,NULL);
-INSERT INTO vars VALUES ('defaultwritestatus','1','Default write status for newly created articles',NULL,NULL);
-INSERT INTO vars VALUES ('defaultdisplaystatus','0','Default display status...',NULL,NULL);
-INSERT INTO vars VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point',NULL,NULL);
-INSERT INTO vars VALUES ('totalComments','0','Total number of comments posted',NULL,NULL);
-INSERT INTO vars VALUES ('today','730512','Today converted to days past a long time ago',NULL,NULL);
-INSERT INTO vars VALUES ('commentstatus','0','default comment code',NULL,NULL);
-INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.',NULL,NULL);
-INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points',NULL,NULL);
-INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block',NULL,NULL);
-INSERT INTO vars VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward',NULL,NULL);
+INSERT INTO vars VALUES ('absolutedir','http://www.example.com','Absolute base URL of site',NULL,NULL);
+INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends',NULL,NULL);
 INSERT INTO vars VALUES ('adminmail','admin@www.example.com','All admin mail goes here',NULL,NULL);
-INSERT INTO vars VALUES ('mailfrom','admin@www.example.com','All mail addressed from the site looks like it is coming from here',NULL,NULL);
-INSERT INTO vars VALUES ('siteowner','slash','What user this runs as',NULL,NULL);
-INSERT INTO vars VALUES ('datadir','/home/slash','What is the root of the install for slash',NULL,NULL);
-INSERT INTO vars VALUES ('logdir','/home/slash/logs','Where should the logs be found?',NULL,NULL);
+INSERT INTO vars VALUES ('allow_anonymous','1','allow anonymous posters',NULL,NULL);
+INSERT INTO vars VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward',NULL,NULL);
+INSERT INTO vars VALUES ('approvedtags','[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)]','Tags that you can use',NULL,NULL);
+INSERT INTO vars VALUES ('archive_delay','60','days to wait for story archiving, comments deleting',NULL,NULL);
+INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu',NULL,NULL);
+INSERT INTO vars VALUES ('authors_unlimited','1','Authors have unlimited moderation',NULL,NULL);
+INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value',NULL,NULL);
 INSERT INTO vars VALUES ('basedir','/home/slash/public_html','Where should the html/perl files be found?',NULL,NULL);
 INSERT INTO vars VALUES ('basedomain','www.example.com','The URL for the site',NULL,NULL);
-INSERT INTO vars VALUES ('cookiedomain','','What should the cookie domain be?',NULL,NULL);
-INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site',NULL,NULL);
-INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site',NULL,NULL);
-INSERT INTO vars VALUES ('smtp_server','localhost','The mailserver for the site',NULL,NULL);
-INSERT INTO vars VALUES ('sitename','Slash Site','Name of the site',NULL,NULL);
-INSERT INTO vars VALUES ('slogan','Slash Site','Slogan of the site',NULL,NULL);
-INSERT INTO vars VALUES ('breaking','100','Undefined',NULL,NULL);
-INSERT INTO vars VALUES ('shit','0','Undefined',NULL,NULL);
-INSERT INTO vars VALUES ('mainfontface','verdana,helvetica,arial','Fonts',NULL,NULL);
-INSERT INTO vars VALUES ('fontbase','0','base font size, default 0',NULL,NULL);
-INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5',NULL,NULL);
-INSERT INTO vars VALUES ('archive_delay','60','days to wait for story archiving, comments deleting',NULL,NULL);
-INSERT INTO vars VALUES ('submiss_view','1','allow users to view submissions queue',NULL,NULL);
-INSERT INTO vars VALUES ('submiss_ts','1','print timestamp in submissions view',NULL,NULL);
-INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu',NULL,NULL);
-INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends',NULL,NULL);
-INSERT INTO vars VALUES ('allow_anonymous','1','allow anonymous posters',NULL,NULL);
-INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
-INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments',NULL,NULL);
-INSERT INTO vars VALUES ('approvedtags','[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)]','Tags that you can use',NULL,NULL);
-INSERT INTO vars VALUES ('defaultsection','articles','Default section to display',NULL,NULL);
-INSERT INTO vars VALUES ('http_proxy','','http://proxy.www.example.com',NULL,NULL);
-INSERT INTO vars VALUES ('rdflanguage','en','What language is the site in?',NULL,NULL);
-INSERT INTO vars VALUES ('rdfencoding','ISO-8859-1','Site encoding',NULL,NULL);
-INSERT INTO vars VALUES ('fancyboxwidth','200','What size should the boxes be in?',NULL,NULL);
-INSERT INTO vars VALUES ('story_expire','600','Default expiration time for a story',NULL,NULL);
 INSERT INTO vars VALUES ('block_expire','3600','Default expiration time for the block cache',NULL,NULL);
-INSERT INTO vars VALUES ('titlebar_width','100%','The width of the titlebar',NULL,NULL);
-INSERT INTO vars VALUES ('run_ads','0','Should we be running ads?',NULL,NULL);
-INSERT INTO vars VALUES ('send_mail','0','Turn On/Off the mailing list',NULL,NULL);
-INSERT INTO vars VALUES ('authors_unlimited','1','Authors have unlimited moderation',NULL,NULL);
-INSERT INTO vars VALUES ('m2_comments','10','Number of comments for meta-moderation.',NULL,NULL);
-INSERT INTO vars VALUES ('m2_maxunfair','0.5','Minimum % of unfairs for M2 penalty.',NULL,NULL);
-INSERT INTO vars VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for which M2 is ignored.',NULL,NULL);
-INSERT INTO vars VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation.',NULL,NULL);
-INSERT INTO vars VALUES ('m2_penalty','-1','Penalty for misuse of meta-moderation.',NULL,NULL);
-INSERT INTO vars VALUES ('m2_userpercentage','1','UID must be below this percentage of the total userbase to metamoderate.',NULL,NULL);
-INSERT INTO vars VALUES ('comment_minscore','-1','Minimum score for a specific comment.',NULL,NULL);
+INSERT INTO vars VALUES ('breaking','100','Undefined',NULL,NULL);
 INSERT INTO vars VALUES ('comment_maxscore','5','Maximum score for a specific comment.',NULL,NULL);
-INSERT INTO vars VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value',NULL,NULL);
-INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value',NULL,NULL);
-INSERT INTO vars VALUES ('maxkaubmiss_tsma','50','Maximum karma a user can accumulate.',NULL,NULL);
-INSERT INTO vars VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)',NULL,NULL);
-INSERT INTO vars VALUES ('maxtokens','40','Token threshold that must be hit to get any points',NULL,NULL);
-INSERT INTO vars VALUES ('tokensperpoint','8','Number of tokens per point',NULL,NULL);
-INSERT INTO vars VALUES ('maxpoints','5','The maximum number of points any moderator can have',NULL,NULL);
-INSERT INTO vars VALUES ('stir','3','Number of days before unused moderator points expire',NULL,NULL);
-INSERT INTO vars VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment',NULL,NULL);
+INSERT INTO vars VALUES ('comment_minscore','-1','Minimum score for a specific comment.',NULL,NULL);
+INSERT INTO vars VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point',NULL,NULL);
+INSERT INTO vars VALUES ('commentstatus','0','default comment code',NULL,NULL);
+INSERT INTO vars VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)',NULL,NULL);
+INSERT INTO vars VALUES ('cookiepath','/','Path on server for cookie to be active',NULL,NULL);
+INSERT INTO vars VALUES ('currentqid','happy','The Current Question on the homepage pollbooth',NULL,NULL);
+INSERT INTO vars VALUES ('datadir','/home/slash','What is the root of the install for slash',NULL,NULL);
+INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.',NULL,NULL);
+INSERT INTO vars VALUES ('defaultdisplaystatus','0','Default display status...',NULL,NULL);
+INSERT INTO vars VALUES ('defaultsection','articles','Default section to display',NULL,NULL);
+INSERT INTO vars VALUES ('defaultwritestatus','1','Default write status for newly created articles',NULL,NULL);
 INSERT INTO vars VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated',NULL,NULL);
-INSERT INTO vars VALUES ('post_limit','10','seconds delay before repeat posting',NULL,NULL);
+INSERT INTO vars VALUES ('fancyboxwidth','200','What size should the boxes be in?',NULL,NULL);
+INSERT INTO vars VALUES ('fontbase','0','base font size, default 0',NULL,NULL);
+INSERT INTO vars VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey',NULL,NULL);
+INSERT INTO vars VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value',NULL,NULL);
+INSERT INTO vars VALUES ('http_proxy','','http://proxy.www.example.com',NULL,NULL);
+INSERT INTO vars VALUES ('imagedir','http://www.example.com/images','Absolute URL for image directory',NULL,NULL);
+INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points',NULL,NULL);
+INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block',NULL,NULL);
+INSERT INTO vars VALUES ('logdir','/home/slash/logs','Where should the logs be found?',NULL,NULL);
+INSERT INTO vars VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_comments','10','Number of comments for meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_maxbonus','12','??',NULL,NULL);
+INSERT INTO vars VALUES ('m2_maxunfair','0.5','Minimum % of unfairs for M2 penalty.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_mincheck','3','??',NULL,NULL);
+INSERT INTO vars VALUES ('m2_penalty','-1','Penalty for misuse of meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for which M2 is ignored.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_userpercentage','1','UID must be below this percentage of the total userbase to metamoderate.',NULL,NULL);
+INSERT INTO vars VALUES ('mailfrom','admin@www.example.com','All mail addressed from the site looks like it is coming from here',NULL,NULL);
+INSERT INTO vars VALUES ('mainfontface','verdana,helvetica,arial','Fonts',NULL,NULL);
+INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments',NULL,NULL);
 INSERT INTO vars VALUES ('max_posts_allowed','30','maximum number of posts per day allowed',NULL,NULL);
 INSERT INTO vars VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed',NULL,NULL);
-INSERT INTO vars VALUES ('submission_speed_limit','300','How fast they can submit',NULL,NULL);
-INSERT INTO vars VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey',NULL,NULL);
+INSERT INTO vars VALUES ('maxkaubmiss_tsma','50','Maximum karma a user can accumulate.',NULL,NULL);
+INSERT INTO vars VALUES ('maxpoints','5','The maximum number of points any moderator can have',NULL,NULL);
+INSERT INTO vars VALUES ('maxtokens','40','Token threshold that must be hit to get any points',NULL,NULL);
+INSERT INTO vars VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)',NULL,NULL);
+INSERT INTO vars VALUES ('post_limit','10','seconds delay before repeat posting',NULL,NULL);
+INSERT INTO vars VALUES ('rdfencoding','ISO-8859-1','Site encoding',NULL,NULL);
+INSERT INTO vars VALUES ('rdfimg','http://www.example.com/images/topics/topicslash.gif','Site encoding',NULL,NULL);
+INSERT INTO vars VALUES ('rdflanguage','en','What language is the site in?',NULL,NULL);
+INSERT INTO vars VALUES ('rootdir','http://www.example.com','Base URL of site',NULL,NULL);
+INSERT INTO vars VALUES ('run_ads','0','Should we be running ads?',NULL,NULL);
+INSERT INTO vars VALUES ('send_mail','0','Turn On/Off the mailing list',NULL,NULL);
+INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site',NULL,NULL);
+INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site',NULL,NULL);
+INSERT INTO vars VALUES ('sitename','Slash Site','Name of the site',NULL,NULL);
+INSERT INTO vars VALUES ('siteowner','slash','What user this runs as',NULL,NULL);
+INSERT INTO vars VALUES ('slogan','Slash Site','Slogan of the site',NULL,NULL);
+INSERT INTO vars VALUES ('smtp_server','localhost','The mailserver for the site',NULL,NULL);
+INSERT INTO vars VALUES ('stats_reports','{\'admin@www.example.com\' => \'Slash Site Stats Report\'};','Who to send daily stats reports to',NULL,NULL);
+INSERT INTO vars VALUES ('stir','3','Number of days before unused moderator points expire',NULL,NULL);
+INSERT INTO vars VALUES ('story_expire','600','Default expiration time for a story',NULL,NULL);
+INSERT INTO vars VALUES ('submiss_ts','1','print timestamp in submissions view',NULL,NULL);
+INSERT INTO vars VALUES ('submiss_view','1','allow users to view submissions queue',NULL,NULL);
 INSERT INTO vars VALUES ('submission_bonus','3','Bonus given to user if submission is used.',NULL,NULL);
-
+INSERT INTO vars VALUES ('submission_speed_limit','300','How fast they can submit',NULL,NULL);
+INSERT INTO vars VALUES ('submit_categories','[qw(Back)]','Extra submissions categories',NULL,NULL);
+INSERT INTO vars VALUES ('titlebar_width','100%','The width of the titlebar',NULL,NULL);
+INSERT INTO vars VALUES ('today','730512','Today converted to days past a long time ago',NULL,NULL);
+INSERT INTO vars VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment',NULL,NULL);
+INSERT INTO vars VALUES ('tokensperpoint','8','Number of tokens per point',NULL,NULL);
+INSERT INTO vars VALUES ('totalComments','0','Total number of comments posted',NULL,NULL);
+INSERT INTO vars VALUES ('totalhits','383','Total number of hits the site has had thus far',NULL,NULL);
+INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5',NULL,NULL);
+INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
+INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting',NULL,NULL);

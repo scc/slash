@@ -8,11 +8,11 @@ use Apache::Constants qw(:common);
 $Slash::Apache::Log::VERSION = '0.01';
 
 sub handler {
-	my ($r) = @_;
+	my($r) = @_;
 	my $slashdb = getCurrentDB();
 	my $op = $r->notes('SLASH_LOG_OPERATION');
 	my $dat = $r->notes('SLASH_LOG_DATA');
-	if($op) {
+	if ($op) {
 		$slashdb->createAccessLog($op, $dat);
 	}
 

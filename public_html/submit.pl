@@ -200,7 +200,7 @@ ADMIN
 		selectTopic("tid", $submission->{'tid'});
 		selectSection("section", $I{F}{section} || $I{defaultsection});
 
-		print <<ADMIN, stripByMode($submission->{'introtext'}, 'literal');
+		printf <<ADMIN, stripByMode($submission->{'introtext'}, 'literal');
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
 		<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL">%s</TEXTAREA><BR>
@@ -451,7 +451,7 @@ EOT
 
 	print formLabel("The Scoop",
 		"HTML is fine, but double check those URLs and HTML tags!");
-	print <<EOT, stripByMode($I{F}{story}, 'literal');
+	printf <<EOT, stripByMode($I{F}{story}, 'literal');
 
 <TEXTAREA WRAP="VIRTUAL" COLS="70" ROWS="12" NAME="story">%s</TEXTAREA><BR>
 <FONT SIZE="2">(Are you sure you included a URL?  Didja test them for typos?)</FONT><P>
@@ -468,7 +468,8 @@ sub saveSub {
 	my ($id) = @_;
 
 	# if formkey works
-	if (checkSubmission("submissions", $I{submission_speed_limit}, $I{max_submissions_allowed}, $id)) {
+# formkey stuff broken ... ?  -- pudge
+#	if (checkSubmission("submissions", $I{submission_speed_limit}, $I{max_submissions_allowed}, $id)) {
 		if (length $I{F}{subj} < 2) {
 			titlebar("100%", "Error:");
 			print "Please enter a reasonable subject.\n";
@@ -487,14 +488,12 @@ sub saveSub {
 			$I{dbobject}->getSubmissionCount(),
 			" submissions pending.</B><P>";
 
-		my $submit_after = $I{dbobject}->getBlock("submit_after", 'block');
-		print $submit_after->{'block'};
+		print $I{dbobject}->getBlock("submit_after", 'block');
 
 		$I{dbobject}->createSubmission();
-	}
+#	}
 }
 
 main();
-# Why do we want to destroy our database handle? -Brian
-#$I{dbh}->disconnect if $I{dbh};
+
 1;
