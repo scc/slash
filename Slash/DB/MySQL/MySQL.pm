@@ -92,7 +92,7 @@ my %descriptions = (
 	'templatesbysection'
 		=> sub { $_[0]->sqlSelectMany('tpid,name', 'templates', "section = '$_[2]'") },
 
-	'templatepages'
+	'pages'
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
 
 	'sectionblocks'

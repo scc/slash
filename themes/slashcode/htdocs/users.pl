@@ -65,6 +65,9 @@ sub main {
 	if ($op eq 'newuser') {
 		newUser();
 
+	} elsif ($op eq 'newuseradmin' and $user->{seclev} >= 10000) {
+		newUserForm();
+
 	} elsif ($form->{authoredit} && $user->{seclev} >= 10000) {
 		editUser($form->{authoruid});
 
@@ -74,7 +77,7 @@ sub main {
 		} else {
 			editUser($form->{userfield});
 		}
-
+	
 	} elsif ($op eq 'edituser') {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
@@ -206,6 +209,11 @@ sub miniAdminMenu {
 }
 
 #################################################################
+sub newUserForm {
+	slashDisplay('newUserForm')
+}
+
+#################################################################
 sub newUser {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -284,7 +292,7 @@ sub userInfo {
 
 	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0;
 
-	$admin_block = getUserAdmin($userbio->{uid}, $currentuser->{seclev}, 1, 0) if $author_flag;
+	$admin_block = getUserAdmin($userbio->{uid}, $userbio->{seclev}, 1, 0) if $author_flag;
 
 	my($title, $commentstruct, $question, $points, $nickmatch_flag, $rows);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
@@ -398,8 +406,8 @@ sub editUser {
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
-	my $author_flag = ($user_edit->{seclev} >= 100) ? 1 : 0; 
-	$admin_block = getUserAdmin($user_edit->{uid}, $currentuser->{seclev}, 0, 1) if $author_flag;
+	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0; 
+	$admin_block = getUserAdmin($user_edit->{uid}, $user_edit->{seclev}, 0, 1) if $author_flag;
 
 	slashDisplay('editUser', { 
 		user_edit 		=> $user_edit, 
@@ -824,6 +832,7 @@ sub getUserAdmin {
 
 	my $slashdb 	= getCurrentDB();
 	my $form    	= getCurrentForm();	
+	my $currentuser = getCurrentUser();
 
 	my $user = $slashdb->getUser($uid);
 
@@ -836,8 +845,8 @@ sub getUserAdmin {
 	}		
 
 	my $author_select;
-	my $author_flag = ($seclev >= 100) ? 1 : 0; 
-	my $authoredit_flag = ($seclev >= 10000) ? 1 : 0; 
+	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0; 
+	my $authoredit_flag = ($currentuser->{seclev} >= 10000) ? 1 : 0; 
 
 	my $authors = $slashdb->getDescriptions('authors');
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;

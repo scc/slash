@@ -135,7 +135,7 @@ sub main {
 	} elsif ($form->{templatenew}) {
 		templateEdit($user->{seclev});
 	
-	} elsif ($form->{templatepage}) {
+	} elsif ($form->{templatepage} || $form->{templatesection}) {
 		templateEdit($user->{seclev}, '', $form->{page}, $form->{section});
 
 	} elsif ($form->{templateed}) {
@@ -350,6 +350,19 @@ sub authorDelete {
 }
 
 ##################################################################
+sub pageEdit {
+	my ($seclev,$page) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+
+	my $pages = $slashdb->getPages();
+	my $pageselect = createSelect('page', $pages, $page, 1);
+
+	slashDisplay('pageEdit', { page => $page });
+}
+
+##################################################################
 # OK, here's the template editor
 # @my_names = grep /^$foo-/, @all_names;
 sub templateEdit {
@@ -376,9 +389,29 @@ sub templateEdit {
 	if($form->{templatedelete}) {
 		$templatedelete_flag = 1;
 	} else {
-		my $templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
-		my $pages = $slashdb->getDescriptions('templatepages', '', 1);
+		my $templates = {};
+
+		if ($form->{templatesection}) {
+			if($section eq 'All Sections') {
+				$templates = $slashdb->getDescriptions('templates', $page, 1);
+			} else {
+				$templates = $slashdb->getDescriptions('templatesbysection', $section, 1);
+			}
+		} else {
+			if($page eq 'All') {
+				$templates = $slashdb->getDescriptions('templates', $page, 1);
+			} else {
+				$templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
+			}
+		}
+
+
+		my $pages = $slashdb->getDescriptions('pages', '$page', 1);
 		my $sections = $slashdb->getDescriptions('sections','', 1);
+
+		$pages->{All} = 'All';
+		$pages->{misc} = 'misc';
+		$sections->{default} = 'default';
 
 		$page_select = createSelect('page', $pages, $page, 1);
 		$template_select = createSelect('tpid', $templates, $tpid, 1);
@@ -412,7 +445,6 @@ sub templateEdit {
 ##################################################################
 sub templateSave {
 	my($tpid) = @_;
-	return unless $tpid;
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -421,33 +453,43 @@ sub templateSave {
 
 	$form->{seclev} ||= 500;
 
-	my $saved = $slashdb->getTemplateByID($tpid);
+	my $id = $slashdb->getTemplateByID($tpid);
+	my $temp = $slashdb->getTemplate($form->{name});
+
+	my $exists = 0;
+	$exists = 1 if ($form->{name} eq $temp->{name} && 
+			$form->{section} eq $temp->{section} && 
+			$form->{page} eq $temp->{page});
 
 	if ($form->{save_new}) {
-		if($saved->{tpid}) {
-			print getMessage('templateSave-exists-message', { tpid => $tpid } );
+		if($id->{tpid} || $exists) {
+			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $form->{name} } );
 			return;
 		} else {
-			print "trying to insert $tpid<br>\n";
+			print "trying to insert $form->{name}<br>\n";
 			$slashdb->createTemplate({
-               			tpid            => $tpid,
+               			name		=> $form->{name},
 				template        => $form->{template},
 				title		=> $form->{title},
 				description	=> $form->{description},
 				seclev          => $form->{seclev},
-				page		=> $form->{page}
+				page		=> $form->{page},
+				section		=> $form->{section}
 			});
 
-			print getMessage('blockSave-inserted-message', { bid => $tpid });
+			print getMessage('templateSave-inserted-message', { tpid => $tpid , name => $form->{name}});
 		} 
 	} else {
 		$slashdb->setTemplate($tpid, { 
+				name		=> $form->{name},
 				template 	=> $form->{template},
 				description	=> $form->{description},
 				title		=> $form->{title},
-				seclev		=> $form->{seclev}
+				seclev		=> $form->{seclev},
+				page		=> $form->{page},
+				section		=> $form->{section}
 		});
-		print getMessage('blockSave-saved-message', { bid => $tpid });
+		print getMessage('templateSave-saved-message', { tpid => $tpid, name => $form->{name} });
 	}	
 
 }
@@ -596,8 +638,8 @@ sub colorEdit {
 
 	@colors = split m/,/, $colorblock;
 
-	$user->{fg} = [@colors[0..3]];
-	$user->{bg} = [@colors[4..7]];
+	$user->{fg} = [@colors[0..4]];
+	$user->{bg} = [@colors[5..9]];
 
        	$title = getTitle('colorEdit-title');
 
