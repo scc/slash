@@ -146,10 +146,12 @@ sub editComment {
 	my($id, $f, $u, $db, $c, $error_message) = @_;
 
 	my $formkey_earliest = time() - $c->{formkey_timeframe};
-	$u->{points} = 0;
 
+	# Get the comment we may be responding to. Remember to turn off 
+	# moderation elements for this instance of the comment. 
 	my $reply = $db->getCommentReply(getDateFormat('date', 'time'), $f->{sid},
 									 $f->{pid});
+	$reply->{no_moderation} = 1;
 
 	if (!$c->{allow_anonymous} && $u->{is_anon}) {
 		slashDisplay('comments-error', {
@@ -190,7 +192,6 @@ sub editComment {
 	my $approvedtags =
 		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$c->{approvedtags}};
 
-	# Consider passing $c.
 	slashDisplay('comments-edit-comment', {
 		approved_tags => $approvedtags,
 		error_message => $error_message,

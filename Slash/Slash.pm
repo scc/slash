@@ -1464,6 +1464,8 @@ Parameters
 
 	COMMENT
 	Hashref of comment data.
+		If the 'no_moderation' key of the COMMENT hashref exists, the
+		moderation elements of the comment will not be displayed.
 
 Return value
 
@@ -1504,7 +1506,7 @@ sub dispComment {
 		%$comment,
 		comment_shrunk	=> $comment_shrunk,
 		reasons		=> \%reasons,
-		can_mod		=> $can_mod,
+		can_mod		=> $comment->{no_moderation} ? 0 : $can_mod,
 		is_anon		=> isAnon($comment->{uid}),
 		fixednickname	=> fixparam($comment->{nickname}),
 	}, 1, 1);
