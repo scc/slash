@@ -98,7 +98,12 @@ Return a random value based on alphanumeric characters
 
 =cut
 
+# this srand thing should be elsewhere, but here for now because i need food
+# we need to seed srand again since it might have been seeded in parent process,
+# and we don't want to inherit the same seed all the other children have
+{ my $srand_called;
 sub getFormkey {
+	srand(time ^ ($$ + ($$ << 15))) unless $srand_called++;
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 
@@ -122,6 +127,7 @@ sub getFormkey {
 	print STDERR "$formkey is good! (count:$count) ",
 		"$user->{uid}/ipid:$user->{ipid}\n";
 	return $formkey;
+}
 }
 
 #========================================================================
