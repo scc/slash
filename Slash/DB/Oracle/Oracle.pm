@@ -4,7 +4,6 @@ use strict;
 
 @Slash::DB::Oracle::ISA = qw( Slash::DB::Utility );
 	
-);
 ($Slash::DB::Oracle::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 
