@@ -108,13 +108,15 @@ sub header {
 		my $r = Apache->request;
 
 		$r->content_type('text/html');
+
+		# Caching has been reverted to how it worked before.
+		# Leave it like this until we get complaints about
+		# it -- pudge
 		$r->header_out('Cache-Control', 'private');
-		# Pragma worked before; we need to have a really good
-		# reason to change it if we are to change it at all;
-		# so for now, i revert to the tried-and-true former
-		# directives -- pudge
 		$r->header_out('Pragma', 'no-cache')
-			unless $user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/;
+			# why use caching only for authors/admins?
+			# is that backwards?
+			unless $ENV{SCRIPT_NAME} =~ /comments/ || $user->{seclev} > 1;
 
 # 		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
 # 			$r->header_out('Cache-Control', 'no-cache');
