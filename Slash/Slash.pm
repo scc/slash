@@ -1833,9 +1833,9 @@ sub dispStory {
 		topic	=> $topic,
 		author	=> $author,
 		full	=> $full,
-		magic	=> (!$full && index($story->{title}, ':') ==( -1
-			and ($story->{section} ne $constants->{defaultsection})
-			and ($story->{section} ne $form_section))),
+		magic	=> (!$full && index($story->{title}, ':') == (-1
+			&& ($story->{section} ne $constants->{defaultsection})
+			&& ($story->{section} ne $form_section))),
 		width	=> $constants->{titlebar_width}
 	);
 
