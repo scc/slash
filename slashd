@@ -26,7 +26,6 @@
 ###############################################################################
 use sigtrap;
 use strict;
-use vars '$I';
 use Carp;
 use File::Basename;
 use File::Path;
@@ -39,11 +38,8 @@ use Slash;
 use Slash::DB;
 use Slash::Utility;
 
-
-#*I = getSlashConf();
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
 my($constants, $slashdb) = createEnvironment($virtual_user);
-$I = $constants;
 
 my $totalChangedStories = 1;
 
@@ -51,15 +47,15 @@ sub END { Carp::cluck("why am I here?") }
 
 sub slashdPid {
 	local *PID;
-	open PID,">$I->{logdir}/slashd.pid"
-		or die "Can't open $I->{logdir}/slashd.pid: $!";
+	open PID,">$constants->{logdir}/slashd.pid"
+		or die "Can't open $constants->{logdir}/slashd.pid: $!";
 	print PID $$;
 	close PID;
 }
 
 sub slashdLog {
 	local *LOG;
-	my $dir = "$I->{logdir}";
+	my $dir = "$constants->{logdir}";
 	open LOG, ">>$dir/slashd.log"
 		or die "Can't append to $dir/slashd.log: $!";
 	print LOG localtime() . "\t", join("\t", @_), "\n";
@@ -134,7 +130,7 @@ sub moveImages {
 	if (opendir DIR, "/tmp/slash") {
 		my @files = readdir(DIR);
 		foreach my $old (@files) {
-			my $new = "$I->{basedir}/$old";
+			my $new = "$constants->{basedir}/$old";
 			$new =~ s|~|/|g;
 			if (substr($old, 0, 1) ne ".") {
 				copy("/tmp/slash/$old", $new);
@@ -155,8 +151,8 @@ sub setheadertopics {
 		local $_ = $t;
 		if (! /$_->{'tid'}/) {	
 			$r .= <<EOT;
-	<TD><A HREF="$I->{rootdir}/search.pl?topic=$_->{'tid'}"><IMG
-		SRC="$I->{imagedir}/topics/$_->{'image'}" WIDTH="$_->{'width'}" HEIGHT="$_->{'height'}"
+	<TD><A HREF="$constants->{rootdir}/search.pl?topic=$_->{'tid'}"><IMG
+		SRC="$constants->{imagedir}/topics/$_->{'image'}" WIDTH="$_->{'width'}" HEIGHT="$_->{'height'}"
 		BORDER="0" ALT="$_->{'alttext'}"></A>
 	</TD>
 
@@ -197,30 +193,30 @@ sub sectionHeaders {
 	my $section = shift;
 	local *FH;
 
-	$I->{F}{ssi} = 1;
-	open FH,">$I->{basedir}/$section/slashhead.inc"
-		or die "Can't open $I->{basedir}/$section/slashhead.inc: $!";
+	$constants->{F}{ssi} = 1;
+	open FH,">$constants->{basedir}/$section/slashhead.inc"
+		or die "Can't open $constants->{basedir}/$section/slashhead.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "thread");
 	close FH;
 
-	$I->{F}{ssi} = 0;
-	open FH, ">$I->{basedir}/$section/slashfoot.inc"
-		or die "Can't open $I->{basedir}/$section/slashfoot.inc: $!";
+	$constants->{F}{ssi} = 0;
+	open FH, ">$constants->{basedir}/$section/slashfoot.inc"
+		or die "Can't open $constants->{basedir}/$section/slashfoot.inc: $!";
 	*STDOUT = *FH;
 	footer();
 	close FH;
 
-	$I->{F}{ssi} = 1;
-	open FH, ">$I->{basedir}/$section/slashhead_F.inc"
-		or die "Can't open $I->{basedir}/$section/slashhead_F.inc: $!";
+	$constants->{F}{ssi} = 1;
+	open FH, ">$constants->{basedir}/$section/slashhead_F.inc"
+		or die "Can't open $constants->{basedir}/$section/slashhead_F.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "flat");
 	close FH;
 
-	$I->{F}{ssi} = 0;
-	open FH, ">$I->{basedir}/$section/slashfoot_F.inc"
-		or die "Can't open $I->{basedir}/$section/slashfoot_F.inc: $!";
+	$constants->{F}{ssi} = 0;
+	open FH, ">$constants->{basedir}/$section/slashfoot_F.inc"
+		or die "Can't open $constants->{basedir}/$section/slashfoot_F.inc: $!";
 	*STDOUT = *FH;
 	footer();
 	close FH;
@@ -235,7 +231,7 @@ sub newfooter {
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {
 		my($section) = $sections->{$_}{section};
-		mkdir "$I->{basedir}/$section", 0755;
+		mkdir "$constants->{basedir}/$section", 0755;
 		sectionHeaders($section);
 	}
 
@@ -248,40 +244,40 @@ sub newrdf {
 	my $stories_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '0.9',
-		$I->{rdfencoding} ? (encoding => $I->{rdfencoding}) : ()
+		$constants->{rdfencoding} ? (encoding => $constants->{rdfencoding}) : ()
 	);
 
 	my $SECT = getSection($section);
-	$SECT->{title} = "$I->{sitename}: $SECT->{title}" unless $SECT->{isolate};
+	$SECT->{title} = "$constants->{sitename}: $SECT->{title}" unless $SECT->{isolate};
 
 	my @fs = (xmlEncodeStr($SECT->{title}),
 		$section ? "/index.pl?section=$section" : '',
-		xmlEncodeStr($I->{sitename})
+		xmlEncodeStr($constants->{sitename})
 	);
 
 	$rss->channel(
 		title		=> xmlEncodeStr($SECT->{title}),
-		'link'		=> $I->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
-#		language	=> $I->{rdflanguage},
-		description	=> $I->{slogan},
+		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
+#		language	=> $constants->{rdflanguage},
+		description	=> $constants->{slogan},
 	);
 
 	$rss->image(
-		title		=> xmlEncodeStr($I->{sitename}),
-		url		=> $I->{rdfimg},
-		'link'		=> $I->{absolutedir} . '/',
+		title		=> xmlEncodeStr($constants->{sitename}),
+		url		=> $constants->{rdfimg},
+		'link'		=> $constants->{absolutedir} . '/',
 	);
 
 
 	for my $section (@$stories_and_topics) {
 		$rss->add_item(
 			title	=> xmlEncodeStr($section->{title}),
-			'link'	=> "$I->{absolutedir}/article.pl?sid=$section->{sid}",
+			'link'	=> "$constants->{absolutedir}/article.pl?sid=$section->{sid}",
 		);
 	}
 
-	(my $file = $section || lc $I->{sitename}) =~ s/\W+//g;
-	$rss->save("$I->{basedir}/$file.rdf");
+	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	$rss->save("$constants->{basedir}/$file.rdf");
 }
 
 #################################
@@ -297,11 +293,11 @@ sub newwml {
 <!--  Dev  -->
 
 <!-- TOC -->
-<card title="$I->{sitename}" id="$I->{sitename}">
+<card title="$constants->{sitename}" id="$constants->{sitename}">
 <do label="Home" type="options">
 <go href="/index.wml"/>
 </do>
-<p align="left"><b>$I->{sitename}</b>
+<p align="left"><b>$constants->{sitename}</b>
 <select>
 EOT
 
@@ -321,8 +317,8 @@ EOT
 </wml>
 EOT
 
-	(my $file = $section || lc $I->{sitename}) =~ s/\W+//g;
-        save2file("$I->{basedir}/$file.wml", $x);
+	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+        save2file("$constants->{basedir}/$file.wml", $x);
 }
 
 #################################
@@ -332,7 +328,7 @@ sub newxml {
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
-xmlns:backslash="$I->{rootdir}/backslash.dtd">
+xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 
 EOT
 
@@ -340,7 +336,7 @@ EOT
 		$x.= sprintf <<EOT, xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
 	<story>
 		<title>%s</title>
-		<url>$I->{rootdir}/article.pl?sid=$section->{sid}</url>
+		<url>$constants->{rootdir}/article.pl?sid=$section->{sid}</url>
 		<time>$section->{'time'}</time>
 		<author>$section->{aid}</author>
 		<department>%s</department>
@@ -354,8 +350,8 @@ EOT
 	}
 
 	$x .= "</backslash>\n";
-	(my $file = $section || lc $I->{sitename}) =~ s/\W+//g;
-	save2file("$I->{basedir}/$file.xml", $x);
+	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	save2file("$constants->{basedir}/$file.xml", $x);
 }
 
 #################################
@@ -380,7 +376,7 @@ sub makeDir {
 	my $yearid = substr($sid, 0, 2);
 	my $dayid = substr($sid, 6, 2);
 
-	mkpath "$I->{basedir}/$section/$yearid/$monthid/$dayid", 0, 0755;
+	mkpath "$constants->{basedir}/$section/$yearid/$monthid/$dayid", 0, 0755;
 }
 
 #################################
@@ -399,12 +395,12 @@ sub freshenup {
 		makeDir($section, $sid);
 		$totalChangedStories++;
 
-		if (prog2file("$I->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=thread",
-			"$I->{basedir}/$section/$sid.shtml")) {
+		if (prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=thread",
+			"$constants->{basedir}/$section/$sid.shtml")) {
 
 			# Don't need this any more.
-			prog2file("$I->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
-				"$I->{basedir}/$section/$sid"."_F.shtml");
+			prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
+				"$constants->{basedir}/$section/$sid"."_F.shtml");
 
 			push @updatedsids, $sid;
 		} else {
@@ -421,10 +417,10 @@ sub freshenup {
 		my($sid, $title, $section) = @$_;
 		$x++;
 		$updates{$section} = 1;
-		unlink "$I->{basedir}/$section/$sid.shtml"
-			or warn "Can't unlink $I->{basedir}/$section/$sid.shtml: $!";
-		unlink "$I->{basedir}/$section/${sid}_F.shtml"
-			or warn "Can't unlink $I->{basedir}/$section/${sid}_F.shtml: $!";
+		unlink "$constants->{basedir}/$section/$sid.shtml"
+			or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
+		unlink "$constants->{basedir}/$section/${sid}_F.shtml"
+			or warn "Can't unlink $constants->{basedir}/$section/${sid}_F.shtml: $!";
 		$slashdb->deleteStoryAll($sid);
 		slashdLog("Deleting $sid");
 	}
@@ -433,34 +429,34 @@ sub freshenup {
 
 #	if ($updates{articles} ne "" || $w ne "0") {
 		$slashdb->setVar("writestatus", "0");
-		prog2file("$I->{basedir}/index.pl ssi=yes", "$I->{basedir}/index.shtml");
-		# prog2file("$I->{basedir}/index.pl ssi=yes\\\&mode=flat","$I->{basedir}/index_F.shtml");
+		prog2file("$constants->{basedir}/index.pl ssi=yes", "$constants->{basedir}/index.shtml");
+		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat","$constants->{basedir}/index_F.shtml");
 #	}
 
 	foreach my $key (keys %updates) {
 		next unless $key;
-		prog2file("$I->{basedir}/index.pl ssi=yes\\\&section=$key",
-			"$I->{basedir}/$key/index.shtml");
-		# prog2file("$I->{basedir}/index.pl ssi=yes\\\&mode=flat\\\&section=$key","$I->{basedir}/$key/index_F.shtml");
+		prog2file("$constants->{basedir}/index.pl ssi=yes\\\&section=$key",
+			"$constants->{basedir}/$key/index.shtml");
+		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat\\\&section=$key","$constants->{basedir}/$key/index_F.shtml");
 	}
 }
 
 #######################################
 sub writePollBooth {
-	$I->{currentSection} = "redhat";
+	$constants->{currentSection} = "redhat";
 	my $poll = pollbooth("", "rh");
-	$poll = qq!\n<FONT FACE="$I->{mainfontface}" SIZE="1">$poll</FONT>\n!;
-	save2file("$I->{basedir}/pollbooth.html", $poll);
-	$I->{currentSection} = "";
+	$poll = qq!\n<FONT FACE="$constants->{mainfontface}" SIZE="1">$poll</FONT>\n!;
+	save2file("$constants->{basedir}/pollbooth.html", $poll);
+	$constants->{currentSection} = "";
 }
 
 
 main();
 
 sub main {
-	mkpath "$I->{logdir}/", 0, 0755;
-	open STDERR, ">> $I->{logdir}/slashd.log"
-		or die "Can't open STDERR to $I->{logdir}/slashd.log: $!";
+	mkpath "$constants->{logdir}/", 0, 0755;
+	open STDERR, ">> $constants->{logdir}/slashd.log"
+		or die "Can't open STDERR to $constants->{logdir}/slashd.log: $!";
 
 	slashdPid();
 	slashdLog("Starting up Slashd with pid $$");
@@ -480,7 +476,7 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 
 
 			newmotd();
-			system("$I->{datadir}/portald $virtual_user&");
+			system("$constants->{datadir}/portald $virtual_user&");
 			sleep(60 * 2);
 
 			my($today) = $slashdb->getTime();
@@ -489,21 +485,21 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			if ($today ne $yesterday) {
 				$slashdb->setVar("today", $today);
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
-				system("$I->{datadir}/dailyStuff $virtual_user &");
+				system("$constants->{datadir}/dailyStuff $virtual_user &");
 			}
 			$last = time;
 
 		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
 			slashdLog("Running Moderatord");
-			system("$I->{datadir}/moderatord $virtual_user");
-			prog2file("$I->{basedir}/hof.pl ssi=yes", "$I->{basedir}/hof.shtml");
-			prog2file("$I->{basedir}/topics.pl ssi=yes", "$I->{basedir}/topics.shtml");
-			prog2file("$I->{basedir}/cheesyportal.pl ssi=yes",
-				"$I->{basedir}/cheesyportal.shtml");
+			system("$constants->{datadir}/moderatord $virtual_user");
+			prog2file("$constants->{basedir}/hof.pl ssi=yes", "$constants->{basedir}/hof.shtml");
+			prog2file("$constants->{basedir}/topics.pl ssi=yes", "$constants->{basedir}/topics.shtml");
+			prog2file("$constants->{basedir}/cheesyportal.pl ssi=yes",
+				"$constants->{basedir}/cheesyportal.shtml");
 			$modlast = time;
 		}
 
-		sleep(60 * $I->{updatemin}); # Sleep for 5 minutes
+		sleep(60 * $constants->{updatemin}); # Sleep for 5 minutes
 	}
 }
 
