@@ -195,11 +195,7 @@ possible.
 =back
 
 
-=head1 AUTHOR
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
-
 =head1 SEE ALSO
 
-Template, Template::Provider, Slash, Slash::Utility, Slash::Display.
+Template(3), Template::Provider(3), Slash(3), Slash::Utility(3),
+Slash::Display(3).

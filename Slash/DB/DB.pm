@@ -108,13 +108,8 @@ By looking at the database parameter during creation
 it determines what type of database to inherit from.
 
 
-
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
 =head1 SEE ALSO
 
-Slash(3).
+Slash(3), Slash::DB::Utility(3).
 
 =cut

@@ -7,3 +7,4 @@ Makefile\.old
 Slash/.xs
 Slash/.Makefile$
 \.#
+^Icon\015$

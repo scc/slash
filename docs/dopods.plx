@@ -12,8 +12,8 @@ for (qw(INSTALL README)) {
 	MacPerl::SetFileInfo($ENV{EDITOR} || 'R*ch', 'TEXT', "$_.html")
 		if $^O eq 'MacOS';
 
-	print "Copying $_ to parent directory\n";
-	copy $_, catfile(updir, $_) or warn "Couldn't copy\n";
+	print "Moving $_ to parent directory\n";
+	move $_, catfile(updir, $_) or warn "Couldn't copy\n";
 }
 
 for (qw(pod2html-dircache pod2html-itemcache)) {

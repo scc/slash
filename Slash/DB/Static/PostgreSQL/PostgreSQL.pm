@@ -26,14 +26,8 @@ Slash::DB::Static::PostgreSQL - PostgreSQL Interface for Slashcode
 
 No documentation yet. Sue me.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
-Chris Nandor, pudge@pobox.com
-
 =head1 SEE ALSO
 
-Slash(3). Slash::DB(3)
+Slash(3), Slash::DB(3).
 
 =cut

@@ -166,12 +166,8 @@ Slash search module.
 
 Blah blah blah.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
 =head1 SEE ALSO
 
-perl(1). Slash(3)
+Slash(3).
 
 =cut

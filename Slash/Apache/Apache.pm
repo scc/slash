@@ -84,12 +84,8 @@ Slash::Apache - Apache Specific handler for Slashcode
 This is what creates the SlashVirtualUser command for us
 in the httpd.conf file.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
 =head1 SEE ALSO
 
-perl(1). Slash(3).
+Slash(3).
 
 =cut

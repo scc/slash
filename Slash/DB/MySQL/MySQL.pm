@@ -2200,6 +2200,7 @@ sub getUrlFromTitle {
 
 ##################################################################
 # Should this really be in here?
+# this should probably return time() or something ... -- pudge
 sub getTime {
 	my($self) = @_;
 	my($now) = $self->sqlSelect('now()');
@@ -3131,14 +3132,8 @@ Slash::DB::MySQL - MySQL Interface for Slashcode
 
 No documentation yet. Sue me.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
 =head1 SEE ALSO
 
-Slash(3). Slash::DB(3)
+Slash(3), Slash::DB(3).
 
 =cut

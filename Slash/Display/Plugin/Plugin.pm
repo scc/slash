@@ -74,11 +74,6 @@ from within your template.  Also call methods from Slash::DB
 with the C<db> method.  Invoke with C<[% USE Slash %]>.
 
 
-=head1 AUTHOR
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
-
 =head1 SEE ALSO
 
-Template, Slash, Slash::Utility, Slash::Display.
+Template(3), Slash(3), Slash::Utility(3), Slash::Display(3).

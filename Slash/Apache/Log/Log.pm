@@ -42,12 +42,8 @@ No method are provided. Basically this handles grabbing the
 data out of the Apache process and logging it to the
 database. 
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
 =head1 SEE ALSO
 
-perl(1).
+Slash(3), Slash::Apache(3).
 
 =cut

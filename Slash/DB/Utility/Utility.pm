@@ -273,12 +273,8 @@ Slash::DB::Utility - Generic SQL code which is common to all DB interfaces for S
 
 No documentation yet.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
 =head1 SEE ALSO
 
-Slash(3). Slash::DB(3)
+Slash(3), Slash::DB(3).
 
 =cut

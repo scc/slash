@@ -378,11 +378,7 @@ my %scalar_ops = (
 __END__
 
 
-=head1 AUTHOR
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
-
 =head1 SEE ALSO
 
-Template, Slash, Slash::Utility, Slash::DB, Slash::Display::Plugin.
+Template(3), Slash(3), Slash::Utility(3), Slash::DB(3),
+Slash::Display::Plugin(3), Slash::Display::Provider(3).

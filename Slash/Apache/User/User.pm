@@ -380,14 +380,8 @@ method of authenication. The rest of slashcode depends
 on finding the UID of the user in the SLASH_USER 
 environmental variable.
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
 =head1 SEE ALSO
 
-perl(1). Slash(3).
+Slash(3), Slash::Apache(3).
 
 =cut

@@ -2050,12 +2050,6 @@ sub createEnvironment {
 
 1;
 
-=head1 AUTHOR
-
-Brian Aker, brian@tangent.org
-
-Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
-
 
 =head1 SEE ALSO
 
