@@ -5,7 +5,7 @@ slash-1.1.4-bender, 2000.02.16
 
 *	Minor modifications to the ERD
 
-*	Changed language code from two characters (e.e. "en") to five
+*	Changed language code from two characters (e.g. "en") to five
 	characters, lang + country (e.g., "en_US"), in templates
 	and user prefs
 
