@@ -38,7 +38,7 @@ sub getsByUid {
 	my ($self, $uid, $limit) = @_;
 	my $order = "ORDER BY date DESC";
 	$order .= " LIMIT $limit" if $limit; 
-	my $answer = $self->sqlSelectAll('date, article, description, journals.id', 'journals, journals_text', "uid = $uid journals.id = journals_text.id", $order);
+	my $answer = $self->sqlSelectAll('date, article, description, journals.id', 'journals, journals_text', "uid = $uid AND journals.id = journals_text.id", $order);
 	return $answer;
 }
 
