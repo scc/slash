@@ -261,7 +261,7 @@ die "You need to give us a password.\n" unless $password;
 unless ($opts{'e'}) {
 	print "\nWhat is the email address of the account? [$username\@$host_noport] ";
 	chomp($email = <STDIN>);
-	$email ||= "$owner\@$host_noport";
+	$email ||= "$username\@$host_noport";
 } else {
 	$email = $opts{'e'};
 }
