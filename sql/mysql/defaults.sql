@@ -337,7 +337,7 @@ INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|O
 INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
 INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show only Articles in submission count in admin menu');
 INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','1','Authors have unlimited moderation');
-INSERT INTO vars (name, value, description) VALUES ('backup_db_user','backup','The virtual user of the database that the code should use for intensive database access that may bring down the live site. If you don\'t know what this is for, you should leave it blank.');
+INSERT INTO vars (name, value, description) VALUES ('backup_db_user','','The virtual user of the database that the code should use for intensive database access that may bring down the live site. If you don\'t know what this is for, you should leave it blank.');
 INSERT INTO vars (name, value, description) VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value');
 INSERT INTO vars (name, value, description) VALUES ('badreasons','4','number of \"Bad\" reasons in \"reasons\", skip 0 (which is neutral)');
 INSERT INTO vars (name, value, description) VALUES ('basedir','/usr/local/slash/www.example.com/htdocs','Where should the html/perl files be found?');
