@@ -636,6 +636,7 @@ sub submitComment {
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
 	unless (validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {
+		$slashdb->resetFormkey($form->{formkey});
 		editComment(@_, $error_message);
 		return(0);
 	}

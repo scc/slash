@@ -146,7 +146,7 @@ sub main {
 			formname	=> $formname,
 			checks		=>
 			[ qw (max_post_check valid_check
-				interval_check formkey_check regen_formkey) ],
+				formkey_check regen_formkey) ],
 		},
 		newuseradmin	=> {
 			function	=> \&newUserForm,
@@ -400,6 +400,7 @@ sub newUser {
 
 			return;
 		} else {
+			$slashdb->resetFormkey($form->{formkey});	
 			print getError('duplicate_user', { nick => $form->{usernick} });
 			return;
 		}
