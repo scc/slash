@@ -13,7 +13,7 @@ while(<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,">slashdata_dump.sql") or die "can't locate slashdata_dump.sql! Where is it?";
+open(DUMP,">slashdata_dump-$hostname.sql") or die "can't locate slashdata_dump-$hostname.sql! Where is it?";
 print DUMP $newdump;
 close(DUMP);
 
