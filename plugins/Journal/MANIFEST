@@ -4,4 +4,3 @@ Makefile.PL
 MANIFEST
 test.pl
 journal.pl
-install
