@@ -535,7 +535,7 @@ CREATE TABLE users (
   realemail varchar(50) DEFAULT '' NOT NULL,
   fakeemail varchar(50),
   homepage varchar(100),
-  passwd varchar(32) DEFAULT '' NOT NULL,
+  passwd char(32) DEFAULT '' NOT NULL,
   sig varchar(160),
   seclev int(11) DEFAULT '0' NOT NULL,
   matchname varchar(20),
