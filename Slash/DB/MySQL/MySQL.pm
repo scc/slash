@@ -240,6 +240,9 @@ sub getFormatDescriptions {
 	if($codetype eq 'sections') {
 		$sth = $self->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title');
 	}
+	if($codetype eq 'sectionblocks') {
+		$sth = $self->sqlSelectMany('bid,title', 'sections', 'portal=1');
+	}
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -375,6 +378,15 @@ sub getUserInfoByUID{
   my($self, $uid) = @_;
 
 	my $user = $self->sqlSelectHashref('nickname,realemail', 'users',
+			'nickname=' . $self->{dbh}->quote($uid)); 
+	return $user;
+}
+########################################################
+# Get user info from the users table.
+sub getUserFakeEmail{
+  my($self, $uid) = @_;
+
+	my $user = $self->sqlSelectHashref('nickname,fakeemail', 'users',
 			'nickname=' . $self->{dbh}->quote($uid)); 
 	return $user;
 }
@@ -1172,6 +1184,65 @@ sub setUsersPrefrences{
 	my ($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid . " AND uid>0", 1);
 }
+########################################################
+sub countStories{
+	my ($self) = @_;
+	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,aid",
+			"stories","", "ORDER BY commentcount DESC LIMIT 10"
+			);
+	return $stories;
+}
+########################################################
+sub countStoriesStuff{
+	my ($self) = @_;
+	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,aid",
+			"stories,storiestuff","stories.sid=storiestuff.sid",
+			"ORDER BY hits DESC LIMIT 10"
+			);
+	return $stories;
+}
+########################################################
+sub countStoriesAuthors{
+	my ($self) = @_;
+	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid, url", 
+			"stories, authors","authors.aid=stories.aid",
+			"GROUP BY aid ORDER BY c DESC LIMIT 10"
+			);
+	return $authors;
+}
+########################################################
+sub countPollquestions{
+	my ($self) = @_;
+	my $pollquestions = $self->sqlSelectAll("voters,question,qid", "pollquestions",
+			"1=1", "ORDER by voters DESC LIMIT 10"
+			);
+	return $pollquestions;
+}
+########################################################
+sub countUsersIndexExboxesByBid{
+	my ($self, $bid) = @_;
+	my ($count) = $self->sqlSelect("count(*)","users_index",
+			qq!exboxes like "%'$bid'%" !
+			);
+
+	return $count;
+}
+########################################################
+sub getCommentsTop{
+	my ($self, $sid, $user) = @_;
+	my $where ="stories.sid=comments.sid"; 
+	$where .= " AND stories.sid=" . $self->{dbh}->quote($sid) if $sid;
+	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject," 
+			. getDateFormat("date","d", $user) . "," . getDateFormat("time","t", $user) 
+			. ",uid, cid, points"
+			, "stories, comments"
+			, $where
+			, " ORDER BY points DESC, d DESC LIMIT 10 ");
+
+	return $stories;
+}
+########################################################
+
 
 1;
 

@@ -42,53 +42,37 @@ EOT
 
 	# Top 10 Hit Generating Articles
 	titlebar("98%", "Most Active Stories");
-	displayCursor($storyDisp, sqlSelectMany(
-		"sid,title,section,commentcount,aid",
-		"stories","", "ORDER BY commentcount DESC LIMIT 10"
-	));
+	displayCursor($storyDisp, $I{dbobject}->countStories());
 
 	print "<P>";
 	titlebar("98%", "Most Visited Stories");
-	displayCursor($storyDisp,sqlSelectMany(
-		"stories.sid,title,section,storiestuff.hits as hits,aid",
-		"stories,storiestuff", "stories.sid=storiestuff.sid",
-		"ORDER BY hits DESC LIMIT 10"
-	));
+	displayCursor($storyDisp, $I{dbobject}->countStoriesStuff());
 	
 	print "<P>";
 	titlebar("98%", "Most Active Authors");
 	displayCursor(sub { qq!<B>$_[0]</B> <A HREF="$_[2]">$_[1]</A><BR>! },
-		sqlSelectMany("count(*) as c, stories.aid, url", "stories, authors",
-			"authors.aid=stories.aid",
-			"GROUP BY aid ORDER BY c DESC LIMIT 10"
-		)
-	);
+		$I{dbobject}->countStoriesAuthors());
 
 	print "<P>";
 	titlebar("98%", "Most Active Poll Topics");
-	displayCursor(sub { qq!<B>$_[0]</B> <A HREF="$I{rootdir}/pollBooth.pl?qid=$_[2]">$_[1]</A><BR>! },
-		sqlSelectMany("voters,question,qid",
-			"pollquestions","1=1", "ORDER by voters DESC LIMIT 10"
-		)
-	);
+	displayCursor(sub { qq!<B>$_[0]</B> <A HREF="$I{rootdir}/pollBooth.pl?qid=$_[2]">$_[1]</A><BR>! }, $I{dbobject}->countPollquestions());
 
 	if (0) {  #  only do this in static mode
 		print "<P>";
 		titlebar("100%", "Most Popular Slashboxes");
-		my $boxes = sqlSelectMany("bid,title", "sectionblocks", "portal=1");
+		my $boxes = $I{dbobject}->getFormatDescription('sectionblocks');
 		my(%b, %titles);
 
-		while (my($bid, $title) = $boxes->fetchrow) {
+		while (my($bid, $title) = each %$boxes) {
 			$b{$bid} = 1;
 			$titles{$bid} = $title;
 		}
 
-		$boxes->finish;
 
+		#Something tells me we could simplify this with some 
+		# thought -Brian
 		foreach my $bid (keys %b) {
-			($b{$bid}) = sqlSelect("count(*)","users_index",
-				qq!exboxes like "%'$bid'%" !
-			);
+			$b{$bid} = $I{dbobject}->countUsersIndexExboxesByBid($bid);
 		}
 
 		my $x;
@@ -117,10 +101,9 @@ EOT
 sub displayCursor {
 	my($d, $c) = @_;
 	return unless $c;
-	while (@_ = $c->fetchrow) {
-		print $d->(@_);
+	for (@$c) {
+		print $d->(@$_);
 	}
-	$c->finish;
 }
 
 ##################################################################
@@ -128,28 +111,18 @@ sub topComments {
 	# and SID, article title, type and a link to the article
 	print "<P>";
 	titlebar("100%","Top 10 Comments");
-	my $sqlquery = "SELECT section, stories.sid, aid, title, pid, subject," .
-		getDateFormat("date","d", $I{U}) . "," . getDateFormat("time","t", $I{U}) . 
-		",uid, cid, points";
-	$sqlquery .= "	  FROM stories, comments
-			 WHERE stories.sid=comments.sid";
-	$sqlquery .= "	   AND stories.sid=" . $I{dbh}->quote($I{F}{sid}) if $I{F}{sid};
-
-	$sqlquery .= " ORDER BY points DESC, d DESC LIMIT 10 ";
-
-	my $cursor = $I{dbh}->prepare($sqlquery);
-	$cursor->execute;
+	my $story_comments = $I{dbobject}->getCommentsTop($I{F}{sid},$I{U});
 
 	my $x = $I{F}{min};
-	while (my($section, $sid, $aid, $title, $pid, $subj, $cdate, $sdate,
-		$uid, $cid, $score) = $cursor->fetchrow) {
-		my($cname, $cemail) = sqlSelect("nickname,fakeemail",
-			"users","uid=$uid");
-
+	for(@$story_comments) {
+		my($section, $sid, $aid, $title, $pid, $subj, $cdate, $sdate,
+				$uid, $cid, $score) = @$_;
+		my $user = $I{dbobject}->getUserFakeEmail($uid);
+	
 		print <<EOT;
 <BR><B>$score</B>
 	<A HREF="$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid">$subj</A>
-	by <A HREF="mailto:$cemail">$cname</A> on $cdate<BR>
+	by <A HREF="mailto:$user->{fakeemail}">$user->{nickname}</A> on $cdate<BR>
 
 	<FONT SIZE="2">attached to <A HREF="$I{rootdir}/$section/$sid.shtml">$title</A>
 	posted on $sdate by $aid</FONT><BR>
@@ -157,8 +130,8 @@ EOT
 
 	}
 
-	$cursor->finish;
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+#Don't kick the baby
+#$I{dbh}->disconnect if $I{dbh};
