@@ -45,6 +45,9 @@ my %descriptions = (
 	'datecodes'
 		=> sub { $_[0]->sqlSelectMany('id,format', 'dateformats') },
 
+	'discussiontypes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='discussiontypes'") },
+
 	'commentmodes'
 		=> sub { $_[0]->sqlSelectMany('mode,name', 'commentmodes') },
 
@@ -224,10 +227,12 @@ sub createComment {
 			cid	=> $cid,
 			comment	=>  $comment->{postercomment},
 	});
+
 	if (getCurrentStatic('mysql_heap_table')) {
-		my $insline = "INSERT into comments_hash (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db,$cid," .
+		my $insline = "INSERT into comment_heap (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db,$cid," .
 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
+			$self->sqlDo($insline);
 	}
 
 	return $cid;
@@ -399,7 +404,7 @@ sub getDiscussions {
 	my($self) = @_;
 	my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url",
 		"discussions,stories ",
-		"displaystatus > -1 and discussions.sid=stories.sid and time <= now() ",
+		"displaystatus > -1 and discussions.sid=stories.sid and time <= now() and type = 0 ",
 		"order by time desc LIMIT 50"
 	);
 
@@ -1540,7 +1545,7 @@ sub checkReadOnly {
 		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'";
+	$where .= " AND readonly = 1 AND formname = '$formname'"; 
 
 	$self->sqlSelect("readonly", "accesslist", $where);
 }
@@ -2135,8 +2140,13 @@ sub getCommentsForUser {
 
 	my $table = 'comments';
 
+<<<<<<< MySQL.pm
+	if(getCurrentStatic('mysql_heap_table')) {
+		$table = 'comment_heap';
+=======
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comments_hash';
+>>>>>>> 1.2.2.39
 	}
 
 	my $user = getCurrentUser();
@@ -2345,14 +2355,21 @@ sub getTrollUID {
 
 ########################################################
 sub createDiscussion {
-	my($self, $sid, $title, $time, $url) = @_;
+	my($self, $sid, $title, $time, $url, $type) = @_;
+
+	#If no type is specified we assume the value is zero
+	$type ||= 0;
+	$sid ||= '';
 
 	$self->sqlInsert('discussions', {
 		sid	=> $sid,
 		title	=> $title,
 		ts	=> $time,
-		url	=> $url
+		url	=> $url,
+		type	=> $type
 	});
+
+	return $self->getLastInsertId();
 }
 
 ########################################################
