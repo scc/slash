@@ -3499,6 +3499,13 @@ sub _getTemplateNameCache {
 }
 
 ########################################################
+sub existsTemplate {
+	my($self, $template) = @_;
+	my $answer = $self->sqlSelect('tpid', 'templates', "name = '$template->{name}' AND section = '$template->{section}' AND page = '$template->{page}'");
+	return $answer;
+}
+
+########################################################
 sub getTemplate {
 	my($self) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));

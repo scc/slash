@@ -79,7 +79,7 @@ your Slash directories). [Y] ";
 		$symlink = $ans =~ /^\s*[Yy]/;
 	}
 
-	$install->installPlugin(\@answers, 0, $symlink);
+	$install->installPlugins(\@answers, 0, $symlink);
 }
 
 sub usage {

@@ -134,6 +134,13 @@ sub installTheme {
 }
 
 sub installPlugin {
+	my($self, $answer, $plugins, $symlink) = @_;
+	$plugins ||= $self->{'_plugins'};
+
+	$self->_install($plugins->{$answer}, $symlink, 1);
+}
+
+sub installPlugins {
 	my($self, $answers, $plugins, $symlink) = @_;
 	$plugins ||= $self->{'_plugins'};
 
@@ -320,10 +327,41 @@ sub _install {
 
 	if ($hash->{'template'}) {
 		for (@{$hash->{'template'}}) {
+			my $id;
 			my $template = $self->readTemplateFile("$hash->{'dir'}/$_");
-			$self->{slashdb}->createTemplate($template) if $template;
+			if($template and ($id = $self->{slashdb}->existsTemplate($template))) {
+				$self->{slashdb}->setTemplate($id, $template);
+			} else {
+				$self->{slashdb}->createTemplate($template);
+			}
 		}
 	}
+
+	if ($hash->{'plugin'}) {
+		for (keys %{$hash->{'plugin'}}) {
+			$self->installPlugin($_, 0, $symlink);
+		}
+	}
+
+	if ($hash->{"${driver}_prep"}) {
+		my $prep_file = "$hash->{dir}/" . $hash->{"${driver}_prep"};
+		my $fh = gensym;
+		if (open($fh, "< $prep_file\0")) {
+			while (<$fh>) {
+				next unless /^INSERT/;
+				next unless /^UPDATE/;
+				next unless /^REPLACE/;
+				chomp;
+				s/www\.example\.com/$hostname/g;
+				s/admin\@example\.com/$email/g;
+				push @sql, $_;
+			}
+			close $fh;
+		} else {
+ 			warn "Can't open $prep_file: $!";
+ 		}
+ 	}
+
 	if ($hash->{note}) {
 		my $file = "$hash->{dir}/$hash->{note}";
 		my $fh = gensym;
