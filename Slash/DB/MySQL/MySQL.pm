@@ -60,7 +60,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
 
 	'sectionblocks'
-		=> sub { $_[0]->sqlSelectMany('bid,title', 'sections', 'portal=1') }
+		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
 
 );
 
@@ -970,7 +970,6 @@ sub revertBlock {
 sub deleteBlock {
 	my($self, $bid) = @_;
 	$self->sqlDo('DELETE FROM blocks WHERE bid=' . $self->{dbh}->quote($bid));
-	$self->sqlDo('DELETE FROM sectionblocks WHERE bid=' . $self->{dbh}->quote($bid));
 }
 
 ########################################################
@@ -1024,7 +1023,6 @@ sub saveBlock {
 
 	if ($rows == 0) {
 		$self->sqlInsert('blocks', { bid => $bid, seclev => 500 });
-		$self->sqlInsert('sectionblocks', { bid => $bid });
 	}
 
 	my($portal, $retrieve) = (0, 0);
@@ -1042,6 +1040,13 @@ sub saveBlock {
 			blockbak	=> $form->{block},
 			description	=> $form->{description},
 			type		=> $form->{type},
+			ordernum	=> $form->{ordernum}, 
+			title		=> $form->{title},
+			url		=> $form->{url},	
+			rdf		=> $form->{rdf},	
+			section		=> $form->{section},	
+			retrieve	=> $form->{retrieve}, 
+			portal		=> $form->{portal}, 
 		}, 'bid=' . $self->{dbh}->quote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
@@ -1049,18 +1054,16 @@ sub saveBlock {
 			block		=> $form->{block},
 			description	=> $form->{description},
 			type		=> $form->{type},
+			ordernum	=> $form->{ordernum}, 
+			title		=> $form->{title},
+			url		=> $form->{url},	
+			rdf		=> $form->{rdf},	
+			section		=> $form->{section},	
+			retrieve	=> $form->{retrieve}, 
+			portal		=> $form->{portal}, 
 		}, 'bid=' . $self->{dbh}->quote($bid));
 	}
 
-	$self->sqlUpdate('sectionblocks', {
-		ordernum	=> $form->{ordernum}, 
-		title		=> $form->{title},
-		url		=> $form->{url},	
-		rdf		=> $form->{rdf},	
-		section		=> $form->{section},	
-		retrieve	=> $form->{retrieve}, 
-		portal		=> $form->{portal}, 
-	}, 'bid=' . $self->{dbh}->quote($bid));
 
 	return $rows;
 }
@@ -1097,7 +1100,7 @@ sub saveColorBlock {
 sub getSectionBlock {
 	my($self, $section) = @_;
 	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
-		"sectionblocks", "section=" . $self->{dbh}->quote($section),
+		"blocks", "section=" . $self->{dbh}->quote($section),
 		"ORDER by ordernum"
 	);
 
@@ -1379,7 +1382,7 @@ sub getColorBlock {
 sub getSectionBlocks {
 	my($self) = @_;
 
-	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
+	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "blocks", "portal=1", "order by bid");
 
 	return $blocks;
 }
@@ -1604,11 +1607,10 @@ sub getPortals {
 	# It is a shame we are currently hitting the database
 	# for this since the same info can be found in $commonportals
 	my $strsql = "SELECT block,title,blocks.bid,url
-		   FROM blocks,sectionblocks
+		   FROM blocks
 		  WHERE section='index'
 		    AND portal > -1
-		    AND blocks.bid=sectionblocks.bid
-		  GROUP BY blocks.bid
+		  GROUP BY bid
 		  ORDER BY ordernum";
 
 	my $sth = $self->{dbh}->prepare($strsql);
@@ -1626,9 +1628,10 @@ sub getPortalsCommon {
 	$self->{_boxes} = {};
 	$self->{_sectionBoxes} = {};
 	my $sth = $self->sqlSelectMany(
-			'blocks.bid as bid,title,url,section,portal,ordernum',
-			'sectionblocks,blocks',
-			'sectionblocks.bid=blocks.bid ORDER BY ordernum ASC'
+			'bid,title,url,section,portal,ordernum',
+			'blocks',
+			'',
+			'ORDER BY ordernum ASC'
 	);
 	# We could get rid of tmp at some point
 	my %tmp;
@@ -2706,13 +2709,13 @@ sub getSubmission {
 
 ########################################################
 sub getSection {
-	my $answer = _genericGetCache('sectionblocks', 'bid', @_);
+	my $answer = _genericGetCache('blocks', 'bid', @_);
 	return $answer;
 }
 
 ########################################################
 sub getSections {
-	my $answer = _genericGetsCache('sectionblocks', 'bid', @_);
+	my $answer = _genericGetsCache('blocks', 'bid', @_);
 	return $answer;
 }
 

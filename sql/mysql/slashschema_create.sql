@@ -1,8 +1,8 @@
-# MySQL dump 7.1
+# MySQL dump 6.0
 #
-# Host: localhost    Database: slash
+# Host: localhost    Database: slashdot
 #--------------------------------------------------------
-# Server version	3.22.32
+# Server version	3.22.25-log
 
 #
 # Table structure for table 'abusers'
@@ -64,8 +64,16 @@ CREATE TABLE blocks (
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
   blockbak text,
+  section varchar(30) DEFAULT '' NOT NULL,
+  ordernum tinyint(4) DEFAULT '0',
+  title varchar(128),
+  portal tinyint(4) DEFAULT '0',
+  url varchar(128),
+  rdf varchar(255),
+  retrieve int(1) DEFAULT '0',
   PRIMARY KEY (bid),
-  KEY type (type)
+  KEY type (type),
+  KEY section (section)
 );
 
 #
@@ -315,24 +323,6 @@ CREATE TABLE postmodes (
 );
 
 #
-# Table structure for table 'sectionblocks'
-#
-CREATE TABLE sectionblocks (
-  section varchar(30) DEFAULT '' NOT NULL,
-  bid varchar(30) DEFAULT '' NOT NULL,
-  ordernum tinyint(4) DEFAULT '0' NOT NULL,
-  title varchar(128),
-  portal tinyint(4) DEFAULT '0' NOT NULL,
-  url varchar(128),
-  rdf varchar(255),
-  retrieve int(1),
-  PRIMARY KEY (bid),
-  KEY bididx (bid),
-  KEY normalblocks (bid,portal,ordernum),
-  KEY normalsection (section,bid,portal,ordernum)
-);
-
-#
 # Table structure for table 'sections'
 #
 CREATE TABLE sections (
@@ -483,11 +473,11 @@ CREATE TABLE users (
   realemail varchar(50) DEFAULT '' NOT NULL,
   fakeemail varchar(50),
   homepage varchar(100),
-  passwd char(32) DEFAULT '' NOT NULL,
+  passwd varchar(32) DEFAULT '' NOT NULL,
   sig varchar(160),
   seclev int(11) DEFAULT '0' NOT NULL,
   matchname varchar(20),
-  newpasswd char(32),
+  newpasswd varchar(32),
   PRIMARY KEY (uid),
   KEY login (uid,passwd,nickname),
   KEY chk4user (nickname,realemail),

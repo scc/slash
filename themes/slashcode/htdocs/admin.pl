@@ -440,7 +440,8 @@ EOT
 		# getSection() is cached so you might as well grab it all
 		my @values = qw (bid title url rdf ordernum retrieve section portal);
 		$section = $I{dbobject}->getSection($bid, @values);
-		if ($section->{'isabid'}) {
+
+		if ($section->{'bid'}) {
 			$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$section->{'title'}"></TD>\n\t</TR>];
 			$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$section->{'url'}"></TD>\n\t</TR>];
 			$section->{'rdf'} = qq[<TR>\n\t\t<TD><B>RDF</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE="$section->{'rdf'}"></TD>\n\t</TR>];
