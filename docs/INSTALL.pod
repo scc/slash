@@ -337,8 +337,7 @@ Version 5.6.0 (5.005_03).
 
 =item MySQL
 
-Version 3.23 (3.22).  Version 3.22 is no longer supported,
-but should work.
+Version 3.23 (3.22).
 
 	http://www.mysql.com/
 
