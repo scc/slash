@@ -2349,7 +2349,7 @@ sub setCommentCount {
 sub saveStory {
 	my($self) = @_;
 	my $form = getCurrentForm();
-	my $constants = getSlashConstants();
+	my $constants = getCurrentStatic();
 	$self->sqlInsert('storiestuff', { sid => $form->{sid} });
 	$self->sqlInsert('discussions', {
 		sid	=> $form->{sid},
