@@ -14,7 +14,7 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my($backupdb);
 	if ($constants->{backup_db_user}) {
-		$backupdb  = getObject('Slash::DB', $constants->{backup_db_user});
+		$backupdb = getObject('Slash::DB', $constants->{backup_db_user});
 	} else {
 		$backupdb = $slashdb;
 	}
@@ -42,7 +42,7 @@ $task{$me}{code} = sub {
 
 	my $accesslog_rows = $slashdb->sqlCount('accesslog');
 	my $formkeys_rows = $slashdb->sqlCount('formkeys');
-	my $moderatorlog_rows = $slashdb->sqlCount('moderatorlog');
+	my $modlog_rows = $slashdb->sqlCount('moderatorlog');
 	my $metamodlog_rows = $slashdb->sqlCount('metamodlog');
 
 	my $mod_points = $slashdb->sqlSelect('SUM(points)', 'users_comments');
@@ -61,11 +61,12 @@ $task{$me}{code} = sub {
 		"GROUP BY val"
 	);
 	my $modlog_total = $modlog_hr->{1}{count} + $modlog_hr->{-1}{count};
-	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $moderatorlog_rows, $metamodlog_rows, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count});
+	my $mm_factor = ($modlog_rows ? $metamodlog_rows/$modlog_rows : 0);
+	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $modlog_rows, $metamodlog_rows, $mm_factor, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count});
  accesslog: %7d rows total
   formkeys: %7d rows total
     modlog: %7d rows total
-metamodlog: %7d rows total
+metamodlog: %7d rows total (%.1fx)
 mod points: %7d in system
 used total: %7d yesterday
    used -1: %7d yesterday
@@ -75,11 +76,11 @@ EOT
 	my $email = <<EOT;
 $constants->{sitename} Stats for yesterday
 
-$modlog_text
-
      total: $count->{'total'}
     unique: $count->{'unique'}
      users: $count->{'unique_users'}
+
+$modlog_text
 total hits: $sdTotalHits
   homepage: $count->{'index'}{'index'}
   journals: $count->{'journals'}
@@ -98,9 +99,9 @@ EOT
 
  		my $story = $backupdb->getStory($key, ['title', 'uid']);
 
-		$email .= sprintf("%s\t%s %s by %s\n",
+		$email .= sprintf("%6d %16s %30s by %s\n",
 			$value, $key, substr($story->{'title'}, 0, 30),
-			$backupdb->getUser($story->{uid}, 'nickname')
+			($backupdb->getUser($story->{uid}, 'nickname') || $story->{uid})
 		) if $story->{'title'} && $story->{uid} && $value > 100;
 	}
 
