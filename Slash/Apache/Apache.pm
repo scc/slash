@@ -36,10 +36,6 @@ sub SlashVirtualUser ($$$) {
 	my $anonymous_coward = $cfg->{slashdb}->getUser(
 		$cfg->{constants}{anonymous_coward_uid}
 	);
-#	my $actz = $cfg->{slashdb}->getACTz(
-#		$anonymous_coward->{tzcode}, $anonymous_coward->{dfid}
-#	);
-#	@{$anonymous_coward}{keys %$actz} = values %$actz;
 
 	# Lets just do this once
 	my $timezones = $cfg->{slashdb}->getDescriptions('tzcodes');
@@ -59,8 +55,14 @@ sub IndexHandler {
 			$r->filename($r->document_root . '/index.pl');
 			return OK;
 		} else {
+		# We should fix this at some point since
+		# technically this would break if somone
+		# setup slash in a subdirectory (and its
+		# only a theory that it even would work
+		# since I don't think anyone has tried 
+		# it). -Brian
 			$r->filename($r->document_root . '/index.shtml');
-			writeLog('index.shtml', '');
+			writeLog('index', 'shtml');
 			return OK;
 		}
 	}
