@@ -407,6 +407,20 @@ CREATE TABLE stories (
 );
 
 #
+# Table structure for table 'story_param'
+#
+
+DROP TABLE IF EXISTS story_param;
+CREATE TABLE story_param (
+  param_id int(11) NOT NULL auto_increment,
+  sid varchar(20) DEFAULT '' NOT NULL,
+  name varchar(32) DEFAULT '' NOT NULL,
+  value text,
+  UNIQUE story_key (sid,name),
+  PRIMARY KEY (param_id)
+);
+
+#
 # Table structure for table 'storiestuff'
 #
 
@@ -593,7 +607,7 @@ CREATE TABLE users_prefs (
   uid int(11) DEFAULT '1' NOT NULL,
   willing tinyint(4) DEFAULT '1' NOT NULL,
   dfid int(11) DEFAULT '0' NOT NULL,
-  tzcode char(3) DEFAULT 'edt' NOT NULL,
+  tzcode char(3) DEFAULT 'EDT' NOT NULL,
   noicons tinyint(4) DEFAULT '0' NOT NULL,
   light tinyint(4) DEFAULT '0' NOT NULL,
   mylinks varchar(255) DEFAULT '' NOT NULL,

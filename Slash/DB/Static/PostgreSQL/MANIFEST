@@ -2,4 +2,3 @@ Changes
 MANIFEST
 Makefile.PL
 PostgreSQL.pm
-test.pl

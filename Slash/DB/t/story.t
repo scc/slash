@@ -6,11 +6,10 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..1\n"; }
+BEGIN { $| = 1; print "1..3\n"; }
 END {print "not ok 1\n" unless $loaded;}
-use Slash::DB::MySQL;
+use Slash::DB;
 $loaded = 1;
-print "ok 1\n";
 
 ######################### End of black magic.
 
@@ -18,5 +17,16 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-Slash::DB::Utility::sanityCheck();
+my $object = new Slash::DB('slash');
+$object->sqlConnect();
+my $sid = '00/01/25/1236215';
+
+########################################################################
+my $story = $object->getStory($sid);
+print "ok 1\n";
+
+$object->setStory($sid, , {picture => 'http://madhatter.com/hat.jpg'});
 print "ok 2\n";
+
+$object->setStory($sid, , {picture => 'http://madhatter.org/hat.jpg'});
+print "ok 3\n";

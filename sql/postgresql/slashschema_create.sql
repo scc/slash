@@ -343,6 +343,15 @@ CREATE TABLE stories (
 CREATE INDEX idx_time ON stories(time);
 CREATE INDEX idx_searchform ON stories(displaystatus,time);
 
+CREATE TABLE users_param (
+	param_id SERIAL,
+  sid varchar(20) DEFAULT '' NOT NULL,
+	name varchar(32) NOT NULL,
+	value text,
+	UNIQUE (sid, name),
+	PRIMARY KEY (param_id)
+);
+
 
 
 

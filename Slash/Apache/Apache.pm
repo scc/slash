@@ -28,14 +28,13 @@ sub SlashVirtualUser ($$$) {
 		$cfg->{$_} = '';
 	}
 
-	# Backwards compatibility
 	my $anonymous_coward = $cfg->{slashdb}->getUser(
 		$cfg->{constants}{anonymous_coward_uid}
 	);
-	my $actz = $cfg->{slashdb}->getACTz(
-		$anonymous_coward->{tzcode}, $anonymous_coward->{dfid}
-	);
-	@{$anonymous_coward}{keys %$actz} = values %$actz;
+#	my $actz = $cfg->{slashdb}->getACTz(
+#		$anonymous_coward->{tzcode}, $anonymous_coward->{dfid}
+#	);
+#	@{$anonymous_coward}{keys %$actz} = values %$actz;
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();

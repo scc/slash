@@ -14,9 +14,6 @@ my %descriptions = (
 	'sortcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[1]'") },
 
-	'default'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[1]'") },
-
 	'statuscodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
 
@@ -78,6 +75,9 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
+		=> sub { $_[0]->sqlSelectMany('U.uid,U.nickname', 'users as U, users_param as P', "P.name = 'author' AND U.uid = P.uid") },
+
+	'admins'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 99') },
 
 	'users'
@@ -574,11 +574,12 @@ sub getUserInstance {
 ########################################################
 sub deleteUser {
 	my($self, $uid) = @_;
+	return unless $uid;
 	$self->setUser($uid, {
 		bio		=> '',
 		nickname	=> 'deleted user',
 		matchname	=> 'deleted user',
-		realname	=> '',
+		realname	=> 'deleted user',
 		realemail	=> '',
 		fakeemail	=> '',
 		newpasswd	=> '',
@@ -732,16 +733,18 @@ sub createUser {
 	))[0];
 
 	$self->sqlInsert("users", {
-		uid		=> '',  # this would be done automatically ... ? -- pudge
+		uid	=> '',
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
+		seclev	=> 1,
 		passwd		=> encryptPassword(changePassword())
 	});
 
 # This is most likely a transaction problem waiting to
 # bite us at some point. -Brian
 	my($uid) = $self->sqlSelect("LAST_INSERT_ID()");
+	return unless $uid;
 	$self->sqlInsert("users_info", { uid => $uid, -lastaccess => 'now()' } );
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
@@ -750,17 +753,17 @@ sub createUser {
 	return $uid;
 }
 
-########################################################
-# This method should be questioned long term
-sub getACTz {
-	my($self, $tzcode, $dfid) = @_;
-	my $ac_hash_ref;
-	$ac_hash_ref = $self->sqlSelectHashref('*',
-		'tzcodes,dateformats',
-		"tzcodes.tz='$tzcode' AND dateformats.id=$dfid"
-	);
-	return $ac_hash_ref;
-}
+#########################################################
+## This method should be questioned long term
+#sub getACTz {
+#	my($self, $tzcode, $dfid) = @_;
+#	my $ac_hash_ref;
+#	$ac_hash_ref = $self->sqlSelectHashref('*',
+#		'tzcodes,dateformats',
+#		"tzcodes.tz='$tzcode' AND dateformats.id=$dfid"
+#	);
+#	return $ac_hash_ref;
+#}
 
 
 ########################################################
@@ -777,12 +780,12 @@ sub setSession {
 
 ########################################################
 sub setBlock {
-	_genericSet('blocks', 'bid', @_);
+	_genericSet('blocks', 'bid', '', @_);
 }
 
 ########################################################
 sub setTemplate {
-	_genericSet('templates', 'tpid', @_);
+	_genericSet('templates', 'tpid', '', @_);
 }
 
 ########################################################
@@ -1232,7 +1235,7 @@ sub deleteStoryAll {
 
 ########################################################
 sub setStory {
-	_genericSet('blocks', 'bid', @_);
+	_genericSet('stories', 'bid', 'story_param', @_);
 }
 
 ########################################################
@@ -2403,7 +2406,7 @@ sub getStory {
 	my($self) = @_;
 	# We need to expire stories
 	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
-	my $answer = _genericGetCache('stories', 'sid', @_);
+	my $answer = _genericGetCache('stories', 'sid', 'story_param', @_);
 
 	return $answer;
 }
@@ -2486,7 +2489,7 @@ sub getAuthors {
 
 ########################################################
 sub getPollQuestion {
-	my $answer = _genericGet('pollquestions', 'qid', @_);
+	my $answer = _genericGet('pollquestions', 'qid', '', @_);
 	return $answer;
 }
 
@@ -2494,7 +2497,7 @@ sub getPollQuestion {
 sub getBlock {
 	my($self) = @_;
 	_genericCacheRefresh($self, 'blocks', getCurrentStatic('block_expire'));
-	my $answer = _genericGetCache('blocks', 'bid', @_);
+	my $answer = _genericGetCache('blocks', 'bid', '', @_);
 	return $answer;
 }
 
@@ -2502,61 +2505,61 @@ sub getBlock {
 sub getTemplate {
 	my($self) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
-	my $answer = _genericGetCache('templates', 'tpid', @_);
+	my $answer = _genericGetCache('templates', 'tpid', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getTopic {
-	my $answer = _genericGetCache('topics', 'tid', @_);
+	my $answer = _genericGetCache('topics', 'tid', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getTopics {
-	my $answer = _genericGetsCache('topics', 'tid', @_);
+	my $answer = _genericGetsCache('topics', 'tid', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getContentFilter {
-	my $answer = _genericGet('content_filters', 'filter_id', @_);
+	my $answer = _genericGet('content_filters', 'filter_id', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getSubmission {
-	my $answer = _genericGet('submissions', 'subid', @_);
+	my $answer = _genericGet('submissions', 'subid', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getSection {
-	my $answer = _genericGetCache('sections', 'section', @_);
+	my $answer = _genericGetCache('sections', 'section', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getSections {
-	my $answer = _genericGetsCache('sections', 'section', @_);
+	my $answer = _genericGetsCache('sections', 'section', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getModeratorLog {
-	my $answer = _genericGet('moderatorlog', 'id', @_);
+	my $answer = _genericGet('moderatorlog', 'id', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getNewStory {
-	my $answer = _genericGet('newstories', 'sid', @_);
+	my $answer = _genericGet('newstories', 'sid', '', @_);
 	return $answer;
 }
 
 ########################################################
 sub getVar {
-	my $answer = _genericGet('vars', 'name', @_);
+	my $answer = _genericGet('vars', 'name', '', @_);
 	return $answer;
 }
 
@@ -2577,6 +2580,8 @@ sub setUser {
 	}
 
 	# hm, come back to exboxes later -- pudge
+	# a VARARRAY would make a lot more sense for this, no need to
+	# pack either -Brian
 	if (0 && exists $hashref->{exboxes}) {
 		if (ref $hashref->{exboxes} eq 'ARRAY') {
 			$hashref->{exboxes} = sprintf("'%s'", join "','", @{$hashref->{exboxes}});
@@ -2684,12 +2689,24 @@ sub getUser {
 # values
 sub _genericGetCacheName {
 	my($self, $tables) = @_;
-	my $cache = '_' . join ('_', sort(@$tables), 'cache');
-	unless (keys %{$self->{$cache}}) {
-		for my $table (@$tables) {
-			my $keys = $self->getKeys($table);
+	my $cache;
+
+	if (ref($tables) eq 'ARRAY') {
+		$cache = '_' . join ('_', sort(@$tables), 'cache_tables_keys');
+		unless (keys %{$self->{$cache}}) {
+			for my $table (@$tables) {
+				my $keys = $self->getKeys($table);
+				for (@$keys) {
+					$self->{$cache}{$_} = $table;
+				}
+			}
+		}
+	} else {
+		$cache = '_' . $tables . 'cache_tables_keys';
+		unless (keys %{$self->{$cache}}) {
+			my $keys = $self->getKeys($tables);
 			for (@$keys) {
-				$self->{$cache}{$_} = $table;
+				$self->{$cache}{$_} = $tables;
 			}
 		}
 	}
@@ -2702,11 +2719,38 @@ sub _genericGetCacheName {
 # We assum most people called set to hit the database
 # and just not the cache (if one even exists)
 sub _genericSet {
-	my($table, $table_prime, $self, $id, $value) = @_;
-	$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
+	my($table, $table_prime, $param_table, $self, $id, $value) = @_;
+
+	if($param_table) {
+		my $cache = _genericGetCacheName($self, $table);
+
+		my (@param, %updates);
+		for (keys %$value) {
+			(my $clean_val = $_) =~ s/^-//;
+			my $key = $self->{$cache}{$clean_val};
+			if ($key) {
+				$updates{$_} = $value->{$_};
+			} else {
+				push @param, [$_, $value->{$_}];
+			}
+		}
+		$self->sqlUpdate($table, \%updates, $table_prime . '=' . $self->{_dbh}->quote($id))
+			if(keys %updates);
+		# What is worse, a select+update or a replace?
+		# I should look into that. if EXISTS() the
+		# need for a fully sql92 database.
+		for (@param)  {
+			$self->sqlDo("REPLACE INTO $param_table values ('', " 
+				. $self->{_dbh}->quote($id) 
+				. ", '$_->[0]', '$_->[1]')");
+		}
+	} else {
+		$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
+	}
 
 	my $table_cache= '_' . $table . '_cache';
 	return unless (keys %{$self->{$table_cache}});
+
 	my $table_cache_time= '_' . $table . '_cache_time';
 	$self->{$table_cache_time} = time();
 	for (keys %$value) {
@@ -2742,7 +2786,7 @@ sub _genericCacheRefresh {
 sub _genericGetCache {
 	return _genericGet(@_) unless getCurrentStatic('cache_enabled');
 
-	my($table, $table_prime, $self, $id, $values, $cache_flag) = @_;
+	my($table, $table_prime, $param_table,  $self, $id, $values, $cache_flag) = @_;
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
 
@@ -2763,13 +2807,15 @@ sub _genericGetCache {
 		}
 	}
 
-	# Lets go knock on the door of the database
-	# and grab the data's since it is not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
 	$answer->{'_modtime'} = time();
+	if($param_table) {
+		my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=" . $self->{_dbh}->quote($id));
+		for (@$append) {
+			$answer->{$_->[0]} = $_->[1];
+		}
+	}
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -2800,18 +2846,62 @@ sub _genericClearCache {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGet {
-	my($table, $table_prime, $self, $id, $val) = @_;
+	my($table, $table_prime, $param_table, $self, $id, $val) = @_;
 	my($answer, $type);
 	my $id_db = $self->{_dbh}->quote($id);
 
-	if (ref($val) eq 'ARRAY') {
-		my $values = join ',', @$val;
-		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=$id_db");
-	} elsif ($val) {
-		($answer) = $self->sqlSelect($val, $table, "$table_prime=$id_db");
+
+	if($param_table) {
+	# With Param table 
+		if (ref($val) eq 'ARRAY') {
+			my $cache = _genericGetCacheName($self, $table);
+
+			my($values, @param);
+			for (@$val) {
+				(my $clean_val = $_) =~ s/^-//;
+				if ($self->{$cache}{$clean_val}) {
+					$values .= "$_,";
+				} else {
+					push @param, $_;
+				}
+			}
+			chop($values);
+
+			$answer = $self->sqlSelectHashref($values, $table, "$table_prime=$id_db");
+			for (@param) {
+				my $val = $self->sqlSelect('value', $param_table, "$table_prime=$id_db AND name='$_'");
+				$answer->{$_} = $val;
+			}
+
+		} elsif ($val) {
+			my $cache = _genericGetCacheName($self, $table);
+			(my $clean_val = $val) =~ s/^-//;
+			my $table = $self->{$cache}{$clean_val};
+			if ($table) {
+				($answer) = $self->sqlSelect($val, $table, "uid=$id");
+			} else {
+				($answer) = $self->sqlSelect('value', $param_table, "$table_prime=$id_db AND name='$val'");
+			}
+
+		} else {
+			$answer = $self->sqlSelectHashref('*', $table, "$table_prime=$id_db");
+			my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=$id_db" );
+			for (@$append) {
+				$answer->{$_->[0]} = $_->[1];
+			}
+		}
 	} else {
-		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=$id_db");
+	# Without Param table 
+		if (ref($val) eq 'ARRAY') {
+			my $values = join ',', @$val;
+			$answer = $self->sqlSelectHashref($values, $table, "$table_prime=$id_db");
+		} elsif ($val) {
+			($answer) = $self->sqlSelect($val, $table, "$table_prime=$id_db");
+		} else {
+			$answer = $self->sqlSelectHashref('*', $table, "$table_prime=$id_db");
+		}
 	}
+
 
 	return $answer;
 }
@@ -2822,7 +2912,7 @@ sub _genericGet {
 sub _genericGetsCache {
 	return _genericGets(@_) unless getCurrentStatic('cache_enabled');
 
-	my($table, $table_prime, $self, $cache_flag) = @_;
+	my($table, $table_prime, $param_Table, $self, $cache_flag) = @_;
 	my $table_cache= '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
 	my $table_cache_full= '_' . $table . '_cache_full';
@@ -2854,7 +2944,7 @@ sub _genericGetsCache {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGets {
-	my($table, $table_prime, $self, $values) = @_;
+	my($table, $table_prime, $param_table, $self, $values) = @_;
 
 	my %return;
 	my $sth;
@@ -2880,7 +2970,7 @@ sub _genericGets {
 
 ########################################################
 sub getSessions {
-	my $answer = _genericGets('sessions', 'session', @_);
+	my $answer = _genericGets('sessions', 'session', '', @_);
 	return $answer;
 }
 

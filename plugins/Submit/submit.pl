@@ -39,7 +39,7 @@ sub main {
 
 	my $id = getFormkeyId($user->{uid});
 	my($section, $op, $aid) = (
-		$form->{section}, $form->{op}, $user->{aid}
+		$form->{section}, $form->{op}, $user->{nickname}
 	);
 	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
 

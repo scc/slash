@@ -2,4 +2,3 @@ Changes
 Makefile.PL
 MANIFEST
 Oracle.pm
-test.pl

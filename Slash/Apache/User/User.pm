@@ -226,17 +226,15 @@ sub getUser {
 	}
 
 	# All sorts of checks on user data
-	$user->{tzcode}		= uc($user->{tzcode});
-	$user->{clbig}		||= 0;
-	$user->{clsmall}	||= 0;
+	#$user->{tzcode}		= uc($user->{tzcode});
 	$user->{exaid}		= testExStr($user->{exaid}) if $user->{exaid};
 	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
 	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
-	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
+	#$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
 
 	if ($user->{seclev} >= 99) {
 		$user->{is_admin} = 1;
-		$user->{aid} = $user->{nickname}; # Just here for the moment
+		#$user->{aid} = $user->{nickname}; # Just here for the moment
 		my $sid;
 		if($cookies->{session}) {
 			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
@@ -245,19 +243,6 @@ sub getUser {
 		}
 		setCookie('session', $sid) if $sid;
 	}
-
-#	if ($form->{op} eq 'adminlogin') {
-#		my $sid = $slashdb->getAuthorAuthenticate($form->{aaid},
-#			$form->{apasswd}, $user);
-#		setCookie('session', $sid) if $sid;
-#	} elsif ($cookies->{session} && length($cookies->{session}->value) > 3) {
-#			my $value = $slashdb->getAuthorInfo(
-#				$cookies->{session}->value,
-#				$constants->{admin_timeout},
-#				$user
-#			);
-#			print STDERR "Slash::Apache::User::getUser VALUE $value \n";
-#	}
 
 	return $user;
 }
