@@ -45,7 +45,7 @@ sub IndexHandler {
 			return OK;
 		} else {
 			$r->filename($r->document_root . '/index.shtml');
-			writeLog("index.shtml",'');
+			writeLog('index.shtml', '');
 			return OK;
 		}
 	}

@@ -343,7 +343,7 @@ sub getContentFilters {
 
 ########################################################
 sub createPollVoter {
-	my($self, $qid, $uid) = @_;
+	my($self, $qid, $aid) = @_;
 
 	$self->sqlInsert("pollvoters", {
 		qid	=> $qid,
@@ -356,7 +356,7 @@ sub createPollVoter {
 	$self->sqlDo("update pollquestions set
 		voters=voters+1 where qid=$qid_db");
 	$self->sqlDo("update pollanswers set votes=votes+1 where
-		qid=$qid_db and uid=" . $self->{_dbh}->quote($uid));
+		qid=$qid_db and aid=" . $self->{_dbh}->quote($aid));
 }
 
 ########################################################
@@ -576,7 +576,7 @@ sub getDescriptions {
 	my $codetype = shift; # Shift off to keep things clean
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
-	my $sth = $descriptions{$codetype}->($self,@_);
+	my $sth = $descriptions{$codetype}->($self, @_);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -1168,31 +1168,30 @@ sub saveColorBlock {
 	my($self, $colorblock) = @_;
 	my $form = getCurrentForm();
 
-	$form->{color_block} ||= 'colors';
+	my $db_bid = $self->{_dbh}->quote($form->{color_block} || 'colors');
 
 	if ($form->{colorsave}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
-			}, "bid = '$form->{color_block}'"
+			}, "bid = $db_bid"
 		);
 
 	} elsif ($form->{colorsavedef}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
-			}, "bid = '$form->{color_block}'"
+			}, "bid = $db_bid"
 		);
 		$self->sqlUpdate('backup_blocks', {
 				block => $colorblock,
-			}, "bid = '$form->{color_block}'"
+			}, "bid = $db_bid"
 		);
 
 	} elsif ($form->{colororig}) {
 		# reload original version of colors
-		my $db_bid = $self->{_dbh}->quote($form->{color_block});
-		my $block = $self->{_dbh}->selectrow_array("SELECT block from backup_blocks WHERE bid=$db_bid");
-		$self->sqlDo("update blocks set block = $block where bid = $db_bid");
+		my $block = $self->{_dbh}->selectrow_array("SELECT block FROM backup_blocks WHERE bid = $db_bid");
+		$self->sqlDo("UPDATE blocks SET block = $block WHERE bid = $db_bid");
 	}
 }
 
@@ -1249,7 +1248,7 @@ sub savePollQuestion {
 	for (my $x = 1; $x < 9; $x++) {
 		if ($form->{"aid$x"}) {
 			$self->sqlReplace("pollanswers", {
-				uid	=> $x,
+				aid	=> $x,
 				qid	=> $form->{qid},
 				answer	=> $form->{"aid$x"},
 				votes	=> $form->{"votes$x"}
@@ -1257,7 +1256,7 @@ sub savePollQuestion {
 
 		} else {
 			$self->{_dbh}->do("DELETE from pollanswers WHERE qid="
-					. $self->{_dbh}->quote($form->{qid}) . " and uid=$x");
+					. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
 		}
 	}
 }
@@ -1275,7 +1274,7 @@ sub getPollQuestionList {
 sub getPollAnswers {
 	my($self, $id, $val) = @_;
 	my $values = join ',', @$val;
-	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by uid');
+	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by aid');
 
 	return $answers;
 }
@@ -1531,10 +1530,10 @@ sub getPoll {
 	my($self, $qid) = @_;
 
 	my $sth = $self->{_dbh}->prepare_cached("
-			SELECT question,answer,uid  from pollquestions, pollanswers
+			SELECT question,answer,aid  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
 			pollquestions.qid= " . $self->{_dbh}->quote($qid) . "
-			ORDER BY pollanswers.uid
+			ORDER BY pollanswers.aid
 	");
 	$sth->execute;
 	my $polls = $sth->fetchall_arrayref;
@@ -3086,6 +3085,7 @@ sub getMenus {
 
 	return $menus;
 }
+
 ########################################################
 sub sqlReplace {
 	my($self, $table, $data) = @_;

@@ -266,7 +266,7 @@ sub authorEdit {
 	$aid = '' if $form->{authornew};
 
 	my $authors = $slashdb->getDescriptions('authors');
-	my $author = $slashdb->getUser($aid,[nickname, fakemail]) if $aid;
+	my $author = $slashdb->getUser($aid, ['nickname', 'fakemail']) if $aid;
 
 	$author_select = createSelect('myaid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;

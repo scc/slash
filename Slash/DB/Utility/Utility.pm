@@ -46,6 +46,7 @@ sub sqlConnect {
 		}
 	}
 }
+
 ########################################################
 # Useful SQL Wrapper Functions
 ########################################################
@@ -221,8 +222,6 @@ sub sqlInsert {
 	$self->sqlConnect();
 	return $self->{_dbh}->do($sql) or errorLog($sql);
 }
-
-
 
 #################################################################
 sub sqlDo {
