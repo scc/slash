@@ -831,15 +831,7 @@ sub deleteStoryAll {
 	$self->sqlDo("DELETE FROM stories WHERE sid=$db_sid");
 	$self->sqlDo("DELETE FROM story_text WHERE sid=$db_sid");
 	my $discussion_id = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
-	if ($discussion_id) { 
-		# In comments "sid" is a numeric discussion id.
-		my $comment_ids = $self->sqlSelectAll('cid', 'comments', "sid=$discussion_id");
-		$self->sqlDo("DELETE FROM comments WHERE sid=$discussion_id");
-		$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
-			. join(",", map { $_->[0] } @$comment_ids)
-			. ")");
-		$self->sqlDo("DELETE FROM discussions WHERE id=$discussion_id");
-	}
+	$self->deleteDiscussion($discussion_id) if $discussion_id;
 }
 
 ########################################################
