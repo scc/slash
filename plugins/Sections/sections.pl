@@ -65,7 +65,7 @@ sub main {
 		listSections($user);
 
 	} elsif ((! defined $op || $op eq 'list') && $seclev > 499) {
-		titlebar('100%', getData('listhead');
+		titlebar('100%', getData('listhead'));
 		listSections($user);
 	}
 
