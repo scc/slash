@@ -99,9 +99,9 @@ EOT
 
  		my $story = $backupdb->getStory($key, ['title', 'uid']);
 
-		$email .= sprintf("%6d %16s %30s by %s\n",
+		$email .= sprintf("%6d %-16s %-30s by %s\n",
 			$value, $key, substr($story->{'title'}, 0, 30),
-			($backupdb->getUser($story->{uid}, 'nickname') || $story->{uid})
+			($slashdb->getUser($story->{uid}, 'nickname') || $story->{uid})
 		) if $story->{'title'} && $story->{uid} && $value > 100;
 	}
 
