@@ -31,8 +31,6 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	my $op;
-
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -44,102 +42,83 @@ sub main {
 	getSection('admin');
 
 	my($tbtitle);
-	if (($form->{editstory} || $form->{previewstory}) && $form->{title}) {
+	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
 		# Show submission/article title on browser's titlebar.
 		$tbtitle = $form->{title};
 		$tbtitle =~ s/"/'/g;
 		$tbtitle = " - \"$tbtitle\"";
 		# Undef the form title value if we have SID defined, since the editor
 		# will have to get this information from the database anyways.
-		undef $form->{title} if ($form->{sid} && $form->{editstory});
+		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
 	}
 	header("backSlash $user->{tzcode} $user->{offset}$tbtitle", 'admin');
 
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $user->{aseclev};
 
+	my $op = $form->{op};
 	if (!$user->{aseclev}) {
 		titlebar('100%', 'back<I>Slash</I> Login');
 		adminLoginForm();
 
-	} elsif ($form->{adminclose}) {
+	} elsif ($op eq 'logout') {
 		$slashdb->deleteSession();
 		titlebar('100%', 'back<I>Slash</I> Buh Bye');
 		adminLoginForm();
-		$op = 'adminclose';
 
 	} elsif ($form->{topicdelete}) {
 		topicDelete();
 		topicEdit();
-		$op = 'topicdelete';
 
 	} elsif ($form->{topicsave}) {
 		topicSave();
 		topicEdit();
-		$op = 'topicsave';
 
 	} elsif ($form->{topiced} || $form->{topicnew}) {
 		topicEdit();
-		$op = 'topicedornew';
 
-	} elsif ($form->{savestory}) {
+	} elsif ($op eq 'save') {
 		saveStory();
-		$op = 'savestory';
 
-	} elsif ($form->{updatestory}) {
+	} elsif ($op eq 'update') {
 		updateStory();
-		$op = 'updatestory';
 
-	} elsif ($form->{liststories}) {
-		titlebar('100%', 'Story List', 'c');
+	} elsif ($op eq 'list') {
+		titlebar('100%', 'Story List');
 		listStories();
-		$op = 'liststories';
 
-	} elsif ($form->{rmstory}) {
+	} elsif ($op eq 'delete') {
 		rmStory($form->{sid});
 		listStories();
-		$op = 'rmstory';
 
-	} elsif ($form->{newstory}) {
+	} elsif ($op eq 'preview') {
 		editStory();
-		$op = 'newstory';
 
-	} elsif ($form->{previewstory}) {
-		editStory();
-		$op = 'previewstory';
-
-	} elsif ($form->{editstory}) {
+	} elsif ($op eq 'edit') {
 		editStory($form->{sid});
-		$op = 'editstory';
 
-	} elsif ($form->{listtopics}) {
+	} elsif ($op eq 'topics') {
 		listTopics($user->{aseclev});
-		$op = 'listtopics';
 
-	} elsif ($form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
+	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
 		colorEdit($user->{aseclev});
 		$op = 'colored';
 
 	} elsif ($form->{colorsave} || $form->{colorsavedef} || $form->{colororig}) {
 		colorSave();
 		colorEdit($user->{aseclev});
-		$op = 'colorsave';
 
-	} elsif ($form->{blockdelete_cancel} || $form->{blocked}) {
+	} elsif ($form->{blockdelete_cancel} || $op eq 'blocked') {
 		blockEdit($user->{aseclev},$form->{bid});
-		$op = 'blocked';
 
 	} elsif ($form->{blocknew}) {
 		blockEdit($user->{aseclev});
-		$op = 'blocknew';
 
 	} elsif ($form->{blocked1}) {
 		blockEdit($user->{aseclev}, $form->{bid1});
-		$op = 'blocked1';
 
 	} elsif ($form->{blocked2}) {
 		blockEdit($user->{aseclev}, $form->{bid2});
-		$op = 'blocked2';
 
 	} elsif ($form->{blocksave} || $form->{blocksavedef}) {
 		blockSave($form->{thisbid});
@@ -162,8 +141,11 @@ sub main {
 		blockDelete($form->{deletebid});
 		blockEdit($user->{aseclev});
 
-	} elsif ($form->{authoredit}) {
+	} elsif ($op eq 'authors') {
 		authorEdit($form->{thisaid});
+
+	} elsif ($form->{authoredit}) {
+		authorEdit($form->{myaid});
 
 	} elsif ($form->{authornew}) {
 		authorEdit();
@@ -179,14 +161,14 @@ sub main {
 		authorSave();
 		authorEdit($form->{myaid});
 
-	} elsif ($form->{varedit}) {
+	} elsif ($op eq 'vars') {
 		varEdit($form->{name});	
 
-	} elsif ($form->{varsave}) {
+	} elsif ($op eq 'varsave') {
 		varSave();
 		varEdit($form->{name});
 
-	} elsif ($form->{listfilters}) {
+	} elsif ($op eq 'listfilters') {
 		titlebar("100%","List of comment filters","c");
 		listFilters();
 
@@ -1023,11 +1005,14 @@ EOT
 			$storiestoday = '' unless $storiestoday > 1;
 			print <<EOT;
 
-	<TR><TD ALIGN="RIGHT" BGCOLOR="$constants->{bg}[2]">
+	<TR>
+		<TD ALIGN="RIGHT" BGCOLOR="$constants->{bg}[2]">
 		<FONT SIZE="${\( $constants->{fontbase} + 1 )}">$storiestoday</FONT>
-	</TD><TD COLSPAN="7" ALIGN="right" BGCOLOR="$constants->{bg}[3]">
+		</TD>
+		<TD COLSPAN="7" ALIGN="right" BGCOLOR="$constants->{bg}[3]">
 		<FONT COLOR="$constants->{fg}[3]" SIZE="${\( $constants->{fontbase} + 1 )}">$td</FONT>
-	</TD></TR>
+		</TD>
+	</TR>
 EOT
 
 		    $storiestoday = 0;
@@ -1049,7 +1034,7 @@ EOT
 		print qq[\t<TR BGCOLOR="$bgcolor"><TD ALIGN="RIGHT">\n];
 		if ($user->{aid} eq $aid || $user->{aseclev} > 100) {
 			my $tbtitle = fixparam($title);
-			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&editstory=1&sid=$sid">$x</A>\n]!;
+			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&op=edit&sid=$sid">$x</A>\n]!;
 
 		} else {
 			print "\t\t[$x]\n"

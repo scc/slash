@@ -2640,7 +2640,7 @@ sub updateStory {
 			sid	=> $form->{sid},
 			title	=> $form->{title},
 			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
-			-ts	=> $form->{'time'},
+			ts	=> $form->{'time'},
 		},
 		'sid = ' . $self->{_dbh}->quote($form->{sid})
 	);
