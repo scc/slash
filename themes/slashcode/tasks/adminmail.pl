@@ -46,9 +46,9 @@ $task{$me}{code} = sub {
 	my $metamodlog_rows = $slashdb->sqlCount('metamodlog');
 
 	my $mod_points = $slashdb->sqlSelect('SUM(points)', 'users_comments');
-	my @time = localtime;
+	my @yesttime = localtime(time-86400);
 	my $yesterday = sprintf "%4d-%02d-%02d", 
-		$time[5] + 1900, $time[4] + 1, $time[3] - 1;
+		$yesttime[5] + 1900, $yesttime[4] + 1, $yesttime[3];
 	my $used = $slashdb->sqlCount(
 		'moderatorlog', 
 		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'"
