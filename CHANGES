@@ -1,3 +1,14 @@
+slash-2.2.5, 2002.02.07
+-----------------------
+
+*	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.5 from
+	versions 2.2.0 through 2.2.4, immediately.  This update fixes a
+	bug which allows scripting attacks which can compromise both
+	user and admin passwords.
+
+*	Add note in INSTALL about potential problems with perl 5.6.0
+	(5.6.1 is recommended, 5.005_03 should work fine).
+
 slash-2.2.4, 2002.01.14
 -----------------------
 
