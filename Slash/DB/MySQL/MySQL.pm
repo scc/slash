@@ -2861,7 +2861,7 @@ sub getCommentsTop {
 	# any big site will just be the latest score:5 comments).
 	my $columns = "sid, pid, cid, uid, points, date, subject";
 	my $tables = $comment_table;
-	my $where = "1=1";
+	$where = "1=1";
 	my $other = "ORDER BY points DESC, date DESC LIMIT 10";
 	my $top_comments = $self->sqlSelectAll($columns,$tables,$where,$other);
 	formatDate($top_comments, 5);
