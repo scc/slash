@@ -339,7 +339,7 @@ sub install {
 	for(@{$plugin->{'htdoc'}}) {
 		print "copying $_ to $prefix/$sitename/htdocs\n";
 		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
-		chmod('0755', "$prefix/$sitename/htdocs/$_");
+		chmod(0755, "$prefix/$sitename/htdocs/$_");
 	}
 	my($sql, @sql, @create);
 
