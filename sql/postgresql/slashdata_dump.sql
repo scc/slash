@@ -666,73 +666,73 @@ INSERT INTO tzcodes VALUES ('iss',7200,'Israel Standard');
 # Dumping data for table 'users'
 #
 
-INSERT INTO users VALUES (1,'Anonymous Coward','','','','d766935ef45953f5313c6127d3689f8e','',0,'anonymouscoward',NULL);
-INSERT INTO users VALUES (2,'author1','author1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author1',NULL);
-INSERT INTO users VALUES (3,'user1','user1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user1',NULL);
-INSERT INTO users VALUES (4,'user2','user2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user2',NULL);
-INSERT INTO users VALUES (5,'user3','user3@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user3',NULL);
-INSERT INTO users VALUES (6,'user4','user4@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user4',NULL);
-INSERT INTO users VALUES (7,'author2','author2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author2',NULL);
+INSERT INTO users VALUES (2,'Anonymous Coward','','','','d766935ef45953f5313c6127d3689f8e','',0,'anonymouscoward',NULL);
+INSERT INTO users VALUES (3,'author1','author1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author1',NULL);
+INSERT INTO users VALUES (4,'user1','user1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user1',NULL);
+INSERT INTO users VALUES (5,'user2','user2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user2',NULL);
+INSERT INTO users VALUES (6,'user3','user3@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user3',NULL);
+INSERT INTO users VALUES (7,'user4','user4@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user4',NULL);
+INSERT INTO users VALUES (8,'author2','author2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author2',NULL);
 
 #
 # Dumping data for table 'users_comments'
 #
 
-INSERT INTO users_comments VALUES (1,0,'html',0,4,4096,0,0,0,1,0,50000,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (5,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (4,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
+INSERT INTO users_comments VALUES (2,0,'html',0,4,4096,0,0,0,1,0,50000,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (3,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (2,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
+INSERT INTO users_comments VALUES (4,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
+INSERT INTO users_comments VALUES (4,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (6,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
+INSERT INTO users_comments VALUES (7,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (7,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 
 #
 # Dumping data for table 'users_index'
 #
 
-INSERT INTO users_index VALUES (1,'','','','',30,0);
-INSERT INTO users_index VALUES (2,'','','','\'lilithfair\',\'linuxgames\',\'linuxdev\'',30,0);
-INSERT INTO users_index VALUES (3,NULL,NULL,NULL,NULL,30,0);
+INSERT INTO users_index VALUES (2,'','','','',30,0);
+INSERT INTO users_index VALUES (3,'','','','\'lilithfair\',\'linuxgames\',\'linuxdev\'',30,0);
 INSERT INTO users_index VALUES (4,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (5,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (6,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (7,NULL,NULL,NULL,NULL,30,0);
+INSERT INTO users_index VALUES (8,NULL,NULL,NULL,NULL,30,0);
 
 #
 # Dumping data for table 'users_info'
 #
 
-INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
-INSERT INTO users_info VALUES (2,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-28',0);
-INSERT INTO users_info VALUES (3,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
-INSERT INTO users_info VALUES (4,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-18',0);
-INSERT INTO users_info VALUES (5,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
-INSERT INTO users_info VALUES (6,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
-INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
+INSERT INTO users_info VALUES (2,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
+INSERT INTO users_info VALUES (3,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-28',0);
+INSERT INTO users_info VALUES (4,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
+INSERT INTO users_info VALUES (5,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-18',0);
+INSERT INTO users_info VALUES (6,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
+INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
+INSERT INTO users_info VALUES (8,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
 
 #
 # Dumping data for table 'users_key'
 #
 
-INSERT INTO users_key VALUES (1,NULL);
 INSERT INTO users_key VALUES (2,NULL);
 INSERT INTO users_key VALUES (3,NULL);
 INSERT INTO users_key VALUES (4,NULL);
 INSERT INTO users_key VALUES (5,NULL);
 INSERT INTO users_key VALUES (6,NULL);
 INSERT INTO users_key VALUES (7,NULL);
+INSERT INTO users_key VALUES (8,NULL);
 
 #
 # Dumping data for table 'users_prefs'
 #
 
-INSERT INTO users_prefs VALUES (1,1,0,'est',0,0,'');
-INSERT INTO users_prefs VALUES (2,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (2,1,0,'est',0,0,'');
 INSERT INTO users_prefs VALUES (3,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (4,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (5,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (6,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (7,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (8,1,0,'edt',0,0,'');
 
 #
 # Dumping data for table 'vars'
@@ -771,7 +771,7 @@ INSERT INTO vars VALUES ('submiss_view','1','allow users to view submissions que
 INSERT INTO vars VALUES ('submiss_ts','1','print timestamp in submissions view',NULL,NULL);
 INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu',NULL,NULL);
 INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends',NULL,NULL);
-INSERT INTO vars VALUES ('allow_anonymous','1','allow anonymous posters',NULL,NULL);
+INSERT INTO vars VALUES ('allow_anonymous','2','allow anonymous posters',NULL,NULL);
 INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
 INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments',NULL,NULL);
 INSERT INTO vars VALUES ('approvedtags','[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)]','Tags that you can use',NULL,NULL);

@@ -10,8 +10,10 @@ sub new {
 	my($class, $user) = @_;
 	my $self = {};
 	my $dsn = DBIx::Password::getDriver($user);
-	if (defined $dsn) {
+	print STDERR "DRIVER $dsn:$user \n";
+	if ($dsn) {
 		if ($dsn =~ /mysql/) {
+			print STDERR "Picking MySQL \n";
 			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 			if($ENV{GATEWAY_INTERFACE}) {
@@ -19,6 +21,7 @@ sub new {
 				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
 			}
 		} elsif ($dsn =~ /oracle/) {
+			print STDERR "Picking Oracle \n";
 			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
 			if($ENV{GATEWAY_INTERFACE}) {
@@ -26,15 +29,16 @@ sub new {
 				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
 			}
 		} elsif ($dsn =~ /Pg/) {
-			require Slash::DB::PostgresSQL;
-			push(@Slash::DB::ISA, 'Slash::DB::PostgresSQL');
-			if($ENV{GATEWAY_INTERFACE}) {
-				require Slash::DB::Static::PostgresSQL;
-				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgresSQL');
-			}
+			print STDERR "Picking PostgreSQL \n";
+			require Slash::DB::PostgreSQL;
+			push(@Slash::DB::ISA, 'Slash::DB::PostgreSQL');
+#			if($ENV{GATEWAY_INTERFACE}) {
+#				require Slash::DB::Static::PostgreSQL;
+#				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
+#			}
 		}
 	} else {
-		die "We don't support the database specified";
+		warn ("We don't support the database ($dsn) specified. Using user ($user)" . DBIx::Password::getDriver($user));
 	}
 #	push(@Slash::DB::EXPORT, 'sqlConnect');
 	bless($self, $class);

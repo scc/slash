@@ -1,6 +1,5 @@
 package Slash::DB::MySQL;
 use strict;
-use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();

@@ -112,7 +112,7 @@ CREATE TABLE comments (
 
 
 CREATE TABLE content_filters (
-  filter_id int2 DEFAULT '0' NOT NULL auto_increment,
+  filter_id SERIAL,
   regex varchar(100) DEFAULT '' NOT NULL,
   modifier varchar(5) DEFAULT '' NOT NULL,
   field varchar(20) DEFAULT '' NOT NULL,

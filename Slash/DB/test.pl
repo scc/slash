@@ -18,7 +18,7 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-my $object = new Slash::DB('slash');
+my $object = new Slash::DB('pslash');
 print "ok 2\n";
 ########################################################################
 $object->sqlConnect();
@@ -28,7 +28,7 @@ $object->sanityCheck();
 print "ok 4\n";
 ########################################################################
 print "Lets grab some user data\n";
-my $user = $object->getUser('2', 'change', 'index.pl');
+my $user = $object->getUser('2');
 print "Should dump the data for an user now\n";
 while(my ($key, $val) = each %$user) {
 	print "$key = $val \n";
