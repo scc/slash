@@ -127,7 +127,7 @@ sub findUsers {
 
 
 	my $other;
-	if($form->{query}) {
+	if ($form->{query}) {
 		$other = " ORDER BY score "
 	} else {
 		$other = " ORDER BY users.uid "
