@@ -19,6 +19,9 @@ sub main {
 	# Let's make ONE call to getStory() and fetch all we need.
 	# - Cliff
 	my $story = $slashdb->getStory($form->{sid});
+	$story = '' 
+		if(($story->{displaystatus} == -1) and  !($user->{author} or $user->{is_admin}));
+	
 
 	if ($story) {
 		my $SECT = $slashdb->getSection($story->{section});
