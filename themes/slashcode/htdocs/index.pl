@@ -264,7 +264,7 @@ sub displayStories {
 
 		$return .= slashDisplay('storylink', {
 			links	=> \@links,
-		}, 1);
+		}, { Return => 1});
 
 		my($w) = join ' ', (split m/ /, $time)[0 .. 2];
 		$today ||= $w;
