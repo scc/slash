@@ -143,18 +143,19 @@ sub newxml {
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
-xmlns:backslash="$constants->{rootdir}/backslash.dtd">
+xmlns:backslash="$constants->{absolutedir}/backslash.dtd">
 
 EOT
 
 	for my $sect (@$stories_and_topics) {
 		my @str = (xmlencode($sect->{title}), xmlencode($sect->{dept}));
+		my $author = $slashdb->getUser($sect->{uid}, 'nickname');
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
-		<url>$constants->{rootdir}/article.pl?sid=$sect->{sid}</url>
+		<url>$constants->{absolutedir}/article.pl?sid=$sect->{sid}</url>
 		<time>$sect->{'time'}</time>
-		<author>$sect->{aid}</author>
+		<author>$author</author>
 		<department>$str[1]</department>
 		<topic>$sect->{tid}</topic>
 		<comments>$sect->{commentcount}</comments>
