@@ -805,7 +805,7 @@ CREATE TABLE users_prefs (
 	uid mediumint UNSIGNED NOT NULL,
 	willing tinyint DEFAULT '1' NOT NULL,
 	dfid tinyint UNSIGNED DEFAULT '0' NOT NULL,
-	tzcode char(3) DEFAULT 'EDT' NOT NULL,
+	tzcode char(4) DEFAULT 'EDT' NOT NULL,
 	noicons tinyint DEFAULT '0' NOT NULL,
 	light tinyint DEFAULT '0' NOT NULL,
 	mylinks varchar(255) DEFAULT '' NOT NULL,
