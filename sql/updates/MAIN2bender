@@ -5,10 +5,9 @@
 #### %REQUIRED TABLES: tzcodes, users, users_comments, users_index, users_info
 #### %REQUIRED TABLES: users_prefs
 
-#### %OBSOLETE TABLES: authors, commentcodes, displaycodes, isolatemodes
-#### %OBSOLETE TABLES: issuemodes, postmodes, statuscodes, users_key
+#### %OBSOLETE TABLES: authors, users_key
 
 # Update commands.
 
-# Miraculously enough, aside from NORMALIZATION issues, there are no 
-# schema changes.
+ALTER TABLE users MODIFY passwd varchar(32) NOT NULL;
+ALTER TABLE users ADD newpasswd varchar(32);
