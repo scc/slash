@@ -11,9 +11,9 @@ use Slash::DB::Utility;
 use vars qw($VERSION @ISA @ISAPg @ISAMySQL);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@ISA = qw[ Slash::Utility ];
-@ISAPg = qw[ Slash::Utility Slash::DB::PostgreSQL Slash::DB::MySQL ];
-@ISAMySQL = qw[ Slash::Utility Slash::DB::MySQL ];
+@Slash::DB::ISA      = qw[ Slash::Utility ];
+@Slash::DB::ISAPg    = qw[ Slash::Utility Slash::DB::PostgreSQL Slash::DB::MySQL ];
+@Slash::DB::ISAMySQL = qw[ Slash::Utility Slash::DB::MySQL ];
 
 # BENDER: Bender's a genius!
 
@@ -24,34 +24,34 @@ sub new {
 	if ($dsn) {
 		if ($dsn =~ /mysql/) {
 			require Slash::DB::MySQL;
-			@ISA = @ISAMySQL;
+			@Slash::DB::ISA = @Slash::DB::ISAMySQL;
 			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::MySQL;
-				push(@ISA, 'Slash::DB::Static::MySQL');
-				push(@ISAMySQL, 'Slash::DB::Static::MySQL');
+				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+				push(@Slash::DB::ISAMySQL, 'Slash::DB::Static::MySQL');
 			}
 #		} elsif ($dsn =~ /oracle/) {
 #			require Slash::DB::Oracle;
-#			push(@ISA, 'Slash::DB::Oracle');
+#			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
 #			require Slash::DB::MySQL;
-#			push(@ISA, 'Slash::DB::MySQL');
+#			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 #			unless ($ENV{GATEWAY_INTERFACE}) {
 #				require Slash::DB::Static::Oracle;
-#				push(@ISA, 'Slash::DB::Static::Oracle');
+#				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
 ## should these be here, in addition? -- pudge
 ## Longterm yes, right now it is pretty much pointless though --Brian
 ##				require Slash::DB::Static::MySQL;
-##				push(@ISA, 'Slash::DB::Static::MySQL');
+##				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
 #			}
 		} elsif ($dsn =~ /Pg/) {
 			require Slash::DB::PostgreSQL;
 			require Slash::DB::MySQL;
-			@ISA = @ISAPg;
+			@Slash::DB::ISA = @Slash::DB::ISAPg;
 			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::PostgreSQL;
-				push(@ISA, 'Slash::DB::Static::PostgreSQL',
+				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL',
 				           'Slash::DB::Static::MySQL');
-				push(@ISAPg, 'Slash::DB::Static::MySQL');
+				push(@Slash::DB::ISAPg, 'Slash::DB::Static::MySQL');
 			}
 		}
 	} else {
@@ -86,9 +86,9 @@ sub fixup {
 	my ($self) = @_;
 
 	if ($self->{db_driver} =~ /mysql/) {
-		@ISA = @ISAMySQL;
+		@Slash::DB::ISA = @Slash::DB::ISAMySQL;
 	} elsif ($self->{db_driver} =~ /Pg/) {
-		@ISA = @ISAPg;
+		@Slash::DB::ISA = @Slash::DB::ISAPg;
 	} 
 }
 

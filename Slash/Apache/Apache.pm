@@ -15,7 +15,7 @@ require AutoLoader;
 use vars qw($VERSION @ISA);
 
 @ISA = qw(DynaLoader);
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+$VERSION = '1.001014';
 
 bootstrap Slash::Apache $VERSION;
 
