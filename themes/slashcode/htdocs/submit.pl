@@ -26,7 +26,8 @@ sub main {
 	$form->{del}	||= 0;
 	$form->{op}	||= '';
 	my $error_flag = 0;
-	my $subsaved = 0;
+	my $success = 0;
+
 
 	if (($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}) {
 		my $success = displayRSS($slashdb, $constants, $user, $form);
@@ -88,8 +89,10 @@ sub main {
 	$ops->{default} = $ops->{blankform};
 
 	my $op = lc($form->{op});
+	print STDERR "OP1 $op\n";
 	$op ||= 'default';
 	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
+	print STDERR "OP2 $op\n";
 
 	$section = 'admin' if $user->{is_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
@@ -104,12 +107,13 @@ sub main {
 		}
 	}
 
-	if ($ops->{$op}{update_formkey} && $subsaved && ! $error_flag) {
+	# call the method
+	$success = $ops->{$op}{function}->($constants, $slashdb, $user, $form) if ! $error_flag;
+	print STDERR "SUCCESS $success\n";
+
+	if ($ops->{$op}{update_formkey} && $success && ! $error_flag) {
 		my $updated = $slashdb->updateFormkey($formkey, $form->{tid}, length($form->{story}));
 	}
-
-	# call the method
-	$ops->{$op}{function}->($constants, $slashdb, $user, $form) if ! $error_flag;
 
 	footer();
 }
@@ -118,7 +122,7 @@ sub main {
 sub updateSubmissions {
 	my($constants, $slashdb, $user, $form) = @_;
 	my @subids = $slashdb->deleteSubmission();
-	submissionEd(getData('updatehead', { subids => \@subids }));
+	submissionEd(@_, getData('updatehead', { subids => \@subids }));
 }
 
 #################################################################
@@ -131,11 +135,11 @@ sub blankForm {
 #################################################################
 sub previewStory {
 	my($constants, $slashdb, $user, $form) = @_;
-	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
-	displayForm($form->{from}, $form->{email}, $form->{section}, getData('previewhead'));
+	displayForm($form->{name}, $form->{email}, $form->{section}, getData('previewhead'));
 }
 
 #################################################################
@@ -159,6 +163,8 @@ sub yourPendingSubmissions {
 sub previewForm {
 	my($constants, $slashdb, $user, $form) = @_;
 
+	my $admin_flag = $user->{seclev} >= 100 ? 1 : 0;
+
 	my $sub = $slashdb->getSubmission($form->{subid},
 		[qw(email name subj tid story time comment uid)]);
 
@@ -171,6 +177,7 @@ sub previewForm {
 		submission	=> $sub,
 		submitter	=> $sub->{uid},
 		subid		=> $form->{subid},
+		admin_flag 	=> $admin_flag,
 		lockTest	=> lockTest($sub->{subj}),
 		section		=> $form->{section} || $constants->{defaultsection},
 	});
@@ -183,13 +190,13 @@ sub genQuickies {
 	my $stuff = slashDisplay('genQuickies', { submissions => $submissions },
 		{ Return => 1, Nocomm => 1 });
 	$slashdb->setQuickies($stuff);
-	submissionEd(getData('quickieshead'));
+	submissionEd(@_, getData('quickieshead'));
 }
 
 #################################################################
 sub submissionEd {
 	# mmmm, code comments in here sure would be nice
-	my($title) = @_;
+	my($contants, $slashdb, $user, $form, $title) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -320,7 +327,7 @@ sub displayForm {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
-	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
@@ -358,7 +365,7 @@ sub displayForm {
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),
 		savestory	=> $form->{story} && $form->{subj},
-		username	=> $form->{from} || $username,
+		username	=> $form->{name} || $username,
 		fakeemail	=> processSub($form->{email} || $fakeemail),
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $topic,
@@ -370,14 +377,16 @@ sub displayForm {
 #################################################################
 sub saveSub {
 	my($constants, $slashdb, $user, $form) = @_;
-	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+
+	$form->{name} ||= '';
+	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	if (length($form->{subj}) < 2) {
 		titlebar('100%', getData('error'));
 		my $error_message = getData('badsubject');
-		displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $error_message);
+		displayForm($form->{name}, $form->{email}, $form->{section}, '', '', $error_message);
 		return(0);
 	}
 
@@ -385,27 +394,27 @@ sub saveSub {
 		my $message = "";
 		# run through filters
 		if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
-			displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $message);
+			displayForm($form->{name}, $form->{email}, $form->{section}, '', '', $message);
 			return(0);
 		}
 		# run through compress test
 		if (! compressOk($form->{$_})) {
 			my $err = getData('compresserror');
-			displayForm($form->{from}, $form->{email}, $form->{section}, '', '');
+			displayForm($form->{name}, $form->{email}, $form->{section}, '', '');
 			return(0);
 		}
 	}
 
 	$form->{story} = strip_html(url2html($form->{story}));
 
-	my $uid ||= $form->{from}
+	my $uid ||= $form->{name}
 		? getCurrentUser('uid')
 		: getCurrentStatic('anonymous_coward_uid');
 
 	my $submission = {
 		email	=> $form->{email},
 		uid	=> $uid,
-		name	=> $form->{from},
+		name	=> $form->{name},
 		story	=> $form->{story},
 		subj	=> $form->{subj},
 		tid	=> $form->{tid},
@@ -432,7 +441,7 @@ sub saveSub {
 		title		=> 'Saving',
 		width		=> '100%',
 		missingemail	=> length($form->{email}) < 3,
-		anonsubmit	=> length($form->{from}) < 3,
+		anonsubmit	=> length($form->{name}) < 3,
 		submissioncount	=> $slashdb->getSubmissionCount(),
 	});
 	yourPendingSubmissions(@_);

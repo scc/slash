@@ -477,6 +477,7 @@ sub createSubmission {
 
 	$submission->{ipid} = getCurrentUser('ipid');
 	$submission->{subnetid} = getCurrentUser('subnetid');
+	$submission->{email} ||= ''; 
 
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
 	my $subid = "$hour$min$sec.$mon$mday$year";
