@@ -11,6 +11,7 @@ use Getopt::Std;
 # use Date::Manip; # is this needed?  -- pudge
 use File::Basename;
 use File::Path;
+use File::Spec::Functions;
 use LWP::UserAgent;
 use HTTP::Request;
 use Time::Local;
@@ -35,11 +36,12 @@ exit 0;
 ############################################################
 
 sub slashdLog {
-	chomp @_;
+	my @msg = @_;
+	chomp @msg;
 	my $fh = gensym();
-	my $file = "$constants->{logdir}/slashd.log";
-	open($fh, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
-	my $log_msg = scalar(localtime) . "\truntask @_\n";
+	my $file = catfile($constants->{logdir}, "slashd.log");
+	my $log_msg = scalar(localtime) . "\truntask @msg\n";
+	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @msg\n";
 	print $fh $log_msg;
 	print     $log_msg;
 	close $fh;
@@ -71,7 +73,7 @@ sub prog2file {
 		$err_str .= " no data";
 	} else {
 		my $fh = gensym();
-		if (!open $fh, ">$f") {
+		if (!open $fh, "> $f\0") {
 			$err_str .= " could not write to '$f': '$!'";
 		} else {
 			print $fh $data;
@@ -130,9 +132,9 @@ sub verbosity {
 
 sub slashdLogInit {
 	my $ld = $constants->{logdir};
-	mkpath "$ld/", 0, 0775;
-	my $file = "$ld/slashd.log";
-	open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
+	mkpath $ld, 0, 0775;
+	my $file = catfile($ld, "slashd.log");
+	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
 }
 
 sub get_task_subref {
@@ -207,7 +209,7 @@ sub parse_slash_sites {
 	my $line;
 	my($virtual_user, $unix_user, $sitename);
 	my $fh = gensym();
-	open($fh, "< $file") or die "can't open $file, $!";
+	open($fh, "< $file\0") or die "can't open $file, $!";
 	while (defined($line = <$fh>)) {
 		chomp $line;
 		($virtual_user, $unix_user, $sitename) = split /:/, $line;

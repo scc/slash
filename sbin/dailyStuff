@@ -13,6 +13,7 @@
 use strict;
 use File::Basename;
 use File::Path;
+use File::Spec::Functions;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
@@ -35,6 +36,12 @@ exit;
 
 sub sendAdminMail {
 	my $count = $slashdb->countDaily();
+
+	# homepage hits are logged as either '' or 'shtml'
+	$count->{'index'}{'index'} += delete $count->{'index'}{''};
+	$count->{'index'}{'index'} += delete $count->{'index'}{'shtml'};
+	# these are 404s
+	delete $count->{'index.html'};
 
 	my $sdTotalHits = $slashdb->getVar('totalhits', 'value');
 
@@ -59,15 +66,17 @@ EOT
 
 	$email .= "\n-----------------------\n";
 
-# DOESN'T WORK
-# for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
-# 	my $value = $count->{'articles'}{$key};
-#
-# 	my $story = $slashdb->getStory($key, 'title', 'aid');
-#
-# 	$email .= "$value\t$key " . substr($story->{'title'}, 0, 30) .
-# 		" by $story->{'author'}\n" if $value > 100;
-# }
+
+	for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
+		my $value = $count->{'articles'}{$key};
+
+ 		my $story = $slashdb->getStory($key, ['title', 'uid']);
+
+		$email .= sprintf("%s\t%s %s by %s\n",
+			$value, $key, substr($story->{'title'}, 0, 30),
+			$slashdb->getUser($story->{uid}, 'nickname')
+		) if $value > 100;
+	}
 
 	$email .= "\n-----------------------\n";
 	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
@@ -127,20 +136,19 @@ sub mailingList {
 	my @h_email = map { $_->[2] } @$h_users;
 	my @n_email = map { $_->[2] } @$n_users;
 
-	messagedLog("Daily Headlines begin\n");
+	messagedLog("Daily Headlines begin");
 	$messages->bulksend(\@h_email, "Daily Headlines", $headlines,  1);
-	messagedLog("Daily Headlines end\n");
-	messagedLog("Daily Newsletter begin\n");
+	messagedLog("Daily Headlines end");
+	messagedLog("Daily Newsletter begin");
 	$messages->bulksend(\@n_email, "Daily Stories",   $newsletter, 0);
-	messagedLog("Daily Newsletter end\n");
+	messagedLog("Daily Newsletter end");
 }
 
 sub messagedLog {
-	chomp @_;
 	my $fh = gensym();
 	my $file = catfile(getCurrentStatic('logdir'), "messaged.log");
 	my $log_msg = scalar(localtime) . "\t@_\n";
-	open $fh, ">> $file\0" or die "Can't append to $log: $!\nmsg: @_\n";
+	open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @_\n";
 	print $fh $log_msg;
 	close $fh;
 }

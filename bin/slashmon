@@ -13,7 +13,7 @@ my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my %opts;
-$opts{'u'} ||= 'banjo';
+$opts{'u'} ||= $ARGV[0] || 'slashdot';
 
 createEnvironment($opts{'u'});
 

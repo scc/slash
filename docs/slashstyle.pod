@@ -846,7 +846,8 @@ Other than that, they are exactly the same.  It is best to use the lower
 precedence version for control, and the higher for testing/returning
 values.  Examples:
 
-	$value = $foo || $bar;
+	$bool = $flag1 or $flag2;	# WRONG (doesn't work)
+	$value = $foo || $bar;		# right
 	open(FILE, $file) or die $!;
 
 	$true  = foo($bar) && baz($buz);
@@ -1001,6 +1002,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.7  2001/08/23 18:23:20  pudge
+	More stats and logging fixes
+	
 	Revision 1.1.2.6  2001/08/01 07:01:21  jamie
 	Change mkdir calls to mkpath (and document use of mkpath better).
 	

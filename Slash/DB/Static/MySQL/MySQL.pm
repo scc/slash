@@ -105,11 +105,10 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 	# Optimize later to use heap table -Brian
-	for ($self->sqlSelect('cid, discussion.id', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 'recycle' AND comments.pid = 0")) {
+	for ($self->sqlSelect('cid, discussions.id', 'comments,discussions', "to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussions.id = comments.sid AND discussions.type = 'recycle' AND comments.pid = 0")) {
 		my $local_count = $self->_deleteThread($_->[0]);
 		$self->setDiscussionDelCount($_->[1], $local_count);
 	}  
-
 }
 
 sub _deleteThread {
@@ -200,14 +199,14 @@ sub countDaily {
 
 	# clean the key table
 
-
-	$c = $self->sqlSelectMany("dat,count(*)", "accesslog",
-		"to_days(now()) - to_days(ts)=1 AND op='comments'",
-		"GROUP BY dat");
-	while (my($sid, $cnt) = $c->fetchrow) {
-		$commentviews{$sid} = $cnt;
-	}
-	$c->finish;
+# not used ... ?
+# 	$c = $self->sqlSelectMany("dat,count(*)", "accesslog",
+# 		"to_days(now()) - to_days(ts)=1 AND op='comments'",
+# 		"GROUP BY dat");
+# 	while (my($sid, $cnt) = $c->fetchrow) {
+# 		$commentviews{$sid} = $cnt;
+# 	}
+# 	$c->finish;
 
 	$returnable{'index'} = \%indexes;
 	$returnable{'articles'} = \%articles;
@@ -572,6 +571,9 @@ sub updateTokens {
 		$self->setUser($uid, {
 			-tokens	=> "tokens+1",
 		});
+	}
+	if ($num_empty_uids) {
+		errorLog("$num_empty_uids empty uids in updateTokens");
 	}
 	# if ($num_empty_uids) {
 	#	errorLog("$num_empty_uids empty uids in updateTokens");

@@ -58,11 +58,12 @@ exit 0;
 # The standard log command.
 
 sub slashdLog {
-	chomp @_;
+	my @msg = @_;
+	chomp @msg;
 	my $fh = gensym();
 	my $file = catfile($constants->{logdir}, "slashd.log");
-	my $log_msg = scalar(localtime) . "\t@_\n";
-	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @_\n";
+	my $log_msg = scalar(localtime) . "\t@msg\n";
+	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @msg\n";
 	print $fh $log_msg;
 	close $fh;
 }

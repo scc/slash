@@ -30,6 +30,7 @@ use File::Spec::Functions;
 use Mail::Bulkmail;
 use Mail::Sendmail;
 use Slash::Utility::Environment;
+use Symbol 'gensym';
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK);
