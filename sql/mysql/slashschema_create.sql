@@ -52,7 +52,7 @@ CREATE TABLE accesslog (
 	host_addr char(32)	DEFAULT '' NOT NULL,
 	subnetid char(32)	DEFAULT '' NOT NULL,
 	op varchar(254),
-	dat varchar(32),
+	dat varchar(254),
 	uid mediumint UNSIGNED NOT NULL,
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	query_string varchar(50),
