@@ -200,7 +200,7 @@ EOT
 	
 	$I{U}{noscores} = 1; # Keep Things Impartial
 
-	my $c = sqlSelectMany("comments.cid," . getDateFormat("date","time", $I{U}) . ",
+	my $c = sqlSelectMany("comments.cid," . getDateFormat("date","time") . ",
 		subject,comment,nickname,homepage,fakeemail,realname,
 		users.uid as uid,sig,comments.points as points,pid,comments.sid as sid,
 		moderatorlog.id as id,title,moderatorlog.reason as modreason,

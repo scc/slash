@@ -299,7 +299,7 @@ EOT
 	print "</TABLE>\n";
 
 
-	my $date = getDateOffset("time", $I{U});
+	my $date = getDateOffset("time");
 	my $submission = $I{dbobject}->getSubmissionForUser($date);
 
 	my @select = (qw(DEFAULT Hold Quik),

@@ -160,7 +160,7 @@ sub editComment {
 
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	my $reply = $I{dbobject}->getCommentReply(getDateFormat("date", "time", $I{U}), $I{F}{sid}, $I{F}{pid});
+	my $reply = $I{dbobject}->getCommentReply(getDateFormat("date", "time"), $I{F}{sid}, $I{F}{pid});
 
 	# Display parent comment if we got one
 	if ($I{F}{pid}) {

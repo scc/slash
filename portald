@@ -88,7 +88,7 @@ sub geturl {
 sub getTop10Comments {
 	my $c = $slashdb->sqlSelectMany("stories.sid, title,
 		cid, subject,".
-		getDateFormat("date", "d", $constants->{U}).",
+		getDateFormat("date", "d").",
 		nickname,comments.points",
 		"comments,stories,users",
 		"comments.points >= 4
@@ -295,15 +295,10 @@ getUptime();
 # Clean up
 deleteTmp();
 
-# $slashdb->{dbh}->do("LOCK TABLES blocks WRITE");
 
 foreach (keys %savedBlocks) {
-	$slashdb->sqlUpdate("blocks", { block => $savedBlocks{$_} },
-		"bid=" . $slashdb->{dbh}->quote($_)
-	);
+	$slashdb->setBlock($_, { block => $savedBlocks{$_} });
 }
-
-# $slashdb->{dbh}->do("UNLOCK TABLES");
 
 # from 'portald-site'
 newSemiRandomBlock() if defined &newSemiRandomBlock;

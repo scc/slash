@@ -27,7 +27,7 @@ CREATE TABLE accesslog (
   host_addr varchar(16) DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
-  uid int(1) DEFAULT '-1' NOT NULL,
+  uid int(1) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   query_string varchar(50),
   user_agent varchar(50),
@@ -106,9 +106,9 @@ CREATE TABLE comments (
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
   comment text NOT NULL,
-  uid int(1) DEFAULT '-1' NOT NULL,
+  uid int(1) NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
-  lastmod int(1) DEFAULT '-1',
+  lastmod int(1),
   reason int(11) DEFAULT '0',
   PRIMARY KEY (sid,cid),
   KEY display (sid,points,uid),
@@ -173,7 +173,7 @@ CREATE TABLE formkeys (
   formname varchar(20) DEFAULT '' NOT NULL,
   id varchar(30) DEFAULT '' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
-  uid int(11) DEFAULT '-1' NOT NULL,
+  uid int(11) NOT NULL,
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
@@ -309,7 +309,7 @@ CREATE TABLE pollvoters (
   qid char(20) DEFAULT '' NOT NULL,
   id char(35) DEFAULT '' NOT NULL,
   time datetime,
-  uid int(11) DEFAULT '-1' NOT NULL,
+  uid int(11) NOT NULL,
   KEY qid (qid,id,uid)
 );
 
@@ -427,7 +427,7 @@ CREATE TABLE submissions (
   note varchar(30),
   section varchar(30) DEFAULT '' NOT NULL,
   comment varchar(255),
-  uid int(11) DEFAULT '-1' NOT NULL,
+  uid int(11) NOT NULL,
   del tinyint(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid),
   KEY subid (subid,section)

@@ -361,7 +361,7 @@ sub createSubmission {
 
 	$self->sqlInsert("submissions", {
 			email	=> $form->{email},
-			uid	=> $uid,
+			uid	=> $ENV{REMOTE_USER},
 			name	=> $form->{from},
 			story	=> $form->{story},
 			-'time'	=> 'now()',
