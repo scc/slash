@@ -1891,11 +1891,12 @@ sub updateFormkeyVal {
 
 	my $constants = getCurrentStatic();
 
+	my $formkey_quoted = $self->sqlQuote($formkey);
 	my $speed_limit = $constants->{"${formname}_speed_limit"};
 	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
 
 	my $min = time() - $speed_limit; 
-	my $where = " AND idcount < $maxposts ";
+	my $where = "idcount < $maxposts ";
 	$where .= "AND last_ts <= $min ";
 	$where .= "AND value = 0";
 
@@ -1907,7 +1908,7 @@ sub updateFormkeyVal {
 	my $updated = $self->sqlUpdate("formkeys", {
 		-value		=> 'value+1',
 		-idcount	=> 'idcount+1',
-	}, "formkey=" . $self->sqlQuote($formkey) . $where);
+	}, "formkey=$formkey_quoted AND $where");
 
 	$updated = int($updated);
 
@@ -3271,12 +3272,13 @@ sub getTrollUID {
 
 ########################################################
 sub createDiscussion {
-	my($self, $title, $url, $topic, $type, $sid, $time) = @_;
+	my($self, $title, $url, $topic, $type, $sid, $time, $uid) = @_;
 
 	#If no type is specified we assume the value is zero
 	$type ||= 0;
 	$sid ||= '';
 	$time ||= $self->getTime();
+	$uid ||= getCurrentUser('uid');
 
 	$self->sqlInsert('discussions', {
 		sid	=> $sid,
@@ -3285,24 +3287,26 @@ sub createDiscussion {
 		url	=> $url,
 		topic	=> $topic,
 		type	=> $type,
-		uid	=> getCurrentUser('uid'),
+		uid	=> $uid,
 		# commentcount and flags set to defaults
 	});
 
 	my $discussion_id = $self->getLastInsertId();
 
-	# This could be made slightly faster by doing one of those fancy
-	# question-mark-substitution INSERT commands, but, I'm lazy.
-	my $min = getCurrentStatic('comment_minscore');
-	my $max = getCurrentStatic('comment_maxscore');
-	$min = -99 if $min < -99; # sanity checks, make it harder to
-	$max =  99 if $max >  99; # accidentally insert a billion rows
-	for my $threshold ($min .. $max) {
-		$self->sqlInsert("discussion_hitparade", {
-			discussion	=> $discussion_id,
-			threshold	=> $threshold,
-			count		=> 0
-		});
+	if ($discussion_id) {
+		# This could be made slightly faster by doing one of those fancy
+		# question-mark-substitution INSERT commands, but, I'm lazy.
+		my $min = getCurrentStatic('comment_minscore');
+		my $max = getCurrentStatic('comment_maxscore');
+		$min = -99 if $min < -99; # sanity checks, make it harder to
+		$max =  99 if $max >  99; # accidentally insert a billion rows
+		for my $threshold ($min .. $max) {
+			$self->sqlInsert("discussion_hitparade", {
+				discussion	=> $discussion_id,
+				threshold	=> $threshold,
+				count		=> 0
+			});
+		}
 	}
 
 	return $discussion_id;
@@ -3943,7 +3947,12 @@ sub getTemplateByName {
 	$id  ||= $self->{$table_cache_id}{$name, $page,  'default'};
 	$id  ||= $self->{$table_cache_id}{$name, 'misc', $section };
 	$id  ||= $self->{$table_cache_id}{$name, 'misc', 'default'};
-	return unless $id;
+	if (!$id) {
+		my @caller = caller;
+		warn "Failed template lookup on '$name;$page;$section'"
+			. ", called from $caller[0] line $caller[2]";
+		return ;
+	}
 
 	my $type;
 	if (ref($values) eq 'ARRAY') {

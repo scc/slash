@@ -23,7 +23,15 @@ $task{$me}{code} = sub {
 	}, 1);
 
 	# If it exists, we update it, if not, we create it.
-	my($tpid)= $slashdb->getTemplateByName('sectionindex_display','tpid');
+	my $tpid = '';
+	{
+		local $SIG{__WARN__} = sub {
+			# Ignore the error that we expect to sometimes get.
+			warn @_ if $_[0] !~ /Failed template lookup/;
+		};
+		($tpid) = $slashdb->getTemplateByName('sectionindex_display', 'tpid');
+	}
+
 	my(%template) = ( 
 		name => 'sectionindex_display',
 		tpid => $tpid, 

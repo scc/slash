@@ -112,7 +112,7 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	<B>nick</B> name here:
 
 [% CASE 'mailpasswd_mailed_msg' %]
-	Passwd for [% name %] was just emailed.<BR>
+	<P>The password for [% name %] was just emailed.<BR>
 
 [% CASE 'savename_msg' %]
 	<P>Saving [% name.substr(0,20) %]<BR><P>

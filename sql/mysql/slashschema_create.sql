@@ -235,7 +235,7 @@ CREATE TABLE discussions (
 	type mediumint(2) DEFAULT 0 NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	commentcount smallint UNSIGNED DEFAULT '0',
-	flags set("delete_me","hitparade_dirty"),
+	flags set("delete_me","hitparade_dirty") DEFAULT '' NOT NULL,
 	KEY (sid),
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),

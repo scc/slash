@@ -322,7 +322,6 @@ INSERT INTO vars (name, value, description) VALUES ('admin_timeout','30','time i
 INSERT INTO vars (name, value, description) VALUES ('adminmail','admin@example.com','All admin mail goes here');
 INSERT INTO vars (name, value, description) VALUES ('allow_anonymous','1','allow anonymous posters');
 INSERT INTO vars (name, value, description) VALUES ('allow_moderation','1','allows use of the moderation system');
-INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|OL|UL|EM|BR|TT|STRONG|BLOCKQUOTE|DIV','Tags that you can use');
 INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
 INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show only Articles in submission count in admin menu');
