@@ -365,7 +365,8 @@ sub authorDelete {
 
 	if ($form->{authordelete_confirm}) {
 		$slashdb->deleteAuthor($aid);
-		print getMessage('authorDelete-deleted-msg', { aid => $aid }) if ! DBI::errstr;
+		print getMessage('authorDelete-deleted-msg', { aid => $aid })
+			unless $DBI::errstr;
 	} elsif ($form->{authordelete_cancel}) {
 		print getMessage('authorDelete-canceled-msg', { aid => $aid});
 	}
@@ -646,7 +647,7 @@ sub colorEdit {
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
 
-	if ($form->{colorpreview}) {
+	if ($form->{colorpreview} || $form->{colorsave}) {
 		$colorblock_clean = $colorblock =
 			join ',', @{$form}{qw[fg0 fg1 fg2 fg3 fg4 bg0 bg1 bg2 bg3 bg4]};
 
@@ -1108,24 +1109,21 @@ sub listStories {
 	my $storylist = $slashdb->getStoryList();
 
 	my $storylistref = [];
-
-	my($hits, $comments, $sid, $title, $aid, $time, $tid, $section, 
-	$displaystatus, $writestatus, $td, $td2, $yesterday, $tbtitle,
-	$count, $left, $substrtid, $sectionflag);
-
+	my($count, $left, $sectionflag);
 	my($i, $canedit) = (0, 0);
 
 	for (@$storylist) {
-		($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
-			$displaystatus, $writestatus, $td, $td2) = @$_;
+		my($hits, $comments, $sid, $title, $aid, $time_plain, $tid, $section,
+			$displaystatus, $writestatus) = @$_;
+		my $time = timeCalc($time_plain, '%H:%M', 0);
+		my $td   = timeCalc($time_plain, '%A %B %d', 0);
+		my $td2  = timeCalc($time_plain, '%m/%d', 0);
 
-		$substrtid = substr($tid, 0, 5);
-		
+		my $substrtid = substr($tid, 0, 5);
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
-
+		my $tbtitle = fixparam($title);
 		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {
 			$canedit = 1;
-			$tbtitle = fixparam($title);
 		} 
 
 		$x++;
@@ -1148,6 +1146,7 @@ sub listStories {
 			td2		=> $td2,
 			writestatus	=> $writestatus,
 			displaystatus	=> $displaystatus,
+			tbtitle		=> $tbtitle,
 		};
 		
 		$i++;

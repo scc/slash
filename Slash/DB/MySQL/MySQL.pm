@@ -171,12 +171,34 @@ sub init {
 }
 
 ########################################################
+# Yes, this is ugly, and we can ditch it in about 6 months
+# Turn off autocommit here
+sub sqlTransactionStart {
+	my($self, $arg) = @_;
+	$self->sqlDo($arg);
+}
+
+########################################################
+# Put commit here
+sub sqlTransactionFinish {
+	my($self) = @_;
+	$self->sqlDo("UNLOCK TABLES");
+}
+
+########################################################
+# In another DB put rollback here
+sub sqlTransactionCancel {
+	my($self) = @_;
+	$self->sqlDo("UNLOCK TABLES");
+}
+
+########################################################
 # Bad need of rewriting....
 sub createComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
 	my $sid_db = $self->{_dbh}->quote($form->{sid});
 
-	$self->sqlDo("LOCK TABLES comments WRITE");
+	$self->sqlTransactionStart("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
 		"max(cid)", "comments", "sid=$sid_db"
 	);
@@ -188,7 +210,7 @@ sub createComment {
 		$self->{_dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
 
-	$self->sqlDo("UNLOCK TABLES");
+	$self->sqlTransactionFinish();
 	# don't allow pid to be passed in the form.
 	# This will keep a pid from being replace by
 	# with other comment's pid
@@ -1621,7 +1643,7 @@ sub setMetaMod {
 	my $returns = [];
 
 	# Update $muid's Karma
-	$self->sqlDo("LOCK TABLES users_info WRITE, metamodlog WRITE");
+	$self->sqlTransactionStart("LOCK TABLES users_info WRITE, metamodlog WRITE");
 	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
 		my $val = $m2victims->{$_}[1];
@@ -1653,7 +1675,7 @@ sub setMetaMod {
 			-flag => $flag
 		});
 	}
-	$self->sqlDo("UNLOCK TABLES");
+	$self->sqlTransactionFinish();
 
 	return $returns;
 }
@@ -2282,11 +2304,8 @@ sub getStoryList {
 	my $form = getCurrentForm();
 
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, uid,
-			date_format(time,"%k:%i") as t,tid,section,
-			displaystatus,writestatus,
-			date_format(time,"%W %M %d"),
-			date_format(time,"%m/%d")
+	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, uid, time, tid, section,
+			displaystatus,writestatus
 			FROM stories,storiestuff
 			WHERE storiestuff.sid=stories.sid];
 	$sql .= "	AND section='$user->{section}'" if $user->{section};
