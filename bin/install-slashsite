@@ -301,20 +301,27 @@ mkpath "$prefix_site/$sitename/logs", 0, 0775;
 mkpath "$prefix_site/$sitename/htdocs", 0, 0775;
 mkpath "$prefix_site/$sitename/backups", 0, 0775;
 mkpath "$prefix_site/$sitename/sbin", 0, 0775;
-find(sub {
-	my $f1 = $File::Find::name;
-	(my $f2 = $f1) =~ s|^$theme/htdocs/|$prefix_site/$sitename/htdocs/|;
-	if (-d $f1) {
-		mkpath $f2, 0, 0775;
-	} else {
-		if ($symlink) {
-			symlink $f1, $f2;
+mkpath "$prefix_site/$sitename/tasks", 0, 0775;
+{
+	local $dirname;
+	my $find_subref = sub {
+		my $f1 = $File::Find::name;
+		(my $f2 = $f1) =~ s|^$theme/$dirname/|$prefix_site/$sitename/$dirname/|;
+		if (-d $f1) {
+			mkpath $f2, 0, 0775;
 		} else {
-			copy $f1, $f2;
-			chmod((stat(_))[2], $f2);
+			if ($symlink) {
+				symlink $f1, $f2;
+			} else {
+				copy $f1, $f2;
+				chmod((stat(_))[2], $f2);
+			}
 		}
+	};
+	for $dirname (qw( htdocs tasks )) {
+		find($find_subref, "$theme/$dirname");
 	}
-}, "$theme/htdocs/");
+}
 
 my $time = localtime();
 $install->create({ name => 'installed',			value => $time});
@@ -499,7 +506,7 @@ Site options:
 	-H	Hostname
 	-n	Site name
 	-R	Reuse hostname as site name (boolean)
-	-L	Install files in htdocs using symlinks [y/n]
+	-L	Install files in htdocs/ and tasks/ using symlinks [y/n]
 
 User options:
 	-a	Admin name

@@ -93,7 +93,7 @@ sub setStoryIndex {
 sub getNewStoryTopic {
 	my($self) = @_;
 
-	my $returnable = $self->sqlSelectAll(
+	my $sth = $self->sqlSelectMany(
 				"alttext,image,width,height,newstories.tid",
 				"newstories,topics",
 				"newstories.tid=topics.tid
@@ -102,7 +102,7 @@ sub getNewStoryTopic {
 				AND time < now()
 				ORDER BY time DESC");
 
-	return $returnable;
+	return $sth;
 }
 
 ########################################################

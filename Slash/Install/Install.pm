@@ -157,21 +157,15 @@ sub _install {
 		description     => $plugin->{'description'},
 	});
 
-	for (@{$plugin->{'htdoc'}}) {
-		if ($symlink) {
-			symlink "$plugin->{'dir'}/$_", "$prefix_site/htdocs/$_";
-		} else {
-			copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/$_";
-			chmod(0755, "$prefix_site/htdocs/$_");
-		}
-	}
-
-	for (@{$plugin->{'image'}}) {
-		if ($symlink) {
-			symlink "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images/$_";
-		} else {
-			copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images/$_";
-			chmod(0755, "$prefix_site/htdocs/images/$_");
+	for my $subdir (qw( htdoc image task )) {
+		my $subdir_s = "${subdirs}s";
+		for (@{$plugin->{$subdir}}) {
+			if ($symlink) {
+				symlink "$plugin->{dir}/$_", "$prefix_site/$subdir_s/$_";
+			} else {
+				copy "$plugin->{dir}/$_", "$prefix_site/$subdir_s/$_";
+				chmod 0755, "$prefix_site/$subdir_s/$_";
+			}
 		}
 	}
 
@@ -255,11 +249,7 @@ sub getPluginList {
 			next if /^#/;
 			my($key, $val) = split(/=/, $_, 2);
 			$key = lc $key;
-			if ($key eq 'htdoc') {
-				push @{$plugins{$dir}->{$key}}, $val;
-			} elsif ($key eq 'template') {
-				push @{$plugins{$dir}->{$key}}, $val;
-			} elsif ($key eq 'image') {
+			if ($key =~ /^(htdoc|template|image|task)s?$/) {
 				push @{$plugins{$dir}->{$key}}, $val;
 			} else {
 				$plugins{$dir}->{$key} = $val;
