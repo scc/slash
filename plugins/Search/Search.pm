@@ -122,7 +122,7 @@ sub findUsers {
 
 	my $key = " MATCH (nickname,fakeemail) AGAINST ($query) ";
 	my $tables = 'users';
-	my $where .= ' WHERE seclev > 0 ';
+	my $where .= ' seclev > 0 ';
 	$where .= " AND $key" if $form->{query};
 
 
@@ -145,7 +145,7 @@ sub findStory {
 	$start ||= 0;
 
 	my $query = $self->sqlQuote($form->{query});
-	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
+	my $columns = "users.nickname, stories.title, stories.sid as sid, time, discussions.commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
 	my $tables = "stories,story_text,users,discussions";
