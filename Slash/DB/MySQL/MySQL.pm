@@ -2662,6 +2662,10 @@ sub deleteVar {
 # has been removed and now resides at the theme level.
 #	- Cliff 7/3/01
 # It now returns a boolean: whether or not the comment was changed. - Jamie
+# The last UPDATE statement wasn't getting execute because:
+# $s ||= $expr is a SHORT CIRCUIT. If $s is non-zero, $expr isn't evaluated.
+# This has now been fixed and the intended behavior should remain unchanged.
+# - Cliff 7/17/01
 sub setCommentCleanup {
 	my($self, $cid, $val, $reason) = @_;
 
@@ -2683,11 +2687,12 @@ sub setCommentCleanup {
 	$strsql .= " AND lastmod<>$user->{uid}"
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
-	my $rows_changed = 0;
-	$rows_changed = $self->sqlDo("UPDATE comment_heap $strsql")
+	my($rc1, $rc2) = 0;
+	$rc1 = $self->sqlDo("UPDATE comment_heap $strsql")
 		if getCurrentStatic('mysql_heap_table');
-	$rows_changed ||= $self->sqlDo("UPDATE comments $strsql");
-	return $rows_changed;
+	$rc2 = $self->sqlDo("UPDATE comments $strsql");
+
+	return $rc1 || $rc2;
 }
 
 
