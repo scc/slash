@@ -5,17 +5,19 @@ INSTALL - Slash Installation
 
 =head1 SYNOPSIS
 
-This document describes how to install Slash 2.2.  For instructions on
+This document describes how to install Slash 2.1/2.2.  For instructions on
 installation of previous versions of Slash, see the INSTALL document
 included with those distributions.
 
 These instructions have only been tested on Linux. Installation under
-BSD and other Unix OSes should work similarly. We've had reports of the
-1.0.x version of Slash running on Windows, but have done no testing and
-have no further information.
+BSD and other Unix OSes should work similarly, but there are problems
+with the Makefile and installtion under some non-Linux OSes.  Feel free
+to submit bug reports (better, patches) for any such problems.
+We've had reports of the 1.0.x version of Slash running on Windows,
+but have done no testing and have no further information, and have no
+information about Slash 2 running on Windows.
 
-PostgreSQL support in Slash 2.0 is currently alpha-quality,
-while MySQL support is beta-quality.
+PostgreSQL support in Slash 2 is currently alpha-quality.
 
 Slash can always be downloaded from SourceForge, from the FTP site,
 and via CVS.
@@ -102,6 +104,7 @@ this should no longer be necessary.)
 
 All of the installation steps below should be executed as root.
 
+
 =back
 
 
@@ -132,7 +135,7 @@ Create a database to be used by Slash.
 
 Create a username/password that can access that database (by
 default, we normally set the user to have all permissions, but that
-might not be appropriate for your site).
+might not be appropriate for your site).  At least give ???
 
 
 =item 2.
@@ -178,13 +181,24 @@ B<Install the Perl modules.>
 
 The best way to do this is with the CPAN module.
 
-With older versions of the CPAN module, the module will try to
+You might also wish to install each module by hand, using distributions
+found on the CPAN.  See L<perlmodinstall>
+for more information on installing perl modules.
+
+B<IMPORTANT NOTES>:
+
+=over 4
+
+=item B<Overactive CPAN>
+
+With some versions of the CPAN module, the module will try to
 download and install the latest version of Perl.  Watch what
 the module is doing; if it begins to download an entire perl
 distribution, hit ctrl-C until it stops, then try again with the
-CPAN module.  (Hopefully, the new CPAN module will have been installed
-by this point in the process.  If not, try installing the latest
-CPAN module by hand, and then repeat the process.)
+CPAN module.  This should not be an issue in the latest version
+of Bundle::Slash.
+
+=item B<Uninstalling Old Modules>
 
 Sometimes, you will be installing a newer version of a module that
 exists elsewhere on the system.  You might want to tell the CPAN module
@@ -193,38 +207,29 @@ type:
 
 	cpan> o conf make_install_arg UNINST=1
 
-You might also wish to install each module by hand, using distributions
-found on the CPAN.  See http://perldoc.com/m?perlmodinstall
-for more information on installing perl modules.
+=item B<Old Version>
 
-B<IMPORTANT NOTES>:
+If you have previously installed Bundle::Slash, you will want
+to install it again, but you will need to delete the existing
+version.  Go to your F<.cpan/Bundle> directory (usually
+F<~/.cpan/Bundle/>) and remove F<Slash.pm>.
 
-=over 4
-
-=item *
-
-libnet is currently broken somewhat in its tests.  Please use
-C<install Net::Cmd> first, before you install anything else.
-If it fails only tests 8 and 9 of t/require, then it is OK;
-just do <force install Net::Cmd>, then continue on with the
-rest of the modules installation.
-
-=item *
+=item B<Additional Libraries>
 
 You must have certain libraries existing on your system before
 building, for Compress::Zlib and XML::Parser.  See L<"perl">.
 
-=item *
+=item B<BSD>
 
 If running BSD, also install the BSD::Resource module.
 
-=item *
+=item B<Alternate DBs>
 
 If not using MySQL, just allow the installation of its drivers
 to continue, and possibly fail.  Then install the driver you need
 (e.g., for PostgreSQL, use "DBD::Pg") using the CPAN shell.
 
-=item *
+=item B<DBIx::Password>
 
 When installing DBIx::Password, you will be asked for various
 information, the same information used to create the database
@@ -233,6 +238,14 @@ B<virtual user> name, which will be the identifier for all of
 this data.  You can just use the name of your site,
 or any other alphanumeric string.  You will use this virtual
 user name in other places, so do not forget it.
+
+=item B<libnet Broken>
+
+libnet is currently broken somewhat in its tests.  Please use
+C<install Net::Cmd> first, before you install anything else.
+If it fails only tests 8 and 9 of t/require, then it is OK;
+just do <force install Net::Cmd>, then continue on with the
+rest of the modules installation.
 
 =back
 
@@ -248,11 +261,11 @@ To read the README for any module, before or after installing:
 
 	cpan> readme MODULE
 
-If you have problems, feel free to re-run "install Bundle::Slash".  It
+If you have problems, feel free to re-run C<install Bundle::Slash>.  It
 will safely skip anything already installed.
 
 To read the documentation of any of the modules, once they have been
-installed, type "perldoc MODULE" at the command line.
+installed, type C<perldoc MODULE> at the command line.
 
 
 =item 5.
@@ -287,7 +300,7 @@ want to change.
 in step 6. while running F<install-slashsite>.)
 
 So, for example, you might type (although the default SLASH_PREFIX
-is _strongly_ recommended):
+is I<strongly> recommended):
 
 	make SLASH_PREFIX=/home/slash
 	make install SLASH_PREFIX=/home/slash
@@ -415,6 +428,10 @@ of that system.
 
 
 =head1 UPGRADING
+
+=head2 Slash 2.0 -> Slash 2.1/2.2
+
+These procedures do not yet exist.  See L<README>.
 
 =head2 Slash 2.0.x -> Slash 2.0.y
 

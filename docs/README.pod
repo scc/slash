@@ -3,6 +3,16 @@
 README - Slash Readme
 
 
+=head1 WARNING
+
+This release is B<BETA> software.  It is not intended or recommended
+for production use, and is constantly changing.  Please use this only
+for development and testing purposes.
+
+There are currently B<NO> upgrade procedures in place for previous
+versions of Slash.  Those will be coming in a subsequent beta.
+
+
 =head1 DESCRIPTION
 
 Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
