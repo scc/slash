@@ -851,14 +851,21 @@ sub getOlderStories {
 		};
 	}
 
-	my $yesterday = $slashdb->getDay() unless $form->{issue} > 1 || $form->{issue};
+	my $yesterday = $slashdb->getDay(1) unless $form->{issue};
 	$yesterday ||= int($form->{issue}) - 1;
+
+	$form->{start} ||= 0;
+
+	if ($section->{section} eq 'index') {
+		# XXX Fake it...
+		$section->{artcount} = 15;
+	}
 
 	slashDisplay('getOlderStories', {
 		stories		=> $newstories,
 		section		=> $section,
 		yesterday	=> $yesterday,
-		start		=> $section->{artcount} + $form->{start},
+		start		=> $section->{artcount} + $form->{start} + scalar(@$stories),
 	}, 1);
 }
 

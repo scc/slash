@@ -9,6 +9,9 @@ Print older stories for older stories box
 * start = where to start counting from in search.pl return values
 
 Each story has the keys sid, section, title, time, commentcount, day (w, m, d, h, min, ampm), and link (which is a linkStory() value)
+
+XXX This is hacked up pretty badly to work with the fake section "index".
+We really need to decide what the status of "index" is.
 __title__
 
 __page__
@@ -22,9 +25,12 @@ __template__
    FOREACH story = stories;
 	IF today != "$story.w $story.m $story.d";
 		today = "$story.w $story.m $story.d";
-		IF section.issue && section.issue > 1 %]
-			<P><B><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&issue=[% story.day %]&mode=[% user.currentMode %]"
-				><FONT SIZE="4">[% story.w %]</FONT></A> [% story.m %] [% story.d %]</B></P>
+		IF !section or section.section == 'index' %]
+			<P><B><FONT SIZE="4"><A HREF="[% constants.rootdir %]/index.pl?issue=[% story.day %]&mode=[% user.currentMode %]"
+				>[% story.w %]</A></FONT> [% story.m %] [% story.d %]</B></P>
+		[% ELSIF section.issue && section.issue > 1 %]
+			<P><B><FONT SIZE="4"><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&issue=[% story.day %]&mode=[% user.currentMode %]"
+				>[% story.w %]</A></FONT> [% story.m %] [% story.d %]</B></P>
 		[% ELSE %]
 			<P><B><FONT SIZE="4">[% story.w %]</FONT> [% story.m %] [% story.d %]</B></P>
 		[% END;
@@ -32,15 +38,18 @@ __template__
 	<LI>[% story.link %] ([% story.commentcount %])</LI>
 [% END %]
 
-<A HREF="[% constants.rootdir %]/search.pl?section=[% section %]&min=[% start %]>Older Articles</A><BR>
-[% IF section.issue %]
-	<P ALIGN="RIGHT">
+[% IF !section or section.section == 'index' %]
+<P ALIGN="RIGHT"><B><A HREF="[% constants.rootdir %]/search.pl?start=[% start %]">Older Articles</A></B>
+<BR><B><A HREF="[% constants.rootdir %]/index.pl?mode=[% user.currentMode %]&issue=[% yesterday %]"
+>Yesterday's Edition</A></B>
+[% ELSIF section.issue %]
+<P ALIGN="RIGHT">
 	[% IF section.issue == 1 || section.issue == 3 %]
-<BR><A HREF="[% constants.rootdir %]/search.pl?section=[% section.section %]&start=[% start %]"
-><B>Older Articles</B></A>
+<BR><B><A HREF="[% constants.rootdir %]/search.pl?section=[% section %]&start=[% start %]"
+>Older Articles</A></B>
 	[% END %][% IF section.issue == 2 || section.issue == 3 %]
-<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&mode=[% user.currentMode %]&issue=[% yesterday %]"
-><B>Yesterday's Edition</B></A>
+<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section %]&mode=[% user.currentMode %]&issue=[% yesterday %]"
+>Yesterday's Edition</A></B>
 	[% END %]
 [% END %]
 

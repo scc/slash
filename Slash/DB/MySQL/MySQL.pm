@@ -3444,10 +3444,11 @@ sub getTime {
 # As of now, getDay is only used in Slash.pm getOlderStories() - Jamie
 # And if a webserver had a date that is off... -Brian
 sub getDay {
-#	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
-	my $yesterday = timeCalc(scalar localtime, '%Y%m%d'); # epoch time, %Q
-	return $yesterday;
+	my($self, $days_back) = @_;
+	$days_back ||= 0;
+	my $day = timeCalc(scalar(localtime(time-86400*$days_back)), '%Y%m%d'); # epoch time, %Q
+	return $day;
 }
 
 ##################################################################

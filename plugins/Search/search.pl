@@ -31,6 +31,7 @@ sub main {
 	# Set some defaults
 	$form->{query}		||= '';
 	$form->{section}	||= '';
+	$form->{section}	= '' if $form->{section} eq 'index'; # XXX fix this right, do a {realsection}
 	$form->{threshold}	||= getCurrentUser('threshold');
 
 	# get rid of bad characters
