@@ -140,7 +140,6 @@ rm -rf $RPM_BUILD_ROOT
 /usr/local/slash/themes/slashcode/templates/dispComment;misc;light
 /usr/local/slash/themes/slashcode/templates/dispStory;misc;default
 /usr/local/slash/themes/slashcode/templates/dispStory;misc;light
-/usr/local/slash/themes/slashcode/templates/dispStoryTitle;misc;default
 /usr/local/slash/themes/slashcode/templates/dispTheComments;metamod;default
 /usr/local/slash/themes/slashcode/templates/display;article;default
 /usr/local/slash/themes/slashcode/templates/displayForm;submit;default

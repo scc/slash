@@ -69,8 +69,6 @@ sub generateDailyMail {
 	# newlines after advert 
 	$r .= "\n\n";
 
-	# If we don't add http: below it doesn't show up as a link
-	# in my email.
 	return unless @$email;
 	for (@{$email}) {
 		my($sid, $title, $section, $aid, $tid, $time, $dept) = @$_;
