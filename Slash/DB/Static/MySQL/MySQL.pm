@@ -635,7 +635,8 @@ sub getMetamodIDs {
 		'distinct moderatorlog.id', 'moderatorlog, metamodlog',
 		"m2count >= $thresh
 		AND flag = 10
-		AND moderatorlog.id=metamodlog.mmid",
+		AND moderatorlog.id=metamodlog.mmid
+		AND cuid IS NOT NULL",
 		($num) ? "LIMIT $num" : ''
 	);
 	$_ = $_->[0] for @{$list};
