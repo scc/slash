@@ -1,0 +1,465 @@
+#!/usr/bin/perl -w 
+
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+#
+# First version by Brian, brian@tanegnt.org
+# Updated by Patrick Galbraith, capttofu@slashdot.org
+
+# I hope someone takes this over. A TK frontend
+# would be nice. This was Cliff's idea and kudos
+# should go to him. -Brian
+use strict;
+use Slash;
+use Slash::DB;
+use Getopt::Std;
+use Cwd;
+
+my $VERSION = '0.9';
+my $COPYRIGHT = 
+'This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+ released under the GPL.  See README and COPYING for more information.';
+
+
+my %opts;
+usage('no options supplied to program') unless getopts('deilrsvD:P:S:p:f:u:?', \%opts);
+usage('help requested') if $opts{'?'};
+# can't have more than one template for a file in a dump
+usage('you have supplied more templates than there are files to save them to') 
+if ($opts{'f'} && ($opts{'d'} || $opts{'e'}) && @ARGV > 1);
+# you must have -f if you want to save a particular file as a template
+usage('no file to save') if ($opts{'s'} && ! $opts{'f'} && -f $ARGV[0]);
+# if deleting, then there should be no other operation or file flags
+usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} || $opts{'D'})); 
+usage('deletion with other op flags') if ( $opts{'r'} && ! @ARGV);
+# can't have multiple IDs on a save
+usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
+
+$opts{'u'} = 'slash' unless $opts{'u'};  
+my $slash = Slash::DB->new($opts{'u'});
+
+# datastruct of ALL templates, keyed by uid
+my $templates = $slash->getTemplates();
+
+
+my ($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0,0,0,0);
+
+##################################
+# version
+if ($opts{'v'}) {
+	print "$0, Version $VERSION, $COPYRIGHT\n";
+	exit();
+}
+
+if ($opts{'D'}) {
+	if ( ! -d $opts{'D'}) {
+		if ($opts{'d'} || $opts{'e'} || ( $opts{'l'} && $opts{'f'})) {
+			system("mkdir $opts{'D'}") 
+		} else {
+			print "Invalid directory $opts{'D'} \n";
+			exit(0);
+		}
+	}
+} 
+
+if ($opts{'S'} and $opts{'P'}) {
+	$sectionpage_flag = 1;
+} 
+elsif ($opts{'S'}) {
+	$section_flag = 1;
+} elsif ($opts{'P'}) {
+	$page_flag = 1;
+} else {
+	$all_flag = 1;
+}
+
+# start the processing
+if ($opts{'s'}) {
+	my ($section, $page, $name, $file, $tpid);
+
+	if ($opts{'D'} and $opts{'f'}) {
+		$file = $opts{'D'} . "/" . $opts{'f'};
+	} 
+	elsif ($opts{'f'}) {
+		$file = $opts{'f'}; 
+	}
+	elsif ($opts{'D'}) {
+		$file = $opts{'D'};
+	} else {
+		$file = cwd;
+	}
+
+	# wierd hack to allow multiple files - two args would be
+	if (@ARGV > 2 && $opts{'f'}) { 
+		for (@ARGV) {
+			my $tmpfile = $opts{'D'} ? $opts{'D'} . "/" . $_ : $_;
+			# has to be a damned file and not dir
+			save_template("", "", "", $tmpfile) if -f $tmpfile;
+		}
+	# nab down the section and page that we'll be passing
+	} else {
+		if($opts{'i'}) {
+			$tpid = $ARGV[0];
+			$name = $ARGV[1];
+		} else {
+			$name = $ARGV[0];
+		}
+
+		$name ||= '';
+		$tpid ||= '';
+
+		if ($sectionpage_flag) {
+			$section = $opts{'S'};
+			$page = $opts{'P'};
+		} 
+		elsif ($section_flag) {
+			$section = $opts{'S'};
+			$page = '';
+		}
+		elsif ($page_flag) {
+			$section = ''; 
+			$page = $opts{'P'};
+		} else {
+			$section = ''; 
+			$page = '';
+		}
+		save_template($tpid, $section, $page, $name, $file );
+	}
+} else {
+	my $templatelist = {};
+	my ($sectionpage_match,$no_sectionpage,$template_counter) = (0,0,0);
+	my $filename;
+
+	if ($opts{'f'}) {
+		$filename = $opts{'f'};
+		$filename .= $opts{'D'} . '/' . $filename if $opts{'D'};
+	} 
+	elsif($opts{'D'}) {
+		$filename = $opts{'D'};
+	}
+
+	# build a template list of the templates we want to process
+	for my $key (keys %$templates) {
+		if ($opts{'p'}) {
+			next unless $key =~ /$opts{'p'}/;
+		}
+
+		if ( 	($sectionpage_flag && 
+			$opts{'S'} eq $templates->{$key}{section} && 
+			$opts{'P'} eq $templates->{$key}{page}) 
+			|| 
+			($section_flag && $templates->{$key}{section} eq $opts{'S'}) 
+			|| 
+			($page_flag and $templates->{$key}{page} eq $opts{'P'}) ) 
+		{
+			$sectionpage_match = 1;
+			# print "section_flag $section_flag template section $templates->{$key}{section}  opts section $opts{'S'}\n";
+
+		} elsif ($all_flag) {
+			$no_sectionpage = 1;
+		} 
+
+		if($sectionpage_match || $no_sectionpage) {
+			if (@ARGV) {
+				for (@ARGV) {
+					if($opts{'i'}) {
+						$templatelist->{$key} = $templates->{$key} if $key == $_;
+
+					} else {
+						my $templatename = $_;
+						if ($templates->{$key}{name} eq $templatename) {
+							$templatelist->{$key} = $templates->{$key};
+							$template_counter++;
+						}
+					}
+				}
+			} 
+			elsif (! $opts{'i'}) {
+				$templatelist->{$key} = $templates->{$key};
+				$template_counter++;
+			}
+			($sectionpage_match,$no_sectionpage) = (0,0);
+		}
+	}
+
+	if ($opts{'l'}) {
+		list_templates($templatelist, $filename);
+	} 
+	elsif ($opts{'d'}) {
+		if ($template_counter > 1 && $opts{'f'}) {
+			usage('too many templates per file');
+		} else {
+			dump_templates($templatelist,$filename);
+		}
+	}
+	elsif ($opts{'e'}) {
+		sql_templates($templatelist, $filename);
+	}
+	elsif ($opts{'r'}) {
+		delete_templates($templatelist);
+	}
+}
+
+###############################################
+sub sql_templates {
+	my ($templates,$filename) = @_;
+
+	$filename ||= 'templates.sql';
+	my $sql = '';
+
+	for my $template (keys %$templates) {
+		my ($values, $names);
+		for (keys %{$templates->{$template}}) {
+			$values .= $slash->{_dbh}->quote($templates->{$template}{$_}) . ",";
+			$names .= "$_,";
+		}
+		chop($values);
+		chop($names);
+		$sql .= "INSERT INTO templates ($names) VALUES ($values)\n";
+	}
+
+	open(SQL,">$filename") or die "$! unable to open file $filename\n";
+	print SQL "$sql\n";
+	close(SQL);
+} 
+
+###############################################
+sub save_template {
+	my ($tpid, $section, $page, $name, $file) = @_;
+	my @files;
+	my $dirflag = 0;
+	$dirflag = 1 if -d $file;
+	
+	if ($name eq '' && ! $tpid  && $dirflag) {
+		opendir(DIR, $file);
+		while(my $tmpfile = readdir(DIR)) {
+			next if $tmpfile =~ /\./;
+			print "processing $tmpfile\n";
+			push(@files, $file . '/' . $tmpfile);
+		}
+	} 
+	# this should be only one file
+	elsif (-f $file) {
+		push @files, $file;
+
+	} 
+
+	for my $tmpfile (@files) {
+		my ($tsection,$tpage,$tname,$data);
+		my ($psection,$ppage,$pname);
+		my $filename_flag = 0;
+		my $tmp = {};
+		my $exists = 0;
+
+		# you can't save a template without a section and page or without a name
+		# the file has the section, page, and name in it's filename and we don't 
+		# have a template id, so get any unset attributes from the file name
+		if($tpid) {
+			$tname = $name if $name ne '';	
+			$tpage = $page if $page ne '';
+			$tsection = $section if $section ne '';
+		}
+		elsif ($tmpfile =~ /(\w+)\-(\w+)\-(.*)$/i) {
+			$filename_flag = 1;
+			($psection,$ppage,$pname) = ($1,$2,$3);
+			$tname = $name eq '' ? $3 : $name ;
+			$tpage = $page eq '' ? $2 : $page ;
+			$tsection = $section eq '' ? $1 : $section ;
+		}
+		elsif ($name ne '') {
+			$tname = $name;
+			$tsection = $section ne '' ? $section : 'default';	
+			$tpage = $page ne '' ? $page : 'misc';
+		} else {
+			usage('There was an error saving the template.');
+		}
+
+		print "opening $tmpfile\n";
+		open(FILE, "<$tmpfile");
+		{ local $/; $data = <FILE> }
+		close(FILE);
+
+		if($tpid) {
+			$tmp = $slash->getTemplateByID($tpid);
+			if ($tmp && $tmp->{tpid} == $tpid) {
+				$exists = 1 ;
+				$tname = $name eq '' ? $tmp->{name} : $name ;
+				$tpage = $page eq '' ? $tmp->{page} : $page ;
+				$tsection = $section eq '' ? $tmp->{section} : $section ;
+			}
+			
+		} else {
+			if ($filename_flag && $dirflag) {
+				$tmp = $slash->getTemplate($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
+				if (	$tmp &&
+					$tmp->{page} eq $ppage && 
+					$tmp->{section} eq $psection && 
+					$tmp->{name} eq $pname ) 
+				{
+					$exists = 1; 
+				}
+			} else {
+				$tmp = $slash->getTemplate($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
+				if (	$tmp &&
+					$tmp->{page} eq $tpage && 
+					$tmp->{section} eq $tsection && 
+					$tmp->{name} eq $tname ) 
+				{
+					$exists = 1; 
+				}
+			}
+
+		}
+
+		if($exists) {
+			print "updating $tname, tpid $tmp->{tpid}\n";
+			$slash->setTemplate($tmp->{tpid}, { 	
+						page 	=> $tpage,
+						section => $tsection,
+						template => $data 
+						});
+		} else {
+			print "creating $tname\n";
+			my $seclev = 100;
+			$slash->createTemplate({ tpid		=> '',
+						name 		=> $tname,
+						page 		=> $tpage,
+						section		=> $tsection,
+						template	=> $data,
+						seclev		=> $seclev
+						});
+		}
+	}
+}
+
+###############################################
+sub dump_templates {
+	my ($templatelist, $file) = @_;
+	my $filename;
+
+	for my $template (keys %$templatelist) {
+		if (! $file || -d $file) {
+			$filename = $templatelist->{$template}{'section'} . "-" .  
+				$templatelist->{$template}{'page'} . "-" .  
+				$templatelist->{$template}{'name'};
+
+			$filename = $file . "/" . $filename if -d $file;
+		} else {
+			$filename = $file;
+		} 
+
+		print "dumping template to $filename\n";
+
+		open(FILE, ">$filename") or die "$! unable to open file $file to dump to\n";
+		print FILE $templatelist->{$template}{'template'};
+		close(FILE);
+	} 
+}
+
+###############################################
+sub list_templates {
+	my ($templatelist, $file) = @_;
+
+	if($file) {	
+		$file .= $file . '/templatelist.txt' if -d $file;
+
+		print "printing template descriptions to $file\n";
+		open(FILE, ">$file") or die "$! unable to open file $file to dump to\n";
+		select(FILE);
+	}
+
+	for my $template (keys %$templatelist) {
+
+		# stinking lousy control-Ms
+		$templatelist->{$template}{description} =~ s/\x0d//g if $templatelist->{$template}{description};
+
+		print <<EOT; 
+--------------------------------------------------------
+Tpid: $templatelist->{$template}{tpid} Name: $templatelist->{$template}{name}
+Section: $templatelist->{$template}{section} Page: $templatelist->{$template}{page}
+
+EOT
+
+		print <<EOT if $templatelist->{$template}{description};
+Description:\n$templatelist->{$template}{description}
+EOT
+	}
+
+	close(FILE);
+}
+###############################################
+sub delete_templates {
+	my ($templatelist) = @_;
+	my $list = join(" ",keys(%$templatelist));
+	print "are you sure you want to delete templates tpid(s) $list ? y/Y ";
+	my $answer = <STDIN>;
+	chomp($answer);
+ 
+	if($answer eq 'Y' || $answer eq 'y') { 
+		for my $template (keys %$templatelist) {
+			$slash->deleteTemplate($template);
+		}
+	} else {
+		print "\n...canceled template deletion.\n";
+	}
+}
+
+###############################################
+sub usage {
+	my ($message) = @_;
+	print "ERROR: $message\n";
+	print <<EOT;
+Usage: template-editor [OPTIONS] <template templateN>
+
+OPTIONS
+
+	-d dump templates
+	-e prints template out in a manner suitable for a sql dump file
+	-i use tpid (template id) instead of template name
+
+	-l list template(s) and their descriptions
+	-p only perform list and get actions if the template matches this pattern
+	-f <templatefilename> filename of template being dumped or created (single template)
+	
+	-s create/save/update template 
+
+	-D directory where templates are saved or created
+	-P <page> template page
+	-S <section> template section
+
+	Save Notes:
+	* With no args except filename, uses template name to derive section, 
+	page and template name from.
+	* -s -f <multiple template filenames> allows you to save specific 
+	templates from the given files. You should make sure the template
+	name conforms to section-page-templatename standard 
+	* If you don't supply a template name, or leave the section and page 
+	unset, the name will try to be derived from the filename.
+	* If you supply a section and/or page and your reading files out of a 
+	directory, those templates will be saved with those sections. If you 
+	want to read from a directory and not have your section or page changed,
+	don't provide these arguments.
+
+	-r deletes template(s) (don't shoot yourself in the foot!)
+	-u virtual user to use(default is slash)
+	-? this message
+
+Section, page, and template args logic:
+
+	for listing and dumping functions:
+
+	-S <section> all templates in a section
+	-S <section> <template templateN> all templates in a section having the name(s)
+	-P <page> all templates for a page
+	-P <page> <template templateN> all templates for a page having the name(s)
+	-S <section> -P <page> all templates for a page and section
+	-S <section> -P <page> <template templateN> templates for a page and 
+	section with the name(s) <template templateN> all templates having the 
+	name(s) all other template fields should be modified via web interface
+
+	-v Version of this program
+EOT
+	exit();
+}
+
