@@ -36,12 +36,12 @@ sub main {
 	header("$constants->{sitename}: Search $form->{query}", $form->{section});
 	titlebar("99%", "Searching $form->{query}");
 
-	my $op = $form->{op} ? $form->{op} : 'stories';
+	$form->{op} ||= 'stories';
 	my $authors = _authors();
 	slashDisplay('searchform', {
 		section => getSection($form->{section}),
 		tref =>$slashdb->getTopic($form->{topic}),
-		op => $op,
+		op => $form->{op},
 		authors => $authors
 	});
 
