@@ -668,7 +668,7 @@ sub dispComment {
 		print <<EOF;
 			<TR><TD BGCOLOR="$color">
 				<FONT SIZE="3" COLOR="$color">
-					<A NAME="comment->{cid}"><B>comment->{subject}</B></A>$score_to_display
+					<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>$score_to_display
 				</FONT>
 				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
 				$userinfo_to_display
