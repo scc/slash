@@ -528,7 +528,7 @@ sub editArticle {
 		$theme ||= $constants->{journal_default_theme};
 		slashDisplay($theme, {
 			articles	=> [{ day => $article->{date}, article => [ $disp_article ] }],
-			uid		=> $article->{uid},
+			uid		=> $article->{uid} || $user->{uid},
 			is_friend	=> $journal->is_friend($article->{uid}),
 			back		=> -1,
 			forward		=> 0,
