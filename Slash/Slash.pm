@@ -25,6 +25,7 @@ package Slash;
 #  $Id$
 ###############################################################################
 use strict;  # ha ha ha ha ha!
+use Apache;
 use Apache::SIG ();
 use CGI ();
 use DBI;
@@ -128,12 +129,13 @@ sub getSlash {
 	$I{dbobject} = $cfg->{'dbslash'} || Slash::DB->new('slash');
 	$I{query} = new CGI;
 
+	# %I legacy
+	$I{F} = $user_cfg->{'form'};
 	my $user = getUser($ENV{REMOTE_USER});
 	# When we can move this method into Slash::Apache::User
 	# this can go away
 	$user_cfg->{'user'} = $user;
 	# %I legacy
-	$I{F} = $user_cfg->{'form'};
 	$I{U} = $user;
 
 	return 1;
@@ -323,6 +325,7 @@ sub addToUser {
 sub getUser {
 	my($uid) = @_;
 	undef $I{U};
+	print STDERR "OP $I{F}{op}\n";
 
 	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
 
