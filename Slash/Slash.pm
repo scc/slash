@@ -848,7 +848,7 @@ sub getSectionMenu {
 ########################################################
 sub footer {
 	my $dbslash = getCurrentDB();
-	if (getCurrent('ssi')) {
+	if (getCurrentForm('ssi')) {
 		ssiFoot();
 		return;
 	}
