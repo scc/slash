@@ -1281,7 +1281,6 @@ sub getBackendStories {
 	return $returnable;
 }
 
-
 ########################################################
 sub clearStory {
 	 _genericClearCache('stories', @_);
@@ -2619,7 +2618,7 @@ sub getKeys {
 sub getStory {
 	my ($self) = @_;
 	# We need to expire stories
-  _genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
+	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
 	my $answer = _genericGetCache('stories', 'sid', @_);
 	return $answer;
 }
@@ -2861,7 +2860,7 @@ sub _genericGetCache {
 	my $DEBUG_TABLE = 'stories';
 	########################################
 	print STDERR "_genericGetCache: $table:$id cache hit($self->{$table_cache}{$id})\n"
-			if ($self->{$table_cache}{$id} and $DEBUG and $table eq $DEBUG_TABLE);
+		if ($self->{$table_cache}{$id} and $DEBUG and $table eq $DEBUG_TABLE);
 	my $type;
 	if((ref($values) eq 'ARRAY')) {
 		$type = 0;
@@ -2895,7 +2894,6 @@ sub _genericGetCache {
 		return $self->{$table_cache}{$id};
 	}
 }
-
 ########################################################
 # This is protected and don't call it from your
 # scripts directly.
