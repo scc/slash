@@ -108,6 +108,8 @@ if ($opts{'s'}) {
 				print "Not overwritting template $_ with placeholder.\n";
 				next;
 			}
+			delete $template->{instructions};
+
 			if ($slashdb->setTemplate($temp2->{tpid}, $template)) {
 				print "updated template $_ tpid $temp2->{tpid}\n";
 			} else {

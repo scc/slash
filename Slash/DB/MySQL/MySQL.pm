@@ -1049,6 +1049,9 @@ sub setPollQuestion {
 
 ########################################################
 sub setTemplate {
+	# Instructions don't get passed to the DB.
+	delete $_[2]->{instructions};
+
 	for (qw| page name section |) {
 		next unless $_[2]->{$_};
 		if ($_[2]->{$_} =~ /;/) {
@@ -4471,6 +4474,9 @@ sub createTemplate {
 			return;
 		}
 	}
+	# Instructions field does not get passed to the DB.
+	delete $hash->{instructions};
+
 	$self->sqlInsert('templates', $hash);
 	my $tpid  = $self->getLastInsertId('templates', 'tpid');
 	return $tpid;

@@ -92,6 +92,11 @@ my (%conversions) = (
 		$data->{block} =~ s/$searchfor/$vars->{rootdir}/g
 			if $data->{block};
 
+		# Why the schema as of 08/16/01 has no defaults for these, I
+		# don't know.
+		$data->{seclev} ||= 0;
+		$data->{section} ||= $vars->{defaultsection};
+
 		# Drop columns.
 		delete $data->{aid};
 		delete $data->{blockbak};
@@ -146,24 +151,25 @@ EOT
                 }
 
 		# Program should accept a default topic for discussions.
-		$data->{'topic'} = 
-			$topics{$story_hash->{$data->{'sid'}}{'tid'}} ||
+		$data->{'topic'} = (defined($story_hash->{$data->{'sid'}}{'tid'})) ?
+			$topics{$story_hash->{$data->{'sid'}}{'tid'}} :
 			$vars->{defaulttopic};
 		# Admins must disable stories via their own criterion.
-		$data->{'type'} = 0;
-		$data->{'flags'} = 'dirty';
+		$data->{'type'} = 'open';
 		if (!$opts{I}) {
 			# Reset the flag only if necessary. Pretty much we
 			# want to set things dirty and clean them up later.
-			my $ws = $story_hash->{$data->{sid}}{writestatus};
+			my $ws = $story_hash->{$data->{sid}}{writestatus} || 0;
 
 			$data->{flags} = 'delete' if $ws == 5 || $ws == 10;
 			$data->{flags} = 'dirty' if $ws == 1;
 			$data->{flags} ||= 'ok';
+		} else {
+			$data->{'flags'} = 'dirty';
 		}
 
 		$data->{'ALLOWED_FIELDS'} = [qw(
-			id sid title url topic ts type writestatus
+			id sid title url topic ts type uid commentcount
 		)];
 			
 		return $data
@@ -250,8 +256,7 @@ EOT
 		} else {
 			$data->{writestatus} = 'dirty';
 		}
-		push @{$storylist}, $datacopy
-			if $storylist && $data->{writestatus} != 'delete';
+		push @{$storylist}, $datacopy if $storylist;
 			
 		# Use to properly assign topics to story-based discussions.
 		#$story_topics{$data->{sid}} = $data->{tid};
@@ -337,7 +342,6 @@ EOT
 
 		$data->{tid} = ($data->{tid}) ? 
 			$topics{$data->{tid}} : $vars->{defaulttopic};
-		$data->{submitter} = $ac_uid{-1};
 		$data->{$_} ||= '' for (qw(comment name note story));
 		return $data;
 	},
@@ -420,7 +424,7 @@ my (%conditions) = (
         my($sth_d, $allow_heaps);
         my @prefs = qw(
 		mysql_heap_table absolutedir comment_minscore
-		comment_maxscore defaulttopic rootdir
+		comment_maxscore defaultsection defaulttopic rootdir archive_delay
 	);
         push @prefs, 'anonymous_coward_uid' if $opts{I};
  
@@ -568,7 +572,7 @@ EOT
 	$sth_s->execute;
 	die "SQL: $sql\n" if $dbh_new->errstr;
 	printf "Processing stories...\n";
-	do_handle('stories', $sth_s, 0, \%hitlist, \@stories);
+	do_handle('stories', $sth_s, !$opts{I}, \%hitlist, \@stories);
 
 	# Now go back and handle discussion updates.
 	print "Reprocessing discussions and hitparade...\n";
@@ -624,7 +628,7 @@ VALUES (
 	@{[$dbh_new->quote($story->{sid})]}, 
 	@{[$dbh_new->quote($story->{title})]},
 	'$vars->{rootdir}/article.pl?sid=$story->{sid}',
-	${[$topics{$story->{tid}} || $vars->{defaulttopic}]},
+	@{[$topics{$story->{tid}} || $vars->{defaulttopic}]},
 	'$story->{time}',
 	'dirty'
 )
@@ -634,7 +638,8 @@ EOT
 			die "SQL: $sql\n" if $dbh_new->errstr;
 			$discussions{$story->{sid}} = getLastInsertID();
 			print <<EOT;
-Inserted missing story data "$story->{title}" ($story->{sid}) as #$discussions{$story->{sid}}
+      + Inserted missing story data "$story->{title}"
+        ($story->{sid}) as #$discussions{$story->{sid}}
 EOT
 
 		}
@@ -681,7 +686,11 @@ SELECT * FROM pollvoters WHERE qid=@{[$dbh_old->quote($_)]}
 EOT
 
 		$sth_s->execute;
-		do_handle('pollvoters', $sth_s, $del)
+		do_handle('pollvoters', $sth_s, $del);
+
+		# Only want del active the first time thru this, if it's active at all.
+		$del = 0 if $del;
+	}
 
 	# Make sure we get the latest poll. This should only return an array
 	# with one value.
@@ -717,6 +726,15 @@ sub convert {
 	# Replace topics dropping the character based tid for the new sequence.
 	duplicate('topics', 1);
 	reload_keys('topics', \%topics, 'tid', 'alttext');
+	# Deal with section_topics table (new for Fry).
+	$dbh_new->do(<<EOT)
+DELETE FROM section_topics
+EOT
+
+	$dbh_new->do(<<EOT)
+INSERT INTO sectino_topics AS
+	SELECT distinct section, tid FROM topics, sections WHERE LENGTH(section) > 0
+EOT
 	
 	for (@user_tables) {
 		# users_param does not exist in MAIN.
@@ -1142,11 +1160,11 @@ EOT
 				# Now have to update the poll!
 				$dbh_new->do(<<EOT);
 UPDATE pollquestions SET discussion=$discussions{$data->{sid}} WHERE
-	sid=$data->{sid}
+	sid='$data->{sid}'
 EOT
 
 				print <<EOT;
-Created discussion for poll "$ques" ($data->{sid}/$sid)
+      + Created discussion for poll "$ques" ($data->{sid}/$sid)
 EOT
 
 			}
@@ -1224,7 +1242,7 @@ EOT
 	# Now update discussion_hitparade...
 	print "Updating story comment counts...";
 	$sth_d = $dbh_new->prepare(<<EOT);
-SELECT id,sid FROM discussions flags='dirty'
+SELECT id,sid FROM discussions WHERE flags='dirty'
 EOT
 
 	$sth_d->execute();
@@ -1290,6 +1308,12 @@ EOT
 		}
 	}
 	
+	# Make sure we update discussion type.
+	$dbh_new->do(<<EOT);
+UPDATE discussions SET type='archived' 
+	WHERE ts < date_sub(now(), interval $vars->{archive_delay} day)
+EOT
+
 	# Make sure we clean our flags.
 	$dbh_new->do(
 		"UPDATE discussions SET flags='ok' WHERE flags='dirty'"
