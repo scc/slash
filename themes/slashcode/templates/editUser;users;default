@@ -29,12 +29,12 @@ You can automatically login by clicking
 <A HREF="[% constants.rootdir %]/index.pl?op=userlogin&upasswd=[% FILTER fixparam; user_edit.passwd; END %]&unickname=[% FILTER fixparam; user_edit.nickname; END %]">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 <BR>
-<FORM ACTION="[% env.script_name %]" METHOD="POST">
 
 	[% IF admin_flag %]
 	[% admin_block %]
 	[% END %]
 
+<FORM ACTION="[% env.script_name %]" METHOD="POST">
 <BR>
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; user_edit.realname; END %]" SIZE="40"><BR>

@@ -1541,7 +1541,7 @@ sub getUserAdmin {
 
 	for $formname ('comments', 'submit') {
 		$readonly->{$formname} = $slashdb->checkReadOnly($formname, $edituser) ? ' CHECKED' : '';
-		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, $edituser);
+		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, $edituser) if $readonly->{$formname};
 	}
 
 	$author_flag = ($edituser->{author} == 1) ? ' CHECKED' : ''; 

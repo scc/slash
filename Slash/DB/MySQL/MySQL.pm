@@ -1630,6 +1630,8 @@ sub getReadOnlyReason {
 		}
 		elsif ($user->{subnetid}) { 
 			$where = "WHERE subnetid = '$user->{subnetid}'"; 
+		} else {
+			$where = "WHERE uid = $user->{uid}";
 		}
 	} else {
 		$user = $self->getCurrentUser();
