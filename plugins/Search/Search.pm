@@ -170,10 +170,10 @@ sub findUsers {
 	$limit = " LIMIT $start, $limit" if $limit;
 
 	my $columns = 'fakeemail,nickname,users.uid ';
-	$columns .= ", TRUNCATE((MATCH (nickname,fakeemail) AGAINST($query)), 1) as score "
+	$columns .= ", TRUNCATE((MATCH (nickname) AGAINST($query)), 1) as score "
 		if ($form->{query} && $sort ne 'date');
 
-	my $key = " MATCH (nickname,fakeemail) AGAINST ($query) ";
+	my $key = " MATCH (nickname) AGAINST ($query) ";
 	my $tables = 'users';
 	my $where .= ' seclev > 0 ';
 	$where .= " AND $key" if $form->{query};

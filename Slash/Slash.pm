@@ -458,13 +458,6 @@ The 'displayThread' template block.
 
 sub displayThread {
 	my($sid, $pid, $lvl, $comments, $const) = @_;
-# Couple of notes.
-# $displayed is past along as we need it to make sure we don't print
-# to many comments. $recurse is a flag. Why not use wantarray()? For
-# for some reason the original template call makes wantarray think
-# that an array should be returned (which is bad) so I added this
-# as a flag. 
-#	-Brian
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();

@@ -62,6 +62,7 @@ CREATE TABLE accesslog (
 	section varchar(30) DEFAULT 'index' NOT NULL,
 	INDEX host_addr_part (host_addr(16)),
 	INDEX op_part (op(12)),
+	INDEX ts (ts),
 	PRIMARY KEY (id)
 ) TYPE = myisam;
 

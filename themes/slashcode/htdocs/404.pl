@@ -11,6 +11,7 @@ use Slash::Utility;
 
 sub main {
 	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 	$ENV{REQUEST_URI} ||= '';
 
 	# catch old .shtml links ... need to check for other schemes, too?
@@ -22,7 +23,7 @@ sub main {
 	my $url = strip_literal(substr($ENV{REQUEST_URI}, 1));
 	my $admin = $constants->{adminmail};
 
-	header('404 File Not Found');
+	header('404 File Not Found', $form->{section});
 
 	my($new_url, $errnum) = fixHref($ENV{REQUEST_URI}, 1);
 

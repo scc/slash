@@ -1180,6 +1180,8 @@ Hashref of cleaned-up data.
 sub filter_params {
 	my %params = @_;
 	my %form;
+	my $apr = $params{query_apache};
+	my %multivalue = map {($_ => 1)} qw(section_multiple);
 
 	# fields that are numeric only
 	my %nums = map {($_ => 1)} qw(
@@ -1213,6 +1215,12 @@ sub filter_params {
 
 	for (keys %params) {
 		$form{$_} = $params{$_};
+		# We don't filter the multivalue params yet -Brian
+		if (exists $multivalue{$_} && $apr) {
+			my @multi = $apr->param ($_);
+			$form{$_} = \@multi;
+			next;
+		}
 
 		# Paranoia - Clean out any embedded NULs. -- cbwood
 		# hm.  NULs in a param() value means multiple values

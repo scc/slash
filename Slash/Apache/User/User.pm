@@ -9,6 +9,7 @@ use strict;
 use Apache;
 use Apache::Constants qw(:common M_GET REDIRECT);
 use Apache::Cookie;
+use Apache::Request();
 use Apache::File;
 use Apache::ModuleConfig;
 use AutoLoader ();
@@ -55,6 +56,7 @@ sub handler {
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $dbcfg->{constants};
 	my $slashdb = $dbcfg->{slashdb};
+	my $apr = Apache::Request->new($r);
 
 	$r->err_header_out('X-Powered-By' => "Slash $Slash::VERSION");
 	random($r);
@@ -85,7 +87,15 @@ sub handler {
 	# do we need to do this too? i am leaning toward No. -- pudge
 # 	$r->method_number(M_GET);
 
-	my $form = filter_params($r->args, $r->content);
+	my @params_array = $apr->param;
+	my %params;
+	for (@params_array) {
+		$params {$_} = $apr->param("$_") ;
+	}
+	$params{query_apache} = $apr;
+	my $form = filter_params(%params);
+	$form->{query_apache} = $apr;
+
 	@{$form}{keys  %{$constants->{form_override}}} =
 		values %{$constants->{form_override}};
 	my $cookies = Apache::Cookie->fetch;
