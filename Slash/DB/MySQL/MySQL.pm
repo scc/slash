@@ -1476,8 +1476,9 @@ sub getPollVoter {
 	my($self, $id) = @_;
 
 	my $md5 = md5_hex($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR});
+	my $id_quoted = $self->sqlQuote($id);
 	my($voters) = $self->sqlSelect('id', 'pollvoters',
-		"qid=$id AND id='$md5' AND uid=$ENV{SLASH_USER}"
+		"qid=$id_quoted AND id='$md5' AND uid=$ENV{SLASH_USER}"
 	);
 
 	return $voters;

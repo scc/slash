@@ -56,6 +56,7 @@ sub reconcileM2 {
 			$m2_votes{$a} <=> $m2_votes{$b}
 		} keys %m2_votes;
 		my($con, $dis) = @{%m2_votes}{@rank};
+		next if $con+$dis == 0;
 		my($con_avg, $dis_avg) = ($con/($con+$dis), $dis/($con+$dis));
 
 		# Now organize list of consenters/dissenters by UID.
