@@ -81,7 +81,10 @@ usage('Invalid number of comments')
 	                "sid=$story_id"
 	        );
  
-	        map { $family_tree{$_->{cid}} = $_->{pid} } keys %{$comments};
+ 		print "R: ", ref $comments;
+	        map {
+			$family_tree{$comments->{$_}{cid}}=$comments->{$_}{pid}
+		} keys %{$comments};
 	}
  
 	my $t0 = new Benchmark;
