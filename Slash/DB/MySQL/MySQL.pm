@@ -1112,16 +1112,20 @@ sub setDiscussionDelCount {
 sub setStoryFlagsBySid {
 	my($self, $sid_ary, $onoff, $flags) = @_;
 	return 0 unless $sid_ary and @$sid_ary and $flags and @$flags;
+	my @tables = qw( stories );
+	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
 	my $rows = 0;
 	my $sid_list = join(",", map { $self->sqlQuote($_) } @$sid_ary);
 	if ($onoff) {
 		# Set
 		my $flagtext = join(",", map { $self->sqlQuote($_) } @$flags);
-		$rows = $self->sqlUpdate(
-			'discussions',
-			{ -flags => "CONCAT(flags, ',$flagtext')" },
-			"sid IN ($sid_list)"
-		);
+		for my $table (@tables) {
+			$rows = $self->sqlUpdate(
+				$table,
+				{ -flags => "CONCAT(flags, ',$flagtext')" },
+				"sid IN ($sid_list)"
+			);
+		}
 	} else {
 		# Clear
 		my $numeric = -1;
@@ -1129,11 +1133,13 @@ sub setStoryFlagsBySid {
 			$numeric &= -2 if $flag =~ /delete_me/i;	# bit 0
 			$numeric &= -3 if $flag =~ /data_dirty/i;	# bit 1
 		}
-		$rows = $self->sqlUpdate(
-			'discussions',
-			{ -flags => "flags & $numeric" },
-			"sid IN ($sid_list)"
-		);
+		for my $table (@tables) {
+			$rows = $self->sqlUpdate(
+				$table,
+				{ -flags => "flags & $numeric" },
+				"sid IN ($sid_list)"
+			);
+		}
 	}
 	return $rows;
 }
