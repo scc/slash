@@ -8,6 +8,7 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Secti
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Colors','[% constants.rootdir %]/admin.pl?op=colors',500,10);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Stories','[% constants.rootdir %]/admin.pl',1,5);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Templates','[% constants.rootdir %]/admin.pl?op=templates',500,15);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Keywords','[% constants.rootdir %]/admin.pl?op=edit_keyword',10000,14);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Users','[% constants.rootdir %]/users.pl',10000,13);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Vars','[% constants.rootdir %]/admin.pl?op=vars',10000,15);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','[% USE Slash %][% Slash.db.getSubmissionCount(constants.articles_only) %] Submissions','[% constants.rootdir %]/submit.pl?op=list',500,7);

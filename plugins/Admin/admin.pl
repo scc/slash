@@ -31,17 +31,9 @@ sub main {
 			function 	=> \&authorEdit,
 			seclev 		=> 10000,
 		},
-		save_keyword 	=> {
-			function 	=> \&saveKeyword,
-			seclev		=> 100,
-		},
 		edit_keyword	=> {
 			function	=> \&editKeyword,
-			seclev		=> 100,
-		},
-		delete_keyword	=> {
-			function	=> \&deleteKeyword,
-			seclev		=> 100,
+			seclev		=> 10000,
 		},
 		save		=> {
 			function	=> \&saveStory,
@@ -52,6 +44,10 @@ sub main {
 			seclev		=> 100,
 		},
 		list		=> {
+			function	=> \&listStories,
+			seclev		=> 100,
+		},
+		default		=> {
 			function	=> \&listStories,
 			seclev		=> 100,
 		},
@@ -126,6 +122,9 @@ sub main {
 		return;
 	}
 	# non suadmin users can't perform suadmin ops
+	unless($ops->{$op}) {
+		$op = 'default';
+	}
 	$op = 'list' if $user->{seclev} < $ops->{$op}{seclev};
 	$op ||= 'list';
 
@@ -674,46 +673,52 @@ sub colorSave {
 ##################################################################
 # Keyword Editor
 sub editKeyword {
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
+	my ($form, $slashdb, $user, $constants) = @_;
+
+	if($form->{keywordnew}) {
+		$form->{id} = '';
+		saveKeyword(@_);
+	}
+	deleteKeyword(@_) if($form->{keyworddelete});
+	saveKeyword(@_) if($form->{keywordsave});
 
 	my($keywords_menu, $keywords_select);
 
 	$keywords_menu = $slashdb->getDescriptions('keywords', '', 1);
-	$keywords_select = createSelect('nexttid', $keywords_menu, $form->{id}, 1);
+	$keywords_select = createSelect('id', $keywords_menu, $form->{id}, 1, '', 1);
+
+	my $keyword = $slashdb->getRelatedLink($form->{id}) 
+		if $form->{id};
 
 	slashDisplay('keywordEdit', {
 		keywords_select		=> $keywords_select,
+		keyword		=> $keyword,
 	});
 }
 
 ##################################################################
 sub deleteKeyword {
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
+	my ($form, $slashdb, $user, $constants) = @_;
 
 	print getData('keywordDelete-message');
-	$slashdb->deleteKeyword($form->{id});
+	$slashdb->deleteRelatedLink($form->{id});
 	$form->{id} = '';
-	keywordEdit();
 }
 
 ##################################################################
 sub saveKeyword {
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $basedir = getCurrentStatic('basedir');
+	my ($form, $slashdb, $user, $constants) = @_;
+	my $basedir = $constants->{'basedir'};
 
 	return if getCurrentUser('seclev') < 500;
 
 	if ($form->{id}) {
-		$slashdb->setKeyword($form->{id}, $form);
+		$slashdb->setRelatedLink($form->{id},{ keyword =>$form->{keyword}, name =>$form->{name}, link =>$form->{link} } );
 	} else {
-		$form->{id} = $slashdb->createKeyword($form);
+		$form->{id} = $slashdb->createRelatedLink({ keyword =>$form->{keyword}, name =>$form->{name}, link =>$form->{link} });
 	}
 
 	print getData('keywordSave-message');
-	keywordEdit();
 }
 
 ##################################################################

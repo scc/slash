@@ -112,6 +112,9 @@ my %descriptions = (
 	'templatesbysection'
 		=> sub { $_[0]->sqlSelectMany('tpid,name', 'templates', "section = '$_[2]'") },
 
+	'keywords'
+		=> sub { $_[0]->sqlSelectMany('id,CONCAT(keyword, " - ", name)', 'related_links') },
+
 	'pages'
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
 
@@ -410,6 +413,13 @@ sub deleteSectionTopicsByTopic {
 	my($self, $tid) = @_;
 
 	$self->sqlDo("DELETE FROM section_topics WHERE tid=$tid");
+}
+
+########################################################
+sub deleteRelatedLink {
+	my($self, $id) = @_;
+
+	$self->sqlDo("DELETE FROM related_links WHERE id=$id");
 }
 
 ########################################################
@@ -1012,7 +1022,7 @@ sub setBlock {
 
 ########################################################
 sub setRelatedLink {
-	_genericSet('related_links', 'keyword', '', @_);
+	_genericSet('related_links', 'id', '', @_);
 }
 
 ########################################################
@@ -3885,7 +3895,7 @@ sub getPollQuestion {
 
 ########################################################
 sub getRelatedLink {
-	my $answer = _genericGet('related_links', 'keyword', '', @_);
+	my $answer = _genericGet('related_links', 'id', '', @_);
 	return $answer;
 }
 
@@ -4577,7 +4587,7 @@ sub getStories {
 
 ########################################################
 sub getRelatedLinks {
-	my $answer = _genericGets('related_links', 'keyword', '', @_);
+	my $answer = _genericGets('related_links', 'id', '', @_);
 	return $answer;
 }
 

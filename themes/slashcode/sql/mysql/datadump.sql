@@ -203,7 +203,7 @@ INSERT INTO related_links (keyword, name, link) VALUES ('intel','Intel','http://
 INSERT INTO related_links (keyword, name, link) VALUES ('linux','Linux','http://www.linux.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('redhat','Red Hat','http://www.redhat.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('red hat','Red Hat','http://www.redhat.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('example.com','example.com','http://www.example.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('www.example.com','www.example.com','http://www.example.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('slashdot','Slashdot','http://slashdot.org');
 INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://slashcode.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('cmdrtaco','Rob Malda','http://CmdrTaco.net');

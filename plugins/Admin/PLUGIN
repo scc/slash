@@ -21,3 +21,5 @@ template=templates/templateEdit;admin;default
 template=templates/titles;admin;default
 template=templates/topicEdit;admin;default
 template=templates/varEdit;admin;default
+template=templates/keywordEdit;admin;default
+template=templates/data;admin;default

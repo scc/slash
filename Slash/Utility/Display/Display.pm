@@ -123,6 +123,15 @@ sub createSelect {
 
 	return unless (ref $hashref eq 'HASH' && keys %$hashref);
 
+	if ($ordered && !ref ($ordered)) {
+		$ordered = [
+			map  { $_->[0] }
+			sort { $a->[1] cmp $b->[1] }
+			map  { [$_, lc $hashref->{$_}] }
+			keys %$hashref
+		];
+	}
+
 	my $display = {
 		label	=> $label,
 		items	=> $hashref,
