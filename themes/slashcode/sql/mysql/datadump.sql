@@ -89,13 +89,13 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000')
+INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
 
 #
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments_hash (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000')
+INSERT INTO comments_hash (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000');
 #
 # Dumping data for table 'comments'
 #
@@ -197,8 +197,9 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Rece
 # Dumping data for table 'newstories'
 #
 
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the slashdotrc.pl to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','',0,0,'articles',0,0,'0,0,0,0,0,0,0','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46','So it took some doing, but it looks like you\'ve got Slash installed and ready to rock.  You can now login using <A href=/admin.pl>backSlash</A>, the Slash Code Administration tool.  The default account is God and whatever password you set during the install.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,1,0,0,0,0','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
+
+INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0');
+INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0');
 
 #
 # Dumping data for table 'pollanswers'
@@ -252,9 +253,15 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the variables (in the admin menu) to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','',1,0,'articles',0,0,'0,0,0,0,0,0,0','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, introtext, bodytext, writestatus, hits, section, displaystatus, commentstatus, hitparade, relatedtext, extratext) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46','So it took some doing (hopefully not too much), and it looks like you\'ve got Slash installed and ready to rock.  You can now use <A href="/admin.pl">backSlash</A>, the Slash Code Administration tool, if you are logged in as the admin user you set up during installation.  And you might wanna start posting some stories too.','',0,0,'articles',0,0,'1,1,1,0,0,0,0','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>',NULL);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0');
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0');
 
+#
+# Dumping data for table 'story_text'
+#
+
+INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES ('00/01/25/1236215','You should play around with the admin stuff.  Configure things to\r\nyour tastes.  You should also edit the variables (in the admin menu) to define things like your websites name and slogan.  You should also donate some money to the <A href=http://www.fsf.org>FSF</A> and <A href=http://slashdot.org>Read Slashdot</A>.\r\n','','<LI><A href=http://www.fsf.org>FSF</A></LI>\n<LI><A href=http://slashdot.org>Read Slashdot</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>');
+INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES ('00/01/25/1430236','So it took some doing (hopefully not too much), and it looks like you\'ve got Slash installed and ready to rock.  You can now use <A href="/admin.pl">backSlash</A>, the Slash Code Administration tool, if you are logged in as the admin user you set up during installation.  And you might wanna start posting some stories too.','','<LI><A href=/admin.pl>backSlash</A></LI>\n<LI><A HREF=\"//www.example.com/search.pl?topic=slash\">More on Slash</A></LI>\r\n<LI><A HREF=\"//www.example.com/search.pl?author=God\">Also by God</A></LI>');
 #
 # Dumping data for table 'storiestuff'
 #

@@ -1321,14 +1321,49 @@ sub deleteStoryAll {
 	my($self, $sid) = @_;
 
 	$self->sqlDo("DELETE from stories where sid='$sid'");
+	$self->sqlDo("DELETE from story_text where sid='$sid'");
 	$self->sqlDo("DELETE from newstories where sid='$sid'");
 }
 
 ########################################################
 sub setStory {
-	_genericSet('stories', 'sid', 'story_param', @_);
+	my($self, $sid, $hashref) = @_;
+	my(@param, %update_tables, $cache);
 	# ??? should we do this?  -- pudge
-	_genericSet('newstories', 'sid', 'story_param', @_);
+	#_genericSet('newstories', 'sid', 'story_param', @_);
+	my $table = 'stories';
+	my $table_prime = 'sid';
+	my $param_table = 'story_param';
+	my $tables = [qw(
+		stories story_text
+	)];
+
+	$cache = _genericGetCacheName($self, $tables);
+
+	for (keys %$hashref) {
+		(my $clean_val = $_) =~ s/^-//;
+		my $key = $self->{$cache}{$clean_val};
+		if ($key) {
+			push @{$update_tables{$key}}, $_;
+		} else {
+			push @param, [$_, $hashref->{$_}];
+		}
+	}
+
+	for my $table (keys %update_tables) {
+		my %minihash;
+		for my $key (@{$update_tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
+		}
+		$self->sqlUpdate($table, \%minihash, 'sid=' . $sid, 1);
+	}
+	# What is worse, a select+update or a replace?
+	# I should look into that.
+	for (@param)  {
+		$self->sqlReplace($param_table, { sid => $sid, name => $_->[0], value => $_->[1]})
+			if defined $_->[1];
+	}
 }
 
 ########################################################
@@ -2367,15 +2402,20 @@ sub createStory {
 		'time'		=> $story->{'time'},
 		title		=> $story->{title},
 		section		=> $story->{section},
-		bodytext	=> $story->{bodytext},
-		introtext	=> $story->{introtext},
 		writestatus	=> $story->{writestatus},
-		relatedtext	=> $story->{relatedtext},
 		displaystatus	=> $story->{displaystatus},
 		commentstatus	=> $story->{commentstatus}
 	};
 
+	my $text = {
+		sid		=> $sid,
+		bodytext	=> $story->{bodytext},
+		introtext	=> $story->{introtext},
+		relatedtext	=> $story->{relatedtext},
+	};
+
 	$self->sqlInsert('stories', $data);
+	$self->sqlInsert('story_text', $text);
 	$self->sqlInsert('newstories', $data);
 	$self->_saveExtras($story);
 
@@ -2401,12 +2441,15 @@ sub updateStory {
 		'time'		=> $form->{'time'},
 		title		=> $form->{title},
 		section		=> $form->{section},
-		bodytext	=> $form->{bodytext},
-		introtext	=> $form->{introtext},
 		writestatus	=> $form->{writestatus},
-		relatedtext	=> $form->{relatedtext},
 		displaystatus	=> $form->{displaystatus},
 		commentstatus	=> $form->{commentstatus}
+	}, 'sid=' . $self->{_dbh}->quote($form->{sid}));
+
+	$self->sqlUpdate('story_text', {
+		bodytext	=> $form->{bodytext},
+		introtext	=> $form->{introtext},
+		relatedtext	=> $form->{relatedtext},
 	}, 'sid=' . $self->{_dbh}->quote($form->{sid}));
 
 	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
@@ -2619,13 +2662,78 @@ sub _saveExtras {
 
 ########################################################
 sub getStory {
-	my($self) = @_;
 	# We need to expire stories
-	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
-	my $answer = _genericGetCache('stories', 'sid', 'story_param', @_);
+	#_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
+	#my $answer = _genericGetCache('stories', 'sid', 'story_param', @_);
+	my($self, $id, $val) = @_;
+	my $answer;
+	my $tables = [qw(
+		stories story_text
+	)];
+	# The sort makes sure that someone will always get the cache if
+	# they have the same tables
+	my $cache = _genericGetCacheName($self, $tables);
+
+	if (ref($val) eq 'ARRAY') {
+		my($values, %tables, @param, $where, $table);
+		for (@$val) {
+			(my $clean_val = $_) =~ s/^-//;
+			if ($self->{$cache}{$clean_val}) {
+				$tables{$self->{$cache}{$_}} = 1;
+				$values .= "$_,";
+			} else {
+				push @param, $_;
+			}
+		}
+		chop($values);
+
+		for (keys %tables) {
+			$where .= "$_.sid=$id AND ";
+		}
+		$where =~ s/ AND $//;
+
+		$table = join ',', keys %tables;
+		$answer = $self->sqlSelectHashref($values, $table, $where);
+		for (@param) {
+			my $val = $self->sqlSelect('value', 'stories_param', "sid=$id AND name='$_'");
+			$answer->{$_} = $val;
+		}
+
+	} elsif ($val) {
+		(my $clean_val = $val) =~ s/^-//;
+		my $table = $self->{$cache}{$clean_val};
+		if ($table) {
+			($answer) = $self->sqlSelect($val, $table, "sid=$id");
+		} else {
+			($answer) = $self->sqlSelect('value', 'stories_param', "sid=$id AND name='$val'");
+		}
+
+	} else {
+		my($where, $table, $append);
+		for (@$tables) {
+			$where .= "$_.sid=$id AND ";
+		}
+		$where =~ s/ AND $//;
+
+		$table = join ',', @$tables;
+		$answer = $self->sqlSelectHashref('*', $table, $where);
+		$append = $self->sqlSelectAll('name,value', 'stories_param', "sid=$id");
+		for (@$append) {
+			$answer->{$_->[0]} = $_->[1];
+		}
+	}
+
+	return $answer;
 
 	return $answer;
 }
+
+########################################################
+sub getNewStory {
+	my($self) = shift;
+	$self->getStory(@_);
+}
+
 
 ########################################################
 sub getAuthor {
@@ -2902,12 +3010,6 @@ sub getSections {
 ########################################################
 sub getModeratorLog {
 	my $answer = _genericGet('moderatorlog', 'id', '', @_);
-	return $answer;
-}
-
-########################################################
-sub getNewStory {
-	my $answer = _genericGet('newstories', 'sid', '', @_);
 	return $answer;
 }
 

@@ -138,7 +138,7 @@ CREATE TABLE comments (
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1) DEFAULT '-1',
   reason int(11) DEFAULT '0',
-	signature char(32),
+  signature char(32) NOT NULL,
   PRIMARY KEY (cid),
   KEY display (sid,points,uid),
   KEY byname (uid,points),
@@ -164,7 +164,7 @@ CREATE TABLE comments_hash (
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1) DEFAULT '-1',
   reason int(11) DEFAULT '0',
-	signature char(32),
+  signature char(32),
   PRIMARY KEY (cid),
   KEY display (sid,points,uid),
   KEY byname (uid,points),
@@ -326,16 +326,12 @@ CREATE TABLE newstories (
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
   time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  introtext text,
-  bodytext text,
   writestatus int(1) DEFAULT '0' NOT NULL,
   hits int(1) DEFAULT '0' NOT NULL,
   section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-  relatedtext text,
-  extratext text,
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
@@ -413,6 +409,20 @@ CREATE TABLE sessions (
 );
 
 #
+# Table structure for table 'spamarmors'
+#
+
+DROP TABLE IF EXISTS spamarmors;
+CREATE TABLE spamarmors (
+  armor_id int(11) NOT NULL auto_increment,
+  name varchar(40) default NULL,
+  code text,
+  active int(11) default '1',
+  PRIMARY KEY  (armor_id)
+) TYPE=MyISAM;
+
+
+#
 # Table structure for table 'stories'
 #
 
@@ -425,16 +435,11 @@ CREATE TABLE stories (
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
   time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  introtext text,
-  bodytext text,
   writestatus int(1) DEFAULT '0' NOT NULL,
-  hits int(1) DEFAULT '0' NOT NULL,
   section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-  relatedtext text,
-  extratext text,
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
@@ -445,13 +450,12 @@ CREATE TABLE stories (
 #
 
 DROP TABLE IF EXISTS story_text;
-CREATE TABLE stories (
+CREATE TABLE story_text (
   sid char(16) DEFAULT '' NOT NULL,
   introtext text,
   bodytext text,
   relatedtext text,
-  extratext text,
-  PRIMARY KEY (sid),
+  PRIMARY KEY (sid)
 );
 
 #
@@ -688,16 +692,4 @@ CREATE TABLE vars (
   description varchar(127),
   PRIMARY KEY (name)
 );
-
-#
-# Table structure for table 'spamarmors'
-#
-
-CREATE TABLE spamarmors (
-  armor_id int(11) NOT NULL auto_increment,
-  name varchar(40) default NULL,
-  code text,
-  active int(11) default '1',  # reserved for later. Not yet in use.
-  PRIMARY KEY  (armor_id)
-) TYPE=MyISAM;
 
