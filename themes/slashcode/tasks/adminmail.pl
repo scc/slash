@@ -57,8 +57,10 @@ mod points $points
 
      total $count->{'total'}
     unique $count->{'unique'}
+    users $count->{'unique_users'}
 total hits $sdTotalHits
   homepage $count->{'index'}{'index'}
+  journals $count->{'journals'}
    indexes
 EOT
 
