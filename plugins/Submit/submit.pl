@@ -163,7 +163,9 @@ sub previewForm {
 	my $sub = $slashdb->getSubmission($form->{subid},
 		[qw(email name subj tid story time comment uid)]);
 
-	$sub->{email} = processSub($sub->{email});
+	my $email_known = "";
+	$email_known = "mailto" if $sub->{email} eq $user->{fakeemail};
+	$sub->{email} = processSub($sub->{email}, $email_known);
 
 	$slashdb->setSession(getCurrentUser('uid'), { lasttitle => $sub->{subj} })
 		if $user->{is_admin};
@@ -318,6 +320,7 @@ sub displayForm {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	my $user = getCurrentUser();
 	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
@@ -358,11 +361,15 @@ sub displayForm {
 	$topic->{imageclean} = $topic->{image};
 	$topic->{imageclean} = "$constants->{imagedir}/topics/$topic->{imageclean}" if $topic->{imageclean} =~ /^\w+\.\w+$/;
 
+	$fakeemail = $form->{email} if $form->{email};
+	my $known = "";
+	$known = "mailto" if $fakeemail eq $user->{fakeemail};
+
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),
 		savestory	=> $form->{story} && $form->{subj},
 		username	=> $form->{name} || $username,
-		fakeemail	=> processSub($form->{email} || $fakeemail),
+		fakeemail	=> processSub($fakeemail, $known),
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $topic,
 		width		=> '100%',
@@ -446,13 +453,13 @@ sub saveSub {
 
 #################################################################
 sub processSub {
-	my($home) = @_;
+	my($home, $known_to_be) = @_;
 
 	my $proto = qr[^(?:mailto|http|https|ftp|gopher|telnet):];
 
-	if ($home =~ /\@/ && $home !~ $proto) {
+	if ($known_to_be eq 'mailto' or ($home =~ /\@/ && $home !~ $proto)) {
 		$home = "mailto:$home";
-	} elsif ($home ne '' && $home !~ $proto) {
+	} elsif ($known_to_be eq 'http' or ($home ne '' && $home !~ $proto)) {
 		$home = "http://$home";
 	}
 
