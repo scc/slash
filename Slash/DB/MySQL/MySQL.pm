@@ -500,6 +500,21 @@ sub getDiscussions {
 	return $discussion;
 }
 
+#################################################################
+# Less then 2, ince 2 would be a read only discussion
+sub getDiscussionsByCreator {
+	my($self, $uid) = @_;
+	return unless $uid;
+
+	my $discussion = $self->sqlSelectAll("id, title, url",
+		"discussions",
+		"type < 2 AND ts <= now() AND uid = $uid",
+		"ORDER BY ts DESC LIMIT 50"
+	);
+
+	return $discussion;
+}
+
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called during authentication
@@ -1481,7 +1496,7 @@ sub getSectionBlock {
 sub getSectionBlocks {
 	my($self) = @_;
 
-	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "blocks", "portal=1", "order by bid");
+	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "blocks", "portal=1", "order by title");
 
 	return $blocks;
 }

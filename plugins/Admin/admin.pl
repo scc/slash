@@ -156,7 +156,7 @@ sub main {
 
 	# Display who is logged in right now.
 	footer();
-	writeLog('admin', $user->{uid}, $op, $form->{sid});
+	writeLog($user->{uid}, $op, $form->{sid});
 }
 
 

@@ -90,6 +90,7 @@ CREATE TABLE blocks (
 	url varchar(128),
 	rdf varchar(255),
 	retrieve tinyint NOT NULL DEFAULT '0',
+	last_update timestamp,
 	PRIMARY KEY (bid),
 	KEY type (type),
 	KEY section (section)
@@ -240,6 +241,7 @@ CREATE TABLE discussions (
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (topic) REFERENCES topics(tid),
+	INDEX (type,uid,ts),
 	KEY (sid),
 	PRIMARY KEY (id)
 ) TYPE = myisam;

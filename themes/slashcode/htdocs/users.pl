@@ -736,7 +736,7 @@ sub tildeEd {
   	# repeated from above?
 	$customize_title = getTitle('tildeEd_customize_title');
 
-	for (@$sections_description) {
+	for (sort  sort {$::b->[1] <=> $::a->[1]} @$sections_description) {
 		my($bid, $title, $boldflag) = @$_;
 
 		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ?

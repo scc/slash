@@ -40,7 +40,7 @@ sub main {
 		});
 	}
 
-	writeLog('404');
+	writeLog($url);
 	footer();
 }
 

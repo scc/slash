@@ -234,6 +234,10 @@ sub userdir_handler {
 			$r->args("nick=$nick&op=display");
 			$r->uri('/journal.pl');
 			$r->filename($constants->{basedir} . '/journal.pl');
+		} elsif ($op eq 'discussions') {
+			$r->args("nick=$nick&op=creator_index");
+			$r->uri('/comments.pl');
+			$r->filename($constants->{basedir} . '/comments.pl');
 		} else {
 			$r->args("nick=$nick");
 			$r->uri('/users.pl');

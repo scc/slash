@@ -137,6 +137,12 @@ sub main {
 			formname 		=> 'discussions',
 			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
 		},
+		creator_index			=> {
+			function		=> \&commentIndexCreator,
+			seclev			=> 0,
+			formname 		=> 'discussions',
+			checks			=> [],
+		},
 		moderate		=> {
 			function		=> \&moderate,
 			seclev			=> 1,
@@ -322,7 +328,7 @@ sub displayComments {
 sub commentIndex {
 	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
-	titlebar("90%", "Several Active Discussions");
+	titlebar("90%", getData('active_discussions'));
 	if ($form->{all}) {
 		my $discussions = $slashdb->getDiscussions();
 		slashDisplay('discuss_list', {
@@ -333,6 +339,33 @@ sub commentIndex {
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 		});
+	}
+}
+
+##################################################################
+# Index of recent discussions: Used if comments.pl is called w/ no
+# parameters
+sub commentIndexCreator {
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+
+	my($uid, $nickname);
+	if($form->{uid} or $form->{nick}) {
+		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		$nickname = $slashdb->getUser($uid, 'nickname');
+	} else {
+		$nickname	= $user->{nickname};
+		$uid	= $user->{uid};
+	}
+
+	titlebar("90%", getData('user_discussion', { name => $nickname}));
+	my $discussions = $slashdb->getDiscussionsByCreator($uid);
+	if(@$discussions) {
+		slashDisplay('discuss_list', {
+			discussions	=> $discussions,
+			supress_create	=> 1,
+		});
+	} else {
+		print getData('users_no_discussions');
 	}
 }
 
