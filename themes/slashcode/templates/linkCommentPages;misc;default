@@ -24,7 +24,7 @@ __template__
 	[% FOREACH p = [0 .. pages] %]
 		[% start = user.commentlimit * p %]
 		[% IF p != 0 %] | [% END %]
-		[% IF start == form.startat || !form.startat %]
+		[% IF start == form.startat || (!form.startat && p == 0) %]
 			<B>([% p + 1 %])</B>
 		[% ELSE %]
 			[% Slash.linkComment({
