@@ -91,14 +91,7 @@ $task{$me}{code} = sub {
 	prog2file("$bd/index.pl", "ssi=yes", "$bd/index.shtml");
 	++$total_freshens;
 
-# Are we still using this var? I see it in datadump.sql but it doesn't
-# seem to get set anywhere except here. - Jamie 2001/05/04
-#	my $w = $slashdb->getVar('writestatus', 'value');
-#       if ($updates{articles} ne "" || $w ne "0") {
-#		$slashdb->setVar("writestatus", "0");
-#       }
-
-	foreach my $key (keys %{$updates{section}}) {
+	for my $key (keys %{$updates{section}}) {
 		next unless $key;
 		prog2file("$bd/index.pl", "ssi=yes section=$key", "$bd/$key/index.shtml");
 		++$total_freshens;

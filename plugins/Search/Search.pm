@@ -141,34 +141,33 @@ sub findUsers {
 ####################################################################################
 sub findStory {
 	my($self, $form, $start, $limit) = @_;
-	my $sql;
-	$limit = " LIMIT $start, $limit" if $limit;
+	$start ||= 0;
+
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $columns = "nickname, title, $story_table.sid as sid, time, commentcount, section";
+	my $tables = "$story_table, story_text, users, discussions";
+	my $other = " ORDER BY time DESC";
+	$other .= " LIMIT $start, $limit" if $limit;
+
+	# The big old searching WHERE clause, fear it
 	my $key = $self->_keysearch($form->{query}, ['title', 'introtext']);
-
-	$sql .= "SELECT nickname,title,stories.sid as sid, time, commentcount,section ";
-
-	$sql .= " FROM stories, story_text, users WHERE displaystatus>=0 ";
-
-	$sql .= " AND stories.sid=story_text.sid ";
-	$sql .= " AND $key " if $form->{query};
-
-	if ($form->{section}) {
-		$sql .= qq| AND ((displaystatus = 0 and "$form->{section}" = "")|;
-		$sql .= qq| OR (section = "$form->{section}" AND displaystatus >= 0))|;
+	my $where = "$story_table.sid = story_text.sid AND $story_table.uid = users.uid";
+	$where .= " AND $key" if $form->{query};
+	if ($form->{section}) { 
+		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";
+		$where .= " OR (section = '$form->{section}' AND displaystatus >= 0))";
+	} else {
+		$where .= " AND displaystatus >= 0";
 	}
-
-	$sql .= " AND time < now() AND NOT FIND_IN_SET('delete_me', flags) ";
-	$sql .= " AND stories.uid=" . $self->sqlQuote($form->{author})
+	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', flags) ";
+	$where .= " AND $story_table.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
-	$sql .= " AND section=" . $self->sqlQuote($form->{section})
+	$where .= " AND section=" . $self->sqlQuote($form->{section})
 		if $form->{section};
-	$sql .= " AND tid=" . $self->sqlQuote($form->{topic})
+	$where .= " AND tid=" . $self->sqlQuote($form->{topic})
 		if $form->{topic};
-
-	$sql .= " AND stories.uid=users.uid ";
-
-	$sql .= " ORDER BY ";
-	$sql .= " time DESC $limit";
+	
+	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;

@@ -250,7 +250,10 @@ sub createComment {
 	# is correct?  -- pudge
 	$self->sqlUpdate(
 		"discussions",
-		{ -commentcount => 'commentcount+1' },
+		{
+			-commentcount	=> 'commentcount+1',
+			-flags		=> "CONCAT(flags, ',hitparade_dirty')",
+		},
 		"id=$header",
 	);
 
@@ -1190,9 +1193,16 @@ sub setDiscussionHitParade {
 		# (Guaranteed atomicity is not necessary here;  hitparade is
 		# only supposed to be close enough for horseshoes.)
 		for my $threshold (sort {$a<=>$b} keys %$hp) {
-			$self->sqlDo("UPDATE discussion_hitparade
-				SET count=$hp->{$threshold}
-				WHERE discussion=$discussion_id AND threshold=$threshold");
+			# We *should* be able to just sqlUpdate, not Replace,
+			# but this doesn't get performed all that much, it's
+			# not performance-intensive, and the algorithm fails
+			# annoyingly if those rows are absent, so Replace is
+			# a good thing IMHO.
+			$self->sqlReplace("discussion_hitparade", {
+				discussion	=> $discussion_id,	# key
+				threshold	=> $threshold,		# key
+				count		=> $hp->{$threshold},	# value
+			});
 		}
 	}
 }
@@ -2745,14 +2755,15 @@ sub getStoriesEssentials {
 			$self->getSection($section, 'artcount') :
 			$self->getSection($section)->{artcount};
 
+	# Note that we're not doing a join on stories/discussions.  We're
+	# just getting the sid now, and we'll pick up the discussion field
+	# later when we query that table (which we have to do anyway;
+	# separating the two queries is faster than a join).
 
-	my $columns = 	"$story_table.sid, $story_table.uid, commentcount,
-			$story_table.title, section, time, hits,
-			discussions.id as discussion";
+	my $columns = "$story_table.sid, $story_table.uid,
+			$story_table.title, section, time, hits";
 
-	my $from = "$story_table, discussions";
-
-	my $where = "time < NOW() AND $story_table.discussion=discussions.id ";
+	my $where = "time < NOW() ";
 	$where .= "AND displaystatus=0 " unless $form->{section};
 	$where .= "AND (displaystatus>=0 AND section='$section') "
 		if $section_display;
@@ -2791,9 +2802,9 @@ sub getStoriesEssentials {
 			$yesterday_str ";
 	}
 
-	my(@stories, @discussion_ids, $count);
-	my $cursor = $self->sqlSelectMany($columns, $from, $where, $other)
-		or errorLog("error in getStoriesEssentials columns $columns from $from where $where other $other");
+	my(@stories, @story_ids, @discussion_ids, $count);
+	my $cursor = $self->sqlSelectMany($columns, $story_table, $where, $other)
+		or errorLog("error in getStoriesEssentials columns $columns story_table $story_table where $where other $other");
 
 	while (my $row = $cursor->fetchrow_hashref) {
 
@@ -2815,11 +2826,30 @@ sub getStoriesEssentials {
 		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
 		push @stories, $row;
-		push @discussion_ids, $row->{discussion};
+		push @story_ids, $row->{sid};
 		last if ++$count >= $limit;
 
 	}
 	$cursor->finish;
+
+	# Convert the list of story ids into the list of corresponding
+	# discussion ids.  %sid_to_disc_data's key is a story sid, and
+	# its value is an arrayref of discussion id and commentcount.
+	my %sid_to_disc_data = ( );
+	if (@story_ids) {
+		my $sid_list = join(",",
+			map { $self->sqlQuote($_) }
+			@story_ids );
+		%sid_to_disc_data =
+			map { $_->[0], [ $_->[1], $_->[2] ] }
+			@{ $self->sqlSelectAll("sid, id, commentcount",
+				"discussions",
+				"sid IN ($sid_list)") };
+	}
+	@discussion_ids =
+		grep { $_ }			# if an error, ignore
+		map { $_->[0] }			# get the discussion id
+		values %sid_to_disc_data;
 
 	# Because we're storing hitparade as a collection of multiple rows for
 	# each discussion (and thus story), it really only makes sense to select
@@ -2829,27 +2859,35 @@ sub getStoriesEssentials {
 	# Double blech.
 	# First, fill a hash with the hitparade values for the discussions
 	# (stories) that we need.
-	my $discussion_id_list = join(",", map { $_->{discussion} } @stories);
-	$cursor = $self->sqlSelectMany(
-		"discussion, threshold, count",
-		"discussion_hitparade",
-		"discussion IN ($discussion_id_list)"
-	);
 	my %count = ( );
-	while (my $row = $cursor->fetchrow_hashref) {
-		$count{$row->{discussion}}{$row->{threshold}} = $row->{count};
+	if (@discussion_ids) {
+		my $discussion_id_list = join(",", @discussion_ids);
+		$cursor = $self->sqlSelectMany(
+			"discussion, threshold, count",
+			"discussion_hitparade",
+			"discussion IN ($discussion_id_list)"
+		);
+		while (my $row = $cursor->fetchrow_hashref) {
+			$count{$row->{discussion}}{$row->{threshold}} = $row->{count};
+		}
+		$cursor->finish;
 	}
-	$cursor->finish;
-	# Then, go through the stories and assemble a comma-delimited list
-	# based on the values in the hash for each story.
+
+	# Then, go through the stories, assign the {discussion} field, and
+	# assemble a comma-delimited list based on the values in the hash
+	# for each story.
 	my $min = getCurrentStatic('comment_minscore');
 	my $max = getCurrentStatic('comment_maxscore');
 	for my $story (@stories) {
+		$story->{discussion} = $sid_to_disc_data{$story->{sid}}[0];
+		$story->{commentcount} = $sid_to_disc_data{$story->{sid}}[1];
 		$story->{hitparade} = join (",",
 			map { $count{$story->{discussion}}{$_} || 0 }
 				($min .. $max)
 		);
 	}
+
+#	{ use Data::Dumper; print STDERR "getStoriesEssentials returning: " . Dumper(\@stories) . "\n"; }
 
 	return \@stories;
 }
@@ -4299,7 +4337,7 @@ F
 $story_table.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
 OR ($story_table.section=$section_dbi and displaystatus > -1))
-AND time < NOW() AND NOT FIND_IN_SET("delete_me", flags)
+AND time < NOW() AND NOT FIND_IN_SET("delete_me", $story_table.flags)
 W
 GROUP BY $story_table.sid
 ORDER BY time DESC

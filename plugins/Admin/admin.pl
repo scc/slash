@@ -1056,18 +1056,14 @@ sub editStory {
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} else { # New Story
-		$storyref->{flags} = "data_dirty";
-		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
-		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
+		$storyref->{displaystatus} =	$slashdb->getVar('defaultdisplaystatus', 'value');
+		$storyref->{commentstatus} =	$slashdb->getVar('defaultcommentstatus', 'value');
+		$storyref->{tid} =		$slashdb->getVar('defaulttopic', 'value');
+		$storyref->{section} =		$slashdb->getVar('defaultsection', 'value');
 
 		$storyref->{'time'} = $slashdb->getTime();
-		# hmmm. I don't like hardcoding these PMG 10/19/00
-		# I would agree. How about setting defaults in vars
-		# that can be override? -Brian
-		$storyref->{tid} ||= 'news';
-		$storyref->{section} ||= 'articles';
-
 		$storyref->{uid} = $user->{uid};
+		$storyref->{flags} = "data_dirty";
 	}
 
 	$sections = $slashdb->getDescriptions('sections');

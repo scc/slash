@@ -29,8 +29,9 @@ my $PROGNAME = basename($0);
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:R', \%opts);
-usage() if ($opts{'h'} || !keys %opts);
+usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:P:R', \%opts);
+usage() if !$opts{'u'} and ($opts{'h'} or !keys %opts);
+# if invoked with both -u and -h, call usage() later, after we load Slash::Install
 version() if $opts{'v'};
 
 $| = 1;
@@ -56,6 +57,7 @@ unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
 $driver = $drivers{DBIx::Password::getDriver($opts{'u'})};
 my $install = Slash::Install->new($opts{'u'});
 
+usage() if $opts{'u'} and $opts{'h'};
 
 eval { require DBIx::Password };
 
@@ -161,36 +163,54 @@ for (keys %$themes) {
 }
 
 #---------------------------------------------------
-print "\nPlease select which plugins you would like?\n";
 my $plugins = $install->getPluginList($PREFIX);
-my @answers;
-for (sort keys %$plugins) {
-	if ($themes->{$theme}{plugin}{$plugins->{$_}{'name'}}) {
-		print "(*)$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
-		push @answers, $plugins->{$_}{'order'};
-	} else {
-		print "( )$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
-	}
-}
-my $select = 'a';
-print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
-while ($select ne 'q'){
-	chomp($select = <STDIN>);
-
-	if ($select =~ /^\d\,/) {
-		@answers = split(/\,/, $select);
-		last;
-	} elsif ($select eq 'a') {
-		for (keys %$plugins) {
-			my $answer = $plugins->{$_}{name};
-			$themes->{$theme}{plugin}{$answer} = 1;	
+my @plugins = ( );
+if ($opts{'P'}) {
+	@plugins = grep { exists $plugins->{$_} }
+		split /\s*,\s*/, $opts{'P'};
+} else {
+	my @default_plugins = ( );
+	my %order_to_name = ( );
+	print "\nPlease select which plugins you would like ('*' marks default).\n";
+	for my $key (sort keys %$plugins) {
+		my $c = " ";
+		if ($themes->{$theme}{plugin}{$plugins->{$key}{name}}) {
+			$c = "*";
+			push @default_plugins, $key;
 		}
-		last;
-	} elsif ($select ne 'q') {
-		my $answer = $plugins->{$select}{name};
-		$themes->{$theme}{plugin}{$select} = 1;	
+		print "($c) $plugins->{$key}{order}. $key - $plugins->{$key}{description}\n";
+		$order_to_name{$plugins->{$key}{order}} = $key;
+	}
+	my $select = 'a';
+	print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
+	while ($select ne 'q'){
+		chomp($select = <STDIN>);
+		if ($select =~ /^\d\,/) {
+			@default_plugins = ( );
+			@plugins = grep { $_ } map { $order_to_name{$_} } split(/\,/, $select);
+			last;
+		} elsif ($select eq 'a') {
+			for my $key (sort keys %$plugins) {
+				push @plugins, $plugins->{$key}{name};
+			}
+			last;
+		} elsif ($select ne 'q') {
+			@default_plugins = ( );
+			push @plugins, $order_to_name{$select};
+		}
+	}
+	push @plugins, @default_plugins if @default_plugins;
+}
+# Zero out the list of plugins
+%{$themes->{$theme}{plugin}} = ( );
+# Add back in the ones just selected
+for my $plugin (@plugins) {
+	if ($plugins->{$plugin}) {
+		$themes->{$theme}{plugin}{$plugin} = 1;
 	}
 }
+# Show the user what was picked
+print "Selected: " . join(" ", sort keys %{$themes->{$theme}{plugin}}) . "\n";
 
 
 if ($opts{'L'}) {
@@ -349,7 +369,7 @@ $install->create({ name => 'base_install_directory',	value => $PREFIX});
 $install->create({ name => 'site_install_directory',	value => "$prefix_site/$sitename"});
 $install->create({ name => 'db_driver',			value => "$driver"});
 
-#$install->installPlugins(\@answers, 0, $symlink);
+#$install->installPlugins(\@plugins, 0, $symlink);
 $install->installTheme($theme, 0, $symlink);
 
 my $uid = $slashdb->createUser($username, $email, $username);
@@ -507,6 +527,19 @@ Have fun with your new site. You should also consider registering it:
 
 sub usage {
 	print "*** $_[0]\n" if $_[0];
+
+	# Generate a sample list of plugins which just happens to be
+	# the default list for the first theme.
+	my $sample_plugins = '';
+	my $install = Slash::Install->new('slash') unless $install;
+	if ($install) {
+		my $plugins = $install->getPluginList($PREFIX);
+		my $themes = $install->getThemeList($PREFIX);
+		my $theme = (sort keys %$themes)[0];
+		$sample_plugins = join(",", sort keys %{$themes->{$theme}{plugin}});
+	}
+	$sample_plugins = ", e.g.:\n\t\t\t-P$sample_plugins" if $sample_plugins;
+
 	# Remember to doublecheck these match getopts()!
 	print <<EOT;
 
@@ -527,6 +560,7 @@ Site options:
 	-n	Site name
 	-R	Reuse hostname as site name (boolean)
 	-L	Install files in htdocs/ and tasks/ using symlinks [y/n]
+	-P	Comma-separated list of plugin names$sample_plugins
 
 User options:
 	-a	Admin name
