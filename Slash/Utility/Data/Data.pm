@@ -989,21 +989,23 @@ sub fixurl {
 		# "if (1)" to remind us of this...
 		my $uri = new URI $url;
 		if ($uri && $uri->can('host') && $uri->can('authority')) {
-			# don't need to print the port if we
-			# already have the correct port
-			my $host = $uri->can('host_port') &&
+			# Make sure the host and port are legit, then zap
+			# the port if it's the default port.
+			my $host = $uri->host;
+			$host =~ tr/A-Za-z0-9.-//cd; # per RFC 1035
+			$uri->host($host);
+			my $authority = $uri->can('host_port') &&
 				$uri->port != $uri->default_port
 				? $uri->host_port
-				: $uri->host;
-			$host =~ tr/A-Za-z0-9.-//cd; # per RFC 1035
-			$uri->authority($host);
+				: $host;
+			$uri->authority($authority);
 			$url = $uri->canonical->as_string;
 		}
 	}
 
 	# we don't like SCRIPT at the beginning of a URL
 	my $decoded_url = decode_entities($url);
-	return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
+	return $decoded_url =~ /^\s*\w*script\b/i ? undef : $url;
 }
 
 #========================================================================
