@@ -21,7 +21,7 @@ __template__
 	IF submission.email && submission.name;
 		subtext = "<A HREF=\"$submission.email\">$submission.name</A> writes <EM>\"$submission.story\"</EM>";
 	ELSIF submission.name;
-		subtext = "submission.name writes <EM>\"$submission.story\"</EM>";
+		subtext = "$submission.name writes <EM>\"$submission.story\"</EM>";
 	ELSE;
 		subtext = submission.story;
 	END;
