@@ -1,3 +1,86 @@
+slash-1.1.6-bender, 2000.03.13
+------------------------------
+
+*	Major overhaul of command-line tools; many options have changed;
+	all of the ones (except for the ones in sbin/) have -h (help)
+	and -v (version) options now, so check the help before use
+
+*	Lots of changes to the Makefile to work more smoothly on various
+	platforms, and set hardcoded values for /usr/bin/perl and
+	/usr/local/slash appropriately; changed PREFIX to SLASH_PREFIX
+	to not conflict with perl's Makefiles
+
+*	Move more directives out of slash.conf into site.conf
+
+*	Fix bug with createSelect() returning data when there are
+	no options
+
+*	Update sessions to work properly again
+
+*	Make session-based user logins work properly again
+
+*	Update cookie on every connect, as it was not getting updated
+	when it needed to be; perhaps change in the future, but
+	necessary for now
+
+*	Remove remnants of userMode and archived stories on disk
+
+*	Add disconnect in Slash::Apache initial startup
+
+*	Add "userdir_handler" to allow sites to allow user lookups
+	via http://slashcode.com/~username/
+
+*	Fixes to various Slash::DB::MySQL methods, including
+	getMetamodComments, getSessionInstance, currentAdmin,
+	setUser, _genericSet
+
+*	Name changes to Slash::DB methods setStoriesCount
+	(now setStoryCount), createFormkey (was insertFormkey),
+	createAbuse (was formAbuse), checkForMetaModerator
+	(was checkForModerator)
+
+*	countComments has been split into four methods; *BySid,
+	*BySidUid, *BySidPid, and FindCommentsDuplicate
+
+*	Update story count for newstories more approriately now;
+	setStoryCount and setStory now update newstories as well
+	as stories table
+
+*	Various fixes to time-related calls in DB methods
+
+*	Add "restart" boolean paramater to sqlConnect in
+	Slash::DB::Utility to allow disconnect of db handle,
+	followed by subsequent connect
+
+*	Add public function get_template to Slash::Display, so
+	external programs can get an appropriate Template
+	object
+
+*	Remove "template_trim" option; it needs to be true for some
+	things to work properly
+
+*	Add support for saving compiled templates to disk to
+	Slash::Provider
+
+*	Fix whitespace handling in strip_mode in Slash::Utility
+
+*	Allow _ in sid; properly filter qid like sid in Slash::Utility
+
+*	Various fixes to tools, especially install-slashsite,
+	template-tool, tailslash, dailyStuff, slashd
+
+*	Add HOWTO documents for Themes, Templates, and Plugins
+
+*	Various minor fixes to .pl files, including admin.pl,
+	metamod.pl, search.pl
+
+*	Fix various miscellaneous text/UI thingys in data dumps,
+	templates, and plugins
+
+*	Fix Search to work
+
+
+
 slash-1.1.5-bender, 2000.03.02
 ------------------------------
 
