@@ -3700,7 +3700,8 @@ sub calcModval {
 	if ($be_portable) {
 		$hr = $self->sqlSelectAllHashref(
 			"hoursback",
-			"CEILING((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(ts))/3600) AS hoursback,
+			"STRAIGHT_JOIN CEILING((UNIX_TIMESTAMP(NOW())-
+				UNIX_TIMESTAMP(ts))/3600) AS hoursback,
 				SUM(val) AS valsum",
 			"comments, moderatorlog",
 			"comments.cid = moderatorlog.cid

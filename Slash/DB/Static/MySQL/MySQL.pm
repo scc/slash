@@ -231,20 +231,83 @@ sub updateStoriesCounts {
 
 ########################################################
 # For dailystuff
+sub forgetCommentIPs {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+
+	# Forget the source IP information for comments older than a given
+	# time.
+	my $hours = $constants->{comments_forgetip_hours} || 720;
+	my $hours1 = $hours-1; $hours1 = 0 if $hours1 < 0;
+	# At what cid do we start scanning?
+	my $mincid = $constants->{comments_forgetip_mincid};
+	if (!defined($mincid)) {
+		$self->sqlInsert('vars', {
+			name	=> 'comments_forgetip_mincid',
+			value	=> '0',
+		});
+		$mincid = 0;
+	}
+	# How many rows to do at once?  We don't want to tie up the DB
+	# for too long at one sitting.  Find the first discussion posted
+	# just after the time limit, and then the first comment in that
+	# discussion.  A discussion predates its comments, so this comment
+	# is guaranteed to postdate the time limit, and finding it doesn't
+	# require a table scan of comments, only of discussions.
+	my $maxrows = $constants->{comments_forgetip_maxrows} || 10000;
+	my $maxcid = 0;
+	my $min_remember_sid = $self->sqlSelect("MIN(id)",
+		"discussions",
+		"ts > DATE_SUB(NOW(), INTERVAL $hours1 HOUR)");
+	if ($min_remember_sid) {
+		$maxcid = $self->sqlSelect("MIN(cid)",
+			"comments",
+			"sid=$min_remember_sid");
+	}
+	if ($maxcid < $mincid) {
+		# Shouldn't happen, but just in case
+		$maxcid = $mincid;
+	} elsif ($mincid+$maxrows < $maxcid) {
+		$maxcid = $mincid+$maxrows;
+	}
+	if ($maxcid > $mincid) {
+		# Do the update.
+		$self->sqlUpdate("comments",
+			{ ipid => '', subnetid => '' },
+			"cid BETWEEN $mincid AND $maxcid
+			AND date < DATE_SUB(NOW(), INTERVAL $hours HOUR)"
+		);
+		# How far did we go?
+		my $nextcid = $self->sqlSelect("MAX(cid)",
+			"comments",
+			"cid BETWEEN $mincid AND $maxcid
+			AND ipid = ''",
+		);
+		$nextcid ||= $mincid;
+		# The next forgetting can start here.
+		$self->setVar('comments_forgetip_mincid', $nextcid);
+	}
+}
+
+########################################################
+# For dailystuff
 sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
 	$self->updateStoriesCounts();
+
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
 	$self->sqlDo("DELETE from moderatorlog WHERE
 		to_days(now()) - to_days(ts) > $constants->{archive_delay}");
 	$self->sqlDo("DELETE from metamodlog WHERE
 		to_days(now()) - to_days(ts) > $constants->{archive_delay}");
+
 	# Formkeys
 	my $delete_time = time() - $constants->{'formkey_timeframe'};
 	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
+
 	# Note, on Slashdot, the next line locks the accesslog for several
 	# minutes, up to 10 minutes if traffic has been heavy.
 	$self->sqlDo("DELETE FROM accesslog WHERE date_add(ts,interval 48 hour) < now()");
