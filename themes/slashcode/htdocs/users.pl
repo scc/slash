@@ -69,10 +69,10 @@ sub main {
 		editUser($form->{authoruid});
 
 	} elsif ($form->{useredit} && $user->{seclev} >= 10000) {
-		if ($form->{edit_nick}) {
-			editUser($slashdb->getUserUID($form->{edit_nick}));
-		} elsif ($form->{edit_uid}) {
-			editUser($form->{edit_uid});
+		if ($form->{userfield_flag} eq 'nickname') {
+			editUser($slashdb->getUserUID($form->{userfield}));
+		} else {
+			editUser($form->{userfield});
 		}
 
 	} elsif ($op eq 'edituser') {
@@ -402,20 +402,20 @@ sub editUser {
 	$admin_block = getUserAdmin($user_edit->{uid}, $currentuser->{seclev}, 0, 1) if $author_flag;
 
 	slashDisplay('users-editUser', { 
-		user_edit 	=> $user_edit, 
-		author_flag	=> $author_flag,
-		author_select	=> $author_select,
-		title		=> $title,
-		temppass	=> $temppass,
-		tempnick	=> $tempnick,	
-		bio 		=> strip_nohtml($user_edit->{bio}), 
-		sig 		=> strip_nohtml($user_edit->{sig}),
-		quote		=> strip_nohtml($user_edit->{quote}),
-		copy 		=> strip_nohtml($user_edit->{copy}),
-		editkey 	=> editKey($user_edit->{uid}),
-		maillist 	=> $maillist,
-		session 	=> $session_select,
-		admin_block	=> $admin_block
+		user_edit 		=> $user_edit, 
+		author_flag		=> $author_flag,
+		author_select		=> $author_select,
+		title			=> $title,
+		temppass		=> $temppass,
+		tempnick		=> $tempnick,	
+		bio 			=> strip_nohtml($user_edit->{bio}), 
+		sig 			=> strip_nohtml($user_edit->{sig}),
+		quote			=> strip_nohtml($user_edit->{quote}),
+		copy 			=> strip_nohtml($user_edit->{copy}),
+		editkey 		=> editKey($user_edit->{uid}),
+		maillist 		=> $maillist,
+		session 		=> $session_select,
+		admin_block		=> $admin_block
 	});
 }
 
@@ -822,24 +822,37 @@ sub getTitle {
 sub getUserAdmin {
 	my($uid, $seclev, $form_flag, $display_seclev) = @_;
 
-	my $slashdb = getCurrentDB();
+	my $slashdb 	= getCurrentDB();
+	my $form    	= getCurrentForm();	
 
 	my $user = $slashdb->getUser($uid);
+
+	my ($uid_checked,$nickname_checked);
+
+	if($form->{userfield_flag} eq 'userid') {
+		$uid_checked = 'CHECKED';
+	} else {
+		$nickname_checked = 'CHECKED';
+	}		
+
 	my $author_select;
 	my $author_flag = ($seclev >= 100) ? 1 : 0; 
 	my $authoredit_flag = ($seclev >= 10000) ? 1 : 0; 
 
 	my $authors = $slashdb->getDescriptions('authors');
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
+	$author_select =~ s/\s{2,}//g;
 
 	return slashDisplay('users-admin', { 
-		user		=> $user,
-		seclev_field	=> $display_seclev,
-		author_select	=> $author_select,
-		author_flag 	=> $author_flag, 
-		form_flag	=> $form_flag,
-		authoredit_flag => $authoredit_flag }, 
-		{ Return => 1 }
+		user			=> $user,
+		seclev_field		=> $display_seclev,
+		uid_checked 		=> $uid_checked,
+		nickname_checked 	=> $nickname_checked,
+		author_select		=> $author_select,
+		author_flag 		=> $author_flag, 
+		form_flag		=> $form_flag,
+		authoredit_flag 	=> $authoredit_flag }, 
+		{ Return 		=> 1 }
 	);
 }
 
