@@ -23,6 +23,9 @@ sub handler {
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
 	my $cur_ipid = md5_hex($r->connection->remote_ip);
+	my $cur_subnet = $r->connection->remote_ip;
+	$cur_subnet =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$cur_subnet = md5_hex($cur_subnet);
 
 	my $slashdb = getCurrentDB();
 	$slashdb->sqlConnect();
@@ -30,9 +33,26 @@ sub handler {
 	# what is the point of "isBanned()"?  why not just get
 	# the reference and check for existence here? -- pudge
 	my $banlist = $slashdb->getBanList();
+	print STDERR "cur_subnet $cur_subnet";
+	for (%$banlist) {
+		print STDERR "cur_subnet $cur_subnet banlist key $_\n";
+	}
 
-	if ($banlist->{$cur_ipid}) {
-		$r->custom_response(FORBIDDEN, "The ipid $cur_ipid is banned from this site");
+	if ($banlist->{$cur_ipid} || $banlist->{$cur_subnet}) {
+		my $bug_off =<<EOT;
+<HTML>
+<HEAD><TITLE>BANNED!</TITLE></HEAD>
+<BODY BGCOLOR="pink">
+<H1>Either your network or ip address has been banned
+from this site</H1><BR>
+due to script flooding that originated 
+from your network or ip address. If you feel that this 
+is unwarrented, feel free to include your ip address 
+in an email, and we will examine why there is a ban.
+</BODY>
+</HTML>
+EOT
+		$r->custom_response(FORBIDDEN, $bug_off); 
 		return FORBIDDEN;
 	}
 

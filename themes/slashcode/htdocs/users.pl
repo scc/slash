@@ -1809,6 +1809,7 @@ sub getUserAdmin {
 	my $user	= getCurrentUser();
 	my $form	= getCurrentForm();
 	my $constants	= getCurrentStatic();
+	$id ||= $user->{uid};
 
 	my($checked, $uidstruct, $readonly, $readonly_reasons);
 	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $topabusers, $thresh_select);
