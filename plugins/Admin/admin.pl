@@ -1109,16 +1109,11 @@ sub listStories {
 	my $storylistref = [];
 
 	my($hits, $comments, $sid, $title, $aid, $time, $tid, $section, 
-	$displaystatus, $writestatus, $td, $td2, $yesterday,$tbtitle,
-	$count,$left,$substrtid,$substrsection,$sectionflag);
+	$displaystatus, $writestatus, $td, $td2, $yesterday, $tbtitle,
+	$count, $left, $substrtid,$substrsection, $sectionflag);
 
+	my($i, $canedit) = (0, 0);
 
-	my ($storiestoday,$not_today,$i,$display,$canedit,$storymin) = (0,0,0,0,0,0);
-	my $displayoff = 1;
-
-	$yesterday = '';
-	my $bgcolor = '';
-	
 	for (@$storylist) {
 		($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
 			$displaystatus, $writestatus, $td, $td2) = @$_;
@@ -1126,7 +1121,6 @@ sub listStories {
 		$substrtid = substr($tid, 0, 5);
 		
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
-		$displayoff = 1 if($writestatus < 0 || $displaystatus < 0);
 
 		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {
 			$canedit = 1;
@@ -1134,25 +1128,12 @@ sub listStories {
 		} 
 
 		$x++;
-		$storiestoday++;
 		next if $x < $first;
 		last if $x > $first + 40;
 
-		if ($td ne $yesterday && !$form->{section}) {
-			$not_today = 1;
-
-			unless ($storiestoday > 1) {
-				$storymin = 1;
-				$storiestoday = '' 
-			}
-			$storiestoday = 0;
-		} 
-
-		$yesterday = $td;
-
 		unless ($user->{section} || $form->{section}) {
 			$sectionflag = 1;
-			$substrsection = substr($section,0,5) 
+			$substrsection = substr($section, 0, 5);
 		}
 
 		$storylistref->[$i] = {
@@ -1170,10 +1151,9 @@ sub listStories {
 			substrsection	=> $substrsection,
 			td		=> $td,
 			td2		=> $td2,
-			not_today	=> $not_today,
-			storiestoday	=> $storiestoday,
-			storymin	=> $storymin,
-		}; 
+			writestatus	=> $writestatus,
+			displaystatus	=> $displaystatus,
+		};
 		
 		$i++;
 	}

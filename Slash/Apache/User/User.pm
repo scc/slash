@@ -146,7 +146,7 @@ sub handler {
 	} 
 
 	# This has happened to me a couple of times.
-	delete $cookies->{user} if($cookies->{user} and !($cookies->{user}->value));
+	delete $cookies->{user} if ($cookies->{user} and !($cookies->{user}->value));
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 

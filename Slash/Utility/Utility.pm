@@ -1337,15 +1337,13 @@ sub setCookie {
 # 		$cookie{-secure} = 1;
 # 	}
 
-	$session ||= '+1y'; 
-
 	my $cookie = Apache::Cookie->new($r,
 		-name    =>  $name,
 		-value   =>  $val || '',
-		-expires =>  $session,
 		-path    =>  $cookiepath
 	);
 
+	$cookie->expires('+1y') unless $session;
 	$cookie->domain($domain) if $domain;
 
 	$cookie->bake;
@@ -2226,7 +2224,7 @@ The URI of the page the user is on.
 
 =item COOKIES
 
-A Apache::Cookie object (not used in "command line" mode).
+An Apache::Cookie object (not used in "command line" mode).
 
 =back
 
