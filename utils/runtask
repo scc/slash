@@ -42,8 +42,9 @@ sub slashdLog {
         local *LOG;
         my $file = "$constants->{logdir}/slashd.log";
         open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
-        print LOG localtime() . "\truntask\t", join("\t", @_), "\n";
-	print     localtime() . "\truntask\t", join("\t", @_), "\n";
+	my $log_msg = sprintf "%s\truntask\t%s\n", localtime, join("\t", @_);
+	$log_msg =~ s/\n+$//;
+	print LOG "$log_msg\n";
         close LOG;
 }
 
