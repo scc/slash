@@ -126,7 +126,7 @@ change your password, or just click pretty widgets to kill time.
 	E-mail address changed and re-registration information sent to: [% form.realemail %]<BR>
 
 [% CASE 'saveuser_passchanged_msg' %]
-	Password changed.<BR>
+	Password changed for [% nick %], UID [% uid %].<BR>
 
 [% CASE 'no_registration_needed' %]
 	<P>Hello, [% user.nickname %]. Your account is currently registered with

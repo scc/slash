@@ -264,6 +264,7 @@ sub main {
 	print createMenu($formname) if ! $user->{is_anon};
 
 
+	$op = 'userinfo' if (! $form->{op} && ($form->{uid} || $form->{nick}));
 	$op ||= isAnon($user->{uid}) ? 'userlogin' : 'userinfo';
 
 	if ($user->{is_anon} && $ops->{$op}{seclev} > 0) {
@@ -777,8 +778,7 @@ sub tildeEd {
 	my $aids = $slashdb->getAuthorNames();
 	my $n = 0;
 	for my $aid (@$aids) {
-		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ?
-			' CHECKED' : '';
+		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ? ' CHECKED' : '';
 	}
 
 	my $topics = $slashdb->getDescriptions('topics');
@@ -839,7 +839,7 @@ sub changePasswd {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	return if (! $user->{is_admin} && $id != $user->{uid});
+	# return if (! $user->{is_admin} && $id != $user->{uid});
 
 	my $user_edit = {};
 	my $title ;
@@ -1180,7 +1180,7 @@ sub savePasswd {
 	}
 
 	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
-		$note .= getMessage('saveuser_passchanged_msg', 0, 1);
+		$note .= getMessage('saveuser_passchanged_msg', { nick => $user_edit->{nickname}, uid => $user_edit->{uid}}, 0, 1);
 
 		$user_edits_table->{passwd} = $form->{pass1};
 		if ($form->{uid} eq $user->{uid}) {

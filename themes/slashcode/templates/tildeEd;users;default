@@ -33,14 +33,14 @@ __template__
 		<TD VALIGN="TOP">
 
 [% FOREACH aid = aidref.keys %]
-		<INPUT TYPE="CHECKBOX" NAME="exaid_[% aid %]"[% aidref.$uid.checked %]>[% aid %]<BR>
+		<INPUT TYPE="CHECKBOX" NAME="exaid_[% aid %]"[% aidref.$aid.checked %]>[% aid %]<BR>
 [% END %]
 
 		</TD>
 		<TD VALIGN="TOP"><MULTICOL COLS="3">
 
 [% FOREACH tid = tidref.keys %]
-		<INPUT TYPE="CHECKBOX" NAME="extid_[% tid %]"[% tidref.tid %]>[% tidref.$tid.alttext %]<BR>
+		<INPUT TYPE="CHECKBOX" NAME="extid_[% tid %]"[% tidref.$tid.checked %]>[% tidref.$tid.alttext %]<BR>
 [% END %]
 
 		</MULTICOL></TD>

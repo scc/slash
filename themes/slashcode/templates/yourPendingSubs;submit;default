@@ -38,8 +38,8 @@ and their staus within the system:</P>
 	[% del == 1 ? '(rejected)' : del == 2 ? '(accepted)' : '' %]
 	</LI>
 [% END %]
-	<LI>[% submissioncount %] submissions pending.</LI>
 </UL>
+	<P>[% submissioncount %] submissions pending.</P>
 
 __seclev__
 10000
