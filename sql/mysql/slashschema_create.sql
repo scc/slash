@@ -701,6 +701,7 @@ CREATE TABLE users_comments (
 DROP TABLE IF EXISTS users_count;
 CREATE TABLE users_count (
 	uid mediumint UNSIGNED NOT NULL,
+	PRIMARY KEY (uid)
 ) TYPE = myisam;
 
 #
