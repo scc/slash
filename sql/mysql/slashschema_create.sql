@@ -335,7 +335,7 @@ CREATE TABLE newstories (
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
-);
+) TYPE=heap;
 
 #
 # Table structure for table 'pollanswers'

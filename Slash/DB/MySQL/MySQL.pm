@@ -949,10 +949,12 @@ sub setStoryCount {
 		-commentcount	=> "commentcount-$count",
 		writestatus	=> 1
 	}, 'sid=' . $self->{_dbh}->quote($sid));
-	$self->sqlUpdate('newstories', {
-		-commentcount	=> "commentcount-$count",
-		writestatus	=> 1
-	}, 'sid=' . $self->{_dbh}->quote($sid));
+	if(getCurrentStatic('mysql_heap_table')) {
+		$self->sqlUpdate('newstories', {
+			-commentcount	=> "commentcount-$count",
+			writestatus	=> 1
+		}, 'sid=' . $self->{_dbh}->quote($sid));
+	}
 }
 
 ########################################################
@@ -1319,10 +1321,13 @@ sub deleteStory {
 # for slashd
 sub deleteStoryAll {
 	my($self, $sid) = @_;
+	my $db_sid $self->sqlQuote($sid);
 
-	$self->sqlDo("DELETE from stories where sid='$sid'");
-	$self->sqlDo("DELETE from story_text where sid='$sid'");
-	$self->sqlDo("DELETE from newstories where sid='$sid'");
+	$self->sqlDo("DELETE from stories where sid=$db_sid");
+	$self->sqlDo("DELETE from story_text where sid=$db_sid");
+	if(getCurrentStatic('mysql_heap_table')) {
+		$self->sqlDo("DELETE from newstories where sid=$db_sid");
+	}
 }
 
 ########################################################
@@ -1357,9 +1362,11 @@ sub setStory {
 				if defined $hashref->{$key};
 		}
 		$self->sqlUpdate($table, \%minihash, 'sid=' . $sid, 1);
+		if(getCurrentStatic('mysql_heap_table') and $table eq 'stories') {
+			$self->sqlUpdate('newstories', \%minihash, 'sid=' . $sid, 1);
+		}
 	}
-	# What is worse, a select+update or a replace?
-	# I should look into that.
+
 	for (@param)  {
 		$self->sqlReplace($param_table, { sid => $sid, name => $_->[0], value => $_->[1]})
 			if defined $_->[1];
@@ -1685,8 +1692,9 @@ sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
-		"topics.tid=newstories.tid
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,$table",
+		"topics.tid=$topics.tid
 		$when
 		GROUP BY topics.tid
 		$order"
@@ -1888,8 +1896,9 @@ sub getStoryByTime {
 	$where .= "   AND sid != '$story->{'sid'}'";
 
 	my $time = $story->{'time'};
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
 	my $returnable = $self->sqlSelectHashref(
-			'title, sid, section', 'newstories',
+			'title, sid, section', $table,
 			"time $sign '$time' AND writestatus >= 0 AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
@@ -2197,7 +2206,7 @@ sub getNewStories {
 		? $user->{maxstories}
 		: $self->getSection($section, 'artcount');
 
-	my $tables = 'newstories';
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
@@ -2215,8 +2224,8 @@ sub getNewStories {
 
 	# We need to check up on this later for performance -Brian
 	my(@stories, $count);
-	my $cursor = $self->sqlSelectMany($columns, $tables, $where, $other)
-		or errorLog("error in getStories columns $columns table $tables where $where other $other");
+	my $cursor = $self->sqlSelectMany($columns, $table, $where, $other)
+		or errorLog("error in getStories columns $columns table $table where $where other $other");
 
 	while (my(@data) = $cursor->fetchrow) {
 		formatDate([\@data], 3, 3, '%A %B %d %I %M %p');
@@ -2416,7 +2425,9 @@ sub createStory {
 
 	$self->sqlInsert('stories', $data);
 	$self->sqlInsert('story_text', $text);
-	$self->sqlInsert('newstories', $data);
+	if(getCurrentStatic('mysql_heap_table')) {
+		$self->sqlInsert('newstories', $data);
+	}
 	$self->_saveExtras($story);
 
 	return $sid;
@@ -2661,77 +2672,75 @@ sub _saveExtras {
 }
 
 ########################################################
+#I will rewrite this later -Brian
+# We make use of newstories if it exists since it will
+# be heap. Throw out what you know about newstories
+# BTW. This works quite differently. -Brian
 sub getStory {
+	my($self, $id, $val, $cache_flag) = @_;
+	# Lets see if we can use newstories
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
 	# We need to expire stories
-	#_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
-	#my $answer = _genericGetCache('stories', 'sid', 'story_param', @_);
-	my($self, $id, $val) = @_;
-	my $answer;
-	my $tables = [qw(
-		stories story_text
-	)];
-	# The sort makes sure that someone will always get the cache if
-	# they have the same tables
-	my $cache = _genericGetCacheName($self, $tables);
+	_genericCacheRefresh($self, $table, getCurrentStatic('story_expire'));
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time= '_' . $table . '_cache_time';
 
+	my $type;
 	if (ref($val) eq 'ARRAY') {
-		my($values, %tables, @param, $where, $table);
-		for (@$val) {
-			(my $clean_val = $_) =~ s/^-//;
-			if ($self->{$cache}{$clean_val}) {
-				$tables{$self->{$cache}{$_}} = 1;
-				$values .= "$_,";
-			} else {
-				push @param, $_;
-			}
-		}
-		chop($values);
-
-		for (keys %tables) {
-			$where .= "$_.sid=$id AND ";
-		}
-		$where =~ s/ AND $//;
-
-		$table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, $where);
-		for (@param) {
-			my $val = $self->sqlSelect('value', 'stories_param', "sid=$id AND name='$_'");
-			$answer->{$_} = $val;
-		}
-
-	} elsif ($val) {
-		(my $clean_val = $val) =~ s/^-//;
-		my $table = $self->{$cache}{$clean_val};
-		if ($table) {
-			($answer) = $self->sqlSelect($val, $table, "sid=$id");
-		} else {
-			($answer) = $self->sqlSelect('value', 'stories_param', "sid=$id AND name='$val'");
-		}
-
+		$type = 0;
 	} else {
-		my($where, $table, $append);
-		for (@$tables) {
-			$where .= "$_.sid=$id AND ";
-		}
-		$where =~ s/ AND $//;
-
-		$table = join ',', @$tables;
-		$answer = $self->sqlSelectHashref('*', $table, $where);
-		$append = $self->sqlSelectAll('name,value', 'stories_param', "sid=$id");
-		for (@$append) {
-			$answer->{$_->[0]} = $_->[1];
-		}
+		$type  = $val ? 1 : 0;
 	}
 
-	return $answer;
+	if ($type) {
+		return $self->{$table_cache}{$id}{$val}
+			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
+	} else {
+		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		}
+	}
+# At this point its not in the cache so we go grab
+# the entity.
+# BTW, we avoid the join here. Sure, its two calls to
+# the db but why do a join if it is not needed?
+	my($append, $answer, $db_id);
+	$db_id = $self->sqlQuote($id);
+	$answer = $self->sqlSelectHashref('*', $table, "sid=$db_id");
+	$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
+	for (@$append) {
+		$answer->{$_->[0]} = $_->[1];
+	}
+	$append = $self->sqlSelectAll('name,value', 'stories_param', "sid=$db_id");
+	for (@$append) {
+		$answer->{$_->[0]} = $_->[1];
+	}
 
-	return $answer;
+# We save the entity
+	$self->{$table_cache}{$id} = $answer;
+	$self->{$table_cache_time} = time();
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$val};
+	} else {
+		if ($self->{$table_cache}{$id}) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		} else {
+			return;
+		}
+	}
 }
 
 ########################################################
+# Why would you ever want to call this? If you only
+# wanted the meta data, didn't want to worry
+# about cache. -Brian
 sub getNewStory {
-	my($self) = shift;
-	$self->getStory(@_);
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
+	my $answer = _genericGet($table, 'sid', '', @_);
+	return $answer;
 }
 
 

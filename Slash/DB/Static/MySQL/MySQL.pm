@@ -61,12 +61,14 @@ sub updateCommentTotals {
 			commentcount	=> $comments->[0]{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
-	$self->sqlUpdate("newstories", {
-			hitparade	=> $hp,
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $self->{_dbh}->quote($sid)
-	);
+	if(getCurrentStatic('mysql_heap_table')) {
+		$self->sqlUpdate("newstories", {
+				hitparade	=> $hp,
+				writestatus	=> 0,
+				commentcount	=> $comments->[0]{totals}[0]
+			}, 'sid=' . $self->{_dbh}->quote($sid)
+		);
+	}
 }
 
 ########################################################
@@ -74,18 +76,19 @@ sub updateCommentTotals {
 sub setStoryIndex {
 	my($self, @sids) = @_;
 
-	my %stories;
-
-	for my $sid (@sids) {
-		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
-	}
-	$self->sqlTransactionStart("LOCK TABLES newstories WRITE");
-
-	foreach my $sid (keys %stories) {
-		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
-	}
-
-	$self->sqlTransactionFinish();
+# No op, aka does nothing
+#	my %stories;
+#
+#	for my $sid (@sids) {
+#		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
+#	}
+#	$self->sqlTransactionStart("LOCK TABLES newstories WRITE");
+#
+#	foreach my $sid (keys %stories) {
+#		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
+#	}
+#
+#	$self->sqlTransactionFinish();
 }
 
 ########################################################
@@ -93,10 +96,11 @@ sub setStoryIndex {
 sub getNewStoryTopic {
 	my($self) = @_;
 
+	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
 	my $sth = $self->sqlSelectMany(
-				"alttext,image,width,height,newstories.tid",
-				"newstories,topics",
-				"newstories.tid=topics.tid
+				"alttext,image,width,height,$table.tid",
+				"$table,topics",
+				"$table.tid=topics.tid
 				AND displaystatus = 0
 				AND writestatus >= 0
 				AND time < now()
@@ -126,9 +130,10 @@ sub deleteDaily {
 	my $delay2 = $constants->{archive_delay} * 9;
 	$constants->{defaultsection} ||= 'articles';
 
-	$self->sqlDo("DELETE FROM newstories WHERE
-			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
-			or (to_days(now()) - to_days(time) > $delay2)");
+# No need to delete anymore
+#	$self->sqlDo("DELETE FROM newstories WHERE
+#			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
+#			or (to_days(now()) - to_days(time) > $delay2)");
 
 #	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
