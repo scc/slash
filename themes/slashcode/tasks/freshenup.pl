@@ -28,7 +28,7 @@ $task{$me}{code} = sub {
 		slashdLog("Deleting $sid ($title)") if verbosity() >= 1;
 	}
 	my $stories = $slashdb->getStoriesWithFlag('dirty');
-	my @updatedsids;
+	#my @updatedsids;
 	my $totalChangedStories = 0;
 	my $vu = "virtual_user=$virtual_user";
 
@@ -37,7 +37,8 @@ $task{$me}{code} = sub {
 		slashdLog("Updating $sid") if verbosity() >= 2;
 		$updates{$section} = 1;
 		$totalChangedStories++;
-		push @updatedsids, $sid;
+		# What was this for?
+		#push @updatedsids, $sid;
 
 		my @rc;
 		if ($section) {
