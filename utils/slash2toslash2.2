@@ -732,6 +732,36 @@ EOT
 		$sth_s->execute;
 		do_handle('pollvoters', $sth_s, $del);
 
+		# Create discussion for existing poll if it doesn't already
+		# exist.
+		if (! $discussions{$_}) {
+			my $poll_url = "$vars{rootdir}/pollBooth.pl?qid=$_";
+			my $insert_q = <<EOT;
+INSERT INTO discussions (title, url, topic, ts, flags)
+VALUES (
+	$poll_data{$_}->{question},
+	@{[$dbh_new->quote($poll_url)]},
+	$vars{defaulttopic},
+	$poll_data{$_}->{date},
+	'dirty'
+)
+EOT
+
+			$dbh_new->do($insert_q);
+			die "SQL: $insert_q\n" if $dbh_new->errstr;
+			$discussions{$_} = getLastInsertID();
+
+			# Now have to update the poll!
+			$dbh_new->do(<<EOT);
+UPDATE pollquestions SET discussion = $discussions{$_} WHERE sid = '$_'
+EOT
+
+			print <<EOT;
+      + Created discussion for poll"$poll_data{$_}->{question}" ($_/$discussions{$_})
+EOT
+
+		}
+
 		# Only want del active the first time thru this, if it's active
 		# at all.
 		$del = 0 if $del;
@@ -773,15 +803,15 @@ sub convert {
 		duplicate($_, 0);
 	}
 
+	# Stories: Merge with storiestuff data, uid, aid, sid, tid
+	# removal of all text fields into their own table (story_text).
+	update_stories();
+
 	duplicate('pollquestions', 1, \%poll_data);
 	reload_keys('pollquestions', \%polls, 'qid', 'date');
 	update_pollresults(\%poll_data, 1);
 	# Done with polls by this point.
 	%skip_polls = ();
-
-	# Stories: Merge with storiestuff data, uid, aid, sid, tid
-	# removal of all text fields into their own table (story_text).
-	update_stories();
 
 	copy_comments();
 	%polls = (); %poll_data = ();
@@ -918,67 +948,32 @@ EOT
 	}
 	my $sth_s = $dbh_old->prepare("SELECT * FROM comments $cond");
 	$sth_s->execute;
+
 	LOOP:
 	while (my $data = $sth_s->fetchrow_hashref) {
 		next if exists $dead_discussions{$data->{sid}};
-		# Fix SID.
-		my $insert_q;
+
 		my $sid = $discussions{$data->{sid}};
-		SIDTEST: { if (!$sid) {
-			# If the discussion is attached to a POLL (has the same
-			# name as a poll, then it IS a valid discussion and
-			# a record should be created for it.
-			if (exists $polls{$data->{sid}}) {
-				my $ques = $poll_data{$data->{sid}}->{question};
-				my $poll_url = sprintf "%s/pollBooth.pl?qid=%s",
-					$vars{rootdir}, $polls{$data->{sid}};
- 
-				$insert_q = <<EOT;
-INSERT INTO discussions (title, url, topic, ts, flags)
-VALUES (
-	@{[$dbh_new->quote($ques)]},
-	@{[$dbh_new->quote($poll_url)]},
-	$vars{defaulttopic},
-	$poll_data{$data->{sid}}->{date},
-	'dirty'
-)
-EOT
-
-				$dbh_new->do($insert_q);
-				die "SQL: $insert_q\n" if $dbh_new->errstr;
-				$discussions{$data->{sid}} =
-					($sid = getLastInsertID());
-
-				# Now have to update the poll!
-				$dbh_new->do(<<EOT);
-UPDATE pollquestions SET discussion=$discussions{$data->{sid}} WHERE
-	sid='$data->{sid}'
-EOT
-
-				print <<EOT;
-      + Created discussion for poll "$ques" ($data->{sid}/$sid)
-EOT
-
-			}
-			last SIDTEST if $sid;
-			
+		if (! $sid) {
 			$dead_discussions{$data->{sid}}++;
 			print <<EOT;
       Skipping deleted discussion '$data->{sid}'
 EOT
 
 			next LOOP;
-		} }
-		$insert_q = sprintf
-			qq[
+		}
+
+		my $insert_d = scalar join(', ', 
+			map { $dbh_new->quote($data->{$_}) }
+			qw [pid date subject uid points lastmod reason]
+		);
+
+		my $insert_q = <<EOT;
 INSERT INTO comments
 (sid, pid, date, subject, uid, points, lastmod, reason)
-VALUES ($sid, %s)
-			],
-			scalar join(', ', 
-				map { $dbh_new->quote($data->{$_}) }
-				qw [pid date subject uid points lastmod reason]
-			);
+VALUES ($sid, $insert_d)
+EOT
+
 		$dbh_new->do($insert_q);
 		die "SQL: $insert_q\n" if $dbh_new->errstr;
 
@@ -1059,27 +1054,6 @@ EOT
 		while (my($val, $count) = $sth_d1->fetchrow_array) {
 			$total += $count;
 			$hitparade[$val - $vars{comment_minscore}] = $total;
-#
-#	THIS CODE SEVERELY DEPRECATED, PLEASE DO NOT USE.
-#
-			# Handle the possibility that there may be records
-			# that need an UPDATE.
-#			my $sql;
-#			if ($id >= $min_did) {
-#				$sql = <<EOT;
-#INSERT INTO discussion_hitparade (discussion, threshold, count)
-#	VALUES ($id, $val, $total)
-#EOT
-#			} else {
-#				$sql = <<EOT;	
-#UPDATE discussion_hitparade SET 
-#	count=$total
-#WHERE discussion=$id AND threshold=$val
-#EOT
-#			}
-#
-#			$dbh_new->do($sql);
-#			die "SQL: $sql\n" if $dbh_new->errstr;
 		}
 		$sth_d1->finish;
 		for (qw(discussions stories)) {
