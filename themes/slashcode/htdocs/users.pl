@@ -428,7 +428,7 @@ sub mailPasswd {
 }
 
 #################################################################
-# arhgghgh. I love torture. I love pain. This subroutine satisfies 
+# arhgghgh. I love torture. I love pain. This subroutine satisfies
 # these needs of mine
 sub showInfo {
 	my($id) = @_;
@@ -447,23 +447,23 @@ sub showInfo {
 
 	my($points, $lastgranted, $nickmatch_flag, $uid, $nick);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
-	
+
 	if (! $id && ! $form->{userfield}) {
-		if ($form->{uid} && ! $id ) {
+		if ($form->{uid} && ! $id) {
 			$fieldkey = 'uid';
-			($uid,$id) = ($form->{uid}, $form->{uid});
+			($uid, $id) = ($form->{uid}, $form->{uid});
 			$requested_user = $slashdb->getUser($id);
 			$nick = $requested_user->{nickname};
 
 		} elsif ($form->{nick} && ! $id) {
 			$fieldkey = 'nickname';
-			($nick,$id) = ($form->{nick}, $form->{nick});
+			($nick, $id) = ($form->{nick}, $form->{nick});
 			$uid = $slashdb->getUserUID($id);
 			$requested_user = $slashdb->getUser($uid);
 
 		} else {
 			$fieldkey = 'uid';
-			($id,$uid) = ($user->{uid}, $user->{uid});
+			($id, $uid) = ($user->{uid}, $user->{uid});
 			$requested_user = $slashdb->getUser($uid);
 		}
 	} elsif ($user->{is_admin}) {
@@ -473,7 +473,7 @@ sub showInfo {
 			$requested_user = $slashdb->getUser($id);
 			$uid = $requested_user->{uid};
 			$nick = $requested_user->{nickname};
-			if ( (my $conflict_id = $slashdb->getUserUID($id)) && ($form->{userfield} ne $form->{uid})) {
+			if ((my $conflict_id = $slashdb->getUserUID($id)) && ($form->{userfield} ne $form->{uid})) {
 				slashDisplay('showInfoConflict', { op => 'userinfo', id => $uid, nick => $nick, conflict_id => $conflict_id});
 				return(1);
 			}
@@ -496,7 +496,7 @@ sub showInfo {
 		}
 	} else {
 		$fieldkey = 'uid';
-		($id,$uid) = ($user->{uid}, $user->{uid});
+		($id, $uid) = ($user->{uid}, $user->{uid});
 		$requested_user = $slashdb->getUser($uid);
 	}
 
@@ -547,7 +547,7 @@ sub showInfo {
 
 		# This is ok, since with all luck we will not be hitting the DB
 		# ...however, the "sid" parameter here must be the string
-		# based SID from either the "stories" table or from 
+		# based SID from either the "stories" table or from
 		# pollquestions.
 		my($discussion) = $slashdb->getDiscussion($sid);
 
@@ -562,7 +562,7 @@ sub showInfo {
 		push @$commentstruct, {
 			pid 		=> $pid,
 			url		=> $discussion->{url},
-			type 		=> $type,	
+			type 		=> $type,
 			disc_title	=> $discussion->{title},
 			sid 		=> $sid,
 			cid 		=> $cid,
@@ -591,7 +591,7 @@ sub showInfo {
 		});
 
 	} else {
-		if (! defined $uid && defined $nick && ! $requested_user->{nonuid} ) {
+		if (! defined $uid && defined $nick && ! $requested_user->{nonuid}) {
 			print getError('userinfo_nicknf_err', { nick => $nick });
 			return;
 		}
@@ -931,8 +931,7 @@ sub editHome {
 	my($formats, $title, $tzformat_select, $tzcode_select);
 	my $user_edit = {};
 	my $fieldkey;
-	#Is it a good idea to set this, this low (100)
-	# no, it is not -- pudge
+
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $admin_block = '';
 
@@ -1089,12 +1088,12 @@ sub saveUserAdmin {
 	} elsif ($form->{subnetid}) {
 		$user_editfield_flag = 'subnetid';
 		$user_edit->{uid} = $constants->{anonymous_coward_uid};
-		($id,$user_edit->{subnetid})  = ($form->{subnetid}, $form->{subnetid});
+		($id, $user_edit->{subnetid})  = ($form->{subnetid}, $form->{subnetid});
 		$user_edit->{nonuid} = 1;
 
 	} elsif ($form->{ipid}) {
 		$user_editfield_flag = 'ipid';
-		($id,$user_edit->{ipid})  = ($form->{ipid}, $form->{ipid});
+		($id, $user_edit->{ipid})  = ($form->{ipid}, $form->{ipid});
 		$user_edit->{subnetid} = $1 . "0" ;
 		$user_edit->{subnetid} = md5_hex($user_edit->{subnetid});
 		$user_edit->{uid} = $constants->{anonymous_coward_uid};
