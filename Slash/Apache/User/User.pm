@@ -88,6 +88,7 @@ sub handler{
 	my $op = $form{'op'} || '';
 	if (($op eq 'userlogin' || $form{'rlogin'} )&& length($form{upasswd}) > 1){
 		my $user = $dbslash->getUserUID($form{unickname});
+		print STDERR "FORM_AUTH: $user:$form{upasswd}\n";
 		$uid = userLogin($dbcfg, $user, $form{upasswd});
 	} elsif ($op eq 'userclose' ) {
 		setCookie('user', '');
@@ -96,6 +97,7 @@ sub handler{
 	#This is icky, should be simplified
 	} elsif ($cookies{'user'}) {
 		my($user, $password) = userCheckCookie($dbcfg, $cookies{'user'}->value);
+		print STDERR "COOKIE_AUTH: $user:$password\n";
 		if($password) {
 			$uid = $dbslash->getUserAuthenticate($user, $password);
 			unless ($uid) {
