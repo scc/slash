@@ -3564,7 +3564,7 @@ sub autoUrl {
 # link to Everything2 nodes --- should be elsewhere (as should autoUrl)
 sub linkNode {
 	my($title) = @_;
-	my $link = URI->new("http://www.everything2.com");
+	my $link = URI->new("http://www.everything2.com/");
 	$link->query("node=$title");
 
 	return qq|$title<sup><a href="$link">?</a></sup>|;
