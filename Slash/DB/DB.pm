@@ -55,7 +55,7 @@ sub new {
 			}
 		}
 	} else {
-		warn("We don't support the database ($dsn) specified. Using user ($user) "
+		warn("We don't support the database ($dsn) specified.\nUsing virtual user '$user' "
 			. DBIx::Password::getDriver($user));
 	}
 	bless($self, $class);

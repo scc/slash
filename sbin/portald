@@ -21,6 +21,7 @@ use strict;
 # this needs to be a global here so we can add to it from externally
 # called scripts (see portald-site)
 use vars qw(%savedBlocks);
+use File::Spec::Functions;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
@@ -207,7 +208,13 @@ makeTmp();
 portaldLog("Launching Portald");
 
 $|++;
-require 'portald-site' if -e 'portald-site';
+
+my $p_site = catfile($constants->{datadir}, 'sbin', 'portald-site');
+if (-e $p_site) {
+	portaldLog("requiring $p_site");
+	require $p_site;
+}
+
 portaldLog("Updating Portal Box Thingees");
 
 getSectionMenu2();

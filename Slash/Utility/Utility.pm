@@ -2442,7 +2442,7 @@ sub createEnvironment {
 	createCurrentDB($slashdb);
 	createCurrentStatic($constants);
 
-#	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
+	$ENV{SLASH_USER} = $constants->{anonymous_coward_uid};
 	my $user = prepareUser($constants->{anonymous_coward_uid}, getCurrentForm(), $0);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
