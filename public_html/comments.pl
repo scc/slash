@@ -332,7 +332,7 @@ EOT
 
 EOT
 
-	my $formats = $I{dbobject}->getFormatDescriptions('postmodes');
+	my $formats = $I{dbobject}->getDescriptions('postmodes');
 	if ($I{F}{posttype}) {
 		createSelect('posttype', $formats, $I{F}{posttype});
 	} else {

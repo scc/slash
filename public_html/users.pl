@@ -392,7 +392,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	<P><B>Headline Mailing List</B>
 EOT
 
-	my $description = $I{dbobject}->getFormatDescriptions('maillist');
+	my $description = $I{dbobject}->getDescriptions('maillist');
 	createSelect('maillist', $description, $user->{maillist});
 
 	print <<EOT;
@@ -449,7 +449,7 @@ EOT
 
 	# Customizable Topic
 	print qq!</TD><TD VALIGN="TOP"><MULTICOL COLS="3">!;
-	my $topics = $I{dbobject}->getFormatDescriptions('topics');
+	my $topics = $I{dbobject}->getDescriptions('topics');
 	while (my($tid, $alttext) = each %$topics) {
 		my $checked = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
 		print qq!<INPUT TYPE="CHECKBOX" NAME="extid_$tid"$checked>$alttext<BR>\n! if $tid;
@@ -459,7 +459,7 @@ EOT
 
 	# Customizable Sections
 	print '<TD VALIGN="TOP">';
-	my $sections = $I{dbobject}->getFormatDescriptions('sections');
+	my $sections = $I{dbobject}->getDescriptions('sections');
 
 	while (my($section,$title) = each %$sections) {
 		my $checked = ($exsect =~ /'$section'/) ? " CHECKED" : "";
@@ -540,10 +540,10 @@ sub editHome {
 EOT
 
 	my $formats;
-	$formats = $I{dbobject}->getFormatDescriptions('dateformats');
+	$formats = $I{dbobject}->getDescriptions('dateformats');
 	createSelect('tzformat', $formats, $user->{dfid});
 
-	$formats = $I{dbobject}->getFormatDescriptions('tzcodes');
+	$formats = $I{dbobject}->getDescriptions('tzcodes');
 	createSelect('tzcode', $formats, $user->{tzcode});
 
 	print "</NOBR>";
@@ -600,15 +600,15 @@ EOT
 	my $formats;
 
 	print "<B>Display Mode</B>";
-	$formats = $I{dbobject}->getFormatDescriptions('commentmodes');
+	$formats = $I{dbobject}->getDescriptions('commentmodes');
 	createSelect('umode', $formats, $user->{mode});
 
 	print "<P><B>Sort Order</B> (self explanatory?	I hope?)\n";
-	$formats = $I{dbobject}->getFormatDescriptions('sortcodes');
+	$formats = $I{dbobject}->getDescriptions('sortcodes');
 	createSelect('commentsort', $formats, $user->{commentsort});
 
 	print "<P><B>Threshold</B>";
-	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
+	$formats = $I{dbobject}->getDescriptions('threshcodes');
 	createSelect('uthreshold', $formats, $user->{threshold});
 
 	print <<EOT;
@@ -619,7 +619,7 @@ EOT
 EOT
 
 	print "<P><B>Highlight Threshold</B>";
-	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
+	$formats = $I{dbobject}->getDescriptions('threshcodes');
 	createSelect('highlightthresh', $formats, $user->{highlightthresh});
 
 	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
@@ -669,7 +669,7 @@ EOT
 	<P><B>Comment Post Mode</B>
 EOT
 
-	$formats = $I{dbobject}->getFormatDescriptions('postmodes');
+	$formats = $I{dbobject}->getDescriptions('postmodes');
 	createSelect('posttype', $formats, $user->{posttype});
 
 	print <<EOT;

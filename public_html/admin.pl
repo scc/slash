@@ -208,7 +208,7 @@ sub adminLoginForm {
 sub varEdit {
 	my($name) = @_;
 	print qq[\n<!-- begin variables editor form -->\n<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">\n];
-	my $vars = $I{dbobject}->getFormatDescriptions('vars');
+	my $vars = $I{dbobject}->getDescriptions('vars');
 	createSelect('name', $vars, $name);
 
 	my($value, $desc) = sqlSelect('value,description',
@@ -802,7 +802,7 @@ sub topicEd {
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 EOT
 
-	my $topics = $I{dbobject}->getFormatDescriptions('vars');
+	my $topics = $I{dbobject}->getDescriptions('vars');
 	createSelect('nexttid', $topics, $I{F}{nexttid});
 
 	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
@@ -1235,10 +1235,10 @@ EOT
 		lockTest($S->{title});
 
 	unless ($I{U}{asection}) {
-		my $description = $I{dbobject}->getFormatDescriptions('displaycodes');
+		my $description = $I{dbobject}->getDescriptions('displaycodes');
 		createSelect('displaystatus', $description, $S->{displaystatus});
 	}
-	my $description = $I{dbobject}->getFormatDescriptions('commentcodes');
+	my $description = $I{dbobject}->getDescriptions('commentcodes');
 	createSelect('commentstatus', $description, $S->{commentstatus});
 
 	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{sqltime}" size="16"> <BR>!;

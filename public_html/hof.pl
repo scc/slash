@@ -60,7 +60,7 @@ EOT
 	if (0) {  #  only do this in static mode
 		print "<P>";
 		titlebar("100%", "Most Popular Slashboxes");
-		my $boxes = $I{dbobject}->getFormatDescription('sectionblocks');
+		my $boxes = $I{dbobject}->getDescription('sectionblocks');
 		my(%b, %titles);
 
 		while (my($bid, $title) = each %$boxes) {

@@ -185,7 +185,7 @@ sub getCodes {
 }
 
 ########################################################
-sub getFormatDescriptions {
+sub getDescriptions {
 # Creating three different methods for this seems a bit
 # silly. 
 # This is getting way to long... probably should

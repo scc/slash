@@ -163,11 +163,11 @@ EOT
 	createSelect('qui', $formats, $qid);
 
 	print qq|<BR><BR><B>Isolate mode:</B><br>\n|;
-	$formats = $I{dbobject}->getFormatDescriptions('isolatemodes');
+	$formats = $I{dbobject}->getDescriptions('isolatemodes');
 	createSelect('isolate', $formats, $isolate);
 
 	print qq|<BR><BR><B>Issue mode:</B><br>\n|;
-	$formats = $I{dbobject}->getFormatDescriptions('issuemodes');
+	$formats = $I{dbobject}->getDescriptions('issuemodes');
 	createSelect('issue', $formats, $issue);
 	
 
