@@ -15,7 +15,7 @@ __template__
 <TABLE>
 	<TR VALIGN="TOP">
 		<TD COLSPAN=2>
-			<FORM action=/journal.pl?op=save method=post ENCTYPE="application/x-www-form-urlencoded">
+			<FORM action=/journal.pl method=post ENCTYPE="application/x-www-form-urlencoded">
 				<INPUT TYPE="hidden" NAME="id" VALUE="[% article.id %]">
 				<INPUT TYPE="hidden" NAME="state" VALUE="editing">
 				<INPUT TYPE="hidden" NAME="preview" VALUE="active">
