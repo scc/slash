@@ -52,6 +52,7 @@ use vars qw($VERSION @EXPORT);
 	getCurrentStatic
 	getCurrentUser
 	getCurrentVirtualUser
+	getCurrentCache
 
 	createEnvironment
 	getObject
