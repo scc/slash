@@ -3272,9 +3272,10 @@ sub getTrollAddress {
 	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
 			"$comment_table.cid = moderatorlog.cid AND
-			 ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1 AND
-			 (TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back) GROUP BY ipid"
+			 ipid ='$ipid' AND moderatorlog.active=1 AND
+			 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
 	);
+	$badIP = 0 if !$badIP; # make sure it's not undef
 
 	return $badIP;
 }
@@ -3290,9 +3291,9 @@ sub getTrollUID {
 		"$comment_table,moderatorlog",
 		"$comment_table.cid=moderatorlog.cid
 		AND $comment_table.uid=$user->{uid} AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < $days_back)
-		GROUP BY $comment_table.uid"
+		AND TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
 	);
+	$badUID = 0 if !$badUID; # make sure it's not undef
 
 	return $badUID;
 }
