@@ -344,7 +344,7 @@ sub getTop10Comments {
 	my($self) = @_;
 	my $c = $self->sqlSelectMany("stories.sid, title, cid, subject, date, nickname, comments.points",
 		"comments, stories, users",
-		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=stories.sid",
+		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=stories.discussion",
 		"ORDER BY date DESC LIMIT 10");
 
 	my $comments = $c->fetchall_arrayref;
