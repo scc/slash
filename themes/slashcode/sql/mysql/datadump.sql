@@ -164,20 +164,19 @@ INSERT INTO pollquestions (qid, sid, question, voters, date, discussion, uid) VA
 # Dumping data for table 'related_links'
 #
 
-INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://www.slashcode.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('slashcode','Slash','http://www.slashcode.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('intel','Intel','http://www.intel.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('linux','Linux','http://www.linux.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('redhat','Red Hat','http://www.redhat.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('red hat','Red Hat','http://www.redhat.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('www.example.com','www.example.com','http://www.example.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('slashdot','Slashdot','http://slashdot.org');
-INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://slashcode.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('cmdrtaco','Rob Malda','http://CmdrTaco.net');
-INSERT INTO related_links (keyword, name, link) VALUES ('debian','Debian','http://www.debian.org');
-INSERT INTO related_links (keyword, name, link) VALUES ('zdnet','ZDNet','http://www.zdnet.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('news.com','News.com','http://www.news.com');
-INSERT INTO related_links (keyword, name, link) VALUES ('cnn','CNN','http://www.cnn.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://slashcode.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('slashcode','Slash','http://slashcode.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('intel','Intel','http://www.intel.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('linux','Linux','http://www.linux.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('redhat','Red Hat','http://www.redhat.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('red hat','Red Hat','http://www.redhat.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('www.example.com','www.example.com','http://www.example.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('slashdot','Slashdot','http://slashdot.org/');
+INSERT INTO related_links (keyword, name, link) VALUES ('cmdrtaco','Rob Malda','http://CmdrTaco.net/');
+INSERT INTO related_links (keyword, name, link) VALUES ('debian','Debian','http://www.debian.org/');
+INSERT INTO related_links (keyword, name, link) VALUES ('zdnet','ZDNet','http://www.zdnet.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('news.com','News.com','http://www.news.com/');
+INSERT INTO related_links (keyword, name, link) VALUES ('cnn','CNN','http://www.cnn.com/');
 INSERT INTO related_links (keyword, name, link) VALUES ('krow','Krow','http://tangent.org/~brian/');
 INSERT INTO related_links (keyword, name, link) VALUES ('tangent','TangentOrg','http://tangent.org/');
 INSERT INTO related_links (keyword, name, link) VALUES ('pudge','Pudge','http://pudge.net/');

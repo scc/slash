@@ -867,7 +867,8 @@ sub getRelated {
 	if ($related_links) {
 		for my $key (values %$related_links) {
 			if ($story_content =~ /\b$key->{keyword}\b/i) {
-				$related_text .= qq[<LI><A HREF="$key->{link}">$key->{name}</A></LI>\n];
+				my $str = qq[<LI><A HREF="$key->{link}">$key->{name}</A></LI>\n];
+				$related_text .= $str unless $related_text =~ /\Q$str\E/;
 			}
 		}
 	}
@@ -876,7 +877,9 @@ sub getRelated {
 	while ($story_content =~ m|<A(.*?)>(.*?)</A>|sgi) {
 		my($url, $label) = ($1, $2);
 		$label =~ s/(\S{30})/$1 /g;
-		$related_text .= "<LI><A$url>$label</A></LI>\n" unless $label eq "[?]";
+		my $str = qq[<LI><A$url>$label</A></LI>\n];
+		$related_text .= $str unless $related_text =~ /\Q$str\E/
+			|| $label eq "?" || $label eq "[?]";
 	}
 
 	return $related_text;
