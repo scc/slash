@@ -9,6 +9,7 @@ use File::Basename;
 use Getopt::Std;
 use Slash;
 use Slash::DB;
+use Slash::Utility;
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
@@ -27,7 +28,9 @@ $opts{'u'} ||= 'slash';
 		my($total, $today);
 		my $pages = $slashdb->pagesServed();
 		for (@$pages) {
-			my($cnt, $h, $d) = @$_;
+			my($cnt, $time) = @$_;
+			my $h = timeCalc($time, '%d_%H');
+			my $d = timeCalc($time, '%d');
 			$total = 0 unless $today == $d;
 			$today = $d;
 			$total += $cnt;
