@@ -30,7 +30,7 @@ __template__
 	This is not the discussion you are looking for.
 
 [% CASE 'archive_error' %]
-	This discussion has been archive, no further changes/additions can be made to it.
+	This discussion has been archived, no further changes/additions can be made to it.
 
 [% END %]
 

@@ -139,7 +139,7 @@ sub selectComments {
 	$slashdb->setStory($sid, {
 			hitparade => $hp,
 			writestatus => "ok",
-			commentcount  => $comments->{0}{totals}[0]
+			commentcount  => $count,
 		}
 	) if $form->{ssi} && $sid;
 

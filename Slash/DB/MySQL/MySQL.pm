@@ -257,7 +257,6 @@ sub createComment {
 	# is correct?  -- pudge
 	# This is fine as is; if the insert failed, we've already
 	# returned out of this method. - Jamie
-	$self->setStoryDirty($header);
 	$self->sqlUpdate(
 		"discussions",
 		{ -commentcount	=> 'commentcount+1' },

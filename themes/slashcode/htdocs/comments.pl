@@ -678,6 +678,10 @@ sub previewForm {
 # story id.
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
+	if ($discussion->{type} eq 'archived') {
+		print getError('archive_error');
+		return;
+	}
 
 	my $error_message;
 
@@ -768,7 +772,6 @@ sub submitComment {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 			if (@$users) {
 				my $reply	= $slashdb->getCommentReply($form->{sid}, $maxCid);
-				my $discussion	= $slashdb->getDiscussion($form->{sid});
 				my $data    = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },
