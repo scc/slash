@@ -33,6 +33,8 @@ use File::Path;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
+use XML::RSS;
+
 use Slash;
 use Slash::DB;
 
@@ -335,6 +337,7 @@ sub getBackendStories {
 sub newrdf {
 	my $section = shift;
 	my $c = getBackendStories($section);
+	my $rss = XML::RSS->new($I{rdfencoding} ? (encoding => $I{rdfencoding}) : ());
 
 	my $SECT = getSection($section);
 	$SECT->{title} = "$I{sitename}: $SECT->{title}" unless $SECT->{isolate};
@@ -344,40 +347,30 @@ sub newrdf {
 		xmlEncodeStr($I{sitename})
 	);
 
-	my $x = sprintf <<EOT, @fs;
-<?xml version="1.0" encoding="ISO-8859-1"?><rdf:RDF
-xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-xmlns="http://my.netscape.com/rdf/simple/0.9/">
-<rss>
-	<channel>
-		<title>%s</title>
-		<link>$I{rootdir}%s</link>
-		<description>$I{slogan}</description>
-	</channel>
+	$rss->channel(
+		title		=> xmlEncodeStr($SECT->{title}),
+		'link'		=> $I{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
+		language	=> $I{rdflanguage},
+		description	=> $I{slogan},
+	);
 
-	<image>
-		<title>%s</title>
-		<url>$I{rdfimg}</url>
-		<link>$I{rootdir}</link>
-	</image>
+	$rss->image(
+		title		=> xmlEncodeStr($I{sitename}),
+		url		=> $I{rdfimg},
+		'link'		=> $I{absolutedir} . '/',
+	);
 
-EOT
 
 	while (my $S = $c->fetchrow_hashref) {
-		$x .= sprintf <<EOT, xmlEncodeStr($S->{title});
-	<item>
-		<title>%s</title>
-		<link>$I{rootdir}/article.pl?sid=$S->{sid}</link>
-	</item>
-
-EOT
+		$rss->add_item(
+			title	=> xmlEncodeStr($S->{title}),
+			'link'	=> "$I{absolutedir}/article.pl?sid=$S->{sid}",
+		);
 	}
 	$c->finish;
 
-	$x .= "</rss></rdf:RDF>\n";
-
 	(my $file = $section || lc $I{sitename}) =~ s/\W+//g;
-	save2file("$I{basedir}/$file.rdf", $x);
+	$rss->save("$I{basedir}/$file.rdf");
 }
 
 #################################
@@ -639,7 +632,6 @@ EOT
 main();
 
 sub main {
-
 	mkpath "$I{datadir}/logs/", 0, 0755;
 	open STDERR, ">> $I{datadir}/logs/slashd.log"
 		or die "Can't open STDERR to $I{datadir}/logs/slashd.log: $!";

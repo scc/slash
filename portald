@@ -35,13 +35,14 @@ Slashdot.  Exciting?  Nope.
 
 use strict;
 use vars '%I';
-use Slash;
-use Slash::DB;
-use Slash::Utility;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
-use XML::Parser;
+use XML::RSS;
+
+use Slash;
+use Slash::DB;
+use Slash::Utility;
 
 *I = getSlashConf();
 my $slashdb = new Slash::DB('slash');
@@ -200,76 +201,33 @@ sub setblock {
 }
 
 
-my($title, $link, $snatchtitle, $snatchlink, $str);
-# "globals" needed for XML parsing
-
-
-#################################################################
-sub start_handler {
-	my($p, $data) = @_;
-
-	if ($data =~ /\blink\b/i) {
-		$link = "";
-		$snatchlink = 1;
-	} elsif ($data =~ /\btitle\b/i) {
-		$title = "";
-		$snatchtitle = 1;
-	} elsif ($data =~ /\bitem\b/i) {
-		$str .= "<LI>";
-	}
-}
-
-#################################################################
-sub char_handler {
-	my($p, $data) = @_;
-
-	$data =~ s/\s/ /g;
-	if ($snatchtitle) {
-		$title .= $data;
-	} elsif ($snatchlink) {
-		$link .= $data;
-	}
-}
-
-#################################################################
-sub end_handler {
-	my($p, $data) = @_;
-
-	if ($data =~ /\blink\b/i) {
-		$snatchlink = 0;
-	} elsif ($data =~ /\btitle\b/i) {
-		$snatchtitle = 0;
-	} elsif ($data =~ /\bitem\b/i) {
-		$str .= qq!<A HREF="$link">$title</A></LI>\n!;
-	}
-}
-
 #################################################################
 sub getRDF {
 	#gets an RDF file, and formats it as a /. block
-	eval {
-		my($bid, $url, $other) = @_;
-	
-		($title, $link, $snatchtitle, $snatchlink, $str) = ("", "", 0, 0, "");
 
-		my $p = new XML::Parser (ErrorContext => 2);
-		$p->setHandlers(Char => \&char_handler,
-				End => \&end_handler,
-				Start => \&start_handler
-		);
+	my($bid, $url, $other) = @_;
+	my $rss = new XML::RSS;
 
-		my $d = geturl($url);
-		if (!$d) {
-			portaldLog("failed to get $bid");
-			return;
+	my $d = geturl($url);
+	if (!$d) {
+		portaldLog("failed to get $bid: $@");
+		return;
+	}
+	$d =~ s/&(?!(?:[a-zA-Z0-9]+|#\d+);)/&amp;/g; #s/&/&amp;/g;
+
+	eval { $rss->parse($d) };
+
+	if ($@) {
+		portaldLog("$bid did not parse properly:$@");
+		return;
+	} else {
+		my $str;
+		foreach my $item (@{$rss->{items}}) {
+			$str .= qq!<LI><A HREF="$item->{'link'}">$item->{title}</A> [?]</LI>\n!;
 		}
-
-		$d =~ s/&(?!(?:[a-zA-Z0-9]+|#\d+);)/&amp;/g; #s/&/&amp;/g;
-		$p->parse($d) or portaldLog("$bid did not parse properly");
 		setblock($bid, "$str$other");
-	};
-
-	portaldLog("Error getting $_[0]: $@") if $@;
+		return 1;
+	}
 }
 
 #################################################################

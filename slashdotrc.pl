@@ -56,6 +56,8 @@ my %my_conf = (
 	approvedtags    	=> [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)],
 	defaultsection  	=> 'articles',  # default section for articles
 	http_proxy		=> '',	# 'http://proxy.example.com/'
+	rdflanguage		=> 'en',
+	rdfencoding		=> 'ISO-8859-1',
 
 # this controls the life of %storyBank
 	story_expire	=> 600,
@@ -129,6 +131,7 @@ my %my_conf = (
 
 # these keys dependent on values set above
 $my_conf{rootdir}	= "http://$my_conf{basedomain}";
+$my_conf{absolutedir}	= $my_conf{rootdir};
 $my_conf{basedir}	= $my_conf{datadir} . "/public_html";
 $my_conf{imagedir}	= "$my_conf{rootdir}/images";
 $my_conf{rdfimg}	= "$my_conf{imagedir}/topics/topicslash.gif";
