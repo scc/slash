@@ -595,6 +595,7 @@ CREATE TABLE users_param (
   name varchar(32) DEFAULT '' NOT NULL,
   value text,
   UNIQUE uid_key (uid,name),
+  KEY (uid),
   PRIMARY KEY (param_id)
 );
 
