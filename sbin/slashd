@@ -111,8 +111,8 @@ sub geturl {
 
 
 sub prog2file {
-	my($c, $f) = @_;
-	my $d = `$c`;
+	my($command, $arguments, $f) = @_;
+	my $d = `$command $virtual_user $arguments`;
 	my $dir = dirname($f);
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {
@@ -384,6 +384,7 @@ sub makeDir {
 # This is the normal, every 60 seconds stuff
 sub freshenup {
 	moveImages();
+print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 
 	my %updates;
 	my $stories = $slashdb->getStoriesForSlashdb();
@@ -396,12 +397,12 @@ sub freshenup {
 		makeDir($section, $sid);
 		$totalChangedStories++;
 
-		if (prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=thread",
+		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid\\\&ssi=yes\\\&mode=thread",
 			"$constants->{basedir}/$section/$sid.shtml")) {
 
 			# Don't need this any more.
-			prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
-				"$constants->{basedir}/$section/$sid"."_F.shtml");
+			#prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
+			#	"$constants->{basedir}/$section/$sid"."_F.shtml");
 
 			push @updatedsids, $sid;
 		} else {
@@ -429,14 +430,17 @@ sub freshenup {
 	my $w  = $slashdb->getVar('writestatus', 'value');
 
 #	if ($updates{articles} ne "" || $w ne "0") {
+print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 		$slashdb->setVar("writestatus", "0");
-		prog2file("$constants->{basedir}/index.pl ssi=yes", "$constants->{basedir}/index.shtml");
+		prog2file("$constants->{basedir}/index.pl", "ssi=yes", "$constants->{basedir}/index.shtml");
+		print("$constants->{basedir}/index.pl ssi=yes", "$constants->{basedir}/index.shtml");
+print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat","$constants->{basedir}/index_F.shtml");
 #	}
 
 	foreach my $key (keys %updates) {
 		next unless $key;
-		prog2file("$constants->{basedir}/index.pl ssi=yes\\\&section=$key",
+		prog2file("$constants->{basedir}/index.pl", "ssi=yes\\\&section=$key",
 			"$constants->{basedir}/$key/index.shtml");
 		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat\\\&section=$key","$constants->{basedir}/$key/index_F.shtml");
 	}
@@ -493,9 +497,9 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
 			slashdLog("Running Moderatord");
 			system("$constants->{sbindir}/moderatord $virtual_user");
-			prog2file("$constants->{basedir}/hof.pl ssi=yes", "$constants->{basedir}/hof.shtml");
-			prog2file("$constants->{basedir}/topics.pl ssi=yes", "$constants->{basedir}/topics.shtml");
-			prog2file("$constants->{basedir}/cheesyportal.pl ssi=yes",
+			prog2file("$constants->{basedir}/hof.pl", "ssi=yes", "$constants->{basedir}/hof.shtml");
+			prog2file("$constants->{basedir}/topics.pl", "ssi=yes", "$constants->{basedir}/topics.shtml");
+			prog2file("$constants->{basedir}/cheesyportal.pl", "ssi=yes",
 				"$constants->{basedir}/cheesyportal.shtml");
 			$modlast = time;
 		}

@@ -31,6 +31,7 @@ use File::Path;
 use Slash;
 use Slash::Utility;
 
+my $virtual_user = $ARGV[0];
 createEnvironment();
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
@@ -89,7 +90,7 @@ my $E = $slashdb->getOldStories($constants->{archive_delay});
 for (@{$E}) {
 	my($sid, $date, $section, $title) = ($_->[0], $_->[1], $_->[2], $_->[3]);
 	$email.= "archiving: $sid $title \n";
-	prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=archive",
+	prog2file("$constants->{basedir}/article.pl", "sid=$sid\\\&ssi=yes\\\&mode=archive",
 		"$constants->{basedir}/$section/$sid"."_F.shtml");
 
 	unlink("$constants->{basedir}/$section/$sid.shtml")
@@ -140,9 +141,9 @@ EOT
 }
 
 sub prog2file {
-	my($c, $f) = @_;
+	my($command, $f) = @_;
 
-	my $d = `$c $ARGV[0]`;
+	my $d = `$command $virtual user $arguments`;
 	my $dir = dirname($f);
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {
