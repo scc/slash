@@ -43,6 +43,7 @@ install: slash
 	# First we do the default sutff
 	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/
 	install -D bin/install-slashsite $(PREFIX)/bin/
+	install -D bin/tailslash $(PREFIX)/bin/
 	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
 	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql

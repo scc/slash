@@ -1,4 +1,10 @@
 package Slash::DB::Static::MySQL;
+#####################################################################
+#
+# Note, this is where all of the ugly red headed step children go.
+# This does not exist, these are not the methods you are looking for.
+#
+#####################################################################
 use strict;
 use DBIx::Password;
 use Slash::DB::Utility;
@@ -157,17 +163,9 @@ sub updateStamps {
 
 	for (@{$E}) {
 		my $uid=$_->[0];
-		$self->setUser($uid, {-lastaccess=>'now()'});
+		$self->setUser($uid, {lastaccess=>'now()'});
 	}
 	$self->sqlDo("UNLOCK TABLES");
-}
-
-########################################################
-# For dailystuff
-sub cleanFormKeys {
-	my ($self) = @_;
-
-
 }
 
 ########################################################
@@ -383,6 +381,40 @@ sub getUserLast {
 	my($totalusers) = $self->sqlSelect("max(uid)", "users_info");
 
 	return $totalusers;
+}
+
+########################################################
+# For tailslash
+sub pagesServed {
+	my ($self) = @_;
+	my $returnable = $self->sqlSelectAll("count(*),date_format(ts,\"%d_%H\") as h,
+			date_format(ts,\"%d\") as d",
+			"accesslog", "1=1",
+			"GROUP BY H ORDER BY H ASC");
+
+	return $returnable;
+
+}
+
+########################################################
+# For tailslash
+sub maxAccessLog {
+	my ($self) = @_;
+	my ($returnable) = $self->sqlSelect("max(id)", "accesslog");;
+
+	return $returnable;
+}
+
+########################################################
+# For tailslash
+sub getAccessLogInfo {
+	my ($self, $id) = @_;
+	my $returnable = $self->sqlSelectAll("host_addr,uid,op,dat,
+				date_format(ts,\"\%H:\%i\") as ts,id",
+				"accesslog","id > $id",
+				"ORDER BY ts DESC");
+
+	return $returnable;
 }
 
 ########################################################

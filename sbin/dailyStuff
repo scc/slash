@@ -41,8 +41,6 @@ my $sdTotalHits = $slashdb->getVar("totalhits");
 $sdTotalHits = $sdTotalHits + $count->{'total'};
 $slashdb->setVar("totalhits", $sdTotalHits);
 
-$slashdb->cleanFormKeys();
-
 $slashdb->updateStamps();
 
 my $email = <<EOT;
@@ -55,13 +53,13 @@ total hits $sdTotalHits
    indexes 
 EOT
 
-for (keys %indexes) {
+for (keys %{$count->{'index'}}) {
 	$email .= "\t   $_=$count->{'index'}es{$_}\n"
 }
 
 $email .= "\n-----------------------\n";
 
-for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %articles) {
+for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
 	my $value = $count->{'articles'}{$key};
 
 	my $story = $slashdb->getStory($key, 'title', 'aid');
@@ -71,7 +69,7 @@ for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys
 }
 
 $email .= "\n-----------------------\n";
-$email .= `$constants->{datadir}/bin/tailslash today`;
+$email .= `$constants->{datadir}/bin/tailslash $virtual_user today`;
 $email .= "\n-----------------------\n";
 
 
