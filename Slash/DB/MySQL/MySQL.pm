@@ -3753,7 +3753,7 @@ discussions LEFT OUTER JOIN $comments ON discussions.id = $comments.sid, $storie
 F
 $stories.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
-OR (stories.section=$section_dbi and displaystatus > -1))
+OR ($stories.section=$section_dbi and displaystatus > -1))
 AND time < now() AND writestatus > -1
 W
 GROUP BY $stories.sid

@@ -298,6 +298,7 @@ sub saveArticle {
 		if ($constants->{journal_comments}) {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
+			# i hope sid=$id is correct here ... krow? -- pudge
 			$slashdb->createDiscussion('', $description, $slashdb->getTime(), 
 				"$rootdir/journal.pl?sid=$id", $constants->{journal_default_topic}
 			);
