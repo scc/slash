@@ -748,13 +748,14 @@ EOT
 	}
 
 	# update the public key
-	sqlReplace("users_key", { uid => $uid, pubkey => $I{F}{pubkey} } );
+	my $public_key = { uid => $uid, pubkey => $I{F}{pubkey} };
+	$I{dbobject}->setUsersKey($uid, $public_key);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	sqlUpdate("users", $H, "uid=" . $uid . " AND uid>0", 1);
+	$I{dbobject}->setUsers($uid, $H);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	sqlUpdate("users_info", $H2, "uid=" . $uid . " AND uid>0", 1);
+	$I{dbobject}->setUsers($uid, $H2);
 }
 
 #################################################################
@@ -795,7 +796,7 @@ EOT
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	sqlUpdate("users_comments", $H, "uid=" . $uid . " AND uid>0", 1);
+	$I{dbobject}->setUsersComments($uid,$H);
 }
 
 #################################################################
@@ -813,7 +814,7 @@ eliminates them, you are using a browser that doesn't support them, or you rejec
 EOT
 
 	my($extid, $exaid, $exsect) = "";
-	my($exboxes) = sqlSelect("exboxes", "users_index", "uid=$uid");
+	my $exboxes = $I{dbobject}->getUserIndexExboxes($uid);
 
 	$exboxes =~ s/'//g;
 	my @b = split m/,/, $exboxes;
@@ -868,14 +869,15 @@ EOT
 
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
-	sqlUpdate("users_comments", { points => 0 }, "uid=$uid AND uid>0", 1)
+	my $users_comments = { points => 0 };
+	$I{dbobject}->setUsersComments($uid, $users_comments)
 		unless $I{F}{willing};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	sqlUpdate("users_index", $H, "uid=" . $uid . " AND uid>0", 1);
+	$I{dbobject}->setUsersIndex($uid, $H);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	sqlUpdate("users_prefs", $H2, "uid=" . $uid . " AND uid>0", 1);
+	$I{dbobject}->setUsersPrefrences($uid, $H2);
 }
 
 #################################################################

@@ -349,7 +349,7 @@ sub getUserPublicKey{
 }
 #################################################################
 sub getUserComments{
-  my($self, $uid, $min, $user) = @_;
+  my($self, $uid, $min) = @_;
 
 	my $sqlquery = "SELECT pid,sid,cid,subject,"
 			. getDateFormat("date","d")
@@ -364,8 +364,10 @@ sub getUserComments{
 
 }
 #################################################################
-sub userInfo {
-	my($self, $nick) = @_;
+sub getUserIndexExboxes {
+	my($self, $uid) = @_;
+	my($exboxes) = $self->sqlSelect("exboxes", "users_index", "uid=$uid");
+	return $exboxes
 }
 ########################################################
 # Get user info from the users table.
@@ -1140,6 +1142,36 @@ sub getStoryByTime {
 	);
 }
 
+#################################################################
+#These methods should be the same
+#and to be honest add little. Perfect for 
+#a rewrite.
+########################################################
+sub setUsersKey{
+	my ($self, $uid, $hashref) = @_;
+	# Replace is a naughy thing
+	$self->sqlReplace("users_key", $hashref);
+}
+########################################################
+sub setUsersInfo{
+	my ($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid>0", 1);
+}
+########################################################
+sub setUsersComments{
+	my ($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid>0", 1);
+}
+########################################################
+sub setUsers{
+	my ($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users", $hashref, "uid=" . $uid . " AND uid>0", 1);
+}
+########################################################
+sub setUsersPrefrences{
+	my ($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid . " AND uid>0", 1);
+}
 
 1;
 
