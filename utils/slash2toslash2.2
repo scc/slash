@@ -15,13 +15,18 @@ use Digest::MD5 'md5_hex';
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-my %opts;
+my(%opts, %forced_plugins);
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('Ihvu:U:', \%opts);
+usage('Options used incorrectly') unless getopts('Ihvu:U:P:', \%opts);
 usage() if $opts{'h'};
 version() if $opts{'v'};
 usage('Need v2 virtual user') unless $opts{'U'};
 usage('Need new virtual user') unless $opts{'u'};
+
+# Determine plugins to force conversion for.
+for (split /,/, $opts{P}) {
+	$forced_plugins{$_} = 1;
+}
 
 ####################################
 # disclaimer
@@ -459,7 +464,6 @@ EOT
 sub convert_plugins {
 	my($new_plugins, $old_plugins);
 
-	print "\nConverting PLUGINS...\n\n";
 	$new_plugins = $dbh_new->selectcol_arrayref(
 		'SELECT value FROM site_info WHERE name="plugin"'
 	);
@@ -467,11 +471,22 @@ sub convert_plugins {
 		'SELECT value FROM site_info WHERE name="plugin"'
 	);
 
+	my $printed = 0;
 	for (@{$new_plugins}) {
 		local $" = '|';
 		my $alit = "(@{$old_plugins})";
-		if (/^$alit$/) {
-			next if ! $plugins{$_}{tables};
+		if ($forced_plugins{$_} || /^$alit$/) {
+			if (! $printed) {
+				print "\nConverting PLUGINS...\n\n";
+				$printed++;
+			}
+			if (! $plugins{$_}{tables}) {
+				print <<EOT;
+Skipping conversion: No conversion data for PLUGIN '$_'!
+EOT
+
+				next;
+			}
 			for (@{$plugins{$_}{tables}}) {
 				duplicate($_, 1);
 			}
@@ -1160,15 +1175,20 @@ sub usage {
 
 Usage: $PROGNAME [OPTIONS] RCFILE
 
-Converts Slash 1.0 data to Slash 1.1/2.2 data.  Type
+Converts Slash 2.0 data to Slash 2.2 data.  Type
 "perldoc $PROGNAME" or "perldoc `which $PROGNAME`"
 for instructions on use.
 
 Main options:
-		slashdotrc.pl file from 1.0 installation
 	-h	Help (this message)
 	-v	Version
-	-u	Virtual user (default is "slash") [REQUIRED]
+
+	-u	v2.2 Virtual user (default is "slash") [REQUIRED]
+	-U 	v2.0 Virtual user. 	               [REQUIRED]
+
+	-P<x>	Force presence (and conversion) of comma separated list 
+		of plugins: <x>
+
 	-I	Perform INCREMENTAL conversion
 
 EOT
@@ -1375,8 +1395,8 @@ I know it's a pain, but you'll be _much_ happier with the results.
 If you invoke this program using the -I switch, an incremental conversion will
 be performed. The name implies exactly what it means, each table has a condition
 that will allow for incremental updates to be performed between a Beast site and
-a Fry site, which is useful for sites attempting to upgrade to Fry by using another
-system in tandem.
+a Fry site, which is useful for sites attempting to upgrade to Fry by using
+another system in tandem.
 
 An incremental update assumes that a previous conversion (or a working Slash site
 already exists at the database referred to by the specified virtual user.
