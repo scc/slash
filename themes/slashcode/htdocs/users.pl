@@ -831,7 +831,7 @@ sub adminDispatch {
 	} elsif ($form->{userinfo}) {
 		showInfo();
 
-	} elsif ($form->{uid}) {
+	} elsif ($form->{userfield}) {
 		if ($form->{edituser}) {
 			editUser();
 
