@@ -303,7 +303,7 @@ sub delete {
 	my $delCount = deleteThread($form->{sid}, $form->{cid});
 
 	$slashdb->setDiscussionDelCount($form->{sid}, $delCount);
-	$slashdb->setStoryDirty($form->{sid});
+	$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
 }
 
 
@@ -739,11 +739,20 @@ sub submitComment {
 		return(0);
 	} else {
 		slashDisplay('comment_submit');
-		undoModeration($form->{sid}); # XXX authors should not have their mods undone - Jamie
+		undoModeration($form->{sid});
 		printComments($discussion, $maxCid, $maxCid);
 
 		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
+
+		# This is for stories. If a sid is only a number
+		# then it belongs to discussions, if it has characters
+		# in it then it belongs to stories and we should
+		# update to help with stories/hitparade.
+		# -Brian
+		if ($form->{sid} !~ /^\d+$/) {
+			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		}
 
 		$slashdb->setUser($user->{uid}, {
 			-totalcomments => 'totalcomments+1',
@@ -831,7 +840,14 @@ sub moderate {
 	printComments($discussion, $form->{pid}, $form->{cid});
 
 	if ($was_touched) {
-		$slashdb->setStoryDirty($form->{sid});
+		# This is for stories. If a sid is only a number
+		# then it belongs to discussions, if it has characters
+		# in it then it belongs to stories and we should
+		# update to help with stories/hitparade.
+		# -Brian
+		if ($form->{sid} !~ /^\d+$/) {
+			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		}
 	}
 }
 
