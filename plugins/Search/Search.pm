@@ -126,8 +126,12 @@ sub findUsers {
 	$where .= " AND $key" if $form->{query};
 
 
-	my $other = " ORDER BY users.uid "
-		if $form->{query};
+	my $other;
+	if($form->{query}) {
+		$other = " ORDER BY score "
+	} else {
+		$other = " ORDER BY users.uid "
+	}
 
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
 

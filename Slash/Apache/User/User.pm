@@ -256,6 +256,10 @@ sub userdir_handler {
 				$r->args("op=personal_index");
 				$r->uri('/comments.pl');
 				$r->filename($constants->{basedir} . '/comments.pl');
+			} elsif ($op eq 'messages' or $op eq 'inbox') {
+				$r->args("op=list");
+				$r->uri('/messages.pl');
+				$r->filename($constants->{basedir} . '/messages.pl');
 			} else {
 				$r->uri('/users.pl');
 				$r->filename($constants->{basedir} . '/users.pl');
