@@ -675,4 +675,4 @@ INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5',NULL,NUL
 INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
 INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting',NULL,NULL);
 
-INSERT INTO users (uid,realname,passwd,matchname) VALUES (1,'Anonymous Coward','eb399bcaca686f8609137153307eecf1','anonymouscoward');
+INSERT INTO users (uid,nickname,realname,passwd,matchname) VALUES (1,'Anonymous Coward','Anonymous Coward','eb399bcaca686f8609137153307eecf1','anonymouscoward');
