@@ -60,6 +60,7 @@ BEGIN {
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect
+		createEnvironment
 	);
 	$CRLF = "\015\012";
 }
@@ -217,7 +218,7 @@ sub getEvalBlock {
 sub getSectionBlock {
 	my $dbslash = getCurrentDB();
 	my($name) = @_;
-	my $thissect = getCurrentUser('light')? 'light' : $I{currentSection};
+	my $thissect = getCurrentUser('light')? 'light' : getCurrentStatic('currentSection');
 	my $block;
 	if ($thissect) {
 		$block = $dbslash->getBlock($thissect . "_$name", 'block');
@@ -295,12 +296,13 @@ sub anonLog {
 # used by dailyStuff, users.pl, and someday submit.pl
 sub sendEmail {
 	my($addr, $subject, $content) = @_;
+	my $constants = getCurrentStatic();
 	sendmail(
-		smtp	=> $I{smtp_server},
+		smtp	=> $constants->{smtp_server},
 		subject	=> $subject,
 		to	=> $addr,
 		body	=> $content,
-		from	=> $I{mailfrom}
+		from	=> $constants->{mailfrom}
 	) or apacheLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
 }
 
@@ -313,11 +315,12 @@ sub linkStory {
 
 	if (getCurrentUser('currentMode') ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
 		$dynamic = 1 if $c->{mode} || exists $c->{threshold} || $ENV{SCRIPT_NAME};
-		$l .= '&mode=' . ($c->{mode} || $I{U}{mode});
+		$l .= '&mode=' . ($c->{mode} || getCurrentUser('mode'));
 		$l .= "&threshold=$c->{threshold}" if exists $c->{threshold};
 	}
 
-	return qq!<A HREF="$I{rootdir}/! .
+	my $rootdir = getCurrentStatic('rootdir');
+	return qq!<A HREF="$rootdir/! .
 		($dynamic ? "article.pl?sid=$c->{sid}$l" : "$c->{section}/$c->{sid}.shtml") .
 		qq!">$c->{'link'}</A>!;
 			# "$c->{section}/$c->{sid}$userMode".".shtml").
@@ -329,10 +332,11 @@ sub linkStory {
 sub getSectionColors {
 	my $color_block = shift;
 	my @colors;
+	my $colorblock = getCurrentForm('colorblock');
 
 	# they damn well better be legit
-	if ($I{F}{colorblock}) {
-		@colors = map { s/[^\w#]+//g ; $_ } split m/,/, $I{F}{colorblock};
+	if ($colorblock) {
+		@colors = map { s/[^\w#]+//g ; $_ } split m/,/, $colorblock;
 	} else {
 		@colors = split m/,/, getSectionBlock('colors');
 	}
@@ -364,6 +368,8 @@ sub getSection {
 sub pollbooth {
 	my($qid, $notable) = @_;
 
+	my $constants = getCurrentStatic();
+
 	my $dbslash = getCurrentDB();
 	$qid = $dbslash->getVar('currentqid', 'value') unless $qid;
 	my $qid_htm = stripByMode($qid, 'attribute');
@@ -374,12 +380,12 @@ sub pollbooth {
 		my($question, $answer, $aid) = @$_;
 		if ($x == 0) {
 			$tablestuff = <<EOT;
-<FORM ACTION="$I{rootdir}/pollBooth.pl">
+<FORM ACTION="$constants->{rootdir}/pollBooth.pl">
 \t<INPUT TYPE="hidden" NAME="qid" VALUE="$qid_htm">
 <B>$question</B>
 EOT
-			$tablestuff .= <<EOT if $I{currentSection};
-\t<INPUT TYPE="hidden" NAME="section" VALUE="$I{currentSection}">
+			$tablestuff .= <<EOT if $constants->{currentSection};
+\t<INPUT TYPE="hidden" NAME="section" VALUE="$constants->{currentSection}">
 EOT
 			$x++;
 		}
@@ -389,11 +395,11 @@ EOT
 	my $voters = $dbslash->getPollQuestion($qid, 'voters');
 	my $comments = $dbslash->countComments($qid);
 #	my $comments = $dbslash->getPollComments($qid);
-	my $sect = "section=$I{currentSection}&" if $I{currentSection};
+	my $sect = "section=$constants->{currentSection}&" if $constants->{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
-		qq![ <A HREF="$I{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$I{anonymous_coward_uid}"><B>Results</B></A> | !;
-	$tablestuff .= qq!<A HREF="$I{rootdir}/pollBooth.pl?$sect"><B>Polls</B></A> !
+		qq![ <A HREF="$constants->{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$constants->{anonymous_coward_uid}"><B>Results</B></A> | !;
+	$tablestuff .= qq!<A HREF="$constants->{rootdir}/pollBooth.pl?$sect"><B>Polls</B></A> !
 		unless $notable eq 'rh';
 	$tablestuff .= "Votes:<B>$voters</B>" if $notable eq 'rh';
 	$tablestuff .= " ] <BR>\n";
@@ -401,7 +407,7 @@ EOT
 	$tablestuff .="</FORM>\n";
 
 	return $tablestuff if $notable;
-	fancybox($I{fancyboxwidth}, 'Poll', $tablestuff, 'c');
+	fancybox($constants->{fancyboxwidth}, 'Poll', $tablestuff, 'c');
 }
 
 
@@ -466,13 +472,15 @@ sub fixHref {
 	my $abs_url; # the "fixed" URL
 	my $errnum; # the errnum for 404.pl
 
-	for my $qr (@{$I{fixhrefs}}) {
+	my $fixhrefs = getCurrentStatic('fixhrefs');
+	for my $qr (@{$fixhrefs}) {
 		if ($rel_url =~ $qr->[0]) {
 			my @ret = $qr->[1]->($rel_url);
 			return $print_errs ? @ret : $ret[0];
 		}
 	}
 
+	my $rootdir = getCurrentStatic('rootdir');
 	if ($rel_url =~ /^www\.\w+/) {
 		# errnum 1
 		$abs_url = "http://$rel_url";
@@ -497,7 +505,7 @@ sub fixHref {
 		my $file = pop @chunks;
 
 		if ($file =~ /^98/ || $file =~ /^0000/) {
-			$rel_url = "$I{rootdir}/articles/older/$file";
+			$rel_url = "$rootdir/articles/older/$file";
 			return ($rel_url, 6) if $print_errs;
 			return $rel_url;
 		} else {
@@ -510,7 +518,7 @@ sub fixHref {
 		my $file = pop @chunks;
 
 		if ($file =~ /^98/ || $file =~ /~00000/) {
-			$rel_url = "$I{rootdir}/features/older/$file";
+			$rel_url = "$rootdir/features/older/$file";
 			return ($rel_url, 7) if $print_errs;
 			return $rel_url;
 		} else {
@@ -523,7 +531,7 @@ sub fixHref {
 		my $file = pop @chunks;
 
 		if ($file =~ /^98/ || $file =~ /^00000/) {
-			$rel_url = "$I{rootdir}/books/older/$file";
+			$rel_url = "$rootdir/books/older/$file";
 			return ($rel_url, 8) if $print_errs;
 			return $rel_url;
 		} else {
@@ -536,7 +544,7 @@ sub fixHref {
 		my $file = pop @chunks;
 
 		if ($file =~ /^98/ || $file =~ /^00000/) {
-			$rel_url = "$I{rootdir}/askslashdot/older/$file";
+			$rel_url = "$rootdir/askslashdot/older/$file";
 			return ($rel_url, 9) if $print_errs;
 			return $rel_url;
 		} else {
@@ -2021,10 +2029,14 @@ sub errorMessage {
 # make sure they're not posting faster than the limit
 sub checkSubmission {
 	my($formname, $limit, $max, $id) = @_;
-	my $formkey_earliest = time() - $I{formkey_timeframe};
+	my $constants = getCurrentStatic();
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $dbslash = getCurrentDB();
+	# If formkey starts to act up, me doing the below
+	# may be the cause
+	my $formkey = getCurrentForm('formkey');
 
-	my $last_submitted = $dbslash->getSubmissionLast($id, $formname, $I{U});
+	my $last_submitted = $dbslash->getSubmissionLast($id, $formname);
 
 	my $interval = time() - $last_submitted;
 
@@ -2033,7 +2045,7 @@ sub checkSubmission {
 		my $interval_string = intervalString($interval);
 		my $speed_limit_err = <<EOT;
 <B>Slow down cowboy!</B><BR>
-<P>$I{sitename} requires you to wait $limit_string between
+<P>$constants->{sitename} requires you to wait $limit_string between
 each submission of $ENV{SCRIPT_NAME} in order to allow everyone to have a fair chance to post.</P>
 <P>It's been $interval_string since your last submission!</P>
 EOT
@@ -2041,24 +2053,24 @@ EOT
 		return;
 
 	} else {
-		if ($dbslash->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{U})) {
-			undef $I{F}{formkey} unless $I{F}{formkey} =~ /^\w{10}$/;
+		if ($dbslash->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
+			undef $formkey unless $formkey =~ /^\w{10}$/;
 
-			unless ($I{F}{formkey} && $dbslash->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey}, $I{U})) {
+			unless ($formkey && $dbslash->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
 				$dbslash->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				my $invalid_formkey_err = "<P><B>Invalid form key!</B></P>\n";
 				errorMessage($invalid_formkey_err);
 				return;
 			}
 
-			if (submittedAlready($I{F}{formkey}, $formname)) {
+			if (submittedAlready($formkey, $formname)) {
 				$dbslash->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				return;
 			}
 
 		} else {
 			$dbslash->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
-			my $timeframe_string = intervalString($I{formkey_timeframe});
+			my $timeframe_string = intervalString($constants->{formkey_timeframe});
 			my $max_posts_err =<<EOT;
 <P><B>You've reached you limit of maximum submissions to $ENV{SCRIPT_NAME} :
 $max submissions over $timeframe_string!</B></P>
@@ -2070,6 +2082,23 @@ EOT
 	return 1;
 }
 
+########################################################
+# Ok, in a CGI we need to set up enough of an
+# environment so that methods that are accustom
+# to Apache do not choke.
+sub createEnvironment{
+	my ($virtual_user) = @_;
+	my $slashdb = new Slash::DB($virtual_user);
+	my $constants = $slashdb->getSlashConf();
+	#We assume that the user for scripts is the anonymous user
+	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
+	setCurrentDB($slashdb);
+	setCurrentStatic($constants);
+	setCurrentUser($user);
+	setCurrentAnonymousCoward($user);
+
+	return ($constants, $slashdb);
+}
 
 ########################################################
 #sub CLOSE { $I{dbh}->disconnect if $I{dbh} }

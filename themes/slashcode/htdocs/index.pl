@@ -208,7 +208,6 @@ sub displayStories {
 	my $user = getCurrentUser();
 	my $cnt = int($user->{maxstories} / 3);
 
-	#stackTrace(8);
 	for (@{$stories_arrayref}) {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
 

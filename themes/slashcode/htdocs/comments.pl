@@ -78,7 +78,7 @@ sub main {
 
 		if ($I{F}{op} eq 'Reply') {
 			$I{F}{formkey} = getFormkey();
-			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid});	
+			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid});	
 		} else {
 			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey},
 				getCurrentStatic('anonymous_coward_uid'), $I{U}{uid},
@@ -172,7 +172,7 @@ EOT
 		print "\n</TABLE><P>\n\n";
 	}
 
-	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest, $I{U})) {
+	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest)) {
 		my $max_posts_warn =<<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day :
 $I{max_submissions_allowed}</B></P>

@@ -95,9 +95,10 @@ my $keysearch = sub {
 
 ########################################################
 my $whereFormkey = sub {
-	my($formkey_id, $user) = @_;
+	my($formkey_id) = @_;
 	my $where;
 
+	my $user = getCurrentUser();
 	# anonymous user without cookie, check host, not formkey id
 	if ($user->{anon_id} && ! $user->{anon_cookie}) {
 		$where = "host_name = '$ENV{REMOTE_ADDR}'";
@@ -1316,9 +1317,9 @@ sub setStory {
 
 ########################################################
 sub getSubmissionLast {
-	my($self, $id, $formname, $user) = @_;
+	my($self, $id, $formname) = @_;
 
-	my $where = $whereFormkey->($id, $user);
+	my $where = $whereFormkey->($id);
 	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
@@ -1410,17 +1411,16 @@ sub updateFormkeyId {
 
 ########################################################
 sub insertFormkey {
-	my($self, $formname, $id, $sid, $formkey, $uid) = @_;
-
+	my($self, $formname, $id, $sid) = @_;
 
 	# insert the fact that the form has been displayed, but not submitted at this point
 	$self->sqlInsert("formkeys", {
-		formkey		=> $formkey,
+		formkey		=> getCurrentForm('formkey'),
 		formname 	=> $formname,
 		id 		=> $id,
 		sid		=> $sid,
-		uid		=> $uid,
-		host_name	=> $ENV{REMOTE_ADDR},
+		uid		=> $ENV{'REMOTE_USER'},
+		host_name	=> $ENV{'REMOTE_ADDR'},
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1428,9 +1428,9 @@ sub insertFormkey {
 
 ########################################################
 sub checkFormkey {
-	my($self, $formkey_earliest, $formname, $formkey_id, $formkey, $user) = @_;
+	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
 
-	my $where = $whereFormkey->($formkey_id, $user);
+	my $where = $whereFormkey->($formkey_id);
 	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
 		'formkey = ' . $self->{dbh}->quote($formkey) .
 		" AND $where " .
@@ -1440,9 +1440,9 @@ sub checkFormkey {
 
 ##################################################################
 sub checkTimesPosted {
-	my($self, $formname, $max, $id, $formkey_earliest, $user) = @_;
+	my($self, $formname, $max, $id, $formkey_earliest) = @_;
 
-	my $where = $whereFormkey->($id, $user);
+	my $where = $whereFormkey->($id);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		"formkeys",
@@ -1984,7 +1984,7 @@ sub getComments {
 sub getStories {
 	my($self, $user, $form, $SECT, $currentSection, $limit, $tid) = @_;
 
-	my $limit ||= $user->{maxstories};
+	$limit ||= $user->{maxstories};
 
 	my $tables = "newstories";
 	my $columns = "sid, section, title, date_format(" .  
@@ -2769,7 +2769,7 @@ sub _genericGetCombined {
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} else {
 		my $where;
-		for (keys %{$self->{$cache}}) {
+		for (@$tables) {
 			$where .= "$_.$table_prime=$id_db AND ";
 		}
 		$where =~ s/ AND $//;

@@ -42,12 +42,9 @@ use Slash::Utility;
 
 #*I = getSlashConf();
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my $slashdb = Slash::DB->new($virtual_user);
-$constants = $slashdb->getSlashConf();
+print "USING  $virtual_user \n";
+my ($constants, $slashdb) = createEnvironment($virtual_user);
 $I = $constants;
-# Now kiddies, let make playland safe to use	-Brian
-setCurrentDB($slashdb);
-setCurrentStatic($constants);
 
 my $totalChangedStories = 1;
 
@@ -151,7 +148,7 @@ sub moveImages {
 
 #################################
 sub setheadertopics {
-	my $stories = getNewStoryTopic();
+	my $stories = $slashdb->getNewStoryTopic();
 	my($x, $r, $t);
 
 	for (@$stories) {
@@ -238,10 +235,10 @@ sub newfooter {
 print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	sectionHeaders("");
 print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
-	my $sections = $slashdb->getSections('section');
+	my $sections = $slashdb->getSections();
 print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
-	for (@$sections) {
-		my($section) = @$_;
+	for (keys %$sections) {
+		my($section) = $sections->{$_}->{'section'};
 		mkdir "$I->{basedir}/$section", 0755;
 		sectionHeaders($section);
 	}

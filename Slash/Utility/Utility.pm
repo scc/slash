@@ -208,7 +208,7 @@ sub getCurrentDB {
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		my $slashdb = $const_cfg->{'dbslash'};
+		$slashdb = $const_cfg->{'dbslash'};
 	} else {
 		$slashdb = $static_db;
 	}
@@ -221,13 +221,6 @@ sub setCurrentDB {
 	($static_db) = @_;
 }
 
-#################################################################
-# This is the Chris method, since I bet he won't want to call
-# all of the other methods independtly :)
-sub setCurrentAll {
-	($static_user, $static_form, $static_constants,
-		$static_db, $static_anonymous_coward) = @_;
-}
 
 #################################################################
 sub isAnon {
