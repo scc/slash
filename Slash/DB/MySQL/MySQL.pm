@@ -1928,7 +1928,7 @@ sub saveVars {
 	my $name = $form->{thisname};
 	if ($form->{desc}) {
 		my($exists) = $self->sqlSelect('count(*)', 'vars',
-			"name=$name"
+			"name='$name'"
 		);
 		if ($exists == 0) {
 			$self->sqlInsert('vars', { name => $form->{thisname} });
@@ -1938,7 +1938,7 @@ sub saveVars {
 				description	=> $form->{desc},
 				datatype	=> $form->{datatype},
 				dataop		=> $form->{dataop}
-			}, "name=$name"
+			}, "name='$name'"
 		);
 	} else {
 		$self->sqlDo("DELETE from vars WHERE name=$name");
@@ -2728,6 +2728,7 @@ sub getPollQuestion {
 	return $answer;
 }
 
+
 ########################################################
 sub getBlock {
 	my($self) = @_;
@@ -2792,6 +2793,12 @@ sub getVar {
 	my $var = $self->{_dbh}->selectrow_array($sql);
 
 	return $var;
+}
+
+########################################################
+sub getVarRef {
+	my $varref = _genericGet('vars', 'name', @_);
+	return $varref;
 }
 
 ########################################################

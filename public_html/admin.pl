@@ -35,9 +35,6 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	for(keys %{$form}) {
-		print STDERR "key $_ value $form->{$_}\n";
-	}
 	getSection('admin');
 
 	my($tbtitle);
@@ -58,12 +55,12 @@ sub main {
 
 	my $op = $form->{op};
 	if (!$user->{aseclev}) {
-		titlebar('100%', 'back<I>Slash</I> Login');
+		titlebar('100%', getTitle('adminLogin-title'));
 		adminLoginForm();
 
 	} elsif ($op eq 'logout') {
 		$slashdb->deleteSession();
-		titlebar('100%', 'back<I>Slash</I> Buh Bye');
+		titlebar('100%', getTitle('adminLogout-title'));
 		adminLoginForm();
 
 	} elsif ($form->{topicdelete}) {
@@ -84,7 +81,7 @@ sub main {
 		updateStory();
 
 	} elsif ($op eq 'list') {
-		titlebar('100%', 'Story List');
+		titlebar('100%', getTitle('listStories-title'));
 		listStories();
 
 	} elsif ($op eq 'delete') {
@@ -185,7 +182,7 @@ sub main {
 		updateFilter(3);
 
 	} else {
-		titlebar('100%', 'Story List', 'c');
+		titlebar('100%', getTitle('listStories-title'));
 		listStories();
 	}
 
@@ -222,7 +219,7 @@ sub varEdit {
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
 	if($name) {
-		$varsref = $slashdb->getVar($name, ['name','value','description','datatype','dataop']);
+		$varsref = $slashdb->getVarRef($name);
 	}
 
 	slashDisplay('admin-varEdit', { 
@@ -632,7 +629,7 @@ sub listTopics {
 	my $constants = getCurrentStatic();
 
 	my $topics = $slashdb->getTopics();
-	titlebar('100%', 'Topic Lister');
+	titlebar('100%', getTitle('listTopics-title'));
 
 	my $x = 0;
 
@@ -1074,8 +1071,7 @@ sub rmStory {
 
 	$slashdb->deleteStory($sid);
 
-	my $title = getTitle('rmStory-title', {sid => $sid});	
-	titlebar('100%', $title);
+	titlebar('100%', getTitle('rmStory-title', {sid => $sid}));
 }
 
 ##################################################################
