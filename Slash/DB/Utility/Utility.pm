@@ -30,7 +30,7 @@ sub sqlSelectMany {
 		return $sth;
 	} else {
 		$sth->finish;
-		apacheLog($sql);
+		errorLog($sql);
 		return undef;
 	}
 }
@@ -46,7 +46,7 @@ sub sqlSelect {
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	$self->sqlConnect();
 	if (!$sth->execute) {
-		apacheLog($sql);
+		errorLog($sql);
 		return undef;
 	}
 	my @r = $sth->fetchrow;
@@ -66,7 +66,7 @@ sub sqlSelectArrayRef {
 	$self->sqlConnect();
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
-		apacheLog($sql);
+		errorLog($sql);
 		return undef;
 	}
 	my $r = $sth->fetchrow_arrayref;
@@ -110,7 +110,7 @@ sub sqlSelectHashref {
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
 	unless ($sth->execute) {
-		apacheLog($sql);
+		errorLog($sql);
 		return;
 	} 
 	my $H = $sth->fetchrow_hashref;
@@ -162,7 +162,7 @@ sub sqlUpdate {
 	$self->sqlConnect();
 	my $rows = $self->{dbh}->do($sql);
 	#print STDERR "SQL: $sql\n";
-	apacheLog($sql) unless($rows);
+	errorLog($sql) unless($rows);
 	return $rows;
 }
 
@@ -186,7 +186,7 @@ sub sqlReplace {
 
 	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or apacheLog($sql);
+	return $self->{dbh}->do($sql) or errorLog($sql);
 }
 
 ########################################################
@@ -209,7 +209,7 @@ sub sqlInsert {
 
 	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or apacheLog($sql);
+	return $self->{dbh}->do($sql) or errorLog($sql);
 }
 
 ########################################################
@@ -262,7 +262,7 @@ sub generatesession {
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
-	$self->{dbh}->do($sql) || apacheLog($sql);
+	$self->{dbh}->do($sql) || errorLog($sql);
 }
 
 1;

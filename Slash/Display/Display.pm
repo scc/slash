@@ -112,7 +112,7 @@ sub slashDisplay {
 		print $comments[1] unless $nocomm;
 	}
 
-	apacheLog($template->error) unless $ok;
+	errorLog($template->error) unless $ok;
 
 	return $return ? $out : $ok;
 }

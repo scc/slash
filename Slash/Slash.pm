@@ -431,7 +431,7 @@ sub sendEmail {
 		to	=> $addr,
 		body	=> $content,
 		from	=> $constants->{mailfrom}
-	) or apacheLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
+	) or errorLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
 }
 
 

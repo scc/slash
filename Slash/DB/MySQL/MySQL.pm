@@ -234,7 +234,7 @@ sub setComment {
 
 	} else {
 		$self->sqlDo("UNLOCK TABLES");
-		apacheLog("$DBI::errstr $insline");
+		errorLog("$DBI::errstr $insline");
 		return -1;
 	}
 }
@@ -2014,8 +2014,8 @@ sub getCommentsForUser {
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
 
 
-	my $thisComment = $self->{dbh}->prepare_cached($sql) or apacheLog($sql);
-	$thisComment->execute or apacheLog($sql);
+	my $thisComment = $self->{dbh}->prepare_cached($sql) or errorLog($sql);
+	$thisComment->execute or errorLog($sql);
 	my(@comments);
 	while (my $comment = $thisComment->fetchrow_hashref){
 		push @comments, $comment;
@@ -2080,7 +2080,7 @@ sub getStories {
 #	print "\n\n\n\n\n<-- stories select $tables $columns $where $other -->\n\n\n\n\n";
 
 	my $stories_arrayref = $self->sqlSelectAll($columns, $tables, $where, $other)
-		or apacheLog("error in getStories columns $columns table $tables where $where other $other");
+		or errorLog("error in getStories columns $columns table $tables where $where other $other");
 
 	return $stories_arrayref;
 }
