@@ -264,6 +264,7 @@ INSERT INTO pollquestions (qid, sid, question, voters, date, discussion, uid) VA
 #
 
 INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://www.slashcode.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('slashcode','Slash','http://www.slashcode.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('intel','Intel','http://www.intel.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('linux','Linux','http://www.linux.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('redhat','Red Hat','http://www.redhat.com');
@@ -276,6 +277,8 @@ INSERT INTO related_links (keyword, name, link) VALUES ('debian','Debian','http:
 INSERT INTO related_links (keyword, name, link) VALUES ('zdnet','ZDNet','http://www.zdnet.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('news.com','News.com','http://www.news.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('cnn','CNN','http://www.cnn.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('krow','Krow','http://tangent.org/~brian/');
+INSERT INTO related_links (keyword, name, link) VALUES ('tangent','TangentOrg','http://tangent.org/');
 
 #
 # Dumping data for table 'sections'
@@ -583,5 +586,7 @@ INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total n
 INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
+INSERT INTO vars (name, value, description) VALUES ('user_comment_display_default','24','Number of comments to display on user\'s info page');
+INSERT INTO vars (name, value, description) VALUES ('user_submitter_display_default','24','Number of comments to display on user\'s info page');
 INSERT INTO vars (name, value, description) VALUES ('users_speed_limit','20','How fast a user can change their prefs');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
