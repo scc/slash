@@ -20,7 +20,7 @@ sub main {
 	# - Cliff
 	my $story = $slashdb->getStory($form->{sid});
 
-	if($story) {
+	if ($story) {
 		my $SECT = $slashdb->getSection($story->{section});
 		my $title = $SECT->{isolate} ?
 			"$SECT->{title} | $story->{title}" :

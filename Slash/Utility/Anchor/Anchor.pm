@@ -303,10 +303,7 @@ sub getSectionBlock {
 		: $user->{currentSection};
 
 	my $block;
-	if ($thissect and ($thissect ne 'index')) {  # what is "list" ? -- pudge  
-# list is a cousin... its a slow day, I am on 
-# allergy medicine :)
-# -Brian
+	if ($thissect and ($thissect ne 'index')) {
 		$block = $slashdb->getBlock("${thissect}_${name}", 'block');
 	}
 

@@ -995,7 +995,7 @@ sub setCookie {
 
 	my $cookie = Apache::Cookie->new($r,
 		-name    =>  $name,
-		-value   =>  $val || '',
+		-value   =>  $val || 'nobody',
 		-path    =>  $cookiepath
 	);
 
