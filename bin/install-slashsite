@@ -364,6 +364,10 @@ sub apache_site_conf {
     # Enable the line below if you are worried about performance
     #PerlTransHandler Slash::Apache::IndexHandler
     PerlLogHandler Slash::Apache::Log
+		AddType text/xml .rdf 
+		AddType text/xml .rss 
+		AddType text/xml .xml 
+		AddType text/xml .wml
 </VirtualHost>
 |;
 	my $file = "$prefix_site/$sitename/$sitename.conf";  

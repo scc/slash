@@ -56,5 +56,8 @@ my $newcomments = $tc - $lc;
 if ($newcomments > 0) {
 	$slashdb->setVar("lastComments", $tc);
 	comments2tokens($newcomments);
-	$slashdb->tokens2points();
+	my $log = $slashdb->tokens2points();
+	for(@$log) {
+		moderatordLog(@_);
+	}
 }

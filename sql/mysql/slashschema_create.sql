@@ -457,7 +457,7 @@ CREATE TABLE templates (
   name varchar(30) NOT NULL,
   page varchar(20) DEFAULT 'misc' NOT NULL,
   section varchar(30) DEFAULT 'default' NOT NULL,
-  lang char(3) DEFAULT 'eng' NOT NULL,
+  lang char(5) DEFAULT 'en_US' NOT NULL,
   template text,
   seclev int(1),
   description text,
@@ -610,6 +610,7 @@ CREATE TABLE users_prefs (
   noicons tinyint(4) DEFAULT '0' NOT NULL,
   light tinyint(4) DEFAULT '0' NOT NULL,
   mylinks varchar(255) DEFAULT '' NOT NULL,
+  lang char(5) DEFAULT 'en_US' NOT NULL,
   PRIMARY KEY (uid)
 );
 

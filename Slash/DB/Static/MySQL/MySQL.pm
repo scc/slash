@@ -363,19 +363,20 @@ sub getSectionMenu2Info{
 sub tokens2points {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
+	my @log;
 	my $c = $self->sqlSelectMany("uid,tokens", "users_info", "tokens >= $constants->{maxtokens}");
 	$self->sqlDo("LOCK TABLES users READ, 
 		users_info WRITE, 
 		users_comments WRITE");
 
 	while (my($uid, $tokens) = $c->fetchrow) {
-		moderatordLog("Giving $constants->{maxtokens}/$constants->{tokensperpoint} " .
+		push @log, ("Giving $constants->{maxtokens}/$constants->{tokensperpoint} " .
 			($constants->{maxtokens}/$constants->{tokensperpoint}) . " to $uid");
-			$self->setUser($uid, {
-				-lastgranted	=> 'now()',
-				-tokens		=> "tokens - $constants->{maxtokens}",
-				-points		=> "points +" . ($constants->{maxtokens} / $constants->{tokensperpoint})
-			});
+		$self->setUser($uid, {
+			-lastgranted	=> 'now()',
+			-tokens		=> "tokens - $constants->{maxtokens}",
+			-points		=> "points +" . ($constants->{maxtokens} / $constants->{tokensperpoint})
+		});
 	}
 
 	$c->finish;
@@ -393,6 +394,8 @@ sub tokens2points {
 		$self->sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
 	}
 	$self->sqlDo("UNLOCK TABLES");
+
+	return \@log;
 }
 
 ########################################################

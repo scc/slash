@@ -9,7 +9,7 @@ New User Form
 __page__
 users
 __lang__
-eng
+en_US
 __name__
 newUserForm
 __template__

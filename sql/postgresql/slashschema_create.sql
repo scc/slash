@@ -381,7 +381,7 @@ CREATE TABLE templates (
 	name varchar(30) DEFAULT '' NOT NULL,
 	page varchar(20) DEFAULT 'misc' NOT NULL,
 	section varchar(30) DEFAULT 'default' NOT NULL,
-	lang char(3) DEFAULT 'eng' NOT NULL,
+	lang char(5) DEFAULT 'en_US' NOT NULL,
 	template text,
 	seclev int4,
 	description text,
@@ -465,6 +465,7 @@ CREATE TABLE users (
 	noicons int2 DEFAULT '0' NOT NULL,
 	light int2 DEFAULT '0' NOT NULL,
 	mylinks varchar(255) DEFAULT '' NOT NULL,
+  lang char(5) DEFAULT 'en_US' NOT NULL,
 	PRIMARY KEY (uid)
 );
 CREATE INDEX idx_login ON users(uid,passwd,nickname);

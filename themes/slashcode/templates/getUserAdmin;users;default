@@ -16,7 +16,7 @@ users admin
 __page__
 users
 __lang__
-eng
+en_US
 __name__
 getUserAdmin
 __template__
