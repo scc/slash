@@ -24,8 +24,8 @@ sub sqlSelectMany {
 	$sql .= "  WHERE $where " if $where;
 	$sql .= "        $other" if $other;
 
-	$self->sqlConnect();
 	my $sth = $self->{dbh}->prepare_cached($sql);
+	$self->sqlConnect();
 	if ($sth->execute) {
 		return $sth;
 	} else {
@@ -43,8 +43,8 @@ sub sqlSelect {
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 	
-	$self->sqlConnect();
 	my $sth = $self->{dbh}->prepare_cached($sql);
+	$self->sqlConnect();
 	if (!$sth->execute) {
 		apacheLog($sql);
 		# print "\n<P><B>SQL Error</B><BR>\n";
@@ -75,9 +75,9 @@ sub sqlSelectArrayRef {
 }
 ########################################################
 sub sqlSelectHash {
-	my $self = shift;
-	my $H = sqlSelectHashref(@_);
-	return map { $_ => $H->{$_} } keys %$H;
+	my ($self) = @_;
+	my $hash = $self->sqlSelectHashref(@_);
+	return map { $_ => $hash->{$_} } keys %$hash;
 }
 
 ##########################################################

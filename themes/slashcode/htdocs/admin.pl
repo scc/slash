@@ -471,7 +471,7 @@ EOT
 		$bidblock = $I{dbobject}->getBlockByBid($bid, @values);
 	}
 
-	$bidblock->{'description'} = stripByMode($bidblock->{'description'}, 'literal', 1);
+	my $description_ta = stripByMode($bidblock->{'description'}, 'literal', 1);
 	$bidblock->{'block'} = stripByMode($bidblock->{'block'}, 'literal', 1);
 
 	# main table
@@ -502,7 +502,7 @@ EOT
 	</TR>
 		$section->{'title'}
 	<TR>	
-		<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="$bidblock->{'bseclev'}" SIZE="6"></TD>
+		<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="$bidblock->{'seclev'}" SIZE="6"></TD>
 	</TR>
 	<TR>	
 		<TD><B>Type</B></TD><TD><INPUT TYPE="TEXT" NAME="type" VALUE="$bidblock->{'type'}" SIZE="10"></TD>
@@ -517,7 +517,7 @@ EOT
 	<TR>
 		<TD VALIGN="TOP"><B>Description</B></TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">$bidblock->{'description'}_ta</TEXTAREA>
+		<TEXTAREA ROWS="6" COLS="70" NAME="description">$description_ta</TEXTAREA>
 		</TD>
 	</TR>
 	<TR>	
@@ -1059,7 +1059,7 @@ EOT
 	} elsif (defined $sid) { # Loading an Old SID
 		print '<TABLE><TR><TD>';
 		my $tmp = $I{currentSection};
-		($I{currentSection}) = sqlSelect('section', 'stories', "sid='$sid'");
+		($I{currentSection}) = $I{dbobject}->getStoryBySid($sid, 'section');
 		($S, $A, $T) = displayStory($sid, 'Full');
 		$I{currentSection} = $tmp;
 		print '</TD><TD WIDTH="220" VALIGN="TOP">';
@@ -1276,8 +1276,8 @@ EOT
 		print qq[\t<TD><FONT SIZE="${\( $I{fontbase} + 2 )}">$time</TD></TR>\n];
 	}
 
-	my $left = $cursor->rows - $x;
-	$cursor->finish;
+	my $count = @$storylist;
+	my $left = $count - $x;
 
 	print "</TABLE>\n";
 
@@ -1292,19 +1292,15 @@ EOT
 
 ##################################################################
 sub rmStory {
-	my $sid = shift;
-	sqlUpdate('stories', { writestatus => 5 }, 
-		'sid=' . $I{dbh}->quote($sid)
-	) if $I{U}{aseclev} > 500;
-
-	$I{dbh}->do("DELETE from discussions WHERE sid = '$sid'");
+	my ($sid) = @_;
+	$I{dbobject}->deleteStory($sid);
 	
 	titlebar('100%', "$sid will probably be deleted in 60 seconds.");
 }
 
 ##################################################################
 sub listFilters {
-        my $filter_hashref = sqlSelectAll("*","content_filters");
+	my $filter_hashref = $I{dbobject}->getContentFilters();
 	my ($header,$footer);
 
 	$header = getWidgetBlock('list_filters_header');
@@ -1333,23 +1329,25 @@ EOT
 
 ##################################################################
 sub editFilter {
-	my $filter_id = shift;
+	my ($filter_id) = @_;
 	$filter_id ||= $I{F}{filter_id};
 
 	print <<EOT;
 <!-- begin editFilter -->
 <FORM ENCTYPE="multipart/form-data" action="$ENV{SCRIPT_NAME}" method="POST">
 EOT
-	my($regex, $modifier, $field, $ratio, $minimum_match,
-		$minimum_length, $maximum_length, $err_message) =
-		sqlSelect("regex,modifier,field,ratio,minimum_match," .
-			"minimum_length,maximum_length,err_message",
-			"content_filters","filter_id=$filter_id");
+	my @values = qw (regex modifier field ratio minimum_match minimum_length maximum_length err_message);
+	my $filter = $I{dbobject}->getContentFilterById($filter_id, @values);
+#	my($regex, $modifier, $field, $ratio, $minimum_match,
+#		$minimum_length, $maximum_length, $err_message) =
+#		sqlSelect("regex,modifier,field,ratio,minimum_match," .
+#			"minimum_length,maximum_length,err_message",
+#			"content_filters","filter_id=$filter_id");
 
 	# this has to be here - it really screws up the block editor
-	$err_message = stripByMode($err_message, 'literal', 1);
+	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
 	my $textarea = <<EOT;
-<TEXTAREA NAME="err_message" COLS="50" ROWS="2">$err_message</TEXTAREA>
+<TEXTAREA NAME="err_message" COLS="50" ROWS="2">$filter->{'err_message'}</TEXTAREA>
 EOT
 
 	my $header = getWidgetBlock('edit_filter');
@@ -1361,7 +1359,7 @@ EOT
 
 ##################################################################
 sub updateFilter {
-	my $filter_action = shift;
+	my ($filter_action) = @_;
 
 	if ($filter_action eq "new") {
 		sqlInsert("content_filters", {

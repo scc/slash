@@ -271,7 +271,7 @@ sub getEvalBlock {
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists
 sub getSectionBlock {
-	my $name = shift;
+	my ($name) = @_;
 	my $thissect = $I{U}{light} ? 'light' : $I{currentSection};
 	my $block;
 	if ($thissect) {
@@ -284,7 +284,7 @@ sub getSectionBlock {
 ########################################################
 # Get a Block based on mode, section & name, and prep it for evaling
 sub getWidgetBlock {
-	my $name = shift;
+	my ($name) = @_;
 	my $block = getSectionBlock($name);
 	my $execme = prepBlock($block);
 	return $execme;

@@ -751,7 +751,7 @@ sub getCommentCid {
 	my($self, $sid, $cid) = @_;
 	my($scid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
 
-	retunr $scid;
+	return $scid;
 }
 
 ########################################################
@@ -795,8 +795,8 @@ sub getSectionBank {
 	my($self) = @_;
 	my $sectionbank = {};
 	my $sth = $self->sqlSelectMany('*', 'sections');
-	while (my $S = $sth->fetchrow_hashref) {
-		$sectionbank->{ $S->{section} } = $S;
+	while (my $section = $sth->fetchrow_hashref) {
+		$sectionbank->{ $section->{section} } = $section;
 	}
 	$sth->finish;
 	return $sectionbank;
@@ -993,7 +993,7 @@ sub getBlockByBid {
 	my $values = join ',', @val;
 	my $block = $self->sqlSelectHashref($values, 'blocks', "bid='$bid'");
 
-	retunr $block;
+	return $block;
 }
 ########################################################
 sub getTopicByTid {
@@ -1001,7 +1001,15 @@ sub getTopicByTid {
 	my $values = join ',', @val;
 	my $topic = $self->sqlSelectHashref($values, 'topics', "tid='$tid'");
 
-	retunr $topic;
+	return $topic;
+}
+########################################################
+sub getContentFilterById {
+	my($self, $id, @val) = @_;
+	my $values = join ',', @val;
+	my $filter = $self->sqlSelectHashref($values, 'content_filters', "filter_id='$id'");
+
+	return $filter;
 }
 ########################################################
 sub getSectionBlock {
@@ -1139,6 +1147,17 @@ sub getUserBio {
 }
 
 ########################################################
+sub deleteStory{
+	my ($self, $sid) = @_;
+	$self->sqlUpdate('stories', { writestatus => 5 }, 
+		'sid=' . $self->{dbh}->quote($sid)
+	);
+
+	$self->{dbh}->do("DELETE from discussions WHERE sid = '$sid'");
+}
+########################################################
+# This needs to be made to look like other methods so
+# you can request multiple objects
 sub getStoryBySid {
 	my($self, $sid, $member) = @_;
 
@@ -1193,6 +1212,7 @@ sub getSubmissionLast {
 ########################################################
 # Below are the block methods. These will be cleaned
 # up a bit (so names and methods may change)
+# This should be in getDescription
 ########################################################
 sub getStaticBlock {
 	my($self, $seclev) = @_;
