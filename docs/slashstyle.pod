@@ -311,7 +311,7 @@ If you don't know how to use these modules, learn.
 
 	mkdir("/path"), mkdir("/path/to"), ...	# wrong
 	`mkdir /path`; `mkdir /path/to`, ...	# very wrong
-	mkpath("/path/to/my/installation");	# right
+	mkpath("/path/to/my/dir", 0, 0775);	# right
 
 Do not use the glob operator (C<glob('*')> or C<E<lt>*E<gt>>).  Use
 opendir() with readdir() instead.  Note that glob() is much more
@@ -1001,6 +1001,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.6  2001/08/01 07:01:21  jamie
+	Change mkdir calls to mkpath (and document use of mkpath better).
+	
 	Revision 1.1.2.5  2001/04/24 14:40:45  pudge
 	Add in some of the orapatch changes, plus a fix to a typo in slashd
 	

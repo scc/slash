@@ -155,7 +155,7 @@ sub makeDir {
 	my $yearid = substr($sid, 0, 2);
 	my $dayid = substr($sid, 6, 2);
 
-	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0755;
+	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0775;
 }
 
 1;

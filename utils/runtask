@@ -33,7 +33,7 @@ exit 0;
 
 sub slashdLogInit {
 	my $ld = $constants->{logdir};
-	mkpath "$ld/", 0, 0755;
+	mkpath "$ld/", 0, 0775;
 	my $file = "$ld/slashd.log";
 	open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
 }
@@ -196,7 +196,7 @@ sub prog2file {
 	my $bytes = length $data;
 
 	my $dir = dirname($f);
-	my @created = mkpath($dir, 0, 0755) unless -e $dir;
+	my @created = mkpath($dir, 0, 0775) unless -e $dir;
 	if (!-e $dir or !-d _ or !-w _) {
 		$err_str .= " mkpath($dir) failed '"
 			. (-e _) . (-d _) . (-w _)

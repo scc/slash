@@ -2,6 +2,7 @@
 
 use strict;
 use Slash;
+use File::Path;
 my $me = 'new_headfoot.pl';
 
 use vars qw( %task );
@@ -18,7 +19,7 @@ $task{$me}{code} = sub {
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {
 		my($section) = $sections->{$_}{section};
-		mkdir "$constants->{basedir}/$section", 0755;
+		mkpath "$constants->{basedir}/$section", 0, 0755;
 		sectionHeaders(@_, $section);
 	}
 
