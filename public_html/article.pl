@@ -58,9 +58,9 @@ sub main {
 	$title = $SECT->{isolate} ? "$SECT->{title} | $title" : "$I{sitename} | $title";
 	header($title, $sect);
 
-	my($S, $A, $T) = displayStory($I{F}{sid}, 'Full');
+	my($story, $S, $A, $T) = displayStory($I{F}{sid}, 'Full');
 
-	print "<P>";
+	print $story, "<P>";
 	articleMenu($S, $SECT);
 #	print qq!</TD><TD VALIGN="TOP">\n!;
 	print qq!</TD><TD>&nbsp;</TD><TD VALIGN="TOP">\n!;

@@ -101,7 +101,7 @@ sub main {
 	} elsif ($I{F}{op} eq "moderate") {
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();
-		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $stories->{'commentstatus'});
+		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid});
 
 	} elsif ($I{F}{op} eq "Change") {
 		if ($I{U}{is_anon} || defined $I{F}->{"savechanges"}) {
@@ -111,13 +111,13 @@ sub main {
 					commentsort	=> $I{U}{commentsort}
 			}) unless $I{U}{is_anon};
 		}
-		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $stories->{'commentstatus'});
+		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid});
 
 	} elsif ($I{F}{cid}) {
-		printComments($I{F}{sid}, $I{F}{cid},$I{F}{cid}, $stories->{'commentstatus'});
+		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid});
 
 	} elsif ($I{F}{sid}) {
-		printComments($I{F}{sid}, $I{F}{pid}, "", $stories->{'commentstatus'});
+		printComments($I{F}{sid}, $I{F}{pid});
 
 	} else {
 		commentIndex();

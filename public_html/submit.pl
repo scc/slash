@@ -269,7 +269,7 @@ sub displayForm {
 		fakeemail	=> $form->{email} || $fakeemail,
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $dbslash->getTopic($form->{tid}),
-		literalstory	=> stripByMode($form->{story}, 'literal'),
+		literalstory	=> stripByMode($form->{story}, 'literal', 1),
 		width		=> '100%',
 		title		=> $title,
 	});

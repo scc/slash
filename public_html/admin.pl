@@ -464,7 +464,7 @@ EOT
 	}
 
 	my $description_ta = stripByMode($bidblock->{'description'}, 'literal', 1);
-	$bidblock->{'block'} = stripByMode($bidblock->{'block'}, 'literal', 1);
+	my $block_ta = stripByMode($bidblock->{'block'}, 'literal', 1);
 
 	# main table
 	print <<EOT;
@@ -523,7 +523,7 @@ EOT
 		</P>
 		</TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="15" COLS="100" NAME="block">$bidblock->{'block'}</TEXTAREA>
+		<TEXTAREA ROWS="15" COLS="100" NAME="block">$block_ta</TEXTAREA>
 		</TD>
 	</TR>
 EOT
@@ -1014,7 +1014,7 @@ EOT
 		print '<TABLE><TR><TD>';
 		my $tmp = $I{currentSection};
 		$I{currentSection} = $S->{section};
-		dispStory($S, $A, $T, 'Full');
+		print dispStory($S, $A, $T, 'Full');
 		$I{currentSection} = $tmp;
 		print '</TD><TD WIDTH="210" VALIGN="TOP">';
 		$S->{relatedtext} = getRelated("$S->{title} $S->{bodytext} $S->{introtext}")
@@ -1035,9 +1035,9 @@ EOT
 		print '<TABLE><TR><TD>';
 		my $tmp = $I{currentSection};
 		($I{currentSection}) = $I{dbobject}->getStory($sid, 'section');
-		($S, $A, $T) = displayStory($sid, 'Full');
+		(my($story), $S, $A, $T) = displayStory($sid, 'Full');
 		$I{currentSection} = $tmp;
-		print '</TD><TD WIDTH="220" VALIGN="TOP">';
+		print $story, '</TD><TD WIDTH="220" VALIGN="TOP">';
 
 		fancybox($I{fancyboxwidth},'Related Links', $S->{relatedtext});
 		CGI::param('relatedtext', $S->{relatedtext});

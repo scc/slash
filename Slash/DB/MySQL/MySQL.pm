@@ -591,14 +591,17 @@ sub getUserInstance {
 	# perhaps `@{$user}{ keys %foo } = values %foo` is wanted?  -- pudge
 	$user->{ keys %$user_extra } = values %$user_extra;
 
-	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/) {
+#	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/) {
+	{
 		my $user_extra = $self->sqlSelectHashref('*', "users_comments", "uid=$uid");
 		while (my($key, $val) = each %$user_extra) {
 			$user->{$key} = $val;
 		}
 	}
+
 	# Do we want the index stuff?
-	if (!$script || $script =~ /index/) {
+#	if (!$script || $script =~ /index/) {
+	{
 		my $user_extra = $self->sqlSelectHashref('*', "users_index", "uid=$uid");
 		while (my($key, $val) = each %$user_extra) {
 			$user->{$key} = $val;
@@ -609,24 +612,24 @@ sub getUserInstance {
 }
 
 ########################################################
-# Get user info from the users table.
 sub deleteUser {
-	my ($self, $uid) = @_;
+	my($self, $uid) = @_;
 	$self->setUser($uid, {
-		bio => '',
-		nickname => '<deleted user>',
-		matchname => '<deleted user>',
-		realname => '',
-		realemail => '',
-		fakeemail => '',
-		newpasswd => '',
-		homepage => '',
-		passwd => '',
-		sig =>  '',
-		seclev =>'0'
+		bio		=> '',
+		nickname	=> '<deleted user>',
+		matchname	=> '<deleted user>',
+		realname	=> '',
+		realemail	=> '',
+		fakeemail	=> '',
+		newpasswd	=> '',
+		homepage	=> '',
+		passwd		=> '',
+		sig		=> '',
+		seclev		=> 0
 	});
 	$self->sqlDo("DELETE FROM users_param WHERE uid=$uid");
 }
+
 ########################################################
 # Get user info from the users table.
 sub getUserAuthenticate {
@@ -757,7 +760,7 @@ sub createContentFilter {
 # Replication issue. This needs to be a two-phase commit.
 sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
-	return unless($matchname && $email && $newuser);
+	return unless $matchname && $email && $newuser;
 
 	my($cnt) = $self->sqlSelect(
 		"matchname","users",
@@ -959,7 +962,7 @@ sub deleteSubmission {
 		$subid{$form->{subid}}++;
 	}
 
-	for (keys %{$form}) {
+	foreach (keys %{$form}) {
 		next unless /(.*)_(.*)/;
 		my($t, $n) = ($1, $2);
 		if ($t eq "note" || $t eq "comment" || $t eq "section") {
@@ -1926,13 +1929,16 @@ sub setCommentCleanup {
 		# Adjust comment posters karma
 		if ($cuid != $constants->{anonymous_coward}) {
 			if ($val > 0) {
-				$self->sqlUpdate("users_info",
-					{ -karma => "karma$val" },
-					"uid=$cuid AND karma < $constants->{maxkarma}"
+				$self->sqlUpdate("users_info", {
+						-karma	=> "karma$val",
+						-upmods	=> 'upmods+1',
+					}, "uid=$cuid AND karma < $constants->{maxkarma}"
 				);
 			} elsif ($val < 0) {
-				$self->sqlUpdate("users_info",
-					{ -karma => "karma$val" }, "uid=$cuid"
+				$self->sqlUpdate("users_info", {
+						-karma		=> "karma$val",
+						-downmods	=> 'downmods+1',
+					}, "uid=$cuid AND karma > $constants->{minkarma}"
 				);
 			}
 		}
@@ -2451,7 +2457,8 @@ sub getSlashConf {
 	$conf{imagedir}		||= "$conf{rootdir}/images";
 	$conf{rdfimg}		||= "$conf{imagedir}/topics/topicslash.gif";
 	$conf{cookiepath}	||= URI->new($conf{rootdir})->path . '/';
-	$conf{maxkarma}		||= 999;
+	$conf{maxkarma}		= 999  unless defined $conf{maxkarma};
+	$conf{minkarma}		= -999 unless defined $conf{minkarma};
 
 	$conf{m2_mincheck} = defined($conf{m2_mincheck})
 				? $conf{m2_mincheck}
@@ -2736,16 +2743,15 @@ sub getVar {
 	return $answer;
 }
 
-
 ########################################################
-#
 sub setUser {
 	my($self, $uid, $hashref) = @_;
+	my(@param, %update_tables, $cache);
 	my $tables = [qw(
 		users users_comments users_index
 		users_info users_key users_prefs
 	)];
-	my @param;
+
 	# encrypt password  --  done here OK?
 	# Probably safer to put it here
 	if (exists $hashref->{passwd}) {
@@ -2753,16 +2759,18 @@ sub setUser {
 		$hashref->{newpasswd} = '';
 		$hashref->{passwd} = encryptPassword($hashref->{passwd});
 	}
-	my %update_tables;
-	my $cache = _genericGetCacheName($self, $tables);
+
+	$cache = _genericGetCacheName($self, $tables);
+
 	for (keys %$hashref) {
 		my $key = $self->{$cache}{$_};
-		if($key) {
+		if ($key) {
 			push @{$update_tables{$key}}, $_;
 		} else {
-			push @param , [$_, $hashref->{$_}];
+			push @param, [$_, $hashref->{$_}];
 		}
 	}
+
 	for my $table (keys %update_tables) {
 		my %minihash;
 		for my $key (@{$update_tables{$table}}){
@@ -2773,10 +2781,11 @@ sub setUser {
 	}
 	# What is worse, a select+update or a replace?
 	# I should look into that.
-	for(@param)  {
+	for (@param)  {
 		$self->sqlDo("REPLACE INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
 	}
 }
+
 ########################################################
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
@@ -2792,10 +2801,9 @@ sub getUser {
 	my $cache = _genericGetCacheName($self, $tables);
 
 	if (ref($val) eq 'ARRAY') {
-		my $values;
-		my(%tables, @param, $where);
+		my($values, %tables, @param, $where, $table);
 		for (@$val) {
-			if($self->{$cache}{$_}) {
+			if ($self->{$cache}{$_}) {
 				$tables{$self->{$cache}{$_}} = 1;
 				$values .= "$_,";
 			} else {
@@ -2803,33 +2811,38 @@ sub getUser {
 			}
 		}
 		chop($values);
+
 		for (keys %tables) {
 			$where .= "$_.uid=$id AND ";
 		}
 		$where =~ s/ AND $//;
-		my $table = join ',', keys %tables;
+
+		$table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where);
-		for(@param) {
+		for (@param) {
 			my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
 			$answer->{$_} = $val;
 		}
+
 	} elsif ($val) {
 		my $table = $self->{$cache}{$val};
-		if($table) {
+		if ($table) {
 			($answer) = $self->sqlSelect($val, $table, "uid=$id");
 		} else {
 			($answer) = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$val'");
 		}
+
 	} else {
-		my $where;
+		my($where, $table, $append);
 		for (@$tables) {
 			$where .= "$_.uid=$id AND ";
 		}
 		$where =~ s/ AND $//;
-		my $table = join ',', @$tables;
+
+		$table = join ',', @$tables;
 		$answer = $self->sqlSelectHashref('*', $table, $where);
-		my $append = $self->sqlSelectAll('name,value', 'users_param', "uid=$id");
-		for(@$append) {
+		$append = $self->sqlSelectAll('name,value', 'users_param', "uid=$id");
+		for (@$append) {
 			$answer->{$_->[0]} = $_->[1];
 		}
 	}
@@ -2854,7 +2867,6 @@ sub _genericGetCacheName {
 	}
 	return $cache;
 }
-
 
 ########################################################
 # Now here is the thing. We want setUser to look like
@@ -2899,9 +2911,8 @@ sub _genericCacheRefresh {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGetCache {
-	unless (getCurrentStatic('cache_enabled')) {
-		return _genericGet(@_);
-	}
+	return _genericGet(@_) unless getCurrentStatic('cache_enabled');
+
 	my($table, $table_prime, $self, $id, $values, $cache_flag) = @_;
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
@@ -2917,8 +2928,8 @@ sub _genericGetCache {
 		return $self->{$table_cache}{$id}{$values}
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	} else {
-		if (keys %{$self->{$table_cache}{$id}} and !$cache_flag) {
-			my %return = %{$self->{$table_cache}->{$id}};
+		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+			my %return = %{$self->{$table_cache}{$id}};
 			return \%return;
 		}
 	}
@@ -2927,17 +2938,17 @@ sub _genericGetCache {
 	# and grab the data's since it is not cached
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
-	$self->{$table_cache}->{$id} = {};
+	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
-	$self->{$table_cache}->{$id} = $answer;
+	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
 
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values};
 	} else {
-		if($self->{$table_cache}->{$id}) {
-			my %return = %{$self->{$table_cache}->{$id}};
+		if ($self->{$table_cache}{$id}) {
+			my %return = %{$self->{$table_cache}{$id}};
 			return \%return;
 		} else {
 			return;
@@ -2979,20 +2990,18 @@ sub _genericGet {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGetsCache {
-	unless (getCurrentStatic{'cache_enabled'}) {
-		return _genericGets(@_);
-	}
+	return _genericGets(@_) unless getCurrentStatic('cache_enabled');
+
 	my($table, $table_prime, $self, $cache_flag) = @_;
 	my $table_cache= '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
 	my $table_cache_full= '_' . $table . '_cache_full';
 
-
-	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} and !$cache_flag) {
-
+	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
 		my %return = %{$self->{$table_cache}};
 		return \%return;
 	}
+
 	# Lets go knock on the door of the database
 	# and grab the data since it is not cached
 	# On a side note, I hate grabbing "*" from a database
@@ -3015,6 +3024,7 @@ sub _genericGetsCache {
 # scripts directly.
 sub _genericGets {
 	my($table, $table_prime, $self) = @_;
+
 	# Lets go knock on the door of the database
 	# and grab the data since it is not cached
 	# On a side note, I hate grabbing "*" from a database

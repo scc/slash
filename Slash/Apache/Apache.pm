@@ -1,11 +1,10 @@
 package Slash::Apache;
 
 use strict;
-use Slash::Utility;
-
 use Apache::ModuleConfig;
 use Apache::Constants qw(:common);
 use Slash::DB;
+use Slash::Utility;
 require DynaLoader;
 require AutoLoader;
 use vars qw($VERSION @ISA);
@@ -36,15 +35,13 @@ sub SlashVirtualUser ($$$) {
 }
 
 sub IndexHandler {
-  my ($r) = @_;
-
+	my ($r) = @_;
 	if ($r->uri eq '/') {
-
 		if ($ENV{HTTP_COOKIE} =~ /(?:user|session)/) {
-			$r->filename($r->document_root . "/index.pl");
+			$r->filename($r->document_root . '/index.pl');
 			return OK;
 		} else {
-			$r->filename($r->document_root . "/index.shtml");
+			$r->filename($r->document_root . '/index.shtml');
 			return OK;
 		}
 	}

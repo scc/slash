@@ -386,7 +386,6 @@ sub getUserLast {
 	return $totalusers;
 }
 
-
 ########################################################
 # For moderatord
 sub giveKarma {

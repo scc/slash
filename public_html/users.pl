@@ -25,27 +25,23 @@
 ###############################################################################
 use strict;
 use Slash;
-use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 
 #################################################################
 sub main {
-	getSlash();
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my ($rootdir) = $constants->{rootdir};
-
 	my $op = $form->{op};
 
-	if ($op eq "userlogin" && !$user->{is_anon}) {
+	if ($op eq 'userlogin' && !$user->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
 		redirect($refer);
 		return;
-	} elsif ($op eq "saveuser") {
+	} elsif ($op eq 'saveuser') {
 		my $note = saveUser($user->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;
@@ -58,17 +54,17 @@ sub main {
 		}
 	}
 
-	my $sitename = getCurrentStatic('sitename');
-	header("$sitename Users");
+	header("$constants->{sitename} Users");
 
-	if (!$user->{is_anon} && $op ne "userclose") {
+	if (!$user->{is_anon} && $op ne 'userclose') {
 		print createMenu('user');
 	}
+
 	# and now the carnage begins
-	if ($op eq "newuser") {
+	if ($op eq 'newuser') {
 		newUser();
 
-	} elsif ($op eq "edituser") {
+	} elsif ($op eq 'edituser') {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
 			editUser($user->{uid});
@@ -76,7 +72,7 @@ sub main {
 			displayForm(); 
 		}
 
-	} elsif ($op eq "edithome" || $op eq "preferences") {
+	} elsif ($op eq 'edithome' || $op eq 'preferences') {
 		# also known as the user_index table
 		if (!$user->{is_anon}) {
 			editHome($user->{uid});
@@ -84,7 +80,7 @@ sub main {
 			displayForm(); 
 		}
 
-	} elsif ($op eq "editcomm") {
+	} elsif ($op eq 'editcomm') {
 		# also known as the user_comments table
 		if (!$user->{is_anon}) {
 			editComm($user->{uid});
@@ -92,7 +88,7 @@ sub main {
 			displayForm(); 
 		}
 
-	} elsif ($op eq "userinfo" || !$op) {
+	} elsif ($op eq 'userinfo' || !$op) {
 		if ($form->{nick}) {
 			userInfo($slashdb->getUserUID($form->{nick}), $form->{nick});
 		} elsif ($user->{is_anon}) {
@@ -101,37 +97,37 @@ sub main {
 			userInfo($user->{uid}, $user->{nickname});
 		}
 
-	} elsif ($op eq "savecomm") {
+	} elsif ($op eq 'savecomm') {
 		saveComm($user->{uid});
 		userInfo($user->{uid}, $user->{nickname});
 
-	} elsif ($op eq "savehome") {
+	} elsif ($op eq 'savehome') {
 		saveHome($user->{uid});
 		userInfo($user->{uid}, $user->{nickname});
 
-	} elsif ($op eq "sendpw") {
+	} elsif ($op eq 'sendpw') {
 		mailPassword($user->{uid});
 
-	} elsif ($op eq "mailpasswd") {
+	} elsif ($op eq 'mailpasswd') {
 		mailPassword($slashdb->getUserUID($form->{unickname}));
 
-	} elsif ($op eq "suedituser" && $user->{aseclev} > 100) {
+	} elsif ($op eq 'suedituser' && $user->{aseclev} > 100) {
 		editUser($slashdb->getUserUID($form->{name}));
 
-	} elsif ($op eq "susaveuser" && $user->{aseclev} > 100) {
+	} elsif ($op eq 'susaveuser' && $user->{aseclev} > 100) {
 		saveUser($form->{uid}); 
 
-	} elsif ($op eq "sudeluser" && $user->{aseclev} > 100) {
+	} elsif ($op eq 'sudeluser' && $user->{aseclev} > 100) {
 		delUser($form->{uid});
 
-	} elsif ($op eq "userclose") {
-		print "ok bubbye now.";
+	} elsif ($op eq 'userclose') {
+		print 'ok bubbye now.';
 		displayForm();
 
-	} elsif ($op eq "userlogin" && !$user->{is_anon}) {
+	} elsif ($op eq 'userlogin' && !$user->{is_anon}) {
 		userInfo($user->{uid}, $user->{nickname});
 
-	} elsif ($op eq "preview") {
+	} elsif ($op eq 'preview') {
 		previewSlashbox();
 
 	} elsif (!$user->{is_anon}) {
@@ -142,7 +138,7 @@ sub main {
 	}
 
 	miniAdminMenu() if $user->{aseclev} > 100;
-	$slashdb->writeLog("users", $user->{nickname});
+	$slashdb->writeLog('users', $user->{nickname});
 
 	footer();
 }
@@ -173,28 +169,27 @@ sub checkList {
 #################################################################
 sub previewSlashbox {
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	my $section = $slashdb->getSection($form->{bid});
 	my $cleantitle = $section->{title};
 	$cleantitle =~ s/<(.*?)>//g;
 
-	my $is_editable = 1 if $user->{aseclev} > 999;
+	my $is_editable = $user->{aseclev} > 999;
 
 	# my $title = eval prepBlock $slashdb->getBlock('users_previewslashbox_title','block');
-	my $title = getTitle('previewslashbox_title',{ cleantitle => $cleantitle });
+	my $title = getTitle('previewslashbox_title', { cleantitle => $cleantitle });
 	slashDisplay('users-previewSlashbox', {
 		width		=> '100%',
 		title		=> $title,
 		cleantitle 	=> $cleantitle,
 		is_editable	=> $is_editable,
-		
 	});
 
 	print portalbox($constants->{fancyboxwidth}, $section->{title},
-		$section->{content}, "", $section->{url});
+		$section->{content}, '', $section->{url});
 }
 
 #################################################################
@@ -204,11 +199,9 @@ sub miniAdminMenu {
 
 #################################################################
 sub newUser {
-
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
-
-	my $title = "";
+	my $title;
 
 	# Check if User Exists
 	$form->{newuser} =~ s/\s+/ /g;
@@ -217,7 +210,6 @@ sub newUser {
 
 	(my $matchname = lc $form->{newuser}) =~ s/[^a-zA-Z0-9]//g;
 
-
 	if ($matchname ne '' && $form->{newuser} ne '' && $form->{email} =~ /\@/) {
 		my $uid;
 		my $rootdir = getCurrentStatic('rootdir','value');
@@ -225,8 +217,7 @@ sub newUser {
 			$title = getTitle('newUser_title');
 
 			$form->{pubkey} = stripByMode($form->{pubkey}, "html");
-			my $newuser_msg = getMessage('newuser_msg', {title => $title});
-			print $newuser_msg;
+			print getMessage('newuser_msg', {title => $title});
 			mailPassword($uid);
 
 			return;

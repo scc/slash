@@ -204,7 +204,9 @@ sub displayStories {
 
 		# Prefix story with section if section != this section and no
 		# colon
-		my($S) = displayStory($sid, '', 'index');
+		my($story, $S) = displayStory($sid, '', 'index');
+
+		print $story;
 
 		my $execme = getEvalBlock('story_link');
 

@@ -1,22 +1,25 @@
 package Slash::Apache::User;
 
+# EXPORT functions!
+
 use strict;
 
 use Apache; 
 use Apache::Constants qw(:common REDIRECT);
 use Apache::File; 
 use Apache::ModuleConfig;
+use AutoLoader ();
 use Data::Dumper;
+use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
 use CGI::Cookie;
-use vars qw($VERSION @ISA);
+use vars qw($REVISION $VERSION @ISA);
 
-require DynaLoader;
-require AutoLoader;
-
-@ISA = qw(DynaLoader);
+# $Id$
+($REVISION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 $VERSION = '0.01';
+@ISA = qw(DynaLoader);
 
 bootstrap Slash::Apache::User $VERSION;
 
@@ -29,6 +32,7 @@ sub SlashAuthAll ($$$) {
 	my($cfg, $params, $flag) = @_;
 	$cfg->{auth} = $flag;
 }
+
 # handler method
 sub handler {
 	my($r) = @_;
@@ -45,7 +49,6 @@ sub handler {
 	unless ($cfg->{auth}){
 		unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
 			$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
-
 			return OK;
 		}
 	}
@@ -105,7 +108,7 @@ sub handler {
 	# or just a cheesy CGI, they would never see it.
 	$r->subprocess_env('REMOTE_USER' => $uid);
 
-	return DECLINED if($cfg->{auth} && isAnon($uid));
+	return DECLINED if $cfg->{auth} && isAnon($uid);
 
 	createCurrentUser(getUser($form, $cookies, $uid));
 	createCurrentForm($form);
@@ -116,18 +119,21 @@ sub handler {
 
 ########################################################
 sub createEnv {
-	my ($r) = @_;
+	my($r) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	while(my ($key, $val) = each %$user) {
+
+	while (my($key, $val) = each %$user) {
 		$r->subprocess_env("USER_$key" => $val);
 	}
-	while(my ($key, $val) = each %$form) {
+
+	while (my($key, $val) = each %$form) {
 		$r->subprocess_env("FORM_$key" => $val);
 	}
 
 }
+
 ########################################################
 sub userLogin {
 	my($name, $passwd) = @_;
@@ -169,6 +175,9 @@ sub getUser {
 		$user->{is_anon} = 0;
 
 	} else {
+		$user = getCurrentAnonymousCoward();
+		$user->{is_anon} = 1;
+
 		if ($cookies->{anon} && $cookies->{anon}->value) {
 			$user->{anon_id} = $cookies->{anon}->value;
 			$user->{anon_cookie} = 1;
@@ -176,9 +185,7 @@ sub getUser {
 			$user->{anon_id} = getAnonId();
 		}
 
-		$user = getCurrentAnonymousCoward();
 		setCookie('anon', $user->{anon_id}, 1);
-		$user->{is_anon} = 1;
 	}
 
 	if ($form->{op} eq 'adminlogin') {
@@ -281,6 +288,11 @@ sub filter_params {
 
 	for (keys %params) {
 		$form{$_} = $params{$_};
+
+		# Paranoia - Clean out any embedded NULs. -- cbwood
+		# hm.  NULs in a param() value mean multiple values
+		# for that item.  do we use that anywhere? -- pudge
+		$form{$_} =~ s/\0//g;
 
 		# clean up numbers
 		if (exists $nums{$_}) {

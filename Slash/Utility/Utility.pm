@@ -60,7 +60,7 @@ sub apacheLog {
 	my($package, $filename, $line) = caller(1);
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		if($r) {
+		if ($r) {
 			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
 			($package, $filename, $line) = caller(2);
 			$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
@@ -180,7 +180,7 @@ sub setCurrentUser {
 
 #################################################################
 sub createCurrentUser {
-	my ($user) = @_;
+	my($user) = @_;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
@@ -213,7 +213,7 @@ sub getCurrentForm {
 
 #################################################################
 sub createCurrentForm {
-	my ($form) = @_;
+	my($form) = @_;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
