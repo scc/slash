@@ -332,7 +332,7 @@ sub getMode {
 	# check if mode is allowed for specific type; default to email
 	if (length($coderef->{modes}) && !grep /\b$mode\b/, $coderef->{modes}) {
 		if (!$msg->{user}{registered}) {
-			$mode == MSG_MODE_NONE;
+			$mode = MSG_MODE_NONE;
 		} else {
 			$mode = MSG_MODE_EMAIL;
 		}
