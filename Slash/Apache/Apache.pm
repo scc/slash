@@ -80,7 +80,7 @@ __END__
 
 =head1 NAME
 
-Slash::Apache - Apache Specific handler for Slashcode
+Slash::Apache - Apache Specific handler for Slash
 
 =head1 SYNOPSIS
 

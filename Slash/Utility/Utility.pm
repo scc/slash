@@ -7,7 +7,7 @@ package Slash::Utility;
 
 =head1 NAME
 
-Slash::Utility - Generic Perl routines for SlashCode
+Slash::Utility - Generic Perl routines for Slash
 
 
 =head1 SYNOPSIS
@@ -919,13 +919,13 @@ sub getCurrentAnonymousCoward {
 
 =head2 getCurrentSlashUser()
 
-Returns the current slash user.
+Returns the current Slash user.
 
 =over 4
 
 =item Return value
 
-Returns the current slash user.
+Returns the current Slash user.
 
 =back
 

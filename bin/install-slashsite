@@ -79,7 +79,7 @@ END { $dbh->disconnect if $dbh }
 
 chomp($hostname_f = `hostname -f`);
 unless ($opts{'h'}) {
-	print "\nWhat is hostname of your slash site
+	print "\nWhat is hostname of your Slash site
 	(e.g., www.slashdot.org)? [$hostname_f] ";
 	chomp($hostname = <STDIN>);
 	$hostname ||= $hostname_f;
@@ -89,7 +89,7 @@ unless ($opts{'h'}) {
 ($host_noport = $hostname) =~ s/:.+$//;
 
 unless ($opts{'o'}) {
-	print "\nWhat user would you like to run your slash site as? [nobody] ";
+	print "\nWhat user would you like to run your Slash site as? [nobody] ";
 	chomp($owner = <STDIN>);
 	$owner ||= 'nobody';
 } else {
@@ -101,7 +101,7 @@ die "$owner is not a valid user name.\n" unless defined $owner_id;
 unless ($opts{'g'}) {
 	my $tmpgroup = getgrgid($owner_id); 
 	$tmpgroup = defined($tmpgroup) ? $tmpgroup : 'nobody';
-	print "\nWhat group would you like to run your slash site under? [$tmpgroup] ";
+	print "\nWhat group would you like to run your Slash site under? [$tmpgroup] ";
 	chomp($group = <STDIN>);
 	$group ||= $tmpgroup;
 } else {
@@ -116,7 +116,7 @@ if ($opts{'r'}) {
 	unless ($opts{'s'}) {
 		print "
 OK, I am planning on user $host_noport as the unique name
-for the slash site.  If this is not ok, you need to fill in
+for the Slash site.  If this is not ok, you need to fill in
 something else here. [$host_noport] ";
 		chomp($sitename = <STDIN>);
 		$sitename ||= $host_noport;
@@ -412,7 +412,7 @@ sub install_message {
 
 Unless any errors reported themself during the install you should now
 have a slashsite. You will either need to edit your httpd.conf file
-unless you are have slash handle it. The correct syntax can be found in:
+unless you are have Slash handle it. The correct syntax can be found in:
 
 	$prefix_site/$sitename/$sitename.conf
 

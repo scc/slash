@@ -121,9 +121,9 @@ convert.pl - Convert from 1.0.9 to 2.0 data
 
 =head1 What does this do?
 
-This converts the data from your slash sites
+This converts the data from your Slash sites
 to format you can then use to populate a new
-slash site.
+Slash site.
 
 =head1 What does this not do?
 

@@ -523,7 +523,7 @@ __END__
 
 =head1 NAME
 
-Slash::DB::PostgreSQL - PostgreSQL Interface for Slashcode
+Slash::DB::PostgreSQL - PostgreSQL Interface for Slash
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@ __section__
 default
 __description__
 This template controls how the Discussion List is printed. For default
-Slashcode, this list is printed when comments.pl executed with no
+Slash, this list is printed when comments.pl executed with no
 arguments.
 
 * discussions = arrayref of arrayrefs of discussions (sid = 0, title=1, url=2)

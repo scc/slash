@@ -4,7 +4,7 @@
 # $Id$
 
 ##
-##  Makefile -- Current one for slashcode
+##  Makefile -- Current one for Slash
 ##
 
 #   the used tools
@@ -82,7 +82,7 @@ install: slash plugins
 # Add a @ to suppress output of the echo's
 	@echo "+--------------------------------------------------------+"; \
 	echo "| All done.                                              |"; \
-	echo "| If you want to let slash handle your httpd.conf file   |"; \
+	echo "| If you want to let Slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
 	echo "| Include $(PREFIX)/httpd/slash.conf              |"; \
@@ -90,7 +90,7 @@ install: slash plugins
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \
 	echo "|                                                        |"; \
-	echo "| Thanks for installing slash.                           |"; \
+	echo "| Thanks for installing Slash.                           |"; \
 	echo "+--------------------------------------------------------+"; \
 
 

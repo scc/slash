@@ -524,7 +524,7 @@ __END__
 
 =head1 NAME
 
-Slash::DB::Static::MySQL - MySQL Interface for Slashcode
+Slash::DB::Static::MySQL - MySQL Interface for Slash
 
 =head1 SYNOPSIS
 

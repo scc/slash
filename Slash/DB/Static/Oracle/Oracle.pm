@@ -17,7 +17,7 @@ __END__
 
 =head1 NAME
 
-Slash::DB::Static::Oracle - Oracle Interface for Slashcode
+Slash::DB::Static::Oracle - Oracle Interface for Slash
 
 =head1 SYNOPSIS
 

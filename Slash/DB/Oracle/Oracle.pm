@@ -17,7 +17,7 @@ use strict;
 
 =head1 NAME
 
-Slash::DB::Oracle - Oracle Interface for Slashcode
+Slash::DB::Oracle - Oracle Interface for Slash
 
 =head1 SYNOPSIS
 

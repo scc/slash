@@ -99,7 +99,7 @@ __END__
 
 =head1 NAME
 
-Slash::DB - Database Class for Slashcode
+Slash::DB - Database Class for Slash
 
 =head1 SYNOPSIS
 

@@ -357,7 +357,7 @@ sub sqlDo {
 
 =head1 NAME
 
-Slash::DB::Utility - Generic SQL code which is common to all DB interfaces for Slashcode
+Slash::DB::Utility - Generic SQL code which is common to all DB interfaces for Slash
 
 =head1 SYNOPSIS
 

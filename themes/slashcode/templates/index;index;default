@@ -6,7 +6,7 @@ index page.
 
 * is_moderator = boolean for whether current user has moderator access
 * stories = string containing all the stories
-* boxes = string containing all the slash boxes
+* boxes = string containing all the slashboxes
 __title__
 
 __page__

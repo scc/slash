@@ -1905,7 +1905,7 @@ sub displayStory {
 	# this only needs to run for slashdot
 	# why is this commented out?  -- pudge
 	# Its basically an undocumented feature
-	# that slash uses.
+	# that Slash uses.
 	#$slashdb->setSectionExtra($full, $story);
 
 	my $return = dispStory($story, $author, $topic, $full);

@@ -245,7 +245,7 @@ __END__
 
 =head1 NAME
 
-Slash::Apache::User - Apache Authenticate for slashcode user
+Slash::Apache::User - Apache Authenticate for Slash user
 
 =head1 SYNOPSIS
 
@@ -255,7 +255,7 @@ Slash::Apache::User - Apache Authenticate for slashcode user
 
 This is the user authenication system for Slash. This is
 where you want to be if you want to modify slashcode's
-method of authenication. The rest of slashcode depends
+method of authenication. The rest of Slash depends
 on finding the UID of the user in the SLASH_USER 
 environmental variable.
 

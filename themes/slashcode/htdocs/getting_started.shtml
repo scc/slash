@@ -12,7 +12,7 @@
 <h1>The slashcode admin interface getting started guide.</h1>
 
 <ul>
-	<a href="#start"><li>So I have slashcode installed, what do I do now?</a>
+	<a href="#start"><li>So I have Slash installed, what do I do now?</a>
 	<a href="#logging"><li>Logging into the admin interface</a>
 	<a href="#stories"><li>The Story list</a>
 	<a href="#newstory"><li>Submitting a new story</a>
@@ -26,7 +26,7 @@
 	<a href="#variables"><li>Variables</a>
 </ul>
 
-<a name="start"><p><b>So I have slashcode installed, what do I do now?</b></a>
+<a name="start"><p><b>So I have Slash installed, what do I do now?</b></a>
 
 <p>The site is running, you can get a front page to display, and slashd
 is generating static .shtml files. What do I do now? How do I administer

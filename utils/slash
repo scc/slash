@@ -11,7 +11,7 @@
 PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:\
 				/usr/local/sbin:/usr/bin/X11:/usr/X11R6/bin"
 
-# slash home
+# Slash home
 DATADIR=/usr/local/slash
 SLASHD="$DATADIR/sbin/slashd $SERVER_NAME"
 SLASHSITE=$DATADIR/slash.sites
