@@ -99,12 +99,22 @@ if ($opts{'s'}) {
 	for(@ARGV) {
 		my $template = $install->readTemplateFile($_);
 		next unless $template;
-		print "$template->{name}\n";
+		print "Preparing to insert $template->{name} using filename $_\n";
 		my $tpid = $slash->getTemplateByName($template->{name}, 'tpid', 1, $template->{page}, $template->{section});
 		if(defined($tpid)) {
-			$slash->setTemplate($tpid, $template);
+			if( $slash->setTemplate($tpid, $template)) {
+				print "updated template $_ tpid $tpid\n";
+			} else {
+				print "wasn't able to update template $_ $tpid\n";
+				print "Error: " . $slash->{_dbh}->DBI::err_str . "\n";
+			}
 		} else {
-			$slash->createTemplate($template);
+			if($slash->createTemplate($template)) {
+				print "created template $_\n";
+			} else {
+				print "wasn't able to update template $_ $tpid\n";
+				print "Error: " . $slash->{_dbh}->DBI::err_str . "\n";
+			}
 		}
 	}
 } else {
