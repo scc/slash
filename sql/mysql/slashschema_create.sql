@@ -27,14 +27,14 @@ CREATE TABLE abusers (
 
 DROP TABLE IF EXISTS accesslist; 
 CREATE TABLE accesslist ( 
-	id mediumint UNSIGNED UNSIGNED NOT NULL auto_increment, 
-	uid mediumint UNSIGNED NOT NULL,
-	ipid char(32) DEFAULT '' NOT NULL,
-	subnetid char(32) DEFAULT '' NOT NULL,
+	id int(10) NOT NULL auto_increment, 
+	uid int(11),
+	ipid char(32),
+	subnetid char(32),
 	formname varchar(20) DEFAULT '' NOT NULL,
-	readonly tinyint DEFAULT 0 NOT NULL, 
-	isbanned tinyint DEFAULT 0 NOT NULL,
-	ts datetime default '0000-00-00 00:00:00' NOT NULL, 
+	readonly int(4) DEFAULT 0 NOT NULL, 
+	isbanned int(4) DEFAULT 0 NOT NULL,
+	ts datetime default '0000-00-00 00:00:00', 
 	reason varchar(120), 
 	PRIMARY KEY id (id), 
 	key uid (uid), 

@@ -606,7 +606,6 @@ sub editUser {
 	} else {
 		$user = $id eq '' ? $curuser : $slashdb->getUser($id);
 	}
-	print STDERR "user id $user->{uid}\n";
 	return if isAnon($user->{uid}) && ! $admin_flag; 
 	$admin_block = getUserAdmin() if $admin_flag;
 
@@ -817,13 +816,24 @@ sub saveUserAdmin {
 	}
 
 	for my $formname ('comments', 'submit') {
+		my $existing_reason = $slashdb->getReadOnlyReason($formname, $user);
+		my $is_readonly_now = $slashdb->checkReadOnly($formname, $user) ? 1 : 0;
+
 		my $keyname = "readonly_" . $formname;
 		my $reason_keyname = $formname . "_ro_reason";
 		$form->{$keyname} = $form->{$keyname} eq 'on' ? 1 : 0 ;
-
 		$form->{$reason_keyname} ||= '';
 
-		$slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
+		if ($form->{$keyname} != $is_readonly_now) {
+			if ("$existing_reason" ne "$form->{$reason_keyname}") {
+				$slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
+			} else {
+				$slashdb->setReadOnly($formname, $user, $form->{$keyname});
+			}
+		} elsif ("$existing_reason" ne "$form->{$reason_keyname}") {
+                                $slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
+		}
+
 		# $note .= getMessage('saveuseradmin_notsaved', { field => $form->{userfield_flag}, id => $id });
 	}
 
@@ -844,11 +854,15 @@ sub saveUserAdmin {
 		#}
 	}
 
-	my $exp = $slashdb->checkExpired($user->{uid});
-	if ($form->{expired} eq 'on' && ! ($slashdb->checkExpired($user->{uid})) && ! $user->{nonuid}) {
-			print STDERR"form expired $form->{expired} user expired $exp\n";
+	if (!$user->{nonuid}) {
+		if ($form->{expired} eq 'on') {
+
 			$slashdb->setExpired($user->{uid});
-	};
+
+		} else {
+			$slashdb->setUnexpired($user->{uid});
+		}
+	}
 
 	print getMessage('note', { note => $note }) if defined $note;
 
@@ -1285,7 +1299,6 @@ sub getUserAdmin {
 	my($checked, $uidstruct, $readonly, $readonly_reasons) = ({}, {}, {}, {});
 	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select);
 	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
-	print STDERR "op $form->{op} userinfo_flag $userinfo_flag\n";
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
 
 	if ($form->{userfield_flag} eq 'uid') {
@@ -1296,14 +1309,14 @@ sub getUserAdmin {
 		}
 		$userfield = $user->{uid};
 		$checked->{uid} = ' CHECKED';
-		$checked->{expired} = $slashdb->checkExpired($user->{uid});
+		$checked->{expired} = $slashdb->checkExpired($user->{uid}) ? ' CHECKED' : '';
 		$iplist = $slashdb->getNetIDList($user->{uid});
 
 	} elsif ($form->{userfield_flag} eq 'nickname') {
 		$user = $slashdb->getUser($slashdb->getUserUID($id));
 		$userfield = $user->{nickname};
 		$checked->{nickname} = ' CHECKED';
-		$checked->{expired} = $slashdb->checkExpired($user->{uid});
+		$checked->{expired} = $slashdb->checkExpired($user->{uid}) ? ' CHECKED' : '';
 		$iplist = $slashdb->getNetIDList($user->{uid});
 
 	} elsif ($form->{userfield_flag} eq 'ip') {
@@ -1353,7 +1366,6 @@ sub getUserAdmin {
 	$user->{author} = ($user->{author} == 1) ? ' CHECKED' : '';
 	$user->{rtbl} = ($user->{rtbl} == 1) ? ' CHECKED' : '';
 
-	print STDERR "userinfo flag $userinfo_flag\n";
 	return slashDisplay('getUserAdmin', {
 		useredit		=> $user,
 		userinfo_flag		=> $userinfo_flag,

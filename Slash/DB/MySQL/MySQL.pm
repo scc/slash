@@ -767,7 +767,6 @@ sub getCommentsByUID {
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $table WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
-	print STDERR "getCommentsByUID query $sqlquery\n";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -787,7 +786,6 @@ sub getCommentsByNetID {
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
-	print STDERR "getCommentsByNetID query $sqlquery\n";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -1632,21 +1630,27 @@ sub createAbuse {
 sub setExpired {
 	my($self, $uid) = @_;
 
-	$self->sqlInsert('accesslist', {
-		uid			=> $uid,
-		formname 	=> 'comments', 
-		readonly	=> 1,
-		ts			=> 'now()',
-		reason		=> 'expired'
-	}) if $uid;
+	if  (!($self->checkExpired($uid))) {
+		$self->setUser($uid, { expired => 1});
+		$self->sqlInsert('accesslist', {
+			-uid		=> $uid,
+			formname 	=> 'comments', 
+			-readonly	=> 1,
+			-ts		=> 'now()',
+			reason		=> 'expired'
+		}) if $uid ;
+	}
 }
 
 ##################################################################
 sub setUnexpired {
 	my($self, $uid) = @_;
 
-	my $sql = "WHERE uid = $uid AND reason = 'expired'";
-	$self->sqlDo("DELETE from accesslist $sql") if $uid;
+	if (($self->checkExpired($uid))) {
+		$self->setUser($uid, { expired => 0});
+		my $sql = "WHERE uid = $uid AND reason = 'expired' AND formname = 'comments'";
+		$self->sqlDo("DELETE from accesslist $sql") if $uid;
+	}
 }
 
 ##################################################################
@@ -1690,7 +1694,7 @@ sub checkReadOnly {
 		$where = "ipid = '$curuser->{ipid}'";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'";
+	$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
 
 	$self->sqlSelect("readonly", "accesslist", $where);
 }
@@ -1734,7 +1738,7 @@ sub getReadOnlyReason {
 		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'";
+	$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
 
 	$ref = $self->sqlSelectAll("reason", "accesslist $where");
 
@@ -1752,64 +1756,47 @@ sub getReadOnlyReason {
 
 ##################################################################
 sub setReadOnly {
+	# do not use this method to set/unset expired
 	my($self, $formname, $user, $flag, $reason) = @_;
 
-	my $constants = getCurrentStatic();
+	return if $reason eq 'expired';
 
-	my $where = '';
+	my $constants = getCurrentStatic();
+	my $rows;
+
+	my $where = '/* setReadOnly WHERE clause */';
 
 	if ($user) {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
-			$where = "uid = $user->{uid}";
+			$where .= "uid = $user->{uid}";
+
 		} elsif ($user->{ipid}) {
 			$where = "ipid = '$user->{ipid}'";
+
 		} elsif ($user->{subnetid}) {
 			$where = "subnetid = '$user->{subnetid}'";
 		}
 
 	} else {
 		$user = getCurrentUser();
-		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
+		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND formname = '$formname'";
+	$where .= " AND formname = '$formname' AND reason != 'expired'";
 
+	$rows = $self->sqlSelect("count(*) FROM accesslist WHERE $where AND readonly = 1");
+	$rows ||= 0;
 
-	if ($self->checkReadOnly($formname, $user) && $flag == 0) {
-		if ($reason) {
+	if ($flag == 0 && $rows > 0) {
+		$self->sqlDo("DELETE from accesslist WHERE $where");
+	} else { 
+		if ($reason && $rows == 1) {
 			my $return = $self->sqlUpdate("accesslist", {
 				-readonly	=> $flag,
-				reason		=> $reason,
+			 	reason		=> $reason,
 			}, $where);
-			return $return ? 1 : 0;
-		} else {
-			my $return = $self->sqlUpdate("accesslist", {
-				-readonly	=> $flag,
-			}, $where);
-			return $return ? 1 : 0;
-		}
-	} elsif ($flag == 1) {
-		$user->{ipid} = '' if ! $user->{ipid};
-		$user->{subnetid} = '' if ! $user->{subnetid};
 
-		# find out if they're in the list
-		my($rows) = $self->sqlSelect(
-		 	"count(*)",
-		 	"accesslist", $where
-		);
-
-		if ($rows) {
-			if ($reason) {
-				$self->sqlUpdate("accesslist", {
-						-readonly => $flag,
-						reason => $reason,
-				}, $where);
-			} else {
-				my $return = $self->sqlUpdate("accesslist", {
-					-readonly => $flag,
-				}, $where);
-				return $return ? 1 : 0;
-			}
+			return $return ? 1 : 0;
 		} else {
 			my $return = $self->sqlInsert("accesslist", {
 				-uid		=> $user->{uid},
