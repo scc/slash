@@ -80,13 +80,13 @@ $task{$me}{code} = sub {
 		"$cid_limit_clause date BETWEEN '$yesterday 00:00' AND '$yesterday 23:59:59'"
 	);
 
-	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $modlog_rows, $metamodlog_rows, $mm_factor, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $comments);
+	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $modlog_rows, $metamodlog_rows, $mm_factor, $mod_points, $modlog_total, ($mod_points ? $modlog_total*100/$mod_points : 0), $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $comments);
  accesslog: %7d rows total
   formkeys: %7d rows total
     modlog: %7d rows total
 metamodlog: %7d rows total (%.1fx)
 mod points: %7d in system
-used total: %7d yesterday
+used total: %7d yesterday (%.1f%%)
    used -1: %7d yesterday
    used +1: %7d yesterday
   comments: %7d posted yesterday
