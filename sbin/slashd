@@ -192,20 +192,6 @@ sub sectionHeaders {
 	*STDOUT = *FH;
 	footer();
 	close FH;
-
-	setCurrentForm('ssi', 1);
-	open FH, ">$constants->{basedir}/$section/slashhead_F.inc"
-		or die "Can't open $constants->{basedir}/$section/slashhead_F.inc: $!";
-	*STDOUT = *FH;
-	header("", $section, "flat");
-	close FH;
-
-	setCurrentForm('ssi', 0);
-	open FH, ">$constants->{basedir}/$section/slashfoot_F.inc"
-		or die "Can't open $constants->{basedir}/$section/slashfoot_F.inc: $!";
-	*STDOUT = *FH;
-	footer();
-	close FH;
 }
 
 #################################

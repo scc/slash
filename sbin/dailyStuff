@@ -57,7 +57,7 @@ for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys
 }
 
 $email .= "\n-----------------------\n";
-#$email .= `$constants->{slashdir}/bin/tailslash $virtual_user today`;
+$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
 $email .= "\n-----------------------\n";
 
 sub generateDailyMail {
@@ -81,7 +81,7 @@ sub generateDailyMail {
 $title 
      $dept
      posted by $aid on $time ($tid)
-     http:$constants->{rootdir}/article.pl?sid=$sid
+     $constants->{absolutedir}/article.pl?sid=$sid
 EOT
 	}
 	print "$r\n";

@@ -2411,6 +2411,7 @@ sub getTemplate {
 # This is a bit different
 sub getTemplateByName {
 	my($self, $name, $values, $cache_flag, $page, $section) = @_;
+	return if ref $name;	# no scalar refs, only text names
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
 
 	my $table_cache = '_templates_cache';
