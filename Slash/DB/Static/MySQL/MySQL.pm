@@ -378,7 +378,7 @@ sub getSectionInfo {
 
 	my $sectioninfo;
 	for (@{$menu}) {
-		@{%{$sectioninfo}{$_->[0]}{qw(month day)}} =
+		@{%{$sectioninfo}{$_->[0]}}{qw(month day)} =
 			$self->{_dbh}->selectrow_array(<<EOT);
 SELECT MONTH(time), DAYOFMONTH(time)
 FROM $story_table
