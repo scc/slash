@@ -32,6 +32,9 @@ sub handler {
 	# not tranlated "/" to "/index.pl"
 	return OK unless $r->filename =~ /\.pl$/;
 
+	#Ok, this will make it so that we can reliably use Apache->request
+	Apache->request($r)
+
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $dbcfg->{constants};
