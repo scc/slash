@@ -61,6 +61,8 @@ sub handler {
 	unless ($cfg->{auth}) {
 		unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
+			createCurrentUser();
+			createCurrentForm();
 			return OK;
 		}
 	}

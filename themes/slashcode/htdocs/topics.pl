@@ -59,8 +59,6 @@ sub topTopics {
 		topics		=> \@topics,
 		currtime	=> scalar localtime,
 	});
-
-	writeLog('topics');
 }
 
 #################################################################

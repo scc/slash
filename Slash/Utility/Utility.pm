@@ -686,6 +686,8 @@ Returns no value.
 sub createCurrentUser {
 	my($user) = @_;
 
+	$user ||= {};
+
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
@@ -771,6 +773,8 @@ Returns no value.
 
 sub createCurrentForm {
 	my($form) = @_;
+
+	$form ||= {};
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
@@ -2391,8 +2395,12 @@ sub writeLog {
 
 	my $r = Apache->request;
 
-	$r->notes('SLASH_LOG_OPERATION', $op);
-	$r->notes('SLASH_LOG_DATA', $dat);
+	# Notes has a bug (still in apache 1.3.17 at
+	# last look). Apache's directory sub handler
+	# is not copying notes. Bad Apache!
+	# -Brian
+	$r->err_header_out(SLASH_LOG_OPERATION => $op);
+	$r->err_header_out(SLASH_LOG_DATA => $dat);
 }
 
 #========================================================================

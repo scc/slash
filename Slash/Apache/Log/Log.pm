@@ -17,10 +17,16 @@ $Slash::Apache::Log::VERSION = '0.01';
 
 sub handler {
 	my($r) = @_;
-	my $slashdb = getCurrentDB();
-	my $op = $r->notes('SLASH_LOG_OPERATION');
-	my $dat = $r->notes('SLASH_LOG_DATA');
+
+	# Notes has a bug (still in apache 1.3.17 at
+	# last look). Apache's directory sub handler
+	# is not copying notes. Bad Apache!
+	# -Brian
+
+	my $op = $r->err_header_out('SLASH_LOG_OPERATION');
 	if ($op) {
+		my $slashdb = getCurrentDB();
+		my $dat = $r->notes('SLASH_LOG_DATA');
 		$slashdb->createAccessLog($op, $dat);
 	}
 
