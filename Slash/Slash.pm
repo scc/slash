@@ -28,6 +28,7 @@ use strict;  # ha ha ha ha ha!
 use Apache;
 use Apache::SIG ();
 use CGI ();
+use CGI::Cookie;
 use DBI;
 use Data::Dumper;  # the debuggerer's best friend
 use Date::Manip;
@@ -69,6 +70,7 @@ BEGIN {
 
 ###############################################################################
 # Let's get this party Started
+# Entirely legacy at this point
 sub getSlashConf {
 	my $constants = getCurrentStatic();
 	# Yes this is ugly and should go away
@@ -80,26 +82,17 @@ sub getSlashConf {
 
 
 ###############################################################################
-# Blank variables, get $I{r} (apache) $I{query} (CGI) $I{U} (User) and $I{F} (Form)
-# Handles logging in and printing HTTP headers
+# Entirely legacy at this point
 sub getSlash {
-	# We should pull 'r' out of %I
-	for (qw[r query F U SETCOOKIE]) {
-		undef $I{$_} if $I{$_};
-	}
-
 	my $r = Apache->request;
-	$I{r} = $r;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 
 	$I{dbobject} = $cfg->{'dbslash'} || Slash::DB->new('slash');
-	$I{query} = new CGI;
 
 	# %I legacy
 	$I{F} = $user_cfg->{'form'};
 	my $user = $I{U} = $user_cfg->{'user'};
-	$I{currentMode} = $user->{mode};
 
 	return 1;
 }
@@ -312,7 +305,7 @@ sub linkStory {
 	my($c) = @_;
 	my($l, $dynamic);
 
-	if ($I{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
+	if (getCurrentUser('currentMode') ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
 		$dynamic = 1 if $c->{mode} || exists $c->{threshold} || $ENV{SCRIPT_NAME};
 		$l .= '&mode=' . ($c->{mode} || $I{U}{mode});
 		$l .= "&threshold=$c->{threshold}" if exists $c->{threshold};
@@ -739,8 +732,7 @@ sub redirect {
 	my %params = (
 		-type		=> 'text/html',
 		-status		=> '302 Moved',
-		-location	=> $url,
-		($I{SETCOOKIE} ? %{$I{SETCOOKIE}} : ())
+		-location	=> $url
 	);
 
 	print CGI::header(%params), <<EOT;
@@ -760,8 +752,7 @@ sub header {
 	unless ($I{F}{ssi}) {
 		my %params = (
 			-cache_control => 'private',
-			-type => 'text/html',
-			($I{SETCOOKIE} ? %{$I{SETCOOKIE}} : ())
+			-type => 'text/html'
 		);
 		$params{-status} = $status if $status;
 		$params{-pragma} = "no-cache"
@@ -770,7 +761,7 @@ sub header {
 		print CGI::header(%params);
 	}
 
-	$I{userMode} = $I{currentMode} eq 'flat' ? '_F' : '';
+	$I{userMode} = getCurrentUser('currentMode') eq 'flat' ? '_F' : '';
 	$I{currentSection} = $section || '';
 	getSectionColors();
 
@@ -1792,8 +1783,9 @@ sub selectStories {
 sub getOlderStories {
 	my($array_ref, $SECT) = @_;
 	my($today, $stuff);
+	my $user = getCurrentUser();
 
-	$array_ref ||= $I{dbobject}->getStories($I{U}, $I{F}, $SECT, $I{currentSection});
+	$array_ref ||= $I{dbobject}->getStories($user, $I{F}, $SECT, $I{currentSection});
 
 	for (@{$array_ref}) {
 		my($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
@@ -1802,7 +1794,7 @@ sub getOlderStories {
 			$today  = $w;
 			$stuff .= '<P><B>';
 			$stuff .= <<EOT if $SECT->{issue} > 1;
-<A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&issue=$day&mode=$I{currentMode}">
+<A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&issue=$day&mode=$user->{'currentMode'}">
 EOT
 			$stuff .= qq!<FONT SIZE="${\( $I{fontbase} + 4 )}">$w</FONT>!;
 			$stuff .= '</A>' if $SECT->{issue} > 1;
@@ -1834,7 +1826,7 @@ EOT
 <B>Older Articles</B></A>
 EOT
 		$stuff .= <<EOT if $SECT->{issue} == 2 || $SECT->{issue} == 3;
-<BR><A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&mode=$I{currentMode}&issue=$yesterday">
+<BR><A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&mode=$user->{'currentMode'}&issue=$yesterday">
 <B>Yesterday's Edition</B></A>
 EOT
 	}
@@ -1895,7 +1887,9 @@ EOT
 ########################################################
 sub getAnonCookie {	
 	my($user) = @_;
-	if (my $cookie = $I{query}->cookie('anon')) {
+	my $r = Apache->request;
+	my $cookies = CGI::Cookie->parse( $r->header_in('Cookie'));
+	if (my $cookie = $cookies->('anon')) {
 		$user->{anon_id} = $cookie;
 		$user->{anon_cookie} = 1;
 	} else {
@@ -1915,7 +1909,7 @@ sub getFormkeyId {
 
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
-	if ($user->{uid} > 0 && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
+	if ($user->{uid} > 0 && getCurrentForm('rlogin') && length($I{F}{upasswd}) > 1) {
 		getAnonCookie($user);
 		$id = $user->{anon_id};
 	} elsif ($uid > 0) {

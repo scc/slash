@@ -385,7 +385,7 @@ sub editUser {
 	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
-	return if $user_edit->{uid} == $I{anonymous_coward_uid};
+	return if isAnon($user_edit->{uid});
 
 	titlebar("100%", "Editing $user_edit->{nickname} ($user_edit->{uid}) $user_edit->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
@@ -567,7 +567,7 @@ sub editHome {
 	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
-	return if $user_edit->{uid} == $I{anonymous_coward_uid};
+	return if isAnon($user_edit->{uid});
 
 	titlebar("100%", "Customize $I{sitename}'s Display");
 
@@ -734,7 +734,7 @@ sub saveUser {
 	my $note;
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
-	return if $uid == $I{anonymous_coward_uid};
+	return if isAnon($uid);
 
 	$note = "Saving $user_email->{nickname}.\n";
 	$note .= <<EOT if !$user_email->{nickname};
@@ -786,7 +786,10 @@ EOT
 
 		# hm ... cookies are now set in Slash::Apache::User ...
 		# is there a good way to set a cookie here? -- pudge
-		# $I{SETCOOKIE} = Slash::setCookie('user', $cookie);
+		# $I{setcookie} = Slash::setCookie('user', $cookie);
+		# Yes, call the request rec and then just feed it
+		# into headers_out. Keep in mind though that this must
+		# occur before output has actualy occured. -Brian
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
 		$note .= "Passwords don't match. Password not changed.";
@@ -807,10 +810,10 @@ sub saveComm {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return if $uid == $I{anonymous_coward_uid};
+	return if isAnon($uid);
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward_uid} || !$name;
+	print <<EOT if isAnon($uid) || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -848,10 +851,10 @@ sub saveHome {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return if $uid == $I{anonymous_coward_uid};
+	return if isAnon($uid);
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward_uid} || !$name;
+	print <<EOT if isAnon($uid) || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -905,7 +908,7 @@ EOT
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
-	if ($uid != $I{anonymous_coward_uid}) {
+	unless (isAnon($uid)) {
 		$I{dbobject}->setUser($uid, $users_comments)
 			unless $I{F}{willing};
 	}

@@ -108,7 +108,7 @@ sub pleaseLogin {
 
 ##################################################################
 sub yourArticle {
-	if ($I{U}{uid} == $I{anonymous_coward_uid}) {
+	if (isAnon($I{U}{uid})) {
 		pleaseLogin();
 		return;
 	}
@@ -188,7 +188,7 @@ sub nextStory {
 			&&
 		$array_place != -1
 			&&
-		$I{U}{uid} == $I{anonymous_coward_uid}
+		$I{U}{is_anon}
 	) {
 		my $title   = $I{dbobject}->getStory($I{sid_array}[$array_place], 'title');
 		my $psid    = $I{sid_array}[$array_place];

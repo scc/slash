@@ -199,7 +199,7 @@ sub userSearch {
 
 	my($x, $cnt) = 0;
 
-	my $users = $I{dbobject}->getSearchUsers($I{F}, $I{anonymous_coward_uid});
+	my $users = $I{dbobject}->getSearchUsers($I{F}, getCurrentStatic('anonymous_coward_uid'));
 	for (@$users) {
 		my($fakeemail, $nickname, $uid) = @$_;
 		my $ln = $nickname;

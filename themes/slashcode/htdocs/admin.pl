@@ -30,6 +30,7 @@ use Image::Size;
 use Slash;
 use Slash::Utility;
 use Slash::DB;
+use CGI();
 
 sub main {
 	*I = getSlashConf();
@@ -204,15 +205,15 @@ sub main {
 # Misc
 sub adminLoginForm {	
 	print "\n<!-- begin admin login form -->\n<CENTER>",
-		$I{query}->startform(-method => 'POST', -action => $ENV{SCRIPT_NAME}),
-		$I{query}->hidden(-name => 'op', -default => 'adminlogin', -override => 1),
+		CGI::startform(-method => 'POST', -action => $ENV{SCRIPT_NAME}),
+		CGI::hidden(-name => 'op', -default => 'adminlogin', -override => 1),
 		'<TABLE><TR><TD ALIGN="RIGHT">Login</TD>
-		<TD>', $I{query}->textfield(-name => 'aaid'), "</TD></TR>",
+		<TD>', CGI::textfield(-name => 'aaid'), "</TD></TR>",
 		'<TR><TD ALIGN="RIGHT">Password</TD>
-		<TD>', $I{query}->password_field(-name => 'apasswd'),"</TD></TR>",
+		<TD>', CGI::password_field(-name => 'apasswd'),"</TD></TR>",
 		'<TD> </TD><TD><INPUT TYPE="SUBMIT" VALUE="Login"></TD>
 		</TR></TABLE>',
-		$I{query}->endform,
+		CGI::endform(),
 		"</CENTER>\n<!-- end admin login form -->\n";
 }
 
@@ -227,11 +228,11 @@ sub varEdit {
 	my($value, $desc) = $I{dbobject}->getVar($name,'value','description');
 	print "Next<BR>\n",
 		formLabel('Variable Name'),
-		$I{query}->textfield(-name => 'thisname', -default => $name),
+		CGI::textfield(-name => 'thisname', -default => $name),
 		formLabel('Value'),
-		$I{query}->textfield(-name => 'value',-default => $value),
+		CGI::textfield(-name => 'value',-default => $value),
 		formLabel('Description'),
-		$I{query}->textfield(-name => 'desc', -default => $desc, -size => 60),
+		CGI::textfield(-name => 'desc', -default => $desc, -size => 60),
 		qq'<INPUT TYPE="SUBMIT" VALUE="varsave" NAME="op">
 		</FORM><!-- end variables editor form -->\n';
 }
@@ -910,7 +911,7 @@ sub linkNode {
 	my $n = shift;
 	return '[?]' if $n eq '?';
 	return $n . '<SUP><A HREF="http://www.everything2.com/index.pl?node='
-		. $I{query}->escape($n) . '">[?]</A></SUP>';
+		. CGI::escape($n) . '">[?]</A></SUP>';
 }
 
 ##################################################################
@@ -1033,8 +1034,8 @@ EOT
 			. otherLinks($S->{aid}, $S->{tid});
 
 		fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
-		$I{query}->param('relatedtext', $S->{relatedtext});
-		$I{query}->hidden('relatedtext');
+		CGI::param('relatedtext', $S->{relatedtext});
+		CGI::hidden('relatedtext');
 
 		print <<EOT;
 </TD></TR></TABLE>
@@ -1052,7 +1053,7 @@ EOT
 		print '</TD><TD WIDTH="220" VALIGN="TOP">';
 
 		fancybox($I{fancyboxwidth},'Related Links', $S->{relatedtext});
-		$I{query}->param('relatedtext', $S->{relatedtext});
+		CGI::param('relatedtext', $S->{relatedtext});
 
 		print '</TD></TR></TABLE>';
 
@@ -1096,13 +1097,13 @@ EOT
 
 	$S->{dept} =~ s/ /-/gi;
 	print qq!<TR><TD BGCOLOR="$I{bg}[3]"><FONT COLOR="$I{fg}[3]"> <B>Title</B> </FONT></TD>\n<TD BGCOLOR="$I{bg}[2]"> !,
-		$I{query}->textfield(-name => 'title', -default => $S->{title}, -size => 50, -override => 1),
+		CGI::textfield(-name => 'title', -default => $S->{title}, -size => 50, -override => 1),
 		'</TD></TR>';
 
 	if ($I{use_dept}) {
 		print qq!<TR><TD BGCOLOR="$I{bg}[3]"><FONT COLOR="$I{fg}[3]"> <B>Dept</B> </FONT></TD>\n!,
 			qq!<TD BGCOLOR="$I{bg}[2]"> !,
-			$I{query}->textfield(-name => 'dept', -default => $S->{dept}, -size => 50),
+			CGI::textfield(-name => 'dept', -default => $S->{dept}, -size => 50),
 			qq!</TD></TR>\n!;
 	}
 
@@ -1119,9 +1120,9 @@ EOT
 
 	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{sqltime}" size="16"> <BR>!;
 
-	printf "\t[ %s | %s", $I{query}->checkbox('fixquotes'), $I{query}->checkbox('autonode');
+	printf "\t[ %s | %s", CGI::checkbox('fixquotes'), CGI::checkbox('autonode');
 	printf(qq! | %s | <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid&op=edit">Related Poll</A>!,
-		$I{query}->checkbox('fastforward')) if $sid;
+		CGI::checkbox('fastforward')) if $sid;
 	print " ]\n";
 
 	print <<EOT;
@@ -1144,7 +1145,7 @@ EOT
 			my($sect, $col) = split m/_/;
 			$S->{$_} = $I{F}{$_} || $S->{$_};
 
-			printf <<EOT, $I{query}->textfield({ -name => $_, -value => $S->{$_}, -size => 64 });
+			printf <<EOT, CGI::textfield({ -name => $_, -value => $S->{$_}, -size => 64 });
 
 	<TR><TD BGCOLOR="$I{bg}[3]">
 		<FONT COLOR="$I{fg}[3]"> <B>$col</B> </FONT>

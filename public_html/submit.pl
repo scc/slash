@@ -29,6 +29,7 @@ use vars '%I';
 use Slash;
 use Slash::DB;
 use Slash::Utility;
+use CGI();
 
 #################################################################
 sub main {
@@ -106,7 +107,7 @@ sub main {
 
 #################################################################
 sub yourPendingSubmissions {
-	return unless $I{U}{uid} != $I{anonymous_coward_uid};
+	return if $I{U}{is_anon};
 	my $submissions = $I{dbobject}->getSubmissionsPending();
 	if ($submissions) {
 		my $count = $I{dbobject}->getSubmissionCount();
@@ -172,12 +173,12 @@ EOT
 	}
 
 	my @fs = (
-		$I{query}->textfield(-name => 'title', -default => $submission->{'title'}, -size => 50),
+		CGI::textfield(-name => 'title', -default => $submission->{'title'}, -size => 50),
 		lockTest($submission->{'title'})
 	);
 
 	push @fs, sprintf("\n\t\tdept %s<BR>",
-		$I{query}->textfield(-name => 'dept', -default => '', -size => 50)
+		CGI::textfield(-name => 'dept', -default => '', -size => 50)
 	) if $I{use_dept};
 
 	print <<EOT;
@@ -335,7 +336,7 @@ USER
 		$name  =~ s/<(.*)>//g;
 		$email =~ s/<(.*)>//g;
 
-		$karma = $uid != $I{anonymous_coward_uid} && defined $karma ? " ($karma)" : "";
+		$karma = !isAnon($uid) && defined $karma ? " ($karma)" : "";
 
 		# @strs is for DISPLAY purposes, nothing more.
 		my @strs = (substr($subj, 0, 35), substr($name, 0, 20), substr($email, 0, 20));
@@ -416,13 +417,13 @@ EOT
 
 	print
 		formLabel("Your Name", "Leave Blank to be Anonymous"),
-		$I{query}->textfield(-name => 'from', -default => $user, -size=>50),
+		CGI::textfield(-name => 'from', -default => $user, -size=>50),
 
 		formLabel("Your Email or Homepage", "Leave Blank to be Anonymous"),
-		$I{query}->textfield(-name => 'email', -default => $fakeemail, -size => 50),
+		CGI::textfield(-name => 'email', -default => $fakeemail, -size => 50),
 
 		formLabel("Subject", "Be Descriptive, Clear and Simple!"),
-		$I{query}->textfield(-name => 'subj', -default => $I{F}{subj}, -size => 50),
+		CGI::textfield(-name => 'subj', -default => $I{F}{subj}, -size => 50),
 
 		qq[\n<BR><FONT SIZE="2">(bad subjects='Check This Out!' or 'An Article'.  
 		We get many submissions each day, and if yours isn't clear, it will
@@ -487,7 +488,7 @@ sub saveSub {
 			" submissions pending.</B><P>";
 
 		my $submit_after = $I{dbobject}->getBlock("submit_after", 'block');
-		print $submit_after->{'block'}
+		print $submit_after->{'block'};
 
 		$I{dbobject}->createSubmission();
 	}

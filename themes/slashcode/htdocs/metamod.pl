@@ -127,7 +127,7 @@ EOT
 	$metamod{unfair} ||= 0;
 	$metamod{fair} ||= 0;
 	$I{dbobject}->setModerationVotes($I{U}{uid}, \%metamod)
-		if ($I{U}{uid}> $I{anonymous_coward_uid});
+		unless ($I{U}{is_anon});
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
@@ -259,7 +259,7 @@ EOT
 # This is going to break under replication
 sub isEligible {
 
-	if ($I{U}{uid} == $I{anonymous_coward_uid}) {
+	if ($I{U}{is_anon}) {
 		print "You are not logged in";
 		return 0;
 	}
