@@ -15,13 +15,13 @@ use Digest::MD5 'md5_hex';
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-my(%opts, %forced_plugins);
+my(%opts, %forced_plugins, %sacred_tables);
 my($del_users, $poll_uid);
 my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%vars, %story_authors);
 
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('Ihvu:U:P:', \%opts);
+usage('Options used incorrectly') unless getopts('Ihvu:U:P:X:', \%opts);
 usage() if $opts{'h'};
 version() if $opts{'v'};
 usage('Need v2 virtual user') unless $opts{'U'};
@@ -30,6 +30,10 @@ usage('Need new virtual user') unless $opts{'u'};
 # Determine plugins to force conversion for.
 for (split /,/, $opts{P}) {
 	$forced_plugins{$_} = 1;
+}
+# Determine tables to be left alone.
+for (split /,/, $opts{X}) {
+	$sacred_tables{$_} = 1;
 }
 
 ####################################
@@ -1203,6 +1207,10 @@ sub duplicate {
 	my($table, $opt, @extra) = @_;
 	my $filter = $conversions{$table};
 
+	if ($sacred_tables{$table}) {
+		print "Not processing $table, as requested!\n";
+		return;
+	}
 	print "Processing $table\n";
 
 	my $sth_s = $dbh_old->prepare("SELECT * FROM $table");
@@ -1292,10 +1300,16 @@ Main options:
 	-u	v2.2 Virtual user (default is "slash") [REQUIRED]
 	-U 	v2.0 Virtual user. 	               [REQUIRED]
 
+	-I	Perform INCREMENTAL conversion
+
+The following are advanced options. Use these ONLY IF YOU KNOW 
+WHAT YOU ARE DOING:
+
 	-P<x>	Force presence (and conversion) of comma separated list 
 		of plugins: <x>
 
-	-I	Perform INCREMENTAL conversion
+	-X<x>	Do not convert any of the tables listed in comma
+		separated list: <x>
 
 EOT
 	exit;
