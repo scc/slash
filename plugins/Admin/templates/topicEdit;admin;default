@@ -11,47 +11,53 @@ en_US
 __name__
 topicEdit
 __template__
-<FORM ACTION="[% env.script_name %]" METHOD="POST">
+<TABLE>
+	<TR>
+		<TD>
+			<FORM ACTION="[% env.script_name %]" METHOD="POST">
 
-[% topics_select %]
+			[% topics_select %]
 
-<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
-<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>
+			<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
+			<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>
 
-[% IF ! form.topicdelete %]
+			[% IF ! form.topicdelete %]
 
-	[% IF topic.tid %]
-<BR>Image as seen: <BR><BR>
-<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
-	[% END %]
+				[% IF topic.tid %]
+			<BR>Image as seen: <BR><BR>
+			<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
+				[% END %]
 
-<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
-<BR>Alt Text<BR>
-<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
-<BR>Dimensions (leave blank to determine automatically)<BR>
-Width: <INPUT TYPE="TEXT" NAME="width" VALUE="[% topic.width %]" SIZE="4">
-Height: <INPUT TYPE="TEXT" NAME="height" VALUE="[% topic.height %]" SIZE="4"><BR>
-<BR>
+			<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
+			<BR>Alt Text<BR>
+			<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
+			<BR>Dimensions (leave blank to determine automatically)<BR>
+			Width: <INPUT TYPE="TEXT" NAME="width" VALUE="[% topic.width %]" SIZE="4">
+			Height: <INPUT TYPE="TEXT" NAME="height" VALUE="[% topic.height %]" SIZE="4"><BR>
+			<BR>
 
-	[% IF images_flag %]
+				[% IF images_flag %]
 
-	<BR>Image<BR>
-	[% image_select %]
+				<BR>Image<BR>
+				[% image_select %]
 
-	[% ELSE %]
+				[% ELSE %]
 
-	<P>No images were found in the topic images directory
-		([% constants.basedir %]/images/topics).<BR>
-		<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]"><BR><BR>
+				<P>No images were found in the topic images directory
+					([% constants.basedir %]/images/topics).<BR>
+					<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]"><BR><BR>
 
-	[% END %]
+				[% END %]
 
-<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
-<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
+			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
+			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
 
-[% END %]
+			[% END %]
 
-</FORM>
+			</FORM>
+		</TD>
+	</TR>
+</TABLE>
 
 __seclev__
 500
