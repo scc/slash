@@ -939,6 +939,25 @@ your own module with your name, and put your code there temporarily.
 
 get/gets/set/sets/create/exists/delete
 
+perlpod
+
+exporting
+
+
+=head1 CHANGES
+
+=over 4
+
+=item v1.1.2.2
+
+
+
+=item v1.1.2.1
+
+Initial checkin.
+
+=back
+
 
 =head1 AUTHORS
 
