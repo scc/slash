@@ -26,6 +26,9 @@ __template__
 [% CASE 'user_discussion' %]
 	Discussions create by [% name %]
 
+[% CASE 'no_such_sid' %]
+	This is not the discussion you are looking for.
+
 [% END %]
 
 __seclev__
