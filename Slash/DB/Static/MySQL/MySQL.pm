@@ -225,6 +225,16 @@ sub countDaily {
 	$returnable{'unique'} = $c->rows;
 	$c->finish;
 
+	$c = $self->sqlSelectMany("count(*)", "accesslog",
+		"to_days(now()) - to_days(ts)=1 GROUP BY uid");
+	$returnable{'unique_users'} = $c->rows;
+	$c->finish;
+
+	$c = $self->sqlSelectMany("count(*)", "accesslog",
+		"op='journal' AND to_days(now()) - to_days(ts)=1 GROUP BY uid");
+	$returnable{'journals'} = $c->rows;
+	$c->finish;
+
 #	my($comments) = $self->sqlSelect("count(*)", "accesslog",
 #		"to_days(now()) - to_days(ts)=1 AND op='comments'");
 
