@@ -93,8 +93,9 @@ sub getByID {
 sub readTemplateFile {
 	my($self, $filename) = @_;
 	return unless -f $filename;
-	open(FILE, $filename) or die "$! unable to open file $filename to read from";
-	my @file = <FILE>;
+	my $fh = gensym;
+	open($fh, "< $filename\0") or die "Can't open $filename to read from: $!";
+	my @file = <$fh>;
 	my %val;
 	my $latch;
 	for (@file) {
@@ -102,7 +103,7 @@ sub readTemplateFile {
 			$latch = $1;
 			next;
 		}
-		$val{$latch} .= $_  if $latch;
+		$val{$latch} .= $_ if $latch;
 	}
 	$val{'tpid'} = undef if $val{'tpid'};
 	for (qw| name page section lang seclev description title |) {
@@ -114,14 +115,15 @@ sub readTemplateFile {
 
 sub writeTemplateFile {
 	my($self, $filename, $template) = @_;
-	open(FILE, '>' . $filename) or die "$! unable to open file $filename to write to";
+	my $fh = gensym;
+	open($fh, "> $filename\0") or die "Can't open $filename to write to: $!";
 	for (keys %$template) {
 		next if ($_ eq 'tpid');
-		print FILE "__${_}__\n";
+		print $fh "__${_}__\n";
 		$template->{$_} =~ s/\015\012/\n/g;
-		print FILE "$template->{$_}\n";
+		print $fh "$template->{$_}\n";
 	}
-	close(FILE);
+	close $fh;
 }
 
 sub installTheme {
@@ -138,7 +140,7 @@ sub installPlugin {
 	for my $answer (@$answers) {
 		for (keys %$plugins) {
 			if ($answer eq $plugins->{$_}{order}) {
-				$self->_install($plugins->{$_}, $symlink,1);
+				$self->_install($plugins->{$_}, $symlink, 1);
 			}
 		}
 	}
@@ -152,7 +154,7 @@ sub _install {
 		print STDERR "Plugin $hash->{name} has already been installed\n";
 		return;
 	}
-	if($flag) {
+	if ($flag) {
 		return if $self->exists('plugin', $hash->{name});
 
 		$self->create({
@@ -173,11 +175,11 @@ sub _install {
 	my $prefix_site = $self->getValue('site_install_directory');
 
 	# YEs, the next bit could be cleaned up -Brian
-	if($hash->{htdoc}){
+	if ($hash->{htdoc}){
 		my $filename;
 		for (@{$hash->{htdoc}}) {
-			if($_ =~ /\//) {
-				$_ =~ /.*\/(.*)$/;
+			if (/\//) {
+				/.*\/(.*)$/;
 				$filename = $1;
 			} else {
 				$filename = $_;
@@ -192,11 +194,11 @@ sub _install {
 		}
 	}
 
-	if($hash->{task}){
+	if ($hash->{task}){
 		my $filename;
 		for (@{$hash->{task}}) {
-			if($_ =~ /\//) {
-				$_ =~ /.*\/(.*)$/;
+			if (/\//) {
+				/.*\/(.*)$/;
 				$filename = $1;
 			} else {
 				$filename = $_;
@@ -211,11 +213,11 @@ sub _install {
 		}
 	}
 
-	if($hash->{misc}){
+	if ($hash->{misc}){
 		my $filename;
 		for (@{$hash->{misc}}) {
-			if($_ =~ /\//) {
-				$_ =~ /.*\/(.*)$/;
+			if (/\//) {
+				/.*\/(.*)$/;
 				$filename = $1;
 			} else {
 				$filename = $_;
@@ -230,11 +232,11 @@ sub _install {
 		}
 	}
 
-	if($hash->{image}){
+	if ($hash->{image}){
 		my $filename;
 		for (@{$hash->{image}}) {
-			if($_ =~ /\//) {
-				$_ =~ /.*\/(.*)$/;
+			if (/\//) {
+				/.*\/(.*)$/;
 				$filename = $1;
 			} else {
 				$filename = $_;
@@ -249,11 +251,11 @@ sub _install {
 		}
 	}
 
-	if($hash->{topic}){
+	if ($hash->{topic}){
 		my $filename;
 		for (@{$hash->{topic}}) {
-			if($_ =~ /\//) {
-				$_ =~ /.*\/(.*)$/;
+			if (/\//) {
+				/.*\/(.*)$/;
 				$filename = $1;
 			} else {
 				$filename = $_;
@@ -271,9 +273,10 @@ sub _install {
 	my($sql, @sql, @create);
 
 	if ($hash->{"${driver}_schema"}) {
-		if (my $schema_file = "$hash->{dir}/" . $hash->{"${driver}_schema"}) {
-			open(CREATE, "< $schema_file");
-			while (<CREATE>) {
+		my $schema_file = "$hash->{dir}/" . $hash->{"${driver}_schema"};
+		my $fh = gensym;
+		if (open($fh, "< $schema_file\0")) {
+			while (<$fh>) {
 				chomp;
 				next if /^#/;
 				next if /^$/;
@@ -281,26 +284,31 @@ sub _install {
 				next if /^ $/;
 				push @create, $_;
 			}
-			close (CREATE);
-
-			$sql = join '', @create;
-			@sql = split /;/, $sql;
+			close $fh;
+		} else {
+			warn "Can't open $schema_file: $!";
 		}
+
+		$sql = join '', @create;
+		@sql = split /;/, $sql;
 	}
 
 	if ($hash->{"${driver}_dump"}) {
-		if (my $dump_file = "$hash->{dir}/" . $hash->{"${driver}_dump"}) {
-			open(DUMP, "< $dump_file") or warn "Can't open $dump_file: $!";
-			while (<DUMP>) {
+		my $dump_file = "$hash->{dir}/" . $hash->{"${driver}_dump"};
+		my $fh = gensym;
+		if (open($fh, "< $dump_file\0")) {
+			while (<$fh>) {
 				next unless /^INSERT/;
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;
 				push @sql, $_;
 			}
-			close(DUMP);
-		}
-	}
+			close $fh;
+		} else {
+ 			warn "Can't open $dump_file: $!";
+ 		}
+ 	}
 
 	for (@sql) {
 		next unless $_;
@@ -318,9 +326,12 @@ sub _install {
 	}
 	if ($hash->{note}) {
 		my $file = "$hash->{dir}/$hash->{note}";
-		open(FILE, $file);
-		while (<FILE>) {
-			print;
+		my $fh = gensym;
+		if (open($fh, "< $file\0")) {
+			print <$fh>;
+			close $fh;
+		} else {
+			warn "Can't open $file: $!";
 		}
 	}
 }
@@ -334,15 +345,22 @@ sub getThemeList {
 }
 
 sub _getList {
-	my($self, $prefix,$subdir,$type) = @_;
+	my($self, $prefix, $subdir, $type) = @_;
 	$self->{'_install_dir'} = $prefix;
-	opendir(DIR, "$prefix/$subdir");
+
+	my $dh = gensym;
+	unless (opendir($dh, "$prefix/$subdir")) {
+		warn "Can't opendir $prefix/$subdir: $!";
+		return;
+	}
+
 	my %hash;
-	while (my $dir = readdir(DIR)) {
+	while (my $dir = readdir($dh)) {
 		next if $dir =~ /^\.$/;
 		next if $dir =~ /^\.\.$/;
 		next if $dir =~ /^CVS$/;
-		open(FILE, "< $prefix/$subdir/$dir/$type") or next;
+		my $fh = gensym;
+		open($fh, "< $prefix/$subdir/$dir/$type\0") or next;
 		$hash{$dir}->{'dir'} = "$prefix/$subdir/$dir";
 		#This should be overridden by the actual name of the plugin
 		$hash{$dir}->{'name'} = $dir;
@@ -350,7 +368,7 @@ sub _getList {
 		my @info;
 		{
 			local $/;
-			@info = split /\015\012?|\012/, <FILE>;
+			@info = split /\015\012?|\012/, <$fh>;
 		}
 
 		for (@info) {

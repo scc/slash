@@ -15,6 +15,7 @@ use File::Copy;
 use File::Find;
 use File::Path;
 use File::Spec::Functions;
+use Slash;
 use Slash::DB;
 use Slash::Install;
 
@@ -138,14 +139,14 @@ my $x;
 #---------------------------------------------------
 my $themes = $install->getThemeList($PREFIX);
 for (sort keys %$themes) {
-	if((keys %$themes) > 1) {
+	if ((keys %$themes) > 1) {
 		print "( )$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
 	} else {
 		print "(*)$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
 	}
 }
 my $atheme;
-if((keys %$themes) > 1) {
+if ((keys %$themes) > 1) {
 	chomp($theme = <STDIN>);
 	$atheme ||= '1';
 } else {
@@ -153,8 +154,8 @@ if((keys %$themes) > 1) {
 	$atheme = '1';
 }
 
-for(keys %$themes) {
-	if($themes->{$_}->{order} == $atheme) {
+for (keys %$themes) {
+	if ($themes->{$_}->{order} == $atheme) {
 		$theme = $_;
 	}
 }
@@ -164,7 +165,7 @@ print "\nPlease select which plugins you would like?\n";
 my $plugins = $install->getPluginList($PREFIX);
 my @answers;
 for (sort keys %$plugins) {
-	if($themes->{$theme}{plugin}{$plugins->{$_}{'name'}}) {
+	if ($themes->{$theme}{plugin}{$plugins->{$_}{'name'}}) {
 		print "(*)$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
 		push @answers, $plugins->{$_}{'order'};
 	} else {
@@ -188,9 +189,10 @@ while ($select ne 'q'){
 		push @answers, $select;
 	}
 }
+
 # Lets make sure entries do not happen more then once
 my %answers;
-for(@answers) {
+for (@answers) {
 	$answers{$_} = 1;
 }
 @answers = 0;
@@ -238,9 +240,10 @@ unless ($opts{'e'}) {
 my $trgst = '';
 
 # Dump in the schema then pepper with a trace of your own theme
-open(CREATE, "< $PREFIX/sql/$driver/schema.sql")
-	or die "Can't open $PREFIX/sql/$driver/schema.sql: $!.\n";
-while (<CREATE>) {
+my $create = gensym;
+open($create, "< $PREFIX/sql/$driver/schema.sql\0")
+	or die "Can't open $PREFIX/sql/$driver/schema.sql: $!";
+while (<$create>) {
 	# ugly-as-hell hack to keep Oracle trigger code from getting munged
 	# the syntax is sensitive plus there *has* to be a semicolon at the end
 	# (yes, one that gets passed in the statement, not the EOS delimiter!)
@@ -257,7 +260,7 @@ while (<CREATE>) {
 	next if /^ $/;
 	push @create, $_;
 }
-close (CREATE);
+close $create;
 
 $sql = join '', @create;
 @sql = split /;/, $sql;
@@ -269,9 +272,10 @@ if ($driver eq 'oracle') {
 	}
 }
 
-#open(DUMP, "< $theme/sql/$driver/datadump.sql")
-#	or die "Can't open $theme/sql/$driver/datadump.sql: $!.\n";
-#while (<DUMP>) {
+#my $dump = gensym;
+#open($dump, "< $theme/sql/$driver/datadump.sql\0")
+#	or die "Can't open $theme/sql/$driver/datadump.sql: $!";
+#while (<$dump>) {
 #	next unless /^INSERT/;
 #	chomp;
 #	s/;$//;
@@ -287,15 +291,15 @@ if ($driver eq 'oracle') {
 #	}
 #	push @sql, $_;
 #}
-#close(DUMP);
+#close $dump;
 #
-#open(DUMP, "< $theme/sql/$driver/prep.sql");
-#while (<DUMP>) {
+#open($dump, "< $theme/sql/$driver/prep.sql\0");  # or what?
+#while (<$dump>) {
 #	chomp;
 #	s/;$//;
 #	push @sql, $_;
 #}
-#close(DUMP);
+#close $dump;
 #
 for (@sql) {
 	next unless $_;
@@ -342,20 +346,21 @@ $slashdb->setUser($uid, {
 });
 
 # Now, lets update slash.sites
-if (open(SLASHSITES, "< $PREFIX/slash.sites")) {
-	while (<SLASHSITES>) {
+my $sites = gensym;
+if (open($sites, "< $PREFIX/slash.sites\0")) {
+	while (<$sites>) {
 		chomp;
 		my($dbuser) = split /:/;
 		$slash_sites{$dbuser} = 1;
 	}
-	close(SLASHSITES);
+	close $sites;
 }
 
 unless (exists $slash_sites{$opts{'u'}}) {
-	open(SLASHSITES, ">> $PREFIX/slash.sites")
-		or die "Can't append to $PREFIX/slash.sites: $!.\n";
-	print SLASHSITES "$opts{'u'}:$owner:$sitename\n";
-	close(SLASHSITES);
+	open($sites, ">> $PREFIX/slash.sites\0")
+		or die "Can't append to $PREFIX/slash.sites: $!";
+	print $sites "$opts{'u'}:$owner:$sitename\n";
+	close $sites;
 }
 
 find(sub { chown $owner_id, $group_id, $_ unless -l $_ }, "$prefix_site/$sitename");
@@ -427,17 +432,22 @@ sub apache_site_conf {
 </VirtualHost>
 |;
 	my $file = "$prefix_site/$sitename/$sitename.conf";
-	open(FILE, '> ' . $file);
-	print FILE $text;
-	close(FILE);
-	open(FILE, "< $PREFIX/httpd/slash.conf");
+	my $fh = gensym;
 
-	unless (grep /^Include $file$/, <FILE>) {
-		close(FILE);
-		open(FILE, ">> $PREFIX/httpd/slash.conf");
-		print FILE "Include $file\n";
+	open($fh, ">$file\0") or die "Can't write to $file: $!";
+	print $fh $text;
+	close $fh;
+
+	open($fh, "< $PREFIX/httpd/slash.conf\0")
+		or die "Can't write to $PREFIX/httpd/slash.conf: $!";
+
+	unless (grep /^Include $file$/, <$fh>) {
+		close $fh;
+		open($fh, ">> $PREFIX/httpd/slash.conf\0")
+			or die "Can't open $PREFIX/httpd/slash.conf: $!";
+		print $fh "Include $file\n";
 	}
-	close(FILE);
+	close $fh;
 }
 
 sub install_message {
