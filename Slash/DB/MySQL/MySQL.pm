@@ -2285,11 +2285,9 @@ sub getNetIDList {
 sub getBanList {
 	my($self, $refresh) = @_;
 	my $constants = getCurrentStatic();
-	my $banlist_ref;
 	
-	delete $self->{banlist} if $refresh;
-
-	unless (exists ($self->{banlist})) {
+	if ($refresh || ! exists $self->{banlist}) {
+		my $banlist_ref;
 		my $sth = $self->{_dbh}->prepare("SELECT ipid,subnetid,uid from accesslist WHERE isbanned = 1");
 		$sth->execute;
 		my $list = $sth->fetchall_arrayref;
@@ -2301,7 +2299,7 @@ sub getBanList {
 		$self->{banlist} = $banlist_ref;
 	}
 
-	return $banlist_ref;
+	return $self->{banlist};
 }
 
 ########################################################

@@ -17,23 +17,21 @@ sub handler {
 	my($r) = @_;
 
 	my $r = Apache->request;
-	my $isbanned = 0;
 
 	return DECLINED unless $r->is_main;
 
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
-	my $hostip = $r->connection->remote_ip; 
-	my $cur_ipid = md5_hex($hostip);
+	my $cur_ipid = md5_hex($r->connection->remote_ip);
 
-	my $constants = getCurrentStatic();
 	my $slashdb = getCurrentDB();
 	$slashdb->sqlConnect();
 	
-	$slashdb->getBanList();
+	# what is the point of "isBanned()"?  why not just get
+	# the reference and check for existence here? -- pudge
+	my $banlist = $slashdb->getBanList();
 
-	$isbanned = $slashdb->isBanned($cur_ipid);
-	if ($isbanned) {
+	if ($banlist->{$cur_ipid}) {
 		$r->custom_response(FORBIDDEN, "The ipid $cur_ipid is banned from this site");
 		return FORBIDDEN;
 	}
