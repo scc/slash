@@ -1,0 +1,14 @@
+#### %REQUIRED TABLES: comments, content_filters, commentmodes, dateformats
+#### %REQUIRED TABLES: discussions, metamodlog, moderatorlog, newstories
+#### %REQUIRED TABLES: pollanswers, pollquestions, pollvoters, sections
+#### %REQUIRED TABLES: stories, storystuff, sections, submissions, topics
+#### %REQUIRED TABLES: tzcodes, users, users_comments, users_index, users_info
+#### %REQUIRED TABLES: users_prefs
+
+#### %OBSOLETE TABLES: authors, commentcodes, displaycodes, isolatemodes
+#### %OBSOLETE TABLES: issuemodes, postmodes, statuscodes, users_key
+
+# Update commands.
+
+# Miraculously enough, aside from NORMALIZATION issues, there are no 
+# schema changes.

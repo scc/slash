@@ -8,7 +8,7 @@
 ##
 
 #   the used tools
-VERSION = 1.1.1-bender
+VERSION = 1.1.3-bender
 DISTNAME = slash
 DISTVNAME = $(DISTNAME)-$(VERSION)
 
@@ -78,7 +78,7 @@ install: slash plugins
 	chown -R $(USER):$(GROUP) $(PREFIX)/bin
 	chown -R $(USER):$(GROUP) $(PREFIX)/sql
 	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
-
+# Add a @ to suppress output of the echo's
 	@echo "+--------------------------------------------------------+"; \
 	echo "| All done.                                              |"; \
 	echo "| If you want to let slash handle your httpd.conf file   |"; \

@@ -1,0 +1,323 @@
+#!/usr/bin/perl
+
+use DBI;
+use Getopt::Std;
+
+$0 =~ /[^\/]+$/;
+my $PROGNAME = $1;
+
+my(%optsi, %aidCache);
+getopts('P:s:d:o:', \%opts);
+my ($prefix, $dumpfile, $rcfile, $outfile)=	($opts{P} || '/usr/local/slash',
+											 $opts{d} || './site.dump',
+								 			 $opts{s} || './slashdotrc.pl',
+											 $opts{o} || './bendersite.dump');
+
+die "FATAL ERROR: Can't read $rcfile: $!\n"
+	if ! -r $rcfile;
+die "FATAL ERROR: Can't read input dump file: $!\n"
+	if ! -r $dumpfile;
+
+require $rcfile;
+
+my(@updateFile);
+open(INFILE, "<$prefix/sql/updates/$PROGNAME")
+	or die "Can't read update file $prefix/sql/updates/$PROGNAME: $!\n";
+@updateFile = <INFILE>;
+map { chomp } @updateFile;
+close(INFILE);
+
+# Process table status directives from update file.
+my(@rtables, @otables);
+for (@updateFile) {
+	/^#### %REQUIRED TABLES: (.+)$/ && do {
+		push (@rtables, split(/\s*,\s*/, $1));
+		next;
+	};
+
+	/^#### %OBSOLETE TABLES: (.+)$/ && do {
+		push (@otables, split(/\s*,\s*/, $1));
+		next;
+	};
+}
+
+# Sanitize array of all unnecessary entries.
+@updateFile = grep { ! /^(#.+|\s+)?$/ } @updateFile;
+
+# Create temporary database.
+my $tempDBname = tempDBname();
+my $dbh = DBI->connect($my_conf{dsn}, $my_conf{dbuser}, $my_conf{dbpass}) or
+	exit 1;
+$dbh->do("CREATE TABLE $tempDBname") ||
+	die "Can't create temporary database for conversion: $dbh->errstr\n";
+$dbh->do("connect $tempDBname") ||
+	die "Can't connect to temporary conversion database: $dbh->errstr\n";
+
+# Perform selective import of given dump.
+importDump();
+
+# Perform schema updates on loaded tables.
+for (@updateFile) {
+	$dbh->do($_) or
+		print STDERR "Error executing '$_': $dbh->errstr\n";
+}
+
+# Perform version specific conversion process.
+authors2Users();
+aid2uid();
+codes2CodeParam();
+userskey2Param();
+
+# Drop obsolete tables.
+for (@otables) {
+	$dbh->do("DROP TABLE $_");
+}
+
+# Make dump of temporary database.
+
+
+END {
+	# Destroy temporary database.
+	if ($dbh) {
+		$dbh->do("DROP DATABASE $tempDBname") ||
+			print STDERR <<EOT;
+Cannot DROP DATABASE '$tempDBname': $dbh->errstr
+Database drop should be performed manually!
+
+EOT
+		$dbh->disconnect;
+	}
+};
+
+# %%%%% SUBROUTINE DEFINITIONS %%%%%
+
+sub tempDBname {
+	my $size = shift || 6;
+	my $ret = 'slashConvert-';
+	my @chars = ('A'..'Z', 'a'..'z', '0'..'9');
+
+	while ($size) {
+		$ret .= $chars[int(rand($#chars + 1))];
+		$size--;
+	}
+
+	$ret;
+}
+
+
+sub importDump {
+	my @vtables = (@rtables, @otables);
+
+	open(DUMPFILE, "<$dumpfile") or 
+		die "FATAL ERROR: Odd! Can't open dumpfile for reading: $!\n";
+	while (! eof DUMPFILE) {
+		next if /^(#.+|\s+)?$/;
+
+		my($cmd, $valid) = ('', 0);
+		do {
+			my $c = <DUMPFILE>;
+			chomp($c);
+			$cmd .= $c;
+		} until $cmd =~ /\);$/ || eof DUMPFILE;
+
+		# We only deal with CREATE TABLE and INSERT statements for now.
+		if ($cmd =~ /(?:CREATE TABLE (.+?)|INSERT INTO (.+?) VALUES)/) {
+			my $tablename = $1;
+			local $" = '|';
+			$valid = ($tablename =~ /"(@vtables)"/);
+		}
+		
+		$dbh->do($cmd) if $valid;
+	}
+}
+
+
+sub authors2Users {
+	my $sth = $dbh->prepare('SELECT * FROM authors');
+	if (! $sth->execute) {
+		err("Can't execute on statement handle: $dbh->errstr\n");
+		return;
+	}
+	my $data = $sth->fetchall_arrayref({});
+	$sth->finish;
+
+	for (@{$data}) {
+		# Search users table for a matching nickname for the AID.
+		my $l_sth = $dbh->prepare('SELECT * FROM users WHERE nickname=' .
+			$dbh->quote($_->{aid}));
+		if (! $l_sth->execute) {
+			err("Can't exacute on USER statement handle: $dbh->errstr\n");
+			next;
+		}
+		my $user = $l_sth->fetchrow_hashref;
+		$l_sth->finish;
+		
+		my ($uid, $user_info) = (0, 0);
+		my $qn = $dbh->quote(($user) ? $user->{nickname} : $_->{aid});
+		if (! $user) {
+			# Insert author as a new user into the database.
+			print STDERR "-- Creating user account for author $qn\n";
+			$dbh->do(<<EOQ);
+INSERT INTO users (uid, nickname) VALUES (null, $qn)
+EOQ
+
+			# Get full user record back from database.
+			#$l_sth = $dbh->prepare("SELECT * FROM users WHERE nickname=$qn");
+			if (! $l_sth->execute) {
+				err("Can't exacute on USER statement handle: $dbh->errstr\n");
+				next;
+			}
+			($uid) = $l_sth->fetchrow_array;
+			$l_sth->finish;
+
+			$dbh->do(<<EOQ);
+INSERT INTO users_info (uid) VALUES ($uid)
+EOQ
+			$dbh->do(<<EOQ);
+INSERT INTO users_index (uid) VALUES ($uid)
+EOQ
+			$dbh->do(<<EOQ);
+INSERT INTO users_comments (uid) VALUES ($uid)
+EOQ
+			$dbh->do(<<EOQ);
+INSERT INTO users_prefs (uid) VALUES ($uid)
+EOQ
+		} else {
+			print STDERR "-- Promoting user $qn.\n";
+		}
+		
+		# Retrieve necessary user information to use as defaults.
+		$uid = $user->{uid};
+		$aidCache{$_->{aid}} = $uid;	# Used in aid2Uid().
+		$l_sth = $dbh->prepare("SELECT bio FROM users_info WHERE uid=$uid");
+		if ($l_sth && $l_sth->execute) {
+			$user_info = $l_sth->fetchrow_hashref;
+			$l_sth->finish;
+		}
+
+		# Change/Set the proper seclev.
+		$user->{seclev} = $_->{seclev};
+
+		# Add in author information for anything that isn't currently set.
+		$user_info->{bio}	||= $_->{copy};
+		$user->{realname}	||= $_->{name};
+		$user->{realemail}	||= $_->{email};
+		$user->{homepage}	||= $_->{url};
+		$user->{sig} 		||= $_->{quote};
+
+		# Update regular tables.
+		$dbh->do(<<EOQ);
+UPDATE users SET	
+	seclev 		= $user->{seclev},
+	realname 	= @{\($dbh->quote($user->{realname}))},
+	realemail	= @{\($dbh->quote($user->{realemail}))},
+	homepage	= @{\($dbh->quote($user->{homepage}))},
+	sig			= @{\($dbh->quote($user->{sig}))}
+WHERE uid = $user->{uid}
+EOQ
+
+		$dbh->do(<<EOQ);
+UPDATE users_info SET bio = @{\($dbh->quote($user_info->{bio}))}
+EOQ
+
+		# There should be no defaults for these.
+		$dbh->do(<<EOQ) if $_->{section};
+INSERT INTO users_params (param_id, uid, name, value)
+	VALUES (null, $uid, 'section', @{\($dbh->quote($_->{section}))})
+EOQ
+
+		$dbh->do(<<EOQ) if $_->{deletedsubmissions};
+INSERT INTO users_params (param_id, uid, name, value)
+	VALUES (null, $uid, 'deletedsubmissions', $_->{deletedsubmissions})
+EOQ
+	}
+}
+
+
+sub aid2uid {
+	my @tables = qw[stories newstories];
+
+	for (@tables) {
+		my $sth = $dbh->prepare("SELECT distinct aid FROM $_");
+		my @authorList;
+		for (@{$sth->fetchall_arrayref}) {
+			push @authorList, $_->[0];
+		}
+
+		$dbh->do("ALTER TABLE $_ ADD uid int");
+
+		for (@authorList) {
+			my $qn = $dbh->quote($_);
+			$dbh->do("UPDATE $_ SET uid=$aidCache{$_} WHERE aid=$qn");
+		}
+
+		$dbh->do("ALTER TABLE $_ DROP aid");
+	}
+}
+
+
+sub codes2CodeParam {
+	my @tables = qw[commentcodes displaycodes isolatemodes issuemodes
+					maillist statuscodes postmodes];
+
+	for (@tables) {
+		print STDERR "-- Processing table $_ into CODE_PARAM\n";
+
+		my $sth = $dbh->prepare("SELECT * FROM $_");
+		my $table = $dbh->quote($_);
+		
+		for (@{$sth->fetchall_arrayref({})}) {
+			my $code = $dbh->quote($_->{code});
+			my $name = $dbh->quote($_->{name});
+
+			$dbh->do(<<EOQ);
+INSERT INTO code_param (param_id, type, code, name)	
+	VALUES(null, $table, $code, $name)
+EOQ
+		}
+	}
+}
+
+
+sub users_key2Param {
+	my $sth = $dbh->prepare("SELECT * FROM users_key");
+	print STDERR "-- Processing table USERS_KEY into table USERS_PARAM\n";
+	for (@{$sth->fetchall_arrayref({})}) {
+		my $pubkey = $dbh->quote($_->[1]);
+
+		$dbh->do(<<EOQ);
+INSERT INTO users_param (param_id, uid, name, value)
+	VALUES (null, $_->[0], 'key', $pubkey)
+EOQ
+	}
+}
+
+
+sub err {
+	my $msg = shift;
+	chomp $msg;
+	printf STDERR "%s - %s\n", (caller(1))[3], $msg;
+}
+
+
+sub usage {
+
+	print <<EOT;
+
+usage: $PROGNAME {-Psdo}
+
+	-P Prefix for Slash install 			[default: /usr/local/slash]
+	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
+	-d Location of source MySQL dump		[default: ./site.dump]
+	-o Location of output dump 				[default: ./bendersite.dump]
+
+Notes: 
+	User given in slashdotrc.pl should have global CREATE/DROP priviledges
+	when this program is run. See INSTALL file for more details.	
+
+EOT
+
+	exit 0;
+}
+
+0;

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 
 use Slash::DB;
 use Slash::DB::Utility;
@@ -10,7 +10,7 @@ use Date::Manip;
 # Enclosure defs.
 
 my $enclosure_regexps = {
-	"Slashcode v0.9.2+"	=> {
+	"Slash v0.9.2+"	=> {
 		regexp			=>
 '<!-- begin comment block -->(.+?)<!-- end comment block -->',
 		extractors		=> '*',
@@ -344,9 +344,9 @@ Notes:
 	ignored.
 
 	If -s is not given, then the program will cycle thru all defined ID
-	extractors in an attempt to find a key suitable for database insertion. If 
-	no ID can be found, then the program will quit with an error and the use
-	of -s will be required.
+	extractors in an attempt to find a key suitable for database insertion.
+	If no ID can be found, then the program will quit with an error and the
+	use of -s will be required.
 
 Defined comment enclosures:
 	%s
