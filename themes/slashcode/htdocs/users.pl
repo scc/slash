@@ -856,6 +856,7 @@ sub tildeEd {
 
 	my $sections = $slashdb->getDescriptions('sections');
 	while (my($section, $title) = each %$sections) {
+		next if !$section;
 		$sectionref->{$section}{checked} =
 			($exsect =~ /'\Q$section\E'/) ? ' CHECKED' : '';
 		$sectionref->{$section}{title} = $title;
