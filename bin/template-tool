@@ -32,7 +32,7 @@ my %opts;
 usage('options used incorrectly') unless getopts('cdilrsvg:D:O:P:S:p:f:u:?', \%opts);
 usage('no options supplied to program') unless keys %opts;
 usage('help requested') if $opts{'?'};
-boiler() if $opts{'g'};
+boiler() if $opts{'B'};
 
 # if deleting, then there should be no other operation or file flags
 usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
@@ -72,12 +72,12 @@ if ($opts{'c'}) {
 	exit();
 }
 
-if ($opts{'D'}) {
-	if ( ! -d $opts{'D'}) {
+if ($opts{'O'}) {
+	if ( ! -d $opts{'O'}) {
 		if ($opts{'d'} || $opts{'e'} || ( $opts{'l'} && $opts{'f'})) {
-			system("mkdir $opts{'D'}") 
+			system("mkdir $opts{'O'}") 
 		} else {
-			print "Invalid directory $opts{'D'} \n";
+			print "Invalid directory $opts{'O'} \n";
 			exit(0);
 		}
 	}
@@ -123,15 +123,15 @@ if ($opts{'s'}) {
 
 	if ($opts{'f'}) {
 		$filename = $opts{'f'};
-		$filename = catfile($opts{'D'}, $filename) if $opts{'D'};
-	} elsif ($opts{'D'}) {
-		$filename = $opts{'D'};
+		$filename = catfile($opts{'O'}, $filename) if $opts{'O'};
+	} elsif ($opts{'O'}) {
+		$filename = $opts{'O'};
 	}
 
 	# build a template list of the templates we want to process
 	for my $key (keys %$templates) {
-		if ($opts{'p'}) {
-			next unless $key =~ /$opts{'p'}/;
+		if ($opts{'m'}) {
+			next unless $key =~ /$opts{'m'}/;
 		}
 
 		if ( 	($sectionpage_flag && 
@@ -318,14 +318,13 @@ sub compile_template {
 
 ###############################################
 sub usage {
-	my ($message) = @_;
-	print "ERROR: $message\n";
+	print "*** $_[0] \n" if $_[0];
 	print <<EOT;
 Usage: template-tool [OPTIONS] <template templateN>
 
 OPTIONS
 
-	-g generates a blank template (specify the name of the file after the option)
+	-B generates a blank template (specify the name of the file after the option)
 
 	-u virtual user to use (default is "slash")
 
@@ -333,12 +332,12 @@ OPTIONS
 	-i use tpid (template id) instead of template name
 
 	-l list template(s) and their descriptions
-	-p only perform list and get actions if the template matches this pattern
+	-m only perform list and get actions if the template matches this pattern
 	-f <templatefilename> filename of template being dumped or created (single template)
 	
 	-s create/save/update template 
 
-	-D directory where templates are saved or created
+	-0 directory where templates are saved or created
 	-P <page> template page
 	-S <section> template section
 
@@ -386,7 +385,7 @@ EOT
 
 sub boiler {
 	my $fh = gensym();
-	open($fh, "> $opts{'g'}") or die "Could not open file for blank template";
+	open($fh, "> $opts{'B'}") or die "Could not open file for blank template";
 	print $fh <<EOT;
 __section__
 default
