@@ -2025,14 +2025,13 @@ sub lockTest {
 	my $constants = getCurrentStatic();
 
 	my $msg;
-	my $locks = $slashdb->getLock();
-	for (@$locks) {
-		my($subject, $aid) = @$_;
-		if ($aid ne getCurrentUser('aid') && (my $pct = matchingStrings($subject, $subj))) {
+	my $locks = $slashdb->getSessions([qw|lasttitle uid|]);
+	for (keys %$locks) {
+		if ($_->{uid} ne getCurrentUser('uid') && (my $pct = matchingStrings($_->{subject}, $subj))) {
 			$msg .= slashDisplay('lockTest', {
 				percent	=> $pct,
-				subject	=> $subject,
-				aid	=> $aid
+				subject	=> $_->{subject},
+				aid	=> $slashdb->getUser($_->{uid}, 'nickname')
 			}, 1);
 		}
 	}

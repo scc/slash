@@ -1416,15 +1416,6 @@ sub getPoll {
 }
 
 ##################################################################
-# This should be deletable at this point
-#sub getPollComments {
-#	my($self, $qid) = @_;
-#	my($comments) = $self->sqlSelect('count(*)', 'comments', "sid=" .$self->{_dbh}->quote($qid));
-#
-#	return $comments;
-#}
-
-##################################################################
 sub getSubmissionsSections {
 	my($self) = @_;
 	my $del = getCurrentForm('del');
@@ -2869,20 +2860,34 @@ sub _genericGetsCache {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGets {
-	my($table, $table_prime, $self) = @_;
+	my($table, $table_prime, $self, $values) = @_;
 
-	# Lets go knock on the door of the database
-	# and grab the data since it is not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
 	my %return;
-	my $sth = $self->sqlSelectMany('*', $table);
+	my $sth;
+
+	if (ref($values) eq 'ARRAY') {
+		my $values = join ',', @$values;
+		$values .= ",$table_prime" unless grep $table_prime, @$values;
+		$sth = $self->sqlSelectMany($values, $table);
+	} elsif ($values) {
+		$values .= ",$table_prime" unless $values eq $table_prime;
+		$sth = $self->sqlSelectMany($values, $table);
+	} else {
+		$sth = $self->sqlSelectMany('*', $table);
+	}
+
 	while (my $row = $sth->fetchrow_hashref) {
 		$return{ $row->{$table_prime} } = $row;
 	}
 	$sth->finish;
 
 	return \%return;
+}
+
+########################################################
+sub getSessions {
+	my $answer = _genericGets('sessions', 'session', @_);
+	return $answer;
 }
 
 ########################################################
