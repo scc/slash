@@ -193,31 +193,32 @@ sub newmotd {
 
 #################################
 sub sectionHeaders {
-	my ($section) = @_;
-	local *FH;
+	my($section) = @_;
+	my $form = getCurrentForm();
+	local(*FH, *STDOUT);
 
-	$constants->{F}{ssi} = 1;
-	open FH,">$constants->{basedir}/$section/slashhead.inc"
+	$form->{ssi} = 1;
+	open FH, ">$constants->{basedir}/$section/slashhead.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "thread");
 	close FH;
 
-	$constants->{F}{ssi} = 0;
+	$form->{ssi} = 0;
 	open FH, ">$constants->{basedir}/$section/slashfoot.inc"
 		or die "Can't open $constants->{basedir}/$section/slashfoot.inc: $!";
 	*STDOUT = *FH;
 	footer();
 	close FH;
 
-	$constants->{F}{ssi} = 1;
+	$form->{ssi} = 1;
 	open FH, ">$constants->{basedir}/$section/slashhead_F.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead_F.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "flat");
 	close FH;
 
-	$constants->{F}{ssi} = 0;
+	$form->{ssi} = 0;
 	open FH, ">$constants->{basedir}/$section/slashfoot_F.inc"
 		or die "Can't open $constants->{basedir}/$section/slashfoot_F.inc: $!";
 	*STDOUT = *FH;
