@@ -3,7 +3,6 @@ package Slash::DB::MySQL;
 # up in a big way. If we had one normalized table
 # this would be quite clean. I will find a way around
 # this.  -Brian
-
 use strict;
 use Digest::MD5 'md5_hex';
 use DBIx::Password;
@@ -322,10 +321,11 @@ sub createPollVoter {
 		uid	=> $ENV{REMOTE_USER}
 	});
 
-	$self->{dbh}->do("update pollquestions set 
-		voters=voters+1 where qid=$qid");
-	$self->{dbh}->do("update pollanswers set votes=votes+1 where 
-		qid=$qid and aid=" . $self->{dbh}->quote($aid));
+	my $qid_db = $self->{dbh}->quote($qid);
+	$self->sqlDo("update pollquestions set 
+		voters=voters+1 where qid=$qid_db");
+	$self->sqlDo("update pollanswers set votes=votes+1 where 
+		qid=$qid_db and aid=" . $self->{dbh}->quote($aid));
 }
 
 ########################################################
@@ -1146,7 +1146,7 @@ sub getPollVoter {
 	my($self, $id) = @_;
 	my($voters) = $self->sqlSelect('id', 'pollvoters', 
 		"qid=" . $self->{dbh}->quote($id) .
-		"AND id=" . $self->{dbh}->($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
+		"AND id=" . $self->{dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
 		"AND uid=" . $ENV{REMOTE_USER}
 	);
 
@@ -1523,15 +1523,6 @@ sub getTopNewsstoryTopics {
 
 	return $topics;
 }
-
-########################################################
-# This was added to replace latestpoll() except I
-# don't think anything is using it anymore
-#sub getPoll{
-#	my($self) = @_;
-#  my($qid) = $self->sqlSelect('qid', 'pollquestions', '', 'ORDER BY date DESC LIMIT 1');
-#	return $qid;
-#}
 
 ##################################################################
 # Get poll
@@ -2633,12 +2624,6 @@ sub getAuthors {
 ########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', @_);
-	return $answer;
-}
-
-########################################################
-sub getPollAnswer {
-	my $answer = _genericGet('pollanswers', 'qid', @_);
 	return $answer;
 }
 

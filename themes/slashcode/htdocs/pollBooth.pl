@@ -58,10 +58,9 @@ sub main {
 		print "</CENTER>";
 
 	} else {
-		print "<H1>Got here coments :$op:$I{F}{qid}:</H1>\n";
 		my $vote = vote($I{F}{qid}, $I{F}{aid});
 		printComments($I{F}{qid})
-			if $vote && ! $I{dbobject}->getVar('nocomment', 'values');
+			if $vote && ! $I{dbobject}->getVar('nocomment', 'value');
 	}
 
 	$I{dbobject}->writelog("pollbooth", $I{F}{qid});
@@ -140,7 +139,7 @@ sub vote {
 
 	# get valid answer IDs
 	my(%all_aid) = map { ($_->[0], 1) }
-		@{$I{dbobject}->getPollAnswer($qid,'aid')} if $qid;
+		@{$I{dbobject}->getPollAnswers($qid,'aid')} if $qid;
 
 	if (! keys %all_aid) {
 		print "Invalid poll!<BR>";
@@ -172,7 +171,7 @@ sub vote {
 
 	my $question = $I{dbobject}->getPollQuestion($qid, 'voters', 'question');
 
-	my $maxvotes  = getPollVotesMax($qid);
+	my $maxvotes  = $I{dbobject}->getPollVotesMax($qid);
 
 	print <<EOT;
 <CENTER><TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="500">
@@ -189,8 +188,8 @@ EOT
 		my $imagewidth	= $maxvotes
 			? int(350 * $votes / $maxvotes) + 1
 			: 0;
-		my $percent	= $question->{'totalvotes'}
-			? int(100 * $votes / $question->{'totalvotes'})
+		my $percent	= $question->{'voters'}
+			? int(100 * $votes / $question->{'voters'})
 			: 0;
 		pollItem($answer, $imagewidth, $votes, $percent);
 	}
@@ -200,7 +199,7 @@ EOT
 
 	print <<EOT;
 	<TR><TD COLSPAN="2" ALIGN="RIGHT">
-		<FONT SIZE="4"><B>$question->{'totalvotes'} total votes.</B></FONT>
+		<FONT SIZE="4"><B>$question->{'voters'} total votes.</B></FONT>
 	</TD></TR><TR><TD COLSPAN="2"><P ALIGN="CENTER">
 		[
 			<A HREF="$ENV{SCRIPT_NAME}?qid=$qid_htm">Voting Booth</A> |
