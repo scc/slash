@@ -501,7 +501,7 @@ sub _getList {
 			next if /^#/;
 			my($key, $val) = split(/=/, $_, 2);
 			$key = lc $key;
-			if ($key =~ /^(htdoc|template|image|task|misc|topic)s?$/) {
+			if ($key =~ /^(htdoc|htdoc_code|htdoc_faq|template|image|image_award|image_banner|task|misc|topic)s?$/) {
 				push @{$hash{$dir}->{$key}}, $val;
 			} elsif ($key =~ /^(plugin)s?$/) {
 				$hash{$dir}->{plugin}{$val} = 1;
