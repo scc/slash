@@ -407,12 +407,12 @@ USER
 
 		</FONT><INPUT TYPE="CHECKBOX" NAME="del_$subid">
 	</NOBR></TD><TD>$ptime</TD><TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$s">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="2">%s$karma<BR>%s</FONT></TD></TR>
 ADMIN
 	<TD>\u$section</TD><TD>$ptime</TD>
 	<TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$s">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="-1">%s<BR>%s</FONT></TD></TR>
 	<TR><TD COLSPAN="7"><IMG SRC="$I{imagedir}/pix.gif" ALT="" HEIGHT="3"></TD></TR>
 USER
@@ -564,7 +564,11 @@ EOT
 				# find out if this form has been submitted already
 				my($submitted_already, $interval) = sqlSelect(
 					"value,(time_to_sec(now()) - time_to_sec(ts)) as time_interval",
-					"formkeys","formkey='$I{F}{formkey}' and formname = 'submissions'");
+					"formkeys","formkey='$I{F}{formkey}' and formname = 'submissions'")  print <<EOT and return;
+<P><B>We can't find your formkey.</B></P>
+<P>Please hit "Reply" from the submissions page
+, so you can get a proper form to submit from.</P>
+EOT
 
 				# Ok, this isn't necessary, but it makes it look better than saying:
 				#  "blah blah submitted 23333332288 seconds ago" 
