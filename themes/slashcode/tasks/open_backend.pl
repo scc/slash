@@ -50,8 +50,8 @@ sub site2file {
 	return $file;
 }
 
-sub newrdf {	# RSS 0.9
-	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
+sub _do_rss {
+	my($virtual_user, $constants, $slashdb, $user, $section, $stories, $version) = @_;
 
 	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
 	my $SECT    = $slashdb->getSection($section);
@@ -64,38 +64,21 @@ sub newrdf {	# RSS 0.9
 		: $constants->{sitename};
 
 	my $rss = xmlDisplay('rss', {
-		version		=> 0.9,
+		version		=> $version,
 		title		=> $title,
 		'link'		=> $link,
 		textinput	=> 1,
 		image		=> 1,
 		items		=> [ map { { story => $_ } } @$stories ],
 	}, 1);
-	save2file("$constants->{basedir}/$file.rdf", $rss);
+
+	my $ext = $version == 0.9 ? 'rdf' : 'rss';
+	save2file("$constants->{basedir}/$file.$ext", $rss);
+
 }
 
-sub newrss {	# RSS 1.0
-	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
-
-	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
-	my $SECT    = $slashdb->getSection($section);
-	my $link    = $constants->{absolutedir} .
-		($section ? "/index.pl?section=$section" : '/');
-	my $title   = $section
-		? $SECT->{isolate}
-			? $SECT->{title}
-			: "$constants->{sitename}: $SECT->{title}"
-		: $constants->{sitename};
-
-	my $rss = xmlDisplay('rss', {
-		title		=> $title,
-		'link'		=> $link,
-		textinput	=> 1,
-		image		=> 1,
-		items		=> [ map { { story => $_ } } @$stories ],
-	}, 1);
-	save2file("$constants->{basedir}/$file.rss", $rss);
-}
+sub newrdf { _do_rss(@_, "0.9") } # RSS 0.9
+sub newrss { _do_rss(@_, "1.0") } # RSS 1.0
 
 sub newwml {
 	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
