@@ -65,7 +65,7 @@ sub findComments {
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $query = $self->sqlQuote($form->{query});
-	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.flags as flags, time, date, comments.uid as uid, comments.cid as cid ";
+	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.writestatu as writestatus, time, date, comments.uid as uid, comments.cid as cid ";
 	$columns .= ", TRUNCATE((((MATCH (comments.subject) AGAINST($query) + (MATCH (comment_text.comment) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
 
@@ -148,7 +148,9 @@ sub findStory {
 	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
-	my $tables = "stories, story_text, users, discussions";
+	my $tables = "stories,story_text,users,discussions";
+	$tables .= ",story_text"
+		if $form->{query};
 	my $other;
 	if ($form->{query}) {
 		$other = " ORDER BY score DESC";
@@ -168,7 +170,7 @@ sub findStory {
 	} else {
 		$where .= " AND displaystatus >= 0";
 	}
-	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', stories.flags) ";
+	$where .= " AND time < now() AND stories.writestatus != 'delete' ";
 	$where .= " AND stories.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
 	$where .= " AND section=" . $self->sqlQuote($form->{section})
@@ -224,7 +226,7 @@ sub findJournalEntry {
 	my $key = " (MATCH (description) AGAINST ($query) or MATCH (article) AGAINST ($query)) ";
 	my $where = "journals.id = journals_text.id AND journals.uid = users.uid ";
 	$where .= " AND $key" if $form->{query};
-	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', stories.flags) ";
+	$where .= " AND time < now() AND writestatus != 'delete' ";
 	$where .= " AND users.nickname=" . $self->sqlQuote($form->{nickname})
 		if $form->{nickname};
 	$where .= " AND users.uid=" . $self->sqlQuote($form->{uid})

@@ -33,15 +33,19 @@ sub main {
 		redirect($ENV{SCRIPT_NAME}), return if $c;
 	}
 
-	my $section = $slashdb->getSection($form->{section});
+	my $section = $slashdb->getSection($form->{section} ? $form->{section} : $constants->{defaultsection});
 	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
 	$section->{mainsize} = int($section->{artcount} / 3);
 
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section});
 
+	my $limit ||= $section->{section} eq 'index' ?
+	    $user->{maxstories} : $section->{artcount};
+
 	my $stories_essentials = 
-		$slashdb->getStoriesEssentials($section->{section});
+		$slashdb->getStoriesEssentials($section, $limit);
+
 	my $Stories = displayStories($stories_essentials);
 	my $StandardBlocks = displayStandardBlocks($section, $stories_essentials);
 
@@ -190,7 +194,7 @@ sub displayStandardBlocks {
 #################################################################
 # pass it how many, and what.
 sub displayStories {
-	my($stories_essentials) = @_;
+	my($stories) = @_;
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form      = getCurrentForm();
@@ -203,17 +207,8 @@ sub displayStories {
 	# shift them off, so we do not display them in the Older
 	# Stuff block later (simulate the old cursor-based
 	# method)
-	while (my $story_essentials = shift @$stories_essentials) {
-		my($sid, $thissection, $title, $time, $cc, $d, $hp) =
-			@$story_essentials{qw(
-				sid 
-				section 
-				title 
-				time 
-				commentcount 
-				day 
-				hitparade 
-			)};
+	while ($_ = shift @{$stories}) {
+		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
 		my @links;
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
 		my($storytext, $story) = displayStory($sid);
@@ -247,8 +242,8 @@ sub displayStories {
 			}
 
 			$cclink[1] = linkStory({
-				sid		=> $sid,
-				threshold	=> -1,
+				sid		=> $sid, 
+				threshold	=> -1, 
 				'link'		=> $cc || 0
 			});
 
@@ -278,7 +273,6 @@ sub displayStories {
 
 	return $return;
 }
-
 #################################################################
 createEnvironment();
 main();

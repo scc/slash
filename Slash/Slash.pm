@@ -122,6 +122,18 @@ sub selectComments {
 		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
 	}
 
+	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
+
+	my $hp = join ',', @{$comments->{0}{totals}};
+
+	$slashdb->setStory($sid, {
+			hitparade => $hp,
+			writestatus => "ok",
+			commentcount  => $comments->{0}{totals}[0]
+		}
+	) if $form->{ssi};
+
+
 	reparentComments($comments);
 	return($comments, $count);
 }
@@ -779,8 +791,7 @@ Get older stories for older stories box.
 =item STORIES
 
 Array ref of the "essentials" of the stories to display, gotten from
-getStoriesEssentials. If empty, pulls the appropriate data from the
-specified section.
+getStoriesEssentials.
 
 =item SECTION
 
@@ -808,7 +819,6 @@ sub getOlderStories {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories_essentials ||= $slashdb->getStoriesEssentials($section);
 	for my $sr (@$stories_essentials) {
 
 		my @wordy_split = split / /, $sr->{wordytime};

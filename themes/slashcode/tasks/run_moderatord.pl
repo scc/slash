@@ -94,7 +94,7 @@ sub reconcileM2 {
 			);
 			for (@dis) {
 				$slashdb->setUser($_->[0], {
-					-karma => "karma-$penalty",
+					-karma => "karma-$change",
 				});
 
 				# Also flag these specific M2 instances as 

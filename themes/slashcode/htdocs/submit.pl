@@ -33,15 +33,7 @@ sub main {
 		return if $success;
 	}
 
-	my($section, $op) = (
-		$form->{section}, $form->{op});
-	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
-
-	# this really should not be done now, but later, it causes
-	# a lot of problems -- pudge
-	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
-	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
-	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
+	my $section = $form->{section};
 
 	# Show submission title on browser's titlebar.
 	my($tbtitle) = $form->{title};
@@ -54,64 +46,74 @@ sub main {
 	# not fully used
 	my $ops = {		
 		# initial form, no formkey needed due to 'preview' requirement
-		default		=> {
+		blank		=> {
 			seclev		=> 0, 
 			checks		=> ['max_post_check','generate_formkey'],
+			function  => &blankForm,
 		},
 		previewstory	=> {
 			seclev		=>  0,
 			checks		=> ['update_formkeyid'],
+			function  => &previewStory,
 		},
 		submitstory	=> {
+			function  => &saveStory,
 			seclev		=> 0,
-			post		=> 1,
+			post		  => 1,
 			checks		=> [ qw (max_post_check valid_check response_check
 						interval_check formkey_check) ],
 		},
 		list		=> {
-			seclev		=> 100,
+			seclev		=> $constants->{submiss_view} ? 0 : 100,
+			function	=> &submissionEd,
+		},
+		viewsub		=> {
+			seclev		=> $constants->{submiss_view} ? 0 : 100,
+			function	=> &previewForm,
 		},
 		update		=> {
 			seclev		=> 100,
+			function	=> &submissionEd,
 		},
 		genquickies	=> {
 			seclev		=> 100,
 		},
 		viewsub		=> {
-			seclev		=> 100,
+			seclev	=> 100,
 		},
 	};
-	my $tmpop = lc($op);
-	$tmpop ||= 'default';
+	$ops{default} = $ops{blank};
 
-	$section = 'admin' if $user->{submit_admin};
+	my $op = lc($form->{op});
+	$op ||= 'default';
+
+	$section = 'admin' if $user->{is_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
 	
-	if ($ops->{$tmpop}{checks}) {
-		for my $check (@{$ops->{$tmpop}{checks}}) {
-			$ops->{$tmpop}{update_formkey} = 1 if ($check eq 'formkey_check');
+	if ($ops->{$op}{checks}) {
+		for my $check (@{$ops->{$op}{checks}}) {
+			$ops->{$op}{update_formkey} = 1 if ($check eq 'formkey_check');
 			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
 			last if $error_flag;
 		}	
 	}
 
-	if ($op eq 'list' && ($user->{submit_admin} || $constants->{submiss_view})) {
+	if ($op eq 'list' && ($user->{is_admin} || $constants->{submiss_view})) {
 		submissionEd();
 
-	} elsif ($op eq 'Update' && $user->{submit_admin}) {
+	} elsif ($op eq 'Update' && $user->{is_admin}) {
 		my @subids = $slashdb->deleteSubmission();
 		submissionEd(getData('updatehead', { subids => \@subids }));
 
-	} elsif ($op eq 'GenQuickies' && $user->{submit_admin}) {
+	} elsif ($op eq 'GenQuickies' && $user->{is_admin}) {
 		genQuickies();
 		submissionEd(getData('quickieshead'));
-
 	} elsif ($op eq 'PreviewStory') {
 		displayForm($form->{from}, $form->{email}, $form->{section},
 			$formkeyid, getData('previewhead')) if ! $error_flag;
 
-	} elsif ($op eq 'viewsub' && ($user->{submit_admin} || $constants->{submiss_view})) {
-		previewForm($form->{subid});
+	} elsif ($op eq 'viewsub' && ($user->{is_admin} || $constants->{submiss_view})) {
+		previewForm();
 
 	} elsif ($op eq 'SubmitStory') {
 		$subsaved = saveSub($formkeyid) if ! $error_flag;
@@ -123,11 +125,35 @@ sub main {
 			$formkeyid, getData('defaulthead')) if ! $error_flag;
 	}
 
-	if ($ops->{$tmpop}{update_formkey} && $subsaved && ! $error_flag ) {
+	if ($ops->{$pop}{update_formkey} && $subsaved && ! $error_flag ) {
 		my $updated = $slashdb->updateFormkey($formkey, $form->{tid},length($form->{story})); 
 	}
 
 	footer();
+}
+
+#################################################################
+sub saveStory {
+	$subsaved = saveSub($formkeyid) if ! $error_flag;
+	yourPendingSubmissions();
+}
+
+#################################################################
+sub previewStory {
+	yourPendingSubmissions();
+	displayForm($user->{nickname}, $user->{fakeemail}, $form->{section},
+		$formkeyid, getData('defaulthead')) if ! $error_flag;
+}
+
+#################################################################
+sub previewStory {
+	my $form = getCurrentForm();
+	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
+	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
+
+	displayForm($form->{from}, $form->{email}, $form->{section},
+		$formkeyid, getData('previewhead'));
 }
 
 #################################################################
@@ -150,10 +176,10 @@ sub yourPendingSubmissions {
 
 #################################################################
 sub previewForm {
-	my($subid) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	my $subid = $form->{subid};
 
 	my $sub = $slashdb->getSubmission($subid,
 		[qw(email name subj tid story time comment uid)]);
@@ -178,6 +204,7 @@ sub genQuickies {
 	my $stuff = slashDisplay('genQuickies', { submissions => $submissions },
 		{ Return => 1, Nocomm => 1 });
 	$slashdb->setQuickies($stuff);
+	submissionEd(getData('quickieshead'));
 }
 
 #################################################################
@@ -192,7 +219,7 @@ sub submissionEd {
 		$sections, @sections, @notes,
 		%all_sections, %all_notes, %sn);
 
-	$form->{del} = 0 if $user->{submit_admin};
+	$form->{del} = 0 if $user->{is_admin};
 
 	$def_section	= getData('defaultsection');
 	$def_note	= getData('defaultnote');
@@ -236,7 +263,7 @@ sub submissionEd {
 		sections	=> \@sections,
 		notes		=> \@notes,
 		sn		=> \%sn,
-		title		=> $title || ('Submissions ' . ($user->{submit_admin} ? 'Admin' : 'List')),
+		title		=> $title || ('Submissions ' . ($user->{is_admin} ? 'Admin' : 'List')),
 		width		=> '100%',
 	});
 
@@ -264,7 +291,7 @@ sub submissionEd {
 		$sub->{ssection} = $sub->{section} ne $constants->{defaultsection}
 			? "&section=$sub->{section}" : '';
 		$sub->{stitle}   = '&title=' . fixparam($sub->{subj});
-		$sub->{section} = ucfirst($sub->{section}) unless $user->{submit_admin};
+		$sub->{section} = ucfirst($sub->{section}) unless $user->{is_admin};
 	}
 
 	%selection = map { ($_, $_) }
@@ -273,7 +300,7 @@ sub submissionEd {
 			? @{$constants->{submit_categories}} : ())
 	);
 
-	my $template = $user->{submit_admin} ? 'Admin' : 'User';
+	my $template = $user->{is_admin} ? 'Admin' : 'User';
 	slashDisplay('subEd' . $template, {
 		submissions	=> \@submissions,
 		selection	=> \%selection,
@@ -314,6 +341,9 @@ sub displayForm {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
+	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	if ($error_message ne '') {
 		titlebar('100%', getData('filtererror', { err_message => $error_message}));
@@ -364,6 +394,9 @@ sub saveSub {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
+	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	if (length($form->{subj}) < 2) {
 		titlebar('100%', getData('error'));

@@ -146,6 +146,7 @@ CREATE TABLE comments (
 	KEY display (sid,points,uid),
 	KEY byname (uid,points),
 	KEY ipid (ipid),
+	INDEX (uid),
 	KEY subnetid (subnetid),
 	KEY theusual (sid,uid,points,cid),
 	KEY countreplies (sid,pid)
@@ -237,8 +238,8 @@ CREATE TABLE discussions (
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	type mediumint(2) DEFAULT 0 NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	commentcount smallint UNSIGNED DEFAULT '0',
-	flags set("delete_me","hitparade_dirty") DEFAULT '' NOT NULL,
+	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
+	flags enum("ok","delete","dirty") DEFAULT 'ok' NOT NULL,
 	KEY (sid),
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
@@ -246,23 +247,6 @@ CREATE TABLE discussions (
 	INDEX (type,uid,ts),
 	KEY (sid),
 	PRIMARY KEY (id)
-) TYPE = myisam;
-
-#
-# Table structure for table 'discussion_hitparade'
-#
-
-DROP TABLE IF EXISTS discussion_hitparade;
-CREATE TABLE discussion_hitparade (
-	hpid int UNSIGNED NOT NULL auto_increment,
-	discussion mediumint UNSIGNED NOT NULL,
-	threshold tinyint NOT NULL,
-	count smallint UNSIGNED DEFAULT '0' NOT NULL,
-	INDEX (discussion),
-	UNIQUE hdkey (hpid, discussion),
-	UNIQUE dtkey (discussion, threshold),
-	FOREIGN KEY (discussion) REFERENCES discussions(id),
-	PRIMARY KEY (hpid)
 ) TYPE = myisam;
 
 #
@@ -497,11 +481,14 @@ CREATE TABLE stories (
 	commentstatus tinyint,
 	discussion mediumint UNSIGNED,
 	submitter mediumint UNSIGNED NOT NULL,
-	flags set("delete_me","data_dirty") DEFAULT '' NOT NULL,
+	writestatus ENUM("ok","delete","dirty","archived") DEFAULT 'ok' NOT NULL,
+	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
+	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0' NOT NULL,
 	PRIMARY KEY (sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (tid) REFERENCES tid(topic),
 	FOREIGN KEY (section) REFERENCES sections(section),
+	INDEX frontpage (time, displaystatus,section,writestatus),
 	KEY time (time),
 	KEY searchform (displaystatus,time)
 ) TYPE = myisam;
@@ -524,8 +511,11 @@ CREATE TABLE story_heap (
 	commentstatus tinyint,
 	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	submitter mediumint UNSIGNED NOT NULL,
-	flags set("delete_me","data_dirty") DEFAULT '' NOT NULL,
+	writestatus ENUM("ok","delete","dirty","archived") DEFAULT 'ok' NOT NULL,
+	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
+	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0' NOT NULL,
 	PRIMARY KEY (sid),
+	INDEX frontpage (time, displaystatus,section,writestatus),
 	KEY time (time),
 	KEY searchform (displaystatus,time)
 ) TYPE=heap;
@@ -565,15 +555,15 @@ CREATE TABLE story_param (
 DROP TABLE IF EXISTS submissions;
 CREATE TABLE submissions (
 	subid varchar(15) NOT NULL,
-	email varchar(50),
-	name varchar(50),
-	time datetime,
-	subj varchar(50),
-	story text,
-	tid smallint,
-	note varchar(30),
+	email varchar(50) NOT NULL,
+	name varchar(50) NOT NULL,
+	time datetime NOT NULL,
+	subj varchar(50) NOT NULL,
+	story text NOT NULL,
+	tid smallint NOT NULL,
+	note varchar(30) NOT NULL,
 	section varchar(30) NOT NULL,
-	comment varchar(255),
+	comment varchar(255) NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	ipid char(32) DEFAULT '' NOT NULL,
 	subnetid char(32) DEFAULT '' NOT NULL,
@@ -581,6 +571,8 @@ CREATE TABLE submissions (
 	PRIMARY KEY (subid),
 	FOREIGN KEY (tid) REFERENCES topics(tid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
+	INDEX (del,section,note),
+	INDEX (uid),
 	KEY subid (subid,section),
 	KEY ipid (ipid),
 	KEY subnetid (subnetid)

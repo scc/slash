@@ -95,43 +95,10 @@ INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match,
 # Dumping data for table 'discussions'
 #
 
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1,2,1,'hitparade_dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1,2,0,'hitparade_dirty');
-
-#
-# Dumping data for table 'discussion_hitparade'
-#
-
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1, -1, 1);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  0, 1);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  1, 1);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  2, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  3, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  4, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  5, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2, -1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  0, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  2, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  3, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  4, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 2,  5, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3, -1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  0, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  2, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  3, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  4, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 3,  5, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4, -1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  0, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  2, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  3, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  4, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 4,  5, 0);
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1,2,1,'dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1,2,0,'dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty');
 
 #
 # Dumping data for table 'formkeys'
@@ -248,8 +215,8 @@ INSERT INTO section_topics (section, tid) VALUES ('features', 1);
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2,'');
-INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2,'');
+INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, writestatus) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2, 'dirty');
+INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, writestatus) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2, 'dirty');
 
 
 #
@@ -269,7 +236,7 @@ INSERT INTO story_param (sid, name, value) VALUES ('00/01/25/1430236', 'qid', '2
 # Dumping data for table 'submissions'
 #
 
-INSERT INTO submissions (subid, email, name, time, subj, story, tid, note, section, comment, uid, del, ipid, subnetid) VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ',4,NULL,'articles',NULL,2,0,'2','8f2e0eec531acf0e836f6770d7990857');
+INSERT INTO submissions (subid, email, name, time, subj, story, tid, section, uid, del, ipid, subnetid) VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ',4,'articles',2,0,'2','8f2e0eec531acf0e836f6770d7990857');
 
 #
 # Dumping data for table 'templates'

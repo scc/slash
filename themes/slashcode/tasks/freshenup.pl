@@ -12,140 +12,55 @@ my $total_freshens = 0;
 $task{$me}{timespec} = '1-59/3 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
-
-	if ($virtual_user eq 'banjo'
-		and `/bin/hostname` =~ /cpu25/) {
-		my $min = (localtime)[1];
-		if ($min >= 30) {
-			slashdLog("skipping $me while DB import in progress");
-			return;
-		}
-	}
-
-	my $bd = $constants->{basedir}; # convenience
-	my $start_total_freshens = $total_freshens;
 	my %updates;
 
-	if (!$user->{is_anon}) {
-		errorLog("user not anon!");
-		return ;
+	my $x = 0;
+	# this deletes stories that have a writestatus of 5 (now delete), 
+	# which is the delete writestatus
+	my $deletable = $slashdb->getStoriesWithFlag('delete');
+	for (@$deletable) {
+		my($sid, $title, $section) = @$_;
+		$x++;
+		$updates{$section} = 1;
+		$slashdb->deleteStoryAll($sid);
+		slashdLog("Deleting $sid ($title)");
 	}
+	my $stories = $slashdb->getStoriesWithFlag('dirty');
+	my @updatedsids;
+	my $totalChangedStories = 0;
 
-	my($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
-        my $num_scores = $max-$min+1;
-
-	my @aborted = ( );
-	my $start_time = time;
-
-	# Mark discussions with new comment data as needing to be freshened.
-	my $discussions = $slashdb->getDiscussionsWithFlag("hitparade_dirty");
-	for my $i (0..$#$discussions) {
-		my $id_ary = $discussions->[$i];
-		# @$discussions is an array of arrays, annoyingly.
-		my($discussion_id) = @$id_ary;
-		# Don't do too many at once.
-		if (time > $start_time+45) {
-			push @aborted, "discussions on $i/$#$discussions";
-			last;
-		}
-		my($comments, $count) = Slash::selectComments($discussion_id, 0);
-		my $hp = { };
-		for my $score (reverse (0 .. $num_scores-1)) {
-			my $adjscore = $score+$min;
-			$hp->{$adjscore} = $comments->[0]{natural_totals}[$score];
-		}
-		# This will clear the flag, too.
-		$slashdb->setDiscussionHitParade($discussion_id, $hp);
-		# Take a pause so we don't load the DB too much.
-		sleep 1 if ($i % 5) == 0;
-		++$total_freshens;
-	}
-
-	# Mark stories with new data as needing to be freshened.
-	my @story_order = ( );
-	my $stories = $slashdb->getStoriesWithFlag("data_dirty");
-	for my $info_ary (@$stories) {
-		my($sid, $discussion_id, $title, $section) = @$info_ary;
-		next unless $sid;	# XXX for now, skip poll/journal discussions since we don't know how to write their hitparades in yet
-		# For each story, we need to update its section...
-		$updates{section}{$section} = 1;
-		# ...and the story itself.  We don't update it yet
-		# because if it turns out we're deleting it (below),
-		# there's no need.
-		$updates{story}{$sid} = [@$info_ary];
-		push @story_order, $sid;
-	}
-
-	# Delete stories marked as needing such
-	$stories = [];
-	$stories = $slashdb->getStoriesWithFlag("delete_me")
-		if $constants->{delete_old_stories};
-	for my $i (0..$#$stories) {
-		my $info_ary = $stories->[$i];
-		my($sid, $discussion_id, $title, $section) = @$info_ary;
-		# Don't do too many at once.
-		if (time > $start_time+90) {
-			push @aborted, "delete_stories on $i/$#$stories";
-			last;
-		}
-		$slashdb->finalDeleteStory($sid);
-		# Section needs to be updated.
-		$updates{section}{$section} = 1;
-		# But the story does not.
-		delete $updates{story}{$sid};
-		slashdLog("$me deleted $sid ($title)");
-		++$total_freshens;
-	}
-
-	# Freshen changed stories (that haven't been deleted)
-	my @freshened_stories = ( );
-	for my $i (0..$#story_order) {
-		my $sid = $story_order[$i];
-		next unless exists $updates{story}{$sid};
-		my($discussion_id, $title, $section);
-		($sid, $discussion_id, $title, $section) = @{$updates{story}{$sid}};
-		# Don't do too many at once.
-		if (time > $start_time+135) {
-			push @aborted, "update_stories on $i/$#story_order";
-			last;
-		}
+	for (@$stories){
+		my($sid, $title, $section) = @$_;
+		slashdLog("Updating $sid");
+		$updates{$section} = 1;
+		$totalChangedStories++;
+		push @updatedsids, $sid;
 		if ($section) {
-			makeDir($bd, $section, $sid);
-			prog2file("$bd/article.pl",
-				"ssi=yes sid='$sid' section='$section'",
-				"$bd/$section/$sid.shtml");
-#			slashdLog("$me updated $section:$sid ($title)");
+			makeDir($constants->{basedir}, $section, $sid);
+			prog2file("$constants->{basedir}/article.pl",
+			"ssi=yes sid='$sid' section='$section'",
+			"$constants->{basedir}/$section/$sid.shtml");
+			slashdLog("$me updated $section:$sid ($title)");
 		} else {
-			prog2file("$bd/article.pl",
-				"ssi=yes sid='$sid'",
-				"$bd/$sid.shtml");
+			prog2file("$constants->{basedir}/article.pl",
+			"ssi=yes sid='$sid'",
+			"$constants->{basedir}/$sid.shtml");
 			slashdLog("$me updated $sid ($title)");
 		}
-		push @freshened_stories, $sid;
-		# Take a pause so we don't load the DB too much.
-		sleep 1 if ($i % 5) == 0;
-		++$total_freshens;
 	}
 
-	if (@freshened_stories) {
-		$slashdb->setStoryFlagsBySid([@freshened_stories], 0, ["data_dirty"]);
+	my $w  = $slashdb->getVar('writestatus', 'value');
+
+	if ($updates{$constants->{defaultsection}} ne "" || $w ne "ok") {
+		$slashdb->setVar("writestatus", "ok");
+		prog2file("$constants->{basedir}/index.pl", "ssi=yes", "$constants->{basedir}/index.shtml");
 	}
 
-	# index.shtml just gets written every few minutes, rain or shine.
-	prog2file("$bd/index.pl", "ssi=yes", "$bd/index.shtml");
-	++$total_freshens;
-
-	for my $key (keys %{$updates{section}}) {
+	foreach my $key (keys %updates) {
 		next unless $key;
-		prog2file("$bd/index.pl", "ssi=yes section=$key", "$bd/$key/index.shtml");
-		++$total_freshens;
+		prog2file("$constants->{basedir}/index.pl", "ssi=yes section=$key",
+			"$constants->{basedir}/$key/index.shtml");
 	}
-
-	my $aborted_string = "";
-	$aborted_string = " (aborted: " . join(", ", @aborted) . ")" if @aborted;
-	slashdLog("total_freshens $total_freshens$aborted_string")
-		if $total_freshens != $start_total_freshens;
-
 };
 
 sub makeDir {

@@ -30,7 +30,7 @@ sub getBackendStories {
 	my $cursor = $self->{_dbh}->prepare("SELECT
 		$story_table.sid, $story_table.title, time, dept, $story_table.uid,
 		alttext,
-		image, commentcount, $story_table.section as section,
+		image, $story_table.commentcount, $story_table.section as section,
 		story_text.introtext, story_text.bodytext,
 		topics.tid as tid
 		    FROM $story_table, story_text, topics, discussions
@@ -40,7 +40,7 @@ sub getBackendStories {
 		     AND ((displaystatus = 0 and \"$section\"=\"\")
 			      OR ($story_table.section=\"$section\" and displaystatus > -1))
 		     AND time < NOW()
-		     AND NOT FIND_IN_SET('delete_me', $story_table.flags)
+		     AND $story_table.writestatus != 'delete_me'
 		ORDER BY time DESC
 		   LIMIT 10");
 
@@ -58,48 +58,25 @@ sub getBackendStories {
 
 ########################################################
 # This is only called if ssi is set
-# XXX Outdated, delete before tarball release - Jamie 2001/07/08
-#sub updateCommentTotals {
-#	my($self, $sid, $comments) = @_;
-#	my $hp = join ',', @{$comments->[0]{totals}};
-#	$self->sqlUpdate("stories", {
-#			hitparade	=> $hp,
-#			writestatus	=> 0,
-#			commentcount	=> $comments->[0]{totals}[0]
-#		}, 'sid=' . $self->{_dbh}->quote($sid)
-#	);
-#	if (getCurrentStatic('mysql_heap_table')) {
-#		$self->sqlUpdate("story_heap", {
-#				hitparade	=> $hp,
-#				writestatus	=> 0,
-#				commentcount	=> $comments->[0]{totals}[0]
-#			}, 'sid=' . $self->{_dbh}->quote($sid)
-#		);
-#	}
-#}
+sub updateCommentTotals {
+	my($self, $sid, $comments) = @_;
+	my $hp = join ',', @{$comments->{0}{totals}};
+	$self->sqlUpdate("stories", {
+			hitparade	=> $hp,
+			writestatus	=> 'ok',
+			commentcount	=> $comments->{0}{totals}[0]
+		}, 'sid=' . $self->{_dbh}->quote($sid)
+	);
+	if (getCurrentStatic('mysql_heap_table')) {
+		$self->sqlUpdate("story_heap", {
+				hitparade	=> $hp,
+				writestatus	=> 'ok',
+				commentcount	=> $comments->{0}{totals}[0]
+			}, 'sid=' . $self->{_dbh}->quote($sid)
+		);
+	}
+}
 
-########################################################
-# For slashd
-# Does nothing. Back when this was a copy of stories that needed to be
-# periodically updated, this did something.
-# XXX Outdated, delete before tarball release - Jamie 2001/07/08
-#
-#sub setStoryIndex {
-#	my($self, @sids) = @_;
-#
-#	my %stories;
-#
-#	for my $sid (@sids) {
-#		$stories{$sid} = $self->sqlSelectHashref("*", "stories", "sid='$sid'");
-#	}
-#	$self->sqlTransactionStart("LOCK TABLES story_heap WRITE");
-#
-#	foreach my $sid (keys %stories) {
-#		$self->sqlReplace("story_heap", $stories{$sid}, "sid='$sid'");
-#	}
-#
-#	$self->sqlTransactionFinish();
-#}
 
 ########################################################
 # For slashd
@@ -114,7 +91,7 @@ sub getNewStoryTopic {
 		"alttext, image, width, height, $story_table.tid as tid",
 		"$story_table, topics",
 		"$story_table.tid=topics.tid AND displaystatus = 0
-		AND NOT FIND_IN_SET('delete_me', flags) AND time < NOW()",
+		AND writestatus != 'delete' AND time < NOW()",
 		"ORDER BY time DESC LIMIT 10"
 	);
 
@@ -139,16 +116,6 @@ sub archiveComments {
 sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
-
-#	my $delay1 = $constants->{archive_delay} * 2;
-#	my $delay2 = $constants->{archive_delay} * 9;
-#	$constants->{defaultsection} ||= 'articles';
-
-# We no longer delete stories or comments that are too old.
-#	$self->sqlDo("DELETE FROM newstories WHERE
-#			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
-#			or (to_days(now()) - to_days(time) > $delay2)");
-#	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
@@ -279,6 +246,7 @@ sub getMailingList {
 ########################################################
 # For dailystuff
 # XXX Outdated, delete before tarball release - Jamie 2001/07/08
+# If we go back to using this is may have issues -Brian
 #sub getOldStories {
 #	my($self, $delay) = @_;
 #
@@ -652,35 +620,6 @@ sub getMetaModerations {
 	return $ret;
 }
 
-########################################################
-# for tasks/freshenup.pl
-sub setDiscussionHitParade {
-	my($self, $discussion_id, $hp) = @_;
-	return if !$discussion_id;
-	# Clear the hitparade_dirty flag.
-	my $rows_changed = $self->sqlUpdate(
-		"discussions",
-		{ -flags => "flags & -3" }, # works, but depends on SET() order
-		"id=$discussion_id AND FIND_IN_SET('hitparade_dirty', flags)"
-	);
-	if ($rows_changed) {
-		# Update the hitparade only if the flag was changed just now.
-		# (Guaranteed atomicity is not necessary here;  hitparade is
-		# only supposed to be close enough for horseshoes.)
-		for my $threshold (sort {$a<=>$b} keys %$hp) {
-			# We *should* be able to just sqlUpdate, not Replace,
-			# but this doesn't get performed all that much, it's
-			# not performance-intensive, and the algorithm fails
-			# annoyingly if those rows are absent, so Replace is
-			# a good thing IMHO.
-			$self->sqlReplace("discussion_hitparade", {
-				discussion	=> $discussion_id,	# key
-				threshold	=> $threshold,		# key
-				count		=> $hp->{$threshold},	# value
-			});
-		}
-	}
-}
 
 ########################################################
 # For moderation scripts. 
@@ -713,34 +652,13 @@ sub clearM2Flag {
 # For freshneup.pl
 #
 #
-sub getDiscussionsWithFlag {
-	my($self, $flag) = @_;
-	my $flag_quoted = $self->sqlQuote($flag);
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	return $self->sqlSelectAll(
-		"id",
-		"discussions",
-		"FIND_IN_SET($flag_quoted, discussions.flags)",
-		# update the stuff at the top of the page first
-		"ORDER BY id DESC LIMIT 200",
-	);
-}
-
-########################################################
-# For freshneup.pl
-#
-#
 sub getStoriesWithFlag {
-	my($self, $flag) = @_;
-	my $flag_quoted = $self->sqlQuote($flag);
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	return $self->sqlSelectAll(
-		"sid, discussion, title, section",
-		$story_table,
-		"FIND_IN_SET($flag_quoted, flags)",
-		# update the stuff at the top of the page first
-		"ORDER BY time DESC LIMIT 200",
-	);
+	my($self, $writestatus) = @_;
+
+	my $returnable = $self->sqlSelectAll("sid,title,section",
+		"stories", "writestatus='$writestatus'");
+
+	return $returnable;
 }
 
 
@@ -800,6 +718,24 @@ sub getTodayArmorList {
 		"uid IN ($uid_list)"
 	);
 }
+
+########################################################
+# freshen.pl
+sub deleteStoryAll {
+	my($self, $sid) = @_;
+	my $db_sid = $self->sqlQuote($sid);
+
+	$self->sqlDo("DELETE from stories where sid=$db_sid");
+	$self->sqlDo("DELETE from story_text where sid=$db_sid");
+	if (getCurrentStatic('mysql_heap_table')) {
+		$self->sqlDo("DELETE from story_heap where sid=$db_sid");
+	}
+	my $discussions = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
+	$self->sqlDo("DELETE from comment_heap where sid=$db_sid");
+	$self->sqlDo("DELETE from comments where sid=$db_sid");
+	$self->sqlDo("DELETE from comment_text where sid=$db_sid");
+}
+
 
 1;
 

@@ -832,6 +832,7 @@ sub topicSave {
 
 	$form->{tid} = $slashdb->saveTopic($form);
 
+	# The next few lines need to be wrapped in a transaction -Brian
 	$slashdb->deleteSectionTopicsByTopic($form->{tid});
 	for my $item (keys %$form) {
 		if ($item =~ /^exsect_(.*)/) {
@@ -1009,7 +1010,7 @@ sub editStory {
 
 	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) {
-		$storyref->{flags} = "data_dirty";
+		$storyref->{writestatus} = "dirty";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
@@ -1020,7 +1021,7 @@ sub editStory {
 			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 		}
 
-		$storyref->{flags} = $form->{flags} if exists $form->{flags};
+		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
 		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
 		$storyref->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
 		$storyref->{dept} =~ s/[-\s]+/-/g;
@@ -1067,7 +1068,7 @@ sub editStory {
 
 		$storyref->{'time'} = $slashdb->getTime();
 		$storyref->{uid} = $user->{uid};
-		$storyref->{flags} = "data_dirty";
+		$storyref->{writestatus} = "dirty";
 	}
 
 	$sections = $slashdb->getDescriptions('sections');
@@ -1230,7 +1231,7 @@ sub listStories {
 
 	for (@$storylist) {
 		my($hits, $comments, $sid, $title, $aid, $time_plain, $topic, $section,
-			$displaystatus, $flags) = @$_;
+			$displaystatus, $writestatus) = @$_;
 		my $time = timeCalc($time_plain, '%H:%M', 0);
 		my $td   = timeCalc($time_plain, '%A %B %d', 0);
 		my $td2  = timeCalc($time_plain, '%m/%d', 0);
@@ -1254,7 +1255,7 @@ sub listStories {
 			section		=> $section,
 			td		=> $td,
 			td2		=> $td2,
-			flags		=> $flags,
+			writestatus		=> $writestatus,
 			displaystatus	=> $displaystatus,
 			tbtitle		=> $tbtitle,
 		};

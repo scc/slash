@@ -291,7 +291,7 @@ sub delete {
 	my $delCount = deleteThread($form->{sid}, $form->{cid});
 
 	$slashdb->setDiscussionDelCount($form->{sid}, $delCount);
-	$slashdb->setDiscussionFlagsBySid([$form->{sid}], 1, ["hitparade_dirty"]);
+	$slashdb->setStory($form->{sid}, { writestatus => 'dirty'});
 }
 
 ##################################################################
@@ -713,7 +713,7 @@ sub submitComment {
 		my $tc = $slashdb->getVar('totalComments', 'value');
 		$slashdb->setVar('totalComments', ++$tc);
 
-		$slashdb->setDiscussionFlagsBySid([$form->{sid}], 1, ["hitparade_dirty"]);
+		$slashdb->setDiscussion($form->{sid}, { flags => 'dirty'});
 
 		$slashdb->setUser($user->{uid}, {
 			-totalcomments => 'totalcomments+1',
@@ -795,7 +795,7 @@ sub moderate {
 	printComments($sid, $form->{pid}, $form->{cid});
 
 	if ($was_touched) {
-		$slashdb->setDiscussionFlagsBySid([$sid], 1, ["hitparade_dirty"]);
+		$slashdb->setDiscussion($sid, { flags => "dirty"});
 	}
 }
 

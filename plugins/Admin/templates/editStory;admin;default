@@ -63,7 +63,7 @@ __template__
 		[% section_select %]
 		[% END %]
 
-		<INPUT TYPE="HIDDEN" NAME="flags" VALUE="[% storyref.flags %]">
+		<INPUT TYPE="HIDDEN" NAME="writestatus" VALUE="[% storyref.writestatus %]">
 
 		[% IF authoredit_flag %]
 		[% author_select %]
