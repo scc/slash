@@ -168,7 +168,7 @@ sub setComment {
 
 	$self->sqlDo("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
-		"max(cid)", "comments", "sid=$sid_db" 
+		"max(cid)", "comments", "sid=$sid_db"
 	);
 
 	$maxCid++; # This is gonna cause troubles
@@ -332,16 +332,16 @@ sub createPollVoter {
 	my($self, $qid, $aid) = @_;
 
 	$self->sqlInsert("pollvoters", {
-		qid	=> $qid, 
+		qid	=> $qid,
 		id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
 		-'time'	=> 'now()',
 		uid	=> $ENV{REMOTE_USER}
 	});
 
 	my $qid_db = $self->{dbh}->quote($qid);
-	$self->sqlDo("update pollquestions set 
+	$self->sqlDo("update pollquestions set
 		voters=voters+1 where qid=$qid_db");
-	$self->sqlDo("update pollanswers set votes=votes+1 where 
+	$self->sqlDo("update pollanswers set votes=votes+1 where
 		qid=$qid_db and aid=" . $self->{dbh}->quote($aid));
 }
 
@@ -931,7 +931,7 @@ sub deleteSubmission {
 	my $form = getCurrentForm();
 
 	if ($form->{subid}) {
-		$self->sqlUpdate("submissions", { del => 1 }, 
+		$self->sqlUpdate("submissions", { del => 1 },
 			"subid=" . $self->{dbh}->quote($form->{subid})
 		);
 
@@ -963,8 +963,8 @@ sub deleteSubmission {
 			}
 		} else {
 			my $key = $n;
-			$self->sqlUpdate("submissions", { del => 1 }, "subid='$key'"
-			) && $self->sqlUpdate("authors",
+			$self->sqlUpdate("submissions", { del => 1 }, "subid='$key'")
+			&& $self->sqlUpdate("authors",
 				{ -deletedsubmissions => 'deletedsubmissions+1' },
 				"aid='$aid'"
 			);
@@ -1035,8 +1035,8 @@ sub saveTopic {
 	}
 
 	$self->sqlUpdate('topics', {
-			image	=> $form->{image}, 
-			alttext	=> $form->{alttext}, 
+			image	=> $form->{image},
+			alttext	=> $form->{alttext},
 			width	=> $form->{width},
 			height	=> $form->{height}
 		}, 'tid=' . $self->{dbh}->quote($form->{tid})
@@ -1053,7 +1053,7 @@ sub saveBlock {
 	my $form = getCurrentForm();
 	if ($form->{save_new} && $rows > 0) {
 		return $rows;
-	}	
+	}
 
 	if ($rows == 0) {
 		$self->sqlInsert('blocks', { bid => $bid, seclev => 500 });
@@ -1070,32 +1070,32 @@ sub saveBlock {
 
 	if ($rows == 0 || $form->{blocksavedef}) {
 		$self->sqlUpdate('blocks', {
-			seclev		=> $form->{bseclev}, 
+			seclev		=> $form->{bseclev},
 			block		=> $form->{block},
 			blockbak	=> $form->{block},
 			description	=> $form->{description},
 			type		=> $form->{type},
-			ordernum	=> $form->{ordernum}, 
+			ordernum	=> $form->{ordernum},
 			title		=> $form->{title},
-			url		=> $form->{url},	
-			rdf		=> $form->{rdf},	
-			section		=> $form->{section},	
-			retrieve	=> $form->{retrieve}, 
-			portal		=> $form->{portal}, 
+			url		=> $form->{url},
+			rdf		=> $form->{rdf},
+			section		=> $form->{section},
+			retrieve	=> $form->{retrieve},
+			portal		=> $form->{portal},
 		}, 'bid=' . $self->{dbh}->quote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
-			seclev		=> $form->{bseclev}, 
+			seclev		=> $form->{bseclev},
 			block		=> $form->{block},
 			description	=> $form->{description},
 			type		=> $form->{type},
-			ordernum	=> $form->{ordernum}, 
+			ordernum	=> $form->{ordernum},
 			title		=> $form->{title},
-			url		=> $form->{url},	
-			rdf		=> $form->{rdf},	
-			section		=> $form->{section},	
-			retrieve	=> $form->{retrieve}, 
-			portal		=> $form->{portal}, 
+			url		=> $form->{url},
+			rdf		=> $form->{rdf},
+			section		=> $form->{section},
+			retrieve	=> $form->{retrieve},
+			portal		=> $form->{portal},
 		}, 'bid=' . $self->{dbh}->quote($bid));
 	}
 
@@ -1113,18 +1113,18 @@ sub saveColorBlock {
 	if ($form->{colorsave}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
-				block => $colorblock, 
+				block => $colorblock,
 			}, "bid = '$form->{color_block}'"
 		);
-		
+
 	} elsif ($form->{colorsavedef}) {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
-				block => $colorblock, 
-				blockbak => $colorblock, 
+				block => $colorblock,
+				blockbak => $colorblock,
 			}, "bid = '$form->{color_block}'"
 		);
-		
+
 	} elsif ($form->{colororig}) {
 		# reload original version of colors
 		$self->{dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
@@ -1159,7 +1159,7 @@ sub getAuthorDescription {
 # This method does not follow basic guidlines
 sub getPollVoter {
 	my($self, $id) = @_;
-	my($voters) = $self->sqlSelect('id', 'pollvoters', 
+	my($voters) = $self->sqlSelect('id', 'pollvoters',
 		"qid=" . $self->{dbh}->quote($id) .
 		"AND id=" . $self->{dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
 		"AND uid=" . $ENV{REMOTE_USER}
@@ -1193,8 +1193,8 @@ sub savePollQuestion {
 			});
 
 		} else {
-			$self->{dbh}->do("DELETE from pollanswers WHERE qid=" 
-					. $self->{dbh}->quote($form->{qid}) . " and aid=$x"); 
+			$self->{dbh}->do("DELETE from pollanswers WHERE qid="
+					. $self->{dbh}->quote($form->{qid}) . " and aid=$x");
 		}
 	}
 }
@@ -1238,7 +1238,7 @@ sub getPollQuestions {
 ########################################################
 sub deleteStory {
 	my($self, $sid) = @_;
-	$self->sqlUpdate('stories', { writestatus => 5 }, 
+	$self->sqlUpdate('stories', { writestatus => 5 },
 		'sid=' . $self->{dbh}->quote($sid)
 	);
 
@@ -1265,7 +1265,7 @@ sub getBackendStories {
 		topics.tid as tid
 		    FROM stories,topics
 		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
-		      OR (section=\"$section\" and displaystatus > -1)) 
+		      OR (section=\"$section\" and displaystatus > -1))
 		     AND time < now()
 		     AND writestatus > -1
 		     AND stories.tid=topics.tid
@@ -1538,7 +1538,7 @@ sub getPoll {
 sub getSubmissionsSections {
 	my($self) = @_;
 	my $del = getCurrentForm('del');
-	
+
 	my $hash = $self->sqlSelectAll("section,note,count(*)", "submissions WHERE del=$del GROUP BY section,note");
 
 	return $hash;
@@ -1778,7 +1778,7 @@ sub setMetaMod {
 			}
 		}
 		# Time is now fixed at form submission time to ease 'debugging'
-		# of the moderation system, ie 'GROUP BY uid, ts' will give 
+		# of the moderation system, ie 'GROUP BY uid, ts' will give
 		# you the M2 votes for a specific user ordered by M2 'session'
 		$self->sqlInsert("metamodlog", {
 			-mmid => $mmid,
@@ -1886,7 +1886,7 @@ sub setCommentCleanup {
 		reason=$reason,
 		lastmod=$user->{uid}
 		WHERE sid=" . $self->{dbh}->quote($sid)."
-		AND cid=$cid 
+		AND cid=$cid
 		AND points " .
 			($val < 0 ? " > $constants->{comment_minscore}" : "") .
 			($val > 0 ? " < $constants->{comment_maxscore}" : "");
@@ -1901,7 +1901,7 @@ sub setCommentCleanup {
 		if ($cuid != $constants->{anonymous_coward}) {
 			if ($val > 0) {
 				$self->sqlUpdate("users_info",
-					{ -karma => "karma$val" }, 
+					{ -karma => "karma$val" },
 					"uid=$cuid AND karma < $constants->{maxkarma}"
 				);
 			} elsif ($val < 0) {
@@ -1914,7 +1914,7 @@ sub setCommentCleanup {
 		# Adjust moderators total mods
 		$self->sqlUpdate(
 			"users_info",
-			{ -totalmods => 'totalmods+1' }, 
+			{ -totalmods => 'totalmods+1' },
 			"uid=$user->{uid}"
 		);
 
@@ -1922,7 +1922,7 @@ sub setCommentCleanup {
 		$user->{points} = $user->{points} > 0 ? $user->{points} - 1 : 0;
 		$self->sqlUpdate(
 			"users_comments",
-			{ -points=>$user->{points} }, 
+			{ -points=>$user->{points} },
 			"uid=$user->{uid}"
 		); # unless ($user->{aseclev} > 99 && $comments->{authors_unlimited});
 		return 1;
@@ -1941,7 +1941,7 @@ sub countUsersIndexExboxesByBid {
 }
 
 ########################################################
-sub getCommentReply {	
+sub getCommentReply {
 	my($self, $time, $sid, $pid) = @_;
 	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
 		comment,realname,nickname,
@@ -2010,9 +2010,9 @@ sub getStories {
 	$limit ||= $user->{maxstories};
 
 	my $tables = "newstories";
-	my $columns = "sid, section, title, date_format(" .  
-		getDateOffset('time') . 
-		',"%W %M %d %h %i %p"), commentcount, to_days(' .  
+	my $columns = "sid, section, title, date_format(" .
+		getDateOffset('time') .
+		',"%W %M %d %h %i %p"), commentcount, to_days(' .
 		getDateOffset('time') . "), hitparade";
 
 	my $where = "1=1 "; # Mysql's Optimize gets this.";
@@ -2047,7 +2047,7 @@ sub getStories {
 	}
 #	print "\n\n\n\n\n<-- stories select $tables $columns $where $other -->\n\n\n\n\n";
 
-	my $stories_arrayref = $self->sqlSelectAll($columns, $tables, $where, $other) 
+	my $stories_arrayref = $self->sqlSelectAll($columns, $tables, $where, $other)
 		or apacheLog("error in getStories columns $columns table $tables where $where other $other");
 
 	return $stories_arrayref;
@@ -2136,7 +2136,7 @@ sub getSearch {
 	my $threshold = getCurrentUser('threshold');
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
 		getDateFormat("time","d") . ",".
-		getDateFormat("date","t") . ", 
+		getDateFormat("date","t") . ",
 		uid, cid, ";
 
 	$sqlquery .= "	  " . $keysearch->($self, $form->{query}, "subject", "comment") if $form->{query};
@@ -2301,12 +2301,12 @@ sub saveStory {
  			if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('users_info',
-			{ -karma => 'karma + 3' }, 
+			{ -karma => 'karma + 3' },
 			"uid=$suid"
 		) if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('submissions',
-			{ del=>2 }, 
+			{ del=>2 },
 			'subid=' . $self->{dbh}->quote($form->{subid})
 		);
 	}
@@ -2346,13 +2346,13 @@ sub getSlashConf {
 		archive_delay
 		articles_only
 		authors_unlimited
-		badkarma	
+		badkarma
 		basedir
 		basedomain
 		block_expire
 		breaking
-		comment_maxscore	
-		comment_minscore	
+		comment_maxscore
+		comment_minscore
 		cookiedomain
 		cookiepath
 		datadir
@@ -2361,16 +2361,17 @@ sub getSlashConf {
 		fancyboxwidth
 		fontbase
 		formkey_timeframe
-		goodkarma	
+		goodkarma
 		http_proxy
 		imagedir
-		m2_bonus	
-		m2_comments	
+		logdir
+		m2_bonus
+		m2_comments
 		m2_maxbonus
-		m2_maxunfair	
+		m2_maxunfair
 		m2_mincheck
-		m2_penalty	
-		m2_toomanyunfair	
+		m2_penalty
+		m2_toomanyunfair
 		m2_userpercentage
 		mailfrom
 		mainfontface
@@ -2383,12 +2384,12 @@ sub getSlashConf {
 		maxtokens
 		metamod_sum
 		post_limit
-		rdfencoding	
+		rdfencoding
 		rdfimg
 		rdfimg
-		rdflanguage	
+		rdflanguage
 		rootdir
-		run_ads	
+		run_ads
 		send_mail
 		siteadmin
 		siteadmin_name
@@ -2411,7 +2412,7 @@ sub getSlashConf {
 		use_dept
 	);
 
-	# This should be optimized.  
+	# This should be optimized.
 	for (@keys) {
 		my $value = $self->getVar($_, 'value');
 		$conf{$_} = $value;
@@ -2471,7 +2472,7 @@ sub autoUrl {
 
 	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $form->{fixquotes};
 	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
-	
+
 	my $initials = substr $user->{aid}, 0, 1;
 	my $more = substr $user->{aid}, 1;
 	$more =~ s/[a-z]//g;
@@ -2535,11 +2536,11 @@ sub getStoryList {
 			displaystatus,writestatus,
 			date_format(time,"%W %M %d"),
 			date_format(time,"%m/%d")
-			FROM stories,storiestuff 
+			FROM stories,storiestuff
 			WHERE storiestuff.sid=stories.sid];
 	$sql .= "	AND section='$user->{asection}'" if $user->{asection};
 	$sql .= "	AND section='$form->{section}'"  if $form->{section} && !$user->{asection};
-	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq ""; 
+	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
 	$sql .= "	ORDER BY time DESC";
 
 	my $cursor = $self->{dbh}->prepare($sql);
@@ -2608,7 +2609,7 @@ sub saveExtras {
 }
 
 ##################################################################
-# This should be rewritten so that at no point do we 
+# This should be rewritten so that at no point do we
 # pass along an array -Brian
 sub getKeys {
 	my($self, $table) = @_;
@@ -2620,7 +2621,7 @@ sub getKeys {
 
 ########################################################
 sub getStory {
-	my ($self) = @_;
+	my($self) = @_;
 	# We need to expire stories
 	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
 	my $answer = _genericGetCache('stories', 'sid', @_);
@@ -2719,7 +2720,7 @@ sub getUser {
 }
 
 ########################################################
-# 
+#
 sub setUser {
 	my($self, $uid, $hashref) = @_;
 	my $tables = [qw(
@@ -2788,9 +2789,10 @@ sub _genericGetCacheName {
 				$self->{$cache}{$_} = $table;
 			}
 		}
-	} 
+	}
 	return $cache;
 }
+
 ########################################################
 # Now here is the thing. We want setUser to look like
 # a generic, despite the fact that it is not :)
@@ -2826,15 +2828,16 @@ sub _genericSet {
 	my $table_cache_time= '_' . $table . '_cache_time';
 	$self->{$table_cache_time} = time();
 	for (keys %$value) {
-		$self->{$table_cache}{$id}{$_} = $value->{$_}; 
+		$self->{$table_cache}{$id}{$_} = $value->{$_};
 	}
 }
+
 ########################################################
 # You can use this to reset cache's in a timely
 # manner :)
 sub _genericCacheRefresh {
 	my($self, $table,  $expiration) = @_;
-	return unless $expiration;	
+	return unless $expiration;
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time = '_' . $table . '_cache_time';
 	my $table_cache_full = '_' . $table . '_cache_full';
@@ -2849,6 +2852,7 @@ sub _genericCacheRefresh {
 		$self->{$table_cache_full} = 0;
 	}
 }
+
 ########################################################
 # This is protected and don't call it from your
 # scripts directly.
@@ -2865,12 +2869,13 @@ sub _genericGetCache {
 	}
 
 	if ($type) {
-		return $self->{$table_cache}{$id}{$values} 
+		return $self->{$table_cache}{$id}{$values}
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	} else {
-		return $self->{$table_cache}->{$id} 
+		return $self->{$table_cache}->{$id}
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	}
+
 	# Lets go knock on the door of the database
 	# and grab the data's since it is not cached
 	# On a side note, I hate grabbing "*" from a database
