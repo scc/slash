@@ -15,7 +15,7 @@ en_US
 __name__
 ssifoot
 __template__
-<!--#include virtual="[% dir %]/[% section %]slashfoot[% constants.userMode %].inc"-->
+<!--#include virtual="[% dir %]/[% section %]slashfoot.inc"-->
 
 __seclev__
 10000

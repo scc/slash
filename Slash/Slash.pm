@@ -822,7 +822,7 @@ None.
 
 =item Side effects
 
-Sets currentSection and userMode constants.
+Sets currentSection constant.
 
 =item Dependencies
 
@@ -858,8 +858,6 @@ sub header {
 		$r->send_http_header;
 	}
 
-	# Current mode still used?
-	$constants->{userMode} = $user->{currentMode} eq 'flat' ? '_F' : '';
 	$user->{currentSection} = $section || '';
 	getSectionColors();
 
