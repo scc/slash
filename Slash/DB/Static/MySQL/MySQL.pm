@@ -270,6 +270,7 @@ sub forgetCommentIPs {
 	} elsif ($mincid+$maxrows < $maxcid) {
 		$maxcid = $mincid+$maxrows;
 	}
+	my $nextcid = $mincid;
 	if ($maxcid > $mincid) {
 		# Do the update.
 		$self->sqlUpdate("comments",
@@ -278,8 +279,8 @@ sub forgetCommentIPs {
 			AND date < DATE_SUB(NOW(), INTERVAL $hours HOUR)"
 		);
 		# How far did we go?
-		my $nextcid = $self->sqlSelect("MAX(cid)",
-			"comments",
+		$nextcid = $self->sqlSelect("MAX(cid)",
+			"comments USE INDEX (primary)", # XXX ugly
 			"cid BETWEEN $mincid AND $maxcid
 			AND ipid = ''",
 		);
@@ -287,6 +288,7 @@ sub forgetCommentIPs {
 		# The next forgetting can start here.
 		$self->setVar('comments_forgetip_mincid', $nextcid);
 	}
+	return $nextcid - $mincid;
 }
 
 ########################################################

@@ -3693,55 +3693,112 @@ sub getSubmissionForUser {
 
 ########################################################
 sub calcModval {
-	my($self, $where_clause, $hoursback_halflife) = @_;
-	my $hr;
+	my($self, $where_clause, $halflife, $minicache) = @_;
 #my $start_time = Time::HiRes::time();
-	my $be_portable = getCurrentStatic('portable_calcmodval');
-	$be_portable = 1 if !defined($be_portable); # default: yes
-	if ($be_portable) {
-		$hr = $self->sqlSelectAllHashref(
-			"hoursback",
-			"STRAIGHT_JOIN CEILING((UNIX_TIMESTAMP(NOW())-
-				UNIX_TIMESTAMP(ts))/3600) AS hoursback,
-				SUM(val) AS valsum",
-			"comments, moderatorlog",
-			"comments.cid = moderatorlog.cid
-				AND $where_clause
-				AND moderatorlog.active=1",
-			"GROUP BY hoursback",
-		);
-	} else {
-		my $hr1 = $self->sqlSelectAllHashref(
-			"ts",
-			"ts, val",
-			"comments, moderatorlog",
-			"comments.cid = moderatorlog.cid
-				AND $where_clause
-				AND moderatorlog.active=1",
-		);
-		my $db_time = timeCalc($self->getTime(), "%s", 0);
-		for my $ts (keys %$hr1) {
-			my $val = $hr1->{$ts}{val};
-			my $hoursback = int(
-				($db_time - timeCalc($ts, "%s", 0))/3600 + 1
-			);
-			$hr->{$hoursback}{valsum} += $val;
-		}
+
+	# There's just no good way to do this with a join; it takes
+	# over 1 second and if either comment posting or moderation
+	# is reasonably heavy, the DB can get bogged very fast.  So
+	# let's split it up into two queries.  Dagnabbit.
+	my $cid_ar = $self->sqlSelectColArrayref(
+		"cid",
+		"comments",
+		$where_clause,
+	);
+	return 0 if !$cid_ar or !@$cid_ar;
+
+	# If a minicache was passed in, see if we match it;  if so,
+	# we can save a query.  In reality, this means that if an IP
+	# is the only IP posting from its subnet, we don't need to
+	# get the moderatorlog valsum twice.
+	my $cid_text = join(",", @$cid_ar);
+	if ($minicache and defined($minicache->{$cid_text})) {
+#printf STDERR "cM 1 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $modval;
+		return $minicache->{$cid_text};
 	}
-#printf STDERR "cM %d %.3f\n", $be_portable, Time::HiRes::time()-$start_time;
+
+	# We've got the cids that fit the where clause;  find all
+	# moderations of those cids.
+	my $hr = $self->sqlSelectAllHashref(
+		"hoursback",
+		"CEILING((UNIX_TIMESTAMP(NOW())-
+			UNIX_TIMESTAMP(ts))/3600) AS hoursback,
+			SUM(val) AS valsum",
+		"moderatorlog",
+		"moderatorlog.cid IN ($cid_text)
+			AND moderatorlog.active=1",
+		"GROUP BY hoursback",
+	);
+
 	my $modval = 0;
 	for my $hoursback (keys %$hr) {
 		my $val = $hr->{$hoursback}{valsum};
 		next unless $val;
-		if ($hoursback <= $hoursback_halflife) {
+		if ($hoursback <= $halflife) {
 			$modval += $val;
 		} else {
 			# Logarithmically weighted.
-			$modval += $val / (2 ** ($hoursback/$hoursback_halflife));
+			$modval += $val / (2 ** ($hoursback/$halflife));
 		}
 	}
+
+	$minicache->{$cid_text} = $modval if $minicache;
+#printf STDERR "cM 0 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $modval;
 	$modval;
 }
+
+########################################################
+########################################################
+# (And now a word from CmdrTaco)
+#
+# I'm putting this note here because I hate posting stories about
+# Slashcode on Slashdot.  It's just distracting from the news, and the
+# vast majority of Slashdot readers simply don't care about it. I know
+# that this is interpreted as me being all men-in-black, but thats
+# bull pucky.  I don't want Slashdot to be about Slashdot or
+# Slashcode.  A few people have recently taken to reading CVS and then
+# trolling Slashdot with the deep dark secrets that they think they
+# have found within.  They don't bother going so far as to bother
+# *asking* before freaking.  We have a mailing list if people want to
+# ask questions.  We love getting patches when people have better ways
+# to do things.  But answers are much more likely if you ask us to our
+# faces instead of just sitting in the back of class and bitching to
+# everyone sitting around you.  I'm not going to try to have an
+# offtopic discussion in an unrelated story.  And I'm not going to
+# bother posting a story to appease the 1% of readers for whom this
+# story matters one iota.  So this seems to be a reasonable way for me
+# to reach you.
+#
+# What I'm talking about this time is all this IPID crap.  It's a
+# temporary kludge that people simply don't understand. It isn't
+# intended to be permanent, or secure.  These 2 misconceptions are the
+# source of the problem.
+#
+# The IPID stuff was designed when we only kept 2 weeks of comments in
+# the DB at a time.  We need to track IPs and Subnets to prevent DoS
+# script attacks.  Again, I know conspiracy theorists freak out, but
+# the reality is that without this,  we get constant scripted
+# trolling.  This simply isn't up for debate.  We've been doing this
+# for years.  It's not new.  We *used* to just store the plain old IP.
+#
+# The problem is that I don't want IPs staring me in the face. So we
+# MD5d em. This wasn't for "security" in the strict sense of the word.
+# It just was meant to make it inconvenient for now.  Not impossible. 
+# Now I don't have any IPs.  Instead we have reasonably abstracted
+# functions that should let us create a more secure system when we
+# have the time.
+#
+# What really needs to happen is that these IDs need to be generated
+# with some sort of random rolling key. Of course lookups need to be
+# computationally fast within the limitations of our existing
+# database.  Ideas?  Or better yet, Diffs?
+#
+# Lastly I have to say, I find it ironic that we've tracked IPs for
+# years.  But nobody complained until we *stopped* tracking IPs and
+# put the hooks in place to provide a *secure* system.  You'd think
+# people were just looking for an excuse to bitch...
+########################################################
+########################################################
 
 ########################################################
 sub getIsTroll {
@@ -3753,21 +3810,24 @@ sub getIsTroll {
 	my $ipid_hoursback = $constants->{istroll_ipid_hours} || 72;
 	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
 	my($modval, $trollpoint);
+	my $minicache = { };
 #my $time = time;
 
 	# Check for modval by IPID.
 	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior;
-	$modval = $self->calcModval("ipid = '$user->{ipid}'", $ipid_hoursback);
-#my $uidipid = "";
-#$uidipid  = " uid $user->{uid}" if !$user->{is_anon};
-#$uidipid .= " ipid '$user->{ipid}'";
-#printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+	$modval = $self->calcModval("ipid = '$user->{ipid}'",
+		$ipid_hoursback, $minicache);
+#my $idstuff = "";
+#$idstuff  = " uid $user->{uid}" if !$user->{is_anon};
+#$idstuff .= " ipid '$user->{ipid}' subnetid '$user->{subnetid}";
+#printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $idstuff;
 	return 1 if $modval <= $trollpoint;
 
 	# Check for modval by subnet.
 	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior;
-	$modval = $self->calcModval("subnetid = '$user->{subnetid}'", $ipid_hoursback);
-#printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d subnetid '%s'%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $user->{subnetid}, $uidipid;
+	$modval = $self->calcModval("subnetid = '$user->{subnetid}'",
+		$ipid_hoursback, $minicache);
+#printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d %s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $idstuff;
 	return 1 if $modval <= $trollpoint;
 
 	# At this point, if the user is not logged in, then we don't need
@@ -3777,7 +3837,7 @@ sub getIsTroll {
 	# Check for modval by user ID.
 	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
 	$modval = $self->calcModval("comments.uid = $user->{uid}", $uid_hoursback);
-#printf STDERR "gIT %d %d user modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+#printf STDERR "gIT %d %d user modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $idstuff;
 	return 1 if $modval <= $trollpoint;
 
 	# All tests passed, user is not a troll.

@@ -1092,14 +1092,11 @@ sub isTroll {
 			# If the user is signed in but posting anonymously,
 			# their karma helps a little bit to offset their
 			# trollishness.  But not much.
-			$good_behavior = int(log($user->{karma}));
+			$good_behavior = int(log($user->{karma})+0.5);
 		} else {
-			# If the user is signed in and posting under their
-			# own name, their karma can help to offset quite a
-			# bit of their trollishness.
-			$good_behavior = getCurrentStatic('goodkarma');
-			$good_behavior = $user->{karma}
-				if $user->{karma} < $good_behavior;
+			# If the user is signed in with karma at least 1 and
+			# posts with their name, the IP ban doesn't apply.
+			return 0;
 		}
 	}
 
