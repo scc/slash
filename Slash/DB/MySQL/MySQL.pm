@@ -391,7 +391,7 @@ sub getSessionInstance {
 		);
 
 		if ($uid) {
-			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND "
+			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND " .
 				"session != $session_q"
 			);
 			$self->sqlUpdate('sessions', {-lasttime => 'now()'},
