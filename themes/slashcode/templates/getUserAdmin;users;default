@@ -150,6 +150,15 @@ __template__
 			<TR>
 				<TD COLSPAN=3 HEIGHT=10></TD>
 			</TR>
+			<TR>
+				<TD COLSPAN="3"><B>Banned</B></TD>
+			</TR>
+			<TR>
+				<TD WIDTH="100">Banned from [% constants.sitename %]</TD>
+				<TD ALIGN="LEFT" WIDTH="100"><INPUT TYPE="checkbox" NAME="banned" [% banned %]>&nbsp;&nbsp;
+				Reason <INPUT TYPE="TEXT" NAME="banned_reason" VALUE="[% banned_reason%]"></TD>
+			</TR>
+
 			[% IF ! useredit.nonuid %]
 			<TR>
 				<TD WIDTH="100"><B>Expire User</B></TD>

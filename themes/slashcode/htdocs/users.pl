@@ -1141,6 +1141,7 @@ sub saveUserAdmin {
 	my $note = '';
 	my $id;
 	my $user_editfield_flag;
+	my $banned = 0;
 
 	if ($form->{uid}) {
 		$user_editfield_flag = 'uid';
@@ -1171,7 +1172,7 @@ sub saveUserAdmin {
 	}
 
 	for my $formname ('comments', 'submit') {
-		my $existing_reason = $slashdb->getReadOnlyReason($formname, $user_edit);
+		my $existing_reason = $slashdb->getReadOnlyReason($formname, 0, $user_edit);
 		my $is_readonly_now = $slashdb->checkReadOnly($formname, $user_edit) ? 1 : 0;
 
 		my $keyname = "readonly_" . $formname;
@@ -1181,15 +1182,33 @@ sub saveUserAdmin {
 
 		if ($form->{$keyname} != $is_readonly_now) {
 			if ("$existing_reason" ne "$form->{$reason_keyname}") {
-				$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, $form->{$reason_keyname});
+				$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, 0, $form->{$reason_keyname});
 			} else {
 				$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname});
 			}
 		} elsif ("$existing_reason" ne "$form->{$reason_keyname}") {
-			$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, $form->{$reason_keyname});
+			$slashdb->setReadOnly($formname, $user_edit, $form->{$keyname}, 0, $form->{$reason_keyname});
 		}
 
 		# $note .= getError('saveuseradmin_notsaved', { field => $user_editfield_flag, id => $id });
+	}
+
+	$slashdb->getBanList(1);
+	$banned = $slashdb->isBanned($id);
+	$form->{banned} = $form->{banned} eq 'on' ? 1 : 0 ;
+	print STDERR "banned $banned form->{banned} $form->{banned}\n";
+	if ($banned) {
+		if ($form->{banned} == 0) {
+			print STDERR "trying to unset banned\n";
+			$slashdb->setReadOnly('', $user_edit, 0, 1, $form->{banned_reason});
+			$slashdb->getBanList(1);
+		}
+	} else {
+		if ($form->{banned} == 1) {
+			print STDERR "trying to set banned\n";
+			$slashdb->setReadOnly('', $user_edit, $form->{banned}, 1, $form->{banned_reason});
+			$slashdb->getBanList(1);
+		}
 	}
 
 	$note .= getMessage('saveuseradmin_saved', { field => $user_editfield_flag, id => $id}) if $save_success;
@@ -1200,7 +1219,6 @@ sub saveUserAdmin {
 		$user_edits_table->{seclev} = $form->{seclev};
 		$user_edits_table->{rtbl} = $form->{rtbl} eq 'on' ? 1 : 0 ;
 		$user_edits_table->{rtbl_reason} = $form->{rtbl} eq 'on' ? $form->{rtbl_reason} : '' ;
-		print STDERR "REASON rtbl_reason $user_edits_table->{rtbl_reason} form $form->{rtbl_reason}\n";
 		$user_edits_table->{author} = $form->{author} ? 1 : 0 ;
 		$user_edits_table->{defaultpoints} = $form->{defaultpoints};
 
@@ -1323,6 +1341,7 @@ sub saveUser {
 		$slashdb->setReadOnly(
 			$formname, $user_edit,
 			$form->{$keyname},
+			0,
 			$form->{$reason_keyname}
 		);
 	}
@@ -1703,6 +1722,7 @@ sub getUserAdmin {
 	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $topabusers, $thresh_select);
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
+	my ($isbanned, $banned, $banned_reason);
 
 	$field ||= 'uid';
 	if ($field eq 'uid') {
@@ -1748,8 +1768,14 @@ sub getUserAdmin {
 
 	for my $formname ('comments', 'submit') {
 		$readonly->{$formname} = $slashdb->checkReadOnly($formname, $user_edit) ? ' CHECKED' : '';
-		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, $user_edit) if $readonly->{$formname};
+		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, 0, $user_edit) if $readonly->{$formname};
 	}
+	
+	$slashdb->getBanList(1);
+	$isbanned = $slashdb->isBanned($id);
+	$banned = $isbanned ? ' CHECKED' : '';
+	print STDERR "\nbanned $banned\n";
+	$banned_reason = $slashdb->getReadOnlyReason('', 1, $user_edit);
 
 	for (@$uidlist) {
 		$uidstruct->{$_->[0]} = $slashdb->getUser($_->[0], 'nickname');
@@ -1769,6 +1795,8 @@ sub getUserAdmin {
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
 		useredit		=> $user_edit,
+		banned 			=> $banned,
+		banned_reason	=> $banned_reason,
 		userinfo_flag		=> $user_editinfo_flag,
 		userfield		=> $user_editfield,
 		iplist			=> $iplist,

@@ -816,6 +816,7 @@ sub createAccessLog {
 	}, 1);
 }
 
+
 ########################################################
 # pass in additional optional descriptions
 sub getDescriptions {
@@ -2280,6 +2281,40 @@ sub getNetIDList {
 	);
 }
 
+########################################################
+sub getBanList {
+	my ($self, $refresh) = @_;
+	my $constants = getCurrentStatic();
+	my $banlist_ref;
+	
+	delete $self->{banlist} if $refresh;
+
+	unless (exists ($self->{banlist})) {
+		my $sth = $self->{_dbh}->prepare("SELECT ipid,subnetid,uid from accesslist WHERE isbanned = 1");
+		$sth->execute;
+		my $list = $sth->fetchall_arrayref;
+		for (@$list) {
+			$banlist_ref->{$_->[0]} = 1 if $_->[0] ne '';
+			$banlist_ref->{$_->[1]} = 1 if $_->[1] ne '';
+			$banlist_ref->{$_->[2]} = 1 if ($_->[2] ne '' and $_->[2] ne "$constants->{anon_coward_uid}");
+		}
+		$self->{banlist} = $banlist_ref;
+	}
+
+	return $banlist_ref;
+}
+
+########################################################
+sub isBanned {
+	my ($self, $id) = @_;
+
+	if ($self->{banlist}{$id}) {
+		return(1);
+	} else { 
+		return(0);
+	}
+}
+
 ##################################################################
 sub getReadOnlyList {
 	my($self, $min) = @_;
@@ -2314,7 +2349,7 @@ sub getAbuses {
 
 ##################################################################
 sub getReadOnlyReason {
-	my($self, $formname, $user) = @_;
+	my($self, $formname, $banned, $user) = @_;
 
 	my $constants = getCurrentStatic();
 	my $ref = {};
@@ -2323,6 +2358,8 @@ sub getReadOnlyReason {
 	if ($user) {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where = "WHERE uid = $user->{uid}";
+		} elsif ($user->{md5id}) {
+			$where = "WHERE ipid = '$user->{md5id}'";
 		} elsif ($user->{ipid}) {
 			$where = "WHERE ipid = '$user->{ipid}'";
 		} elsif ($user->{subnetid}) {
@@ -2335,7 +2372,12 @@ sub getReadOnlyReason {
 		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
+	if ($banned) {
+		$where .= " AND isbanned = 1";
+	} else {
+		$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
+	}
+	
 
 	$ref = $self->sqlSelectAll("reason", "accesslist $where");
 
@@ -2354,24 +2396,30 @@ sub getReadOnlyReason {
 ##################################################################
 sub setReadOnly {
 	# do not use this method to set/unset expired
-	my($self, $formname, $user, $flag, $reason) = @_;
+	my ($self, $formname, $user, $flag, $banned, $reason) = @_;
 
 	return if $reason eq 'expired';
 
+	my $insert_hashref = {};
+	my $banned_hack = $banned ? 'isbanned' : 'readonly';
+	$insert_hashref->{"-$banned_hack"} = 1;
 	my $constants = getCurrentStatic();
 	my $rows;
 
-	my $where = '/* setReadOnly WHERE clause */';
+	my $where = "/* setReadOnly $banned_hack WHERE clause */";
 
 	if ($user) {
 		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where .= "uid = $user->{uid}";
+			$insert_hashref->{-uid} = $user->{uid};
 
 		} elsif ($user->{ipid}) {
 			$where .= "ipid = '$user->{ipid}'";
+			$insert_hashref->{ipid} = $user->{ipid};
 
 		} elsif ($user->{subnetid}) {
 			$where .= "subnetid = '$user->{subnetid}'";
+			$insert_hashref->{subnetid} = $user->{subnetid};
 		}
 
 	} else {
@@ -2379,9 +2427,12 @@ sub setReadOnly {
 		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND formname = '$formname' AND reason != 'expired'";
+	$where .= " AND formname = '$formname' AND reason != 'expired'" if $banned == 0;
+	$insert_hashref->{formname} = $formname if $formname ne '';
+	$insert_hashref->{reason} = $reason if $reason ne '';
+	$insert_hashref->{-ts} = 'now()';
 
-	$rows = $self->sqlSelect("count(*) FROM accesslist WHERE $where AND readonly = 1");
+	$rows = $self->sqlSelect("count(*) FROM accesslist WHERE $where AND $banned_hack = 1");
 	$rows ||= 0;
 
 	if ($flag == 0 && $rows > 0) {
@@ -2389,21 +2440,13 @@ sub setReadOnly {
 	} else {
 		if ($reason && $rows == 1) {
 			my $return = $self->sqlUpdate("accesslist", {
-				-readonly	=> $flag,
+				"-$banned_hack" => $flag,
 				reason		=> $reason,
 			}, $where);
 
 			return $return ? 1 : 0;
 		} else {
-			my $return = $self->sqlInsert("accesslist", {
-				-uid		=> $user->{uid},
-				ipid		=> $user->{ipid},
-				subnetid	=> $user->{subnetid},
-				formname	=> $formname,
-				-ts		=> "now()",
-				-readonly	=> $flag,
-				reason		=> $reason
-			});
+			my $return = $self->sqlInsert("accesslist", $insert_hashref);
 			return $return ? 1 : 0;
 		}
 	}
@@ -3585,6 +3628,22 @@ sub getSubmissionForUser {
 	formatDate($submission, 2, 2, '%m/%d  %H:%M');
 
 	return $submission;
+}
+
+########################################################
+sub getTrollAddress {
+	my($self) = @_;
+	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
+	my $days_back = int($hours_back / 24);
+	my $ipid = getCurrentUser('ipid');
+	my($badIP) = $self->sqlSelect("sum(val)", "comments, moderatorlog",
+			"comments.cid = moderatorlog.cid AND
+			 ipid ='$ipid' AND moderatorlog.active=1 AND
+			 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
+	);
+	$badIP = 0 if !$badIP; # make sure it's not undef
+
+	return $badIP;
 }
 
 ########################################################
