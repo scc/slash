@@ -337,8 +337,10 @@ sub _install {
 			my $template = $self->readTemplateFile("$hash->{'dir'}/$_");
 			if ($template and ($id = $self->{slashdb}->existsTemplate($template))) {
 				$self->{slashdb}->setTemplate($id, $template);
-			} else {
+			} elsif ($template) {
 				$self->{slashdb}->createTemplate($template);
+			} else {
+				warn "Can't open template file $_: $!";
 			}
 		}
 	}

@@ -296,7 +296,7 @@ sub setPrefs {
 	my %prefs;
 	for my $name (qw(journal_discuss journal_theme)) {
 		$prefs{$name} = $user->{$name} = $form->{$name}
-			if defined $form->{$_};
+			if defined $form->{$name};
 	}
 
 	$slashdb->setUser($user->{uid}, \%prefs);

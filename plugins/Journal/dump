@@ -17,12 +17,13 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Add
 INSERT INTO code_param (type, code, name) VALUES ('journal_discuss', 0, 'Comments Disabled');
 INSERT INTO code_param (type, code, name) VALUES ('journal_discuss', 1, 'Comments Enabled');
 
-INSERT INTO topics (tid, image, alttext, width, height) VALUES ('journal','journaltopic.png','User Journal',70,70);
+INSERT INTO topics (name, image, alttext, width, height) VALUES ('journal', 'journaltopic.png', 'User Journal', 70, 70);
+INSERT INTO section_topics (section, tid) VALUES ('articles', LAST_INSERT_ID());
 
 INSERT INTO vars (name, value, description) VALUES ('journal_top', '30', 'Number of journals to display in the top page');
 INSERT INTO vars (name, value, description) VALUES ('journal_default_display', '10', 'Number of journals to display on a user\'s page');
 INSERT INTO vars (name, value, description) VALUES ('journal_default_theme', 'generic', 'Default theme to use on journal entries');
-INSERT INTO vars (name, value, description) VALUES ('journal_default_topic', 'journal', 'Default topic that all journal discussions belong to');
+INSERT INTO vars (name, value, description) VALUES ('journal_default_topic', '5', 'Default topic that all journal discussions belong to');
 INSERT INTO vars (name, value, description) VALUES ('journal_comments', '1', 'Turn on and off comments for journal entries');
 INSERT INTO vars (name, value, description) VALUES ('journal_top_posters', '1', 'Turn on and off top posters view');
 INSERT INTO vars (name, value, description) VALUES ('journal_top_friend', '1', 'Turn on and off top friends view');
