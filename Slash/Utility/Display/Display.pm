@@ -1086,7 +1086,7 @@ sub _hard_linkComment {
 	}
 
 	$display .= qq!">$subject</A>!;
-	$display .= qq|by $comment->{nickname} <FONT SIZE="-1">(Score:$comment->{points})</FONT> |
+	$display .= qq| by $comment->{nickname} <FONT SIZE="-1">(Score:$comment->{points})</FONT> |
 		if !$user->{noscores} && $comment->{points};
 	$display .= qq| <FONT SIZE="-1">| . timeCalc($comment->{date}) . qq| </FONT>| if $date;
 	$display .= "\n";
