@@ -317,6 +317,7 @@ sub getSectionBlock {
 # on what section you're in.  Used during initialization
 sub getSectionColors {
 	my($color_block) = @_;
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my @colors;
 	my $colorblock = getCurrentForm('colorblock');
@@ -325,7 +326,7 @@ sub getSectionColors {
 	if ($colorblock) {
 		@colors = map { s/[^\w#]+//g ; $_ } split m/,/, $colorblock;
 	} else {
-		@colors = split m/,/, getSectionBlock('colors');
+		@colors = split m/,/, getSectionBlock('colors') || $constants->{colors};
 	}
 
 	$user->{fg} = [@colors[0..4]];

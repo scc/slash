@@ -3424,6 +3424,9 @@ sub getSlashConf {
 
 	$conf{badreasons} = 4 unless defined $conf{badreasons};
 
+	# for fun ... or something
+	$conf{colors} = $self->sqlSelect("block", "blocks", "bid='colors'");
+
 	return \%conf;
 }
 
