@@ -325,11 +325,11 @@ sub getMode {
 	$mode = MSG_MODE_EMAIL if $msg->{altto};
 
 	# Can only get mail sent if registered is set
-	if (0 && $mode == MSG_MODE_EMAIL && !$msg->{user}{registered}) {
+	if ($mode == MSG_MODE_EMAIL && !$msg->{user}{registered}) {
 		$mode = MSG_MODE_WEB;
 	}
 
-	# check if mode is allowed; default to email
+	# check if mode is allowed for specific type; default to email
 	if (length($coderef->{modes}) && !grep /\b$mode\b/, $coderef->{modes}) {
 		if (0 && !$msg->{user}{registered}) {
 			$mode == MSG_MODE_NONE;
