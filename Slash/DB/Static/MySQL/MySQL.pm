@@ -813,6 +813,7 @@ sub getTodayArmorList {
 		"MOD(uid, $buckets) = $which_bucket AND name='emaildisplay' AND value=1",
 		"ORDER BY uid"
 	);
+	return { } if !@$uid_aryref; # nobody wants armor? skip next select
 	my $uid_list = join(",", @$uid_aryref);
 	return $self->sqlSelectAllHashref(
 		"uid",
