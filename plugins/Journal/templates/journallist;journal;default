@@ -13,15 +13,7 @@ journallist
 __template__
 [% USE Slash %]
 <TABLE>
-	[% IF !user.is_anon && (!uid || uid == user.uid) %]
-	<TR VALIGN="TOP"><TD COLSPAN="2">
-		<FORM ACTION="[% constants.rootdir %]/journal.pl" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
-			<INPUT TYPE="hidden" NAME="op" VALUE="list">
-			[% Slash.createSelect('theme', themes, default, 1) %]
-			<INPUT TYPE="submit" NAME="submit" VALUE="change">
-		</FORM>
-	</TD></TR>
-	[% END %]
+	<TR VALIGN="TOP"><TD COLSPAN="3">
 
 	[% x = 0 %]
 	[% FOREACH article = articles %]
@@ -35,7 +27,7 @@ __template__
 			<TD>
 			[% IF !user.is_anon && (!uid || uid == user.uid) %]
 				<A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[% article.2 %]</A>
-				<A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A>
+				<TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
 			[% ELSE %]
 				<A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]&amp;id=[% article.0 %]">[% article.2 %]</A>
 			[% END %]

@@ -778,6 +778,13 @@ sub topicSave {
 		$slashdb->saveTopic();
 	}
 
+	$slashdb->deleteSectionTopicsByTopic($form->{tid});
+	for my $item (keys %$form) {
+		if($form->{$item} =~ /^exsect_(.*)/) {
+			$slashdb->createSectionTopic($1, $form->{tid});
+		}
+	}
+
 	$form->{nexttid} = $form->{tid};
 
 	print getMessage('topicSave-message');

@@ -1,0 +1,26 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+journaloptions
+__template__
+[% USE Slash %]
+<TABLE>
+	<TR VALIGN="TOP"><TD COLSPAN="2">
+		<FORM ACTION="[% constants.rootdir %]/journal.pl" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
+			<INPUT TYPE="hidden" NAME="op" VALUE="list">
+			[% Slash.createSelect('theme', themes, default, 1) %]
+			<INPUT TYPE="submit" NAME="submit" VALUE="change">
+		</FORM>
+	</TD></TR>
+</TABLE>
+
+__seclev__
+100

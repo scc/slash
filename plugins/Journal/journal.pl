@@ -112,7 +112,12 @@ sub displayTop {
 sub displayFriends {
 	my($form, $journal) = @_;
 	my $friends = $journal->friends();
-	slashDisplay('journalfriends', { friends => $friends });
+	if(@$friends) {
+		slashDisplay('journalfriends', { friends => $friends });
+	} else {
+		print getData('nofriends');
+	}
+
 }
 
 sub displayRSS {
@@ -280,12 +285,20 @@ sub listArticle {
 		}
 	}
 	my $theme = $user->{'journal-theme'} || $constants->{journal_default_theme};
-	slashDisplay('journallist', {
-		articles	=> $list,
+	slashDisplay('journaloptions', {
 		default		=> $theme,
 		themes		=> $themes,
 		uid		=> $form->{uid},
-	});
+	}) if (!$user->{is_anon}  && ( !$form->{uid} || $form->{uid} == $user->{uid} ));
+
+	if(@$list) {
+		slashDisplay('journallist', {
+			articles	=> $list,
+			uid		=> $form->{uid},
+		});
+	} else {
+		print getData('noentries');
+	}
 }
 
 sub saveArticle {

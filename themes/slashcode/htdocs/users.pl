@@ -1178,7 +1178,7 @@ sub saveHome {
 	$exboxes = sprintf "'%s',", join "','", @b;
 	$exboxes =~ s/'',//g;
 
-	foreach my $k (keys %{$form}) {
+	for my $k (keys %{$form}) {
 		if ($k =~ /^extid_(.*)/)	{ $extid  .= "'$1'," }
 		if ($k =~ /^exaid_(.*)/)	{ $exaid  .= "'$1'," }
 		if ($k =~ /^exsect_(.*)/)	{ $exsect .= "'$1'," }

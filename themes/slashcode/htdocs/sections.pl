@@ -127,6 +127,7 @@ sub editSection {
 		isolate		=> $isolate,
 		issue		=> $issue,
 		blocks		=> \@blocks,
+		topics		=> $slashdb->getSectionTopicsNamesBySection($section),
 	});
 }
 

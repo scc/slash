@@ -377,6 +377,29 @@ sub unsetModeratorlog {
 }
 
 ########################################################
+sub deleteSectionTopicsByTopic {
+	my($self, $tid) = @_;
+
+	$self->sqlDo("DELETE FROM section_topics WHERE tid=$tid");
+}
+
+########################################################
+sub createSectionTopic {
+	my($self, $section, $tid) = @_;
+
+	$self->sqlDo("INSERT INTO section_topics VALUES (section, tid) ('$section','$tid')");
+}
+
+########################################################
+sub getSectionTopicsNamesBySection {
+	my($self, $section) = @_;
+
+	my $answer = $self->sqlSelectColArrayref('topics.alttext', 'topics,section_topics', " section_topics.section = '$section' AND section_topics.tid = topics.tid");
+
+	return $answer;
+}
+
+########################################################
 sub getContentFilters {
 	my($self, $formname, $field) = @_;
 

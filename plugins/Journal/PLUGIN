@@ -15,3 +15,5 @@ template=templates/journaltop;journal;default
 template=templates/messagenew;journal;default
 template=templates/messagenew_subj;journal;default
 template=templates/pagination;journal;default
+template=templates/data;journal;default
+template=templates/journaloptions

@@ -70,6 +70,7 @@ sub list {
 	my $order = "ORDER BY date DESC";
 	$order .= " LIMIT $limit" if $limit;
 	my $answer = $self->sqlSelectAll('id, date, description', 'journals', "uid = $uid", $order);
+
 	return $answer;
 }
 
@@ -107,12 +108,12 @@ sub friends {
 	my($self) = @_;
 	my $uid = $ENV{SLASH_USER};
 	my $sql;
-	$sql .= " SELECT u.nickname, j.friend, MAX(jo.date) as date ";
-	$sql .= " FROM journals as jo, journal_friends as j,users as u ";
-	$sql .= " WHERE j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid";
-	$sql .= " GROUP BY u.nickname ORDER BY date DESC";
-	$self->sqlConnect;
-	my $friends = $self->{_dbh}->selectall_arrayref($sql);
+#	$sql .= " SELECT u.nickname, j.friend, MAX(jo.date) as date, jo.description ";
+#	$sql .= " FROM journals as jo, journal_friends as j,users as u ";
+#	$sql .= " WHERE j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid";
+#	$sql .= " GROUP BY u.nickname ORDER BY date DESC";
+#	$self->sqlConnect;
+	my $friends = $self->sqlSelectAll('u.nickname, j.friend, MAX(jo.date) as date, jo.description','journals as jo, journal_friends as j,users as u', "j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid", 'GROUP BY u.nickname ORDER BY date DESC');
 
 	return $friends;
 }

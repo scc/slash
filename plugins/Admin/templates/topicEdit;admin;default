@@ -14,7 +14,7 @@ __template__
 <TABLE>
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">
-		<TD>
+		<TD VALIGN="TOP">
 			[% topics_select %]
 
 			<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
@@ -23,21 +23,21 @@ __template__
 			[% IF ! form.topicdelete %]
 
 				[% IF topic.tid %]
-			<BR>Image as seen: <BR><BR>
+			[% INCLUDE formLabel value => "Image as seen" %]
 			<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
 				[% END %]
 
 			<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
-			<BR>Alt Text<BR>
+			[% INCLUDE formLabel value => "Alt Text" %]
 			<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
-			<BR>Dimensions (leave blank to determine automatically)<BR>
+			[% INCLUDE formLabel value => "Dimensions", comment => "leave blank to determine automatically" %]
 			Width: <INPUT TYPE="TEXT" NAME="width" VALUE="[% topic.width %]" SIZE="4">
 			Height: <INPUT TYPE="TEXT" NAME="height" VALUE="[% topic.height %]" SIZE="4"><BR>
 			<BR>
 
 				[% IF images_flag %]
 
-				<BR>Image<BR>
+				[% INCLUDE formLabel value => "Image" %]
 				[% image_select %]
 
 				[% ELSE %]
@@ -54,7 +54,8 @@ __template__
 			[% END %]
 
 		</TD>
-		<TD>
+		<TD VALIGN="TOP">
+		[% INCLUDE formLabel value => "Sections", comment => "select which sections a topic belongs to" %]
 		[% FOREACH section = sectionref.keys %]
 		    <INPUT TYPE="CHECKBOX" NAME="exsect_[% section %]"[% sectionref.$section.checked %]>[% sectionref.$section.title %]<BR>
 		[% END %]
