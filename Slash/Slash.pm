@@ -70,7 +70,7 @@ sub selectComments {
 		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
 	}
 
-	my $thisComment = $slashdb->getCommentsForUser($header, $cid, ($header->{writestatus} eq 'archived' ? 1 : 0 ));
+	my $thisComment = $slashdb->getCommentsForUser($header, $cid, (($header->{writestatus} eq 'archived') ? 1 : 0 ));
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
@@ -272,7 +272,7 @@ sub printComments {
 	my $lvl = 0;
 
 	# Get the Comments
-	my($comments, $count) = selectComments($discussion->{id}, $cid || $pid);
+	my($comments, $count) = selectComments($discussion, $cid || $pid);
 
 	# Should I index or just display normally?
 	my $cc = 0;
