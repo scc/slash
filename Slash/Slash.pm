@@ -352,7 +352,7 @@ sub getWidgetBlock {
 sub userLogin {
 	my($name, $passwd) = @_;
 
-	$passwd = substr $passwd, 0, 12;
+	$passwd = substr $passwd, 0, 20;
 	my $uid = $I{dbobject}->getUserAuthenticate($name, $passwd);
 
 	if ($uid != $I{anonymous_coward}) {
