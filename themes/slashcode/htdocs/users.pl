@@ -226,6 +226,7 @@ sub newUser {
 
 	$I{F}{newuser} =~ s/\s+/ /g;
 	$I{F}{newuser} = stripByMode($I{F}{newuser}, "nohtml");
+	$I{F}{newuser} =~ s/&//g;
 	$I{F}{newuser} = substr($I{F}{newuser}, 0, 20);
 
 	(my $matchname = lc $I{F}{newuser}) =~ s/[^a-zA-Z0-9]//g;
@@ -241,7 +242,7 @@ sub newUser {
 		" realemail=" . $I{dbh}->quote($I{F}{email})
 	);
 
-	if (!$cnt && $I{F}{email} =~ /\@/) {
+	if ($matchname ne '' && $I{F}{newuser} ne '' && !$cnt && $I{F}{email} =~ /\@/) {
 		titlebar("100%", "User $I{F}{newuser} created.");
 
 		$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
@@ -281,11 +282,8 @@ EOT
 
 #################################################################
 sub changePassword {
-	my $r = crypt($_[0], substr(rand, 2, 2));
-	$r =~ s/[i1Il]/x/g;
-	$r =~ s/[^A-Z1-9]//gi;
-	$r = substr($r, 2, 8);
-	return $r;
+	my @chars = grep !/[0O1Iil]/, 0..9, 'A'..'Z', 'a'..'z';
+	return join '', map { $chars[rand @chars] } 0 .. 7;
 }
 
 #################################################################
@@ -300,7 +298,7 @@ sub mailPassword {
 	$msg = prepBlock($msg);
 	$msg = eval $msg;
 
-	if ($name && ($name eq $nickname)) {
+	if ($name ne '' && (lc($name) eq lc($nickname))) {
 		sendEmail($email, "$I{sitename} user password for $name", $msg) if $name;
 		print "Passwd for $name was just emailed.<BR>\n";
 	} else {
@@ -946,6 +944,10 @@ EOT
 
 	$H2->{mylinks} = $I{F}{mylinks} if $I{F}{mylinks};
 
+	# If a user is unwilling to moderate, we should cancel all points, lest
+	# they be preserved when they shouldn't be.
+	sqlUpdate("users_comments", { points => 0 }, "uid=$uid AND uid>0", 1)
+		unless $I{F}{willing};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
 	sqlUpdate("users_index", $H, "uid=" . $uid . " AND uid>0", 1);
@@ -1005,6 +1007,7 @@ EOT1
 EOT2
 
 	print <<EOT;
+	(Note: the characters &amp;, &lt; and &gt; are not allowed in nicknames.)
 
 	<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="$I{F}{newuser}">
 	<BR> and an <B>valid email address </B> address to send your registration
