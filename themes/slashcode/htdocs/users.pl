@@ -56,17 +56,11 @@ print STDERR "OP $I{F}{op}\n";
 	}
 
 	header("$I{sitename} Users");
-	print <<EOT if !$user->{is_anon} && $op ne "userclose";
-$note [
-	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
-	<A HREF="$ENV{SCRIPT_NAME}?op=edituser">Edit User Info</A> |
-	<A HREF="$ENV{SCRIPT_NAME}?op=edithome">Customize Homepage</A> |
-	<A HREF="$ENV{SCRIPT_NAME}?op=editcomm">Customize Comments</A> |
-	<A HREF="$ENV{SCRIPT_NAME}?op=userclose">Logout</A>
- ]
 
-EOT
-
+	if (!$user->{is_anon} && $op ne "userclose") {
+		my $block = eval prepBlock $I{dbobject}->getBlock('users_menu','block');
+		print $block;
+	}
 	# and now the carnage begins
 	if ($op eq "newuser") {
 		newUser();
@@ -176,21 +170,16 @@ sub previewSlashbox {
 	my $cleantitle = $section->{'title'};
 	$cleantitle =~ s/<(.*?)>//g;
 
-	titlebar("100%","Preview $cleantitle");
-	print <<EOT;
-What you see on the right hand side is a preview of the block thingee
-labeled "$cleantitle".  If you select it from the
-<A HREF="$I{rootdir}/users.pl?op=preferences">Preferences Page</A>,
-you will have that little block added to the right hand side of your
-<A HREF="$I{rootdir}/index.pl">Custom $I{sitename}</A> page.	 
-Exciting?  Not really, but its a great way to waste time.
-
-EOT
-	print <<EOT if $I{U}{aseclev} > 999;
-<P>Edit <A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$I{F}{bid}">$I{F}{bid}</A>
-EOT
-
-	print qq!</TD><TD WIDTH="180" VALIGN="TOP">!;
+	my $title = eval prepBlock $I{dbobject}->getBlock('users_previewslashbox_title','block');
+	titlebar("100%",$title);
+	my $preview = eval prepBlock $I{dbobject}->getBlock('users_preview_slashbox','block');
+	print $preview;
+	if ($I{U}{aseclev} > 999) {
+		my $url = eval prepBlock $I{dbobject}->getBlock('users_preview_slashbox_edit','block');
+		print $url;
+	}
+	my $tdtag = $I{dbobject}->getBlock('users_preview_slashbox_tdt','block');
+	print $tdtag;
 
 	print portalbox($I{fancyboxwidth}, $section->{'title'},
 		$section->{'content'}, "", $section->{'url'});
@@ -198,16 +187,9 @@ EOT
 
 #################################################################
 sub miniAdminMenu {
-	print <<EOT;
-<FORM ACTION="$ENV{SCRIPT_NAME}">
-	<FONT SIZE="${\( $I{fontbase} + 1 )}"> [
-		<A HREF="$I{rootdir}/admin.pl">Admin</A> |
-		<INPUT TYPE="HIDDEN" NAME="op" VALUE="suedituser">
-		<INPUT TYPE="TEXT" NAME="name" VALUE="$I{F}{nick}">
-		<INPUT TYPE="SUBMIT" VALUE="Edit">
-	</FONT> ]
-</FORM>
-EOT
+# userpage_miniadminmenu
+	my $miniadminmenu = eval prepBlock $I{dbobject}->getBlock('users_miniadminmenu','block');
+	print $miniadminmenu;
 }
 
 #################################################################
@@ -227,17 +209,8 @@ sub newUser {
 			titlebar("100%", "User $I{F}{newuser} created.");
 
 			$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
-			print <<EOT;
-
-			<B>email</B>=$I{F}{email}<BR>
-			<B>user id</B>=$uid<BR>
-			<B>nick</B>=$I{F}{newuser}<BR>
-			<B>passwd</B>=mailed to $I{F}{email}<BR>
-			<P>Once you receive your password, you can log in and
-			<A HREF="$I{rootdir}/users.pl">set your account up</A>
-
-EOT
-
+			my $newusermsg = eval prepBlock $I{dbobject}->getBlock('users_newusermsg','block');
+			print $newusermsg;
 			mailPassword($uid);
 
 			return;
@@ -252,100 +225,102 @@ EOT
 sub mailPassword {
 	my($uid) = @_;
 	unless ($uid) {
-		print "Nickname was not found. No Password was mailed.<BR>\n"; 
+		my $msg = $I{dbobject}->getBlock('users_mailpasswd_notmailed','block');
+		print $msg;
 		return;
 	}
 
-	my $user_email = $I{dbobject}->getUser($uid, [qw(nickname realemail)]);
+	my $user_email = $I{dbobject}->getUser($uid, qw(nickname realemail));
 	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
 	my $tempnick = fixparam($user_email->{nickname});
 
-	my $msg = <<EOT;
-Your new password is $newpasswd.  Your old password will still work until
-this password is used.  Go to the URL below to log in:
+	my $msg = eval prepBlock $I{dbobject}->getBlock('users_mailpasswdmsg','block');
 
-  $I{absolutedir}/index.pl?op=userlogin&upasswd=$newpasswd&unickname=$tempnick
-
-Make sure you then CHANGE YOUR PASSWORD!
-
-Thanks.
-EOT
-
-	sendEmail(
-		$user_email->{realemail},
-		"$I{sitename} user password for $user_email->{nickname}",
-		$msg
-	) if $user_email->{nickname};
-	print "Passwd for $user_email->{nickname} was just emailed.<BR>\n";
+	my $emailtitle = eval prepBlock $I{dbobject}->getBlock('users_mailpasswd_emailtitle','block');
+	sendEmail($user_email->{realemail}, $emailtitle, $msg) if $user_email->{nickname};
+	my $mailed = eval prepBlock $I{dbobject}->getBlock('users_mailpasswd_mailed','block');
+	print $mailed;
 }
 
 #################################################################
 sub userInfo {
 	my($uid, $nick) = @_;
 	unless (defined $uid) {
-		print "$nick not found.";
+		my $msg = eval prepBlock $I{dbobject}->getBlock('userpage_userinfo_nicknf','block');
+		print $msg;
 		return;
 	}
 
 	my @values = qw(homepage fakeemail bio seclev karma nickname);
-	my $userbio = $I{dbobject}->getUser($uid, \@values);
+	my $userbio = $I{dbobject}->getUser($uid, @values);
 
 	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
 	if ($I{U}{nickname} eq $nick) {
 		my $points = $I{dbobject}->getUser($uid, 'points');
 
-		titlebar("95%", "Welcome back $nick ($uid)");
-		print <<EOT;
-<P>This is <B>your</B> User Info page.  There are thousands more, but this one is yours.
-You most likely are not so interested in you, and probably would be most interested in
-clicking the "Edit User Info" and "Customize..." links you see up top there so you can
-customize $I{sitename}, change your password, or just click pretty widgets to kill time.
-EOT
+		my $title = eval prepBlock $I{dbobject}->getBlock('users_userinfo_maintitle','block');
+		titlebar("95%", $title);
+
+		my $userinfo_msg = $I{dbobject}->getBlock('users_userinfo_msg','block');
+		print $userinfo_msg;
 
 		# Users should be able to see their own points.
 		if ($I{U}{uid} == $uid && $points > 0) {
-			print <<EOT;
-<P>You're a moderator with $points points. Please read the
-<A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A> before you do any moderation.
-<BR><P>
-EOT
+			my $userinfo_modmsg = eval prepBlock $I{dbobject}->getBlock('users_userinfo_modmsg','block');
+			print $userinfo_modmsg;
 		}
-		print <<EOT;
-<CENTER><IMG SRC="$I{imagedir}/greendot.gif" WIDTH="75%" HEIGHT="1" ALIGN="CENTER"><BR></CENTER>
-EOT
+
+		my $userinfo_grndot= eval prepBlock $I{dbobject}->getBlock('users_userinfo_grndot','block');
+		print $userinfo_grndot;
 
 	} else {
-		titlebar("95%", "User Info for $nick ($uid)");
+		my $userinfo_usertitle = eval prepBlock $I{dbobject}->getBlock('users_userinfo_usertitle','block');
+		titlebar("95%", $userinfo_usertitle);
 	}
 
-	print qq!<A HREF="$userbio->{'homepage'}">$userbio->{'homepage'}</A><BR><A HREF="mailto:$userbio->{'fakeemail'}">$userbio->{'fakeemail'}</A><BR>!;
-	print "<B>Karma</B> $userbio->{'karma'} (mostly the sum of moderation done to users comments)<BR>"
-		if $I{U}{aseclev} || $I{U}{uid} == $uid;
-	print "<B>User Bio</B><BR>$userbio->{'bio'}<P>" if $userbio->{'bio'};
+		my $userinfo_homepage = eval prepBlock $I{dbobject}->getBlock('users_userinfo_homepage','block');
+		print $userinfo_homepage;
+	if ($I{U}{aseclev} || $I{U}{uid} == $uid) { 
+		my $userinfo_karma = eval prepBlock $I{dbobject}->getBlock('users_userinfo_karma','block');
+		print $userinfo_karma;
+	}	
+	if ($userbio->{'bio'}) {
+		my $userinfo_bio = eval prepBlock $I{dbobject}->getBlock('users_userinfo_bio','block');
+		print $userinfo_bio;
+	}
 
 	my($k) = $I{dbobject}->getUser($uid, 'pubkey');
-	$k = stripByMode($k, "html");
-	print "<B>Public Key</B><BR><PRE>\n$k</PRE><P>" if $k;
+
+	if($k) {
+		$k = stripByMode($k, "html");
+		my $userinfo_pubkey = eval prepBlock $I{dbobject}->getBlock('users_userinfo_pubkey','block');
+		print $userinfo_pubkey;
+	}
 
 	$I{F}{min} = 0 unless $I{F}{min};
 
-	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min});
+	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
 
 	my $rows = @$comments;
-	print "<B>$nick has posted $rows" 
-		. " comments</B> (this only counts the last few weeks)<BR><P>";
+
+	my $userinfo_posted = eval prepBlock $I{dbobject}->getBlock('users_userinfo_posted','block');
+	print $userinfo_posted;
 
 	my $x;
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 		$x++;
 		my $r = $I{dbobject}->countComments($sid, $cid);
-		my $replies = " Replies:$r" if $r;
 
-		print <<EOT;
-<BR><B>$x</B> <A HREF="$I{rootdir}/comments.pl?sid=$sid&cid=$cid">$subj</A> posted on $cdate (Score:$pts$replies)
-<FONT SIZE="${\( $I{fontbase} + 2 )}">
-EOT
+		my $replies = '';
+		if($r) {
+			$replies = eval prepBlock $I{dbobject}->getBlock('users_userinfo_replies','block');
+		}
+
+		# userpage_userinfo_score
+		my $userinfo_score = eval prepBlock $I{dbobject}->getBlock('users_userinfo_score','block');
+		print $userinfo_score;
+
 		# This is ok, since with all luck we will not be hitting the DB
 		my $story = $I{dbobject}->getStory($sid);
 
@@ -354,14 +329,17 @@ EOT
 				? "$I{rootdir}/$story->{section}/$sid.shtml"
 				: "$I{rootdir}/article.pl?sid=$sid";
 
-			print qq!<BR>attached to <A HREF="$href">$story->{title}</A>!;
-# $S->{section}/$sid.shtml
+			# userpage_userinfo_story
+			my $userinfo_story = eval prepBlock $I{dbobject}->getBlock('users_userinfo_story','block');
+			print $userinfo_story;
 		} else {
+			# userpage_userinfo_poll
 			my $question = $I{dbobject}->getPollQuestion($sid, 'question');
-			print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $question</A>!
-				if $question;
+			if($question) {
+				my $userinfo_poll = eval prepBlock $I{dbobject}->getBlock('users_userinfo_poll','block');
+				print $userinfo_poll;
+			}	
 		}
-		print "</FONT>";
 	}
 }
 
@@ -370,8 +348,10 @@ sub editKey {
 	my($uid) = @_;
 
 	my $k = $I{dbobject}->getUser($uid, 'pubkey');
-	printf qq!<P><B>Public Key</B><BR><TEXTAREA NAME="pubkey" ROWS="4" COLS="60">%s</TEXTAREA>!,
-		stripByMode($k, 'literal');
+
+	# users_editkey (static)
+	my $editkey = $I{dbobject}->getBlock('users_editkey','block');
+	printf $editkey,stripByMode($k, 'literal');
 }
 
 #################################################################
@@ -382,157 +362,116 @@ sub editUser {
 		realname realemail fakeemail homepage nickname
 		passwd sig seclev bio maillist
 	);
-	my $user_edit = $I{dbobject}->getUser($uid, \@values);
+	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
 	return if isAnon($user_edit->{uid});
 
-	titlebar("100%", "Editing $user_edit->{nickname} ($user_edit->{uid}) $user_edit->{realemail}");
-	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
+	my $edituser_title = eval prepBlock $I{dbobject}->getBlock('users_edituser_title','block');
+	titlebar("100%", $edituser_title);
+
+	my $edituser_table= eval prepBlock $I{dbobject}->getBlock('users_edituser_table','block');
+	print $edituser_table;
 
 	$user_edit->{homepage} ||= "http://";
  
 	my $tempnick = fixparam($user_edit->{nickname});
 	my $temppass = fixparam($user_edit->{passwd});
  
-	print <<EOT;
-You can automatically login by clicking
-<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$temppass&unickname=$tempnick">This Link</A>
-and Bookmarking the resulting page. This is totally insecure, but very convenient.
-
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-
-	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="$user_edit->{realname}" SIZE="40"><BR>
-		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$user_edit->{uid}">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$user_edit->{nickname}">
-
-	<B>Real Email</B> (required but never displayed publicly. 
-		This is where your passwd is mailed.  If you change your
-		email, notification will be sent)<BR>
-		<INPUT TYPE="TEXT" NAME="realemail" VALUE="$user_edit->{realemail}" SIZE="40"><BR>
-
-	<B>Fake Email</B> (optional:This email publicly displayed by
-		your comments, you may spam proof it, leave it blank, 
-		or just type in your address)<BR>
-		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="$user_edit->{fakeemail}" SIZE="40"><BR>
-
-	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="$user_edit->{homepage}" SIZE="60"><BR>
-
-	<P><B>Headline Mailing List</B>
-EOT
+	my $edituser_mainform = eval prepBlock $I{dbobject}->getBlock('users_edituser_mainform','block');
+	print $edituser_mainform;
 
 	my $description = $I{dbobject}->getDescriptions('maillist');
 	createSelect('maillist', $description, $user_edit->{maillist});
 
-	printf <<EOT, stripByMode($user_edit->{sig}, 'literal'), stripByMode($user_edit->{bio}, 'literal');
-	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
-		<TEXTAREA NAME="sig" ROWS="2" COLS="60">%s</TEXTAREA>
-
-	<P><B>Bio</B> (this information is publicly displayed on your
-		user page.  255 chars)<BR>
-		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">%s</TEXTAREA>
-
-EOT
+	# users_edituser_sigbio
+	my $edituser_sigbio = $I{dbobject}->getBlock('users_edituser_sigbio','block');
+	printf $edituser_sigbio, stripByMode($user_edit->{sig}, 'literal'), stripByMode($user_edit->{bio}, 'literal');
 
 	editKey($user_edit->{uid});
 
-  	print <<EOT;
-	<P><B>Password</B> Enter new passwd twice to change it.
-		(must be 6-32 chars long)<BR>
-		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="32" MAXLENGTH="32">
-		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="32" MAXLENGTH="32"><P>
-
-</TD></TR></TABLE><P>
-
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="saveuser">
-	</FORM>
-EOT
-
-	# print "	<INPUT TYPE="SUBMIT" NAME="op" VALUE="susaveuser"> <INPUT TYPE="SUBMIT" NAME="op" VALUE="sudeluser">" if $I{U}{aseclev}> 499;
+	my $edituser_passwd = $I{dbobject}->getBlock('users_edituser_passwd','block');
+	print $edituser_passwd; 
 }
 
 #################################################################
 sub tildeEd {
 	my($extid, $exsect, $exaid, $exboxes, $userspace) = @_;
 	
-	titlebar("100%", "Exclude Stories from the Homepage");
+	# users_tilded_title
+	my $tilded_title = $I{dbobject}->getBlock('users_tilded_title','block');
+	titlebar("100%", $tilded_title);
 
-	print <<EOT;
-<TABLE WIDTH="95%" BORDER="0" CELLPADDING="3" CELLSPACING="3" ALIGN="CENTER">
-		<TR BGCOLOR="$I{bg}[3]">
-			<TH><FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 4 )}">Authors</FONT></TH>
-			<TH><FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 4 )}">Topics</FONT></TH>
-			<TH><FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 4 )}">Sections</FONT></TH>
-		</TR><TR BGCOLOR="$I{bg}[2]"><TD VALIGN="TOP">
-EOT
+	my $tilded_menu = eval prepBlock $I{dbobject}->getBlock('users_tilded_menu','block');
+	print $tilded_menu;
 
 	# Customizable Authors Thingee
+	my $tilded_exaid_code = prepBlock $I{dbobject}->getBlock('users_tilded_exaid','block');
+	my $tilded_exaid = '';
 	my $aids = $I{dbobject}->getAuthorAids();
 	for(@$aids) {
 	# Ok, this is probably dumb
 		my ($aid) = @$_;
 		my $checked = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
-		print qq!<INPUT TYPE="CHECKBOX" NAME="exaid_$aid"$checked>$aid<BR>\n!;
+		my $tilded_exaid = eval $tilded_exaid_code;
+		print $tilded_exaid;
 	}
-
 
 	# Customizable Topic
-	print qq!</TD><TD VALIGN="TOP"><MULTICOL COLS="3">!;
+	my $tilded_topicsbegin = $I{dbobject}->getBlock('users_tilded_topicsbegin','block');
+	print $tilded_topicsbegin;
+
 	my $topics = $I{dbobject}->getDescriptions('topics');
+	my $tilded_topics_code = prepBlock $I{dbobject}->('users_tilded_topics','block');
+	my $tilded_topics = '';
 	while (my($tid, $alttext) = each %$topics) {
 		my $checked = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
-		print qq!<INPUT TYPE="CHECKBOX" NAME="extid_$tid"$checked>$alttext<BR>\n! if $tid;
+		$tilded_topics = eval $tilded_topics_code;
+		print $tilded_topics;
 	}
 
-	print "</MULTICOL></TD>";
+	my $tilded_topicsend = $I{dbobject}->getBlock('users_tilded_topicsend','block');
+	print $tilded_topicsend;
 
-	# Customizable Sections
-	print '<TD VALIGN="TOP">';
 	my $sections = $I{dbobject}->getDescriptions('sections');
 
+	# users_tilded_sectionex
+	my $tilded_sectionex_code = prepBlock $I{dbobject}->('users_tilded_sectionex','block');
+	my $tilded_sectionex = '';
 	while (my($section,$title) = each %$sections) {
 		my $checked = ($exsect =~ /'$section'/) ? " CHECKED" : "";
-		print qq!<INPUT TYPE="CHECKBOX" NAME="exsect_$section"$checked>$title<BR>\n! if $section;
+		$tilded_sectionex = eval $tilded_sectionex_code;
+		print $tilded_sectionex;
 	}
 
-	print "</TD>";
-
-	print "</TD></TR></TABLE><P>";
+	my $tilded_endtable1 = $I{dbobject}->('users_tilded_endtable1','block'); 
+	print $tilded_endtable1;
 	
-	titlebar("100%", "Customize Slashboxes");
+	my $tilded_customizetitle = $I{dbobject}->('users_tilded_customizetitle','block'); 
+	titlebar("100%", $tilded_customizetitle);
 
 	$userspace = stripByMode($userspace, 'literal');
-	print <<EOT;
-<TABLE WIDTH="95%" BGCOLOR="$I{bg}[2]" ALIGN="CENTER" BORDER="0">
-	<TR><TD>
-	<P>Look ma, I'm configurable!
-	<B>Important:</B> If you leave these all unchecked, it means you
-	want the <I>default</I> selection of boxes.  If you start selecting
-	boxes, remember to set <B>all</B> of them that you want because the 
-	default selection will be <B>ignored</B>.  Default entries are bolded.
 
-	<P><B>User Space</B> (check 'user space' below and whatever
-	you place here will appear your custom $I{sitename})<BR>
-		<TEXTAREA NAME="mylinks" rows=5 COLS="60" WRAP="VIRTUAL">$userspace</TEXTAREA>
-
-	<P><MULTICOL COLS="3">
-EOT
+	# users_tilded_customizemsg
+	my $tilded_customizemsg = eval prepBlock $I{dbobject}->getBlock('users_tilded_customizemsg','block');
+	print $tilded_customizemsg;
 
 	my $sections_description = $I{dbobject}->getSectionBlocks();
+	my $tilded_exboxes_code = prepBlock $I{dbobject}->getBlock('users_tilded_exboxes','block');
+	my $tilded_exboxes = '';
 	for (@$sections_description) {
 		my($bid, $title, $o) = @$_;
 		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";
 		$title =~ s/<(.*?)>//g;
 		print "<B>" if $o > 0;
-		print qq!<INPUT TYPE="CHECKBOX" NAME="exboxes_$bid"$checked>!
-			. qq!<A HREF="$ENV{SCRIPT_NAME}?op=preview&bid=$bid">!;
+		$tilded_exboxes = eval $tilded_exboxes_code;
+		print $tilded_exboxes;
 
 		unless ($bid eq "srandblock") {
 			print $title;
 		} else {
-			print "Semi-Random Box";
+			my $tilded_rand = eval prepBlock $I{dbobject}->getBlock('users_tilded_rand','block');
+			print $tilded_rand;
 		}
 
 		print "</A><BR>\n";
@@ -540,19 +479,9 @@ EOT
 	}
 
 
-	print <<EOT;
-	</MULTICOL><P>
-
-	If you have reasonable suggestions for boxes that can be added
-	here, or a problem with one of the boxes already here,
-	email <A HREF="mailto:$I{adminmail}">$I{siteadmin_name}</A>.	
-
-	<P>The preferred format is the Netscape RDF format that is
-	rapidly becoming the de facto format for exchanging headlines
-	between sites.
-EOT
-		
-	print "<P></TD></TR></TABLE>";
+	# users_tilded_boxmsg
+	my $tilded_boxmsg = eval prepBlock $I{dbobject}->getBlock('users_tilded_boxmsg','block');
+	print $tilded_boxmsg;
 }
 
 #################################################################
@@ -575,23 +504,20 @@ sub editHome {
 	my $user_edit = getCurrentUser();
 	if ($uid == $user_edit->{uid}) {
 		@values = grep ! exists $user_edit->{$_}, @values;
-		my $tmpuser = $I{dbobject}->getUser($uid, \@values);
+		my $tmpuser = $I{dbobject}->getUser($uid, @values);
 		@{$user_edit}{ keys %$tmpuser} = values %$tmpuser;
 	} else {
-		$user_edit = $I{dbobject}->getUser($uid, \@values);
+		$user_edit = $I{dbobject}->getUser($uid, @values);
 		$user_edit->{uid} = $uid;
 	}
 
 	return if isAnon($user_edit->{uid});
 
-	titlebar("100%", "Customize $I{sitename}'s Display");
+	my $edithome_title = eval prepBlock $I{dbobject}->getBlock('users_edithome_title','block');
+	titlebar("100%", $edithome_title);
 
-	print <<EOT;
-	<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>
-
-		<B>Date/Time Format</B><NOBR>
-EOT
+	my $edithome_startform = eval prepBlock $I{dbobject}->getBlock('users_edithome_startform','block');
+	print $edithome_startform;
 
 	my $formats;
 	$formats = $I{dbobject}->getDescriptions('dateformats');
@@ -607,38 +533,16 @@ EOT
 	my $i_check = $user_edit->{noicons}	? " CHECKED" : "";
 	my $w_check = $user_edit->{willing}	? " CHECKED" : "";
 
-	print <<EOT;
-
-	<P><INPUT TYPE="CHECKBOX" NAME="light"$l_check>
-	<B>Light</B> (reduce the complexity of $I{sitename}'s HTML for 
-	AvantGo, Lynx, or slow connections)
-
-	<P><INPUT TYPE="CHECKBOX" NAME="noboxes"$b_check>
-	<B>Deactivate Slashboxes</B> (just the news ma'am)
-
-	<P><INPUT TYPE="CHECKBOX" NAME="noicons"$i_check>
-	<B>No Icons</B> (disable topic icon images on stories)
-
-	<P><B>Maximum Stories</B> The default is 30.  The main
-	column displays 1/3rd of these at minimum, and all of
-	today's stories at maximum.<BR>
-	<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="$user_edit->{maxstories}">
-
-	<P><INPUT TYPE="CHECKBOX" NAME="willing"$w_check>
-	<B>Willing to Moderate</B> By default all users are willing to
-	<A HREF="$I{rootdir}/moderation.shtml"> Moderate</A>.
-	Uncheck this if you aren't interested.
-
-	</TD></TR></TABLE><P>
-EOT
+	my $edithome_formbody = eval prepBlock $I{dbobject}->getBlock('users_edithome_formbody','block');
+	print $edithome_formbody;
 
 	tildeEd(
 		$user_edit->{extid}, $user_edit->{exsect},
 		$user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks}
 	);
 
-	print qq!\t<INPUT TYPE="SUBMIT" NAME="op" VALUE="savehome">\n!;
-	print "\t</FORM>\n\n";
+	my $edithome_formend = $I{dbobject}->getBlock('users_edithome_formend','block');
+	print $edithome_formend;
 }
 
 #################################################################
@@ -646,116 +550,77 @@ sub editComm {
 	my($uid) = @_;
 
 	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
-	my $user_edit = $I{dbobject}->getUser($uid, \@values);
+	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
-	titlebar("100%", "Comment Options");
+	my $editcomm_title= $I{dbobject}->getBlock('users_editcomm_title','block');
+	titlebar("100%", $editcomm_title);
 
-	print <<EOT;
-	<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>
-EOT
+	my $editcomm_startform = eval prepBlock $I{dbobject}->getBlock('users_editcomm_startform','block');
+	print $editcomm_startform;
 
 	my $formats;
 
-	print "<B>Display Mode</B>";
+	my $editcomm_dispmode = $I{dbobject}->getBlock('users_editcomm_dispmode','block');
+	print $editcomm_dispmode;
 	$formats = $I{dbobject}->getDescriptions('commentmodes');
 	createSelect('umode', $formats, $user_edit->{mode});
 
-	print "<P><B>Sort Order</B> (self explanatory?	I hope?)\n";
+	my $editcomm_sortord = $I{dbobject}->getBlock('users_editcomm_sortord','block');
+	print $editcomm_sortord;
+
 	$formats = $I{dbobject}->getDescriptions('sortcodes');
 	createSelect('commentsort', $formats, $user_edit->{commentsort});
 
-	print "<P><B>Threshold</B>";
+	my $editcomm_thres = $I{dbobject}->getBlock('users_editcomm_thres','block');
+	print $editcomm_thres;
+
 	$formats = $I{dbobject}->getDescriptions('threshcodes');
 	createSelect('uthreshold', $formats, $user_edit->{threshold});
 
-	print <<EOT;
-	<BR>(comments scored less than this setting will be ignored.
-	Anonymous posts start at 0, logged in posts start
-	at 1.  Moderators add and subtract points according to
-	the <A HREF="$I{rootdir}/moderation.shtml">Guidelines</A>.
-EOT
+	my $editcomm_guidelines = eval prepBlock $I{dbobject}->getBlock('users_editcomm_guidelines','block');
+	print $editcomm_guidelines;
 
-	print "<P><B>Highlight Threshold</B>";
+	my $editcomm_hithres = $I{dbobject}->getBlock('users_editcomm_hithres','block');
+	print $editcomm_hithres;
+
 	$formats = $I{dbobject}->getDescriptions('threshcodes');
 	createSelect('highlightthresh', $formats, $user_edit->{highlightthresh});
 
-	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
+	my $editcomm_scoring = $I{dbobject}->getBlock('users_editcomm_scoring','block');
+	print $editcomm_scoring;
 
 	my $h_check = $user_edit->{hardthresh}	? " CHECKED" : "";
 	my $r_check = $user_edit->{reparent}	? " CHECKED" : "";
 	my $n_check = $user_edit->{noscores}	? " CHECKED" : "";
 	my $s_check = $user_edit->{nosigs}	? " CHECKED" : "";
 
-	print <<EOT;
-	<P><B>Hard Thresholds</B> (Hides 'X Replies Below
-	Current Threshold' Message from Threads)
-	<INPUT TYPE="CHECKBOX" NAME="hardthresh"$h_check>
-
-	<P><B>Reparent Highly Rated Comments</B> (causes comments
-	to be displayed even if they are replies to comments
-	under current threshold)
-	<INPUT TYPE="CHECKBOX" NAME="reparent"$r_check>
-
-	<P><B>Do Not Display Scores</B> (Hides score:
-	They still <B>apply</B> you just don't see them.)
-	<INPUT TYPE="CHECKBOX" NAME="noscores"$n_check>
-
-	<P><B>Limit</B> only display this many comments.
-	For best results, set this to a low number and sort by score.<BR>
-	<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="$user_edit->{commentlimit}">
-
-	<P><B>Index Spill</B> (When an article has this many comments,
-	it switches to indexed mode)<BR>
-	<INPUT TYPE="TEXT" NAME="commentspill" VALUE="$user_edit->{commentspill}" SIZE="3">
-
-	<P><B>Small Comment Penalty</B> (Assign -1 to comments smaller
-	than this many characters.  This might cause some comments
-	to be rated -2 and hence rendered invisible!)<BR>
-	<INPUT TYPE="TEXT" NAME="clsmall" VALUE="$user_edit->{clsmall}" SIZE="6">
-
-	<P><B>Long Comment Bonus </B> (Assign +1 to lengthy comments)<BR>
-	<INPUT TYPE="TEXT" NAME="clbig" VALUE="$user_edit->{clbig}" SIZE="6">
-
-	<P><B>Max Comment Size</B> (Truncates long comments, and 
-	adds a \"Read More\" link.  Set really big to disable)<BR>
-	<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="$user_edit->{maxcommentsize}">
-
-	<P><B>Disable Sigs</B> (strip sig quotes from comments)
-	<INPUT TYPE="CHECKBOX" NAME="nosigs"$s_check>
-
-	<P><B>Comment Post Mode</B>
-EOT
+	my $editcomm_form = eval prepBlock $I{dbobject}->getBlock('users_editcomm_form','block');
+	print $editcomm_form;
 
 	$formats = $I{dbobject}->getDescriptions('postmodes');
 	createSelect('posttype', $formats, $user_edit->{posttype});
 
-	print <<EOT;
+	my $editcomm_formend = $I{dbobject}->getBlock('users_editcomm_formend','block');
+	print $editcomm_formend;
 
-	</TD></TR></TABLE><P>
-
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="savecomm">
-</FORM>
-EOT
-
-	# print qq! <INPUT TYPE="SUBMIT" NAME="op" VALUE="susaveuser"> <INPUT TYPE="SUBMIT" NAME="op" VALUE="sudeluser">! if $I{U}{aseclev}> 499;
 }
 
 #################################################################
 sub saveUser {
 	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $user_email  = $I{dbobject}->getUser($uid, ['nickname', 'realemail']);
+	my $user_email  = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
 	my $note;
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if isAnon($uid);
 
-	$note = "Saving $user_email->{nickname}.\n";
-	$note .= <<EOT if !$user_email->{nickname};
-Your browser didn't save a cookie properly.  This could mean you are behind a filter that
-eliminates them, you are using a browser that doesn't support them, or you rejected it.
-EOT
+	# $note = "Saving $user_email->{nickname}.\n";
+	$note = eval prepBlock $I{dbobject}->getBlock('users_savenickname','block');
+
+	if(! $user_email->{nickname}) {
+		$note .= $I{dbobject}->getBlock('users_saveuser_note','block');
+	}
 
 	# stripByMode _after_ fitting sig into schema, 120 chars
 	$I{F}{sig}	 = stripByMode(substr($I{F}{sig}, 0, 120), 'html');
@@ -776,34 +641,27 @@ EOT
 
 	if ($user_email->{realemail} ne $I{F}{realemail}) {
 		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
-		$note .= "Notifying $user_email->{realemail} of the change to their account.\n";
 
-		sendEmail($user_email->{realemail}, "$I{sitename} user email change for $user_email->{nickname}", <<EOT);
-The user account $user_email->{nickname} on $I{sitename} had this email
-associated with it.  A web user from $ENV{REMOTE_ADDR} has
-just changed it to $I{F}{realemail}.
+		$note .= eval prepBlock $I{dbobject}->getBlock('users_saveuser_changeemail','block');
 
-If this is wrong, well then we have a problem.	MOST LIKELY THIS IS NO
-BIG DEAL.  It probably means you have a common nickname and someone else
-wanted it.  They do not have your password, they are not going to sneak
-up on you late at night and steal your children.  Only this email address
-got this email.	 So do not sweat it unless your account suddenly dies
-or something.
-EOT
+		my $saveuser_emailtitle = eval prepBlock $I{dbobject}->getBlock('users_saveuser_emailtitle','block');
+		my $saveuser_emailmsg = eval prepBlock $I{dbobject}->getBlock('users_saveuser_emailmsg','block');
+		sendEmail($user_email->{realemail}, $saveuser_emailtitle, $saveuser_emailmsg);
 	}
 
 	delete $H->{passwd};
 	if ($I{F}{pass1} eq $I{F}{pass2} && length($I{F}{pass1}) > 5) {
-		$note .= "Password changed.";
+		$note .= $I{dbobject}->getBlock('users_saveuser_passchanged','block');
+
 		$H->{passwd} = $I{F}{pass1};
 		# check for DB error before setting cookie?  -- pudge
 		setCookie('user', bakeUserCookie($uid, encryptPassword($H->{passwd})));
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
-		$note .= "Passwords don't match. Password not changed.";
+		$note .= $I{dbobject}->getBlock('users_saveuser_passnotmatch','block');
 
 	} elsif (length $I{F}{pass1} < 6 && $I{F}{pass1}) {
-		$note .= "Password is too short and was not changed.";
+		$note .= $I{dbobject}->getBlock('users_saveuser_passtooshort','block');
 	}
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
@@ -820,11 +678,13 @@ sub saveComm {
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
 
-	print "<P>Saving $name<BR><P>";
-	print <<EOT if isAnon($uid) || !$name;
-<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
-eliminates them, you are using a browser that doesn't support them, or you rejected it.
-EOT
+	my $savename = eval prepBlock $I{dbobject}->getBlock('users_savename','block');
+	print $savename;
+
+	if (isAnon($uid) || !$name) {
+		my $cookiemsg = $I{dbobject}->getBlock('users_cookiemsg','block');
+		print $cookiemsg;
+	}
 
 	# Take care of the lists
 	# Enforce Ranges for variables that need it
@@ -861,11 +721,16 @@ sub saveHome {
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
 
-	print "<P>Saving $name<BR><P>";
-	print <<EOT if isAnon($uid) || !$name;
-<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
-eliminates them, you are using a browser that doesn't support them, or you rejected it.
-EOT
+	# users_savename
+	my $savename = eval prepBlock $I{dbobject}->getBlock('users_savename','block');
+	print $savename;
+
+	# print "<P>Saving $name<BR><P>";
+	# users_cookiemsg
+	if (isAnon($uid) || !$name) {
+		my $cookiemsg = $I{dbobject}->getBlock('users_cookiemsg','block');
+		print $cookiemsg;
+	}
 
 	my($extid, $exaid, $exsect) = "";
 	my $exboxes = $I{dbobject}->getUser($uid, 'exboxes');
@@ -927,71 +792,81 @@ EOT
 
 #################################################################
 sub displayForm {
-	my $anon_name = getCurrentAnonymousCoward('nickname');
-	print <<EOT;
-<TABLE WIDTH="100%" CELLPADDING="10"><TR><TD WIDTH="50%" VALIGN="TOP">
+	my $dispform_header = eval prepBlock $I{dbobject}->getBlock('users_dispform_header','block');
+	print $dispform_header;
 
-<P><FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
+	my $dispform_login = $I{dbobject}->getBlock('users_dispform_login','block'); 
+	my $dispform_loginerr = $I{dbobject}->getBlock('users_dispform_loginerr','block'); 
 
-EOT
+	print $I{F}{unickname} ? $dispform_loginerr : $dispform_login;
+	titlebar("100%", $I{F}{unickname} ? $dispform_loginerr : $dispform_login);
 
-	titlebar("100%", $I{F}{unickname} ? "Error Logging In" : "Login");
+	# $I{F}{unickname} ? "Error Logging In" : "Login";
+	# titlebar("100%", $I{F}{unickname} ? "Error Logging In" : "Login");
 
-	print $I{F}{unickname} ? <<EOT1 : $I{allow_anonymous} ? <<EOT2 : <<EOT3;
-	Danger, Will Robinson!  You didn't login!  You apparently put
-	in the wrong password, or the wrong nickname, or else space 
-	aliens have infested the server.  I'd suggest trying again,
-	or clicking that mail password button if you forgot your password.
-EOT1
-	Logging in will allow you to post comments as yourself.  If you
-	don't login, you will only be able to post as $anon_name.
-EOT2
-	Logging in will allow you to post comments.  If you
-	don't login, you will not be able to post.
-EOT3
+	# users_dispform_loginmsg1,users_dispform_loginmsg2,users_dispform_loginmsg3
+	if ($I{F}{unickname}) { 
+		my $msg = $I{dbobject}->getBlock('users_dispform_loginmsg1','block');
+		print $msg;
+
+		if($I{allow_anonymous}) {
+			my $msg = eval prepBlock $I{dbobject}->getBlock('users_dispform_loginmsg2','block');
+			print $msg;
+		} else {
+			my $msg = $I{dbobject}->getBlock('users_dispform_loginmsg3','block');
+			print $msg;
+		}
+	}
 
 	$I{F}{unickname} ||= $I{F}{newuser};
 
-	print <<EOT;
+	my $form1 = eval prepBlock $I{dbobject}->getBlock('users_dispform_form1','block');
+	print $form1 ;
 
-	<P><B>Nick:</B> (maximum 20 characters long)<BR>
-	<INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="$I{F}{unickname}"><BR>
+	my $title = '';
+	if($I{F}{newuser}) {
+		$title = $I{dbobject}->getBlock('users_dispform_duptitle','block');
+	} else {
+		$title = $I{dbobject}->getBlock('users_dispform_newtitle','block');
+	}
+	titlebar("100%", $title);
 
-	<B>Password:</B> (6-20 characters long)<BR>
-	<INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20" MAXLENGTH="20"><BR>
+	# titlebar("100%", $I{F}{newuser} ? "Duplicate Account!" : "I'm a New User!");
+	# users_dispform_newmsg1: users_dispform_newmsg2
 
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="userlogin">
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="mailpasswd">
+	my $form2= $I{dbobject}->getBlock('users_dispform_newmsg1','block');
+	$form2 .= $I{dbobject}->getBlock('users_dispform_newmsg2','block') if $I{F}{newuser};
+	$form2 .= eval prepBlock $I{dbobject}->getBlock('users_dispform_form2','block');
 
-	</TD><TD WIDTH="50%" VALIGN="TOP">
-EOT
+	print $form2;
 
-	titlebar("100%", $I{F}{newuser} ? "Duplicate Account!" : "I'm a New User!");
-	print $I{F}{newuser} ? <<EOT1 : <<EOT2;
-	Apparently you tried to register with a <B>duplicate nickname</B>,
-	a <B>duplicate email address</B>, or an <B>invalid email</B>.  You
-	can try another below, or use the form on the left to either login,
-	or retrieve your forgotten password.
-EOT1
-	What? You don't have an account yet?  Well enter your preferred <B>nick</B> name here:
-EOT2
 
-	print <<EOT;
-	(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
-	are allowed in nicknames, and all others will be stripped out.)
+#	print $I{F}{newuser} ? <<EOT1 : <<EOT2;
+#	Apparently you tried to register with a <B>duplicate nickname</B>,
+#	a <B>duplicate email address</B>, or an <B>invalid email</B>.  You
+#	can try another below, or use the form on the left to either login,
+#	or retrieve your forgotten password.
+#EOT1
+#	What? You don't have an account yet?  Well enter your preferred <B>nick</B> name here:
+#EOT2
 
-	<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="$I{F}{newuser}">
-	<BR> and a <B>valid email address</B> address to send your registration
-	information. This address will <B>not</B> be displayed on $I{sitename}.
-	<INPUT TYPE="TEXT" NAME="email" SIZE="20" VALUE="$I{F}{email}"><BR>
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="newuser"> Click the button to
-	be mailed a password.<BR>
+	# users_dispform_form2
+#	print <<EOT;
+#	(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
+#	are allowed in nicknames, and all others will be stripped out.)
 
-	</FORM>
+#	<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="$I{F}{newuser}">
+#	<BR> and a <B>valid email address</B> address to send your registration
+#	information. This address will <B>not</B> be displayed on $I{sitename}.
+#	<INPUT TYPE="TEXT" NAME="email" SIZE="20" VALUE="$I{F}{email}"><BR>
+#	<INPUT TYPE="SUBMIT" NAME="op" VALUE="newuser"> Click the button to
+#	be mailed a password.<BR>
 
-</TD></TR></TABLE>
+#	</FORM>
 
-EOT
+#</TD></TR></TABLE>
+
+#EOT
 }
 
 main();
