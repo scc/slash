@@ -640,8 +640,9 @@ sub editHome {
 
 	my($formats, $title, $tzformat_select, $tzcode_select);
 	my $user = {};
-	#Is it a good idea to set this, this low
-	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
+	#Is it a good idea to set this, this low (100)
+	# no, it is not -- pudge
+	my $admin_flag = ($curuser->{seclev} >= 1000) ? 1 : 0;
 	my $admin_block = '';
 
 	return if $curuser->{is_anon};

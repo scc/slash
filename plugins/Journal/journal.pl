@@ -93,17 +93,17 @@ sub displayTop {
 	my($form, $journal, $constants) = @_;
 	my $journals;
 
-	if($constants->{journal_top_posters}) {
+	if ($constants->{journal_top_posters}) {
 		$journals = $journal->top($constants->{journal_top});
 		slashDisplay('journaltop', { journals => $journals, type => 'top' });
 	}
 
-	if($constants->{journal_top_friend}) {
+	if ($constants->{journal_top_friend}) {
 		$journals = $journal->topFriends($constants->{journal_top});
 		slashDisplay('journaltop', { journals => $journals, type => 'friend' });
 	}
 
-	if($constants->{journal_top_recent}) {
+	if ($constants->{journal_top_recent}) {
 		$journals = $journal->topRecent($constants->{journal_top});
 		slashDisplay('journaltop', { journals => $journals, type => 'recent' });
 	}
@@ -112,7 +112,7 @@ sub displayTop {
 sub displayFriends {
 	my($form, $journal) = @_;
 	my $friends = $journal->friends();
-	if(@$friends) {
+	if (@$friends) {
 		slashDisplay('journalfriends', { friends => $friends });
 	} else {
 		print getData('nofriends');
@@ -289,9 +289,9 @@ sub listArticle {
 		default		=> $theme,
 		themes		=> $themes,
 		uid		=> $form->{uid},
-	}) if (!$user->{is_anon}  && ( !$form->{uid} || $form->{uid} == $user->{uid} ));
+	}) if (!$user->{is_anon} && ( !$form->{uid} || $form->{uid} == $user->{uid} ));
 
-	if(@$list) {
+	if (@$list) {
 		slashDisplay('journallist', {
 			articles	=> $list,
 			uid		=> $form->{uid},

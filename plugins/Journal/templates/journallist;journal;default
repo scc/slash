@@ -24,14 +24,12 @@ __template__
 		END %]
 		<TR VALIGN="TOP" BGCOLOR="[% color %]">
 			<TD>[% Slash.timeCalc(article.1) %]</TD>
-			<TD>
-			[% IF !user.is_anon && (!uid || uid == user.uid) %]
-				<A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[% article.2 %]</A>
-				<TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
-			[% ELSE %]
-				<A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]&amp;id=[% article.0 %]">[% article.2 %]</A>
-			[% END %]
-			</TD>
+		[% IF !user.is_anon && (!uid || uid == user.uid) %]
+			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[% article.2 %]</A></TD>
+			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
+		[% ELSE %]
+			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]&amp;id=[% article.0 %]">[% article.2 %]</A></TD>
+		[% END %]
 		</TR>
 		[% x = x + 1 %]
 	[% END %]

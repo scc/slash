@@ -691,7 +691,6 @@ sub colorSave {
 ##################################################################
 # Topic Editor
 sub topicEdit {
-
 	my $constants = getCurrentStatic();
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -753,7 +752,6 @@ sub topicEdit {
 
 ##################################################################
 sub topicDelete {
-
 	my $slashdb = getCurrentDB();
 	my $form_tid = getCurrentForm('tid');
 
@@ -766,7 +764,6 @@ sub topicDelete {
 
 ##################################################################
 sub topicSave {
-
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
@@ -780,7 +777,7 @@ sub topicSave {
 
 	$slashdb->deleteSectionTopicsByTopic($form->{tid});
 	for my $item (keys %$form) {
-		if($form->{$item} =~ /^exsect_(.*)/) {
+		if ($form->{$item} =~ /^exsect_(.*)/) {
 			$slashdb->createSectionTopic($1, $form->{tid});
 		}
 	}
