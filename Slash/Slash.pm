@@ -625,8 +625,11 @@ sub dispComment {
 		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
 	}
 
-	for (0 .. @{$constants->{reasons}} - 1) {
-		$reasons{$_} = $constants->{reasons}[$_];
+	my @reasons = ( );
+	@reasons = @{$constants->{reasons}}
+		if $constants->{reasons} and ref($constants->{reasons}) eq 'ARRAY';
+	for (0 .. scalar(@reasons) - 1) {
+		$reasons{$_} = $reasons[$_];
 	}
 
 	# I wonder if much of this logic should be moved out to the theme.
