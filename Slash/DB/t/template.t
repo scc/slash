@@ -22,9 +22,9 @@ $object->sqlConnect();
 print "ok 1\n";
 
 ########################################################################
-$object->createTemplate({ name => 'bee;zle', template => 'My monkey fried'});
+$object->createTemplate({ name => 'bee;zle', template => 'My tofu fried'});
 print "ok 2\n";
-$object->createTemplate({ name => 'beezle', template => 'My monkey fried'});
+$object->createTemplate({ name => 'beezle', template => 'My tofu fried'});
 print "ok 3\n";
 my $tpid =  $object->getTemplateByName('beezle', 'tpid');
-$object->setTemplate($tpid, { section => 'bee;zle', template => 'My monkey fried too'});
+$object->setTemplate($tpid, { section => 'bee;zle', template => 'My tempeh fried too'});

@@ -40,6 +40,9 @@ __template__
 [% CASE 'bad_op' %]
 	Hey! The opcode '[% op %]' is not a valid op! Quit messing around!
 
+[% CASE 'bad_saveparam' %]
+	That user parameter is not valid.
+
 [% CASE 'saveuseradmin_notsaveduser' %]
 [% PROCESS titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] User settings

@@ -1904,10 +1904,7 @@ sub checkResponseTime {
 	my($response_time) = $self->sqlSelect("$now - ts", 'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}));
 
-#	if ($constants->{DEBUG}) {
-	if (1) { # this looks fishy to me, let's check it - Jamie
-		# what? huh? - Patrick. If you wanna test, just
-		# set a var called DEBUG, to 1
+	if ($constants->{DEBUG}) {
 		print STDERR "SQL select $now - ts from formkeys where formkey = '$form->{formkey}'\n";
 		print STDERR "LIMIT REACHED $response_time\n";
 	}
@@ -2357,7 +2354,7 @@ sub getAccessListReason {
 		} elsif ($user->{subnetid}) {
 			$where = "WHERE subnetid = '$user->{subnetid}'";
 		} else {
-			$where = "WHERE uid = $user->{uid}";
+			return "";
 		}
 	} else {
 		$user = $self->getCurrentUser();
@@ -5058,6 +5055,19 @@ sub sqlTableExists {
 	$self->sqlConnect();
 	my $tab = $self->{_dbh}->selectrow_array(qq!SHOW TABLES LIKE "$table"!);
 	return $tab;
+
+#	if (wantarray) {
+#		my(@tabs) = map { $_->[0] }
+#			@{$self->{_dbh}->selectall_arrayref(
+#				qq!SHOW TABLES LIKE "$table"!
+#			)};
+#		return @tabs;
+#	} else {
+#		my $tab = $self->{_dbh}->selectrow_array(
+#			qq!SHOW TABLES LIKE "$table"!
+#		);
+#		return $tab;
+#	}
 }
 
 ########################################################

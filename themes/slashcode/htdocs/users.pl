@@ -106,6 +106,12 @@ sub main {
 			[ qw (valid_check
 				formkey_check regen_formkey) ],
 		},
+		saveparam	=> {
+			function	=> \&saveParam,
+			seclev		=> 1,
+			formname	=> $formname,
+			checks		=> [ ],
+		},
 		changepasswd	=> {
 			function	=> \&changePasswd,
 			seclev		=> 1,
@@ -1559,6 +1565,81 @@ sub saveHome {
 }
 
 #################################################################
+# A generic way for a site to allow users to edit data about themselves.
+# Most useful when your plugin or theme wants to let the user change
+# minor settings but you don't want to write a whole new version
+# of users.pl to provide a user interface.  But the user can't edit
+# just anything about themself;  only the keywords listed in the
+# var "saveparams" can be saved to users_param, by the user accessing
+# /users.pl?op=saveparam&param=theparamname&value=thenewvalue.  This is
+# *not* protected by formkeys, so assume trolls can make users click
+# and accidentally edit their own settings:  no really important data
+# should be stored in this way.
+sub saveParam {
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	# Make sure this is a param the user is allowed to edit.
+	my($param, $value) = ($form->{param} || "", $form->{value} || "");
+	if (!$param) {
+		print getError('bad_saveparam');
+		return ;
+	}
+	# It has to be on the "saveparams" constant's list.
+	my %param_ok =
+		map { ( $_, 1) }
+		split(" ", $constants->{saveparams} || "");
+	if (!$param_ok{$param}) {
+		print getError('bad_saveparam');
+		return ;
+	}
+
+	# As a safety precaution against stupid site admins, we
+	# prohibit any keys in "real" tables from being affected
+	# here.  This is paranoia but it might save someone's
+	# butt someday.
+	if ($param_ok{acl}) {
+		warn "You don't want 'acl' as a saveparams key";
+		print getError('bad_saveparam');
+	}
+#	my(@users_tables) = $slashdb->sqlTableExists("users%");
+	my @users_tables = qw(
+		users users_comments users_index
+		users_info users_prefs
+	);
+	for my $table (grep !/^users_param$/, @users_tables) {
+		my $keys = $slashdb->getKeys($table);
+		for my $key (@$keys) {
+			if ($param eq $key) {
+				# Site admin did something lame!
+				warn join(" ",
+					"There's a REAL KEY in your",
+					"'saveparams' var, take it",
+					"out: '$key'"
+				);
+				print getError('bad_saveparam');
+				return ;
+			}
+		}
+	}
+
+	# Set it.
+	$value = substr($value, 0, 255);
+	$slashdb->setUser($user->{uid}, { $param => $value });
+
+	# Inform the user the change was made.  Since we don't
+	# require formkeys, we always want to print a message to
+	# make sure the user sees what s/he did.
+	print getMessage('saveparam_msg', {
+		param		=> $param,
+		paramvalue	=> $value,
+	});
+
+}
+
+#################################################################
 sub listReadOnly {
 	my $slashdb = getCurrentDB();
 
@@ -1629,6 +1710,7 @@ sub displayForm {
 		newuserform	=> 'newUserForm',
 		userclose	=> 'loginForm',
 		userlogin	=> 'loginForm',
+		saveparam	=> 'loginForm',
 		default		=> 'loginForm'
 	};
 
