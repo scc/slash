@@ -452,6 +452,7 @@ sub showInfo {
 			$fieldkey = 'uid';
 			($uid, $id) = ($form->{uid}, $form->{uid});
 			$requested_user = $slashdb->getUser($id);
+			
 			$nick = $requested_user->{nickname};
 
 		} elsif ($form->{nick} && ! $id) {
@@ -482,17 +483,28 @@ sub showInfo {
 			$requested_user->{nonuid} = 1;
 			$requested_user->{md5id} = $id;
 
-		} elsif ($id =~ /^(\d+\.\d+.\d+\.0)$/) {
+		} elsif ($id =~ /^(\d{1,3}\.\d{1,3}.\d{1,3}\.0)$/ 
+				|| $id =~ /^(\d{1,3}\.\d{1,3}\.\d{1,3})\.?$/) {
 			$fieldkey = 'subnetid';
-			$requested_user->{nonuid} = $1;
-			$requested_user->{subnetid} = md5_hex($1);
+			$requested_user->{subnetid} = $1; 
+			$requested_user->{subnetid} .= '.0' if $requested_user->{subnetid} =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}$/; 
+			$requested_user->{nonuid} = 1;
+			$requested_user->{subnetid} = md5_hex($requested_user->{subnetid});
 
 		} elsif ($id =~ /^([\d+\.]+)$/) {
 			$fieldkey = 'ipid';
 			$requested_user->{nonuid} = 1;
 			$id ||= $1;
+			print STDERR "\$1 $1\n";
 			$requested_user->{ipid} = md5_hex($1);
+
+		} else {
+			$fieldkey = 'nickname';
+			$nick = $id;
+			$uid = $slashdb->getUserUID($nick);
+			$requested_user = $slashdb->getUser($uid);
 		}
+		
 	} else {
 		$fieldkey = 'uid';
 		($id, $uid) = ($user->{uid}, $user->{uid});
@@ -503,21 +515,34 @@ sub showInfo {
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
 
-		my $netid = $requested_user->{ipid} ? $requested_user->{ipid} : $requested_user->{subnetid} ;
+		my $netid;
+		if ($requested_user->{ipid}) {
+			$netid = $requested_user->{ipid} ;
+			print STDERR "IPID $netid\n";
+
+		} elsif ($requested_user->{md5id}) {
+			$netid = $requested_user->{md5id} ;
+			print STDERR "MD5ID $netid\n";
+
+		} else {
+			$netid = $requested_user->{subnetid} ;
+			print STDERR "SUBNETID $netid\n";
+		}
 
 		$title = getTitle('user_netID_user_title', {
 			id => $id,
 			md5id => $netid,
 		});
 
+		
 		$admin_block = getUserAdmin($netid, $fieldkey, 1, 0) if $admin_flag;
 
-		$commentcount = $requested_user->{ipid} ?
+		$commentcount = ( $requested_user->{ipid} || $requested_user->{md5id}) ?
 			$slashdb->countCommentsByIPID($netid) :
 			$slashdb->countCommentsBySubnetID($netid);
 
 		if ($commentcount) {
-			$comments = $requested_user->{ipid} ?
+			$comments = ($requested_user->{ipid} || $requested_user->{md5id}) ?
 				$slashdb->getCommentsByNetID(
 					$netid, $constants->{user_comment_display_default}
 				) :
@@ -590,8 +615,11 @@ sub showInfo {
 		});
 
 	} else {
-		if (! defined $uid && defined $nick && ! $requested_user->{nonuid}) {
-			print getError('userinfo_nicknf_err', { nick => $nick });
+		#if (! defined $uid && defined $nick && ! $requested_user->{nonuid}) {
+		if (! $requested_user->{uid}) {
+			
+			print getError('userinfo_idnf_err', { id => $id, fieldkey => $fieldkey});
+			# print getError('userinfo_nicknf_err', { nick => $nick });
 			return;
 		}
 
@@ -1622,12 +1650,10 @@ sub getUserAdmin {
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 
+	$field ||= 'uid';
+	print STDERR "FIELD $field\n";
 	if ($field eq 'uid') {
-		if (! isAnon($id)) {
-			$user_edit = $slashdb->getUser($id);
-		} else {
-			$user_edit->{nonuid} = 1;
-		}
+		$user_edit = $slashdb->getUser($id);
 		$user_editfield = $user_edit->{uid};
 		$checked->{expired} = $slashdb->checkExpired($user_edit->{uid}) ? ' CHECKED' : '';
 		$iplist = $slashdb->getNetIDList($user_edit->{uid});
@@ -1638,29 +1664,35 @@ sub getUserAdmin {
 		$checked->{expired} = $slashdb->checkExpired($user_edit->{uid}) ? ' CHECKED' : '';
 		$iplist = $slashdb->getNetIDList($user_edit->{uid});
 
-	} elsif ($field eq 'ipid') {
-		$id = $id =~ /^\d+\.\d+\.\d+\.?\d+?$/ ? md5_hex($id) : $id;
-		$user_edit->{ipid} = $id;
+
+	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;
+		$user_edit->{md5id} = $id;
+		$uidlist = $slashdb->getUIDList('md5id', ($user_edit->{ipid}));
+
+	} elsif ($field eq 'ipid') {
+		$user_edit->{nonuid} = 1;
+		$user_edit->{ipid} = $id;
 		$user_editfield = $id;
 		$uidlist = $slashdb->getUIDList('ipid', $user_edit->{ipid});
 
 	} elsif ($field eq 'subnetid') {
+		$user_edit->{nonuid} = 1;
+		print STDERR "SUBNET ID 1 $id\n";
 		if ($id =~ /^(\d+\.\d+\.\d+\.)\.?\d+?/) {
 			$id = $1 . ".0";
-			$user_edit->{subnetid} = md5_hex($id);
+			$user_edit->{subnetid} = $id;
 		} else {
 			$user_edit->{subnetid} = $id;
 		}
 
-		$user_edit->{nonuid} = 1;
 		$user_editfield = $id;
+		print STDERR "SUBNET ID 2 $user_edit->{subnetid}\n";
 		$uidlist = $slashdb->getUIDList('subnetid', $user_edit->{subnetid});
 
 	} else {
 		$user_edit = $id ? $slashdb->getUser($id) : $user;
 		$user_editfield = $user_edit->{uid};
-		$checked->{uid} = ' CHECKED';
 		$iplist = $slashdb->getNetIDList($user_edit->{uid});
 	}
 
@@ -1684,6 +1716,7 @@ sub getUserAdmin {
 	$user_edit->{rtbl} = ($user_edit->{rtbl} == 1) ? ' CHECKED' : '';
 
 	return slashDisplay('getUserAdmin', {
+		field			=> $field,
 		useredit		=> $user_edit,
 		userinfo_flag		=> $user_editinfo_flag,
 		userfield		=> $user_editfield,

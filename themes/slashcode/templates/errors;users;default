@@ -28,6 +28,11 @@ __template__
 [% INCLUDE titlebar width="95%" title="Nickname not found" %]
 	[% nick %] not found.
 
+[% CASE 'userinfo_idnf_err' %]
+	<BR><B>The 
+	[% fieldkey == 'uid' ? ' UID ' : ' nickname ' %]
+	[% id %] could not be found.</B>
+
 [% CASE 'saveuseradmin_notsaved' %]
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] Admin settings

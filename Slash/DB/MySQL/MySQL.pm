@@ -1800,15 +1800,20 @@ sub updateFormkeyVal {
 	my $constants = getCurrentStatic();
 
 	my $formkey_quoted = $self->sqlQuote($formkey);
-	my $speed_limit = $constants->{"${formname}_speed_limit"};
-	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
 
-	my $min = time() - $speed_limit;
-	my $where = "idcount < $maxposts ";
-	$where .= "AND last_ts <= $min ";
-	$where .= "AND value = 0";
+	# I'm going to rewrite this using transactions
+	# it's too error prone as it is, and I'm unable
+	# to duplicate errors being reported on the site.
+	# my $speed_limit = $constants->{"${formname}_speed_limit"};
+	# my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
+	# my $min = time() - $speed_limit;
+	# my $where = "idcount < $maxposts ";
+	# $where .= "AND last_ts <= $min ";
+	# $where .= "AND value = 0";
 
-	print STDERR "MIN $min MAXPOSTS $maxposts WHERE $where\n";
+	my $where .= "value = 0";
+
+	# print STDERR "MIN $min MAXPOSTS $maxposts WHERE $where\n" if $constants->{DEBUG};
 
 	# increment the value from 0 to 1 (shouldn't ever get past 1)
 	# this does two things: increment the value (meaning the formkey
@@ -2058,12 +2063,18 @@ sub checkReadOnly {
 		$where = "(ipid = '$user->{md5id}' OR subnetid = '$user->{md5id}')";
 
 	} elsif ($user->{ipid}) {
-		$where = "ipid = '$user->{ipid}'";
+		my $tmpid = $user->{ipid} =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}/ ? 
+				md5_hex($user->{ipid}) : $user->{ipid}; 
+		$where = "ipid = '$tmpid'";
 
 	} elsif ($user->{subnetid}) {
-		$where = "subnetid = '$user->{subnetid}'";
+		my $tmpid = $user->{subnetid} =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}/ ? 
+				md5_hex($user->{subnetid}) : $user->{subnetid}; 
+		$where = "subnetid = '$tmpid'";
 	} else {
-		$where = "ipid = '$user->{ipid}'";
+		my $tmpid = $user->{ipid} =~ /^\d{1,3}\.\d{1,3}\.\d{1,3}/ ? 
+				md5_hex($user->{ipid}) : $user->{ipid}; 
+		$where = "ipid = '$tmpid'";
 	}
 
 	$where .= " AND readonly = 1 AND formname = '$formname' AND reason != 'expired'";
@@ -2077,9 +2088,10 @@ sub getUIDList {
 
 	my $where;
 	my $fields = { ipid => 'ipid', subnetid => 'subnetid' };
-	if (length($id) == 32) {
+	if (length($id) == 32 || $column eq 'md5id') {
 		$where = "WHERE ipid = '$id' OR subnetid = '$id'";
 	} else {
+		$id = md5_hex($id);
 		$where = "WHERE $fields->{$column} = '$id'";
 	}
 	$self->sqlSelectAll("DISTINCT uid ", "comments $where");

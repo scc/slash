@@ -86,16 +86,16 @@ __template__
 [% END %]
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="admin">
 
-		[% IF ! useredit.nonuid %]
+		[% IF field == 'uid' %]
 		<INPUT TYPE="HIDDEN" NAME="uid" value="[% useredit.uid %]"></TD>
 
-		[% ELSIF useredit.ipid %]
+		[% ELSIF field == 'ipid' %]
 		<INPUT TYPE="HIDDEN" NAME="ipid" value="[% useredit.ipid %]"></TD>
 
-		[% ELSIF useredit.md5id %]
+		[% ELSIF field == 'md5id' %]
 		<INPUT TYPE="HIDDEN" NAME="md5id" value="[% useredit.md5id %]"></TD>
 
-		[% ELSIF useredit.subnetid %]
+		[% ELSIF field == 'subnetid' %]
 		<INPUT TYPE="HIDDEN" NAME="subnetid" value="[% useredit.subnetid %]"></TD>
 		[% END %]
 
