@@ -94,10 +94,11 @@ unless ($opts{'o'}) {
 $owner_id = getpwnam($owner) or die "$owner is not a valid user name.\n";
 
 unless ($opts{'g'}) {
-	$group = getgrgid($owner_id); 
-	$group ||= 'nobody';
-	print "\nWhat group would you like to run your slash site under? [$group] ";
+	my $tmpgroup = getgrgid($owner_id); 
+	$tmpgroup ||= 'nobody';
+	print "\nWhat group would you like to run your slash site under? [$tmpgroup] ";
 	chomp($group = <STDIN>);
+	$group ||= $tmpgroup;
 } else {
 	$group = $opts{'g'};
 }
