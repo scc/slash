@@ -287,7 +287,6 @@ sub _install {
 				chomp;
 				next if /^#/;
 				next if /^$/;
-				next if /^\./;  #No hidden files! -Brian
 				next if /^ $/;
 				push @create, $_;
 			}
@@ -305,7 +304,7 @@ sub _install {
 		my $fh = gensym;
 		if (open($fh, "< $dump_file\0")) {
 			while (<$fh>) {
-				next unless /^INSERT/;
+				next unless (/^INSERT/ or /^DELETE/i);
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;
@@ -324,6 +323,7 @@ sub _install {
 			print "Failed on :$_:\n";
 		}
 	}
+	@sql = ();
 
 	if ($hash->{'plugin'}) {
 		for (keys %{$hash->{'plugin'}}) {
@@ -350,11 +350,7 @@ sub _install {
 		my $fh = gensym;
 		if (open($fh, "< $prep_file\0")) {
 			while (<$fh>) {
-				next unless /^INSERT/i;
-				next unless /^UPDATE/i;
-				next unless /^DELETE/i;
-				next unless /^REPLACE/i;
-				next unless /^ALTER/i;
+				next unless (/^INSERT/i or /^UPDATE/i or /^DELETE/i or /^REPLACE/i or /^ALTER/i or /^CREATE/i);
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;
@@ -365,6 +361,15 @@ sub _install {
  			warn "Can't open $prep_file: $!";
  		}
  	}
+
+	for (@sql) {
+		next unless $_;
+		s/;$//;
+		unless ($self->sqlDo($_)) {
+			print "Failed on :$_:\n";
+		}
+	}
+	@sql = ();
 
 	if ($hash->{note}) {
 		my $file = "$hash->{dir}/$hash->{note}";
