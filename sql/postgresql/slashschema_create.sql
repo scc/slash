@@ -380,7 +380,7 @@ CREATE TABLE templates (
 	seclev int4,
 	description text,
 	title varchar(128),
-	page varchar(20),
+	page varchar(20) DEFAULT 'misc' NOT NULL,
 	PRIMARY KEY (tpid)
 );
 CREATE INDEX idx_tmpltpage ON templates(page);

@@ -1290,9 +1290,6 @@ sub getTitle {
 	return slashDisplay('admin-titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
-##################################################################
-sub getLinks {
-}
 
 
 createEnvironment();

@@ -56,6 +56,14 @@ $driver = $drivers{DBIx::Password::getDriver($ARGV[0])};
 eval { require DBIx::Password };
 
 if ($@) {
+	print "Doesn't look like you have DBIx::Password installed.\n";
+	print "Run the CPAN tool and install DBIx::Password.\n";
+	exit;
+}
+
+eval { require Template };
+
+if ($@) {
 	print "Doesn't look like you have Bundle::Slash installed.\n";
 	print "Run the CPAN tool and install Bundle::Slash.\n";
 	exit;
@@ -115,9 +123,7 @@ if($opts{'r'}) {
 	}
 }
 
-# We also need to really be determining driver here and 
-# picking the right schema. Having it loop through
-# the themes directory would give us a list
+# themes
 print "\nWhich theme do you want to use?\n";
 my $x;
 #---------------------------------------------------
@@ -169,7 +175,6 @@ while(my $dir = readdir(PLUGINDIR)) {
 		$key = lc($key);
 		if( $key eq 'htdoc' ) {
 			push (@{$plugins{$dir}->{$key}}, $val);
-			print "Pushing $val\n";
 		} else {
 			$plugins{$dir}->{$key} = $val;
 		}
@@ -260,7 +265,6 @@ $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/logs") . " 
 $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/htdocs") . " WHERE name = 'basedir'");
 $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename") . " WHERE name = 'datadir'");
 $dbh->do("UPDATE vars SET value = " . $dbh->quote($sitename) . " WHERE name = 'siteid'");
-$dbh->disconnect;
 
 mkpath "$prefix/$sitename", 0, 0775;
 mkpath "$prefix/$sitename/logs", 0, 0775;
@@ -303,6 +307,7 @@ unless (exists $slash_sites{$user}) {
 
 find(sub { chown $owner_id, $group_id, $_ }, "$prefix/$sitename");
 
+$dbh->disconnect;
 print "\nDone, thanks.\n";
 
 
@@ -330,6 +335,45 @@ sub install {
 	for(@{$plugin->{'htdoc'}}) {
 		print "copying $_ to $prefix/$sitename/htdocs\n";
 		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
+	}
+	my($sql, @sql, @create);
+
+	if ($plugin->{"${driver}_schema"}) {
+		if (my $schema_file = "$plugin->{dir}/" . $plugin->{"${driver}_schema"}) {
+			open(CREATE, "< $schema_file");
+			while (<CREATE>) {
+				chomp;
+				next if /^#/;
+				next if /^$/;
+				next if /^ $/;
+				push @create, $_;
+			}
+			close (CREATE);
+
+			$sql = join '', @create;
+			@sql = split /;/, $sql;
+		}
+	}
+
+	if ($plugin->{"${driver}_dump"}) {
+		if (my $dump_file = "$plugin->{dir}/" . $plugin->{"${driver}_dump"}) {
+			open(DUMP,"< $dump_file");
+			while(<DUMP>) {
+				next unless /^INSERT/;
+				chomp;
+				s/www\.example\.com/$hostname/g;
+				s/admin\@example\.com/$email/g;
+				push @sql, $_;
+			}
+			close(DUMP);
+		}
+	}
+
+	for (@sql) {
+		next unless $_;
+		unless ($dbh->do($_)) {
+			print "Failed on :$_:\n";
+		}
 	}
 }
 
