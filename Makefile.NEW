@@ -8,7 +8,7 @@
 ##
 
 #   the used tools
-VERSION = 1.1.4-bender
+VERSION = 1.1.6-bender
 DISTNAME = slash
 DISTVNAME = $(DISTNAME)-$(VERSION)
 
@@ -176,7 +176,7 @@ install: slash plugins
 	echo "| If you want to let Slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
-	echo "| Include $(SLASH_PREFIX)/httpd/slash.conf             |"; \
+	echo "| Include $(SLASH_PREFIX)/httpd/slash.conf              |"; \
 	echo "|                                                        |"; \
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \

@@ -47,14 +47,15 @@ for (keys %{$count->{'index'}}) {
 
 $email .= "\n-----------------------\n";
 
-for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
-	my $value = $count->{'articles'}{$key};
-
-	my $story = $slashdb->getStory($key, 'title', 'aid');
-
-	$email .= "$value\t$key " . substr($story->{'title'}, 0, 30) .
-		" by $story->{'author'}\n" if $value > 100;
-}
+# DOESN'T WORK
+# for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
+# 	my $value = $count->{'articles'}{$key};
+# 
+# 	my $story = $slashdb->getStory($key, 'title', 'aid');
+# 
+# 	$email .= "$value\t$key " . substr($story->{'title'}, 0, 30) .
+# 		" by $story->{'author'}\n" if $value > 100;
+# }
 
 $email .= "\n-----------------------\n";
 $email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;

@@ -13,10 +13,9 @@ linksearch
 __template__
 [% USE Slash %]
 [% linksearch({
-		'link'  => "<B>form.min previous matches...</B>",
-		min => prev
-		})) 
-%]
+	'link'  => "<B>form.min previous matches...</B>",
+	min => prev
+}) %]
 <P>
 
 __seclev__
