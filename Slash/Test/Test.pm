@@ -37,6 +37,7 @@ you use most.
 use Slash;
 use Slash::Display;
 use Slash::Utility;
+use Slash::XML;
 use Data::Dumper;
 
 use base 'Exporter';
@@ -47,6 +48,7 @@ use vars qw($VERSION @EXPORT $vuser);
 	@Slash::EXPORT,
 	@Slash::Display::EXPORT,
 	@Slash::Utility::EXPORT,
+	@Slash::XML::EXPORT,
 	@Data::Dumper::EXPORT,
 	'slashTest'
 );

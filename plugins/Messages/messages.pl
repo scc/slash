@@ -15,10 +15,6 @@ use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-
-# this is an example main().  feel free to use what you think
-# works best for your program, just make it readable and clean.
-
 use constant ALLOWED	=> 0;
 use constant FUNCTION	=> 1;
 

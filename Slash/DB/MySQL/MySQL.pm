@@ -3684,6 +3684,30 @@ sub getStories {
 }
 
 ########################################################
+# single big select for ForumZilla ... if someone wants to
+# improve on this, please go ahead
+sub fzGetStories {
+	my($self, $section) = @_;
+	my $slashdb = getCurrentDB();
+	my $stories = $slashdb->sqlSelectAllHashrefArray(
+		"stories.sid,title,time,dept,alttext,
+		 image,commentcount,stories.section,introtext,bodytext,
+		 topics.tid as tid, MAX(comments.date) AS lastcommentdate",
+		"stories LEFT OUTER JOIN comments ON stories.sid = comments.sid,
+		 topics, story_text",
+		"((displaystatus = 0 and \"$section\"=\"\")
+		 OR (stories.section=\"$section\" and displaystatus > -1))
+		 AND time < now() AND writestatus > -1
+		 AND stories.tid=topics.tid AND stories.sid=story_text.sid",
+		"GROUP BY stories.sid
+		 ORDER BY time DESC
+		 LIMIT 10"
+	);
+	return $stories;
+}
+
+
+########################################################
 sub getSessions {
 	my $answer = _genericGets('sessions', 'session', '', @_);
 	return $answer;

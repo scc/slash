@@ -473,6 +473,7 @@ INSERT INTO vars (name, value, description) VALUES ('max_depth','7','max depth f
 INSERT INTO vars (name, value, description) VALUES ('max_posts_allowed','30','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed');
 INSERT INTO vars (name, value, description) VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)');
+INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
 INSERT INTO vars (name, value, description) VALUES ('post_limit','10','seconds delay before repeat posting');
@@ -519,5 +520,3 @@ INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total num
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
-INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
-

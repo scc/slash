@@ -145,7 +145,7 @@ sub commentIndex {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	titlebar("90%", "Several Active Discussions");
-	if($form->{all}) {
+	if ($form->{all}) {
 		my $discussions = $slashdb->getDiscussions();
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
@@ -157,7 +157,7 @@ sub commentIndex {
 		});
 	}
 
-	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		slashDisplay('discussioncreate');
 	}
 }

@@ -591,8 +591,8 @@ sub editUser {
 	my $curuser = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my ($user, $session) = ({}, {});
-	my ($admin_block, $title, $description, $maillist, $session_select);
+	my($user, $session) = ({}, {});
+	my($admin_block, $title, $description, $maillist, $session_select);
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
 
 	return if $curuser->{is_anon};

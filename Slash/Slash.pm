@@ -245,7 +245,7 @@ sub printComments {
 	my $slashdb = getCurrentDB();
 
 	my($discussion, $header);
-	#Backwards compatibility
+	# SID compatibility
 	if ($sid !~ /^\d+$/) {
 		$discussion = $slashdb->getDiscussionBySid($sid);
 		$header = $discussion->{id};
@@ -277,7 +277,7 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
 
 
-	if($user->{mode} eq 'archive') {
+	if ($user->{mode} eq 'archive') {
 		slashDisplay('printCommNoArchive');
 	}
 
@@ -589,7 +589,7 @@ sub dispComment {
 	my $can_mod = ! $comment->{no_moderation} && ! $user->{is_anon} &&
 		((	$user->{willing} && $user->{points} > 0 &&
 			$comment->{uid} != $user->{uid} && $comment->{lastmod} != $user->{uid}
-		) || ($user->{seclev} > 99 && $constants->{authors_unlimited}));
+		) || ($user->{seclev} >= 100 && $constants->{authors_unlimited}));
 
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
