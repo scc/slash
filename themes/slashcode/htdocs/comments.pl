@@ -156,7 +156,7 @@ EOT
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my ($id) = @_;
+	my($id) = @_;
 	$I{U}{points} = 0;
 
 	my $formkey_earliest = time() - $I{formkey_timeframe};

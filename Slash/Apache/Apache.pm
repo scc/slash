@@ -13,10 +13,10 @@ $Slash::Apache::VERSION = '1.00';
 
 bootstrap Slash::Apache $VERSION;
 
-sub SlashVirtualUser ($$$){
-	my ($cfg, $params, $user) = @_;
+sub SlashVirtualUser ($$$) {
+	my($cfg, $params, $user) = @_;
 	$cfg->{VirtualUser} = $user;
-	$cfg->{dbslash} = new Slash::DB($user);
+	$cfg->{dbslash} = Slash::DB->new($user);
 	# More of a place holder to remind me that it
 	# is here. The uid will be populated once Patrick
 	# finishes up with slashdotrc
@@ -25,8 +25,10 @@ sub SlashVirtualUser ($$$){
 	$cfg->{anonymous_coward} = '';
 	$cfg->{authors_unlimited} = '1';
 }
-__END__
+
 1;
+
+__END__
 
 =head1 NAME
 

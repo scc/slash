@@ -19,6 +19,8 @@ $Slash::Utility::VERSION = '0.01';
 # writes error message to apache's error_log if we're running under mod_perl
 # Called wherever we have errors.
 sub apacheLog {
+	# ummm ... won't this fail if called while not running under
+	# Apache?
 	my $r = Apache->request;
 	if ($ENV{SCRIPT_NAME}) {
 		$r->log_error("$ENV{SCRIPT_NAME}:@_");

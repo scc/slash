@@ -5,25 +5,25 @@ use strict;
 $Slash::DB::VERSION = '0.01';
 
 sub new {
-  my ($class, $user) = @_;
+	my($class, $user) = @_;
 	my $self = {};
 	my $dsn = 'mysql'; #This is just here for the moment.
-	if(defined ($dsn)){
-		if($dsn =~ /mysql/) {
+	if (defined $dsn) {
+		if ($dsn =~ /mysql/) {
 			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 		} elsif ($dsn =~ /oracle/) {
 			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
-		}elsif ($dsn =~ /postgress/) {
+		} elsif ($dsn =~ /postgress/) {
 			require Slash::DB::Postgress;
 			push(@Slash::DB::ISA, 'Slash::DB::Postgress');
 		}
 	} else {
 		die "We don't support the database specified";
 	}
-	push (@Slash::DB::EXPORT, 'sqlConnect');
-	bless ($self,$class);
+	push(@Slash::DB::EXPORT, 'sqlConnect');
+	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->SUPER::sqlConnect();
 	return $self;
@@ -31,6 +31,8 @@ sub new {
 
 
 1;
+
+__END__
 
 =head1 NAME
 
