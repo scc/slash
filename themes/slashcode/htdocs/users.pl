@@ -425,8 +425,8 @@ sub showInfo {
 		md5_hex($id) : $id;
 
 		$user->{nonuid} = 1;
-		$user->{fg} = $curuser->{fg};
-		$user->{bg} = $curuser->{bg};
+		$user->{fg} = $user->{fg};
+		$user->{bg} = $user->{bg};
 
 		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
 		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';

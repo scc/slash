@@ -95,12 +95,6 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,1,-1,0,'8f2e0eec531acf0e836f6770d7990857');
 
 #
-# Dumping data for table 'comment_heap'
-#
-
-INSERT INTO comment_heap (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
-
-#
 # Dumping data for table 'comment_text'
 #
 
@@ -319,12 +313,6 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2,'');
 INSERT INTO stories (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2,'');
 
-#
-# Dumping data for table 'story_heap'
-#
-
-INSERT INTO story_heap (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1430236',4,2,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,1,2,'');
-INSERT INTO story_heap (sid, tid, uid, title, dept, time, hits, section, displaystatus, commentstatus, discussion, submitter, flags) VALUES ('00/01/25/1236215',4,2,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',0,'articles',0,0,2,2,'');
 
 #
 # Dumping data for table 'story_text'
