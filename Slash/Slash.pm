@@ -742,6 +742,7 @@ sub currentAdminUsers {
 					. int(($usertime%3600)/60+0.5) . "m";
 			}
 		}
+		@$data = ($usernick, $usertime, $lasttitle);
 	}
 
 	return slashDisplay('currentAdminUsers', {
