@@ -1,15 +1,15 @@
-# MySQL dump 7.1
+# MySQL dump 8.10
 #
 # Host: localhost    Database: slash
 #--------------------------------------------------------
-# Server version	3.22.32
+# Server version	3.23.26-beta
 
 #
 # Table structure for table 'abusers'
 #
-DROP TABLE IF EXISTS abusers;
+
 CREATE TABLE abusers (
-  abuser_id int(5) DEFAULT '0' NOT NULL auto_increment,
+  abuser_id int(5) NOT NULL auto_increment,
   host_name varchar(25) DEFAULT '' NOT NULL,
   pagename varchar(20) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -23,9 +23,9 @@ CREATE TABLE abusers (
 #
 # Table structure for table 'accesslog'
 #
-DROP TABLE IF EXISTS accesslog;
+
 CREATE TABLE accesslog (
-  id int(5) DEFAULT '0' NOT NULL auto_increment,
+  id int(5) NOT NULL auto_increment,
   host_addr varchar(16) DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
@@ -39,7 +39,7 @@ CREATE TABLE accesslog (
 #
 # Table structure for table 'authors'
 #
-DROP TABLE IF EXISTS authors;
+
 CREATE TABLE authors (
   aid char(30) DEFAULT '' NOT NULL,
   name char(50),
@@ -59,7 +59,7 @@ CREATE TABLE authors (
 #
 # Table structure for table 'backup_blocks'
 #
-DROP TABLE IF EXISTS backup_blocks;
+
 CREATE TABLE backup_blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
@@ -69,11 +69,11 @@ CREATE TABLE backup_blocks (
 #
 # Table structure for table 'blocks'
 #
-DROP TABLE IF EXISTS blocks;
+
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
-	aid varchar(20),
+  aid varchar(20),
   seclev int(1),
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
@@ -92,7 +92,7 @@ CREATE TABLE blocks (
 #
 # Table structure for table 'commentcodes'
 #
-DROP TABLE IF EXISTS commentcodes;
+
 CREATE TABLE commentcodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -102,7 +102,7 @@ CREATE TABLE commentcodes (
 #
 # Table structure for table 'commentmodes'
 #
-DROP TABLE IF EXISTS commentmodes;
+
 CREATE TABLE commentmodes (
   mode varchar(16) DEFAULT '' NOT NULL,
   name varchar(32),
@@ -113,7 +113,7 @@ CREATE TABLE commentmodes (
 #
 # Table structure for table 'comments'
 #
-DROP TABLE IF EXISTS comments;
+
 CREATE TABLE comments (
   sid varchar(30) DEFAULT '' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE comments (
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
-  comment text NOT NULL,
+  comment text DEFAULT '' NOT NULL,
   uid int(1) DEFAULT '0' NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1),
@@ -136,9 +136,9 @@ CREATE TABLE comments (
 #
 # Table structure for table 'content_filters'
 #
-DROP TABLE IF EXISTS content_filters;
+
 CREATE TABLE content_filters (
-  filter_id int(4) DEFAULT '0' NOT NULL auto_increment,
+  filter_id int(4) NOT NULL auto_increment,
   regex varchar(100) DEFAULT '' NOT NULL,
   modifier varchar(5) DEFAULT '' NOT NULL,
   field varchar(20) DEFAULT '' NOT NULL,
@@ -155,7 +155,7 @@ CREATE TABLE content_filters (
 #
 # Table structure for table 'dateformats'
 #
-DROP TABLE IF EXISTS dateformats;
+
 CREATE TABLE dateformats (
   id int(1) DEFAULT '0' NOT NULL,
   format varchar(32),
@@ -166,7 +166,7 @@ CREATE TABLE dateformats (
 #
 # Table structure for table 'discussions'
 #
-DROP TABLE IF EXISTS discussions;
+
 CREATE TABLE discussions (
   sid varchar(20) DEFAULT '' NOT NULL,
   title varchar(128),
@@ -178,7 +178,7 @@ CREATE TABLE discussions (
 #
 # Table structure for table 'displaycodes'
 #
-DROP TABLE IF EXISTS displaycodes;
+
 CREATE TABLE displaycodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -188,7 +188,7 @@ CREATE TABLE displaycodes (
 #
 # Table structure for table 'formkeys'
 #
-DROP TABLE IF EXISTS formkeys;
+
 CREATE TABLE formkeys (
   formkey varchar(20) DEFAULT '' NOT NULL,
   formname varchar(20) DEFAULT '' NOT NULL,
@@ -211,9 +211,9 @@ CREATE TABLE formkeys (
 #
 # Table structure for table 'hitters'
 #
-DROP TABLE IF EXISTS hitters;
+
 CREATE TABLE hitters (
-  id int(5) DEFAULT '0' NOT NULL auto_increment,
+  id int(5) NOT NULL auto_increment,
   host_addr varchar(15) DEFAULT '' NOT NULL,
   hits int(6) DEFAULT '0' NOT NULL,
   PRIMARY KEY (id),
@@ -224,7 +224,7 @@ CREATE TABLE hitters (
 #
 # Table structure for table 'isolatemodes'
 #
-DROP TABLE IF EXISTS isolatemodes;
+
 CREATE TABLE isolatemodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -234,7 +234,7 @@ CREATE TABLE isolatemodes (
 #
 # Table structure for table 'issuemodes'
 #
-DROP TABLE IF EXISTS issuemodes;
+
 CREATE TABLE issuemodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -244,7 +244,7 @@ CREATE TABLE issuemodes (
 #
 # Table structure for table 'maillist'
 #
-DROP TABLE IF EXISTS maillist;
+
 CREATE TABLE maillist (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -254,9 +254,9 @@ CREATE TABLE maillist (
 #
 # Table structure for table 'menus'
 #
-DROP TABLE IF EXISTS menus;
+
 CREATE TABLE menus (
-  id int(5) DEFAULT '0' NOT NULL auto_increment,
+  id int(5) NOT NULL auto_increment,
   menu varchar(20) DEFAULT '' NOT NULL,
   label varchar(200) DEFAULT '' NOT NULL,
   value text,
@@ -270,23 +270,23 @@ CREATE TABLE menus (
 #
 # Table structure for table 'metamodlog'
 #
-DROP TABLE IF EXISTS metamodlog;
+
 CREATE TABLE metamodlog (
   mmid int(11) DEFAULT '0' NOT NULL,
   uid int(11) DEFAULT '0' NOT NULL,
   val int(11) DEFAULT '0' NOT NULL,
   ts datetime,
-  id int(11) DEFAULT '0' NOT NULL auto_increment,
-  flag int(11) NOT NULL,
+  id int(11) NOT NULL auto_increment,
+  flag int(11) DEFAULT '0' NOT NULL,
   PRIMARY KEY (id)
 );
 
 #
 # Table structure for table 'moderatorlog'
 #
-DROP TABLE IF EXISTS moderatorlog;
+
 CREATE TABLE moderatorlog (
-  id int(1) DEFAULT '0' NOT NULL auto_increment,
+  id int(1) NOT NULL auto_increment,
   uid int(1) DEFAULT '0' NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
@@ -302,7 +302,7 @@ CREATE TABLE moderatorlog (
 #
 # Table structure for table 'newstories'
 #
-DROP TABLE IF EXISTS newstories;
+
 CREATE TABLE newstories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
@@ -329,7 +329,7 @@ CREATE TABLE newstories (
 #
 # Table structure for table 'pollanswers'
 #
-DROP TABLE IF EXISTS pollanswers;
+
 CREATE TABLE pollanswers (
   qid char(20) DEFAULT '' NOT NULL,
   aid int(11) DEFAULT '0' NOT NULL,
@@ -341,7 +341,7 @@ CREATE TABLE pollanswers (
 #
 # Table structure for table 'pollquestions'
 #
-DROP TABLE IF EXISTS pollquestions;
+
 CREATE TABLE pollquestions (
   qid char(20) DEFAULT '' NOT NULL,
   question char(255) DEFAULT '' NOT NULL,
@@ -353,7 +353,7 @@ CREATE TABLE pollquestions (
 #
 # Table structure for table 'pollvoters'
 #
-DROP TABLE IF EXISTS pollvoters;
+
 CREATE TABLE pollvoters (
   qid char(20) DEFAULT '' NOT NULL,
   id char(35) DEFAULT '' NOT NULL,
@@ -365,7 +365,7 @@ CREATE TABLE pollvoters (
 #
 # Table structure for table 'postmodes'
 #
-DROP TABLE IF EXISTS postmodes;
+
 CREATE TABLE postmodes (
   code char(10) DEFAULT '' NOT NULL,
   name char(32),
@@ -375,7 +375,7 @@ CREATE TABLE postmodes (
 #
 # Table structure for table 'sections'
 #
-DROP TABLE IF EXISTS sections;
+
 CREATE TABLE sections (
   section varchar(30) DEFAULT '' NOT NULL,
   artcount int(11),
@@ -390,7 +390,7 @@ CREATE TABLE sections (
 #
 # Table structure for table 'sessions'
 #
-DROP TABLE IF EXISTS sessions;
+
 CREATE TABLE sessions (
   session varchar(20) DEFAULT '' NOT NULL,
   aid varchar(30),
@@ -403,7 +403,7 @@ CREATE TABLE sessions (
 #
 # Table structure for table 'sortcodes'
 #
-DROP TABLE IF EXISTS sortcodes;
+
 CREATE TABLE sortcodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -413,7 +413,7 @@ CREATE TABLE sortcodes (
 #
 # Table structure for table 'statuscodes'
 #
-DROP TABLE IF EXISTS statuscodes;
+
 CREATE TABLE statuscodes (
   code int(1) DEFAULT '0' NOT NULL,
   name char(32),
@@ -423,7 +423,7 @@ CREATE TABLE statuscodes (
 #
 # Table structure for table 'stories'
 #
-DROP TABLE IF EXISTS stories;
+
 CREATE TABLE stories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
@@ -450,7 +450,7 @@ CREATE TABLE stories (
 #
 # Table structure for table 'storiestuff'
 #
-DROP TABLE IF EXISTS storiestuff;
+
 CREATE TABLE storiestuff (
   sid varchar(20) DEFAULT '' NOT NULL,
   hits int(1) DEFAULT '0' NOT NULL,
@@ -460,7 +460,7 @@ CREATE TABLE storiestuff (
 #
 # Table structure for table 'submissions'
 #
-DROP TABLE IF EXISTS submissions;
+
 CREATE TABLE submissions (
   subid varchar(15) DEFAULT '' NOT NULL,
   email varchar(50),
@@ -479,9 +479,22 @@ CREATE TABLE submissions (
 );
 
 #
+# Table structure for table 'templates'
+#
+
+CREATE TABLE templates (
+  tpid varchar(30) DEFAULT '' NOT NULL,
+  template text,
+  seclev int(1),
+  description text,
+  title varchar(128),
+  PRIMARY KEY (tpid)
+);
+
+#
 # Table structure for table 'threshcodes'
 #
-DROP TABLE IF EXISTS threshcodes;
+
 CREATE TABLE threshcodes (
   thresh int(1) DEFAULT '0' NOT NULL,
   description char(64),
@@ -491,7 +504,7 @@ CREATE TABLE threshcodes (
 #
 # Table structure for table 'topics'
 #
-DROP TABLE IF EXISTS topics;
+
 CREATE TABLE topics (
   tid char(20) DEFAULT '' NOT NULL,
   image char(30),
@@ -504,7 +517,7 @@ CREATE TABLE topics (
 #
 # Table structure for table 'tzcodes'
 #
-DROP TABLE IF EXISTS tzcodes;
+
 CREATE TABLE tzcodes (
   tz char(3) DEFAULT '' NOT NULL,
   offset int(1),
@@ -515,18 +528,18 @@ CREATE TABLE tzcodes (
 #
 # Table structure for table 'users'
 #
-DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
-  uid int(11) DEFAULT '0' NOT NULL auto_increment,
+  uid int(11) NOT NULL auto_increment,
   nickname varchar(20) DEFAULT '' NOT NULL,
   realemail varchar(50) DEFAULT '' NOT NULL,
   fakeemail varchar(50),
   homepage varchar(100),
-  passwd char(32) DEFAULT '' NOT NULL,
+  passwd varchar(32) DEFAULT '' NOT NULL,
   sig varchar(160),
   seclev int(11) DEFAULT '0' NOT NULL,
   matchname varchar(20),
-  newpasswd char(8),
+  newpasswd varchar(8),
   PRIMARY KEY (uid),
   KEY login (uid,passwd,nickname),
   KEY chk4user (nickname,realemail),
@@ -536,7 +549,7 @@ CREATE TABLE users (
 #
 # Table structure for table 'users_comments'
 #
-DROP TABLE IF EXISTS users_comments;
+
 CREATE TABLE users_comments (
   uid int(11) DEFAULT '0' NOT NULL,
   points int(11) DEFAULT '0' NOT NULL,
@@ -561,7 +574,7 @@ CREATE TABLE users_comments (
 #
 # Table structure for table 'users_index'
 #
-DROP TABLE IF EXISTS users_index;
+
 CREATE TABLE users_index (
   uid int(11) DEFAULT '0' NOT NULL,
   extid varchar(255),
@@ -576,7 +589,7 @@ CREATE TABLE users_index (
 #
 # Table structure for table 'users_info'
 #
-DROP TABLE IF EXISTS users_info;
+
 CREATE TABLE users_info (
   uid int(11) DEFAULT '0' NOT NULL,
   totalmods int(11) DEFAULT '0' NOT NULL,
@@ -600,9 +613,22 @@ CREATE TABLE users_info (
 );
 
 #
+# Table structure for table 'users_param'
+#
+
+CREATE TABLE users_param (
+  param_id int(11) NOT NULL auto_increment,
+  uid int(11) DEFAULT '0' NOT NULL,
+  name varchar(32) DEFAULT '' NOT NULL,
+  value text,
+  UNIQUE uid_key (uid,name),
+  PRIMARY KEY (param_id)
+);
+
+#
 # Table structure for table 'users_prefs'
 #
-DROP TABLE IF EXISTS users_prefs;
+
 CREATE TABLE users_prefs (
   uid int(11) DEFAULT '0' NOT NULL,
   willing tinyint(4) DEFAULT '1' NOT NULL,
@@ -615,22 +641,9 @@ CREATE TABLE users_prefs (
 );
 
 #
-# Table structure for table 'users_param'
-#
-DROP TABLE IF EXISTS users_param;
-CREATE TABLE users_param (
-  param_id int(11) DEFAULT '0' NOT NULL auto_increment,
-  uid int(11) DEFAULT '0' NOT NULL,
-  name varchar(32) NOT NULL,
-  value text,
-  UNIQUE uid_key (uid, name),
-  PRIMARY KEY (param_id)
-);
-
-#
 # Table structure for table 'vars'
 #
-DROP TABLE IF EXISTS vars;
+
 CREATE TABLE vars (
   name varchar(32) DEFAULT '' NOT NULL,
   value text,
