@@ -13,7 +13,11 @@ $task{$me}{code} = sub {
 
 	my $bd = $constants->{basedir}; # convenience
 	for my $name (qw( cheesyportal )) {
-		prog2file("$bd/$name.pl", "ssi=yes", "$bd/$name.shtml");
+		prog2file(
+			"$bd/$name.pl", 
+			"ssi=yes virtual_user=$virtual_user", 
+			"$bd/$name.shtml"
+		);
 	}
 
 };
