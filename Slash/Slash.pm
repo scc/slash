@@ -161,7 +161,7 @@ sub getSlash {
 
 	# This method will go away when I am done building
 	# the different user methods
-	($I{anon_name}) = $I{dbobject}->getNicknameByUID('-1') unless $I{anon_name};
+	($I{anon_name}) = $I{dbobject}->getNicknameByUID($I{anonymous_coward}) unless $I{anon_name};
 
 	my $op = $I{query}->param('op') || '';
 
@@ -180,7 +180,7 @@ sub getSlash {
 		$I{U} = getUser(userCheckCookie($I{query}->cookie('user')));
 
 	} else {
-		$I{U} ||= getUser(-1);
+		$I{U} ||= getUser($I{anonymous_coward});
 	}
 
 	return 1;
@@ -274,7 +274,7 @@ sub selectMode {
 sub getblock {
 	my($bid) = @_;
 	$I{dbobject}->getBlockBank(\%I);
-	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "-1";
+	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "$I{anonymous_coward}";
 }
 
 
@@ -290,7 +290,7 @@ sub nukeBlockCache {
 sub blockCache {
 	my($bid) = @_;
 	$I{dbobject}->getBlockBank(\%I);
-	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "-1");
+	return $I{blockBank}{$bid};
 }
 
 ########################################################
@@ -361,7 +361,7 @@ sub userLogin {
 		$I{SETCOOKIE} = setCookie('user', $cookie);
 		return($uid, $passwd);
 	} else {
-		return(-1, '');
+		return($I{anonymous_coward}, '');
 	}
 }
 
@@ -374,7 +374,7 @@ sub userCheckCookie {
 	my($cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
 	my($uid, $passwd) = split('::', $cookie);
-	return(-1, '') if $uid eq ' ';
+	return($I{anonymous_coward}, '') if $uid eq ' ';
 	return($uid, $passwd);
 }
 
@@ -400,7 +400,7 @@ sub addToUser {
 
 ########################################################
 # IF passed a valid uid & passwd, it logs in $U
-# else $U becomes Anonymous Coward (eg UID -1)
+# else $U becomes Anonymous Coward (eg UID $I{anonymous_coward})
 sub getUser {
 	my($uid, $passwd) = @_;
 	undef $I{U};
@@ -421,7 +421,7 @@ sub getUser {
 		unless ($I{AC}) {
 			# Get ourselves an AC if we don't already have one.
 			# (we have to get it /all/ remember!)
-			$I{AC} = $I{dbobject}->getAC();
+			$I{AC} = $I{dbobject}->getAC($I{anonymous_coward});
 
 			# timezone stuff 
 		 	$I{ACTZ} =  $I{dbobject}->getACTz($I{AC}{tzcode}, $I{AC}{dfid});
@@ -540,7 +540,7 @@ sub getsiddir {
 # typically called now as part of getAd()
 sub anonLog {
 	my($op, $data) = ('/', '');
-	$I{U}{uid} = -1;
+	$I{U}{uid} = $I{anonymous_coward};
 
 	$_ = $ENV{REQUEST_URI};
 	s/(.*)\?/$1/;
@@ -664,7 +664,7 @@ EOT
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
-		qq![ <A HREF="$I{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=-1"><B>Results</B></A> | !;
+		qq![ <A HREF="$I{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$I{anonymous_coward}"><B>Results</B></A> | !;
 	$tablestuff .= qq!<A HREF="$I{rootdir}/pollBooth.pl?$sect"><B>Polls</B></A> !
 		unless $notable eq 'rh';
 	$tablestuff .= "Votes:<B>$voters</B>" if $notable eq 'rh';
@@ -1210,10 +1210,10 @@ sub selectComments {
 			&& $C->{points} < 5 && $I{U}{clbig} != 0;
 
 		$C->{points}-- if length($C->{comment}) < $I{U}{clsmall}
-			&& $C->{points} > -1 && $I{U}{clsmall};
+			&& $C->{points} > $I{anonymous_coward} && $I{U}{clsmall};
 
 		# fix points in case they are out of bounds
-		$C->{points} = $C->{points} < -1 ? -1 : $C->{points} > 5 ? 5 : $C->{points};
+		$C->{points} = $C->{points} < $I{anonymous_coward} ? $I{anonymous_coward} : $C->{points} > 5 ? 5 : $C->{points};
 
 		my $tmpkids = $comments->[$C->{cid}]{kids};
 		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
@@ -2055,8 +2055,6 @@ EOT
 	}
 
 	if ($SECT->{issue}) {
-		# KLUDGE:Should really get previous issue with stories;
-		# my($yesterday) = sqlSelect('to_days(now())-1')
 		my $yesterday;
 		unless ($I{F}{issue} > 1 || $I{F}{issue}) {
 			my @date = localtime();

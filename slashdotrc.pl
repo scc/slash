@@ -28,6 +28,7 @@ require URI;
 # change this according to site specifics
 
 my %my_conf = (
+	anonymous_coward	=> '-1',
 	adminmail	=> 'admin@tanget.org',
 	mailfrom	=> 'reply-to@tangent.org',
 	siteowner	=> 'slash',
