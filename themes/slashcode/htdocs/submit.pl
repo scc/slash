@@ -208,7 +208,7 @@ sub submissionEd {
 
 	my(@submissions, $submissions, @selection);
 	$submissions = $dbslash->getSubmissionForUser(getDateOffset('time'));
-	
+
 	for (@$submissions) {
 		my $sub = $submissions[@submissions] = {};
 		@{$sub}{qw(

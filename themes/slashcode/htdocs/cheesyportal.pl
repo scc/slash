@@ -23,50 +23,68 @@
 #
 #  $Id$
 ###############################################################################
-
 use strict;
 use Slash;
-use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 
 ##################################################################
 sub main {
-	getSlash();
-	my $user = getCurrentUser();
-	my $db = getCurrentDB();
+	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	header("Cheesy Portal");
-	# Display Blocks
-	titlebar("100%", "Cheesy $constants->{sitename} Portal Page");
-	my $portals = $db->getPortals();
+	header(getData('head'));
 
-	print qq!<MULTICOL COLS="3">\n!;
-	my $b;
-	for(@$portals) {
-		my($block, $title, $bid, $url) = @$_ ;
-		if ($bid eq "mysite") {
-			$b = portalbox($constants->{fancyboxwidth},
-				"$user->{nickname}'s Slashbox",
-				$user->{mylinks} ||  $block
+	my @portals;
+	my $portals = $dbslash->getPortals();
+
+	for (@$portals) {
+		my $portal = {};
+		@{$portal}{qw(block title bid url)} = @$_;
+
+		if ($portal->{bid} eq 'mysite') {
+			$portal->{box} = portalbox($constants->{fancyboxwidth},
+				getData('mysite'),
+				$user->{mylinks} ||  $portal->{block}
 			);
-
-		} elsif ($bid =~ /_more$/) {	# do nothing
-		} elsif ($bid eq "userlogin") {	# do nothing
+		} elsif ($portal->{bid} =~ /_more$/) {    # do nothing
+			next;
+		} elsif ($portal->{bid} eq 'userlogin') { # do nothing
+			next;
 		} else {
-			$b = portalbox($constants->{fancyboxwidth},
-				$title, $block, "", $url
+			$portal->{box} = portalbox($constants->{fancyboxwidth},
+				$portal->{title},
+				$portal->{block}, '', $portal->{url}
 			);
 		}
 
-		print $b;
+		push @portals, $portal;
 	}
 
-	print "\n</MULTICOL>\n";
+	slashDisplay('cheesyportal-main', {
+		title	=> "Cheesy $constants->{sitename} Portal Page",
+		width	=> '100%',
+		portals	=> \@portals,
+	});
 
 	footer();
 
-	writeLog("cheesyportal") unless getCurrentForm('ssi');
+	writeLog('cheesyportal') unless $form->{ssi};
 }
 
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "cheesyportal-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('cheesyportal-data', $hashref, 1, 1);
+}
+
+#################################################################
 main();
+
+1;
