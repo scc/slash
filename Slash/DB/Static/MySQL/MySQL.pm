@@ -132,7 +132,6 @@ sub archiveComments {
 	$self->sqlDo(
 		"UPDATE stories SET writestatus='archived'
 		 WHERE to_days(now()) - to_days(time) > $days_to_archive AND
-		       time > '$last_archive_date' AND
 		       writestatus='ok' OR type='dirty'"
 	);
 
