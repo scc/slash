@@ -40,6 +40,7 @@ sub main {
 	$topcomments = $slashdb->getCommentsTop($form->{sid});
 	for (@$topcomments) {
 		my $top = $topcomments[@topcomments] = {};
+		# leave as "aid" for now
 		@{$top}{qw(section sid aid title pid subj cdate sdate uid cid score)} = @$_;
 		my $user_email = $slashdb->getUser($top->{uid}, ['fakeemail', 'nickname']);
 		@{$top}{'fakeemail', 'nickname'} = @{$user_email}{'fakeemail', 'nickname'};

@@ -26,6 +26,7 @@
 ###############################################################################
 use strict;
 use Slash;
+use Slash::Utility;
 
 my $virtual_user = $ARGV[0];
 createEnvironment($ARGV[0]);

@@ -143,7 +143,7 @@ sub main {
 
 	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
 		templateSave($form->{thistpid});
-		if($form->{newpage}) {
+		if ($form->{newpage}) {
 			templateEdit($user->{seclev}, $form->{thistpid}, $form->{newpage}, $form->{section});
 		} else {
 			templateEdit($user->{seclev}, $form->{thistpid}, $form->{page}, $form->{section});
@@ -155,7 +155,7 @@ sub main {
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatedelete}) {
-		templateEdit($user->{seclev},$form->{tpid}, $form->{page}, $form->{section});
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatedelete_confirm}) {
 		templateDelete($form->{deletename}, $form->{deletetpid});
@@ -499,7 +499,7 @@ sub templateSave {
 }
 ##################################################################
 sub templateDelete {
-	my($name,$tpid) = @_;
+	my($name, $tpid) = @_;
 
 	my $slashdb = getCurrentDB();
 

@@ -1700,7 +1700,7 @@ sub countStoriesStuff {
 ########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll("count(*) as c, uid, fakeemail",
+	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
 		"stories, users","users.uid=stories.uid",
 		"GROUP BY uid ORDER BY c DESC LIMIT 10"
 	);
@@ -1916,14 +1916,14 @@ sub getCommentsTop {
 	my $user = getCurrentUser();
 	my $where = "stories.sid=newcomments.sid";
 	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, stories.sid, uid, title, pid, subject,"
-		. "date, time, uid, cid, points"
+	my $stories = $self->sqlSelectAll("section, stories.sid, stories.uid, title, pid, subject,"
+		. "date, time, newcomments.uid, cid, points"
 		, "stories, newcomments"
 		, $where
-		, " ORDER BY points DESC, d DESC LIMIT 10 ");
+		, " ORDER BY points DESC, date DESC LIMIT 10 ");
 
-	formatDate($stories, 'date', 'd');
-	formatDate($stories, 'time', 't');
+	formatDate($stories, 6);
+	formatDate($stories, 7);
 	return $stories;
 }
 

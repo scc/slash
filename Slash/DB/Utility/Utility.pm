@@ -20,16 +20,16 @@ sub sqlConnect {
 # Ok, first lets see if we already have a connection
 	my($self) = @_;
 
-	if (defined($self->{_dbh}) and $self->{_dbh}->ping) {
+	if (defined $self->{_dbh} && $self->{_dbh}->ping) {
 		unless ($self->{_dbh}) {
-			print STDERR ("Undefining and calling to reconnect: $@\n");
+			print STDERR "Undefining and calling to reconnect: $@\n";
 			$self->{_dbh}->disconnect;
 			undef $self->{_dbh};
 			$self->sqlConnect();
 		}
 	} else {
 # Ok, new connection, lets create it
-		print STDERR ("Having to rebuild the database handle\n");
+		print STDERR "Having to rebuild the database handle\n";
 		{
 			local @_;
 			eval {
@@ -39,7 +39,7 @@ sub sqlConnect {
 				alarm 0;
 			};
 
-			if ($@ or !defined $self->{_dbh}) {
+			if ($@ || !defined $self->{_dbh}) {
 				#In the future we should have a backupdatabase
 				#connection in here. For now, we die
 				print STDERR "Major Mojo Bad things\n";

@@ -45,6 +45,7 @@ sub new {
 				require Slash::DB::Static::PostgreSQL;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
 				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+# should you also push Static::PostgreSQL onto ISAPg ? -- pudge
 				push(@Slash::DB::ISAPg, 'Slash::DB::Static::MySQL');
 			}
 		}
@@ -70,7 +71,8 @@ sub new {
 
 sub DESTROY {
 	my($self) = @_;
-	$self->{_dbh}->disconnect unless $ENV{GATEWAY_INTERFACE};
+	$self->{_dbh}->disconnect
+		if ! $ENV{GATEWAY_INTERFACE} && defined $self->{_dbh};
 }
 
 # This is for sites running in multiple threaded/process environments

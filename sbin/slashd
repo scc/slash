@@ -32,6 +32,7 @@ use File::Path;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
+use XML::Parser::Expat;
 use XML::RSS;
 
 use Slash;
@@ -88,14 +89,14 @@ sub copy {
 }
 
 
-sub xmlEncodeStr  {
-	my $s = shift;
-	$s =~ s/&/&amp;/g;
-	$s =~ s/</&lt;/g;
-	$s =~ s/>/&gt;/g;
-
-	return $s;
-}
+# sub xmlEncodeStr  {
+# 	my $s = shift;
+# 	$s =~ s/&/&amp;/g;
+# 	$s =~ s/</&lt;/g;
+# 	$s =~ s/>/&gt;/g;
+# 
+# 	return $s;
+# }
 
 sub geturl {
 	my $ua = new LWP::UserAgent;
@@ -115,10 +116,10 @@ sub prog2file {
 	my($command, $arguments, $f) = @_;
 	my $exec = "$command virtual_user=$virtual_user $arguments";
 	my $d = `$exec`;
-	print "$d";
-	print "$exec\n";
+#	print "$d";
+	slashdLog($exec);
 	my $dir = dirname($f);
-	print "DIR $dir:$f";
+#	print "DIR $dir:$f";
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {
 		local *F;
@@ -246,8 +247,8 @@ sub newfooter {
 }
 
 #################################
-sub newrdf {
-	my ($section) = @_;
+sub newrdf {	# RSS 0.9
+	my($section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '0.9',
@@ -260,14 +261,14 @@ sub newrdf {
 		: "$constants->{sitename}: $SECT->{title}";
 
 	$rss->channel(
-		title		=> xmlEncodeStr($title),
+		title		=> XML::Parser::Expat->xml_escape($title),
 		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
 #		language	=> $constants->{rdflanguage},
 		description	=> $constants->{slogan},
 	);
 
 	$rss->image(
-		title		=> xmlEncodeStr($constants->{sitename}),
+		title		=> XML::Parser::Expat->xml_escape($constants->{sitename}),
 		url		=> $constants->{rdfimg},
 		'link'		=> $constants->{absolutedir} . '/',
 	);
@@ -275,13 +276,96 @@ sub newrdf {
 
 	for my $section (@$stories_and_topics) {
 		$rss->add_item(
-			title	=> xmlEncodeStr($section->{title}),
+			title	=> XML::Parser::Expat->xml_escape($section->{title}),
 			'link'	=> "$constants->{absolutedir}/article.pl?sid=$section->{sid}",
 		);
 	}
 
 	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
 	$rss->save("$constants->{basedir}/$file.rdf");
+}
+
+#################################
+sub newrss {	# RSS 1.0
+	my($section) = @_;
+	my $stories_and_topics = $slashdb->getBackendStories($section);
+	my $rss = XML::RSS->new(
+		version => '1.0',
+		$constants->{rdfencoding}
+			? (encoding => $constants->{rdfencoding})
+			: ()
+	);
+
+	$rss->add_module(
+		prefix	=> 'slash',
+		uri	=> 'http://purl.org/rss/modules/slash/',
+	);
+
+	my $SECT = getSection($section);
+	my $title = $section
+		? $SECT->{isolate}
+			? $SECT->{title}
+			: "$constants->{sitename}: $SECT->{title}"
+		: $constants->{sitename};
+
+	$rss->channel(
+		title		=> XML::Parser::Expat->xml_escape($title),
+		description	=> $constants->{slogan},
+		'link'		=> $constants->{absolutedir} .
+			($section ? "/index.pl?section=$section" : '/'),
+
+		dc => {
+			date		=> 'somedate',
+			subject		=> 'rdfsubject',
+			language	=> $constants->{rdflanguage},
+			creator		=> $constants->{adminmail},
+			publisher	=> 'rdfpublisher',
+			rights		=> 'rdfcopyright',
+			language	=> $constants->{rdflanguage},
+		},
+
+		syn => {
+			updatePeriod	=> 'rdfupdate',
+			updateFrequency	=> 'rdffrequency',
+			updateBase	=> 'somedate',
+		},
+	);
+
+	$rss->image(
+		title		=> XML::Parser::Expat->xml_escape($constants->{sitename}),
+		url		=> $constants->{rdfimg},
+		'link'		=> $constants->{absolutedir} . '/',
+	);
+
+	$rss->textinput(
+		title		=> 'Search ' . XML::Parser::Expat->xml_escape($constants->{sitename}),
+		description	=> 'Search ' . XML::Parser::Expat->xml_escape($constants->{sitename}) . ' stories',
+		name		=> 'query',
+		'link'		=> "$constants->{absolutedir}/search.pl"
+	);
+
+	for my $story (@$stories_and_topics) {
+		$rss->add_item(
+			title		=> XML::Parser::Expat->xml_escape($story->{title}),
+			'link'		=> "$constants->{absolutedir}/article.pl?sid=$story->{sid}",
+			description	=> 'sometext ... define elsewhere',
+
+			dc => {
+				subject		=> $story->{tid},
+				creator		=> $slashdb->getUser($story->{uid}, 'nickname'),
+			},
+
+			slash => {
+				section		=> $story->{section},
+				department	=> $story->{dept},
+				comments	=> $story->{commentcount},
+				hitparade	=> $story->{hitparade},
+			},
+		);
+	}
+
+	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	$rss->save("$constants->{basedir}/$file.rss");
 }
 
 #################################
@@ -309,7 +393,7 @@ EOT
         my $body;
 	for my $section (@$stories_and_topics) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			xmlEncodeStr(strip_nohtml($section->{title})) . 
+			XML::Parser::Expat->xml_escape(strip_nohtml($section->{title})) . 
 			"</option>\n";
 		$z++;
         }     
@@ -337,7 +421,7 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 EOT
 
 	for my $section (@$stories_and_topics) {
-		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept}));
+		my @str = (XML::Parser::Expat->xml_escape($section->{title}), XML::Parser::Expat->xml_escape($section->{dept}));
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
@@ -364,6 +448,7 @@ sub openBackend {
 	newxml();
 	newrdf();
 	newwml();
+	newrss();
 
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {

@@ -122,7 +122,9 @@ EOT
 
 	if ($form->{op} eq "stories") {
 		my $authors = $slashdb->getDescriptions('authors');
-		#Kinda hate this aye?
+		#Kinda hate this aye? -- Brian
+		# Well, this used to be in the authors table, which
+		# is now defunct.  -- pudge
 		$authors->{''} = 'All Authors';
 		createSelect('author', $authors, $form->{author});
 	} elsif ($form->{op} eq "comments") {

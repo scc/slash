@@ -48,11 +48,11 @@ sub getBackendStories {
 ########################################################
 # For slashd
 sub setStoryIndex {
-	my($self) = @_;
+	my($self, @sids) = @_;
 
 	my %stories;
 
-	for my $sid (@_) {
+	for my $sid (@sids) {
 		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
 	}
 	$self->{_dbh}->do("LOCK TABLES newstories WRITE");

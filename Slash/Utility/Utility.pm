@@ -436,6 +436,9 @@ A reference to an array with the menu in it is returned.
 
 sub getCurrentMenu {
 	my($menu) = @_;
+	# do we want to bother with menus at all for static pages?
+	# i can see why we might ... i dunno -- pudge
+	return unless $ENV{GATEWAY_INTERFACE};
 	my $user = getCurrentUser();
 	my @menus;
 
