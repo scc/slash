@@ -12,7 +12,7 @@ en_US
 __name__
 siteInfo
 __template__
-[% INCLUDE titlebar title="Installed Plugins" %]
+[% INCLUDE titlebar title="Installed Plugins" width='100%' %]
 <table>
 	<tr>
 		<td><b>Plugin</b></td><td><b>Description</b></td>
@@ -29,7 +29,7 @@ __template__
 	</tr>
 </table>
 	
-[% INCLUDE titlebar title="Site Information" %]
+[% INCLUDE titlebar title="Site Information" width='100%' %]
 	
 <table>
 	[% FOREACH key = site_info.keys %]

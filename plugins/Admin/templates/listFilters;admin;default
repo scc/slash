@@ -11,7 +11,7 @@ en_US
 __name__
 listFilters
 __template__
-[% INCLUDE titlebar %]
+[% INCLUDE titlebar width='100%' %]
 
 <FORM action="[% env.script_name %]" method="POST">
 <TABLE>

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
@@ -235,6 +235,7 @@ sub varEdit {
 	}
 
 	slashDisplay('varEdit', {
+		title		=> getTitle('varEdit-title', { name => $name }),
 		vars_select 	=> $vars_select,
 		varsref		=> $varsref,
 	});
@@ -560,8 +561,6 @@ sub blockEdit {
 	}
 	my $sectionbid = $blockref->{section};
 
-	my $title = getTitle('blockEdit-title', {}, 1);
-
 	if ($form->{blockdelete} || $form->{blockdelete1} || $form->{blockdelete2}) {
 		$blockdelete_flag = 1;
 	} else {
@@ -587,6 +586,8 @@ sub blockEdit {
 	}
 
 	$blockform_flag = 1 if ((! $form->{blockdelete_confirm} && $bid) || $form->{blocknew});
+
+	my $title = getTitle('blockEdit-title', { bid => $bid }, 1);
 
 	slashDisplay('blockEdit', {
 		bid 			=> $bid,
@@ -735,7 +736,9 @@ sub topicEdit {
 		$image_select = createSelect('image', $available_images, $default, 1);
 	}
 
+	my $topicname = $topic->{name} || '';
 	slashDisplay('topicEdit', {
+		title			=> getTitle('editTopic-title', { tname => $topicname }),
 		images_flag		=> $images_flag,
 		topic			=> $topic,
 		topics_select		=> $topics_select,
@@ -1011,7 +1014,7 @@ sub editStory {
 
 	$sections = $slashdb->getDescriptions('sections');
 
-	$topic_select = selectTopic('tid', $storyref->{tid}, $storyref->{section}, 1);
+	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
 
 	$section_select = selectSection('section', $storyref->{section}, $sections, 1) unless $user->{section};
 
@@ -1348,8 +1351,9 @@ sub saveStory {
 
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {
-		my $id = $slashdb->createDiscussion($form->{title},
-			"$rootdir/article.pl?sid=$sid", $form->{topic}, '', $sid, $form->{'time'}
+		my $id = $slashdb->createDiscussion($sid, $form->{title},
+			$form->{'time'},
+			"$rootdir/article.pl?sid=$sid", $form->{topic}
 		);
 		$slashdb->setStory($sid, { discussion => $id });
 	} else {

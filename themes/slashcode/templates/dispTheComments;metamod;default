@@ -63,7 +63,7 @@ to do this unless you need more context to fairly meta moderate.</LI>
 	Slash.dispComment(C);
 %]
 	<TR><TD>
-		Original Discussion: <B><A HREF="[% C.url %]">[% C.title %]</A></B><BR>
+		Original Discussion: <B><A HREF="[% C.url %]">C.title</A></B><BR>
 		Rating: <B>[% constants.reasons.${C.modreason} %]</B>.<BR>
 		This rating is <B>Unfair
 			<INPUT TYPE="RADIO" NAME="mm[% C.id %]" VALUE="-">

@@ -20,6 +20,9 @@ __template__
 [% CASE 'title' %]
 	[% constants.sitename %] Poll
 
+[% CASE 'edit_poll_title' %]
+	[% IF qid %]Editing Poll #[% qid %][% ELSE %]New Poll[% END %]
+
 [% CASE 'invalid' %]
 	Invalid poll!<BR>
 

@@ -81,6 +81,7 @@ sub editpoll {
 	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']) if $qid;
 
 	slashDisplay('editpoll', {
+		title		=> getData('edit_poll_title', { qid=>$qid }),
 		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
 		qid		=> $qid,
 		question	=> $question,

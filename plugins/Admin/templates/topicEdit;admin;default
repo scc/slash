@@ -11,6 +11,7 @@ en_US
 __name__
 topicEdit
 __template__
+[% INCLUDE titlebar width='100%' %]
 <TABLE>
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">

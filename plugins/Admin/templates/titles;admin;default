@@ -30,13 +30,16 @@ Edit Comment Filter
 Story List
 
 [% CASE 'blockEdit-title' %]
-Site Block Editor
+Site Block Editor [% IF bid %]([% bid %])[% END %]
 
 [% CASE 'colorEdit-title' %]
 Site Color Editor
 
 [% CASE 'listTopics-title' %]
 Topic Lister
+
+[% CASE 'editTopic-title' %]
+Topics Editor [% IF tname %]([% tname %])[% END %]
 
 [% CASE 'rmStory-title' %]
 [% sid %]  will probably be deleted in 60 seconds.
@@ -82,6 +85,9 @@ Filter# [% form.filter_id %] saved.
 
 [% CASE 'templateEdit-title' %]
 Site Template Editor
+
+[% CASE 'varEdit-title' %]
+Variable Editor
 
 [% END %]
 

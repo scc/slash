@@ -170,6 +170,11 @@ my (%conversions) = (
 	'content_filters'	=> sub {
 		my($data) = @_;
 		delete $data->{maximum_length};
+		# Since this used to be "comment_filters" and then evolved into
+		# "comtent_filters", we should be specific about what we
+		# are filtering. The default is for 'comments' as The Beast
+		# didn't have a concept of much more than that.
+		$data->{form} = 'comments';
 		return $data;
 	},
 

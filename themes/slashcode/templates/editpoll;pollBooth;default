@@ -16,6 +16,7 @@ en_US
 __name__
 editpoll
 __template__
+[% INCLUDE titlebar width='100%' %]
 [% USE Slash %]
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 	<B>sid</B> (if this matches a story's ID)<BR>

@@ -19,8 +19,8 @@ sub main {
 
 	header(getData('header'));
 
-	local $ineligible = $user->{is_anon} || $user->{rtbl} ||
-			    !$slashdb->checkForMetaModerator($user);		
+	my $ineligible = $user->{is_anon} || $user->{rtbl} ||
+			 !$slashdb->checkForMetaModerator($user);		
 
 	if (!$constants->{allow_moderation}) {
 		print getData('no_moderation');
