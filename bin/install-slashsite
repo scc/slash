@@ -20,7 +20,7 @@ my $prefix = "/usr/local/slash";
 my(	$user, $owner, $owner_id, $group, $group_id, $password,
 	$sitename, $username, $realname, $email, $dbh, @create, $sql,
 	@sql, $hostname, $hostname_f, $host_noport, $httpd, %slash_sites,
-	$driver
+	$driver, $theme
 );
 
 my %drivers = (
@@ -118,13 +118,40 @@ if($opts{'r'}) {
 # We also need to really be determining driver here and 
 # picking the right schema. Having it loop through
 # the themes directory would give us a list
-print "\nWhich theme do you want to use? (Skipping since we only have one theme.)\n";
-my $theme = "$prefix/themes/slashcode";
-
+print "\nWhich theme do you want to use?\n";
+my $x;
+#---------------------------------------------------
+opendir(THEMEDIR, "$prefix/themes");
+my %themes;
+$x = 0;
+while(my $dir = readdir(THEMEDIR)) {
+	chomp($dir);
+	next if $dir =~ /^\.$/;
+	next if $dir =~ /^\.\.$/;
+	next if $dir =~ /^CVS$/;
+	$x++;
+	$themes{$x}->{'order'} = $x;
+	$themes{$x}->{'dir'} = "$prefix/themes/$dir/";
+	$themes{$x}->{'name'} = $dir;
+	print "$themes{$x}->{'order'}.\t$dir\n";
+	open(THEME,"<$prefix/themes/$dir/PLUGIN") or next; 
+	my @info = <THEME>;
+	chomp(@info);
+	for(@info) {
+		my ($key, $val) = split(/=/, $_, 2);
+		$key = lc($key);
+		$themes{$x}->{$key} = $val;
+	}
+	print "\t$themes{$x}->{'description'}\n" if $themes{$dir}->{'description'};
+}
+chomp($theme = <STDIN>);
+$theme ||= '0';
+$theme = $themes{$theme}->{dir};
+#---------------------------------------------------
 print "\nPlease select which plugins you would like?\n";
 opendir(PLUGINDIR, "$prefix/plugins");
 my %plugins;
-my $x = 0;
+$x = 0;
 while(my $dir = readdir(PLUGINDIR)) {
 	chomp($dir);
 	next if $dir =~ /^\.$/;
@@ -187,22 +214,9 @@ unless ($opts{'p'}) {
 }
 die "You need to give us a password.\n" unless $password;
 
-{
-	local *STDERR;
-	if (open(APXS, 'apxs -q SYSCONFDIR |')) {
-		($httpd) = <APXS>;
-		close(APXS);
-	}
-}
 
-unless ($httpd) {
-	print "\nOK, we couldn't find apxs so you won't have the option
-of us fixing your httpd.conf for you.\n";
-} else {
-	$httpd .= '/httpd.conf';
-}
 
-# Defaulting to the only theme at the moment
+# Dump in the schema then pepper with a trace of your own theme
 open(CREATE, "< $prefix/sql/$driver/schema.sql")
 	or die "Can't open $prefix/sql/$driver/schema.sql: $!.\n";
 while (<CREATE>) {
@@ -228,8 +242,7 @@ while(<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,"< $theme/sql/$driver/prep.sql")
-	or die "Can't open $theme/sql/$driver/prep.sql: $!.\n";
+open(DUMP,"< $theme/sql/$driver/prep.sql");
 while(<DUMP>) {
 	chomp;
 	push @sql, $_;
@@ -292,20 +305,6 @@ find(sub { chown $owner_id, $group_id, $_ }, "$prefix/$sitename");
 
 print "\nDone, thanks.\n";
 
-# Now, lets do the httpd.conf
-
-sub standardadd {
-	open(CONF, ">> $httpd");
-	for (@standard_http) {
-		print CONF "$_\n";
-	}
-	close(CONF);
-}
-
-sub siteadd {
-	open(CONF, ">> $httpd");
-	close(CONF);
-}
 
 sub usage {
 usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
@@ -333,6 +332,7 @@ sub install {
 		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
 	}
 }
+
 
 sub install_plugin {
 	my ($answers, $plugins) = @_;
