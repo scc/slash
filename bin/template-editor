@@ -84,12 +84,14 @@ if($opts{'e'}) {
 		if ($ARGV[0]) {
 			my $file = $opts{n};
 			my $name = $ARGV[0];
-			my $seclev = $ARGV[1];
+			my $page = $ARGV[1];
+			my $seclev = $ARGV[2];
 			$seclev ||= 100;
 			my $template;
 
 			print "creating template $name using the file $file\n";
 			print "seclev $seclev\n";
+			print "page $page\n" if $page;
 			open(FILE,"<$file") or die "unable to open $file $!\n";
 			while(<FILE>) {
 				$template .= $_;
@@ -97,7 +99,9 @@ if($opts{'e'}) {
 			close(FILE);
 
 			$slash->createTemplate({
-					tpid 		=> $name,
+					tpid 		=> '',
+					name 		=> $name,
+					page 		=> $page,
 					template	=> $template,
 					seclev		=> $seclev
 			});
@@ -142,7 +146,7 @@ sub usage {
 	print "\t-d directory to dump all templates in\n";
 	print "\t-e prints template out in a manner suitable for a sql dump file\n";
 	print "\t-l list templates and their descriptions\n";
-	print "\t-n <templatefilename> <templatename> to create a template\n";
+	print "\t-n <templatefilename> <templatename> <page> <seclev> to create a template\n";
 	print "\t-p only perform list and get actions if the template matches this pattern\n";
 	print "\t-s Save template\n";
 	print "\t-s -f <templatefilename> <templatename> to update a template\n";
