@@ -906,7 +906,7 @@ sub otherLinks {
 sub editStory {
 	my($form, $slashdb, $user, $constants) = @_;
 
-	my($sid, $authorbox);
+	my($sid, $storylinks, $authorbox);
 
 	if ($form->{op} eq 'edit') {
 		$sid = $form->{sid};
@@ -1011,7 +1011,7 @@ sub editStory {
 	}
 
 	my $nextblock = slashDisplay('three', { stories => $nextstories }, { Return => 1, Page => 'misc', Section => 'default' });
-	$authorbox = $newestthree . $nextblock;
+	$storylinks = $newestthree . $nextblock;
 
 	$sections = $slashdb->getDescriptions('sections');
 
@@ -1048,6 +1048,7 @@ sub editStory {
 		bodytext =>     get_ispell_comments($storyref->{bodytext}),
 	};
 
+	$authorbox = fancybox($constants->{fancyboxwidth}, 'Story admin', $storylinks, 0, 1);
 	slashDisplay('editStory', {
 		storyref 		=> $storyref,
 		story			=> $story,
