@@ -549,6 +549,49 @@ sub writePollBooth {
 
 main();
 
+sub check_daily {
+	my $is_tomorrow = 0;
+	my $timezones = $slashdb->getDescriptions('tzcodes');
+	# Assume the SQL server is on GMT, like the INSTALL dictates
+	my $gmt_last = UnixDate(ParseDate($slashdb->getVar('daily_last', 'value')), "%s");
+	# What the DB thinks is now, in unix epoch seconds
+	my $gmt_now = UnixDate(ParseDate($slashdb->getTime()), "%s");
+	# Get the offset to local time in seconds
+	my($loc_gmt_offset) = $slashdb->sqlSelect(
+		"tzcodes.off_set",
+		"tzcodes,vars",
+		"vars.name='daily_tz' AND tzcodes.tz=vars.value"
+	) || 0;
+	# Get the offset to the daily_attime in seconds
+	my $daily_attime = join(" ", "1970-01-01", $slashdb->getVar('daily_attime', 'value'));
+	my $loc_attime_offset = UnixDate(ParseDate($daily_attime), "%s");
+	# Offset "now" to account for the requested daily attime
+	my $loc_last_offset = $gmt_last - $loc_gmt_offset + $loc_attime_offset;
+	# Find the next boundary point by going back two days and then
+	# skipping forward until we pass "last"
+	my $loc_next_offset_dayboundary = int($loc_last_offset / 86400 - 2) * 86400;
+	$loc_next_offset_dayboundary += 86400 while $loc_next_offset_dayboundary <= $gmt_last;
+	# XXX For debugging - delete before release
+	slashdLog(join(" ",
+		"(debug code)",
+		"gmt_last $gmt_last",
+		"gmt_now $gmt_now",
+		"loc_gmt_offset $loc_gmt_offset",
+		"daily_attime $daily_attime",
+		"loc_attime_offset $loc_attime_offset",
+		"loc_last_offset $loc_last_offset",
+		"loc_next_offset_dayboundary $loc_next_offset_dayboundary",
+	));
+	if ($loc_next_offset_dayboundary < $gmt_now) {
+		$is_tomorrow = 1;
+		my $gmt_now_sqlformat = UnixDate(
+			ParseDateString("epoch $gmt_now"), "%Y-%m-%d %T"
+		);
+		$slashdb->setVar('daily_last', $gmt_now_sqlformat);
+	}
+	$is_tomorrow;
+}
+
 sub main {
 	mkpath "$constants->{logdir}/", 0, 0755;
 	open STDERR, ">> $constants->{logdir}/slashd.log"
@@ -570,11 +613,7 @@ sub main {
 			system("$constants->{sbindir}/portald $virtual_user&");
 			sleep(60 * 2);
 
-			my $today = $slashdb->getTime();
-			my $yesterday = $slashdb->getVar('today', 'value');
-
-			if ($today ne $yesterday) {
-				$slashdb->setVar("today", $today);
+			if (check_daily()) {
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
 				system("$constants->{sbindir}/dailyStuff $virtual_user &");
 			}
