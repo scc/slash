@@ -60,14 +60,18 @@ sub apacheLog {
 	my($package, $filename, $line) = caller(1);
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
-		($package, $filename, $line) = caller(2);
-		$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
-	} else {
-		print STDERR ("Error in library:$package:$filename:$line:@_\n");
-		($package, $filename, $line) = caller(2);
-		print STDERR ("Which was called by:$package:$filename:$line:@_\n");
-	}
+		if($r) {
+			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
+			($package, $filename, $line) = caller(2);
+			$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
+
+			return 0;
+		}
+	} 
+	print STDERR ("Error in library:$package:$filename:$line:@_\n");
+	($package, $filename, $line) = caller(2);
+	print STDERR ("Which was called by:$package:$filename:$line:@_\n");
+	
 	return 0;
 }
 
@@ -143,8 +147,7 @@ sub getCurrentUser {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-		$user = $user_cfg->{'user'};
+		$user = $r->pnotes('user');
 	} else {
 		$user = $static_user;
 	}
@@ -160,14 +163,14 @@ sub getCurrentUser {
 }
 
 #################################################################
+# Pass in a key pair, and you dink with the user.
 sub setCurrentUser {
 	my($key, $value) = @_;
 	my $user;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-		$user = $user_cfg->{'user'};
+		$user = $r->pnotes('user');
 	} else {
 		$user = $static_user;
 	}
@@ -177,7 +180,14 @@ sub setCurrentUser {
 
 #################################################################
 sub createCurrentUser {
-	($static_user) = @_;
+	my ($user) = @_;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$r->pnotes('user', $user);
+	} else {
+		$static_user = $user;
+	}
 }
 
 #################################################################
@@ -187,8 +197,7 @@ sub getCurrentForm {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-		$form = $user_cfg->{'form'};
+		$form = $r->pnotes('form');
 	} else {
 		$form = $static_form;
 	}
@@ -204,7 +213,14 @@ sub getCurrentForm {
 
 #################################################################
 sub createCurrentForm {
-	($static_form) = @_;
+	my ($form) = @_;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$r->pnotes('form', $form);
+	} else {
+		$static_form = $form;
+	}
 }
 
 #################################################################

@@ -4,6 +4,7 @@ use strict;
 
 use Apache; 
 use Apache::Constants qw(:common REDIRECT);
+use Apache::File; 
 use Apache::ModuleConfig;
 use Data::Dumper;
 use Slash::DB;
@@ -19,12 +20,15 @@ $VERSION = '0.01';
 
 bootstrap Slash::Apache::User $VERSION;
 
-sub SlashUserInit ($$) {
-	my($cfg, $params) = @_;
-	$cfg->{user} = '';
-	$cfg->{form} = '';
+sub SlashEnableENV ($$$) {
+	my($cfg, $params, $flag) = @_;
+	$cfg->{env} = $flag;
 }
 
+sub SlashAuthAll ($$$) {
+	my($cfg, $params, $flag) = @_;
+	$cfg->{auth} = $flag;
+}
 # handler method
 sub handler {
 	my($r) = @_;
@@ -37,13 +41,13 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $dbslash = $dbcfg->{dbslash};
 
-	# let pass if / or .pl
-	unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
-		$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
-		$cfg->{user} = '';
-		$cfg->{form} = '';
+	# let pass unless / or .pl
+	unless ($cfg->{auth}){
+		unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
+			$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
 
-		return OK;
+			return OK;
+		}
 	}
 
 	$dbslash->sqlConnect;
@@ -96,22 +100,34 @@ sub handler {
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
-	if (!isAnon($uid) && $r->uri eq '/') {
-		$r->internal_redirect('/index.pl');
-		return OK;
-	}
-
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
 	$r->subprocess_env('REMOTE_USER' => $uid);
 
-	$cfg->{user} = getUser($form, $cookies, $uid);
-	$cfg->{form} = $form;
+	return DECLINED if($cfg->{auth} && isAnon($uid));
+
+	createCurrentUser(getUser($form, $cookies, $uid));
+	createCurrentForm($form);
+	createEnv($r) if $cfg->{env};
 
 	return OK;
 }
 
+########################################################
+sub createEnv {
+	my ($r) = @_;
+
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	while(my ($key, $val) = each %$user) {
+		$r->subprocess_env("USER_$key" => $val);
+	}
+	while(my ($key, $val) = each %$form) {
+		$r->subprocess_env("FORM_$key" => $val);
+	}
+
+}
 ########################################################
 sub userLogin {
 	my($name, $passwd) = @_;

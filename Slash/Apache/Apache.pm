@@ -1,8 +1,10 @@
 package Slash::Apache;
 
 use strict;
+use Slash::Utility;
 
 use Apache::ModuleConfig;
+use Apache::Constants qw(:common);
 use Slash::DB;
 require DynaLoader;
 require AutoLoader;
@@ -31,6 +33,23 @@ sub SlashVirtualUser ($$$) {
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 	$cfg->{menus} = $cfg->{dbslash}->getMenus();
+}
+
+sub IndexHandler {
+  my ($r) = @_;
+
+	if ($r->uri eq '/') {
+
+		if ($ENV{HTTP_COOKIE} =~ /(?:user|session)/) {
+			$r->filename($r->document_root . "/index.pl");
+			return OK;
+		} else {
+			$r->filename($r->document_root . "/index.shtml");
+			return OK;
+		}
+	}
+	
+	return DECLINED;
 }
 
 1;

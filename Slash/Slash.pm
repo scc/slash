@@ -81,15 +81,12 @@ sub getSlashConf {
 # Entirely legacy at this point
 sub getSlash {
 	return unless $ENV{GATEWAY_INTERFACE};
-	my $r = Apache->request;
-	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 
-	$I{dbobject} = $cfg->{dbslash};
+	$I{dbobject} = getCurrentDB();
 
 	# %I legacy
-	$I{F} = $user_cfg->{form};
-	my $user = $I{U} = $user_cfg->{user};
+	$I{F} = getCurrentForm();
+	$I{U} = getCurrentUser();
 
 	getSlashConf();  # remove when %I is gone
 
@@ -230,8 +227,9 @@ sub getEvalBlock {
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists
 sub getSectionBlock {
-	my $dbslash = getCurrentDB();
 	my($name) = @_;
+
+	my $dbslash = getCurrentDB();
 	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
 	my $block;
 	if ($thissect) {

@@ -108,8 +108,9 @@ unless($sitename) {
 	$sitename = $hostname;
 }
 
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/log/$sitename' WHERE name = 'logdir' ");
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename' WHERE name = 'basedir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename/log' WHERE name = 'logdir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename/htdocs' WHERE name = 'basedir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename' WHERE name = 'datadir' ");
 
 system("mkdir /usr/local/slash/$sitename");
 system("mkdir /usr/local/slash/$sitename/logs");

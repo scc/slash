@@ -5,9 +5,14 @@ use Apache::ExtUtils qw (command_table);
 use Apache::src ();
 
 my @directives = (
-	{ name      => 'SlashUserInit',
-		errmsg      => 'Takes no arguments',
-		args_how    => 'NO_ARGS',
+	{ name      => 'SlashEnableENV',
+		errmsg      => 'Takes a flag that is either on or off (off by default)',
+		args_how    => 'FLAG',
+		req_overrive => 'ACCESS_CONF'
+	},
+	{ name      => 'SlashAuthAll',
+		errmsg      => 'Takes a flag that is either on or off (off by default)',
+		args_how    => 'FLAG',
 		req_overrive => 'ACCESS_CONF'
 	}
 

@@ -573,11 +573,7 @@ sub getUserInstance {
 
 	my $user;
 	unless ($script) {
-		$user = $self->sqlSelectHashref('*',
-			'users, users_index, users_comments, users_prefs',
-			"users.uid=$uid AND users_index.uid=$uid AND " .
-			"users_comments.uid=$uid AND users_prefs.uid=$uid"
-		);
+		$user = $self->getUser($uid);
 		return $user || undef;
 	}
 
@@ -612,6 +608,25 @@ sub getUserInstance {
 	return $user;
 }
 
+########################################################
+# Get user info from the users table.
+sub deleteUser {
+	my ($self, $uid) = @_;
+	$self->setUser($uid, {
+		bio => '',
+		nickname => '<deleted user>',
+		matchname => '<deleted user>',
+		realname => '',
+		realemail => '',
+		fakeemail => '',
+		newpasswd => '',
+		homepage => '',
+		passwd => '',
+		sig =>  '',
+		seclev =>'0'
+	});
+	$self->sqlDo("DELETE FROM users_param WHERE uid=$uid");
+}
 ########################################################
 # Get user info from the users table.
 sub getUserAuthenticate {
@@ -702,7 +717,7 @@ sub getUserUID {
 }
 
 #################################################################
-sub getUserComments {
+sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
 	my $sqlquery = "SELECT pid,sid,cid,subject,"
@@ -742,6 +757,7 @@ sub createContentFilter {
 # Replication issue. This needs to be a two-phase commit.
 sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
+	return unless($matchname && $email && $newuser);
 
 	my($cnt) = $self->sqlSelect(
 		"matchname","users",
@@ -2720,17 +2736,6 @@ sub getVar {
 	return $answer;
 }
 
-########################################################
-# Now here is the thing. We want getUser to look like
-# a generic, despite the fact that it is not :)
-sub getUser {
-	my $tables = [qw(
-		users users_comments users_index
-		users_info users_key users_prefs
-	)];
-	my $answer = _genericGetCombined($tables, 'uid', @_);
-	return $answer;
-}
 
 ########################################################
 #
@@ -2740,6 +2745,7 @@ sub setUser {
 		users users_comments users_index
 		users_info users_key users_prefs
 	)];
+	my @param;
 	# encrypt password  --  done here OK?
 	# Probably safer to put it here
 	if (exists $hashref->{passwd}) {
@@ -2747,42 +2753,85 @@ sub setUser {
 		$hashref->{newpasswd} = '';
 		$hashref->{passwd} = encryptPassword($hashref->{passwd});
 	}
-	my $answer = _genericSetCombined($tables, 'uid', @_);
-	return $answer;
+	my %update_tables;
+	my $cache = _genericGetCacheName($self, $tables);
+	for (keys %$hashref) {
+		my $key = $self->{$cache}{$_};
+		if($key) {
+			push @{$update_tables{$key}}, $_;
+		} else {
+			push @param , [$_, $hashref->{$_}];
+		}
+	}
+	for my $table (keys %update_tables) {
+		my %minihash;
+		for my $key (@{$update_tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
+		}
+		$self->sqlUpdate($table, \%minihash, 'uid=' . $uid, 1);
+	}
+	# What is worse, a select+update or a replace?
+	# I should look into that.
+	for(@param)  {
+		$self->sqlDo("REPLACE INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
+	}
 }
-
 ########################################################
-sub _genericGetCombined {
-	my($tables, $table_prime, $self, $id, $val) = @_;
+# Now here is the thing. We want getUser to look like
+# a generic, despite the fact that it is not :)
+sub getUser {
+	my($self, $id, $val) = @_;
 	my $answer;
+	my $tables = [qw(
+		users users_comments users_index
+		users_info users_key users_prefs
+	)];
 	# The sort makes sure that someone will always get the cache if
 	# they have the same tables
 	my $cache = _genericGetCacheName($self, $tables);
-	my $id_db = $self->{dbh}->quote($id);
 
 	if (ref($val) eq 'ARRAY') {
-		my $values = join ',', @$val;
-		my(%tables, $where);
+		my $values;
+		my(%tables, @param, $where);
 		for (@$val) {
-			$tables{$self->{$cache}{$_}} = 1;
+			if($self->{$cache}{$_}) {
+				$tables{$self->{$cache}{$_}} = 1;
+				$values .= "$_,";
+			} else {
+				push @param, $_;
+			}
 		}
+		chop($values);
 		for (keys %tables) {
-			$where .= "$_.$table_prime=$id_db AND ";
+			$where .= "$_.uid=$id AND ";
 		}
 		$where =~ s/ AND $//;
 		my $table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where);
+		for(@param) {
+			my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
+			$answer->{$_} = $val;
+		}
 	} elsif ($val) {
 		my $table = $self->{$cache}{$val};
-		($answer) = $self->sqlSelect($val, $table, "$table_prime=$id_db");
+		if($table) {
+			($answer) = $self->sqlSelect($val, $table, "uid=$id");
+		} else {
+			($answer) = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$val'");
+		}
 	} else {
 		my $where;
 		for (@$tables) {
-			$where .= "$_.$table_prime=$id_db AND ";
+			$where .= "$_.uid=$id AND ";
 		}
 		$where =~ s/ AND $//;
 		my $table = join ',', @$tables;
 		$answer = $self->sqlSelectHashref('*', $table, $where);
+		my $append = $self->sqlSelectAll('name,value', 'users_param', "uid=$id");
+		for(@$append) {
+			$answer->{$_->[0]} = $_->[1];
+		}
 	}
 
 	return $answer;
@@ -2806,26 +2855,6 @@ sub _genericGetCacheName {
 	return $cache;
 }
 
-########################################################
-# Now here is the thing. We want setUser to look like
-# a generic, despite the fact that it is not :)
-sub _genericSetCombined {
-	my($tables, $table_prime, $self, $id, $hashref) = @_;
-	my %update_tables;
-	my $cache = _genericGetCacheName($self, $tables);
-	for (keys %$hashref) {
-		my $key = $self->{$cache}{$_};
-		push @{$update_tables{$key}}, $_;
-	}
-	for my $table (keys %update_tables) {
-		my %minihash;
-		for my $key (@{$update_tables{$table}}){
-			$minihash{$key} = $hashref->{$key}
-				if defined $hashref->{$key};
-		}
-		$self->sqlUpdate($table, \%minihash, $table_prime . '=' . $id, 1);
-	}
-}
 
 ########################################################
 # Now here is the thing. We want setUser to look like

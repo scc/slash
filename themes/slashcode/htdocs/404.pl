@@ -25,19 +25,16 @@
 ###############################################################################
 use strict;
 use lib '../';
-use vars '%I';
 use Slash;
 use Slash::Utility;
 
 sub main {
-	*I = getSlashConf();
-	getSlash();
-
+	my $constants = getCurrentStatic();
 	$ENV{REQUEST_URI} ||= "";
 
 	my $url = stripByMode(substr($ENV{REQUEST_URI}, 1), 'exttrans');
 
-	my $admin = $I{adminmail};
+	my $admin = $constants->{adminmail};
 
 	header("404 File Not Found", '', '404 File Not Found');
 
@@ -60,12 +57,11 @@ sub main {
 	} elsif ($errnum == 8) {
 		print "<P>All of the older book reviews have been moved to /books/older, so you probably want to be here: <A HREF=\"$new_url\">$new_url</A>.\n";
 	} elsif ($errnum == 9) {
-		print "<P>All of the older Ask $I{sitename} articles have been moved to /askslashdot/older, so you probably want to be here: <A HREF=\"$new_url\">$new_url</A>.\n";
+		print "<P>All of the older Ask $constants->{sitename} articles have been moved to /askslashdot/older, so you probably want to be here: <A HREF=\"$new_url\">$new_url</A>.\n";
 	}
 
-	print "<P>If you feel like it, mail the url, and where ya came from to <A HREF=\"mailto:$I{adminmail}\">$admin</A>\n";
+	print "<P>If you feel like it, mail the url, and where ya came from to <A HREF=\"mailto:$constants->{adminmail}\">$admin</A>\n";
 
-	# $r->log_error("Borked Browser $url $ENV{HTTP_REFERER} $ENV{HTTP_USER_AGENT}") if $url=~/gif/;
 	writeLog("404","404");
 	footer();
 }

@@ -615,6 +615,19 @@ CREATE TABLE users_prefs (
 );
 
 #
+# Table structure for table 'users_param'
+#
+DROP TABLE IF EXISTS users_param;
+CREATE TABLE users_param (
+  param_id int(11) DEFAULT '0' NOT NULL auto_increment,
+  uid int(11) DEFAULT '0' NOT NULL,
+  name varchar(32) NOT NULL,
+  value text,
+  UNIQUE uid_key (uid, name),
+  PRIMARY KEY (param_id)
+);
+
+#
 # Table structure for table 'vars'
 #
 DROP TABLE IF EXISTS vars;
