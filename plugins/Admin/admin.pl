@@ -668,8 +668,9 @@ sub topicEdit {
 
 	local *DIR;
 	opendir(DIR, "$basedir/images/topics");
-	# @$available_images = grep(/.*\.gif|jpg/i, readdir(DIR));
 
+	# this should be a preference at some point, image
+	# extensions ... -- pudge
 	$available_images = { map { ($_, $_) } grep /\.(?:gif|jpe?g|png)$/, readdir DIR };
 
 	closedir(DIR);

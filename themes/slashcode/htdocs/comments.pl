@@ -327,6 +327,7 @@ sub commentIndexPersonal {
 # -Brian
 sub createDiscussion {
 	my($form, $slashdb, $user, $constants) = @_;
+	my $id;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		# if form.url is empty, try the REFERER.  if it
@@ -349,7 +350,7 @@ sub createDiscussion {
 		# for now, use the postersubj filters; problem is,
 		# the error messages can come out a bit funny.
 		# oh well.  -- pudge
-		my($error, $err_message, $id);
+		my($error, $err_message);
 		if (! filterOk('comments', 'postersubj', $form->{title}, \$err_message)) {
 			$error = getError('filter message', {
 				err_message	=> $err_message
@@ -361,15 +362,15 @@ sub createDiscussion {
 		} else {
 			# BTW we are not setting section since at this point we wouldn't
 			# trust users to set it correctly -Brian
-			my $id = $slashdb->createDiscussion({
+			$id = $slashdb->createDiscussion({
 				title	=> $form->{title},
 				topic	=> $form->{topic},
-				url	=> $form->{url},
+				url	=> $form->{url} || 1,
 				type	=> "recycle"
 			});
 
 			# fix URL to point to discussion if no referer
-			if ($form->{url} eq "") {
+			if (!$form->{url}) {
 				$newurl = $constants->{rootdir} . "/comments.pl?sid=$id";
 				$slashdb->setDiscussion($id, { url => $newurl });
 			}

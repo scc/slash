@@ -25,14 +25,14 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use POSIX 'WNOHANG';
-use IPC::Open3 'open3';
 use Email::Valid;
 use File::Basename;
 use File::Path;
 use File::Spec::Functions;
-use Slash::Custom::Bulkmail;	# Mail::Bulkmail
+use IPC::Open3 'open3';
 use Mail::Sendmail;
+use POSIX 'WNOHANG';
+use Slash::Custom::Bulkmail;	# Mail::Bulkmail
 use Slash::Utility::Environment;
 use Symbol 'gensym';
 
@@ -276,18 +276,20 @@ sub prog2file {
 	my $err_str = "";
 
 	my $exec = "$command $arguments";
-	my ($data, $err);
+	my($data, $err);
 
 	# Two ways of handling data from child programs yet we maintain
 	# backwards compatibility.
 	if (! $handle_err) {
 		$data = `$exec`;
 	} else {
-		# Yes, we KNOW *IN is used only once. That's what dummy params
-		# are for. (it would be nice if we could use the 5.6-ism, below)
-		#no warnings 'once';
-		$^W = 0; my $pid = open3(*IN, *OUT, *ERR, $exec); $^W = 1;
-		my $rc = POSIX::waitpid(-1, &WNOHANG);
+		# you need to use local() so you don't trample on
+		# someone else's IN/OUT/ERR variables anyway, and
+		# this takes care of the "used only once" warnings
+		# -- pudge
+		local(*IN, *OUT, *ERR);
+		my $pid = open3(*IN, *OUT, *ERR, $exec);
+		my $rc = POSIX::waitpid(-1, WNOHANG);
 		{
 			undef $/;
 			$data = <OUT>;
@@ -335,11 +337,12 @@ sub prog2file {
 sub makeDir {
 	my($bd, $section, $sid) = @_;
 
+	my $yearid  = substr($sid, 0, 2);
 	my $monthid = substr($sid, 3, 2);
-	my $yearid = substr($sid, 0, 2);
-	my $dayid = substr($sid, 6, 2);
+	my $dayid   = substr($sid, 6, 2);
+	my $path    = catdir($bd, $section, $yearid, $monthid, $dayid);
 
-	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0775;
+	mkpath $path, 0, 0775;
 }
 
 
