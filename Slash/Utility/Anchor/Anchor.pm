@@ -96,7 +96,7 @@ The 'html-header' and 'header' template blocks.
 =cut
 
 sub header {
-	my($title, $section, $status) = @_;
+	my($title, $section, $status, $noheader) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -127,7 +127,8 @@ sub header {
 	$title =~ s/<(.*?)>//g;
 
 	# This is ALWAYS displayed. Let the template handle $title.
-	slashDisplay('html-header', { title => $title }, { Nocomm => 1 });
+	slashDisplay('html-header', { title => $title }, { Nocomm => 1 })
+		unless $noheader;
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
 	if ($form->{ssi} eq 'yes') {

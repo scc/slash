@@ -38,7 +38,7 @@ sub sectionHeaders {
 	open $fh, ">$constants->{basedir}/$section/slashhead.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead.inc: $!";
 	*STDOUT = $fh;
-	header("", $section, "thread");
+	header("", $section, "thread", 1);
 	close $fh;
 
 	setCurrentForm('ssi', 0);

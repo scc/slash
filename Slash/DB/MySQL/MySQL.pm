@@ -4388,7 +4388,7 @@ F
 $story_table.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
 OR ($story_table.section=$section_dbi and displaystatus > -1))
-AND time < NOW()  $story_table.writestatus != 'delete' AND $story_table.writestatus != 'archived')
+AND time < NOW()  $story_table.writestatus != 'delete' AND $story_table.writestatus != 'archived'
 W
 GROUP BY $story_table.sid
 ORDER BY time DESC
