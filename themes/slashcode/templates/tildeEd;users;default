@@ -33,7 +33,7 @@ __template__
 		<TD VALIGN="TOP">
 
 [% FOREACH aid = aidref.keys %]
-		<INPUT TYPE="CHECKBOX" NAME="exaid_[% aid %]"[% aidref.$aid.checked %]>[% aid %]<BR>
+		<INPUT TYPE="CHECKBOX" NAME="exaid_[% aid %]"[% aidref.$aid.checked %]>[% aidref.$aid.nickname %]<BR>
 [% END %]
 
 		</TD>

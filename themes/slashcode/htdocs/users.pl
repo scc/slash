@@ -838,10 +838,11 @@ sub tildeEd {
 	my $title = getTitle('tildeEd_title');
 
 	# Customizable Authors Thingee
-	my $aids = $slashdb->getAuthorNames();
+	my $aids = $slashdb->getDescriptions('authors'); #$slashdb->getAuthorNames();
 	my $n = 0;
-	for my $aid (@$aids) {
-		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ? ' CHECKED' : '';
+	for my $aid (keys %$aids) { #(@$aids) {
+		$aidref->{$aid}{checked}  = ($exaid =~ /'\Q$aid\E'/) ? ' CHECKED' : '';
+		$aidref->{$aid}{nickname} = $aids->{$aid};
 	}
 
 	my $topics = $slashdb->getDescriptions('topics');
