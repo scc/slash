@@ -23,11 +23,22 @@ sub main {
 		friends => \&displayFriends,
 		default => \&displayDefault,
 		);
+	my %safe = (
+		list => 1,
+		get => 1,
+		display => 1,
+		top => 1,
+		friends => 1,
+		default => 1,
+		);
 
 	my $journal = Slash::Journal->new(getCurrentSlashUser());
 	my $form = getCurrentForm();
 	my $op = $form->{'op'};
 	$op = 'default' unless $ops{$op};
+	if (getCurrentUser('is_anon')) {
+		$op = 'default' unless $safe{$op};
+	}
 	my $uid = $form->{'uid'};
 	header();
 	if($op eq 'display') {
@@ -70,8 +81,16 @@ sub displayFriends {
 sub displayArticle {
 	my ($form, $journal) = @_;
 	my $slashdb = getCurrentDB();
-	my $nickname = $slashdb->getUser($form->{uid}, 'nickname');
-	my $articles = $journal->gets($form->{uid},[qw|date article  description|]);
+	my $uid;
+	my $nickname;
+	if($form->{uid}) {
+		$nickname = $slashdb->getUser($form->{uid}, 'nickname');
+		$uid = $form->{uid};
+	} else {
+		$nickname = getCurrentUser('nickname');
+		$uid = getCurrentUser('uid');
+	}
+	my $articles = $journal->gets($uid,[qw|date article  description|]);
 	my @sorted_articles;
 	my $date;
 	my $collection = {};
@@ -90,7 +109,9 @@ sub displayArticle {
 	for(@sorted_articles) {
 		print STDERR "$_->{day}\n";
 	}
-	slashDisplay('journalpage-grey', {
+	my $theme = $slashdb->getUser($uid, 'journal-theme');
+	$theme ||= 'journalpage-grey';
+	slashDisplay($theme, {
 		articles => \@sorted_articles,
 		uid => $form->{uid},
 		url => '/journal.pl',
@@ -100,9 +121,19 @@ sub displayArticle {
 sub listArticle {
 	my ($form, $journal) = @_;
 	my $list = $journal->gets(getCurrentUser('uid'),[qw| id date description |]);
+	my $themes = $journal->themes;
+	if($form->{theme}) {
+		my $db = getCurrentDB();
+		$db->setUser(getCurrentUser('uid'), { 'journal-theme' => $form->{theme} }) 
+			if (grep /$form->{theme}/, @$themes);
+	}
+	my $theme = getCurrentUser('journal-theme');
+	$theme ||= 'journalpage-grey';
 	slashDisplay('journallist', {
 		articles => $list,
 		url => '/journal.pl',
+		default => $theme,
+		themes => $themes,
 	});
 }
 
