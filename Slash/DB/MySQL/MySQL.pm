@@ -2851,7 +2851,7 @@ sub getStoryList {
 
 	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, alttext, section,
+	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, topics.name, section,
 			displaystatus,writestatus
 			FROM $table,topics
 			WHERE $table.tid=topics.tid];
