@@ -288,6 +288,7 @@ sub getAd {
 	return $ENV{"AD_BANNER_$num"};
 }
 
+
 ########################################################
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists

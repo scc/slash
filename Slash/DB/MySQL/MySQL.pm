@@ -248,19 +248,24 @@ sub createComment {
 
 ########################################################
 sub setModeratorLog {
-	my($self, $cid, $sid, $uid, $val, $reason) = @_;
+	my($self, $sid, $cid, $uid, $val, $reason, $active) = @_;
+
+	$active ||= 1;
 	$self->sqlInsert("moderatorlog", {
-		uid => $uid,
-		val => $val,
-		sid => $sid,
-		cid => $cid,
+		uid	=> $uid,
+		val	=> $val,
+		sid	=> $sid,
+		cid	=> $cid,
 		reason  => $reason,
-		-ts => 'now()'
+		-ts	=> 'now()',
+		active 	=> $active,
 	});
 }
 
 ########################################################
 #this is broke right now -Brian
+#
+# Work, dammit! - Cliff
 sub getMetamodComments {
 	my($self, $id, $uid, $num_comments) = @_;
 
@@ -269,45 +274,51 @@ sub getMetamodComments {
 		$table = 'comment_heap';
 	}
 
+	# Removed extraneous "users.uid!=$uid" from WHERE clause.
+	# Also removed "sig" from field list as we anonymize it below.
 	my $sth = $self->sqlSelectMany(
-		"$table.cid,date," .
-		"subject,comment,users.uid as uid,
-		sig,pid,$table.sid as sid,
-		moderatorlog.id as id,title,moderatorlog.reason as modreason,
-		$table.reason",
-		"$table,comment_text,users,users_info,moderatorlog,stories",
-		"stories.sid=$table.sid AND moderatorlog.sid=$table.sid AND
-		moderatorlog.cid=$table.cid AND moderatorlog.id>$id AND
-		$table.uid!=$uid AND users.uid=$table.uid AND
-		users.uid=users_info.uid AND users.uid!=$uid AND
-		moderatorlog.uid!=$uid AND moderatorlog.reason<8 LIMIT $num_comments"
+		"$table.cid,$table.sid as sid,date," .
+		"subject,comment,users.uid as uid,pid,moderatorlog.id as id,
+		moderatorlog.reason as modreason, $table.reason, title, url",
+		"$table,comment_text,users,users_info,moderatorlog,discussions",
+		"moderatorlog.cid=$table.cid AND moderatorlog.id>$id AND
+		$table.uid!=$uid AND users.uid=$table.uid AND 
+		moderatorlog.sid=discussions.id AND
+		comment_text.cid=$table.cid AND users.uid=users_info.uid AND
+		moderatorlog.uid!=$uid AND moderatorlog.reason<8
+		LIMIT $num_comments"
 	);
 
 	my $comments = [];
 	while (my $comment = $sth->fetchrow_hashref) {
 		# Anonymize comment that is to be metamoderated.
-		@{$comment}{qw(nickname uid points sig)} = ('-', -1, 0, '');
+		@{$comment}{qw(nickname uid points sig)} = 
+			('-', getCurrentStatic('anonymous_coward_uid'), 0, '');
 		push @$comments, $comment;
 	}
 	$sth->finish;
-
+ 
 	formatDate($comments);
 	return $comments;
 }
 
 ########################################################
 sub getModeratorCommentLog {
-	my($self, $sid, $cid) = @_;
+	my($self, $cid) = @_;
 # why was this removed?  -- pudge
 #				"moderatorlog.active=1
 # Probably by accident. -Brian
+#
+# I've replaced it. - Cliff
 
 	my $table = 'comments';
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
-	my $comments = $self->sqlSelectMany("$table.sid as sid,
-				 $table.cid as cid,
+
+	# We no longer need SID as CID is now unique.
+	my $comments = $self->sqlSelectMany(
+				 "$table.cid as cid,
 				 $table.points as score,
 				 moderatorlog.uid as uid,
 				 users.nickname as nickname,
@@ -316,11 +327,10 @@ sub getModeratorCommentLog {
 				 moderatorlog.ts as ts,
 				 moderatorlog.active as active",
 				"moderatorlog, users, $table",
-				"moderatorlog.sid='$sid'
-			     AND moderatorlog.cid=$cid
+				"moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
-			     AND $table.sid=moderatorlog.sid
-			     AND $table.cid=moderatorlog.cid",
+			     AND $table.cid=moderatorlog.cid
+			     AND moderatorlog.active=1",
 				"ORDER BY ts"
 	);
 	my(@comments, $comment);
@@ -330,10 +340,10 @@ sub getModeratorCommentLog {
 
 ########################################################
 sub getModeratorLogID {
-	my($self, $cid, $sid, $uid) = @_;
+	my($self, $cid, $uid) = @_;
+	# We no longer need the SID as CID is now unique.
 	my($mid) = $self->sqlSelect(
-		"id", "moderatorlog",
-		"uid=$uid and cid=$cid and sid='$sid'"
+		"id", "moderatorlog", "uid=$uid and cid=$cid"
 	);
 	return $mid;
 }
@@ -341,26 +351,27 @@ sub getModeratorLogID {
 ########################################################
 sub unsetModeratorlog {
 	my($self, $uid, $sid, $max, $min) = @_;
-	my $cursor = $self->sqlSelectMany("cid,val", "moderatorlog",
-			"uid=$uid and sid=$sid"
-	);
-	my @removed;
 
-	while (my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
+	# SID here really refers to discussions.id, NOT stories.sid
+	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
+			"moderatorlog.uid=$uid and moderatorlog.sid=$sid"
+	);
+
+	$max ||= getCurrentStatic('constants_maxscore');
+	$min ||= getCurrentStatic('constants_minscore');
+	my @removed;
+	while (my($cid, $val, $active) = $cursor->fetchrow){
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
 		$self->sqlDo("delete from moderatorlog where
 			cid=$cid and uid=$uid"
 		);
 
-		# If moderation wasn't actually performed, we should not change
-		# the score.
+		# If moderation wasn't actually performed, we skip ahead one.
 		next if ! $active;
 
 		# Insure scores still fall within the proper boundaries
-		my $scorelogic = $val < 0
-			? "points < $max"
-			: "points > $min";
+		my $scorelogic = $val < 0 ? "points < $max" : "points > $min";
 		$self->sqlUpdate(
 			"comments",
 			{ -points => "points+" . (-1 * $val) },
@@ -1006,14 +1017,13 @@ sub setTemplate {
 }
 
 ########################################################
-sub getCommentCid {
-	my($self, $sid, $cid) = @_;
+sub getCommentChildren {
+	my($self, $cid) = @_;
 	my $table = "comments";
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
-	# Does this work?
-	my($scid) = $self->sqlSelectAll('cid', $table, "sid='$sid' and pid='$cid'");
+	my($scid) = $self->sqlSelectAll('cid', $table, "pid=$cid");
 
 	return $scid;
 }
@@ -2213,7 +2223,6 @@ sub checkForMetaModerator {
 	my($tuid) = $self->sqlSelect('count(*)', 'users');
 	return if $user->{uid} >
 		  $tuid * $self->getVar('m2_userpercentage', 'value');
-	# what to do with I hash here?
 	return 1;  # OK to M2
 }
 
@@ -2290,7 +2299,9 @@ sub setMetaMod {
 	my $returns = [];
 
 	# Update $muid's Karma
-	$self->sqlTransactionStart("LOCK TABLES users_info WRITE, metamodlog WRITE");
+	$self->sqlTransactionStart(qq(
+LOCK TABLES users_info WRITE, metamodlog WRITE
+	));
 	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
 		my $val = $m2victims->{$_}[1];
@@ -2298,17 +2309,27 @@ sub setMetaMod {
 		push(@$returns , [$muid, $val]);
 
 		my $mmid = $_;
-		if ($muid && $val && !$flag) {
+		if ($muid && $val) {
 			if ($val eq '+') {
-				$self->sqlUpdate("users_info", { -m2fair => "m2fair+1" }, "uid=$muid");
-				# There is a limit on how much karma you can get from M2.
-				$self->sqlUpdate("users_info", { -karma => "karma+1" },
-					"$muid=uid and karma<$constants->{m2_maxbonus}");
+				$self->sqlUpdate("users_info", {
+					-m2fair => "m2fair+1"
+				}, "uid=$muid");
+				# There is a limit on how much karma you can
+				# get from proper moderation.
+				$self->sqlUpdate(
+					"users_info", { -karma => "karma+1" },
+					"$muid=uid AND
+					karma<$constants->{m2_maxbonus}"
+				);
 			} elsif ($val eq '-') {
-				$self->sqlUpdate("users_info", { -m2unfair => "m2unfair+1" },
-					"uid=$muid");
-				$self->sqlUpdate("users_info", { -karma => "karma-1" },
-					"$muid=uid and karma>$constants->{badkarma}");
+				$self->sqlUpdate("users_info", {
+					-m2unfair => "m2unfair+1",
+				}, "uid=$muid");
+				$self->sqlUpdate(
+					"users_info", { -karma => "karma-1" },
+					"$muid=uid AND
+					karma>$constants->{badkarma}"
+				);
 			}
 		}
 		# Time is now fixed at form submission time to ease 'debugging'
@@ -2317,7 +2338,7 @@ sub setMetaMod {
 		$self->sqlInsert("metamodlog", {
 			-mmid => $mmid,
 			-uid  => $ENV{SLASH_USER},
-			-val  => ($val eq '+') ? 1 : -1,
+			-val  => ($val eq '+') ? '+1' : '-1',
 			-ts   => "from_unixtime($ts)",
 			-flag => $flag
 		});
@@ -2412,20 +2433,23 @@ sub deleteVar {
 }
 
 ########################################################
-# I'm not happy with this method at all
+# This is a little better. Most of the business logic
+# has been removed and now resides at the theme level.
+#	- Cliff 7/3/01
 sub setCommentCleanup {
-	my($self, $val, $sid, $reason, $modreason, $cid) = @_;
+	my($self, $cid, $val, $reason) = @_;
+
+	return if $val eq '+0';
+
 	# Grab the user object.
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
-	my($cuid, $ppid, $subj, $points, $oldreason) = $self->getComments($sid, $cid);
 
 	my $strsql = "SET
 		points=points$val,
 		reason=$reason,
 		lastmod=$user->{uid}
-		WHERE sid=" . $self->{_dbh}->quote($sid)."
-		AND cid=$cid
+		WHERE cid=$cid
 		AND points " .
 			($val < 0 ? " > $constants->{comment_minscore}" : "") .
 			($val > 0 ? " < $constants->{comment_maxscore}" : "");
@@ -2433,47 +2457,11 @@ sub setCommentCleanup {
 	$strsql .= " AND lastmod<>$user->{uid}"
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
-	if ($val ne "+0" && $self->sqlDo("UPDATE comments $strsql")) {
-		if (getCurrentStatic('mysql_heap_table')) {
-			$self->sqlDo("UPDATE comment_heap $strsql")
-		}
-		$self->setModeratorLog($cid, $sid, $user->{uid}, $val, $modreason);
-
-		# Adjust comment posters karma
-		if ($cuid != $constants->{anonymous_coward}) {
-			if ($val > 0) {
-				$self->sqlUpdate("users_info", {
-						-karma	=> "karma$val",
-						-upmods	=> 'upmods+1',
-					}, "uid=$cuid AND karma < $constants->{maxkarma}"
-				);
-			} elsif ($val < 0) {
-				$self->sqlUpdate("users_info", {
-						-karma		=> "karma$val",
-						-downmods	=> 'downmods+1',
-					}, "uid=$cuid AND karma > $constants->{minkarma}"
-				);
-			}
-		}
-
-		# Adjust moderators total mods
-		$self->sqlUpdate(
-			"users_info",
-			{ -totalmods => 'totalmods+1' },
-			"uid=$user->{uid}"
-		);
-
-		# And deduct a point.
-		$user->{points} = $user->{points} > 0 ? $user->{points} - 1 : 0;
-		$self->sqlUpdate(
-			"users_comments",
-			{ -points=>$user->{points} },
-			"uid=$user->{uid}"
-		);
-		return 1;
-	}
-	return;
+	my $table = (getCurrentStatic('mysql_heap_table')) ?
+		'comment_heap' : 'comments';
+	$self->sqlDo("UPDATE $table $strsql");
 }
+
 
 ########################################################
 sub countUsersIndexExboxesByBid {
@@ -2518,14 +2506,12 @@ sub getCommentsForUser {
 	}
 
 	my $user = getCurrentUser();
-	my $sql = "SELECT cid,date,
-				subject,nickname,homepage,fakeemail,
-				users.uid as uid,sig,
-				$table.points as points,pid,sid,
-				lastmod, reason
-			   FROM $table,users
-			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
-			    AND $table.uid=users.uid";
+	my $sql = "SELECT cid,date, subject,nickname,homepage,fakeemail,
+			  users.uid as uid,sig,$table.points as points,pid,sid,
+			  lastmod, reason
+		   FROM $table,users
+		   WHERE sid=" . $self->{_dbh}->quote($sid) . " AND
+		         $table.uid=users.uid";
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
 		$sql .= "	$table.points >= " .
@@ -2541,11 +2527,10 @@ sub getCommentsForUser {
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ?
 		'DESC' : 'ASC';
 
-
 	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
 	$thisComment->execute or errorLog($sql);
 	my $comments = [];
-	while (my $comment = $thisComment->fetchrow_hashref){
+	while (my $comment = $thisComment->fetchrow_hashref) {
 		$comment->{comment} = $self->_getCommentText($comment->{cid});
 		push @$comments, $comment;
 	}
@@ -2760,9 +2745,9 @@ sub getTrollAddress {
 		$table = 'comment_heap';
 	}
 	my($badIP) = $self->sqlSelect("sum(val)", "$table,moderatorlog",
-			"$table.sid=moderatorlog.sid AND $table.cid=moderatorlog.cid
-			AND ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
-			AND (to_days(now()) - to_days(ts) < 3) GROUP BY ipid"
+			"$table.cid=moderatorlog.cid AND
+			 ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1 AND
+			 (to_days(now()) - to_days(ts) < 3) GROUP BY ipid"
 	);
 
 	return $badIP;

@@ -291,7 +291,7 @@ DROP TABLE IF EXISTS metamodlog;
 CREATE TABLE metamodlog (
 	mmid mediumint DEFAULT '0' NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	val mediumint DEFAULT '0' NOT NULL,
+	val tinyint  DEFAULT '0' NOT NULL,
 	ts datetime,
 	id mediumint UNSIGNED NOT NULL auto_increment,
 	flag mediumint DEFAULT '0' NOT NULL,
@@ -471,7 +471,7 @@ CREATE TABLE stories (
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
 	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	discussion mediumint UNSIGNED,
 	submitter mediumint UNSIGNED NOT NULL,
 	PRIMARY KEY (sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
@@ -591,8 +591,8 @@ CREATE TABLE topics (
 	name char(20) NOT NULL,
 	image char(30),
 	alttext char(40),
-	width tinyint,
-	height tinyint,
+	width smallint UNSIGNED,
+	height smallint UNSIGNED,
 	PRIMARY KEY (tid)
 );
 

@@ -36,8 +36,10 @@ sub comments2tokens {
 
 	my $eligibleMods = $slashdb->fetchEligibleModerators();
 	my $eligible = scalar @{$eligibleMods};
-	my($st, $fi) = (int($eligible * $constants->{m1_pointgrant_start}),
-					int($eligible * $constants->{m1_pointgrant_end}));
+	my($st, $fi) = (
+		int($eligible * $constants->{m1_pointgrant_start}),
+		int($eligible * $constants->{m1_pointgrant_end})
+	);
 
 	my %updateUIDs;
 	# $tokenpool used to be the amount of tokens to distribute, now it's just
@@ -52,12 +54,12 @@ sub comments2tokens {
 	# users to fetchEligibleModerators(), for example...
 	moderatordLog(getData('moderatord_tokenmsg', {
 		stirredpoints	=> $stirredpoints,
-		last_user		=> $slashdb->getLastUser(),
-		tokenpool		=> $tokenpool,
-		eligible		=> $eligible,
-		st				=> $st,
-		fi				=> $fi,
-		num_updated		=> scalar keys %updateUIDs,
+		last_user	=> $slashdb->getLastUser(),
+		tokenpool	=> $tokenpool,
+		eligible	=> $eligible,
+		st		=> $st,
+		fi		=> $fi,
+		num_updated	=> scalar keys %updateUIDs,
 	}));
 	$slashdb->updateTokens(keys %updateUIDs);
 }
@@ -67,10 +69,6 @@ sub comments2tokens {
 moderatordLog(getData('moderatord_log_header'));
 my $tc = $slashdb->getVar('totalComments', 'value');
 my $lc = $slashdb->getVar('lastComments', 'value');
-
-# Check to see if we have any M2 that has attained
-# a quorum and is of sufficient age to be handled.
-$slashdb->applyMetaModeration();
 
 # Maybe we should think about adding in a minimum
 # value here which would affect the minimum # of

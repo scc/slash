@@ -61,10 +61,9 @@ to do this unless you need more context to fairly meta moderate.</LI>
 [% FOR C = comments %]
 [%
 	Slash.dispComment(C);
-	S.link = C.title; S.sid = C.sid;
 %]
 	<TR><TD>
-		Story: <B>[% Slash.linkStory(S) %]</B><BR>
+		Original Discussion: <B><A HREF="[% C.url %]">[% C.title %]</A></B><BR>
 		Rating: <B>[% constants.reasons.${C.modreason} %]</B>.<BR>
 		This rating is <B>Unfair
 			<INPUT TYPE="RADIO" NAME="mm[% C.id %]" VALUE="-">

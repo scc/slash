@@ -29,7 +29,7 @@ CASE "score limit" %]
 
 # (COMMENT SUCCESSFULLY) MODERATED.
 CASE "moderated" %]
-<LI>[% val %] ([% reason %]) [% subject %] ([% sid %]-[% cid %], <B>[% points %]</B> points left)
+<LI>[% val %] ([% constants.reasons.$reason %]) [% subject %] ([% sid %]-[% cid %], <B>[% points %]</B> points left)
 </LI>
 [% END %]
 __seclev__

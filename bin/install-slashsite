@@ -222,8 +222,13 @@ give us a name (8 characters only please). [$owner] ";
 }
 
 unless ($opts{'p'}) {
-	print "\nWhat is the password for the account? ";
-	chomp($password = <STDIN>);
+	do {
+		print "\nWhat is the password for the account? ('QUIT' exits):";
+		chomp($password = <STDIN>);
+		die "Cancelled at user request.\n" if $password eq 'QUIT';
+		print "\nYou need to give us a password.\n"
+			if !$password;
+	} until $password;
 } else {
 	$password = $opts{'p'};
 }

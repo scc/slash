@@ -1,4 +1,4 @@
-# This code is a part of Slash, and is released under the GPL.
+# Thi^s code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
@@ -67,12 +67,12 @@ plugins:
 	(cd plugins; \
 	 for a in $(PLUGINS); do \
 	 	(cd $$a; \
-		 if [ -f Makefile.PL ]; then \
+		 if ! [ -f Makefile.PL ]; then \
 		 	if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; make;\
 			else \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make; \
-			fi
+			fi;
 		 fi);
 	fi)
 
@@ -94,15 +94,15 @@ install: slash plugins
 	 for a in $(PLUGINS); do \
 	 	(cd $$a; \
 	 	if [ -f Makefile ]; then \
-			make install; \
+			echo; \
 		elif [ -f Makefile.PL ]; then \
 			if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; \
 			else \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
 			fi; \
-			make install; \
 		fi); \
+		make install UNINST=1; \
 	done)
 
 	# Create all necessary directories.
@@ -217,7 +217,8 @@ install: slash plugins
 		fi;								\
 	done)
 	# Remove any kruft thay may be installed which shouldn't be.
-	-find $(SLASH_PREFIX) -name CVS -type d -exec rm -rf {} \; 2> /dev/null
+	-find $(SLASH_PREFIX) \( -name CVS -type d \) -o \
+		\( -name \.#\* \) -exec rm -rf {} \; 2> /dev/null
 
 	touch $(SLASH_PREFIX)/slash.sites
 	chown $(USER):$(GROUP) $(SLASH_PREFIX)

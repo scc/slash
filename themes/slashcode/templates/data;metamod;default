@@ -23,6 +23,13 @@ Return to <A HREF="[% constants.rootdir %]/">the [% constants.sitename %] homepa
 [% CASE 'header' %]
 Meta Moderation
 
+[% CASE 'no_moderation' %]
+<P>The moderation system for [% constants.sitename %] is currently down.</P>
+
+[% CASE 'unexpected_item' %]
+<P>An error occured during proccessing. Please re-load your meta-moderation form
+and try again.</P>
+
 [% END %]
 
 __seclev__

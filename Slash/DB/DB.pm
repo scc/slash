@@ -79,6 +79,7 @@ it determines what type of database to inherit from.
 This is an awful method. You use it to create a new
 comments. This will go away. It locks tables, so
 fear calling it.
+
 "Its like a party in my mouth and everyone threw up."
 
 =over 4
@@ -756,7 +757,7 @@ Fixed KEY.
 
 =back
 
-=head2 getCommentCid(KEY)
+=head2 getCommentChildren(KEY)
 
 I am the default documentation, short and stout.
 

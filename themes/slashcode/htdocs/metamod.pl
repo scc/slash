@@ -17,13 +17,18 @@ sub main {
 	my $form = getCurrentForm();
 	my $op = getCurrentForm('op');
 
-	# this text must be in a template!
 	header(getData('header'));
 
-	if (! $slashdb->checkForMetaModerator($user)) {
+	local $ineligible = $user->{is_anon} || $user->{rtbl} ||
+			    !$slashdb->checkForMetaModerator($user);		
+
+	if (!$constants->{allow_moderation}) {
+		print getData('no_moderation');
+	} elsif ($ineligible) {
 		print getData('not-eligible');
 	} else {
-		my $last = ($slashdb->getModeratorLast($user->{uid}))->{lastmmid};
+		my $last =
+			($slashdb->getModeratorLast($user->{uid}))->{lastmmid};
 		unless ($last) {
 			$last = $slashdb->getModeratorLogRandom();
 			$slashdb->setUser($user->{uid}, {
@@ -62,51 +67,41 @@ sub metaModerate {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $y = 0;	# Sum of elements from form.
 	my(%metamod, @mmids);
-
+	my $y = $constants->{m2_comments};
 	$metamod{unfair} = $metamod{fair} = 0;
-	foreach (keys %{$form}) {
+	for (keys %{$form}) {
 		# Meta mod form data can only be a '+' or a '-' so we apply some
 		# protection from taint.
 		next if $form->{$_} !~ /^[+-]$/; # bad input, bad!
 		if (/^mm(\d+)$/) {
+			# Sanity check. If this isn't right, then someone's
+			# fiddling with the form.
+			if ($y < 1) {
+				print getData('unexpected_item');
+				return;
+			}		
 			push(@mmids, $1) if $form->{$_};
 			$metamod{unfair}++ if $form->{$_} eq '-';
 			$metamod{fair}++ if $form->{$_} eq '+';
+			$y--;
 		}
 	}
 
 	my %m2victims;
-	foreach (@mmids) {
-		if ($y < $constants->{m2_comments}) {
-			$y++;
-			my $muid = $slashdb->getModeratorLog($_, 'uid');
-
-			$m2victims{$_} = [$muid, $form->{"mm$_"}];
-		}
+	for (@mmids) {
+		$m2victims{$_} = [ $slashdb->getModeratorLog($_, 'uid'),
+				   $form->{"mm$_"} ];
 	}
 
-	# Perform M2 validity checks and set $flag accordingly. M2 is only recorded
-	# if $flag is 0. Immediate and long term checks for M2 validity go here
-	# (or in moderatord?).
+	# Obsoleted by consensus moderation:
+	#	vars.m2_mincheck, vars.m2_maxunfair, vars.m2_toomanyunfair
+	# M2 validation is now determined by long term analysis. This analysis
+	# is now left to the slashd moderation Task, which can vary by theme.
 	#
-	# Also, it was probably unnecessary, but I want it to be understood that
-	# an M2 session can be retrieved by:
-	#		SELECT * from metamodlog WHERE uid=x and ts=y
-	# for a given x and y.
-	# rtbl
-	my ($flag, $ts) = (($user->{rtbl} ? 1 : 0), time);
-	if ($y >= $constants->{m2_mincheck}) {
-		# Test for excessive number of unfair votes (by percentage)
-		# (Ignore M2 & penalize user)
-		$flag = 2 if ($metamod{unfair}/$y >= $constants->{m2_maxunfair});
-		# Test for questionable number of unfair votes (by percentage)
-		# (Ignore M2).
-		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $constants->{m2_toomanyunfair}));
-	}
-
-	my $changes = $slashdb->setMetaMod(\%m2victims, $flag, $ts) unless isAnon($user->{uid});
+	# Note the use of a naked "10" here for the M2 flag. This is used
+	# to denote M2 entries that have yet to be reconciled.
+	my $changes = $slashdb->setMetaMod(\%m2victims, 10, scalar time);
 
 	slashDisplay('metaModerate', {
 		changes	=> $changes,
@@ -114,31 +109,7 @@ sub metaModerate {
 		metamod	=> \%metamod,
 	});
 
-	# Cliff: rtbl
-	$slashdb->setModeratorVotes($user->{uid}, \%metamod) unless ( isAnon($user->{uid}) || $user->{rtbl})  ;
-
-	# Of course, I'm waiting for someone to make the eventual joke...
-	my($change, $excon);
-	if ($y > $constants->{m2_mincheck} && !$user->{is_anon}) {
-		if (!$flag && karmaBonus()) {
-			# Bonus Karma For Helping Out - the idea here, is to not
-			# let meta-moderators get the +1 posting bonus.
-			($change, $excon) =
-				("karma$constants->{m2_bonus}", "and karma<$constants->{m2_maxbonus}");
-			$change = $constants->{m2_maxbonus}
-				if $constants->{m2_maxbonus} < $user->{karma} + $constants->{m2_bonus};
-
-		} elsif ($flag == 2) {
-			# Penalty for Abuse
-			($change, $excon) = ("karma$constants->{m2_penalty}", '');
-		}
-		# rtbl
-		$change = "" if $change and $user->{rtbl} and ($change =~ /([+-]\d+)/ ? $1 : 0) > 0;
-
-		# Update karma.
-		# This is an abuse
-		$slashdb->setUser($user->{uid}, { -karma => "karma$change" }) if $change;
-	}
+	$slashdb->setModeratorVotes($user->{uid}, \%metamod);
 }
 
 #################################################################
@@ -147,11 +118,11 @@ sub displayTheComments {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	my $form = getCurrentForm();
 
 	$user->{points} = 0;
-	my $comments = $slashdb->getMetamodComments($id, $user->{uid},
-		$constants->{m2_comments});
+	my $comments = $slashdb->getMetamodComments(
+		$id, $user->{uid}, $constants->{m2_comments}
+	);
 
 	slashDisplay('dispTheComments', {
 		comments 	=> $comments,

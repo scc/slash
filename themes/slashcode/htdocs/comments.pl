@@ -192,7 +192,6 @@ sub editComment {
 	# Get the comment we may be responding to. Remember to turn off
 	# moderation elements for this instance of the comment.
 	my $reply = $slashdb->getCommentReply($form->{sid}, $form->{pid});
-	$reply->{no_moderation} = 1;
 
 	if (!$constants->{allow_anonymous} && $user->{is_anon}) {
 		slashDisplay('errors', {
@@ -535,7 +534,12 @@ sub submitComment {
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid = $slashdb->createComment($form, $user, $pts, $constants->{anonymous_coward_uid});
+	my $maxCid = $slashdb->createComment(
+		$form, 
+		$user, 
+		$pts, 
+		$constants->{anonymous_coward_uid}
+	);
 
 	$slashdb->setUser($user->{uid}, 'expiry_comm', {
 		'-expiry_comm'	=> 'expiry_comm-1',
@@ -569,7 +573,9 @@ sub submitComment {
 			}
 		}
 
-		$slashdb->setUser($user->{uid}, { -totalcomments => 'totalcomments+1' });
+		$slashdb->setUser($user->{uid}, {
+			-totalcomments => 'totalcomments+1',
+		});
 
 		# successful submission		
 		my $updated = $slashdb->updateFormkey($form->{formkey}, $maxCid, length($form->{postercomment})); 
@@ -603,14 +609,18 @@ sub submitComment {
 sub moderate {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
+	if (! $constants->{allow_moderation}) {
+		print getData('no_moderation');
+		return;
+	}
+
 	my $total_deleted = 0;
 	my $hasPosted;
 
 	titlebar("99%", "Moderating $form->{sid}");
 
-	unless ($user->{seclev} > 99 && $constants->{authors_unlimited}) {
-		$hasPosted = $slashdb->countCommentsBySidUID($form->{sid}, $user->{uid});
-	}
+	$hasPosted = $slashdb->countCommentsBySidUID($form->{sid}, $user->{uid})
+		unless $user->{seclev} > 99 && $constants->{authors_unlimited};
 
 	slashDisplay('mod_header');
 
@@ -635,7 +645,8 @@ sub moderate {
 	} elsif ($user->{seclev} && $total_deleted) {
 		slashDisplay('del_message', {
 			total_deleted	=> $total_deleted,
-			comment_count	=> $slashdb->countCommentsBySid($form->{sid}),
+			comment_count	=>
+				$slashdb->countCommentsBySid($form->{sid}),
 		});
 	}
 	printComments($form->{sid}, $form->{pid}, $form->{cid});
@@ -665,19 +676,24 @@ sub moderateCid {
 		}
 	}
 
-	my($cuid, $ppid, $subj, $points, $oldreason) =
+	# $ppid is unused in this context.
+	my($cuid, $ppid, $subj, $points, $oldreason, $host_name) =
 		$slashdb->getComments($sid, $cid);
+	# Do not allow moderation of anonymous comments with the same IP
+	# as the current user.
+	return if $host_name eq $ENV{REMOTE_ADDR} &&
+		  $cuid == $constants->{anonymous_coward_uid};
 
 	my $dispArgs = {
 		cid	=> $cid,
 		sid	=> $sid,
 		subject => $subj,
-		reason	=> $constants->{reasons}[$reason],
+		reason	=> $reason,
 		points	=> $user->{points},
 	};
 
 	unless ($user->{seclev} > 99 && $superAuthor) {
-		my $mid = $slashdb->getModeratorLogID($cid, $sid, $user->{uid});
+		my $mid = $slashdb->getModeratorLogID($cid, $user->{uid});
 		if ($mid) {
 			$dispArgs->{type} = 'already moderated';
 			slashDisplay('moderation', $dispArgs);
@@ -689,11 +705,9 @@ sub moderateCid {
 	my $val = "-1";
 	if ($reason == 9) { # Overrated
 		$val = "-1";
-		$val = "+0" if $points < 0;
 		$reason = $oldreason;
 	} elsif ($reason == 10) { # Underrated
 		$val = "+1";
-		$val = "+0" if $points > 1;
 		$reason = $oldreason;
 	} elsif ($reason > $constants->{badreasons}) {
 		$val = "+1";
@@ -702,46 +716,100 @@ sub moderateCid {
 	$dispArgs->{'val'} = $val;
 
 	my $scorecheck = $points + $val;
+	my $active = 1;
 	# If the resulting score is out of comment score range, no further
 	# actions need be performed.
 	if (	$scorecheck < $constants->{comment_minscore} ||
 		$scorecheck > $constants->{comment_maxscore})
 	{
 		# We should still log the attempt for M2, but marked as
-		# 'inactive' so we don't mistakenly undo it.
-		$slashdb->setModeratorLog($cid, $sid, $user->{uid}, $val, $modreason);
+		# 'inactive' so we don't mistakenly undo it. Mods get modded
+		# even if the action didn't "really" happen.
+		#
+		$active = 0;
 		$dispArgs->{type} = 'score limit';
-		slashDisplay('moderation', $dispArgs);
-		return;
 	}
 
-	if ($slashdb->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
-		# Update points for display due to possible change in above line.
+	# Write the proper records to the moderatorlog.
+	$slashdb->setModeratorLog(
+		$sid,		# So we can undoModeration()
+		$cid, 		# CID to identify the actual comment (UNIQUE!)
+		$user->{uid}, 	# The moderator
+		$val, 		# The value of the moderation.
+		$modreason,	# Unadjusted moderation reason.
+		$active		# Was it valid (since we do M2 invalid mods).
+	);	
+
+	# Increment moderators total mods and deduct their point for playing.
+	# Word of note, if we are HERE, then the user either has points, or
+	# is an author (and 'author_unlimited' is set) so point checks SHOULD
+	# be unnecessary here.
+	$user->{points}-- if $user->{points} > 0;
+	$user->{totalmods}++;
+	$slashdb->setUser($user->{uid}, {
+		totalmods 	=> $user->{totalmods},
+		points		=> $user->{points},
+	});
+
+	if ($active) {
+		# Adjust comment posters karma and moderation stats.
+		if ($cuid != $constants->{anonymous_coward_uid}) {
+			my $cuser = $slashdb->getUser($cuid);
+			my $newkarma = $cuser->{karma} + $val;
+			$cuser->{downmods}++ if $val < 0;
+			$cuser->{upmods}++ if $val > 0;
+			$cuser->{karma} = $newkarma 
+				if $newkarma <= $constants->{maxkarma} &&
+				   $newkarma >= $constants->{minkarma};
+			$slashdb->setUser($cuid, {
+				karma		=> $newkarma,
+				upmods		=> $cuser->{upmods},
+				downmods	=> $cuser->{downmods},
+			});
+		}
+
+		# Make sure our changes get propagated back to the comment.
+		# Note that we use the ADJUSTED reason value, $reason.
+		$slashdb->setCommentCleanup($cid, $val, $reason);
+
+		# Update points for display as they have most likely changed.
 		$dispArgs->{points} = $user->{points};
 		$dispArgs->{type} = 'moderated';
-		slashDisplay('moderation', $dispArgs);
 
+		# Send messages regarding this moderation to user who posted
+		# comment if the havey that bit set.
 		my $messages = getObject('Slash::Messages');
 		if ($messages) {
 			my $comment = $slashdb->getCommentReply($sid, $cid);
-			my $users   = $messages->checkMessageCodes(MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]);
+			my $users   = $messages->checkMessageCodes(
+				MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
+			);
 			if (@$users) {
 				my $story = $slashdb->getStory($sid);
 				my $data  = {
 					template_name	=> 'mod_msg',
-					subject		=> { template_name => 'mod_msg_subj' },
+					subject		=> {
+						template_name => 'mod_msg_subj'
+					},
 					comment		=> $comment,
 					story		=> $story,
 					moderation	=> {
 						user	=> $user,
 						value	=> $val,
 						reason	=> $modreason,
-					}
+					},
 				};
-				$messages->create($users->[0], MSG_CODE_COMMENT_MODERATE, $data);
+				$messages->create(
+					$users->[0],
+					MSG_CODE_COMMENT_MODERATE,
+					$data
+				);
 			}
 		}
 	}
+
+	# Now display the template with the moderation results.
+	slashDisplay('moderation', $dispArgs);
 }
 
 
@@ -760,19 +828,20 @@ sub deleteThread {
 
 	return unless $user->{seclev} > 100;
 
-	my $delkids = $slashdb->getCommentCid($sid, $cid);
+	my $delkids = $slashdb->getCommentChildren($cid);
 
 	# Delete children of $cid.
 	push @{$comments_deleted}, $cid;
 	for (@{$delkids}) {
 		my($cid) = @{$_};
 		push @{$comments_deleted}, $cid;
-		$count += deleteThread($sid, $cid, $level + 1, $comments_deleted);
+		$count += deleteThread($sid, $cid, $level+1, $comments_deleted);
 	}
 	# And now delete $cid.
 	$slashdb->deleteComment($sid, $cid);
 
 	if (!$level) {
+		# SID remains for display purposes, only.
 		slashDisplay('deleted_cids', {
 			sid			=> $sid,
 			count			=> $count,
@@ -791,14 +860,19 @@ sub undoModeration {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
+	# We abandon this operation if:
+	#	1) Moderation is off
+	#	2) The user is anonymous (they aren't allowed to anyway).
+	#	3) The user is an author with a high enough security level
+	#	   and that option is turned on.
+	return if !$constants->{allow_moderation} || $user->{is_anon} ||
+		  ( $user->{seclev} > 99 && $constants->{authors_unlimited} &&
+		    $user->{author} );
+
 	if ($sid !~ /^\d+$/) {
 		$sid = $slashdb->getDiscussionBySid($sid, 'header');
-	} 
-
-	return if !$user->{is_anon} || ($user->{seclev} > 99 && $constants->{authors_unlimited});
-
-	my $removed = $slashdb->unsetModeratorlog($user->{uid}, $sid,
-		$constants->{comment_maxscore}, $constants->{comment_minscore});
+	}
+	my $removed = $slashdb->unsetModeratorlog($user->{uid}, $sid);
 
 	slashDisplay('undo_mod', {
 		removed	=> $removed,

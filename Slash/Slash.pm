@@ -277,8 +277,8 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 
 	$lvl++ if $user->{mode} ne 'flat' && $user->{mode} ne 'archive'
 		&& $cc > $user->{commentspill}
-		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
-
+		&& ( $user->{commentlimit} > $cc ||
+		     $user->{commentlimit} > $user->{commentspill} );
 
 	if ($discussion->{type} == COMMENTS_READ_ONLY) {
 		$user->{state}{comment_read_only} = 1;
@@ -298,7 +298,6 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 
 	return if $user->{mode} eq 'nocomment';
 
-
 	my($comment, $next, $previous);
 	if ($cid) {
 		my($next, $previous);
@@ -314,7 +313,10 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 	}
 
 	slashDisplay('printCommComments', {
-		can_moderate	=> (($user->{seclev} > 100 || $user->{points}) && !$user->{is_anon}),
+		can_moderate	=> 
+			( ($user->{seclev} > 100 || $user->{points}) &&
+			  !$user->{is_anon} ) &&
+			getCurrentStatic('allow_moderation'),
 		comment		=> $comment,
 		comments	=> $comments,
 		'next'		=> $next,
@@ -590,10 +592,19 @@ sub dispComment {
 		$reasons{$_} = $constants->{reasons}[$_];
 	}
 
-	my $can_mod = ! $comment->{no_moderation} && ! $user->{is_anon} &&
-		((	$user->{willing} && $user->{points} > 0 &&
-			$comment->{uid} != $user->{uid} && $comment->{lastmod} != $user->{uid}
-		) || ($user->{seclev} >= 100 && $constants->{authors_unlimited}));
+	# I wonder if much of this logic should be moved out to the theme.
+	# This logic can then be placed at the theme level and would eventually
+	# become what is put into $comment->{no_moderation}. As it is, a lot
+	# of the functionality of the moderation engine is intrinsically linked
+	# with how things behave on Slashdot.	- Cliff 6/6/01
+	my $can_mod = 	$constants->{allow_moderation} &&
+			!$comment->{no_moderation} && 
+			!$user->{is_anon} &&
+			( ( $user->{willing} && $user->{points} > 0 &&
+			    $comment->{uid} != $user->{uid} &&
+			    $comment->{lastmod} != $user->{uid} ) ||
+			  ($user->{seclev} > 99 &&
+			   $constants->{authors_unlimited}) );
 
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod

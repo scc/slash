@@ -442,9 +442,11 @@ sub validateUser {
 
 		# Increment only the trigger that was used.
 		my $new_comment_expiry = ($maxComm > 0 && $userComm > $maxComm) ?
-			$maxComm : $userComm * (($user->{expiry_comm} < 0) ? $exp : 1);
+			$maxComm : $userComm *
+				   (($user->{expiry_comm} < 0) ? $exp : 1);
 		my $new_days_expiry = ($maxDays > 0 && $userDays > $maxDays) ?
-			$maxDays : $userDays * (($user->{expiry_days} < 0) ? $exp : 1);
+			$maxDays : $userDays *
+				   (($user->{expiry_days} < 0) ? $exp : 1);
 
 		# Reset re-registration triggers for user.
 		$slashdb->setUser($user->{uid}, {
