@@ -70,7 +70,7 @@ sub selectComments {
 		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
 	}
 
-	my $thisComment = $slashdb->getCommentsForUser($header, $cid, (($header->{writestatus} eq 'archived') ? 1 : 0 ));
+	my $thisComment = $slashdb->getCommentsForUser($header->{id}, $cid, (($header->{writestatus} eq 'archived') ? 1 : 0 ));
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
