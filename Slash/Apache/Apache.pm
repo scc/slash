@@ -118,18 +118,18 @@ sub IndexHandler {
 		my $path = URI->new($constants->{rootdir})->path;
 		$uri =~ s/^\Q$path//;
 	}
-	my $dynamic = 1; 
+
 	# Comment this in if you want to try having this do the right
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
-	# my $dynamic = $slashdb->sqlConnect(); 
-	$dynamic = 0 if ( -e "$constants->{datadir}/dboff");
+	# my $dbon = $slashdb->sqlConnect(); 
+	my $dbon = ! -e "$constants->{datadir}/dboff";
 
 	if ($uri eq '/') {
-		my $basedir   = $constants->{basedir};
+		my $basedir = $constants->{basedir};
 
 		# $USER_MATCH defined above
-		if ($r->header_in('Cookie') =~ $USER_MATCH && $dynamic) {
+		if ($dbon && $r->header_in('Cookie') =~ $USER_MATCH) {
 			$r->uri('/index.pl');
 			$r->filename("$basedir/index.pl");
 			return OK;
@@ -142,10 +142,10 @@ sub IndexHandler {
 	}
 
 	if ($uri eq '/authors.pl') {
-		my $filename  = $r->filename;
-		my $basedir   = $constants->{basedir};
+		my $filename = $r->filename;
+		my $basedir  = $constants->{basedir};
 
-		if ($r->header_in('Cookie') !~ $USER_MATCH || !$dynamic) {
+		if (!$dbon || $r->header_in('Cookie') !~ $USER_MATCH) {
 			$r->uri('/authors.shtml');
 			$r->filename("$basedir/authors.shtml");
 			writeLog('shtml');
@@ -154,7 +154,7 @@ sub IndexHandler {
 	}
 
 	if ($uri eq '/hof.pl') {
-		my $basedir   = $constants->{basedir};
+		my $basedir  = $constants->{basedir};
 
 		$r->uri('/hof.shtml');
 		$r->filename("$basedir/hof.shtml");
@@ -162,13 +162,13 @@ sub IndexHandler {
 		return OK;
 	}
 
-	if($uri !~ /\.shtml/ && !$dynamic) {
-		my $basedir   = $constants->{basedir};
+	if (!$dbon && $uri !~ /\.shtml/) {
+		my $basedir  = $constants->{basedir};
 
 		$r->uri('/index.shtml');
 		$r->filename("$basedir/index.shtml");
 		writeLog('shtml');
-		$r->notes('SLASH_FAILURE' => "db"); #You should be able to find this in other processes
+		$r->notes('SLASH_FAILURE' => "db"); # You should be able to find this in other processes
 		return OK;
 	}
 

@@ -803,10 +803,8 @@ sub deleteStoryAll {
 ########################################################
 # For tasks/flush_formkeys.pl
 sub deleteOldFormkeys {
-	my ($self, $timeframe) = @_;
-
+	my($self, $timeframe) = @_;
 	my $nowtime = time();
-
 	$self->sqlDo("delete from formkeys where ts < ($nowtime - (2*".$timeframe."))");
 }
 
