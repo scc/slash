@@ -358,9 +358,7 @@ themes/slashcode/templates/userlogin;misc;default
 themes/slashcode/templates/users;menu;default
 themes/slashcode/templates/vote;pollBooth;default
 themes/slashcode/templates/yourPendingSubs;submit;default
-utils/MAIN2bender
 utils/convert-dump
-utils/convertDBfrommain2bender.pl
 utils/excessiveHits
 utils/replaceblock
 utils/slash

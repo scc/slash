@@ -1,3 +1,48 @@
+slash-2.0.0-pre1, 2000.03.20
+----------------------------
+
+*	Added utils/slash1toslash2, a program for upgrading from a Slash
+	1.0 installation
+
+*	Added upgrade info and more info to INSTALL and README
+
+*	Changed selectTopic and selectSection in Slash.pm to only
+	return "All Topics" and "All Sections" if specifically
+	requested with optional parameter
+
+*	Fixed bug in Slash::Apache::Log where data was not getting
+	properly passed to writeLog(), so accesslog was not getting
+	proper data, and story hit counts were not getting updated
+
+*	Fix submissions to insert anonymous UID instead of user's UID
+	if submission is submitted anonymously (without a name)
+
+*	Fix totalComments to increment properly
+
+*	Remove code to delete old comments
+
+*	Change Slash::Install to be newline-agnostic in PLUGIN files
+
+*	Change Slash::Utility::isAnon to return true for "bad" UIDs
+	(non-integer, non-positive)
+
+*	Fix Slash::Utility::prepareUser to populate TZ and offset
+	info for anonymous user when not through Apache
+
+*	Add option to install-plugin to install as symlinks (like
+	install-slashsite); fix install-plugin to accept a single
+	plugin
+
+*	Move more info to site.conf from slash.conf; clean up in
+	slash.conf, removing redundant directives
+
+*	Fix singular/plural problem for comment count in index.pl
+	and templates
+
+*	Minor fixed to various templates
+
+
+
 slash-1.1.6-bender, 2000.03.14
 ------------------------------
 
