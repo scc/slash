@@ -306,6 +306,7 @@ mkpath "$prefix_site/$sitename/htdocs", 0, 0775;
 mkpath "$prefix_site/$sitename/backups", 0, 0775;
 mkpath "$prefix_site/$sitename/sbin", 0, 0775;
 mkpath "$prefix_site/$sitename/tasks", 0, 0775;
+mkpath "$prefix_site/$sitename/misc", 0, 0775;
 {
 	local $dirname;
 	my $find_subref = sub {
@@ -322,7 +323,7 @@ mkpath "$prefix_site/$sitename/tasks", 0, 0775;
 			}
 		}
 	};
-	for $dirname (qw( htdocs tasks )) {
+	for $dirname (qw( htdocs misc tasks )) {
 		find($find_subref, "$theme/$dirname");
 	}
 }
