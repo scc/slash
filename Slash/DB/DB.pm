@@ -117,6 +117,7 @@ it determines what type of database to inherit from.
 This is an awful method. You use it to create a new
 comments. This will go away. It locks tables, so
 fear calling it.
+"Its like a party in my mouth and everyone threw up."
 
 =over 4
 
@@ -404,9 +405,9 @@ Fixed KEY.
 
 =back
 
-=head2 setContentFilter(KEY)
+=head2 setContentFilter(FORM)
 
-I am the default documentation, short and stout.
+Save data into a filter. 
 
 =over 4
 
@@ -414,9 +415,9 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item FORM
 
-Key, as in the KEY
+Optional form.
 
 =back
 
@@ -448,9 +449,11 @@ Fixed KEY.
 
 =back
 
-=head2 createAccessLog(KEY)
+=head2 createAccessLog(OP, DATA)
 
-I am the default documentation, short and stout.
+This creates an entry into the access log. Keep
+in mind that this uses different environmental
+variables for its entry.
 
 =over 4
 
@@ -458,9 +461,15 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item OP
 
-Key, as in the KEY
+Opcode for this entry
+
+=back
+
+=item DATA
+
+Optional data for the accesslog
 
 =back
 
@@ -470,9 +479,25 @@ Fixed KEY.
 
 =back
 
-=head2 getDescriptions(KEY)
+=head2 getDescriptions(CODETYPE, OPTIONAL, CACHE_FLAG)
 
-I am the default documentation, short and stout.
+The mother of all methods for HTML selects. It returns
+a hash with key pairs pulled from the database. The
+following are valid types:
+sortcodes
+statuscodes
+tzcodes
+tzdescription
+dateformats
+datecodes
+commentmodes
+threshcodes
+postmodes
+isolatemodes
+issuemodes
+vars
+topics
+maillist
 
 =over 4
 
@@ -480,15 +505,28 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item CODETYPE
 
-Key, as in the KEY
+This is one of the valid types
+
+=back
+
+=item OPTIONAL
+
+Sometypes have an option flag
+
+=back
+
+=item CACHE_FLAG
+
+By placing a value in this parameter you force the database
+to reload the caches hash for this type.
 
 =back
 
 =item Return value
 
-Fixed KEY.
+Hash reference filled with the codes.
 
 =back
 

@@ -416,8 +416,8 @@ sub getSessionInstance {
 
 ########################################################
 sub setContentFilter {
-	my($self) = @_;
-	my $form = getCurrentForm();
+	my($self, $form) = @_;
+	$form ||= getCurrentForm();
 	$self->sqlUpdate("content_filters", {
 			regex		=> $form->{regex},
 			modifier	=> $form->{modifier},
@@ -505,7 +505,7 @@ sub getDescriptions {
 # why not just axe this entirely and always get all the data? -- pudge
 # Worry about access times. Realize that when MySQL has row level
 # locking that we can combine all of the user table (except param)
-# into one table again.
+# into one table again. -Brian
 
 sub getUserInstance {
 	my($self, $uid, $script) = @_;
@@ -3147,7 +3147,8 @@ Slash::DB::MySQL - MySQL Interface for Slashcode
 
 =head1 DESCRIPTION
 
-No documentation yet. Sue me.
+This is the MySQL specific stuff. To get the real
+docs look at Slash::DB.
 
 =head1 SEE ALSO
 
