@@ -18,7 +18,7 @@ sub main {
 
 	if ($user->{seclev} < 100) {
 		my $rootdir = getCurrentStatic('rootdir');
-		redirect('/users.pl');
+		redirect("$rootdir/users.pl");
 		return;
 	}
 
