@@ -61,12 +61,14 @@ sub getBackendStories {
 	$select .= "alttext, image, stories.commentcount, stories.section as section,";
 	$select .= "story_text.introtext, story_text.bodytext,topics.tid as tid";
 	my $from = "stories, story_text, topics";
+
 	my $where;
 	$where .= "stories.sid = story_text.sid";
 	$where .= " AND stories.tid=topics.tid";
 	$where .= " AND time < NOW()";
 	$where .= " AND stories.writestatus != 'delete'";
-	if($section) {
+
+	if ($section) {
 		$where .= " AND stories.section=\"$section\" and displaystatus > -1";
 	} else {
 		$where .= " AND displaystatus = 0";
