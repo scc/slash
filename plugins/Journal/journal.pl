@@ -202,13 +202,16 @@ sub listArticle {
 
 sub saveArticle {
 	my ($form, $journal) = @_;
+	my $article = strip_mode($form->{article}, $form->{posttype});
+	my $description = strip_nohtml($form->{description});
+
 	if($form->{id}) {
 		$journal->set($form->{id}, { 
-			description => $form->{description},
-			article => $form->{article},
+			description => $description,
+			article => $article,
 		});
 	} else {
-		$journal->create($form->{description},$form->{article});
+		$journal->create($description, $article);
 	}
 	listArticle(@_);
 }
@@ -240,8 +243,8 @@ sub editArticle {
 
 	if($form->{state}){
 		$article->{date} = scalar(localtime(time()));
-		$article->{article} = strip_mode($form->{article}, $form->{posttype});
-		$article->{description} = strip_nohtml($form->{description});
+		$article->{article} = $form->{article};
+		$article->{description} = $form->{description};
 		$article->{id} = $form->{id};
 	}  else {
 		$article = $journal->get($form->{id}) if $form->{id};
