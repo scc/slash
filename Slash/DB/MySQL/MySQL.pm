@@ -2618,7 +2618,7 @@ sub countStory {
 sub checkForMetaModerator {
 	my($self, $user) = @_;
 	return unless $user->{willing};
-	return if $user->{is_anon};
+	return if $user->{is_anon} || $user->{rtbl};
 	return if $user->{karma} < 0;
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
