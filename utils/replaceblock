@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+
+use strict;
+use Getopt::Std;
+use Slash::DB;
+
+my(@blocktypes) = ('blocks', 'portald');
+my(%opts);
+getopts('hDd:Tt:b:', \%opts);
+$"='|';
+my $regexp = '^(' . "@blocktypes" . ')$';
+usage() if $#ARGV < 1 || $opts{h} || ($opts{r} && $opts{t}) ||
+	   ($opts{t} && $opts{t} !~ /$regexp/);
+
+my($search, $replace) = map { qq[$_] } @ARGV;
+my($dbName, $blockName, $debug, $cond, $count, $replaced) =
+	($opts{d} || 'slash', $opts{b}, $opts{D}, '', 0);
+
+my $dbobject = new Slash::DB($dbName) ||
+	die "%%%%%% Can't open database on Virtual User $dbName.\n";
+
+$cond = 'bid=' . $dbobject->{dbh}->quote($blockName) if $blockName;
+$cond .= ' type=' . $dbobject->{dbh}->quote($opts{t}) if $opts{t};
+if ($cond !~ /^bid/) {
+	print (!$opts{t} ? <<EOGT:<<EOTT);
+%%%%%% You are about to perform a global search and replace on your blocks
+%%%%%% table.
+EOGT
+%%%%%% You are about to perform a global search and replace on all blocks of
+%%%%%% type $opts{t}.
+EOTT
+	print <<EOT;
+%%%%%%
+%%%%%% Please confirm that this is what you wish by typing 'YES' at the prompt
+%%%%%% below:
+> 
+EOT
+	my $response = <STDIN>;
+	die "%%%%%% Cancelled by user.\n" if $response ne 'YES';
+}
+print "%%%%%% Searching for: $search\n%%%%%% Replacing with: $replace\n" if $debug;
+
+my $sth = $dbobject->sqlSelectMany('bid,block', 'blocks', $cond);
+while (my($bid, $block) = $sth->fetchrow_array()) {
+	print "%%%%%% Processing '$bid'\n" if !$opts{b};
+	$count++;
+
+	if ($opts{r}) {
+		next if $bid !~ /$opts{r}/;
+		print "%%%%%% -- Matched\n" if $debug;
+	}
+	my $replace_cond = 'bid='.$dbobject->{dbh}->quote($bid);
+
+	print <<EOT if $debug;
+%%%%%% Current contents for $block
+$block
+EOT
+
+	my $rc = $block =~ s/$search/$replace/g;
+	unless ($rc) {
+		print "%%%%%% -- Search string not found.\n";
+		next;
+	}
+	$replaced++;
+	print "%%%%%% Resulting contents\n$block\n" if $debug && $rc;
+	if (! $opts{T}) {
+		$dbobject->sqlUpdate('blocks', { block => $block }, $replace_cond)
+			|| print <<EOT;
+%%%%%%	-- Error occured while writing to database: $dbobject->{dbh}->errstr
+EOT
+	}
+	print "%%%%%% -- Testing, replace not performed.\n" if $opts{T};
+}
+print "%%%%%% $count blocks processed, $replaced blocks substituted.\n";
+
+0;
+
+sub usage {
+	local $" = "\n\t\t";
+	print <<EOT;
+$0: [-b <block>|-r <regexp>] [-t <type>] [-d <DBVirtualUser>] [-Dh] <s> <r>
+   -b	Block on which we perform operation.
+   -r	Perform operation on blockname matching <regexp> [can't use with -t]
+   -t 	Specify Block Type [can't use with -r]
+   -d	Specify Database Virtual User (default: slash) [can't use with -t].
+   -D	Display debugging information.
+   -T	Test mode (does not actually perform replace)
+   -h	Shows this screen.
+
+	<s>	Search expression
+	<r>	Replacement expression
+
+	Types recognized:
+		@blocktypes
+EOT
+
+	exit 1;
+}
