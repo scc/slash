@@ -122,6 +122,11 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 
+	# Dirty stories would live for an extra day, but we don't pay much 
+	# attention to archived stories so this is ok.
+	# AKA is bookkeeping. -Brian
+	$self->sqlDo("update stories SET writestatus='archived'  WHERE to_days(now()) - to_days(time) > $constants->{discussion_archive} AND writestatus = 'ok' ");
+
 	my $comments = $self->sqlSelectAll(
 		'cid, discussions.id',
 		'comments,discussions',
