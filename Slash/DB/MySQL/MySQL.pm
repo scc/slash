@@ -606,7 +606,7 @@ sub getStoryDiscussions {
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
 		"discussions, $story_table",
-		"displaystatus > -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND type = 'open'",
+		"displaystatus != -1 AND discussions.sid=$story_table.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'",
 		"ORDER BY time DESC LIMIT 50"
 	);
 
@@ -3304,7 +3304,7 @@ sub createDiscussion {
 	my($self, $title, $url, $topic, $type, $sid, $time, $uid) = @_;
 
 	#If no type is specified we assume the value is zero
-	$type ||= 'ok';
+	$type ||= 'open';
 	$sid ||= '';
 	$time ||= $self->getTime();
 	$uid ||= getCurrentUser('uid');
