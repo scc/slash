@@ -520,6 +520,10 @@ so you could have a user named timothy and an author named timothy,
 who were not the same person.  This is not allowed in Slash 2.0,
 as those tables have been combined.
 
+Also, every author must have a matching user, or this will fail.
+If you still have a story owned by "God", for example, you need
+a user with nickname "God" and matchname "god".
+
 Most sites won't have this problem, but if yours does, it is sufficient
 to change the nickname/matchname fields of any conflicting user, and
 then have the author create a new account with that name.  Of course,
