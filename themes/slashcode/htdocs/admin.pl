@@ -24,7 +24,6 @@
 #  $Id$
 ###############################################################################
 use strict;
-use CGI ();
 use Image::Size;
 use Slash;
 use Slash::Display;
@@ -53,6 +52,7 @@ sub main {
 	}
 	header("backSlash $user->{tzcode} $user->{offset}$tbtitle", 'admin');
 
+	
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $user->{aseclev};
 
@@ -169,21 +169,20 @@ sub main {
 		varEdit($form->{name});
 
 	} elsif ($op eq 'listfilters') {
-		titlebar("100%","List of comment filters","c");
 		listFilters();
 
 	} elsif ($form->{editfilter}) {
-		titlebar("100%","Edit Comment Filter","c");
+		titlebar("100%", getTitle('editFilter-title'));
 		editFilter($form->{filter_id});
 
-	} elsif ($form->{updatefilter}) {
-		updateFilter("update");
-
 	} elsif ($form->{newfilter}) {
-		updateFilter("new");
+		updateFilter(1);
+
+	} elsif ($form->{updatefilter}) {
+		updateFilter(2);
 
 	} elsif ($form->{deletefilter}) {
-		updateFilter("delete");
+		updateFilter(3);
 
 	} else {
 		titlebar('100%', 'Story List', 'c');
@@ -217,19 +216,18 @@ sub varEdit {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-	my $var;
+	my $varsref;
 
-	print qq[\n<!-- begin variables editor form -->\n<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">\n];
 	my $vars = $slashdb->getDescriptions('vars');
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
 	if($name) {
-		$var = $slashdb->getVar($name, ['name','value','description','datatype','dataop']);
+		$varsref = $slashdb->getVar($name, ['name','value','description','datatype','dataop']);
 	}
 
-	slashDisplay('admin-varEdit',{ 
+	slashDisplay('admin-varEdit', { 
 			vars_select 	=> $vars_select,
-			var		=> $var,
+			varsref		=> $varsref,
 			}
 	);
 }
@@ -967,6 +965,7 @@ sub editStory {
 			introtext		=> $introtext,
 			bodytext		=> $bodytext,
 			relatedtext		=> $relatedtext,
+			user			=> $user,
 			}
 	);
 }
@@ -982,19 +981,30 @@ sub listStories {
 	my($x, $first) = (0, $form->{'next'});
 	my $storylist = $slashdb->getStoryList();
 
-	my $yesterday;
-	my $storiestoday = 0;
+	my $storylistref = [];
 
-	print <<EOT;
+	my($hits, $comments, $sid, $title, $aid, $time, $tid, $section, 
+	$displaystatus, $writestatus, $td, $td2, $yesterday,$tbtitle,
+	$count,$left,$substrtid,$substrsection,$sectionflag);
 
-<!-- begin liststories -->
+	my ($storiestoday,$not_today,$i,$display,$canedit,$storymin) = (0,0,0,0,0,0);
+	my $displayoff = 1;
 
-<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
-EOT
-
+	my $bgcolor = '';
+	
 	for (@$storylist) {
-		my($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
+		($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
 			$displaystatus, $writestatus, $td, $td2) = @$_;
+
+		$substrtid = substr($tid, 0, 5);
+		
+		$title = substr($title, 0, 50) . '...' if (length $title > 55);
+		$displayoff = 1 if($writestatus < 0 || $displaystatus < 0);
+
+		if ($user->{aid} eq $aid || $user->{aseclev} > 100) {
+			$canedit = 1;
+			$tbtitle = fixparam($title);
+		} 
 
 		$x++;
 		$storiestoday++;
@@ -1002,84 +1012,55 @@ EOT
 		last if $x > $first + 40;
 
 		if ($td ne $yesterday && !$form->{section}) {
-			$storiestoday = '' unless $storiestoday > 1;
-			print <<EOT;
+			$not_today = 1;
 
-	<TR>
-		<TD ALIGN="RIGHT" BGCOLOR="$constants->{bg}[2]">
-		<FONT SIZE="${\( $constants->{fontbase} + 1 )}">$storiestoday</FONT>
-		</TD>
-		<TD COLSPAN="7" ALIGN="right" BGCOLOR="$constants->{bg}[3]">
-		<FONT COLOR="$constants->{fg}[3]" SIZE="${\( $constants->{fontbase} + 1 )}">$td</FONT>
-		</TD>
-	</TR>
-EOT
-
-		    $storiestoday = 0;
+			unless ($storiestoday > 1) {
+				$storymin = 1;
+				$storiestoday = '' 
+			}
+			$storiestoday = 0;
 		} 
 
 		$yesterday = $td;
 
-		if (length $title > 55) {
-			$title = substr($title, 0, 50) . '...';
+		unless ($user->{asection} || $form->{section}) {
+			$sectionflag = 1;
+			$substrsection = substr($section,0,5) 
 		}
 
-		my $bgcolor = '';
-		if ($displaystatus > 0) {
-			$bgcolor = '#CCCCCC';
-		} elsif ($writestatus < 0 or $displaystatus < 0) {
-			$bgcolor = '#999999';
-		}
-
-		print qq[\t<TR BGCOLOR="$bgcolor"><TD ALIGN="RIGHT">\n];
-		if ($user->{aid} eq $aid || $user->{aseclev} > 100) {
-			my $tbtitle = fixparam($title);
-			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&op=edit&sid=$sid">$x</A>\n]!;
-
-		} else {
-			print "\t\t[$x]\n"
-		}
-
-		printf <<EOT, substr($tid, 0, 5);
-	</TD><TD>
-		<A HREF="$constants->{rootdir}/article.pl?sid=$sid">$title&nbsp;</A>
-	</TD><TD>
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}"><B>$aid</B></FONT>
-	</TD><TD>
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}">%s</FONT>
-	</TD>
-EOT
-
-		printf <<EOT, substr($section,0,5) unless $user->{asection} || $form->{section};
-	<TD>
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}"><A HREF="$ENV{SCRIPT_NAME}?section=$section">%s</A>
-	</TD>
-EOT
-
-		print <<EOT;
-	<TD ALIGN="RIGHT">
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}">$hits</FONT>
-	</TD><TD>
-		<FONT SIZE="${\( $constants->{fontbase} + 2 )}">$comments</FONT>
-	</TD>
-EOT
-
-		print qq[\t<TD><FONT SIZE="${\( $constants->{fontbase} + 2 )}">$td2</TD>\n] if $form->{section};
-		print qq[\t<TD><FONT SIZE="${\( $constants->{fontbase} + 2 )}">$time</TD></TR>\n];
+		$storylistref->[$i] = {
+			x		=> $x,
+			hits		=> $hits,
+			comments	=> $comments,
+			sid		=> $sid,
+			title		=> $title,
+			aid		=> $aid,
+			time		=> $time,
+			canedit		=> $canedit,
+			substrtid	=> $substrtid,
+			section		=> $section,
+			sectionflag	=> $sectionflag,
+			substrsection	=> $substrsection,
+			td		=> $td,
+			td2		=> $td2,
+			not_today	=> $not_today,
+			storiestoday	=> $storiestoday,
+			storymin	=> $storymin,
+		}; 
+		
+		$i++;
 	}
 
-	my $count = @$storylist;
-	my $left = $count - $x;
+	$count = @$storylist;
+	$left = $count - $x;
 
-	print "</TABLE>\n";
-
-	if ($x > 0) {
-		print <<EOT;
-<P ALIGN="RIGHT"><B><A HREF="$ENV{SCRIPT_NAME}?section=$form->{section}&op=list&next=$x">$left More</A></B></P>
-EOT
-	}
-
-	print "\n<!-- end liststories -->\n\n";
+	slashDisplay('admin-listStories', {
+			storylistref		=> $storylistref,
+			x			=> $x,
+			left			=> $left
+			}
+	);
+		
 }
 
 ##################################################################
@@ -1092,8 +1073,9 @@ sub rmStory {
 	my $constants = getCurrentStatic();
 
 	$slashdb->deleteStory($sid);
-	
-	titlebar('100%', "$sid will probably be deleted in 60 seconds.");
+
+	my $title = getTitle('rmStory-title', {sid => $sid});	
+	titlebar('100%', $title);
 }
 
 ##################################################################
@@ -1105,30 +1087,14 @@ sub listFilters {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my $filter_hashref = $slashdb->getContentFilters();
+	my $title = getTitle('listFilters-title');
+	my $filter_ref = $slashdb->getContentFilters();
 
-	$header = getWidgetBlock('list_filters_header');
-	print eval $header;
-
-        for (@$filter_hashref) {
-                print <<EOT;
-        <TR>
-                <TD>[<A HREF="$ENV{SCRIPT_NAME}?editfilter=1&filter_id=$_->[0]">$_->[0]</A>]</TD>
-                <TD><FONT FACE="courier" size="+1">$_->[1]</FONT></TD>
-                <TD> $_->[2] </TD>
-                <TD> $_->[3] </TD>
-                <TD> $_->[4] </TD>
-                <TD> $_->[5] </TD>
-                <TD> $_->[6] </TD>
-                <TD> $_->[8] </TD>
-                <TD> $_->[7] </TD>
-        </TR>
-EOT
-        }
-
-	$footer = getEvalBlock('list_filters_footer');
-	print $footer;
-
+	slashDisplay('admin-listFilters', { 
+			title => $title, 
+			filter_ref => $filter_ref 
+			}
+	);
 }
 
 ##################################################################
@@ -1149,7 +1115,11 @@ sub editFilter {
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
 
-	slashDisplay('admin-editFilter', { filter => $filter });
+	slashDisplay('admin-editFilter', { 
+				filter => $filter, 
+				filter_id => $filter_id 
+				}
+	);
 
 }
 
@@ -1161,33 +1131,27 @@ sub updateFilter {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-
-
-	if ($filter_action eq "new") {
+	
+	if ($filter_action == 1) {
 		my $filter_id = $slashdb->createContentFilter();
-
-		# damn damn damn!!!! wish I could use sth->insertid !!!
-		# ewww.....
-		titlebar("100%", "New filter# $filter_id.", "c");
+		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
 		editFilter($filter_id);
 
-	} elsif ($filter_action eq "update") {
+	} elsif ($filter_action == 2) {
 		if (!$form->{regex} || !$form->{regex}) {
-			print "<B>You haven't typed in a regex.</B><BR>\n" if ! $form->{regex};
-			print "<B>You haven't typed in a form field.</B><BR>\n" if ! $form->{field};
-
+			print getMessage('updateFilter-message');
 			editFilter($form->{filter_id});
 
 		} else {
 			$slashdb->setContentFilter();
 		}
 
-		titlebar("100%", "Filter# $form->{filter_id} saved.", "c");
+		titlebar("100%", getTitle('updateFilter-update-title'));
 		editFilter($form->{filter_id});
-	} elsif ($filter_action eq "delete") {
-		$slashdb->deleteContentFilter($form->{filter_id});
 
-		titlebar("100%","<B>Deleted filter# $form->{filter_id}!</B>","c");
+	} elsif ($filter_action == 3) {
+		$slashdb->deleteContentFilter($form->{filter_id});
+		titlebar("100%", getTitle('updateFilter-delete-title'));
 		listFilters();
 	}
 }
@@ -1223,7 +1187,7 @@ sub updateStory {
 		. otherLinks($form->{aid}, $form->{tid});
 
 	$slashdb->updateStory();
-	titlebar('100%', "Article $form->{sid} Saved", 'c');
+	titlebar('100%', getTitle('updateStory-title'));
 	listStories();
 }
 
@@ -1246,7 +1210,7 @@ sub saveStory {
 
 	$slashdb->saveStory();
 
-	titlebar('100%', "Inserted $form->{sid} $form->{title}");
+	titlebar('100%', getTitle('saveStory-title'));
 	listStories();
 }
 
