@@ -636,11 +636,11 @@ template with the new template.
 
 =back
 
-=head2 Slash 1.0 -E<gt> Slash 2.0
+=head2 Slash 1.0 -E<gt> Slash 2.2
 
 Please read the complete documentation of F<utils/slash1toslash2.2>.
 It is a program that will convert your database from Slash 1.0
-to a new Slash 2.0 database.  The program documentation (which can
+to a new Slash 2.2 database.  The program documentation (which can
 be read with F<perldoc>) details exactly what process it follows
 to do the conversion, so you can attempt to do it by hand if you
 prefer.

@@ -6,8 +6,9 @@ WARNING
     production use, and is constantly changing. Please use this only for
     development and testing purposes.
 
-    There are currently NO upgrade procedures in place for previous versions
-    of Slash. Those will be coming in a subsequent beta.
+    The upgrade procedures are available (the INSTALL manpage). Standard
+    disclaimer applies. Please test them if you are so inclined, and let us
+    know how they work for you.
 
 DESCRIPTION
     Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
@@ -37,7 +38,7 @@ DESCRIPTION
     As noted in the FAQ, please send any bug reports, and subscribe to
     mailing lists, at Slash's SourceForge site.
 
-            http://sourceforge.net/projects/slashcode/
+            http://sf.net/projects/slashcode/
 
 DOCUMENTATION
     The .pod documentation included with Slash can be read with the
@@ -94,16 +95,20 @@ DOCUMENTATION
     Schema
         The layout and description of the database. [These are out of date.]
 
-        docs/slasherd_bender.fig
+        docs/slasherd.fig
 
-        docs/slasherd_bender.pdf
+        docs/slasherd.ps
 
-        docs/slasherd_bender.ps
-
-        docs/slashtables_bender.pod
+        docs/slashtables.pod
 
     Other
-        We need to upgrade the Getting Started document.
+        The slashguide document (previously called getting_started) helps
+        you get your feet wet and gives vital information for how to run a
+        Slash site.
+
+        docs/slashguide.pod
+
+        themes/slashcode/htdocs/slashguide.shtml
 
     Authors
         The authors and contributors of Slash.
@@ -129,7 +134,7 @@ LINKS
     SourceForge Site
         Access to the code, bug reports, patches, mailing lists, and more.
 
-        http://sourceforge.net/projects/slashcode/
+        http://sf.net/projects/slashcode/
 
 COPYRIGHT AND LICENSE
     The information below applies to everything in this distribution, except

@@ -18,12 +18,6 @@
 		<LI><A HREF="#important_note">Important Note</A></LI>
 	</UL></LI>
 
-	<LI><A HREF="#versions">VERSIONS</A>
-	<UL>
-
-		<LI><A HREF="#codenames">Codenames</A></LI>
-	</UL></LI>
-
 	<LI><A HREF="#installation">INSTALLATION</A>
 	<UL>
 
@@ -43,9 +37,9 @@
 	<LI><A HREF="#upgrading">UPGRADING</A>
 	<UL>
 
-		<LI><A HREF="#slash_2.0___slash_2.1_2.2">Slash 2.0 -&gt; Slash 2.1/2.2</A></LI>
-		<LI><A HREF="#slash_2.0.x___slash_2.0.y">Slash 2.0.x -&gt; Slash 2.0.y</A></LI>
-		<LI><A HREF="#slash_1.0___slash_2.0">Slash 1.0 -&gt; Slash 2.0</A></LI>
+		<LI><A HREF="#slash_2.0___slash_2.2">Slash 2.0 -&gt; Slash 2.2</A></LI>
+		<LI><A HREF="#slash_2.2.x___slash_2.2.y">Slash 2.2.x -&gt; Slash 2.2.y</A></LI>
+		<LI><A HREF="#slash_1.0___slash_2.2">Slash 1.0 -&gt; Slash 2.2</A></LI>
 	</UL></LI>
 
 	<LI><A HREF="#requirements">REQUIREMENTS</A>
@@ -53,6 +47,12 @@
 
 		<LI><A HREF="#software">Software</A></LI>
 		<LI><A HREF="#hardware">Hardware</A></LI>
+	</UL></LI>
+
+	<LI><A HREF="#versions">VERSIONS</A>
+	<UL>
+
+		<LI><A HREF="#codenames">Codenames</A></LI>
 	</UL></LI>
 
 	<LI><A HREF="#version">VERSION</A></LI>
@@ -66,9 +66,10 @@
 <P>
 <HR>
 <H1><A NAME="synopsis">SYNOPSIS</A></H1>
-<P>This document describes how to install Slash 2.1/2.2.  For instructions on
-installation of previous versions of Slash, see the INSTALL document
-included with those distributions.</P>
+<P>This document describes how to install Slash 2.1/2.2 (where you see
+"2.2" you may safely assume "2.1", except where specified).  For instructions on
+installation or upgrade of previous versions of Slash, see the INSTALL
+document included with those distributions.</P>
 <P>These instructions have only been tested on Linux. Installation under
 BSD and other Unix OSes should work similarly, but there are problems
 with the Makefile and installtion under some non-Linux OSes.  Feel free
@@ -80,7 +81,7 @@ information about Slash 2 running on Windows.</P>
 <P>Slash can always be downloaded from SourceForge, from the FTP site,
 and via CVS.</P>
 <PRE>
-        <A HREF="http://sourceforge.net/projects/slashcode/">http://sourceforge.net/projects/slashcode/</A>
+        <A HREF="http://sf.net/projects/slashcode/">http://sf.net/projects/slashcode/</A>
         <A HREF="ftp://ftp.slashcode.com//pub/slashcode/">ftp://ftp.slashcode.com//pub/slashcode/</A>
         <A HREF="http://cvs.slashcode.com/">http://cvs.slashcode.com/</A></PRE>
 <P>See the SourceForge page for patches and bug reports.</P>
@@ -91,37 +92,6 @@ document, because we know you want to get right into the installation.
 Please read those requirements if you have <STRONG>any</STRONG> question about
 what might be required.</P>
 <P>Upgrading information is also toward the end of the document.</P>
-<P>
-<HR>
-<H1><A NAME="versions">VERSIONS</A></H1>
-<P>Each version of slash has a code name, and the files on CVS for that
-version are tagged with that name.  The current release is always
-MAIN.  The versioning scheme is as Linux and Perl are,
-revision.version.subversion.  version is even for releases, and odd
-for development.  The codename applies to the development version
-and subsequent release.</P>
-<P>For example, 1.0.11 is a normal release, while 1.1.0 is the first
-development release for what will be the next release (either 1.2
-or 2.0).</P>
-<P>The CVS repository is tagged with version numbers, so to get release
-1.0.3, use tag "v1_0_3_0".  The last number (in this case a zero) will
-be incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until
-the next release.</P>
-<P>
-<H2><A NAME="codenames">Codenames</A></H2>
-<DL>
-<DT><STRONG><A NAME="item_v1%2E0">v1.0</A></STRONG><BR>
-<DD>
-beast
-<P></P>
-<DT><STRONG><A NAME="item_v2%2E0">v2.0</A></STRONG><BR>
-<DD>
-bender
-<P></P>
-<DT><STRONG><A NAME="item_v2%2E2">v2.2</A></STRONG><BR>
-<DD>
-fry
-<P></P></DL>
 <P>
 <HR>
 <H1><A NAME="installation">INSTALLATION</A></H1>
@@ -172,7 +142,7 @@ might not be appropriate for your site).</P>
 <LI>
 <STRONG>Install perl.</STRONG>
 <P>perl is likely already installed on your machine; make sure its
-version is 5.005_03 or better.</P>
+version is at least the minimum required (see <A HREF="#requirements">REQUIREMENTS</A>).</P>
 <P></P>
 <LI>
 <STRONG>Install Apache and mod_perl.</STRONG>
@@ -212,9 +182,9 @@ for more information on installing perl modules.</P>
 With some versions of the CPAN module, the module will try to
 download and install the latest version of Perl.  Watch what
 the module is doing; if it begins to download an entire perl
-distribution, hit ctrl-C until it stops, then try again with the
-CPAN module.  This should not be an issue in the latest version
-of Bundle::Slash.
+distribution, interrupt it (hit ctrl-C) until it stops, then try
+again with the CPAN module.  This should not be an issue in the latest
+version of Bundle::Slash.
 <P></P>
 <DT><STRONG><A NAME="item_Uninstalling_Old_Modules"><STRONG>Uninstalling Old Modules</STRONG></A></STRONG><BR>
 <DD>
@@ -235,7 +205,7 @@ version.  Go to your <EM>.cpan/Bundle</EM> directory (usually
 <DT><STRONG><A NAME="item_Additional_Libraries"><STRONG>Additional Libraries</STRONG></A></STRONG><BR>
 <DD>
 You must have certain libraries existing on your system before
-building, for Compress::Zlib and XML::Parser.  See <A HREF="#perl">perl</A>.
+building, for Compress::Zlib and XML::Parser (see <A HREF="#requirements">REQUIREMENTS</A>).
 <P></P>
 <DT><STRONG><A NAME="item_BSD"><STRONG>BSD</STRONG></A></STRONG><BR>
 <DD>
@@ -262,7 +232,7 @@ user name in other places, so do not forget it.
 libnet is currently broken somewhat in its tests.  Please use
 <CODE>install Net::Cmd</CODE> first, before you install anything else.
 If it fails only tests 8 and 9 of t/require, then it is OK;
-just do &lt;force install Net::Cmd&gt;, then continue on with the
+just do <CODE>force install Net::Cmd</CODE>, then continue on with the
 rest of the modules installation.
 <P></P></DL>
 <P>To use the CPAN module, invoke the CPAN shell:</P>
@@ -299,10 +269,10 @@ want to change.</P>
                                                 scripts
         USER            nobody                  User to own files
         GROUP           nobody                  Group to own files
-	CP		cp			Name of or path to
-						alternate `cp`
-	INSTALL		install			Name of or path to
-						alternate `install`</PRE>
+        CP              cp                      Name of or path to
+                                                alternate `cp`
+        INSTALL         install                 Name of or path to
+                                                alternate `install`</PRE>
 <P>(USER and GROUP will also be changed later on a per-site basis,
 in step 6. while running <EM>install-slashsite</EM>.)</P>
 <P>So, for example, you might type (although the default SLASH_PREFIX
@@ -407,11 +377,123 @@ of that system.</P>
 <P>
 <HR>
 <H1><A NAME="upgrading">UPGRADING</A></H1>
+<P><STRONG>These upgrade procedures are still in testing.  Please read them
+entirely before beginning.  We are not responsible for any loss of
+data or functionality.</STRONG></P>
 <P>
-<H2><A NAME="slash_2.0___slash_2.1_2.2">Slash 2.0 -&gt; Slash 2.1/2.2</A></H2>
-<P>These procedures do not yet exist.  See <EM>README</EM>.</P>
+<H2><A NAME="slash_2.0___slash_2.2">Slash 2.0 -&gt; Slash 2.2</A></H2>
+<OL>
+<LI>
+BACK EVERYTHING UP ON THE EXISTING SITE.
+<P></P>
+<LI>
+Install Bundle::Slash.  If you have done so previously, follow
+the instructions for removing the existing version of
+Bundle::Slash before proceeding.
+<P></P>
+<LI>
+Apply this patch to your installed Slash::Install module (probably
+easiest to hand-edit the file):
+<PRE>
+  --- Install.pm~ Wed May  9 15:02:34 2001
+  +++ Install.pm  Fri Sep 28 12:44:41 2001
+  @@ -116,7 +116,7 @@
+   sub writeTemplateFile {
+          my($self, $filename, $template) = @_;
+          open(FILE, '&gt;' . $filename) or die &quot;$! unable to open file $filename to write to&quot;;
+  -       for (keys %$template) {
+  +       for (qw(section description title page lang name template seclev)) {
+                  next if ($_ eq 'tpid');
+                  print FILE &quot;__${_}__\n&quot;;
+                  $template-&gt;{$_} =~ s/\015\012/\n/g;</PRE>
+<P></P>
+<LI>
+Run <CODE>template-check</CODE> on your site, and make a note of every change
+you've made to the standard templates.  You will need to make those
+changes again, manually, later.
+<P>This is unfortunately unavoidable, because templates include code
+that changes significantly between releases.  It is recommended
+that you compile your changes into a THEME so they may easily be
+updated and applied.</P>
+<P></P>
+<LI>
+Stop Apache and slashd on the target machine(s).
+<P></P>
+<LI>
+Install Slash.
+<P><STRONG>If installing on a different machine ...</STRONG></P>
+<OL>
+<LI>
+Install slash 2.2 as normal.  Do not yet run install-slashsite.
+<P></P>
+<LI>
+Make sure that from this machine, you can access not only the database
+used for this installation, but the one used for the old installation.
+You may wish to, instead of accessing that database directly if it
+on another machine, dumping it and adding it to your new database server
+under a different name.
+<P></P>
+<LI>
+Add a virtual user to DBIx::Password for the old installation.
+<P></P></OL>
+<P><STRONG>If installing on the same machine ...</STRONG></P>
+<OL>
+<LI>
+Create a new database for the new installation.  You cannot
+use the same database for both installations.
+<P></P>
+<LI>
+Add a new virtual user to DBIx::Password for the new database,
+and update (and flush) MySQL privileges appropriately.  You cannot
+use the same virtual user for both installations.
+<P></P>
+<LI>
+It is highly recommended that you move <EM>/usr/local/slash</EM>
+(or whatever your installation directory is) to a new location,
+such as <EM>/usr/local/slash-old</EM>, and install a clean slash 2.2
+installation.  However, this is not necessary to do; you may install
+slash 2.2 on top of the slash 2.0 installation.
+<P>The reason to not move anything is that you can keep any customizations
+done (images, additional scripts and plugins, static files, etc.).
+The reason to move it is so that everything is clean.  It is highly
+recommended that you move it, and then manually copy back the pieces
+you want.</P>
+<P></P>
+<LI>
+In any event, either move the old directory, or don't, and
+then install slash 2.2 as normal.  Do not yet run install-slashsite.
+<P></P></OL>
+<LI>
+If you have plugins or themes from the old installation to install,
+copy them over now.  Warning: some plugins and themes might need to be
+ported first.  You may wish to deal with them later if they are not
+yet ported to slash 2.2.
+<P></P>
+<LI>
+Run install-slashsite.  Use the new virtual user.
+<P></P>
+<LI>
+Copy over any files (images, FAQs, etc.) that need to be copied, if necessary.
+<P></P>
+<LI>
+Run update script, <EM>utils/slash2toslash2.2</EM>.  <STRONG>Read its instructions!</STRONG>
+<P></P>
+<LI>
+Update templates.
+<P></P>
+<LI>
+Doublecheck Apache configs (httpd/slash.conf, site/sitename/sitename.conf).
+These configs have changed from the last version.  Read the comments and set
+them up as desired.
+<P></P>
+<LI>
+Start Apache.
+<P></P>
+<LI>
+Start slashd.
+<P></P></OL>
 <P>
-<H2><A NAME="slash_2.0.x___slash_2.0.y">Slash 2.0.x -&gt; Slash 2.0.y</A></H2>
+<H2><A NAME="slash_2.2.x___slash_2.2.y">Slash 2.2.x -&gt; Slash 2.2.y</A></H2>
 <P>Read all of this section before doing any of it.</P>
 <P>The first thing to do is to, as per the instructions below under
 INSTALLATION, unpack the latest distribution and run make and make
@@ -478,65 +560,12 @@ template with the new template.
 <PRE>
         % template-tool -u VIRTUAL_USER -s LIST</PRE>
 <P></P></DL>
-<DT><STRONG><A NAME="item_Data">Data</A></STRONG><BR>
-<DD>
-Currently, there are no differences in the schema between versions of Slash 2.0.
-There are a few data differences.
-<DL>
-<DT><STRONG><A NAME="item_Slash">Slash 2.0.0-pre1 -&gt; Slash-2.0.0 release</A></STRONG><BR>
-<DD>
-<DL>
-<DT><STRONG><A NAME="item_Journal_Data">Journal Data</A></STRONG><BR>
-<DD>
-In the vars table, "journal_default_display" is set to "0".  It should default
-to "10".
-<P>Also, "journal_user_count" is no longer in use and may be deleted.</P>
-<P>See <EM>plugins/Journal/dump</EM>.</P>
-<P></P>
-<DT><STRONG><A NAME="item_Search_Data">Search Data</A></STRONG><BR>
-<DD>
-"search_default_display" should be defined in the vars table, with a default
-of "30".
-<P>See <EM>plugins/Search/dump</EM>.</P>
-<P></P></DL>
-</DL>
-<DT><STRONG>Templates</STRONG><BR>
-<DD>
-Listed below are additions/deletions of templates from version to version.
-Feel free to delete (or not) ones that are no longer used, but please do
-add to your site templates that have been added to the distribution.  Add
-or delete, for your site, all the changes from your current version up
-through the version you're upgrading to.
-<DL>
-<DT><STRONG>Slash 2.0.0-pre2 -&gt; Slash 2.0.0</STRONG><BR>
-<DD>
-<DL>
-<DT><STRONG><A NAME="item_Added">Added</A></STRONG><BR>
-<DD>
-<DL>
-<DT><STRONG><A NAME="item_plugins%2FJournal%2Ftemplates%2Fpagination%3Bjourn">plugins/Journal/templates/pagination;journal;default</A></STRONG><BR>
-<DD>
-<DT><STRONG><A NAME="item_plugins%2FSearch%2Ftemplates%2Fpagination%3Bsearch">plugins/Search/templates/pagination;search;default</A></STRONG><BR>
-<DD>
-<DT><STRONG><A NAME="item_themes%2Fslashcode%2Ftemplates%2FdispLinkComment%3">themes/slashcode/templates/dispLinkComment;misc;default</A></STRONG><BR>
-<DD>
-</DL>
-<DT><STRONG><A NAME="item_Deleted">Deleted</A></STRONG><BR>
-<DD>
-<DL>
-<DT><STRONG><A NAME="item_plugins%2FJournal%2Ftemplates%2Fjournalitem%3Bjour">plugins/Journal/templates/journalitem;journal;default</A></STRONG><BR>
-<DD>
-<DT><STRONG><A NAME="item_plugins%2FSearch%2Ftemplates%2Flinksearch%3Bsearch">plugins/Search/templates/linksearch;search;default</A></STRONG><BR>
-<DD>
-</DL>
-</DL>
-</DL>
 </DL>
 <P>
-<H2><A NAME="slash_1.0___slash_2.0">Slash 1.0 -&gt; Slash 2.0</A></H2>
-<P>Please read the complete documentation of <EM>utils/slash1toslash2</EM>.
+<H2><A NAME="slash_1.0___slash_2.2">Slash 1.0 -&gt; Slash 2.2</A></H2>
+<P>Please read the complete documentation of <EM>utils/slash1toslash2.2</EM>.
 It is a program that will convert your database from Slash 1.0
-to a new Slash 2.0 database.  The program documentation (which can
+to a new Slash 2.2 database.  The program documentation (which can
 be read with <EM>perldoc</EM>) details exactly what process it follows
 to do the conversion, so you can attempt to do it by hand if you
 prefer.</P>
@@ -559,7 +588,7 @@ Version 5.6.1 (5.005_03).
 <P></P>
 <DT><STRONG><A NAME="item_MySQL">MySQL</A></STRONG><BR>
 <DD>
-Version 3.23.42 (3.23.23).
+Version 3.23.42 (3.23).
 <PRE>
         <A HREF="http://www.mysql.com/">http://www.mysql.com/</A></PRE>
 <P></P>
@@ -591,7 +620,7 @@ If they are not present on the system already, download and
 install them before installing the modules.</P>
 <PRE>
         <A HREF="http://www.gzip.org/zlib/">http://www.gzip.org/zlib/</A>
-        <A HREF="http://sourceforge.net/projects/expat/">http://sourceforge.net/projects/expat/</A></PRE>
+        <A HREF="http://sf.net/projects/expat/">http://sf.net/projects/expat/</A></PRE>
 <P>The following required distributions are all included in
 the Bundle::Slash distribution.</P>
 <DL>
@@ -683,6 +712,37 @@ overkill for Slashdot).  slashcode.com runs on two web servers and one
 NFS/database server.  Many sites can run fine on just one machine for
 everything (we use a minimum of two web server machines on every site
 for load balancing and redundancy).</P>
+<P>
+<HR>
+<H1><A NAME="versions">VERSIONS</A></H1>
+<P>Each version of slash has a code name, and the files on CVS for that
+version are tagged with that name.  The current release is always
+MAIN.  The versioning scheme is as Linux and Perl are,
+revision.version.subversion.  version is even for releases, and odd
+for development.  The codename applies to the development version
+and subsequent release.</P>
+<P>For example, 1.0.11 is a normal release, while 1.1.0 is the first
+development release for what will be the next release (either 1.2
+or 2.0).</P>
+<P>The CVS repository is tagged with version numbers, so to get release
+1.0.3, use tag "v1_0_3_0".  The last number (in this case a zero) will
+be incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until
+the next release.</P>
+<P>
+<H2><A NAME="codenames">Codenames</A></H2>
+<DL>
+<DT><STRONG><A NAME="item_v1%2E0">v1.0</A></STRONG><BR>
+<DD>
+beast
+<P></P>
+<DT><STRONG><A NAME="item_v2%2E0">v2.0</A></STRONG><BR>
+<DD>
+bender
+<P></P>
+<DT><STRONG><A NAME="item_v2%2E2">v2.2</A></STRONG><BR>
+<DD>
+fry
+<P></P></DL>
 <P>
 <HR>
 <H1><A NAME="version">VERSION</A></H1>

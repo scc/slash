@@ -2,9 +2,10 @@ NAME
     INSTALL - Slash Installation
 
 SYNOPSIS
-    This document describes how to install Slash 2.1/2.2. For instructions
-    on installation of previous versions of Slash, see the INSTALL document
-    included with those distributions.
+    This document describes how to install Slash 2.1/2.2 (where you see
+    "2.2" you may safely assume "2.1", except where specified). For
+    instructions on installation or upgrade of previous versions of Slash,
+    see the INSTALL document included with those distributions.
 
     These instructions have only been tested on Linux. Installation under
     BSD and other Unix OSes should work similarly, but there are problems
@@ -19,7 +20,7 @@ SYNOPSIS
     Slash can always be downloaded from SourceForge, from the FTP site, and
     via CVS.
 
-            http://sourceforge.net/projects/slashcode/
+            http://sf.net/projects/slashcode/
             ftp://ftp.slashcode.com//pub/slashcode/
             http://cvs.slashcode.com/
 
@@ -33,34 +34,6 @@ SYNOPSIS
     be required.
 
     Upgrading information is also toward the end of the document.
-
-VERSIONS
-    Each version of slash has a code name, and the files on CVS for that
-    version are tagged with that name. The current release is always MAIN.
-    The versioning scheme is as Linux and Perl are,
-    revision.version.subversion. version is even for releases, and odd for
-    development. The codename applies to the development version and
-    subsequent release.
-
-    For example, 1.0.11 is a normal release, while 1.1.0 is the first
-    development release for what will be the next release (either 1.2 or
-    2.0).
-
-    The CVS repository is tagged with version numbers, so to get release
-    1.0.3, use tag "v1_0_3_0". The last number (in this case a zero) will be
-    incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until the
-    next release.
-
-  Codenames
-
-    v1.0
-        beast
-
-    v2.0
-        bender
-
-    v2.2
-        fry
 
 INSTALLATION
   Installation Notes
@@ -109,7 +82,8 @@ INSTALLATION
     2.  Install perl.
 
         perl is likely already installed on your machine; make sure its
-        version is 5.005_03 or better.
+        version is at least the minimum required (see the section on
+        "REQUIREMENTS").
 
     3.  Install Apache and mod_perl.
 
@@ -153,9 +127,9 @@ INSTALLATION
             With some versions of the CPAN module, the module will try to
             download and install the latest version of Perl. Watch what the
             module is doing; if it begins to download an entire perl
-            distribution, hit ctrl-C until it stops, then try again with the
-            CPAN module. This should not be an issue in the latest version
-            of Bundle::Slash.
+            distribution, interrupt it (hit ctrl-C) until it stops, then try
+            again with the CPAN module. This should not be an issue in the
+            latest version of Bundle::Slash.
 
         Uninstalling Old Modules
             Sometimes, you will be installing a newer version of a module
@@ -173,8 +147,8 @@ INSTALLATION
 
         Additional Libraries
             You must have certain libraries existing on your system before
-            building, for Compress::Zlib and XML::Parser. See the section on
-            "perl".
+            building, for Compress::Zlib and XML::Parser (see the section on
+            "REQUIREMENTS").
 
         BSD
             If running BSD, also install the BSD::Resource module.
@@ -197,7 +171,7 @@ INSTALLATION
             libnet is currently broken somewhat in its tests. Please use
             "install Net::Cmd" first, before you install anything else. If
             it fails only tests 8 and 9 of t/require, then it is OK; just do
-            <force install Net::Cmd>, then continue on with the rest of the
+            "force install Net::Cmd", then continue on with the rest of the
             modules installation.
 
         To use the CPAN module, invoke the CPAN shell:
@@ -226,8 +200,8 @@ INSTALLATION
                 make
                 make install
 
-        Note: you will want the GNU versions of fileutils (version
-        4.0 recommended, for cp and install) and make.  Older versions of
+        Note: you will want the GNU versions of fileutils (version 4.0
+        recommended, for cp and install) and make. Older versions of
         install, and make and cp from other systems, might not work.
 
         There are a few options to "make" and "make install" you may want to
@@ -241,10 +215,10 @@ INSTALLATION
                                                         scripts
                 USER            nobody                  User to own files
                 GROUP           nobody                  Group to own files
-                CP		cp			Name of or path to
-                					alternate `cp`
-                INSTALL		install			Name of or path to
-                					alternate `install`
+                CP              cp                      Name of or path to
+                                                        alternate `cp`
+                INSTALL         install                 Name of or path to
+                                                        alternate `install`
 
         (USER and GROUP will also be changed later on a per-site basis, in
         step 6. while running install-slashsite.)
@@ -358,11 +332,105 @@ INSTALLATION OPTIONS
     system.
 
 UPGRADING
-  Slash 2.0 -> Slash 2.1/2.2
+    These upgrade procedures are still in testing. Please read them entirely
+    before beginning. We are not responsible for any loss of data or
+    functionality.
 
-    These procedures do not yet exist. See the README manpage.
+  Slash 2.0 -> Slash 2.2
 
-  Slash 2.0.x -> Slash 2.0.y
+    1.  BACK EVERYTHING UP ON THE EXISTING SITE.
+
+    2.  Install Bundle::Slash. If you have done so previously, follow the
+        instructions for removing the existing version of Bundle::Slash
+        before proceeding.
+
+    3.  Apply this patch to your installed Slash::Install module (probably
+        easiest to hand-edit the file):
+
+          --- Install.pm~ Wed May  9 15:02:34 2001
+          +++ Install.pm  Fri Sep 28 12:44:41 2001
+          @@ -116,7 +116,7 @@
+           sub writeTemplateFile {
+                  my($self, $filename, $template) = @_;
+                  open(FILE, '>' . $filename) or die "$! unable to open file $filename to write to";
+          -       for (keys %$template) {
+          +       for (qw(section description title page lang name template seclev)) {
+                          next if ($_ eq 'tpid');
+                          print FILE "__${_}__\n";
+                          $template->{$_} =~ s/\015\012/\n/g;
+
+    4.  Run "template-check" on your site, and make a note of every change
+        you've made to the standard templates. You will need to make those
+        changes again, manually, later.
+
+        This is unfortunately unavoidable, because templates include code
+        that changes significantly between releases. It is recommended that
+        you compile your changes into a THEME so they may easily be updated
+        and applied.
+
+    5.  Stop Apache and slashd on the target machine(s).
+
+    6   Install Slash.
+
+        If installing on a different machine ...
+
+        1   Install slash 2.2 as normal. Do not yet run install-slashsite.
+
+        2   Make sure that from this machine, you can access not only the
+            database used for this installation, but the one used for the
+            old installation. You may wish to, instead of accessing that
+            database directly if it on another machine, dumping it and
+            adding it to your new database server under a different name.
+
+        3   Add a virtual user to DBIx::Password for the old installation.
+
+        If installing on the same machine ...
+
+        1   Create a new database for the new installation. You cannot use
+            the same database for both installations.
+
+        2   Add a new virtual user to DBIx::Password for the new database,
+            and update (and flush) MySQL privileges appropriately. You
+            cannot use the same virtual user for both installations.
+
+        3   It is highly recommended that you move /usr/local/slash (or
+            whatever your installation directory is) to a new location, such
+            as /usr/local/slash-old, and install a clean slash 2.2
+            installation. However, this is not necessary to do; you may
+            install slash 2.2 on top of the slash 2.0 installation.
+
+            The reason to not move anything is that you can keep any
+            customizations done (images, additional scripts and plugins,
+            static files, etc.). The reason to move it is so that everything
+            is clean. It is highly recommended that you move it, and then
+            manually copy back the pieces you want.
+
+        4   In any event, either move the old directory, or don't, and then
+            install slash 2.2 as normal. Do not yet run install-slashsite.
+
+    7.  If you have plugins or themes from the old installation to install,
+        copy them over now. Warning: some plugins and themes might need to
+        be ported first. You may wish to deal with them later if they are
+        not yet ported to slash 2.2.
+
+    8.  Run install-slashsite. Use the new virtual user.
+
+    9.  Copy over any files (images, FAQs, etc.) that need to be copied, if
+        necessary.
+
+    10. Run update script, utils/slash2toslash2.2. Read its instructions!
+
+    11. Update templates.
+
+    12. Doublecheck Apache configs (httpd/slash.conf,
+        site/sitename/sitename.conf). These configs have changed from the
+        last version. Read the comments and set them up as desired.
+
+    13. Start Apache.
+
+    14. Start slashd.
+
+  Slash 2.2.x -> Slash 2.2.y
 
     Read all of this section before doing any of it.
 
@@ -433,47 +501,11 @@ UPGRADING
 
                     % template-tool -u VIRTUAL_USER -s LIST
 
-    Data
-        Currently, there are no differences in the schema between versions
-        of Slash 2.0. There are a few data differences.
+  Slash 1.0 -> Slash 2.2
 
-        Slash 2.0.0-pre1 -> Slash-2.0.0 release
-            Journal Data
-                In the vars table, "journal_default_display" is set to "0".
-                It should default to "10".
-
-                Also, "journal_user_count" is no longer in use and may be
-                deleted.
-
-                See plugins/Journal/dump.
-
-            Search Data
-                "search_default_display" should be defined in the vars
-                table, with a default of "30".
-
-                See plugins/Search/dump.
-
-    Templates
-        Listed below are additions/deletions of templates from version to
-        version. Feel free to delete (or not) ones that are no longer used,
-        but please do add to your site templates that have been added to the
-        distribution. Add or delete, for your site, all the changes from
-        your current version up through the version you're upgrading to.
-
-        Slash 2.0.0-pre2 -> Slash 2.0.0
-            Added
-                plugins/Journal/templates/pagination;journal;default
-                plugins/Search/templates/pagination;search;default
-                themes/slashcode/templates/dispLinkComment;misc;default
-            Deleted
-                plugins/Journal/templates/journalitem;journal;default
-                plugins/Search/templates/linksearch;search;default
-
-  Slash 1.0 -> Slash 2.0
-
-    Please read the complete documentation of utils/slash1toslash2. It is a
-    program that will convert your database from Slash 1.0 to a new Slash
-    2.0 database. The program documentation (which can be read with perldoc)
+    Please read the complete documentation of utils/slash1toslash2.2. It is
+    a program that will convert your database from Slash 1.0 to a new Slash
+    2.2 database. The program documentation (which can be read with perldoc)
     details exactly what process it follows to do the conversion, so you can
     attempt to do it by hand if you prefer.
 
@@ -522,7 +554,7 @@ REQUIREMENTS
         the modules.
 
                 http://www.gzip.org/zlib/
-                http://sourceforge.net/projects/expat/
+                http://sf.net/projects/expat/
 
         The following required distributions are all included in the
         Bundle::Slash distribution.
@@ -584,6 +616,34 @@ REQUIREMENTS
     NFS/database server. Many sites can run fine on just one machine for
     everything (we use a minimum of two web server machines on every site
     for load balancing and redundancy).
+
+VERSIONS
+    Each version of slash has a code name, and the files on CVS for that
+    version are tagged with that name. The current release is always MAIN.
+    The versioning scheme is as Linux and Perl are,
+    revision.version.subversion. version is even for releases, and odd for
+    development. The codename applies to the development version and
+    subsequent release.
+
+    For example, 1.0.11 is a normal release, while 1.1.0 is the first
+    development release for what will be the next release (either 1.2 or
+    2.0).
+
+    The CVS repository is tagged with version numbers, so to get release
+    1.0.3, use tag "v1_0_3_0". The last number (in this case a zero) will be
+    incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until the
+    next release.
+
+  Codenames
+
+    v1.0
+        beast
+
+    v2.0
+        bender
+
+    v2.2
+        fry
 
 VERSION
     $Id$
