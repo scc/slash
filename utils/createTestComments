@@ -28,9 +28,9 @@ use vars qw( $slashdb $werder $constants $junk );
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-my (%opts, %family_tree);
+my (%opts, %family_tree, %deep_tree);
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hI:RTJu:U:v', \%opts);
+usage('Options used incorrectly') unless getopts('hI:RTJu:U:tv', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 if ($opts{R}) {
@@ -39,6 +39,9 @@ if ($opts{R}) {
 	usage("Must specify either -R, or both -U and -I")
 		if ! exists $opts{U};
 	usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
+}
+if ($opts{T} and $opts{t}) {
+	usage("Can't specify both -t and -T, pick one");
 }
 $junk = $opts{'J'} ? 1 : 0;
 $opts{'u'} ||= 'slash';
@@ -113,6 +116,16 @@ $werder = new Silly::Werder;
 					= $comments->{$_}{pid}
 			} keys %{$comments};
 		}
+		if ($opts{t}) {
+			for my $cid (keys %family_tree) {
+				my $count = 0;
+				my $cid_back = $cid;
+				while (exists($family_tree{$cid_back}) and ++$count < 1000) {
+					$deep_tree{$cid}++;
+					$cid_back = $family_tree{$cid_back};
+				}
+			}
+		}
  
 		my $num_werds = rand(20)*rand(20)+rand(10) + 1;
 		$num_werds += 200 if rand(1) < 0.1;
@@ -158,6 +171,7 @@ $werder = new Silly::Werder;
         	);
 		$slashdb->setStory($sid, { writestatus => 'dirty' }) if $sid;
 	        $family_tree{$cid} = $pid if ! $opts{T};
+		$deep_tree{$cid} = $deep_tree{$pid}+1 if $opts{t};
 	        print <<EOT;
 ($count) Comment created (user=$uid discussion=$discussion_id cid=$cid pid=$pid)
 EOT
@@ -182,14 +196,31 @@ sub getRandomSid {
 
 sub getRandomParent {
         return 0 if $opts{T};
- 
+
         my @a = keys %family_tree;
-	# If not very many posts, return 0 for the root.
-	return 0 if rand(@a) < 5;
+
+	if ($opts{t}) {
+		# Weight toward nesting deeply.
+		my @deepest_cids =
+			sort { $deep_tree{$b} <=> $deep_tree{$a} }
+			keys %deep_tree;
+		if (scalar(@deepest_cids) >= 8) {
+			@a = @deepest_cids[0, 0, 0, 0, 0, 1, 1, 2..5];
+		} elsif (scalar(@deepest_cids) >= 5) {
+			@a = @deepest_cids;
+		} else {
+			# leave @a alone
+		}
+	}
+ 
+	if (!$opts{t}) {
+		# If not very many posts, return 0 for the root.
+		return 0 if rand(@a) < 5;
+		# Always a chance of returning 0.
+		return 0 if rand(1) > 0.75;
+	}
 	# Otherwise pick one.
 	my $pid = $a[ rand @a ];
-	# But, always a change of returning 0.
-	$pid = 0 if rand(1) > 0.75;
 	return $pid;
 }
  
@@ -394,6 +425,7 @@ Identity options (specify one):
 	-R	Post as random users.
 
 Posting options:
+	-t	Weight towards nesting deeply.
 	-T	Do NOT post with threads.
 	-J	Post junk links (random text to stress canonicalization)
 
