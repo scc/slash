@@ -35,11 +35,11 @@ __template__
 [% IF section.issue %]
 	<P ALIGN="RIGHT">
 	[% IF section.issue == 1 || section.issue == 3 %]
-<BR><A HREF="[% constants.rootdir %]/search.pl?section=[% section.section %]&start=[% start %]">
-<B>Older Articles</B></A>
+<BR><A HREF="[% constants.rootdir %]/search.pl?section=[% section.section %]&start=[% start %]"
+><B>Older Articles</B></A>
 	[% END %][% IF section.issue == 2 || section.issue == 3 %]
-<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&mode=[% user.currentMode %]&issue=[% yesterday %]">
-<B>Yesterday's Edition</B></A>
+<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&mode=[% user.currentMode %]&issue=[% yesterday %]"
+><B>Yesterday's Edition</B></A>
 	[% END %]
 [% END %]
 

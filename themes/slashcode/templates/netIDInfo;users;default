@@ -44,9 +44,8 @@ Subnet [% id %],  [% edit.subnetid %] has posted [% commentstruct.size %] commen
 		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.sid";
 		label   = question.question;
         END %]
-<B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]">
-   [% comment.subj %]</A> posted on [% comment.cdate %]
-        (Score:[% comment.pts %][% replies %])
+<B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]">[% comment.subj %]</A>
+posted on [% comment.cdate %] (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
            <BR>attached to <A HREF="[% href %]">[% label %]</A>
       </FONT><BR>

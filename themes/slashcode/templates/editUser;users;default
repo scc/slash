@@ -48,11 +48,14 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; useredit.nickname; END %]"><BR>
 <BR>
 	<B>Your Email Address</B><BR>
-	<SMALL>(required but never displayed publicly. This is where your passwd is mailed. 
-	If you change this address, a notification will be sent, and you will need follow the
-	enclosed instructions to re-register)</SMALL><BR>
+	<SMALL>(required but never displayed publicly, unless you specify so, below. 
+	This is where your passwd is mailed.  If you change this address, a
+	notification will be sent, and you will need follow the enclosed instructions
+	to re-register)</SMALL><BR>
 	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; useredit.realemail; END %]" SIZE="40"><BR>
 <BR>
+
+[% DEFAULT user.emaildisplay = 0 %]
 [% emaildisplay.${user.emaildisplay} = 'CHECKED' -%]
 	<B>Email Display</B><BR>
 	&nbsp;&nbsp;&nbsp;
