@@ -34,8 +34,8 @@ We don't always follow this guide.  We are making changes throughout
 our code to be in line with it.  But just because we didn't do
 it yet, that is no excuse.  Do it anyway.  :-)
 
-[ ADD BIOLERPLATE CODE FOR MODULES, COMMAND LINE, AND WEB PROGRAMS
-LATER TODAY ]
+This document is subject to change at the whims of the core Slash team.
+We hope to add any significant changes at the bottom of the document.
 
 
 =head1 CODING PRINCIPLES
@@ -74,6 +74,15 @@ program, for a different purpose.
 
 All web programs should be documented with a statement of function,
 purpose, and use in the comments of the program.
+
+Any external documents, and documentation for command-line programs and
+modules, should be written in POD, where appropriate. From there, they
+can be translated to many formats with the various pod2* translators. 
+Read the perlpod manpage before writing any POD, because although POD is
+not difficult, it is not what most people are used to.  It is not a
+regular markup language; it is just a way to make easy documentation
+for translating to other formats.  Read, and understand, the perlpod
+manpage, and ask us or someone else who knows if you have any questions.
 
 
 =head2 Version
@@ -164,6 +173,16 @@ variable, consider whether or not you should use local().
 
 local() may also be used on elements of arrays and hashes, though there
 is seldom a need to do it, and you shouldn't.
+
+
+=head2 Exporting
+
+Except for the universal Slash API, which is currently implemented by
+Slash and Slash::Utility (and one function in Slash::Display), do not
+export anything from a module by default.  Feel free to put anything you
+want to in @EXPORT_OK, so users of your modules can explicitly ask
+for symbols (e.g., "use Slash::Something qw(getFoo setFoo)"), but
+do not export them by default.
 
 
 =head2 Pass by Reference
@@ -935,29 +954,18 @@ a member of the core team.  If you have CVS access, feel free to create
 your own module with your name, and put your code there temporarily.
 
 
-=head1 MORE
+=head1 TO DO
 
 get/gets/set/sets/create/exists/delete
-
-perlpod
-
-exporting
 
 
 =head1 CHANGES
 
-=over 4
-
-=item v1.1.2.2
-
-
-
-=item v1.1.2.1
-
-Initial checkin.
-
-=back
-
+	$Log$
+	Revision 1.1.2.3  2001/03/30 14:40:15  pudge
+	Add information about POD and exporting, add notice about document
+	subject to change
+	
 
 =head1 AUTHORS
 
