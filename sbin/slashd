@@ -392,7 +392,7 @@ sub freshenup {
 	moveImages();
 
 	my %updates;
-	my $stories = $slashdb->getStoriesForSlashdb();
+	my $stories = $slashdb->getStoriesForSlashdb(1);
 	my @updatedsids;
 
 	for (@$stories){
@@ -419,7 +419,7 @@ sub freshenup {
 	$slashdb->setStoryIndex(@updatedsids);
 
 	my $x = 0;
-	$stories = $slashdb->getStoriesForSlashdb();
+	$stories = $slashdb->getStoriesForSlashdb(5);
 	for (@$stories) {
 		my($sid, $title, $section) = @$_;
 		$x++;

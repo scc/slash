@@ -57,10 +57,10 @@ sub getNewStoryTopic {
 ########################################################
 # For slashd
 sub getStoriesForSlashdb {
-	my($self) = @_;
+	my($self, $writestatus) = @_;
 
 	my $returnable = $self->sqlSelectAll("sid,title,section", 
-			"stories", "writestatus=1");
+			"stories", "writestatus=$writestatus");
 
 	return $returnable;
 }
