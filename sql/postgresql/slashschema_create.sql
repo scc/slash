@@ -165,7 +165,7 @@ CREATE TABLE menus (
 CREATE TABLE metamodlog (
 	id SERIAL,
 	mmid int4 DEFAULT '0' NOT NULL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	val int4 DEFAULT '0' NOT NULL,
 	ts datetime,
 	PRIMARY KEY (id)
@@ -176,7 +176,7 @@ CREATE TABLE metamodlog (
 
 CREATE TABLE moderatorlog (
 	id SERIAL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	val int2 DEFAULT '0' NOT NULL,
 	sid char(16) DEFAULT '' NOT NULL,
 	ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
@@ -191,7 +191,7 @@ CREATE INDEX idx_sid_2 ON moderatorlog(sid,uid,cid);
 CREATE TABLE newstories (
 	sid char(16) DEFAULT '' NOT NULL,
 	tid varchar(20) DEFAULT '' NOT NULL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	commentcount int2 DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
@@ -274,7 +274,7 @@ CREATE TABLE sections (
 
 CREATE TABLE sessions (
 	session SERIAL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	logintime datetime,
 	lasttime datetime,
 	lasttitle varchar(50),
@@ -294,7 +294,7 @@ CREATE TABLE site_info (
 CREATE TABLE stories (
 	sid char(16) DEFAULT '' NOT NULL,
 	tid varchar(20) DEFAULT '' NOT NULL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	commentcount int2 DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
@@ -348,7 +348,7 @@ CREATE TABLE submissions (
 	note varchar(30),
 	section varchar(30) DEFAULT '' NOT NULL,
 	comment varchar(255),
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	del int2 DEFAULT '0' NOT NULL,
 	PRIMARY KEY (subid)
 );
@@ -454,7 +454,7 @@ CREATE INDEX idx_chk4email ON users(realemail);
 
 CREATE TABLE users_param (
 	param_id SERIAL,
-	uid int4 DEFAULT '1' NOT NULL,
+	uid int4 NOT NULL,
 	name varchar(32) NOT NULL,
 	value varchar(254) NOT NUL,
 	UNIQUE (uid, name),
