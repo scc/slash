@@ -44,7 +44,6 @@ sub new {
 		warn("We don't support the database ($dsn) specified. Using user ($user) "
 			. DBIx::Password::getDriver($user));
 	}
-#	push(@Slash::DB::EXPORT, 'sqlConnect');
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->SUPER::sqlConnect();

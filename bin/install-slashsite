@@ -6,7 +6,22 @@ use Slash::DB;
 # -Brian (brian@tangent.org)
 
 
-my ($user, $dbh, @create, $sql, @sql, $hostname, @directories, @binaries, $httpd, $uname, %slash_sites);
+my $prefix = "/usr/local/slash";
+
+my (	$user,
+			$owner,
+			$password,
+			$dbh,
+			@create,
+			$sql,
+			@sql,
+			$hostname,
+			@directories,
+			@binaries,
+			$httpd,
+			$uname,
+			%slash_sites,
+			);
 
 my @standard_http = qw (
 	PerlModule Apache::SIG
@@ -39,6 +54,7 @@ $dbh = DBIx::Password->connect($user);
 
 unless($dbh) {
 	print "The virtual user \"$user\" doesn't exist.\n";
+	exit 0;
 }
 
 open(APXS, "apxs -q SYSCONFDIR |");
@@ -51,8 +67,9 @@ unless($httpd) {
 } else {
 	$httpd .= "/httpd.conf";
 }
+
 # Defaulting to the only theme at the moment
-open(CREATE, "</usr/local/slash/sql/mysql/schema.sql");
+open(CREATE, "<$prefix/sql/mysql/schema.sql");
 
 while(<CREATE>) {
 	chomp;
@@ -71,10 +88,18 @@ $sql = join '', @create;
 print "What is name of your slashsite (aka www.slashdot.org)?\n";
 $hostname = <STDIN>;
 chomp($hostname);
+print "What user would you like to run your slashcode site as (nobody is default)?\n";
+$owner = <STDIN>;
+chomp($owner);
+unless($owner) {
+	$owner = 'nobody';
+}
+
 # We also need to really be determining driver here and 
-# picking the right schema
+# picking the right schema. Having it loop through
+# the themes directory would give us a list
 print "Which theme do you want to use (skipping since we only have one theme)?\n";
-my $theme = '/usr/local/slash/themes/slashcode';
+my $theme = "$prefix/themes/slashcode";
 
 open(DUMP,"<$theme/sql/mysql/datadump.sql");
 
@@ -108,43 +133,43 @@ unless($sitename) {
 	$sitename = $hostname;
 }
 
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename/log' WHERE name = 'logdir' ");
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename/htdocs' WHERE name = 'basedir' ");
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename' WHERE name = 'datadir' ");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename/logs' WHERE name = 'logdir' ");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename/htdocs' WHERE name = 'basedir' ");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename' WHERE name = 'datadir' ");
 
-system("mkdir /usr/local/slash/$sitename");
-system("mkdir /usr/local/slash/$sitename/logs");
-system("mkdir /usr/local/slash/$sitename/htdocs");
-system("mkdir /usr/local/slash/$sitename/backups");
-system("mkdir /usr/local/slash/$sitename/sbin");
-system("cp -r $theme/htdocs/* /usr/local/slash/$sitename/htdocs");
+system("mkdir $prefix/$sitename");
+system("mkdir $prefix/$sitename/logs");
+system("mkdir $prefix/$sitename/htdocs");
+system("mkdir $prefix/$sitename/backups");
+system("mkdir $prefix/$sitename/sbin");
+system("cp -r $theme/htdocs/* $prefix/$sitename/htdocs");
 
 $dbh->disconnect;
 
 my $slashdb = Slash::DB->new($ARGV[0]);
 
 print "Ok, we need a password for the God account (8 characters only please)\n";
-my $password = <STDIN>;
+$password = <STDIN>;
 chomp($password);
 
 $slashdb->setAuthor('God', {pwd => $password});
 
 # Now, lets update slash.sites
-open (SLASHSITES, "/usr/local/slash/slash.sites");
+open (SLASHSITES, "$prefix/slash.sites");
 while(<SLASHSITES>) {
 	chomp;
-	$slash_sites{$_} = 1;
+	my ($dbuser) = split /:/;
+	$slash_sites{$dbuser} = 1;
 }
 close (SLASHSITES);
 
 unless($slash_sites{$user}) {
-	open (SLASHSITES, ">/usr/local/slash/slash.sites");
-	for(keys %slash_sites) {
-		print SLASHSITES ("$_\n");
-	}
-	print SLASHSITES ("$user\n");
+	open (SLASHSITES, ">>$prefix/slash.sites");
+	print SLASHSITES ("$user:$owner\n");
 	close (SLASHSITES);
 }
+
+system("chown -R $owner $prefix/");
 
 # Now, lets do the httpd.conf
 

@@ -1,37 +1,43 @@
 #! /bin/sh
+# /etc/init.d/slashd
 #
-# written by Yazz Atlas 
-
-PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin/X11:/usr/X11R6/bin"
+# written by Yazz Atlas for the Slashteam... 
+#
+PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:\
+				/usr/local/sbin:/usr/bin/X11:/usr/X11R6/bin"
 
 # slash home
 DATADIR=/usr/local/slash
-SLASHD="$DATADIR/sbin/slashd $server_name"
-SLASHSITE=/usr/local/slash/slash.sites
+SLASHD="$DATADIR/sbin/slashd $SERVER_NAME"
+SLASHSITE=$DATADIR/slash.sites
 
-
+# This is where you store the running PID of the slashd's you start
+# Under Redhat people like to place this in /var/run
+#RUNNING_PID=/var/run
 RUNNING_PID=$DATADIR
 
 # To figure out where things are...
+export TZ=GMT
 WHICH_CAT=`which cat`
 WHICH_CUT=`which cut`
-GRAB_CONFIG=`$WHICH_CAT $SLASHSITE | $WHICH_CUT -d"#" -f1` 
 
-export TZ=GMT
-
-if [ ! -f $SLASHSITE_CONFIG ] ; then
-	echo "NOT Starting slashd: No $SLASHSITE";
-	exit ;
+if [ ! -f $SLASHSITE ] ; then
+	echo "[0;31mNOT[1;m Starting slashd:[0;31m No[1;m $SLASHSITE";
+	exit 0;
 fi
+
+GRAB_CONFIG=`$WHICH_CAT $SLASHSITE | $WHICH_CUT -d"#" -f1` 
 
 case "$1" in
   start)
     cd $DATADIR
 		for server_name in $GRAB_CONFIG
 		do
-			echo -n "Starting slashd $server_name: "
-			$SLASHD &
-			echo $! > $RUNNING_PID/slashd.$server_name.pid
+			SERVER_NAME=`echo $server_name |$WHICH_CUT -d":" -f1`
+			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
+			echo -n "Starting slashd $SERVER_NAME: "
+			su -l $USERNAME -c $SLASHD &
+			echo $! > $RUNNING_PID/slashd.$SERVER_NAME.pid 
 			echo "ok PID = $! "
 		done
     ;;
@@ -39,13 +45,15 @@ case "$1" in
     cd $DATADIR
     for server_name in $GRAB_CONFIG
     do
-			if [ -f $RUNNING_PID/slashd.$server_name.pid ] ;then
-				echo -n "Stopping slashd $server_name: "
-				kill `cat $RUNNING_PID/slashd.$server_name.pid`
-				rm -f $RUNNING_PID/slashd.$server_name.pid
+			SERVER_NAME=`echo $server_name |$WHICH_CUT -d":" -f1`
+			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
+			if [ -f $RUNNING_PID/slashd.$SERVER_NAME.pid ] ;then
+				echo -n "Stopping slashd $SERVER_NAME: "
+				kill -9 `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
+				rm -f $RUNNING_PID/slashd.$SERVER_NAME.pid
 				echo "ok."
 			else
-				echo "Slashd $server_name has no PID file"
+				echo "Slashd $SERVER_NAME has no PID file"
 			fi
 		done
 
@@ -58,6 +66,7 @@ case "$1" in
   *)
     echo "Debian Usage: /etc/init.d/$0 {start|stop|restart}"
     echo "Redhat Usage: /etc/rc.d/init.d/$0 {start|stop|restart}"
+    echo "Other Usage: /usr/local/sbin/$0 {start|stop|restart}"
     exit 1
     ;;
 esac

@@ -19,6 +19,9 @@ PREOP = @$(NOOP)
 POSTOP = @$(NOOP)
 TO_UNIX = @$(NOOP)
 PREFIX = /usr/local/slash
+INIT = /etc/rc.d
+USER = nobody
+GROUP = nobody
 
 
 #   install the shared object file into Apache 
@@ -52,10 +55,11 @@ install: slash
 	cp sql/mysql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/mysql/prep_date.sql
 
 	# this needs to be made platform independent
-	install -D utils/slashd /etc/rc.d/init.d/
-	ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd
-	ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/K99slashd
+	install -D utils/slashd $(INIT)/init.d/
+	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/S99slashd
+	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/K99slashd
 	touch $(PREFIX)/slash.sites
+	chown -R $(USER):$(GROUP) $(PREFIX)
 
 reload: install
 	apachectl stop

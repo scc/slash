@@ -33,7 +33,7 @@ sub setStoryIndex {
 sub getNewStoryTopic {
 	my($self) = @_;
 
-	my $returnable = $self->sqlSelectHashref(
+	my $returnable = $self->sqlSelectAll(
 				"alttext,image,width,height,newstories.tid",
 				"newstories,topics",
 				"newstories.tid=topics.tid
