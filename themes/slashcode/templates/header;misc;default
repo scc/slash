@@ -31,7 +31,7 @@ in this block -->
 		<TD VALIGN="BOTTOM" BACKGROUND="[% constants.imagedir %]/line-bg.gif">
 			[% UNLESS user.noicons || user.light %]
 			<TABLE BORDER="0"><TR>
-				[% INCLUDE topics %]
+				[% INCLUDE recentTopics %]
 			</TR></TABLE>
 			[% END %]
 		</TD>
