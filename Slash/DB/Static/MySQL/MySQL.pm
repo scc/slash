@@ -785,7 +785,7 @@ sub getStoriesWithFlag {
 	my($self, $writestatus, $order, $limit) = @_;
 	
 	my $sqlorder;
-	$sqlorder = "ORDER BY sid $order ";
+	$sqlorder = "ORDER BY time $order ";
 	$sqlorder .= "LIMIT $limit" if $limit;
 	
 	# Currently only used by two tasks and we do NOT want stories
