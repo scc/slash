@@ -135,7 +135,7 @@ sub sqlConnect {
 		unless (eval {$self->{dbh}->ping}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
 			undef $self->{dbh};
-			$self->sqlConnect;
+			$self->sqlConnect();
 		}
 	} else {
 # Ok, new connection, lets create it
