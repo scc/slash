@@ -60,6 +60,7 @@ sub main {
 		saveuser	=> \&saveUser,
 		changepasswd	=> \&changePasswd,
 		edituser	=> \&editUser,
+		authoredit	=> \&editUser,
 		edithome	=> \&editHome,
 		editcomm	=> \&editComm,
 		newuser		=> \&newUser,

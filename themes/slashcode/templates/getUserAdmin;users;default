@@ -55,8 +55,8 @@ __template__
 </TABLE>
 	[% END %]
 
-<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 	[% IF authoredit_flag %]
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">
 
@@ -69,7 +69,7 @@ __template__
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="authoredit"></TD>
 		</FORM>
 	</TR>
-
+</TABLE>
 	[% END %]
 
 [% END %]

@@ -36,7 +36,7 @@ __template__
 	User Info for [% md5id %] ([% id %])
 
 [% CASE 'editUser_title' %]
-	Editing [% user_edit.nickname %] ( [% user_edit.uid %]) [% user_edit.realemail %]
+	Editing [% user_edit.nickname %] ([% user_edit.uid %]) [% user_edit.realemail %]
 
 [% CASE 'changePasswd_title' %]
 	Change password for [% user_edit.nickname %] ( [% user_edit.uid %]) 
