@@ -571,6 +571,7 @@ CREATE TABLE submissions (
 	PRIMARY KEY (subid),
 	FOREIGN KEY (tid) REFERENCES topics(tid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
+	KEY realemailchk (realemail),
 	INDEX (del,section,note),
 	INDEX (uid),
 	KEY subid (subid,section),
