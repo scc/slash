@@ -93,20 +93,25 @@ install: #slash plugins
 	 sbinfiles=$(SBINFILES); \
 	 themefiles=$(THEMEFILES); \
 	 pluginfiles=$(PLUGINFILES); \
-	 echo "$$replacewith"; \
 	 if [ "$$replacewith" != "#!/usr/bin/perl" ]; then \
-		for f in $$binfiles $$sbinfiles $$themefiles $$pluginfiles; do \
+	 	replace=1; \
+		replacestr='(using $(PERL))'; \
+	 else \
+	 	replace=0; \
+	 fi; \
+	 for f in $$binfiles $$sbinfiles $$themefiles $$pluginfiles; do \
+	 	if [ $$replace ]; then \
 			b=`echo $$f | $(PERL) -MFile::Basename -e 'print basename(<STDIN>)'`; \
 			d=`echo $$f | $(PERL) -MFile::Basename -e 'print dirname(<STDIN>)'`; \
 			$(PERL) -i.bak -pe "s@#!/usr/bin/perl@$$replacewith@ if $$. == 1" $$f; \
-			if [ -f "$$f.bak" ]; then \
-				echo "Installing '$$f' in $(PREFIX)/$$d"; \
-				install -d $(PREFIX)/$$d; \
-				install $$f $(PREFIX)/$$d/$$b; \
-				rm $$f; mv $$f.bak $$f; \
-			fi; \
-		done; \
-	fi)
+		fi; \
+		echo "Installing '$$f' in $(PREFIX)/$$d $$replacestr"; \
+		install -d $(PREFIX)/$$d; \
+		install $$f $(PREFIX)/$$d/$$b; \
+		if [ -f "$$f.bak" ]; then \
+			rm $$f; mv $$f.bak $$f; \
+		fi; \
+	done)
 
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
 	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
