@@ -510,7 +510,7 @@ sub pollbooth {
 	return "" unless @$polls;
 
 	# in case $qid was really an sid
-	my $qid = $polls->[0][-1];
+	$qid = $polls->[0][-1];
 	my $poll_q = $slashdb->getPollQuestion($qid);
 	return "" unless keys %$poll_q;
 
