@@ -735,11 +735,19 @@ sub createUser {
 
 
 ########################################################
+# Do not like this method -Brian
 sub setVar {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('vars', {
-		value => ref($value) ? $value->{'value'} : $value
-	}, 'name=' . $self->{_dbh}->quote($name));
+	if(ref($value)) {
+		$self->sqlUpdate('vars', {
+			value => $value->{'value'},
+			description => $value->{'desc'}
+		}, 'name=' . $self->sqlQuote($name));
+	} else {
+		$self->sqlUpdate('vars', {
+			value => $value
+		}, 'name=' . $self->sqlQuote($name));
+	}
 }
 
 ########################################################

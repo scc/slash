@@ -483,7 +483,7 @@ sub submitComment {
 			$slashdb->setDiscussion($form->{sid}, { title => $form->{postersubj}}) if $form->{sid};
 		}
 
-		my $tc = $slashdb->getVar('totalComments');
+		my $tc = $slashdb->getVar('totalComments', 'value' );
 		$slashdb->setVar('totalComments', ++$tc);
 
 		if ($slashdb->getStory($form->{sid}, 'writestatus') == 0) {
