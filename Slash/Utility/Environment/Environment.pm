@@ -161,8 +161,7 @@ sub getCurrentUser {
 	my($value) = @_;
 	my $user;
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$user = $cfg->{'user'};
 	} else {
@@ -302,8 +301,7 @@ sub createCurrentUser {
 
 	$user ||= {};
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$cfg->{'user'} = $user;
 	} else {
@@ -342,8 +340,7 @@ sub getCurrentForm {
 	my($value) = @_;
 	my $form;
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$form = $cfg->{'form'};
 	} else {
@@ -519,10 +516,7 @@ sub getCurrentStatic {
 	my($value) = @_;
 	my $constants;
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
-		# should we get some sort of warning here ... ?  -- pudge
-		return unless $r;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$constants = $const_cfg->{'constants'};
 	} else {
@@ -666,8 +660,7 @@ The current virtual user that the site is running under.
 =cut
 
 sub getCurrentVirtualUser {
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		return $cfg->{'VirtualUser'};
 	} else {
@@ -725,8 +718,7 @@ Returns the current Slash::DB object.
 sub getCurrentDB {
 	my $slashdb;
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$slashdb = $const_cfg->{slashdb};
 	} else {
@@ -1326,8 +1318,7 @@ sub getObject {
 	my($value, $user, @args) = @_;
 	my($cfg, $objects);
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r    = Apache->request;
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		$cfg     = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$objects = $cfg->{'objects'} ||= {};
 	} else {

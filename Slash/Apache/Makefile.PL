@@ -12,6 +12,11 @@ my @directives = (
 	errmsg			=> 'Takes a DBIx::Password virtual name',
 	args_how		=> 'TAKE1',
 	req_overrive => 'ACCESS_CONF'
+	},
+	{ name			=> 'SlashCompileTemplates',
+	errmsg			=> 'Turn precompiling templates on or off',
+	args_how		=> 'FLAG',
+	req_overrive => 'ACCESS_CONF'
 	}
 );
 

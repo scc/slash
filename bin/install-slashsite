@@ -443,18 +443,14 @@ sub apache_site_conf {
 
     SlashVirtualUser $opts{'u'}
 
+    # this directive will compile all the templates
+    # in the database, if cache_enabled is true
+    # and template_cache_size is 0.  Set to On/Off.
+    SlashCompileTemplates On
+    
     PerlAccessHandler  Slash::Apache::User
     PerlCleanupHandler Slash::Apache::Log
     PerlCleanupHandler Slash::Apache::Log::UserLog
-
-    # this directive will compile all the templates
-    # in the database, after the first user's request
-    # is completed (so as not to tie up their request)
-    # and will only do something if cache_enabled is true
-    # and template_cache_size is 0.  this can really
-    # hammer your site at first, so be careful when
-    # enabling it.
-    #PerlCleanupHandler Slash::Apache::CompileTemplates
 
     # this directive will redirect non-logged-in users to
     # index.shtml if they request the home page; turn it

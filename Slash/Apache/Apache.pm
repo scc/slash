@@ -28,9 +28,9 @@ bootstrap Slash::Apache $VERSION;
 
 sub SlashVirtualUser ($$$) {
 	my($cfg, $params, $user) = @_;
-	$cfg->{VirtualUser} = $user;
-	$cfg->{slashdb} = Slash::DB->new($user);
-	$cfg->{constants} = $cfg->{slashdb}->getSlashConf($user);
+	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
+	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
+	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf($user));
 
 	# placeholders ... store extra placeholders in DB?  :)
 	for (qw[user form themes template cookie objects]) {
@@ -47,21 +47,24 @@ sub SlashVirtualUser ($$$) {
 	my $dateformats = $cfg->{slashdb}->getDescriptions('datecodes');
 	$anonymous_coward->{'format'} = $dateformats->{ $anonymous_coward->{dfid} };
 
-	$cfg->{anonymous_coward} = $anonymous_coward;
+	createCurrentAnonymousCoward($cfg->{anonymous_coward} = $anonymous_coward);
+	createCurrentUser($anonymous_coward);
+
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 	# If this is not here this will go poorly.
 	$cfg->{slashdb}->{_dbh}->disconnect;
 }
 
-sub CompileTemplates {
-	my $slashdb   = getCurrentDB();
-	my $constants = getCurrentStatic();
+sub SlashCompileTemplates ($$$) {
+	my($cfg, $params, $flag) = @_;
+	return unless $flag;
 
-	# caching must be on, along with unlimited
-	# cache size, and we can't have already done
-	# this in this child
+	# set up defaults
+	my $slashdb	= $cfg->{slashdb};
+	my $constants	= $cfg->{constants};
+
+	# caching must be on, along with unlimited cache size
 	return unless $constants->{cache_enabled}
-		  && !$constants->{template_already_cached}
 		  && !$constants->{template_cache_size};
 
 	print STDERR "$$: Compiling All Templates Begin\n";
@@ -89,8 +92,9 @@ sub CompileTemplates {
 
 	print STDERR "$$: Compiling All Templates Done\n";
 
-	# don't y'all come back now, y'hear?
-	$constants->{template_already_cached} = 1;
+	$cfg->{template} = Slash::Display::get_template(0, 0, 1);
+	# let's make sure
+	$slashdb->{_dbh}->disonnect;
 }
 
 sub IndexHandler {
@@ -107,6 +111,7 @@ sub IndexHandler {
 		my $filename  = $r->filename;
 		my $basedir   = $constants->{basedir};
 
+		# brian, why was this changed?  -- pudge
 		# cookie data will begin with word char or %
 		#if ($r->header_in('Cookie') =~ /\b(?:user)=[%\w]/) {
 		if ($r->header_in('Cookie') =~ /(?:user/) {

@@ -276,7 +276,7 @@ sub compile_template {
 	my $section = $opts{S} || 'default';
 	my $user = getCurrentUser();
 
-	for (@ARGV) { warn $_;
+	for (@ARGV) {
 		my($data, $template, $compiled_template, $error);
 
 		# get template text or pass template data

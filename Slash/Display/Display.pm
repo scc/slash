@@ -45,7 +45,7 @@ use Slash::Display::Provider ();
 use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Slash::Utility::System;
-use Template;
+use Template 2.01;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
@@ -53,6 +53,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(slashDisplay);
 @EXPORT_OK = qw(get_template);
+my(%objects);
 
 # FRY: That doesn't look like an L at all. Unless you count lowercase.
 
@@ -218,7 +219,7 @@ sub slashDisplay {
 	_populate($data);
 
 	# let us pass in a context if we have one
-	my $template = $CONTEXT || get_template();
+	my $template = $CONTEXT || get_template(0, 0, 1);
 
 	if ($CONTEXT) {
 		$ok  = eval { $out = $template->include($name, $data) };
@@ -310,15 +311,20 @@ my $filters = Template::Filters->new({
 });
 
 sub get_template {
-	my($cfg1, $cfg2) = @_;
-	my $cfg = {};
+	my($cfg1, $cfg2, $VirtualUser) = @_;
+	$VirtualUser &&= getCurrentVirtualUser();
+
+	my $cfg;
 	$cfg1 = ref($cfg1) eq 'HASH' ? $cfg1 : {};
 	$cfg2 = ref($cfg2) eq 'HASH' ? $cfg2 : {};
 
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
+	# think more on this, consider putting it in
+	# Slash::Utility::Environment -- pudge
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		return $cfg->{template} if $cfg->{template};
+	} elsif ($VirtualUser && ref $objects{$VirtualUser}) {
+		return $objects{$VirtualUser};
 	}
 
 	my $constants = getCurrentStatic();
@@ -328,19 +334,27 @@ sub get_template {
 			: undef					# unlimited cache
 		: 0;						# cache off
 
-	return $cfg->{template} = Template->new({
+	my $template = Template->new({
 		# this really has to be "1" for some stuff to work
 		TRIM		=> 1,
 		LOAD_FILTERS	=> $filters,
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		%$cfg1,
 		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
+			# this won't work until Template 2.05, but won't
+			# hurt anything in the meantime
+			FACTORY		=> 'Slash::Display::Directive',
 			PRE_CHOMP	=> $constants->{template_pre_chomp},
 			POST_CHOMP	=> $constants->{template_post_chomp},
 			CACHE_SIZE	=> $cache_size,
 			%$cfg2,
 		})],
 	});
+
+	$cfg->{template}	= $template if ref $cfg;
+	$objects{$VirtualUser}	= $template if $VirtualUser;
+
+	return $template;
 }
 
 =head1 PRIVATE FUNCTIONS

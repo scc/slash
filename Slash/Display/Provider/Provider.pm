@@ -193,6 +193,34 @@ sub _refresh {
 	return($data, $error);
 }
 
+
+# this may be its own module someday if it grows at all
+package Slash::Display::Directive;
+
+use base qw(Template::Directive);
+use Slash::Utility::Environment;
+
+# this is essentially the same as Template::Directive, but we want
+# to hijack simple calls to $constants to optimize it
+sub ident {
+	my ($class, $ident) = @_;
+	return "''" unless @$ident;
+
+	if ($ident->[0] eq q['constants'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+		my $data = getCurrentStatic($1);
+		$data =~ s/'/\\'/;
+		return "'$data'";
+	}
+
+	if (scalar @$ident <= 2 && ! $ident->[1]) {
+		$ident = $ident->[0];
+	} else {
+		$ident = '[' . join(', ', @$ident) . ']';
+	}
+	return "\$stash->get($ident)";
+}
+
+
 1;
 
 __END__
