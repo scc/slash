@@ -104,7 +104,9 @@ Create a database to be used by Slash.
 
 Create a username/password that can access that database (by
 default, we normally set the user to have all permissions, but that
-might not be appropriate for your site).
+might not be appropriate for your site; make sure that you have
+at least privileges to select, insert, update, delete, create,
+drop, and index).
 
 
 =item 2.

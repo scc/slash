@@ -44,7 +44,7 @@ sub main {
 		saveSection($form->{section});
 		listSections($user);
 
-	} elsif ((! defined $op || $op eq 'list') && $seclev > 499) {
+	} elsif ((! defined $op || $op eq 'list') && $seclev >= 500) {
 		titlebar('100%', getData('listhead'));
 		listSections($user);
 	}
