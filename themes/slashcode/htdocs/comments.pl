@@ -46,6 +46,8 @@ sub main {
 	# just a thought.  -- pudge
 	# Not a bad idea actually --Brian
 	# why's that? The ops are already lowercase, and should be. --Patrick
+	# there are four ops above that are just upper
+	# case aliases to the lower case versions -- pudge
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -83,6 +85,7 @@ sub getError {
 	return slashDisplay('errors', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
+
 ##################################################################
 sub edit {
 	my($form, $slashdb, $user, $constants, $id) = @_;

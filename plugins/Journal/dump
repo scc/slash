@@ -4,6 +4,7 @@ INSERT INTO journal_friends (uid, friend) VALUES (2,2);
 INSERT INTO journal_themes (name) VALUES ('generic');
 INSERT INTO journal_themes (name) VALUES ('greypage');
 INSERT INTO journal_themes (name) VALUES ('bluebox');
+INSERT INTO journal_themes (name) VALUES ('slashdot');
 
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Journal','[% constants.rootdir %]/journal.pl?op=list',1,5);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','[% user.nickname %]\'s Journal','[% constants.rootdir %]/journal.pl?op=display',1,1);

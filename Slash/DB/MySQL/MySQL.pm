@@ -298,12 +298,12 @@ sub getMetamodComments {
 	my $comments = [];
 	while (my $comment = $sth->fetchrow_hashref) {
 		# Anonymize comment that is to be metamoderated.
-		@{$comment}{qw(nickname uid points sig)} = 
+		@{$comment}{qw(nickname uid points sig)} =
 			('-', getCurrentStatic('anonymous_coward_uid'), 0, '');
 		push @$comments, $comment;
 	}
 	$sth->finish;
- 
+
 	formatDate($comments);
 	return $comments;
 }
@@ -1687,7 +1687,7 @@ sub createFormkey {
 
 ########################################################
 sub checkResponseTime {
-	my ($self, $formname, $id) = @_;
+	my($self, $formname, $id) = @_;
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1698,7 +1698,7 @@ sub checkResponseTime {
 		comments 	=> $constants->{comments_response_limit},
 	};
 	# 1 or 0
-	my ($response_time) = $self->sqlSelect("$now - ts", 'formkeys', 
+	my($response_time) = $self->sqlSelect("$now - ts", 'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}));
 
 	if ($constants->{DEBUG}) {
@@ -1707,7 +1707,7 @@ sub checkResponseTime {
 	}
 
 	return $response_time < $response_limits->{$formname} ? $response_time : 0;
-}	
+}
 
 ########################################################
 sub validFormkey {
@@ -1717,12 +1717,12 @@ sub validFormkey {
 	my $form = getCurrentForm();
 
 	undef $form->{formkey} unless $form->{formkey} =~ /^\w{10}$/;
-	return(0) if ! $form->{formkey}; 
+	return(0) if ! $form->{formkey};
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	my $where = $self->_whereFormkey($id);
-	my ($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
+	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}) .
 		" AND $where " .
 		"AND ts >= $formkey_earliest AND formname = '$formname'");
@@ -1733,13 +1733,13 @@ sub validFormkey {
 
 ##################################################################
 sub getFormkeyTs {
-	my ($self, $formkey, $ts_flag) = @_;
+	my($self, $formkey, $ts_flag) = @_;
 
 	my $constants = getCurrentStatic();
 
 	my $tscol = $ts_flag == 1 ? 'submit_ts' : 'ts';
 
-	my ($ts) = $self->sqlSelect(
+	my($ts) = $self->sqlSelect(
 		$tscol,
 		"formkeys", "formkey='$formkey'");
 
@@ -1750,27 +1750,27 @@ sub getFormkeyTs {
 ##################################################################
 # two things at once. Validate and increment
 sub updateFormkeyVal {
-	my ($self, $formkey) = @_;
+	my($self, $formkey) = @_;
 
 	my $constants = getCurrentStatic();
 
 	# increment the value from 0 to 1 (shouldn't ever get past 1)
 	# this does two things: increment the value (meaning the formkey
-	# can't be used again) and also gives a true/false value 
+	# can't be used again) and also gives a true/false value
 	my $updated = $self->sqlUpdate("formkeys", {
 		-value		=> 'value+1',
 	}, "formkey=" . $self->sqlQuote($formkey) . " AND value = 0");
-	
+
 	$updated = int($updated);
-	
+
 	print STDERR "UPDATED formkey var $updated\n" if $constants->{DEBUG};
 	return($updated);
 }
 
 ##################################################################
 sub updateFormkey {
-	my ($self, $formkey, $cid, $length) = @_;
-	
+	my($self, $formkey, $cid, $length) = @_;
+
 	my $constants = getCurrentStatic();
 
 	# update formkeys to show that there has been a successful post,
@@ -1781,8 +1781,8 @@ sub updateFormkey {
 		submit_ts	=> time(),
 		content_length	=> $length,
 	}, "formkey=" . $self->sqlQuote($formkey));
-	
-	print STDERR "UPDATED formkey $updated\n" if $constants->{DEBUG}; 
+
+	print STDERR "UPDATED formkey $updated\n" if $constants->{DEBUG};
 	return($updated);
 }
 
@@ -1802,7 +1802,7 @@ sub checkPostInterval {
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	my $now = time();
-	my ($interval) = $self->sqlSelect(
+	my($interval) = $self->sqlSelect(
 		"$now - max(submit_ts)",
 		"formkeys",
 		"formname = '$formname' AND $where");
@@ -1815,7 +1815,7 @@ sub checkPostInterval {
 
 ##################################################################
 sub checkMaxReads {
-	my ($self, $formname, $id) = @_;
+	my($self, $formname, $id) = @_;
 	my $constants = getCurrentStatic();
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
@@ -1824,16 +1824,17 @@ sub checkMaxReads {
 		comments 	=> $constants->{max_comments_viewings},
 		users		=> $constants->{max_users_viewings},
 	};
-	my ($limit_reached) = $self->sqlSelect(
+	my($limit_reached) = $self->sqlSelect(
 		"count(*) >= $maxreads->{$formname}",
 		"formkeys",
 		"$where AND ts >= $formkey_earliest AND formname = '$formname'");
 
 	return $limit_reached ? $maxreads->{$formname} : 0;
 }
+
 ##################################################################
 sub checkMaxPosts {
-	my ($self, $formname, $id) = @_;
+	my($self, $formname, $id) = @_;
 	my $constants = getCurrentStatic();
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
@@ -1842,17 +1843,17 @@ sub checkMaxPosts {
 	my $maxposts = {
 		comments 	=> $constants->{max_comments_allowed},
 		submit		=> $constants->{max_submissions_allowed},
-		users		=> $constants->{max_userchanges_allowed}, 
+		users		=> $constants->{max_userchanges_allowed},
 	};
 
-	my ($limit_reached) = $self->sqlSelect(
+	my($limit_reached) = $self->sqlSelect(
 		"count(*) >= $maxposts->{$formname}",
 		"formkeys",
 		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'");
-	
+
 	if ($constants->{DEBUG}) {
 		print STDERR "LIMIT REACHED (times posted) $limit_reached\n";
-		print STDERR "LIMIT REACHED maxposts $maxposts->{$formname}\n"; 
+		print STDERR "LIMIT REACHED maxposts $maxposts->{$formname}\n";
 	}
 	return $limit_reached ? $maxposts->{$formname} : 0;
 }
@@ -1927,7 +1928,7 @@ sub setExpired {
 		$self->setUser($uid, { expired => 1});
 		$self->sqlInsert('accesslist', {
 			-uid		=> $uid,
-			formname 	=> 'comments', 
+			formname 	=> 'comments',
 			-readonly	=> 1,
 			-ts		=> 'now()',
 			reason		=> 'expired'
@@ -2082,11 +2083,11 @@ sub setReadOnly {
 
 	if ($flag == 0 && $rows > 0) {
 		$self->sqlDo("DELETE from accesslist WHERE $where");
-	} else { 
+	} else {
 		if ($reason && $rows == 1) {
 			my $return = $self->sqlUpdate("accesslist", {
 				-readonly	=> $flag,
-			 	reason		=> $reason,
+				reason		=> $reason,
 			}, $where);
 
 			return $return ? 1 : 0;
@@ -2627,7 +2628,7 @@ sub getCommentsForUser {
 
 ########################################################
 # This is here to save us a database lookup when drawing comment pages.
-# 
+#
 # Couldn't this go faster by having getCommentsForUser() (10 lines up) collect a
 # list of all the cid's it needs (i.e. doesn't already have in cache) and then
 # grabbing them all with one SELECT?
@@ -2670,7 +2671,7 @@ sub getStoriesEssentials {
 
 	$limit ||= $section eq 'index' ?
 		$user->{maxstories} :
-		($section) ? 
+		($section) ?
 			$self->getSection($section, 'artcount') :
 			$self->getSection($section)->{artcount};
 
@@ -2915,12 +2916,11 @@ sub createDiscussion {
 	my $min = getCurrentStatic('comment_minscore');
 	my $max = getCurrentStatic('comment_maxscore');
 	for my $threshold ($min .. $max) {
-		$self->sqlInsert(
-			"discussion_hitparade",
-			{	discussion =>	$discussion_id,
-				threshold =>	$threshold,
-				count =>	0		}
-		);
+		$self->sqlInsert("discussion_hitparade", {
+			discussion	=> $discussion_id,
+			threshold	=> $threshold,
+			count		=> 0
+		});
 	}
 
 	return $discussion_id;
@@ -3017,6 +3017,9 @@ sub updateStory {
 		ts	=> $time,
 	}, 'sid = ' . $self->sqlQuote($form->{sid}));
 
+
+	# what if there is no story_heap?  i thought it was
+	# optional -- pudge
 	$self->sqlUpdate('story_heap', {
 		uid		=> $form->{uid},
 		tid		=> $form->{tid},
@@ -3093,7 +3096,7 @@ sub getSlashConf {
 	if (!$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma}) {
 		# this was changed on slashdot in 6/2001
 		# $conf{m2_maxbonus} = int $conf{goodkarma} / 2;
-		$conf{m2_maxbonus} = 1; 
+		$conf{m2_maxbonus} = 1;
 	}
 
 	my $fixup = sub {
@@ -3248,7 +3251,7 @@ sub getStoryList {
 	$cursor->execute;
 	my $list = $cursor->fetchall_arrayref;
 
-	return ($count, $list);
+	return($count, $list);
 }
 
 ##################################################################
@@ -3694,7 +3697,7 @@ sub setUser {
 			$self->sqlReplace('users_acl', { uid => $uid, name => $_->[1]->{name}, value => $_->[1]->{value}});
 		} else {
 			$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]})
-	 			if defined $_->[1];
+				if defined $_->[1];
 		}
 	}
 }

@@ -30,10 +30,11 @@ my $PROGNAME = basename($0);
 my %opts;
 # Remember to doublecheck these match usage()!
 usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:R', \%opts);
-$opts{'u'} ||= 'slash';
+# this is too dangerous ... if someone forgets to add -u, they
+# could overwrite an existing slash site -- pudge
+# $opts{'u'} ||= 'slash';
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
-
 
 $| = 1;
 
@@ -519,7 +520,7 @@ given virtual user.
 Main options:
 	-h	Help (this message)
 	-v	Version
-	-u	Virtual user (default is "slash")
+	-u	Virtual user
 
 Site options:
 	-H	Hostname
