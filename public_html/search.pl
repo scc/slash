@@ -167,11 +167,11 @@ EOT
 			? "$I{rootdir}/$section/$sid.shtml#$cid"
 			: "$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
 
-		my($cname, $cemail) = sqlSelect("nickname,fakeemail", "users", "uid=$uid");
+		my $user = $I{dbobject}->getUserFakeEmail($uid);
 		printf <<EOT, $match ? $match : $x;
 <BR><B>%s</B>
 	<A HREF="$href">$subj</A>
-	by <A HREF="mailto:$cemail">$cname</A> on $cdate<BR>
+	by <A HREF="mailto:$user->{fakeemail}">$user->{nickname}</A> on $cdate<BR>
 	<FONT SIZE="2">attached to <A HREF="$I{rootdir}/$section/$sid.shtml">$title</A> 
 	posted on $sdate by $aid</FONT><BR>
 EOT
