@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+Hrm, we either need an easy API to update a template from slashd (do we have one?), or this needs to remain as a block.
+__title__
+
+__page__
+misc
+__lang__
+eng
+__name__
+motd
+__template__
+I'm going to Vietnam at the request of the White House.  President Johnson
+says a war isn't really a war without my jokes.
+		-- Bob Hope
+
+__seclev__
+500

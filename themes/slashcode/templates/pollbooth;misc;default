@@ -1,0 +1,40 @@
+__section__
+default
+__description__
+Prints a pollbooth
+
+* polls = arrayref of answer arrayrefs [question, answer, answer ID]
+* question = question text
+* qid = question ID
+* voters = number of voters
+* comments = number of comments
+* sect = section
+
+__title__
+
+__page__
+misc
+__lang__
+eng
+__name__
+pollbooth
+__template__
+<FORM ACTION="[% env.script_name %]">
+	<INPUT TYPE="hidden" NAME="qid" VALUE="[% FILTER strip_attribute; qid; END %]">
+	[% IF user.currentSection %]
+	<INPUT TYPE="hidden" NAME="section" VALUE="[% user.currentSection %]">
+	[% END %]
+<B>[% question %]</B>
+
+[% FOREACH ans = polls %][% answer = ans.1; aid = ans.2 %]
+	<BR><INPUT TYPE="radio" NAME="aid" VALUE="[% aid %]">[% answer %]
+[% END %]
+
+<BR><INPUT TYPE="submit" VALUE="Vote">
+[ <A HREF="[% env.script_name %]?section=[% sect %]&qid=[% qid %]&aid=-1"><B>Results</B></A> |
+<A HREF="[% env.script_name %]?section=[% sect %]"><B>Polls</B></A> ] <BR>
+Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
+</FORM>
+
+__seclev__
+10000

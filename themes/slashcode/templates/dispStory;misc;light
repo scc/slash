@@ -1,0 +1,24 @@
+__section__
+light
+__description__
+Display story for light mode.
+__title__
+
+__page__
+misc
+__lang__
+eng
+__name__
+dispStory
+__template__
+[% INCLUDE titlebar %]
+
+<A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]">[% topic.tid %]</A> | 
+<B>Posted by [% author.nickname %] [% user.aton %] [% story.storytime %]</B><BR>
+
+<FONT SIZE="2"><B>from the [% story.dept %] dept.</B></FONT><BR>
+
+[% story.introtext %]
+
+__seclev__
+10000
