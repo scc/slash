@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '1.0.8-bender';
+$Bundle::Slash::VERSION = '1.0.11';
 
 1;
 
@@ -31,19 +31,15 @@ Date::Parse		- TimeDate
 
 XML::Parser
 
+XML::RSS
+
 Date::Manip
 
 Mail::Sendmail
 
 Apache::DBI
 
-Apache::DBILogConfig
-
-Apache::DBILogger
-
 Image::Size
-
-DBIx::Password
 
 Template		- Template Toolkit
 
@@ -52,9 +48,6 @@ Template		- Template Toolkit
 
 mod_perl must be installed by hand, because of the special configuration
 required for it.
-
-IPC::Shareable no longer required for IPC, since we are no longer doing
-IPC.
 
 If CPAN starts downloading "perl-5.6.0" or somesuch, ctrl-C it, exit
 the CPAN shell, and start it again.  The latest CPAN.pm version does not
