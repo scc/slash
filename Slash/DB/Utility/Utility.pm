@@ -11,10 +11,10 @@ use Slash::Utility;
 ########################################################
 # Useful SQL Wrapper Functions
 ########################################################
-
 sub sanityCheck {
 	print STDERR "Sanity Check for Utility\n";
 }
+
 ########################################################
 sub sqlSelectMany {
 	my($self, $select, $from, $where, $other) = @_;
@@ -73,6 +73,7 @@ sub sqlSelectArrayRef {
 	my $r = $sth->fetchrow_arrayref;
 	return $r;
 }
+
 ########################################################
 sub sqlSelectHash {
 	my($self) = @_;
@@ -148,8 +149,7 @@ sub sqlSelectAll {
 }
 
 ########################################################
-sub sqlUpdate
-{
+sub sqlUpdate {
 	my($self, $table, $data, $where) = @_;
 	my $sql = "UPDATE $table SET";
 	foreach (keys %$data) {
@@ -222,6 +222,7 @@ sub getKeys {
 		if $self->sqlTableExists($table);
 
 }
+
 ########################################################
 sub sqlTableExists {
 	my($self, $table) = @_;

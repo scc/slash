@@ -164,15 +164,15 @@ sub init {
 ########################################################
 sub setComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
+	my $sid_db = $self->{dbh}->quote($form->{sid});
 
 	$self->sqlDo("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
-		"max(cid)", "comments", "sid=" . $self->{dbh}->quote($form->{sid})
+		"max(cid)", "comments", "sid=$sid_db" 
 	);
 
 	$maxCid++; # This is gonna cause troubles
-	my $insline = "INSERT into comments values (".
-		$self->{dbh}->quote($form->{sid}) . ",$maxCid," .
+	my $insline = "INSERT into comments values ($sid_db,$maxCid," .
 		$self->{dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
 		$self->{dbh}->quote($form->{postersubj}) . "," .
 		$self->{dbh}->quote($form->{postercomment}) . "," .
@@ -190,26 +190,26 @@ sub setComment {
 
 		# Update discussion
 		my($dtitle) = $self->sqlSelect(
-			'title', 'discussions', "sid=" . $self->{dbh}->quote($form->{sid})
+			'title', 'discussions', "sid=$sid_db"
 		);
 
 		unless ($dtitle) {
 			$self->sqlUpdate(
 				"discussions",
 				{ title => $form->{postersubj} },
-				"sid=" . $self->{dbh}->quote($form->{sid})
+				"sid=$sid_db"
 			) if $form->{sid};
 		}
 
 		my($ws) = $self->sqlSelect(
-			"writestatus", "stories", "sid=" . $self->{dbh}->quote($form->{sid})
+			"writestatus", "stories", "sid=$sid_db"
 		);
 
 		if ($ws == 0) {
-			sqlUpdate(
+			$self->sqlUpdate(
 				"stories",
 				{ writestatus => 1 },
-				"sid=" . $self->{dbh}->quote($form->{sid})
+				"sid=$sid_db"
 			);
 		}
 
@@ -255,7 +255,7 @@ sub setModeratorLog {
 ########################################################
 sub getModeratorCommentLog {
 	my($self, $sid, $cid) = @_;
-	my $comments = sqlSelectMany(  "comments.sid as sid,
+	my $comments = $self->sqlSelectMany(  "comments.sid as sid,
 				 comments.cid as cid,
 				 comments.points as score,
 				 subject, moderatorlog.uid as uid,
@@ -278,7 +278,7 @@ sub getModeratorCommentLog {
 ########################################################
 sub getModeratorLogID {
 	my($self, $cid, $sid, $uid) = @_;
-	my($mid) = sqlSelect(
+	my($mid) = $self->sqlSelect(
 		"id", "moderatorlog",
 		"uid=$uid and cid=$cid and sid='$sid'"
 	);
@@ -486,13 +486,13 @@ sub setAdminInfo {
 ########################################################
 # This creates an entry in the accesslog
 sub createAccessLog {
-	my ($self, $op, $dat) = @_;
+	my($self, $op, $dat) = @_;
 
 	my $uid;
 	if ($ENV{REMOTE_ADDR}) {
 		$uid = getCurrentUser('uid')
 	} else {
-		$self->getCurrentStatic('anonymous_coward_uid');
+		$uid = getCurrentStatic('anonymous_coward_uid');
 	}
 
 	$self->sqlInsert('accesslog', {
@@ -613,7 +613,8 @@ sub getUserInstance {
 # Get user info from the users table.
 sub getUserAuthenticate {
 	my($self, $user, $passwd, $kind) = @_;
-	my($uid, $cookpasswd, $newpass);
+	my($uid, $cookpasswd, $newpass, $dbh, $user_db,
+		$cryptpasswd, @pass);
 
 	return unless $user && $passwd;
 
@@ -624,40 +625,42 @@ sub getUserAuthenticate {
 	my($EITHER, $PLAIN, $ENCRYPTED) = (0, 1, 2);
 	$kind ||= 0;
 
-	my $dbh = $self->{dbh};
-	my $user_db = $dbh->quote($user);
-	my $pass_db = $dbh->quote($passwd);
+
+	# RECHECK LOGIC!!  -- pudge
+
+	$dbh = $self->{dbh};
+	$user_db = $dbh->quote($user);
+	$cryptpasswd = encryptPassword($passwd);
+	@pass = $self->sqlSelect(
+		'uid,passwd,newpasswd',
+		'users',
+		"uid=$user_db"
+	);
 
 	# try ENCRYPTED -> ENCRYPTED
 	if ($kind == $EITHER || $kind == $ENCRYPTED) {
-		($uid) = $self->sqlSelect('uid', 'users',
-			"passwd=$pass_db AND uid=$user_db"
-		);
-		$cookpasswd = $passwd if defined $uid;
+		if ($passwd eq $pass[1]) {
+			$uid = $pass[0];
+			$cookpasswd = $passwd;
+		}
 	}
 
 	# try plaintext -> ENCRYPTED
 	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		my $cryptpasswd = encryptPassword($passwd);
-		($uid) = $self->sqlSelect('uid', 'users',
-			'passwd=' . $dbh->quote($cryptpasswd) .
-			" AND uid=$user_db"
-		);
-		$cookpasswd = $cryptpasswd if defined $uid;
+		if ($cryptpasswd eq $pass[1]) {
+			$uid = $pass[0];
+			$cookpasswd = $cryptpasswd;
+		}
 	}
 
 	# try newpass?
 	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		($uid) = $self->sqlSelect('uid', 'users',
-			"newpasswd=$pass_db AND uid=$user_db"
-		);
-
-		if (defined $uid) {
-			my $cryptpasswd = encryptPassword($passwd);
+		if ($passwd eq $pass[2]) {
 			$self->sqlUpdate('users', {
 				newpasswd	=> '',
 				passwd		=> $cryptpasswd
 			}, "uid=$user_db");
+			$uid = $pass[0];
 			$cookpasswd = $cryptpasswd;
 			$newpass = 1;
 		}
@@ -1064,7 +1067,8 @@ sub saveBlock {
 	# saved with retrieve set to true
 	$form->{retrieve} = 0 if $form->{type} ne 'portald';
 
-	$form->{block} = $self->autoUrl($form->{section}, $form->{block});
+	$form->{block} = $self->autoUrl($form->{section}, $form->{block})
+		unless $form->{type} eq 'template';
 
 	if ($rows == 0 || $form->{blocksavedef}) {
 		$self->sqlUpdate('blocks', {
@@ -1208,8 +1212,8 @@ sub getPollQuestionList {
 
 ########################################################
 sub getPollAnswers {
-	my($self, $id, @val) = @_;
-	my $values = join ',', @val;
+	my($self, $id, $val) = @_;
+	my $values = join ',', @$val;
 	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{dbh}->quote($id), 'ORDER by aid');
 
 	return $answers;
@@ -1376,7 +1380,7 @@ sub updateFormkeyId {
 	my($self, $formname, $formkey, $anon, $uid, $rlogin, $upasswd) = @_;
 
 	if ($uid != $anon && $rlogin && length($upasswd) > 1) {
-		sqlUpdate("formkeys", {
+		$self->sqlUpdate("formkeys", {
 			id	=> $uid,
 			uid	=> $uid,
 		}, "formname='$formname' AND uid = $anon AND formkey=" .
@@ -1447,7 +1451,7 @@ sub formSuccess {
 ##################################################################
 sub formFailure {
 	my($self, $formkey) = @_;
-	sqlUpdate("formkeys", {
+	$self->sqlUpdate("formkeys", {
 			value   => -1,
 		}, "formkey=" . $self->{dbh}->quote($formkey)
 	);
@@ -1672,7 +1676,7 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
-	my($tuid) = sqlSelect('count(*)', 'users');
+	my($tuid) = $self->sqlSelect('count(*)', 'users');
 	# what to do with %I here?
 	return 1;  # OK to M2
 }
@@ -1794,7 +1798,7 @@ sub setMetaMod {
 ########################################################
 sub getModeratorLast {
 	my($self, $uid) = @_;
-	my $last = sqlSelectHashref(
+	my $last = $self->sqlSelectHashref(
 		"(to_days(now()) - to_days(lastmm)) as lastmm, lastmmid",
 		"users_info",
 		"uid=$uid"
@@ -2035,6 +2039,9 @@ sub getStories {
 
 	if ($limit) {
 		$other .= "LIMIT $limit ";
+
+	# BUG: if $limit if not true, $user->{maxstories} won't be, either ...
+	# should this be something else? -- pudge
 	} elsif ($currentSection eq 'index') {
 		$other .= "LIMIT $user->{maxstories} ";
 	} else {
@@ -2154,7 +2161,7 @@ sub getSearch {
 ########################################################
 sub getNewstoryTitle {
 	my($self, $storyid, $sid) = @_;
-	my($title) = sqlSelect("title", "newstories",
+	my($title) = $self->sqlSelect("title", "newstories",
 	      "sid=" . $self->{dbh}->quote($sid)
 	);
 
@@ -2287,12 +2294,12 @@ sub saveStory {
 		);
 
 		# i think i got this right -- pudge
- 		my($userkarma) = sqlSelect('karma', 'users_info', "uid=$suid");
+ 		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
  		my $newkarma = (($userkarma + $constants->{submission_bonus})
  			> $constants->{maxkarma})
  				? $constants->{maxkarma}
  				: "karma+$constants->{submission_bonus}";
- 		sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
+ 		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
  			if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('users_info',
@@ -2596,8 +2603,8 @@ sub saveExtras {
 
 	foreach (@extras) { $E->{$_} = $form->{$_} }
 
-	if (sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
-		sqlInsert($form->{section}, $E);
+	if ($self->sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
+		$self->sqlInsert($form->{section}, $E);
 	}
 }
 
@@ -2611,7 +2618,6 @@ sub getKeys {
 
 	return \@keys;
 }
-
 
 ########################################################
 sub getStory {
@@ -2712,7 +2718,6 @@ sub getUser {
 	return $answer;
 }
 
-
 ########################################################
 # 
 sub setUser {
@@ -2741,11 +2746,9 @@ sub _genericGetCombined {
 	my $cache = _genericGetCacheName($self, $tables);
 	my $id_db = $self->{dbh}->quote($id);
 
-
-	if((ref($val) eq 'ARRAY')) {
+	if (ref($val) eq 'ARRAY') {
 		my $values = join ',', @$val;
-		my %tables;
-		my $where;
+		my(%tables, $where);
 		for (@$val) {
 			$tables{$self->{$cache}{$_}} = 1;
 		}
@@ -2757,7 +2760,7 @@ sub _genericGetCombined {
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} elsif ($val) {
 		my $table = $self->{$cache}{$val};
-		($answer) = $self->sqlSelect($val, $table, $table_prime . '=' .$id_db);
+		($answer) = $self->sqlSelect($val, $table, "$table_prime=$id_db");
 	} else {
 		my $where;
 		for (@$tables) {
@@ -2770,6 +2773,7 @@ sub _genericGetCombined {
 
 	return $answer;
 }
+
 ########################################################
 # This could be optimized by not making multiple calls
 # to getKeys or by fixing getKeys() to return multiple
@@ -2794,8 +2798,8 @@ sub _genericSetCombined {
 	my($tables, $table_prime, $self, $id, $hashref) = @_;
 	my %update_tables;
 	my $cache = _genericGetCacheName($self, $tables);
-	for(keys %$hashref) {
-		my $key = $self->{$cache}->{$_};
+	for (keys %$hashref) {
+		my $key = $self->{$cache}{$_};
 		push @{$update_tables{$key}}, $_;
 	}
 	for my $table (keys %update_tables) {
@@ -2821,7 +2825,7 @@ sub _genericSet {
 	return unless (keys %{$self->{$table_cache}});
 	my $table_cache_time= '_' . $table . '_cache_time';
 	$self->{$table_cache_time} = time();
-	for(keys %$value) {
+	for (keys %$value) {
 		$self->{$table_cache}{$id}{$_} = $value->{$_}; 
 	}
 }
@@ -2829,7 +2833,7 @@ sub _genericSet {
 # You can use this to reset cache's in a timely
 # manner :)
 sub _genericCacheRefresh {
-	my ($self, $table,  $expiration) = @_;
+	my($self, $table,  $expiration) = @_;
 	return unless $expiration;	
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time = '_' . $table . '_cache_time';
@@ -2861,11 +2865,12 @@ sub _genericGetCache {
 	print STDERR "_genericGetCache: $table:$id cache hit($self->{$table_cache}{$id})\n"
 		if ($self->{$table_cache}{$id} and $DEBUG and $table eq $DEBUG_TABLE);
 	my $type;
-	if((ref($values) eq 'ARRAY')) {
+	if (ref($values) eq 'ARRAY') {
 		$type = 0;
 	} else {
 		$type  = $values ? 1 : 0;
 	}
+
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values} 
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
@@ -2874,7 +2879,7 @@ sub _genericGetCache {
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	}
 	print STDERR "_genericGetCache: $table:$id was not found in cache\n"
-		if($DEBUG and $table eq $DEBUG_TABLE);
+		if ($DEBUG and $table eq $DEBUG_TABLE);
 	# Lets go knock on the door of the database
 	# and grab the data's since it is not cached
 	# On a side note, I hate grabbing "*" from a database
@@ -2883,7 +2888,7 @@ sub _genericGetCache {
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
 	$self->{$table_cache}->{$id} = $answer;
 	print STDERR "_genericGetCache: $table:$id now has $self->{$table_cache}{$id}\n"
-		if($DEBUG and $table eq $DEBUG_TABLE);
+		if ($DEBUG and $table eq $DEBUG_TABLE);
 
 	$self->{$table_cache_time} = time();
 
@@ -2893,6 +2898,7 @@ sub _genericGetCache {
 		return $self->{$table_cache}{$id};
 	}
 }
+
 ########################################################
 # This is protected and don't call it from your
 # scripts directly.
@@ -2908,16 +2914,16 @@ sub _genericClearCache {
 # scripts directly.
 sub _genericGet {
 	my($table, $table_prime, $self, $id, $val) = @_;
-	my $answer;
-	my $type;
+	my($answer, $type);
+	my $id_db = $self->{dbh}->quote($id);
 
-	if((ref($val) eq 'ARRAY')) {
+	if (ref($val) eq 'ARRAY') {
 		my $values = join ',', @$val;
-		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=" . $self->{dbh}->quote($id));
+		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=$id_db");
 	} elsif ($val) {
-		($answer) = $self->sqlSelect($val, $table, "$table_prime=" . $self->{dbh}->quote($id));
+		($answer) = $self->sqlSelect($val, $table, "$table_prime=$id_db");
 	} else {
-		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=$id_db");
 	}
 
 	return $answer;
@@ -2949,6 +2955,7 @@ sub _genericGetsCache {
 
 	return $self->{$table_cache};
 }
+
 1;
 
 __END__
@@ -2968,6 +2975,8 @@ No documentation yet. Sue me.
 =head1 AUTHOR
 
 Brian Aker, brian@tangent.org
+
+Chris Nandor, pudge@pobox.com
 
 =head1 SEE ALSO
 

@@ -204,19 +204,19 @@ sub createCurrentStatic {
 
 #################################################################
 sub getCurrentAnonymousCoward {
-	my ($value) = @_;
+	my($value) = @_;
 	my $anonymous_coward;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		if($value) {
+		if ($value) {
 			$anonymous_coward = $const_cfg->{'anonymous_coward'}{$value};
 		} else {
 			$anonymous_coward = $const_cfg->{'anonymous_coward'};
 		}
 	} else {
-		if($value) {
+		if ($value) {
 			$anonymous_coward = $static_anonymous_coward->{$value};
 		} else {
 			$anonymous_coward = $static_anonymous_coward;
@@ -324,6 +324,7 @@ sub setCookie {
 	# we need to support multiple cookies, like my tummy does
 	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
 }
+
 ########################################################
 sub writeLog {
 	my $op = shift;

@@ -55,7 +55,7 @@ sub handler {
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $dbslash->getUserUID($form->{unickname});
 		print STDERR "FORM_AUTH: $tmpuid:$form->{upasswd}\n";
-		($uid, my($newpass)) = userLogin($r, $dbcfg, $tmpuid, $form->{upasswd});
+		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 		if ($newpass) {
 			$r->err_header_out(Location =>
 				"$constants->{absolutedir}/users.pl?op=edit" .
@@ -75,17 +75,27 @@ sub handler {
 	} elsif ($cookies->{user}) {
 		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
 		print STDERR "COOKIE_AUTH: $tmpuid:$password\n";
-		unless ($uid = $dbslash->getUserAuthenticate($tmpuid, $password)) {
+		($uid, my($cookpasswd)) =
+			$dbslash->getUserAuthenticate($tmpuid, $password);
+
+		if ($uid) {
+			# password in cookie was not encrypted, so
+			# save new cookie
+			setCookie('user', bakeUserCookie($uid, $cookpasswd))
+				if $cookpasswd ne $password;
+		} else {
 			$uid = $constants->{anonymous_coward_uid};
 			delete $cookies->{user};
 			setCookie('user', '');
 		}
 	} 
 
+	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
+
 	# This is just here for testing. This should actually occur way before this
 	# It does work, but unless you have a shtml (and that means I get
 	# other things fixed) don't comment this in
-#	if (($r->filename =~ /\index.pl$/) && ($uid == $constants->{anonymous_coward_uid})) {
+#	if (($r->filename =~ /index.pl$/) && (isAnon($constants->{anonymous_coward_uid}))) {
 #		$r->uri('/index.shtml');
 #		# We need to log this
 #		return OK;
@@ -94,9 +104,9 @@ sub handler {
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
-	$uid ||= $constants->{anonymous_coward_uid};
 	$r->subprocess_env('REMOTE_USER' => $uid);
-	$cfg->{user} = getUser($r, $constants, $dbslash, $form, $cookies, $uid);
+
+	$cfg->{user} = getUser($form, $cookies, $uid);
 	$cfg->{form} = $form;
 
 	print STDERR "UID: $uid\n";
@@ -106,15 +116,16 @@ sub handler {
 
 ########################################################
 sub userLogin {
-	my($r, $cfg, $name, $passwd) = @_;
+	my($name, $passwd) = @_;
+	my $r = Apache->request;
+	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 
 	$passwd = substr $passwd, 0, 20;
 	my($uid, $cookpasswd, $newpass) =
 		$cfg->{dbslash}->getUserAuthenticate($name, $passwd, 1);
 
 	if (!isAnon($uid)) {
-		my $cookie = bakeUserCookie($uid, $cookpasswd);
-		setCookie('user', $cookie);
+		setCookie('user', bakeUserCookie($uid, $cookpasswd));
 		return($uid, $newpass);
 	} else {
 		return $cfg->{constants}{anonymous_coward_uid};
@@ -124,8 +135,14 @@ sub userLogin {
 ########################################################
 # get all the user data, d00d
 sub getUser {
-	my($r, $constants, $dbslash, $form, $cookies, $uid) = @_;
-	my $user;
+	my($form, $cookies, $uid) = @_;
+	my($r, $cfg, $constants, $dbslash, $user);
+
+	$r = Apache->request;
+	$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	$constants = $cfg->{constants};
+	$dbslash = $cfg->{dbslash};
+
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
 	if (!isAnon($uid) && ($user = $dbslash->getUserInstance($uid, $r->uri))) {
@@ -306,6 +323,8 @@ environmental variable.
 =head1 AUTHOR
 
 Brian Aker, brian@tangent.org
+
+Chris Nandor, pudge@pobox.com
 
 =head1 SEE ALSO
 
