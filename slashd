@@ -232,11 +232,8 @@ sub newfooter {
 	local *FH;
 	local *SO = *STDOUT;
 
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	sectionHeaders("");
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	my $sections = $slashdb->getSections();
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	for (keys %$sections) {
 		my($section) = $sections->{$_}->{'section'};
 		mkdir "$I->{basedir}/$section", 0755;
@@ -368,8 +365,9 @@ sub openBackend {
 	newrdf();
 	newwml();
 	my $sections = $slashdb->getSections('section');
-	for (@$sections) {
-		my($section) = @$_;
+	my $sections = $slashdb->getSections();
+	for (keys %$sections) {
+		my($section) = $sections->{$_}->{'section'};
 		newxml($section);
 		newrdf($section);
 	}
