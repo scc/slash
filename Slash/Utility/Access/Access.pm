@@ -414,22 +414,30 @@ sub filterOk {
 	# has to be to be tested), err_message message displayed upon failure
 	# to post if regex matches contents. make sure that we don't select new
 	# filters without any regex data.
-	for (@$filters) {
+	for my $f (@$filters) {
 		my($number_match, $regex);
-		my $raw_regex		= $_->[2];
-		my $modifier		= 'g' if $_->[3] =~ /g/;
-		my $case		= 'i' if $_->[3] =~ /i/;
-		my $field		= $_->[4];
-		my $ratio		= $_->[5];
-		my $minimum_match	= $_->[6];
-		my $minimum_length	= $_->[7];
-		my $err_message		= $_->[8];
+		my $raw_regex		= $f->[2];
+		my $modifier		= 'g' if $f->[3] =~ /g/;
+		my $case		= 'i' if $f->[3] =~ /i/;
+		my $field		= $f->[4];
+		my $ratio		= $f->[5];
+		my $minimum_match	= $f->[6];
+		my $minimum_length	= $f->[7];
+		my $err_message		= $f->[8];
 		my $isTrollish		= 0;
 
-		my $text_to_test = decode_entities(strip_nohtml($content));
+#		my $text_to_test = decode_entities(strip_nohtml($content));
+		my $text_to_test = $content;
+		my $report = "filterOk_report f=$f->[0] len1=" . length($text_to_test);
+		$report .= " uid=$user->{uid} ipid=$user->{ipid}";
+		$text_to_test = strip_nohtml($text_to_test);
+		$report .= " len2=" . length($text_to_test);
+		$text_to_test = decode_entities($text_to_test);
+		$report .= " len3=" . length($text_to_test);
 
 		$text_to_test		=~ s/\xA0/ /g;
 		$text_to_test		=~ s/\<br\>/\n/gi;
+		$report .= " len4=" . length($text_to_test);
 
 		next if ($minimum_length && length($text_to_test) < $minimum_length);
 
@@ -438,6 +446,7 @@ sub filterOk {
 		} elsif ($ratio > 0) {
 			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
 		}
+		$report .= " nm=$number_match";
 
 		$regex = $raw_regex . $number_match;
 		my $tmp_regex = $regex;
@@ -448,12 +457,14 @@ sub filterOk {
 			if ($text_to_test =~ /$regex/g) {
 				$$error_message = $err_message;
 				$slashdb->createAbuse("content filter", $formname, $text_to_test);
+print STDERR "$report\n";
 				return 0;
 			}
 		} else {
 			if ($text_to_test =~ /$regex/) {
 				$$error_message = $err_message;
 				$slashdb->createAbuse("content filter", $formname, $text_to_test);
+print STDERR "$report\n";
 				return 0;
 			}
 		}
@@ -510,6 +521,12 @@ sub compressOk {
 			my $comlen = length(Compress::Zlib::compress(strip_nohtml($content)));
 			if (($comlen / $length) <= $_) {
 				$slashdb->createAbuse("content compress", $formname, $content);
+				my $len2 = length(strip_nohtml($content));
+				my $report = "compressOk_report len1=$length len2=$len2";
+				$report .= " comlen=$comlen";
+				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
+				$report .= " uid=$user->{uid} ipid=$user->{ipid}";
+print STDERR "$report\n";
 				return 0;
 			}
 		}
