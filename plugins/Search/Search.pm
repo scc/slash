@@ -33,19 +33,25 @@ sub _keysearch {
 	my @words = split m/ /, $keywords;
 	my $sql;
 	my $x = 0;
+	my $latch = 0;
 
 	for my $word (@words) {
 		next if length $word < 3;
 		last if $x++ > 3;
+		$sql .= " AND " if $sql;
+		$sql .= " ( ";
+		$latch = 0;
 		for (@$columns) {
-			$sql .= "+" if $sql;
-			$sql .= "($_ LIKE " . $self->{_dbh}->quote("%$word%") . ")";
+			$sql .= " OR " if $latch;
+			$sql .= "$_ LIKE " . $self->{_dbh}->quote("%$word%"). " ";
+			$latch++;
 		}
+		$sql .= " ) ";
 	}
 	# void context, does nothing?
 	$sql = "0" unless $sql;
 
-	return $sql;
+	return qq|($sql)|;
 };
 
 
@@ -61,16 +67,11 @@ sub findComments {
 	my $key = $self->_keysearch($form->{query}, ['subject', 'comment']);
 
 	$sql = "SELECT section, stories.sid,";
-	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid, ";
-
-	$sql .= "	 $key as kw, "
-			if $form->{query};
-	$sql .= "	1 as kw " 
-			unless $form->{query};
+	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid ";
 
 	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
 
-	$sql .= "	  AND $key > 0 " 
+	$sql .= "	  AND $key " 
 			if $form->{query};
 
 	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid}) 
@@ -79,7 +80,7 @@ sub findComments {
 			if $form->{threshold};
 	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section}) 
 			if $form->{section};
-	$sql .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
+	$sql .= " ORDER BY date DESC, time DESC LIMIT $form->{min},20 ";
 
 
 	my $cursor = $self->{_dbh}->prepare($sql);
@@ -128,14 +129,10 @@ sub findStory {
 	my $key = $self->_keysearch($form->{query}, ['title', 'introtext']);
 
 	$sql .= "SELECT nickname,title,sid, time, commentcount,section ";
-	$sql .= ",$key as kw "
-		if $form->{query};
-	$sql .= "	1 as kw " 
-			unless $form->{query};
 
 	$sql .= " FROM stories, users WHERE displaystatus>=0 ";
 
-	$sql .= " AND $key > 0 " 
+	$sql .= " AND $key " 
 		 if $form->{query};
 
 	if($form->{section}) {
@@ -154,7 +151,6 @@ sub findStory {
 	$sql .= " AND stories.uid=users.uid ";
 
 	$sql .= " ORDER BY ";
-	$sql .= " kw DESC, " if $form->{query};
 	$sql .= " time DESC LIMIT $form->{min},$form->{max}";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
