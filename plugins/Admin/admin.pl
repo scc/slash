@@ -6,6 +6,7 @@
 
 use strict;
 use Image::Size;
+use Date::Manip;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
@@ -13,6 +14,7 @@ use Slash::Utility;
 sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
 
 	if ($user->{seclev} < 100) {
 		my $rootdir = getCurrentStatic('rootdir');
@@ -30,7 +32,14 @@ sub main {
 		# will have to get this information from the database anyways.
 		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
 	}
-	header("backSlash $user->{tzcode} $user->{off_set}$tbtitle", 'admin');
+	my $slashdb = getCurrentDB();
+	my $gmt_now_secs = UnixDate(ParseDate($slashdb->getTime()), "%s");
+	my $gmt_ts = UnixDate("epoch $gmt_now_secs", "%T");
+	my $local_ts = UnixDate("epoch ".($gmt_now_secs + $user->{off_set}), "%T");
+	my $time_remark = (length $tbtitle > 10)
+		? " $gmt_ts"
+		: " $local_ts $user->{tzcode} = $gmt_ts GMT";
+	header("backSlash$time_remark$tbtitle", 'admin');
 
 	
 	# Admin Menu
@@ -97,7 +106,6 @@ sub main {
 		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockrevert}) {
-		my $slashdb = getCurrentDB();
 		$slashdb->revertBlock($form->{thisbid}) if $user->{seclev} < 500;
 		blockEdit($user->{seclev}, $form->{thisbid});
 
@@ -140,7 +148,6 @@ sub main {
 		templateEdit($user->{seclev}, $form->{thistpid}, $page, $section);
 
 	} elsif ($form->{templaterevert}) {
-		my $slashdb = getCurrentDB();
 		$slashdb->revertBlock($form->{thistpid}) if $user->{seclev} < 500;
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
@@ -950,6 +957,7 @@ sub editStory {
 
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 	
+	my $extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) { 
 		$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
@@ -960,8 +968,6 @@ sub editStory {
 		$storyref->{aid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
 
-		my $extracolumns = $slashdb->getKeys($storyref->{section});
-
 		foreach (@{$extracolumns}) {
 			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 		}
@@ -969,7 +975,9 @@ sub editStory {
 		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
 		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
 		$storyref->{commentstatus} = $form->{commentstatus} if exists $form->{commentstatus};
-		$storyref->{dept} =~ s/ /-/gi;
+		$storyref->{dept} =~ s/[-\s]+/-/g;
+		$storyref->{dept} =~ s/^-//;
+		$storyref->{dept} =~ s/-$//;
 
 		$storyref->{introtext} = $slashdb->autoUrl($form->{section}, $storyref->{introtext});
 		$storyref->{bodytext} = $slashdb->autoUrl($form->{section}, $storyref->{bodytext});
@@ -1017,7 +1025,6 @@ sub editStory {
 
 		$storyref->{aid} = $user->{uid};
 	}
-	$extracolumns = $slashdb->getKeys($storyref->{section});
 
 	$sections = $slashdb->getDescriptions('sections');
 
