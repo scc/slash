@@ -2793,13 +2793,6 @@ sub getModeratorLogRandom {
 }
 
 ########################################################
-sub countUsers {
-	my($self) = @_;
-	my($users) = $self->sqlSelect("count(*)", "users");
-	return $users;
-}
-
-########################################################
 sub countStoriesTopHits {
 	my($self) = @_;
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';

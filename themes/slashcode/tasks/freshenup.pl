@@ -63,9 +63,6 @@ $task{$me}{code} = sub {
 			"$constants->{basedir}/$key/index.shtml");
 	}
 
-	my $num_users = $slashdb->countUsers();
-	$slashdb->setVar("num_users_approx", $num_users);
-
 	return $totalChangedStories ? "totalChangedStories $totalChangedStories" : "";
 };
 
