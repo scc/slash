@@ -239,7 +239,6 @@ sub formkeyHandler {
 	my $msg = '';
 
 	$formname	||= $user->{currentPage};
-	print STDERR "FORMNAME $formname\n";
 	$formkey	||= $form->{formkey};
 
 	if ($formkey_op eq 'max_reads_check') {

@@ -386,6 +386,23 @@ sub getMetamodComments {
 	return $M2mods
 }
 
+########################################################
+# ok, I was tired of trying to mould getDescriptions into 
+# taking more args.
+sub getTemplateList {
+	my($self, $section, $page) = @_;
+
+	my $templatelist = {};
+	my $where = "seclev <= " . getCurrentUser('seclev');
+	$where .= " AND section = '$section'" if $section;
+	$where .= " AND page = '$page'" if $page;
+	my $templates =	$self->sqlSelectMany('tpid,name', 'templates', $where); 
+	while (my($tpid, $name) = $templates->fetchrow) {
+		$templatelist->{$tpid} = $name;
+	}
+
+	return $templatelist;
+}
 
 ########################################################
 sub getModeratorCommentLog {
@@ -654,10 +671,6 @@ sub setContentFilter {
 
 	my $form = getCurrentForm();
 	$formname ||= $form->{formname};
-
-	for (keys %$form) {
-		print STDERR "KEY $_ value $form->{$_}\n";
-	}
 
 	$self->sqlUpdate("content_filters", {
 			regex		=> $form->{regex},

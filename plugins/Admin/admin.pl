@@ -16,9 +16,6 @@ use Slash::Utility;
 sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	for (keys %$form) {
-		print STDERR "KEY2 $_ value $form->{$_}\n";
-	}
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $postflag = $user->{state}{post};
@@ -103,7 +100,7 @@ sub main {
 					# templatenew,templatesave,
 
 			function 	=> \&templateEdit,
-			seclev		=> 10000,
+			seclev		=> 500,
 		},
 
 		topics 		=> {	# topiced,topicnew,topicsave,topicdelete
@@ -354,6 +351,7 @@ sub templateEdit {
 	my($form, $slashdb, $user, $constants) = @_;
 
 	my($seclev, $tpid, $page, $section);
+	my $seclev_flag = 1;
 
 	my($title, $templateref, $template_select, $page_select,
 		$section_select, $savepage_select, $savesection_select);
@@ -376,12 +374,24 @@ sub templateEdit {
 			$page = $form->{newP} ? $form->{newpage} : $form->{savepage};
 		}
 
-		templateSave($form->{thistpid}, $form->{name},  $page, $section);
+	
+		my $templateref = $slashdb->getTemplate($form->{thistpid}, '', 1);
+		if ( $templateref->{seclev} <= $user->{seclev}) {
+			templateSave($form->{thistpid}, $form->{name},  $page, $section);
+		} else {
+			print getData('seclev-message', { name => $form->{name}, tpid => $form->{thistpid} });
+		}
+
 		$tpid = $form->{thistpid};
 
 	} elsif ($form->{templatedelete_confirm}) {
-		templateDelete($form->{deletename}, $form->{deletetpid});
-		print getData('templateDelete-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
+		my $templateref = $slashdb->getTemplate($form->{deletetpid}, '', 1);
+		if ($templateref->{seclev} <= $user->{seclev}) {
+			templateDelete($form->{deletename}, $form->{deletetpid});
+			print getData('templateDelete-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
+		} else {
+			print getData('seclev-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
+		}
 
 	} else {
 		$tpid = $form->{tpid};
@@ -393,6 +403,7 @@ sub templateEdit {
 	$section ||= 'default';
 
 	$templateref = $slashdb->getTemplate($tpid, '', 1) if $tpid;
+	$seclev_flag = 0 if $templateref->{seclev} > $user->{seclev};
 
 	if ($form->{templatedelete}) {
 		$templatedelete_flag = 1;
@@ -401,15 +412,15 @@ sub templateEdit {
 
 		if ($form->{templatesection}) {
 			if ($section eq 'All') {
-				$templates = $slashdb->getDescriptions('templates', $page, 1);
+				$templates = $slashdb->getTemplateList('',$page);
 			} else {
-				$templates = $slashdb->getDescriptions('templatesbysection', $section, 1);
+				$templates = $slashdb->getTemplateList($section);
 			}
 		} else {
 			if ($page eq 'All') {
-				$templates = $slashdb->getDescriptions('templates', $page, 1);
+				$templates = $slashdb->getTemplateList();
 			} else {
-				$templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
+				$templates = $slashdb->getTemplateList('',$page);
 			}
 		}
 
@@ -445,6 +456,7 @@ sub templateEdit {
 		tpid 			=> $tpid,
 		title 			=> $title,
 		templateref		=> $templateref,
+		seclev_flag		=> $seclev_flag,
 		templateedit_flag	=> $templateedit_flag,
 		templatedelete_flag	=> $templatedelete_flag,
 		template_select		=> $template_select,
@@ -468,8 +480,9 @@ sub templateSave {
 	$form->{seclev} ||= 500;
 
 	my $id = $slashdb->getTemplate($tpid, '', 1);
-	my $temp = $slashdb->getTemplateByName($name, [ 'section', 'page', 'name', 'tpid' ], 1 , $page, $section);
+	my $temp = $slashdb->getTemplateByName($name, [ 'section', 'page', 'name', 'tpid', 'seclev' ], 1 , $page, $section);
 
+	return if $temp->{seclev} > $user->{seclev};
 	my $exists = 0;
 	$exists = 1 if ($name eq $temp->{name} &&
 			$section eq $temp->{section} &&

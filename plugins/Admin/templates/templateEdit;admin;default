@@ -31,7 +31,7 @@ __template__
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="templates">
 
-[% IF templatedelete_flag %]
+[% IF templatedelete_flag && seclev_flag %]
 
 <INPUT TYPE="HIDDEN" NAME="deletetpid" VALUE="[% tpid %]">
 <INPUT TYPE="HIDDEN" NAME="deletename" VALUE="[% templateref.name %]">
@@ -76,7 +76,7 @@ __template__
 </TABLE>
 [% END %]
 
-[% IF templateform_flag %]
+[% IF templateform_flag && seclev_flag %]
 <TABLE BORDER="0">
 	[% IF templateref.description %]
 	<TR>
@@ -153,6 +153,8 @@ __template__
 		<TEXTAREA ROWS="15" COLS="100" NAME="template">[% FILTER strip_literal; templateref.template; END %]</TEXTAREA>
 		</TD>
 	</TR>
+[% ELSIF seclev_flag == 0 %]
+You don't have privedges to edit the template [% templateref.name %], TPID [% templateref.tpid %].
 [% END %]
 
 [% IF form.templatedelete_cancel %]
