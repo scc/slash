@@ -37,6 +37,10 @@ You can not use a form and hit the back button to use it again.
 <BR><P><B>You've reached the maximum number of times you can access users.pl: [% limit %] accesses over [% interval %].
 </B></P>
 
+[%# Why can't these all just be genericized?  this is supposed to
+  # be easy to use. I shouldn't have to create a new entry for
+  # every single form that uses formkeys.  %]
+
 [% CASE "comments_maxposts" %]
 [% INCLUDE titlebar width="95%" title="Maximum Comments Exceeded!" %]
 <BR><P><B>You've reached your maximum number of comments you can post: [% limit %] comments over [% interval %].
@@ -99,6 +103,12 @@ invalid formkey [% formname %] [% formkey %]
 
 [% CASE "formabuse_usedform" %]
 form [% formname %] [% formkey %] already submitted 
+
+[% CASE "journal_speed" %]
+You need to wait [% limit %] between posts.
+
+[% CASE "journal_maxposts" %]
+You can only post [% limit %] posts per [% interval %].
 
 [% CASE %]
 An unexpected error has occured.<BR><B>[% value %]</B><BR>

@@ -418,7 +418,7 @@ sub send {
 
 }
 
-sub getUnreadCount {
+sub getWebCount {
 	my($self, $uid) = @_;
 	$self->_get_web_count_by_uid($uid);
 }

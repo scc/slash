@@ -1367,6 +1367,7 @@ Returns 0;
 
 sub errorLog {
 	my($package, $filename, $line) = caller(1);
+	return if $Slash::Utility::NO_ERROR_LOG;
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		if ($r) {

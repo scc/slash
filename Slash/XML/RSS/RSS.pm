@@ -339,6 +339,9 @@ sub rss_story {
 	# delete it so it won't be processed later
 	my $story = delete $item->{story};
 	my $constants = getCurrentStatic();
+	my $slashdb   = getCurrentDB();
+
+	my $topics = $slashdb->getTopics();
 
 	$encoded_item->{title}  = $self->encode($story->{title});
 	$encoded_item->{'link'} = $self->encode("$constants->{absolutedir}/article.pl?sid=$story->{sid}", 'link');
@@ -352,7 +355,7 @@ sub rss_story {
 		my $slashdb   = getCurrentDB();
 
 		$encoded_item->{dc}{date}    = $self->encode($self->date2iso8601($story->{'time'}));
-		$encoded_item->{dc}{subject} = $self->encode($story->{tid});
+		$encoded_item->{dc}{subject} = $self->encode($topics->{$story->{tid}}{name});
 		$encoded_item->{dc}{creator} = $self->encode($slashdb->getUser($story->{uid}, 'nickname'));
 
 		$encoded_item->{slash}{section}    = $self->encode($story->{section});

@@ -20,6 +20,9 @@ __template__
 [% CASE 'nousers' %]
 	No users with journals found matching "[% FILTER strip_literal; form.nickname; END %]".
 
+[% CASE 'nojournal' %]
+	User "[% FILTER strip_literal; nouser.nickname; END %]" ([% nouser.uid %]) has no journal entries.
+
 [% CASE 'noentries' %]
 	[% nickname ? "$nickname has" : "You have" %] not created any journal entries.
 

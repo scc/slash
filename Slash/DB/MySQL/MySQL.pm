@@ -1852,6 +1852,7 @@ sub resetFormkey {
 ##################################################################
 sub updateFormkey {
 	my($self, $formkey, $cid, $length) = @_;
+	$formkey  ||= getCurrentForm('formkey');
 
 	my $constants = getCurrentStatic();
 
@@ -1871,6 +1872,8 @@ sub updateFormkey {
 ##################################################################
 sub checkPostInterval {
 	my($self, $formname, $id) = @_;
+	$formname ||= getCurrentUser('currentPage');
+	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $constants = getCurrentStatic();
 
@@ -1878,12 +1881,16 @@ sub checkPostInterval {
 	# this is not extensible at all.  why not just do
 	# $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
 	# ? -- pudge
-	my $speedlimit = {
+	my %speedlimit = (
 		comments 	=> $constants->{comments_speed_limit},
 		discussions	=> $constants->{discussions_speed_limit},
 		submissions	=> $constants->{submissions_speed_limit},
 		users		=> $constants->{users_speed_limit},
-	};
+	);
+
+	my $speedlimit = exists($speedlimit{$formname})
+		? $speedlimit{$formname}
+		: $constants->{"${formname}_speed_limit"};
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
@@ -1894,9 +1901,9 @@ sub checkPostInterval {
 		"formname = '$formname' AND $where");
 
 	$interval ||= 0;
-	print STDERR "CHECK INTERVAL $interval speedlimit $speedlimit->{$formname}\n" if $constants->{DEBUG};
+	print STDERR "CHECK INTERVAL $interval speedlimit $speedlimit\n" if $constants->{DEBUG};
 
-	return $interval < $speedlimit->{$formname} ? $interval : 0;
+	return $interval < $speedlimit ? $interval : 0;
 }
 
 ##################################################################
@@ -1922,27 +1929,36 @@ sub checkMaxReads {
 sub checkMaxPosts {
 	my($self, $formname, $id) = @_;
 	my $constants = getCurrentStatic();
+	$formname ||= getCurrentUser('currentPage');
+	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $where = $self->_whereFormkey($id);
 
-	my $maxposts = {
+	# this is not extensible at all.  why not just do
+	# $speedlimit = $constants->{"max_${formname}_allowed"} || 0;
+	# ? -- pudge
+	my %maxposts = (
 		comments 	=> $constants->{max_comments_allowed},
 		discussions	=> $constants->{max_discussions_allowed},
 		submissions	=> $constants->{max_submissions_allowed},
 		users		=> $constants->{max_userchanges_allowed},
-	};
+	);
+
+	my $maxposts = exists($maxposts{$formname})
+		? $maxposts{$formname}
+		: $constants->{"max_${formname}_allowed"};
 
 	my($limit_reached) = $self->sqlSelect(
-		"count(*) >= $maxposts->{$formname}",
+		"count(*) >= $maxposts",
 		"formkeys",
 		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'");
 
 	if ($constants->{DEBUG}) {
 		print STDERR "LIMIT REACHED (times posted) $limit_reached\n";
-		print STDERR "LIMIT REACHED maxposts $maxposts->{$formname}\n";
+		print STDERR "LIMIT REACHED maxposts $maxposts\n";
 	}
-	return $limit_reached ? $maxposts->{$formname} : 0;
+	return $limit_reached ? $maxposts : 0;
 }
 
 ##################################################################

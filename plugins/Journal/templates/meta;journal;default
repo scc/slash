@@ -22,6 +22,8 @@ __template__
 <P>Alright, before we do this thing, I just want to really make
 sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</B>
 ([% friend.uid %]) your friend.</P>
+
+<P><B>Note:</B> Who your friends are is not private; it can and will be used against you.</P>
 		[% END;
 	CASE "deletemeta";
 		title	= "Removing Friend";

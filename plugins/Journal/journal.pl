@@ -134,16 +134,26 @@ sub searchUsers {
 
 	my $results = $journal->searchUsers($form->{nickname});
 
-	if (!$results || @$results < 1) {
-		print getData('nousers'); # not
-		slashDisplay('searchusers');
-	} elsif (@$results == 1) {
+	# if nonref and true, then display user journal
+	if ($results && !ref($results)) {
 		# clean up a bit, just in case
 		for (keys %$form) {
 			delete $form->{$_} unless $_ eq 'op';
 		}
-		$form->{uid} = $results->[0][1];
+		$form->{uid} = $results;
 		displayArticle(@_);
+
+	# if false or empty ref, no users
+	} elsif (!$results || (ref($results) eq 'ARRAY' && @$results < 1)) {
+		print getData('nousers');
+		slashDisplay('searchusers');
+
+	# a hashref, that is exact user with no journal
+	} elsif (ref($results) eq 'HASH') {
+		print getData('nojournal', { nouser => $results });
+		slashDisplay('searchusers');
+
+	# an arrayref, we gots to display a list
 	} else {
 		slashDisplay('journalfriends', {
 			friends => $results,
@@ -289,6 +299,7 @@ sub displayArticle {
 	slashDisplay($theme, {
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
+		nickname	=> $nickname,
 		is_friend	=> $journal->is_friend($uid),
 		back		=> $back,
 		forward		=> $forward,
@@ -342,15 +353,7 @@ sub saveArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 	my $description = strip_nohtml($form->{description});
 
-	my $error;
-	my $ok = $slashdb->updateFormkeyVal($form->{formkey});
-	if (!$ok) {
-		print <<EOT;
-<P>Your formkey is invalid.  More info later when I get this fixed.</P>
-EOT
-		editArticle(@_);
-		return;
-	}
+	return unless _validFormkey();
 
 	if ($form->{id}) {
 		my %update;
@@ -527,6 +530,7 @@ sub editArticle {
 			is_friend	=> $journal->is_friend($article->{uid}),
 			back		=> -1,
 			forward		=> 0,
+			nickname	=> $user->{nickname},
 		});
 	}
 
@@ -537,6 +541,17 @@ sub editArticle {
 		article		=> $article,
 		format_select	=> $format_select,
 	});
+}
+
+sub _validFormkey {
+	# welcome to the Race Condition Convention, everyone
+	# please take your assigned seats!
+	for (qw(max_post_check interval_check formkey_check)) {
+		return if formkeyHandler($_);
+	}
+
+	getCurrentDB()->updateFormkey;
+	return 1;
 }
 
 createEnvironment();

@@ -174,7 +174,7 @@ sub add {
 sub is_friend {
 	my($self, $friend) = @_;
 	my $uid   = $ENV{SLASH_USER};
-	return unless $uid && $friend;
+	return 0 unless $uid && $friend;
 	my $cols  = "jf.uid";
 	my $table = "journal_friends AS jf";
 	my $where = "jf.uid=$uid AND jf.friend=$friend";
@@ -254,28 +254,46 @@ sub themes {
 
 sub searchUsers {
 	my($self, $nickname) = @_;
-	my($data, @users);
+	my $slashdb = getCurrentDB();
 
-	if (my $uid = $self->getUserUID($nickname)) {
-		$data = [[ '', '', $uid ]]
-			if $self->sqlSelect('uid', 'journals', "uid=$uid");
+	if (my $uid = $slashdb->getUserUID($nickname)) {
+		if ($self->sqlSelect('uid', 'journals', "uid=$uid")) {
+			return $uid;
+		} else {
+			return $slashdb->getUser($uid);
+		}
 	}
 
-	if (!$data) {
-		my $search = getObject("Slash::Search");
-		$data  = $search->findUsers(
-			{query => $nickname}, 0,
-			getCurrentStatic('search_default_display') + 1
-		);
-	}
+	my($search, $find, $uids, $jusers, $ids, $journals, @users);
+	$search	= getObject("Slash::Search") or return;
+	$find	= $search->findUsers(
+		{query => $nickname}, 0,
+		getCurrentStatic('search_default_display') + 1
+	);
+	return unless @$find;
 
-	for my $user (sort { lc $a->[1] cmp lc $b->[1] } @$data) {
-		my $id = $self->sqlSelectArrayRef(
-			'nickname, users.uid, date, description, id', 'journals, users',
-			"users.uid=$user->[2] AND journals.uid=users.uid",
-			'ORDER BY date DESC LIMIT 1'
-		);
-		push @users, $id if $id;
+	$uids   = join(" OR ", map { "uid=$_->[2]" } @$find);
+	$jusers = $self->sqlSelectAllHashref(
+		'uid', 'uid, MAX(id) as id', 'journals', $uids, 'GROUP BY uid'
+	);
+
+	$ids      = join(" OR ", map { "id=$_->{id}" } values %$jusers);
+	$journals = $self->sqlSelectAllHashref(
+		'uid', 'uid, id, date, description', 'journals', $ids
+	);
+
+	for my $user (sort { lc $a->[1] cmp lc $b->[1] } @$find) {
+		my $uid  = $user->[2];
+		my $nick = $user->[1];
+		if (exists $journals->{$uid}) {
+			push @users, [
+				$nick, $uid, $journals->{$uid}{date},
+				$journals->{$uid}{description},
+				$journals->{$uid}{id},
+			];
+		} else {
+			push @users, [$nick, $uid];
+		}
 	}
 
 	return \@users;

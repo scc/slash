@@ -634,9 +634,10 @@ sub submitComment {
 			my $parent = $slashdb->getCommentReply($form->{sid}, $form->{pid});
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 			if (@$users) {
-				my $reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
-				my $story = $slashdb->getStory($form->{sid});
-				my $data  = {
+				my $reply   = $slashdb->getCommentReply($form->{sid}, $maxCid);
+				my $realsid = $slashdb->getDiscussion($form->{sid}); # this is so lame
+				my $story   = $slashdb->getStory($realsid);
+				my $data    = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },
 					reply		=> $reply,
@@ -849,6 +850,8 @@ sub moderateCid {
 				MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
 			);
 			if (@$users) {
+#				my $realsid = $slashdb->getDiscussion($form->{sid}); # this is so lame
+#				my $story = $slashdb->getStory($realsid);
 				my $story = $slashdb->getStory($sid);
 				my $data  = {
 					template_name	=> 'mod_msg',

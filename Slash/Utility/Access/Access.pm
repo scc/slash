@@ -216,14 +216,17 @@ sub intervalString {
 sub formkeyHandler {
 	# ok, I know we don't like refs, but I don't wanna rewrite the 
 	# whole damned system
-	my ($formkey_op, $formname, $formkeyid, $formkey, $message_ref) = @_;
+	my($formkey_op, $formname, $formkeyid, $formkey, $message_ref) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $error_flag = 0;
 	my $msg = '';
-	
+
+	$formname	||= $user->{currentPage};
+	$formkeyid	||= getFormkeyId($user->{uid});
+	$formkey	||= $form->{formkey};
 
 	if ($formkey_op eq 'max_reads_check') {
 		if (my $limit = $slashdb->checkMaxReads($formname, $formkeyid)) {
@@ -231,7 +234,7 @@ sub formkeyHandler {
 			$error_flag++;
                 }
 	} elsif ($formkey_op eq 'max_post_check') {
-		if ( my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
+		if (my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
 			$msg = formkeyError('maxposts', $formname, $limit);
 			$error_flag++;
 		}
@@ -241,19 +244,19 @@ sub formkeyHandler {
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'response_check') {
-		if ( my $interval = $slashdb->checkResponseTime($formname, $formkeyid)) {
+		if (my $interval = $slashdb->checkResponseTime($formname, $formkeyid)) {
 			$msg = formkeyError('response', $formname, $interval);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'interval_check') {
 		# check interval from this attempt to last successful post
-		if ( my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
+		if (my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
 			$msg = formkeyError('speed', $formname, $interval);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'formkey_check') {
 		# check if form already used
-		unless (  my $increment_val = $slashdb->updateFormkeyVal($formkey)) {	
+		unless (my $increment_val = $slashdb->updateFormkeyVal($formkey)) {	
 			$msg = formkeyError('usedform', $formname);
 			$error_flag++;
 		}

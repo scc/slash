@@ -25,12 +25,25 @@ Have you <B><A HREF="[% constants.rootdir %]/metamod.pl">Meta Moderated</A></B> 
 
 [% messages = Slash.getObject("Slash::Messages");
    IF messages;
-		message_count = messages.getUnreadCount();
-		IF message_count %]
-You have <B><A HREF="[% constants.rootdir %]/messages.pl?op=list">[%
-message_count %] new message[%
-	message_count == 1 ? "" : "s"
-%]</A></B> waiting for you.<BR>
+		message_count = messages.getWebCount();
+		IF message_count.total %]
+You have <B>[%
+	IF message_count.unread
+%]<A HREF="[% constants.rootdir %]/messages.pl?op=list">[%
+	END;
+message_count.unread %] new message[% message_count.unread == 1 ? "" : "s";
+	IF message_count.unread
+%]</A>[%
+	END
+%]</B> waiting for you, and <B>[%
+	IF message_count.read
+%]<A HREF="[% constants.rootdir %]/messages.pl?op=list">[%
+	END;
+message_count.read %] old message[% message_count.read == 1 ? "" : "s";
+	IF message_count.unread
+%]</A>[%
+	END
+%]</B>.<BR>
 [% END; END %]
 
 	[% group    = ['Flock', 'Swarm', 'Barrel', 'Team', 'Squadron',

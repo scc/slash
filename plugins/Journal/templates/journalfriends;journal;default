@@ -26,8 +26,13 @@ __template__
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH friend = friends %]
     <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER strip_attribute; friend.0; END %]">[% friend.0 %]</A></TD>
+[% IF friend.2 %]
     <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% friend.1 %]"><B>[% friend.3 %]</B></A></TD>
     <TD VALIGN="TOP"><EM>[% Slash.timeCalc(friend.2) %]</EM></TD>
+[% ELSE %]
+    <TD VALIGN="TOP">&nbsp;</TD>
+    <TD VALIGN="TOP"><EM>User has no journal entries.</EM></TD>
+[% END %]
 [% IF !user.is_anon && !search %]     <TD VALIGN="TOP" ALIGN="CENTER"><INPUT TYPE="checkbox" NAME="del_[% friend.1 %]" VALUE="1"></TD>
 [% END %]
 </TR>

@@ -98,11 +98,7 @@ sub findComments {
 
 ####################################################################################
 sub findUsers {
-	my($self, $form, $start, $limit, $users_to_ignore, $journal) = @_;
-	# $journal is just a hack for now ... deal with it.  :)
-	# we do need to make this more extensible, or move it to Journal
-	# itself, but in the meanwhile, this is quick and easy.  -- pudge
-
+	my($self, $form, $start, $limit, $users_to_ignore) = @_;
 	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
 	my $sql;
@@ -110,7 +106,6 @@ sub findUsers {
 
 	$sql .= 'SELECT fakeemail,nickname,users.uid ';
 	$sql .= ' FROM users ';
-	$sql .= ', journals ' if $journal;
 	$sql .= ' WHERE seclev > 0 ';
 	my $x = 0;
 	if ($users_to_ignore) {
@@ -128,7 +123,6 @@ sub findUsers {
 		$kw =~ s/\+/ OR /g;
 		$sql .= " ($kw) ";
 	}
-	$sql .= " AND users.uid = journals.uid " if $journal;
 	$sql .= " ORDER BY users.uid $limit";
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute;
