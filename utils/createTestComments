@@ -81,7 +81,7 @@ $werder = new Silly::Werder;
 		}
 		my $discussion = $slashdb->getDiscussion($discussion_id);
 	 
-		%family_tree = ( );
+		%family_tree = %deep_tree = ( );
 
 		# Initialize the user.
 		my $uid;
