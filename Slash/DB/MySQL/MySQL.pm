@@ -2436,9 +2436,11 @@ sub getStoriesEssentials {
 	$section ||= $user->{currentSection};
 	$section_display ||= $form->{section};
 
-	$limit ||= $section eq 'index'
-		? $user->{maxstories}
-		: $self->getSection($section, 'artcount');
+	$limit ||= $section eq 'index' ?
+		$user->{maxstories} :
+		($section) ? 
+			$self->getSection($section, 'artcount') :
+			$self->getSection($section)->{artcount};
 
 	my $table = getCurrentStatic('mysql_heap_table') ?
 		'story_heap' : 'stories';
