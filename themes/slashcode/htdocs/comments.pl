@@ -131,7 +131,13 @@ sub main {
 			formname		=> 'discussions',
 			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
 		},
-		index			=> {
+		change		=> { 
+			function		=> \&change,
+			seclev			=> 0,
+			formname		=> 'discussions',
+			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
+		},
+		'index'			=> {
 			function		=> \&commentIndex,
 			seclev			=> 0,
 			formname 		=> 'discussions',
@@ -309,7 +315,7 @@ sub change {
 			commentsort	=> $user->{commentsort}
 		});
 	}
-	printComments($discussion, $form->{cid}, $form->{cid});
+	displayComments(@_);
 }
 
 ##################################################################
