@@ -58,6 +58,23 @@ sub sqlSelect {
 }
 
 ########################################################
+sub sqlSelectArrayRef {
+	my($self, $select, $from, $where, $other) = @_;
+	my $sql = "SELECT $select ";
+	$sql .= "FROM $from " if $from;
+	$sql .= "WHERE $where " if $where;
+	$sql .= "$other" if $other;
+	
+	$self->sqlConnect();
+	my $sth = $self->{dbh}->prepare_cached($sql) or die "Sql has gone away\n";
+	if (!$sth->execute) {
+		apacheLog($sql);
+		return undef;
+	}
+	my $r = $sth->fetchrow_arrayref;
+	return $r;
+}
+########################################################
 sub sqlSelectHash {
 	my $self = shift;
 	my $H = sqlSelectHashref(@_);

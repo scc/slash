@@ -34,6 +34,7 @@ my $sectionBoxes;
 #   use the dB classes to override methods (this 
 #   could end up being very slow though since the march
 #   is kinda slow...).
+#	 the getAuthorEdit() methods need to be refined
 ########################################################
 ########################################################
 sub sqlConnect {
@@ -233,12 +234,28 @@ sub getFormatDescriptions {
 	if($codetype eq 'commentcodes') {
 		$sth = $self->sqlSelectMany('code,name', 'commentcodes');
 	}
+	if($codetype eq 'sections') {
+		$sth = $self->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title');
+	}
+	if($codetype eq 'sections') {
+		$sth = $self->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title');
+	}
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 	$sth->finish;
 
 	return  $codeBank_hash_ref;
+}
+########################################################
+# We can't use getDescription() because of the extra
+# parameter at some point I may solve this
+sub getDescriptionSections {
+	my ($self) = @_;
+	my $sections = $self->sqlSelectAll('section,title', 'sections', 'isolate=0', 'order by title');
+
+	return $sections;
+
 }
 ########################################################
 # Get user info from the users table.
@@ -281,14 +298,31 @@ sub getUserInfoAuthenticate{
 
 ########################################################
 # Get user info from the users table.
-sub getUserUID{
+sub getUserAuthenticate{
   my($self, $name, $passwd) = @_;
 
-	$self->sqlSelect('uid', 'users',
+	my ($uid) = $self->sqlSelect('uid', 'users',
 			'passwd=' . $self->{dbh}->quote($passwd) .
 			' AND nickname=' . $self->{dbh}->quote($name)
 	);
+	return $uid;
 
+}
+########################################################
+# Get user info from the users table.
+# May be worth it to cache this at some point
+sub getUserUID{
+  my($self, $name) = @_;
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# We need to add BINARY to this
+# as is, it may be a security flaw
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	my ($uid) = $self->sqlSelect('uid', 'users',
+			'nickname=' . $self->{dbh}->quote($name)
+	);
+
+	return $uid;
 }
 
 ########################################################
@@ -335,10 +369,12 @@ sub userInfo {
 }
 ########################################################
 # Get user info from the users table.
-sub getUserByUID{
-  my($self, $uid, $param) = @_;
+sub getUserInfoByUID{
+  my($self, $uid) = @_;
 
-
+	my $user = $self->sqlSelectHashref('nickname,realemail', 'users',
+			'nickname=' . $self->{dbh}->quote($uid)); 
+	return $user;
 }
 
 ########################################################
@@ -346,8 +382,9 @@ sub getUserByUID{
 sub getUserInfoByNickname{
   my($self, $name) = @_;
 
-	$self->sqlSelect('nickname,passwd,realemail', 'users',
+	my $user = $self->sqlSelectArrayRef('passwd,realemail', 'users',
 			'nickname=' . $self->{dbh}->quote($name)); 
+	return $user;
 
 }
 #################################################################
@@ -635,6 +672,14 @@ sub getUserEditInfo {
 
 }
 ########################################################
+sub getUserEditHome {
+	my ($self, $name) = @_;
+	my $bio = $self->sqlSelectHashref("users.uid, willing, dfid, tzcode, noicons, light, mylinks, users_index.extid, users_index.exaid, users_index.exsect, users_index.exboxes, users_index.maxstories, users_index.noboxes", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
+
+	return $bio;
+
+}
+########################################################
 sub getUserEditComment  {
 	my ($self, $name) = @_;
 	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
@@ -875,7 +920,7 @@ my ($self) = @_;
 ########################################################
 # getTopic() 
 # I'm torn, currently we just dump the entire database
-# into topicBank if we don't find out topic. I am 
+# into topicBank if we don't find our topic. I am 
 # wondering if it wouldn't be better to just grab them
 # as needed (when we need them).
 # Probably ought to spend some time to actually figure
@@ -1058,8 +1103,9 @@ sub setUserBoxes {
 
 ##################################################################
 sub getAids {
+# getAids.... get aids... huhu,huhu...
 	my ($self) = @_;
-	my $aids = sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
+	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
 
 	return $aids;
 }

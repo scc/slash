@@ -350,7 +350,7 @@ sub userLogin {
 	my($name, $passwd) = @_;
 
 	$passwd = substr $passwd, 0, 12;
-	my($uid) = $I{dbobject}->getUserUID($name, $passwd);
+	my $uid = $I{dbobject}->getUserAuthenticate($name, $passwd);
 
 	if ($uid > 0) {
 		my $cookie = $uid . '::' . $passwd;
@@ -1237,8 +1237,8 @@ sub selectComments {
 
 ########################################################
 sub getCommentTotals {
-	my $comments = shift;
-	foreach my $x (0..5) {
+	my ($comments) = @_;
+	for my $x (0..5) {
 		$comments->[0]{totals}[5-$x] += $comments->[0]{totals}[5-$x+1];
 	}
 }
@@ -1246,7 +1246,7 @@ sub getCommentTotals {
 
 ########################################################
 sub reparentComments {
-	my $comments = shift;
+	my ($comments) = @_;
 	my $depth = $I{max_depth} || 7;
 
 	return unless $depth || $I{U}{reparent};

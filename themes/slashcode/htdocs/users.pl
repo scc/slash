@@ -64,7 +64,7 @@ EOT
 		if ($I{U}{uid} > 0) {
 			editUser($I{U}{nickname});
 		} else {
-			displayForm(); #crapMesg();
+			displayForm(); 
 		}
 
 	} elsif ($op eq "edithome" || $op eq "preferences") {
@@ -72,7 +72,7 @@ EOT
 		if ($I{U}{uid} > 0) {
 			editHome($I{U}{nickname});
 		} else {
-			displayForm(); #crapMesg();
+			displayForm(); 
 		}
 
 	} elsif ($op eq "editcomm") {
@@ -80,7 +80,7 @@ EOT
 		if ($I{U}{uid} > 0) {
 			editComm($I{U}{nickname});
 		} else {
-			displayForm(); #crapMesg();
+			displayForm(); 
 		}
 
 	} elsif ($op eq "userinfo" || !$op) {
@@ -105,10 +105,10 @@ EOT
 		userInfo($I{U}{nickname});
 
 	} elsif ($op eq "sendpw") {
-		mailPassword($I{U}{nickname});
+		mailPassword($I{U}{uid});
 
 	} elsif ($op eq "mailpasswd") {
-		mailPassword($I{F}{unickname});
+		mailPassword($I{dbobject}->getUserUID($I{F}{unickname}));
 
 	} elsif ($op eq "suedituser" && $I{U}{aseclev} > 100) {
 		editUser($I{F}{name});
@@ -142,21 +142,6 @@ EOT
 	footer();
 }
 
-#################################################################
-sub crapMesg {
-	print <<EOT;
-<H1>Oh Crap!</H1>
-So we got a bug here.  Ya see, my system doesn't remember who you are,
-yet you think you are logged in.  This could be because you are using
-a crappy browser.  Or are behind a firewall or proxy or something that
-is stripping cookies.  DON'T DO THAT!  If you think none of these are
-the problem, please send me your browser version, nickname, uid, platform,
-and any other details that seem relavant.  I'm trying to sort this out
-and not having much luck.  Optionally, you might not have actually ever
-logged in, so you might want to
-<A HREF="$I{rootdir}/users.pl">Try Doing That</A> instead!
-EOT
-}
 
 #################################################################
 sub checkList {
@@ -230,7 +215,8 @@ sub newUser {
 
 
 	if ($matchname ne '' && $I{F}{newuser} ne '' && $I{F}{email} =~ /\@/) {
-		if(my $uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
+		my $uid;
+		if($uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
 			titlebar("100%", "User $I{F}{newuser} created.");
 
 			$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
@@ -245,7 +231,7 @@ sub newUser {
 
 EOT
 
-			mailPassword($I{F}{newuser});
+			mailPassword($uid);
 
 			return;
 		}
@@ -257,19 +243,18 @@ EOT
 
 #################################################################
 sub mailPassword {
-	my($name) = @_;
-	my($nickname, $passwd, $email) = $I{dbobject}->getUserInfoByNickname($name);
+	my($uid) = @_;
+	unless ($uid) {
+		print "Nickname was not found. No Password was mailed.<BR>\n"; 
+	}
+	my $user = $I{dbobject}->getUserInfoByUID($uid);
 
 	my $msg = blockCache("newusermsg");
 	$msg = prepBlock($msg);
 	$msg = eval $msg;
 
-	if ($name ne '' && (lc($name) eq lc($nickname))) {
-		sendEmail($email, "$I{sitename} user password for $name", $msg) if $name;
-		print "Passwd for $name was just emailed.<BR>\n";
-	} else {
-		print "$name was not found. No Password mailed.<BR>\n"; 
-	}
+	sendEmail($user->{realemail}, "$I{sitename} user password for $user->{nickname}", $msg) if $user->{nickname};
+	print "Passwd for $user->{nickname} was just emailed.<BR>\n";
 }
 
 #################################################################
@@ -453,35 +438,34 @@ sub tildeEd {
 EOT
 
 	# Customizable Authors Thingee
-	my $C = sqlSelectMany("aid", "authors", "seclev > 99", "order by aid");
-	while (my($aid) = $C->fetchrow) {
+	my $aids = $I{dbobject}->getAids();
+	for(@$aids) {
+	# Ok, this is probably dumb
+		my ($aid) = @$_;
 		my $checked = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
 		print qq!<INPUT TYPE="CHECKBOX" NAME="exaid_$aid"$checked>$aid<BR>\n!;
 	}
 
-	$C->finish;
 
 	# Customizable Topic
 	print qq!</TD><TD VALIGN="TOP"><MULTICOL COLS="3">!;
-	$C = sqlSelectMany("tid,alttext", "topics", "1=1 ", "order by tid");
-	while (my($tid, $alttext) = $C->fetchrow) {
+	my $topics = $I{dbobject}->getFormatDescriptions('topics');
+	while (my($tid, $alttext) = each %$topics) {
 		my $checked = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
 		print qq!<INPUT TYPE="CHECKBOX" NAME="extid_$tid"$checked>$alttext<BR>\n! if $tid;
 	}
 
-	$C->finish;
 	print "</MULTICOL></TD>";
 
 	# Customizable Sections
 	print '<TD VALIGN="TOP">';
-	$C = sqlSelectMany("section,title", "sections", "isolate=0", "order by title");
+	my $sections = $I{dbobject}->getFormatDescriptions('sections');
 
-	while (my($section,$title) = $C->fetchrow) {
+	while (my($section,$title) = each %$sections) {
 		my $checked = ($exsect =~ /'$section'/) ? " CHECKED" : "";
 		print qq!<INPUT TYPE="CHECKBOX" NAME="exsect_$section"$checked>$title<BR>\n! if $section;
 	}
 
-	$C->finish;
 	print "</TD>";
 
 	print "</TD></TR></TABLE><P>";
@@ -503,9 +487,9 @@ EOT
 	<P><MULTICOL COLS="3">
 EOT
 
-	$C = sqlSelectMany("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
-
-	while (my($bid,$title,$o) = $C->fetchrow) {
+	my $sections_description = $I{dbobject}->getDescriptionSections();
+	for (@$sections_description) {
+		my($bid,$title,$o) = @$_;
 		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";
 		$title =~ s/<(.*?)>//g;
 		print "<B>" if $o > 0;
@@ -522,7 +506,6 @@ EOT
 		print "</B>" if $o > 0;
 	}
 
-	$C->finish;
 
 	print <<EOT;
 	</MULTICOL><P>
@@ -543,17 +526,9 @@ EOT
 sub editHome {
 	my($name) = @_;
 
-	my($uid, $willing, $tzformat, $tzcode, $noicons, $light, $userspace,
-		$extid, $exaid, $exsect, $exboxes, $maxstories, $noboxes)
-		= sqlSelect("users.uid, willing, dfid, tzcode, noicons, light, "
-		. "mylinks, users_index.extid, users_index.exaid, "
-		. "users_index.exsect, users_index.exboxes, users_index.maxstories, "
-		. "users_index.noboxes", "users, users_prefs, users_index",
-		"users.uid=users_prefs.uid AND users.uid=users_index.uid AND "
-		. "users.nickname=" . $I{dbh}->quote($name)
-	);
+	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $uid < 1;
+	return if $user->{uid} < 1;
 
 	titlebar("100%", "Customize $I{sitename}'s Display");
 
@@ -566,17 +541,17 @@ EOT
 
 	my $formats;
 	$formats = $I{dbobject}->getFormatDescriptions('dateformats');
-	createSelect('tzformat', $formats, $tzformat);
+	createSelect('tzformat', $formats, $user->{dfid});
 
 	$formats = $I{dbobject}->getFormatDescriptions('tzcodes');
-	createSelect('tzcode', $formats, $tzcode);
+	createSelect('tzcode', $formats, $user->{tzcode});
 
 	print "</NOBR>";
 
-	my $l_check = $light	? " CHECKED" : "";
-	my $b_check = $noboxes	? " CHECKED" : "";
-	my $i_check = $noicons	? " CHECKED" : "";
-	my $w_check = $willing	? " CHECKED" : "";
+	my $l_check = $user->{light}	? " CHECKED" : "";
+	my $b_check = $user->{noboxes}	? " CHECKED" : "";
+	my $i_check = $user->{noicons}	? " CHECKED" : "";
+	my $w_check = $user->{willing}	? " CHECKED" : "";
 
 	print <<EOT;
 
@@ -593,7 +568,7 @@ EOT
 	<P><B>Maximum Stories</B> The default is 30.  The main
 	column displays 1/3rd of these at minimum, and all of
 	today's stories at maximum.<BR>
-	<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="$maxstories">
+	<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="$user->{maxstories}">
 
 	<P><INPUT TYPE="CHECKBOX" NAME="willing"$w_check>
 	<B>Willing to Moderate</B> By default all users are willing to
@@ -603,10 +578,9 @@ EOT
 	</TD></TR></TABLE><P>
 EOT
 
-	tildeEd($extid, $exsect, $exaid, $exboxes, $userspace);
+	tildeEd($user->{extid}, $user->{exsect}, $user->{exaid}, $user->{exboxes}, $user->{mylinks});
 
 	print qq!\t<INPUT TYPE="SUBMIT" NAME="op" VALUE="savehome">\n!;
-	# print qq!\t<INPUT TYPE="SUBMIT" NAME="op" VALUE="susaveuser"> <INPUT TYPE="SUBMIT" NAME="op" VALUE="sudeluser">! if $I{U}{aseclev}> 499;
 	print "\t</FORM>\n\n";
 }
 
@@ -712,13 +686,13 @@ EOT
 #################################################################
 sub saveUser {
 	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
+	my $user  = $I{dbobject}->getUserInfoByUID($uid);
 
-	$name = substr($name, 0, 20);
+	$user->{nickname} = substr($user->{nickname}, 0, 20);
 	return unless $uid > 0;
 
-	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid < 1 || !$name;
+	print "<P>Saving $user->{nickname}<BR><P>";
+	print <<EOT if $uid < 1 || !$user->{nickname};
 <P>Your browser didn't save a cookie properly.  This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -743,15 +717,13 @@ EOT
 		bio		=> $I{F}{bio}
 	};
 
-	my($oldEmail) = sqlSelect("realemail", "users",
-		"nickname=" . $I{dbh}->quote($name));
 
-	if ($oldEmail ne $I{F}{realemail}) {
+	if ($user->{realemail} ne $I{F}{realemail}) {
 		$H->{realemail} = $I{F}{realemail};
-		print "\nNotifying $oldEmail of the change to their account.<BR>\n";
+		print "\nNotifying $user->{realemail} of the change to their account.<BR>\n";
 
-		sendEmail($oldEmail, "$I{sitename} user email change for $name", <<EOT);
-The user account $name on $I{sitename} had this email
+		sendEmail($user->{realemail}, "$I{sitename} user email change for $user->{nickname}", <<EOT);
+The user account $user->{nickname} on $I{sitename} had this email
 associated with it.  A web user from $ENV{REMOTE_ADDR} has
 just changed it to $I{F}{realemail}.
 
