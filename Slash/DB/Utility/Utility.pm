@@ -41,7 +41,7 @@ sub sqlConnect {
 			eval {
 				local $SIG{'ALRM'} = sub { die "Connection timed out" };
 				alarm $timeout;
-				$self->{_dbh} = DBIx::Password->connect($self->{virtual_user});
+				$self->{_dbh} = DBIx::Password->connect_cached($self->{virtual_user});
 				alarm 0;
 			};
 
