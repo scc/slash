@@ -16,7 +16,8 @@ for (qw(INSTALL README)) {
 	move $_, catfile(updir, $_) or warn "Couldn't copy\n";
 }
 
-for (qw(pod2html-dircache pod2html-itemcache)) {
+for (qw(pod2html-dircache pod2html-itemcache pod2htmd.x~~ pod2htmi.x~~)) {
+	next unless -e $_;
 	print "Unlinking $_\n";
 	unlink $_ or warn "Couldn't unlink $_: $!";
 }
