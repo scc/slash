@@ -228,11 +228,9 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
-	if ($uri =~ m[^/~(.*)]) {
-		my $clean = $1;
-		my ($nick,$op) = split /\//, $1, 3;
-		$nick =~ s|\/.*$||;
-		if($op eq 'journal') {
+	if ($uri =~ m[^/~(.+)]) {
+		my($nick, $op) = split /\//, $1, 3;
+		if ($op eq 'journal') {
 			$r->args("nick=$nick&op=display");
 			$r->uri('/journal.pl');
 			$r->filename($constants->{basedir} . '/journal.pl');

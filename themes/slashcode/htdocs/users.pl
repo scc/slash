@@ -225,7 +225,8 @@ sub main {
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
 		if ($curuser->{seclev} < 100) { 
-			my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING})) if ! $error_flag; 
+			# why assign to an unused variable? -- pudge
+			my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING})) if ! $error_flag;
 		}
 		$op = 'changepasswd';
 	}
@@ -259,6 +260,7 @@ sub main {
 
 	if ($ops->{$op}{update_formkey} && $curuser->{seclev} < 100 && ! $error_flag) {
 		# successful save action, no formkey errors, update existing formkey
+		# why assign to an unused variable? -- pudge
 		my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING})); 
 	} 
 	# if there were legit error levels returned from the save methods

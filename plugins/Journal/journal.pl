@@ -226,12 +226,12 @@ sub displayArticle {
 	my($date, $forward, $back, @sorted_articles, $nickname, $uid);
 	my $collection = {};
 
-	if($form->{uid} or $form->{nick}) {
+	if ($form->{uid} or $form->{nick}) {
 		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
 		$nickname = $slashdb->getUser($uid, 'nickname');
 	} else {
 		$nickname	= $user->{nickname};
-		$uid	= $user->{uid};
+		$uid		= $user->{uid};
 	}
 
 	_printHead("userhead", { nickname => $nickname });

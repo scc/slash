@@ -296,7 +296,7 @@ sub formkeyHandler {
 		}
 
 		if (! $error_flag) {
-			$slashdb->createFormkey($formname, $formkeyid); 
+			$slashdb->createFormkey($formname, $formkeyid);
 		}
 	}
 		

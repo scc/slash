@@ -20,7 +20,7 @@ __template__
 	[% x = x + 1; "</TR><TR>" IF (x mod 6) == 1 %]
 		<TD ALIGN="CENTER">
 	[% IF user.seclev >= 500 %]
-		<A HREF="[% env.script_name %]?op=topics&nexttid=[% topic.tid %]">
+		<A HREF="[% env.script_name %]?op=topics&amp;nexttid=[% topic.tid %]">
 	[% ELSE %]
 		<A NAME="">
 	[% END %]

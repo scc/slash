@@ -50,7 +50,7 @@ __template__
 
 	[% FOREACH i = filter_ref %]
 	<TR>
-		<TD>[<A HREF="[% env.script_name %]?op=editfilter&filter_id=[% i.0 %]">[% i.0 %]</A>]</TD>
+		<TD>[<A HREF="[% env.script_name %]?op=editfilter&amp;filter_id=[% i.0 %]">[% i.0 %]</A>]</TD>
 		<TD><FONT FACE="courier" size="+1">[% i.1 %]</FONT></TD>
 		<TD> [% i.2 %] </TD>
 		<TD> [% i.3 %] </TD>

@@ -22,17 +22,17 @@ sub main {
 	# lc just in case
 	my $op = lc($form->{op});
 
-	my ($tbtitle);
+	my($tbtitle);
 
 	my $ops = {
 		authors		=> { 	# authorsave,authordelete,
 					# authornew,authoredit,
 
-			function 	=> \&authorEdit, 
+			function 	=> \&authorEdit,
 			seclev 		=> 10000,
 		},
 		save_keyword 	=> {
-			function 	=> \&saveKeyword, 
+			function 	=> \&saveKeyword,
 			seclev		=> 100,
 		},
 		edit_keyword	=> {
@@ -51,7 +51,7 @@ sub main {
 			function	=> \&updateStory,
 			seclev		=> 100,
 		},
-		list		=> { 
+		list		=> {
 			function	=> \&listStories,
 			seclev		=> 100,
 		},
@@ -68,25 +68,25 @@ sub main {
 			seclev		=> 100,
 		},
 		listtopics	=> {
-			function 	=> \&listTopics,	
+			function 	=> \&listTopics,
 			seclev		=> 10000,
 		},
 		blocks 		=> {	# blockdelete_cancel,blockdelete_confirm,
 					# blockdelete1,blockdelete2,blocksave,
 					# blockrevert,blocksavedef,blockdelete,blocknew,
 
-			function 	=> \&blockEdit, 
+			function 	=> \&blockEdit,
 
 			seclev		=> 10000,
 		},
 		colors 		=> {	# colored,colorpreview,colorsave,colorrevert,
 					# colororig,colorsavedef,
 
-			function 	=> \&colorEdit, 
+			function 	=> \&colorEdit,
 			seclev		=> 10000,
 		},
 		listfilters 	=> {
-			function 	=> \&listFilters, # listfilters 
+			function 	=> \&listFilters, # listfilters
 			seclev		=> 100,
 		},
 		editfilter	=> {
@@ -103,24 +103,24 @@ sub main {
 					# templatepage,templateed,templatedelete,
 					# templatenew,templatesave,
 
-			function 	=> \&templateEdit, 
+			function 	=> \&templateEdit,
 			seclev		=> 10000,
 		},
 
 		topics 		=> {	# topiced,topicnew,topicsave,topicdelete
 
-			function 	=>  \&topicEdit, 
+			function 	=>  \&topicEdit,
 			seclev		=> 10000,
 		},
 		vars 		=> {	# varsave, varedit
 
-			function 	=> \&varEdit, 
+			function 	=> \&varEdit,
 			seclev		=> 10000,
 		},
 	};
 
 	# admin.pl is not for regular users
-	if ( $user->{seclev} < 100) {
+	if ($user->{seclev} < 100) {
 		my $rootdir = getCurrentStatic('rootdir');
 		redirect("$rootdir/users.pl");
 		return;
@@ -163,7 +163,7 @@ sub main {
 ##################################################################
 #  Variables Editor
 sub varEdit {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	if ($form->{varsave}) {
 		varSave(@_);
@@ -188,7 +188,7 @@ sub varEdit {
 
 ##################################################################
 sub varSave {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	if ($form->{thisname}) {
 		my $value = $slashdb->getVar($form->{thisname});
@@ -215,7 +215,7 @@ sub varSave {
 ##################################################################
 # Author Editor
 sub authorEdit {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my($aid);
 
@@ -263,7 +263,7 @@ sub authorEdit {
 
 ##################################################################
 sub siteInfo {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my $plugins = $slashdb->getDescriptions('plugins');
 	my $site_info = $slashdb->getDescriptions('site_info');
@@ -277,7 +277,7 @@ sub siteInfo {
 
 ##################################################################
 sub authorSave {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	if ($form->{thisaid}) {
 		# And just why do we take two calls to do
@@ -343,14 +343,14 @@ sub pageEdit {
 # OK, here's the template editor
 # @my_names = grep /^$foo-/, @all_names;
 sub templateEdit {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
-	my ($seclev, $tpid, $page, $section) ; 
+	my($seclev, $tpid, $page, $section);
 
-	my($title, $templateref, $template_select, $page_select, 
+	my($title, $templateref, $template_select, $page_select,
 		$section_select, $savepage_select, $savesection_select);
 
-	my ($templatedelete_flag, $templateedit_flag, $templateform_flag) = 0;
+	my($templatedelete_flag, $templateedit_flag, $templateform_flag) = 0;
 	my $pagehashref = {};
 	$title = getTitle('templateEdit-title', {}, 1);
 
@@ -450,7 +450,7 @@ sub templateEdit {
 
 ##################################################################
 sub templateSave {
-	my ($tpid, $name, $page, $section) = @_; 
+	my($tpid, $name, $page, $section) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -512,9 +512,9 @@ sub templateDelete {
 
 ##################################################################
 sub blockEdit {
-	my ($form,$slashdb,$user,$constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
-	my ($bid);
+	my($bid);
 
 	if ($form->{blocksave} || $form->{blocksavedef}) {
 		blockSave($form->{thisbid});
@@ -522,7 +522,7 @@ sub blockEdit {
 		print getMessage('blockSave-saved-message', { bid => $bid });
 
 	} elsif ($form->{blockrevert}) {
-		$slashdb->revertBlock($form->{thisbid}); 
+		$slashdb->revertBlock($form->{thisbid});
 		$bid = $form->{thisbid};
 
 	} elsif ($form->{blockdelete}) {
@@ -537,7 +537,7 @@ sub blockEdit {
 	} elsif ($form->{blockdelete_confirm}) {
 		blockDelete($form->{deletebid});
 		print getMessage('blockDelete-message', { bid => $form->{deletebid} });
-	} 
+	}
 
 	my($blockref, $saveflag, $block_select, $retrieve_checked,
 		$portal_checked, $block_select1, $block_select2);
@@ -620,7 +620,7 @@ sub blockDelete {
 
 ##################################################################
 sub colorEdit {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my($color_select, $block, $colorblock_clean, $title, @colors);
 
@@ -719,7 +719,7 @@ sub saveKeyword {
 ##################################################################
 # Topic Editor
 sub topicEdit {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{basedir};
 
 	my($topic, $topics_menu, $topics_select);
@@ -735,7 +735,7 @@ sub topicEdit {
 		print getMessage('topicSave-message');
 	}
 
-	my ($imageseen_flag, $images_flag) = (0, 0);
+	my($imageseen_flag, $images_flag) = (0, 0);
 
 	local *DIR;
 	opendir(DIR, "$basedir/images/topics");
@@ -796,7 +796,7 @@ sub topicDelete {
 
 ##################################################################
 sub topicSave {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{basedir};
 
 	if (!$form->{width} && !$form->{height}) {
@@ -816,7 +816,7 @@ sub topicSave {
 
 ##################################################################
 sub listTopics {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 	my $imagedir = $constants->{imagedir};
 
 	my $topics = $slashdb->getTopics();
@@ -955,7 +955,7 @@ sub otherLinks {
 ##################################################################
 # Story Editing
 sub editStory {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my($sid);
 
@@ -1179,15 +1179,15 @@ sub get_ispell_comments {
 
 ##################################################################
 sub listStories {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
-	my ($first_story, $num_stories) = ($form->{'next'} || 0, 40);
-	my ($count, $storylist) = $slashdb->getStoryList($first_story, $num_stories);
+	my($first_story, $num_stories) = ($form->{'next'} || 0, 40);
+	my($count, $storylist) = $slashdb->getStoryList($first_story, $num_stories);
 
 	my $storylistref = [];
-	my ($sectionflag);
-	my ($i, $canedit) = (0, 0);
-	
+	my($sectionflag);
+	my($i, $canedit) = (0, 0);
+
 	if ($form->{op} eq 'delete') {
 		rmStory($form->{sid});
 		titlebar('100%', getTitle('rmStory-title', {sid => $form->{sid}}));
@@ -1250,7 +1250,7 @@ sub rmStory {
 
 ##################################################################
 sub listFilters {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my $formname = $form->{formname};
 
@@ -1269,9 +1269,9 @@ sub listFilters {
 
 ##################################################################
 sub editFilter {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
-	my ($filter_id);
+	my($filter_id);
 
 	if ($form->{newfilter}) {
 		$filter_id = $slashdb->createContentFilter($form->{formname});
@@ -1316,7 +1316,7 @@ sub editFilter {
 
 ##################################################################
 sub updateStory {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	# Some users can only post to a fixed section
 	if (my $section = getCurrentUser('section')) {
@@ -1339,7 +1339,7 @@ sub updateStory {
 
 ##################################################################
 sub saveStory {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	my $edituser = $slashdb->getUser($form->{uid});
 	my $rootdir = getCurrentStatic('rootdir');
