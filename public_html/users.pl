@@ -34,9 +34,11 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 	my $user = getCurrentUser();
+while(my ($key, $val) = each %$user) {
+	print STDERR "USER :$key:$val:\n";
+}
 
 	my $op = $I{F}{op};
-print STDERR "OP $I{F}{op}\n";
 
 	if ($op eq "userlogin" && !$user->{is_anon}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
@@ -57,9 +59,8 @@ print STDERR "OP $I{F}{op}\n";
 
 	header("$I{sitename} Users");
 
-	if (!$user->{is_anon} && $op ne "userclose") {
-		my $menu = getCurrentMenu('user');
-		createMenu($menu);
+	if (!$user->{is_anon} || $op ne "userclose") {
+		createMenu('user');
 	}
 	# and now the carnage begins
 	if ($op eq "newuser") {
@@ -230,8 +231,9 @@ sub mailPassword {
 		return;
 	}
 
-	my $user_email = $I{dbobject}->getUser($uid, qw(nickname realemail));
+	my $user_email = $I{dbobject}->getUser($uid, [qw(nickname realemail)]);
 	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
+
 	my $tempnick = fixparam($user_email->{nickname});
 
 	my $msg = eval prepBlock $I{dbobject}->getBlock('users_mailpasswdmsg','block');
