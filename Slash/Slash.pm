@@ -582,7 +582,7 @@ sub dispComment {
 	}
 
 	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 2;	# default is 2 # XXX Jamie I think should be 1
-	$udt =~ /^(\d+)$/; $udt = 1 if !length($1);	# make sure it's numeric, sigh
+	$udt =~ /^(\d+)$/; $udt = 2 if !length($1);	# make sure it's numeric, sigh
 	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
 	$want_tags = 0 if				# but, don't display them if...
 		$udt == 0				# the user has said they never want the tags

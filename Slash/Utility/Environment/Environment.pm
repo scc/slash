@@ -504,7 +504,7 @@ A member from the static record to be returned.
 
 =item Return value
 
-A hash reference with the satic information is returned unless MEMBER is passed. If
+A hash reference with the static information is returned unless MEMBER is passed. If
 MEMBER is passed in then only its value will be returned.
 
 =back

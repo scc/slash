@@ -647,7 +647,7 @@ sub clearM2Flag {
 }
 
 ########################################################
-# For freshneup.pl
+# For freshenup.pl
 #
 #
 sub getStoriesWithFlag {
