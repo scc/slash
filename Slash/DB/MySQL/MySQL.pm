@@ -2897,6 +2897,9 @@ sub getCommentReply {
 		AND users.uid=$comment_table.uid"
 	) || {};
 
+	# For a comment we're replying to, there's no need to mod.
+	$reply->{no_moderation} = 1;
+
 	formatDate([$reply]);
 	return $reply;
 }
