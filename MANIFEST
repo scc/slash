@@ -492,7 +492,6 @@ themes/slashcode/templates/users;menu;default
 themes/slashcode/templates/vote;pollBooth;default
 themes/slashcode/templates/yourPendingSubs;submit;default
 utils/convert-dump
-utils/excessiveHits
 utils/replaceblock
 utils/slash
 utils/slash1toslash2.2
