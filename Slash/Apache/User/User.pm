@@ -256,8 +256,8 @@ sub DESTROY { }
 @QUOTES = (
 	'Fry, of all the friends I\'ve had ... you\'re the first.',
 	'I hate people who love me.  And they hate me.',
-	'Oh no! Not the magnet! ',
-	'Bender\'s a genius! ',
+	'Oh no! Not the magnet!',
+	'Bender\'s a genius!',
 	'Well I don\'t have anything else planned for today, let\'s get drunk!',
 	'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!',
 	'Oh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.',
@@ -272,6 +272,8 @@ sub DESTROY { }
 	'OK, but I don\'t want anyone thinking we\'re robosexuals.',
 	'Hey Fry, I\'m steering with my ass!',
 	'Care to contribute to the Anti-Mugging-You Fund?',
+	'Want me to smack the corpse around a little?',
+	'My full name is Bender Bending Rodriguez.',
 );
 
 

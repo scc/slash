@@ -177,18 +177,30 @@ sub slashDisplay {
 		$user->{$_} = defined $user->{$_} ? $user->{$_} : '';
 	}
 
-	# we don't want to have to call this here, but because
-	# it is cached the performance his it is generally light,
-	# and this is the only good way to get the actual name,
-	# page, section, we bite the bullet and do it
-	$tempdata = $slashdb->getTemplateByName($name, [qw(tpid page section)]);
 
-	$tempname = "ID $tempdata->{tpid}, " .
-		"$name;$tempdata->{page};$tempdata->{section}";
-	@comments = (
-		"\n\n<!-- start template: $tempname -->\n\n",
-		"\n\n<!-- end template: $tempname -->\n\n"
-	);
+	if (ref $name) {
+		@comments = (
+			"\n\n<!-- start template: anon -->\n\n",
+			"\n\n<!-- end template: anon -->\n\n"
+		);
+	} else {
+		# we don't want to have to call this here, but because
+		# it is cached the performance his it is generally light,
+		# and this is the only good way to get the actual name,
+		# page, section, we bite the bullet and do it
+		$tempdata = $slashdb->getTemplateByName($name, [qw(tpid page section)]);
+
+		# we could, at this point, just return from the
+		# function if $tempdata->{tpid} is undef ...
+		# do we want to try?  for now leave it in.
+
+		$tempname = "ID $tempdata->{tpid}, " .
+			"$name;$tempdata->{page};$tempdata->{section}";
+		@comments = (
+			"\n\n<!-- start template: $tempname -->\n\n",
+			"\n\n<!-- end template: $tempname -->\n\n"
+		);
+	}
 
 	$data ||= {};
 	_populate($data);
@@ -295,7 +307,8 @@ sub get_template {
 		: 0;						# cache off
 
 	return $cfg->{template} = Template->new({
-		TRIM		=> $constants->{template_trim},
+		# this really has to be "1" for some stuff to work
+		TRIM		=> 1,
 		LOAD_FILTERS	=> $filters,
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		%$cfg1,
@@ -353,9 +366,9 @@ sub _populate {
 
 =head1 TEMPLATE ENVIRONMENT
 
-The template has the options TRIM, PRE_CHOMP, and POST_CHOMP set by default.
+The template has the options PRE_CHOMP and POST_CHOMP set by default.
 You can change these in the B<vars> table in your database
-(template_trim, template_pre_chomp, template_post_chomp).  Also
+(template_pre_chomp, template_post_chomp).  Also
 look at the template_cache_size variable for setting the cache size.
 L<Template> for more information.  The cache will be disabled entirely if
 cache_enabled is false.
