@@ -61,7 +61,7 @@ $task{$me}{code} = sub {
 		"GROUP BY val"
 	);
 	my $modlog_total = $modlog_hr->{1}{count} + $modlog_hr->{-1}{count};
-	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $moderatorlog_rows, $metamodlog_rows, $mod_points, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $modlog_total);
+	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $moderatorlog_rows, $metamodlog_rows, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count});
  accesslog: %7d rows total
   formkeys: %7d rows total
     modlog: %7d rows total
