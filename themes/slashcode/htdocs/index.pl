@@ -274,6 +274,16 @@ sub displayStories {
 	return $return;
 }
 
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "index-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('index-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
+}
 
 #################################################################
 createEnvironment();
