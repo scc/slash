@@ -234,7 +234,7 @@ sub displayArticle {
 		$uid		= $user->{uid};
 	}
 
-	_printHead("userhead", { nickname => $nickname });
+	_printHead("userhead", { nickname => $nickname, uid => $uid });
 
 	# clean it up
 	my $start = fixint($form->{start}) || 0;
@@ -330,7 +330,7 @@ sub listArticle {
 		? $slashdb->getUser($form->{uid}, 'nickname')
 		: $user->{nickname};
 
-	_printHead("userhead", { nickname => $nickname });
+	_printHead("userhead", { nickname => $nickname, uid => $form->{uid} || $user->{uid} });
 
 	if (@$list) {
 		slashDisplay('journallist', {
@@ -439,6 +439,7 @@ sub articleMeta {
 
 	if ($form->{id}) {
 		my $article = $journal->get($form->{id});
+		_printHead("mainhead");
 		slashDisplay('meta', { article => $article });
 	} else {
 		listArticle(@_);
@@ -448,7 +449,7 @@ sub articleMeta {
 sub removeArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 
-	for my $id (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+	for my $id (grep { $_ = /^del_(\d+)$/ ? $1 : 0 } keys %$form) {
 		$journal->remove($id);
 	}
 
@@ -460,6 +461,7 @@ sub friendMeta {
 
 	if ($form->{uid}) {
 		my $friend = $slashdb->getUser($form->{uid});
+		_printHead("mainhead");
 		slashDisplay('meta', { friend => $friend });
 	} else {
 		displayFriends(@_);
@@ -476,7 +478,7 @@ sub addFriend {
 sub deleteFriend {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 
-	for my $uid (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+	for my $uid (grep { $_ = /^del_(\d+)$/ ? $1 : 0 } keys %$form) {
 		$journal->delete($uid);
 	}
 

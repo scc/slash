@@ -743,6 +743,7 @@ CREATE TABLE users_info (
 	expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_days smallint UNSIGNED DEFAULT '1' NOT NULL,
 	user_expiry_comm smallint UNSIGNED DEFAULT '1' NOT NULL,
+	journal_last_entry_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	created_at datetime DEFAULT '0000-00-00 00:00' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)

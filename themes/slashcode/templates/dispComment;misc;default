@@ -40,8 +40,13 @@ __template__
 <B><FONT SIZE="2">([% FILTER strip_literal; fakeemail; END %])</FONT></B>[% ELSE %][% nickname %][% END %]
  on [% time %] (<A HREF="[% constants.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]">#[% cid %]</A>)</FONT><BR>
 				<FONT FACE="[% constants.mainfontface %]" SIZE="1">
-[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
-[% IF homepage && homepage.length > 8 %]<A HREF="[% homepage %]">[% homepage %]</A><BR>[% END %]
+[% UNLESS is_anon %]
+<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>
+[% IF homepage && homepage.length > 8 %] | <A HREF="[% homepage %]">[% homepage %]</A>[% END %]
+[% IF journal_last_entry_date %] | Last Journal:
+<A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]">[% Slash.timeCalc(journal_last_entry_date) %]</A>
+[% END %]
+[% END %]
 </FONT>
 			</TD></TR></TABLE></TD>
 			<TD BACKGROUND="[% constants.imagedir %]/gr.gif"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="11" HEIGHT="11" ALT=""></TD>

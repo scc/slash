@@ -144,7 +144,7 @@ sub delete_messages {
 	my($messages, $constants, $user, $form) = @_;
 	my($note, @success, @fail);
 
-	for my $id (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+	for my $id (grep { $_ = /^del_(\d+)$/ ? $1 : 0 } keys %$form) {
 		if ($messages->_delete_web($id)) {
 			push @success, $id;
 		} else {

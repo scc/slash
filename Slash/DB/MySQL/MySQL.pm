@@ -2817,9 +2817,9 @@ sub getCommentsForUser {
 	my $sql = <<EOT;
 SELECT	cid, date, subject, nickname, homepage, fakeemail,
 	users.uid as uid, sig, $comment_table.points as points, pid, sid,
-	lastmod, reason
-FROM $comment_table, users
-WHERE sid=$sid_quoted AND $comment_table.uid=users.uid
+	lastmod, reason, journal_last_entry_date
+FROM $comment_table, users, users_info
+WHERE sid=$sid_quoted AND $comment_table.uid=users.uid AND users.uid=users_info.uid
 EOT
 
 	if ($user->{hardthresh}) {

@@ -21,7 +21,7 @@ __template__
 	[% constants.sitename %] Journal System
 
 [% CASE 'userhead' %]
-	[% nickname %]'s Journal
+	[% nickname %]'s Journal ([% uid %])
 
 [% CASE 'nousers' %]
 	No users with journals found matching "[% FILTER strip_literal; form.nickname; END %]".

@@ -111,6 +111,7 @@ sub remove {
 	$self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id");
 
 	my($date) = $self->sqlSelect('MAX(date)', 'journals', "uid=$uid");
+	$date ||= 0;	# has to be defined
 	my $slashdb = getCurrentDB();
 	$slashdb->setUser($uid, { journal_last_entry_date => $date });
 }
@@ -335,7 +336,7 @@ sub get {
 
 sub DESTROY {
 	my($self) = @_;
-	$self->{_dbh}->disconnect unless ($ENV{GATEWAY_INTERFACE});
+	$self->{_dbh}->disconnect if !$ENV{GATEWAY_INTERFACE} && $self->{_dbh};
 }
 
 
