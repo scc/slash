@@ -94,8 +94,8 @@ sub handler {
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
-	$r->subprocess_env('REMOTE_USER' => $uid);
 	$uid ||= $constants->{anonymous_coward_uid};
+	$r->subprocess_env('REMOTE_USER' => $uid);
 	$cfg->{user} = getUser($r, $constants, $dbslash, $form, $cookies, $uid);
 	$cfg->{form} = $form;
 
