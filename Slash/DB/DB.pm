@@ -111,31 +111,12 @@ This package is the front end interface to slashcode.
 By looking at the database parameter during creation
 it determines what type of database to inherit from.
 
-=head2 sqlConnect(KEY)
 
-I am the default documentation, short and stout.
+=head2 createComment(FORM, USER, POINTS, DEFAULT_USER)
 
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 init(KEY)
-
-I am the default documentation, short and stout.
+This is an awful method. You use it to create a new
+comments. This will go away. It locks tables, so
+fear calling it.
 
 =over 4
 
@@ -143,21 +124,45 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item FORM
 
-Key, as in the KEY
+FORM, as in a form structure. Pretty much no
+good reason why we have to pass this.
+
+=back
+
+=item USER
+
+USER, as in a USER structure. Pretty much no
+good reason why we have to pass this.
+
+=back
+
+=item POINTS
+
+Points for the comment.
+
+=back
+
+=item DEFAULT_USER
+
+Default user to use if the person is being a coward about
+posting.
 
 =back
 
 =item Return value
 
-Fixed KEY.
+Return -1 on failure, and maxcid otherwise.
 
 =back
 
-=head2 createComment(KEY)
+=head2 setModeratorLog(CID, SID, UID, VAL, REASON)
 
-I am the default documentation, short and stout.
+This set has some logic to it and is not a
+generic set method. All values must be accounted
+for or this will not work. Basically this 
+creates an entry in the moderator log.
 
 =over 4
 
@@ -165,37 +170,39 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item CID
 
-Key, as in the KEY
+Comment ID.
+
+=back
+
+=item SID
+
+Story ID.
+
+=back
+
+=item UID
+
+UID of the user doing the moderation.
+
+=back
+
+=item VAL
+
+Value for moderation
+
+=back
+
+=item REASON
+
+Reason for moderation
 
 =back
 
 =item Return value
 
-Fixed KEY.
-
-=back
-
-=head2 setModeratorLog(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
+No defined value.
 
 =back
 
@@ -287,9 +294,24 @@ Fixed KEY.
 
 =back
 
-=head2 getContentFilters(KEY)
+=head2 getContentFilters()
 
-I am the default documentation, short and stout.
+This returns all content filters in an array of arrays.
+It does not return filters that have been created but
+not defined.
+
+=over 4
+
+=item Return value
+
+This return an array of arrays. The order is currently
+defined by the schema.
+
+=back
+
+=head2 createPollVoter(QID, AID)
+
+Increment the poll count for a given answer.
 
 =over 4
 
@@ -297,21 +319,28 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item QID
 
-Key, as in the KEY
+QID is a question ID for polls.
+
+=back
+
+=item AID
+
+Answer ID for the poll
 
 =back
 
 =item Return value
 
-Fixed KEY.
+No defined value.
 
 =back
 
-=head2 createPollVoter(KEY)
+=head2 createSubmission(FORM)
 
-I am the default documentation, short and stout.
+This creates a submission. Passing in the
+form is optional. 
 
 =over 4
 
@@ -319,37 +348,15 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item FORM
 
-Key, as in the KEY
-
-=back
-
-=item Return value
-
-Fixed KEY.
-
-=back
-
-=head2 createSubmission(KEY)
-
-I am the default documentation, short and stout.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item KEY
-
-Key, as in the KEY
+Standard form structure.
 
 =back
 
 =item Return value
 
-Fixed KEY.
+No defined value.
 
 =back
 

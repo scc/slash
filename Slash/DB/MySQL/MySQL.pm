@@ -154,7 +154,7 @@ sub init {
 }
 
 ########################################################
-# Bad need of rewriting, which I have done :)
+# Bad need of rewriting....
 sub createComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
 	my $sid_db = $self->{_dbh}->quote($form->{sid});
@@ -340,8 +340,8 @@ sub createPollVoter {
 
 ########################################################
 sub createSubmission {
-	my($self) = @_;
-	my $form = getCurrentForm();
+	my($self, $form) = @_;
+	$form ||= getCurrentForm();
 	my $uid = getCurrentUser('uid');
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
 	my $subid = "$hour$min$sec.$mon$mday$year";
@@ -357,7 +357,6 @@ sub createSubmission {
 			tid	=> $form->{tid},
 			section	=> $form->{section}
 	});
-	$self->formSuccess($form->{formkey}, 0, length($form->{subj}));
 }
 
 #################################################################
@@ -693,7 +692,7 @@ sub createContentFilter {
 		err_message	=> ''
 	});
 
-	my($filter_id) = $self->sqlSelect("max(filter_id)", "content_filters");
+	my($filter_id) = $self->sqlSelect("LAST_INSERT_ID()");
 
 	return $filter_id;
 }
