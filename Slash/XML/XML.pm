@@ -52,7 +52,7 @@ Creates XML data.
 =item TYPE
 
 The XML type, which determines which XML creation routine to call.
-Right now, supports only "rss" which calls create_rss().
+Right now, supports only "rss" which calls XML::RSS::create().
 
 =item PARAM
 

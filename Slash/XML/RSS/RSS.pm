@@ -302,7 +302,7 @@ sub create {
 
 =head2 rss_story(ITEM, ENCODED_ITEM, VERSION)
 
-Set up a story item for RSS.  Called from create_rss().
+Set up a story item for RSS.  Called from create().
 
 =over 4
 
@@ -320,7 +320,7 @@ The prepared encoded data from ITEM.
 
 =item VERSION
 
-The VERSION as defined in create_rss().  Does the Right Thing for >= "1.0",
+The VERSION as defined in create().  Does the Right Thing for >= "1.0",
 >= "0.91", and "0.9".
 
 =back
