@@ -5,7 +5,7 @@
 # $Id$
 
 ###############################################################################
-# portald  - this is the "daemon" responsible for retrieving portal and site 
+# portald  - this is the "daemon" responsible for retrieving portal and site
 # block content
 ###############################################################################
 
@@ -39,7 +39,7 @@ my $totalChangedStories = 1;
 sub makeTmp {
 	if (-f "$constants->{logdir}/portald.pid") {
 		my $log = `tail -n 3 $constants->{logdir}/portald.log`;
-		#sendEmail($siteadmin,'portal - frickin - d',"Portald has failed. You may want to fix it in the near future. Here are the last 3 lines of the log:\n$log");
+		#sendEmail($siteadmin, 'portal - frickin - d', "Portald has failed. You may want to fix it in the near future. Here are the last 3 lines of the log:\n$log");
 	} else {
 		open LOCK, "> $constants->{logdir}/portald.pid"
 			or die "Can't open $constants->{logdir}/portald.pid: $!";
@@ -57,7 +57,7 @@ sub deleteTmp {
 sub geturl {
 	my $ua = new LWP::UserAgent;
 	my $request = new HTTP::Request('GET', $_[0]);
-	$ua->proxy(http => $constants->{http_proxy}) if $constants->{http_proxy}; 
+	$ua->proxy(http => $constants->{http_proxy}) if $constants->{http_proxy};
 	$ua->timeout(30);
 	my $result = $ua->request($request);
 

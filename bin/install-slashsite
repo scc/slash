@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
@@ -106,7 +106,7 @@ $owner_id = getpwnam($owner);
 die "$owner is not a valid user name.\n" unless defined $owner_id;
 
 unless ($opts{'g'}) {
-	my $tmpgroup = getgrgid($owner_id); 
+	my $tmpgroup = getgrgid($owner_id);
 	$tmpgroup = defined($tmpgroup) ? $tmpgroup : 'nobody';
 	print "\nWhat group would you like to run your Slash site under? [$tmpgroup] ";
 	chomp($group = <STDIN>);
@@ -149,11 +149,11 @@ while (my $dir = readdir(THEMEDIR)) {
 	$themes{$x}->{'dir'} = "$PREFIX/themes/$dir";
 	$themes{$x}->{'name'} = $dir;
 	print "$themes{$x}->{'order'}.\t$dir\n";
-	open(THEME,"< $PREFIX/themes/$dir/PLUGIN") or next; 
+	open(THEME, "< $PREFIX/themes/$dir/PLUGIN") or next;
 	my @info = <THEME>;
 	chomp(@info);
-	for(@info) {
-		my ($key, $val) = split(/=/, $_, 2);
+	for (@info) {
+		my($key, $val) = split(/=/, $_, 2);
 		$key = lc($key);
 		$themes{$x}->{$key} = $val;
 	}
@@ -175,8 +175,8 @@ while ($select ne 'q'){
 	chomp($select = <STDIN>);
 
 	if ($select =~ /^\d\,/) {
-		@answers = split(/\,/,$select);
-		last;	
+		@answers = split(/\,/, $select);
+		last;
 	} elsif ($select eq 'a') {
 		for (keys %$plugins) {
 			push @answers, $plugins->{$_}{'order'};
@@ -260,7 +260,7 @@ if ($driver eq 'oracle') {
 	}
 }
 
-open(DUMP,"< $theme/sql/$driver/datadump.sql")
+open(DUMP, "< $theme/sql/$driver/datadump.sql")
 	or die "Can't open $theme/sql/$driver/datadump.sql: $!.\n";
 while (<DUMP>) {
 	next unless /^INSERT/;
@@ -280,7 +280,7 @@ while (<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,"< $theme/sql/$driver/prep.sql");
+open(DUMP, "< $theme/sql/$driver/prep.sql");
 while (<DUMP>) {
 	chomp;
 	s/;$//;
@@ -307,6 +307,7 @@ mkpath "$prefix_site/$sitename/backups", 0, 0775;
 mkpath "$prefix_site/$sitename/sbin", 0, 0775;
 mkpath "$prefix_site/$sitename/tasks", 0, 0775;
 mkpath "$prefix_site/$sitename/misc", 0, 0775;
+
 {
 	local $dirname;
 	my $find_subref = sub {
@@ -347,7 +348,7 @@ $install->create({ name => 'db_driver',			value => "$driver"});
 my $slashdb = Slash::DB->new($opts{'u'});
 
 opendir(TEMPLATEDIR, "$theme/templates/");
-while(my $dir = readdir(TEMPLATEDIR)) {
+while (my $dir = readdir(TEMPLATEDIR)) {
 	chomp($dir);
 	next if $dir =~ /^\.$/;
 	next if $dir =~ /^\.\.$/;
@@ -361,9 +362,9 @@ closedir(TEMPLATEDIR);
 $install->installPlugin(\@answers, 0, $symlink);
 
 my $uid = $slashdb->createUser($username, $email, $username);
-$slashdb->setUser($uid, { 
-	passwd => $password, 
-	author => 1, 
+$slashdb->setUser($uid, {
+	passwd => $password,
+	author => 1,
 	seclev => 10000
 });
 
@@ -401,7 +402,7 @@ sub apache_site_conf {
 # path listed here is most likely the actual path;
 # fix it and DocumentRoot if you want to
 <Directory $prefix_site/$sitename/htdocs>
-    Options FollowSymLinks ExecCGI Includes Indexes 
+    Options FollowSymLinks ExecCGI Includes Indexes
     AllowOverride None
     Order allow,deny
     Allow from all
@@ -434,9 +435,9 @@ sub apache_site_conf {
     DirectoryIndex index.pl index.shtml
     ErrorDocument 404 /404.pl
 
-    AddType text/xml .rdf 
-    AddType text/xml .rss 
-    AddType text/xml .xml 
+    AddType text/xml .rdf
+    AddType text/xml .rss
+    AddType text/xml .xml
     AddType text/xml .wml
 
     AddType text/html .shtml
@@ -446,7 +447,7 @@ sub apache_site_conf {
     AddHandler server-parsed .inc
 </VirtualHost>
 |;
-	my $file = "$prefix_site/$sitename/$sitename.conf";  
+	my $file = "$prefix_site/$sitename/$sitename.conf";
 	open(FILE, '> ' . $file);
 	print FILE $text;
 	close(FILE);

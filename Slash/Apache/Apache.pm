@@ -46,7 +46,7 @@ sub SlashVirtualUser ($$$) {
 	my $dateformats = $cfg->{slashdb}->getDescriptions('datecodes');
 	$anonymous_coward->{'format'} = $dateformats->{ $anonymous_coward->{dfid} };
 
-	$cfg->{anonymous_coward} = $anonymous_coward; 
+	$cfg->{anonymous_coward} = $anonymous_coward;
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 	# If this is not here this will go poorly.
 	$cfg->{slashdb}->{_dbh}->disconnect;
@@ -78,7 +78,7 @@ sub IndexHandler {
 			return OK;
 		}
 	}
-	
+
 	return DECLINED;
 }
 
@@ -95,7 +95,7 @@ Slash::Apache - Apache Specific handler for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::Apache;
+	use Slash::Apache;
 
 =head1 DESCRIPTION
 

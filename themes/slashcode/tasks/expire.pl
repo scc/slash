@@ -24,20 +24,20 @@ $task{$PROGNAME}{timespec} = '0 6 * * *';
 
 # Handles mail and administrivia necessary for RECENTLY expired users.
 $task{$PROGNAME}{code} = sub {
-    my($virtual_user, $constants, $slashdb, $user) = @_;
+	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-    # We only perform the check if any of the following are turned on.
-    # the logic below, should probably be moved into Slash::Utility.
-    return unless allowExpiry();
+	# We only perform the check if any of the following are turned on.
+	# the logic below, should probably be moved into Slash::Utility.
+	return unless allowExpiry();
 
-    # Loop over all about-to-expire users.
-    my $reg_subj = "You're $constants->{sitename} password has expired.";
-    for my $e_user (@{$slashdb->checkUserExpiry()}) {
-        # Put user in read-only mode for all forms and other 'pages' that
-        # should be. This should also send the appropriate email. This
+	# Loop over all about-to-expire users.
+	my $reg_subj = "You're $constants->{sitename} password has expired.";
+	for my $e_user (@{$slashdb->checkUserExpiry()}) {
+		# Put user in read-only mode for all forms and other 'pages' that
+		# should be. This should also send the appropriate email. This
 		# is better off in the API, as it is used in users.pl, as well.
 		setUserExpired($e_user, 1);
-    }            
+	}
 };
 
 

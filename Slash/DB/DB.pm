@@ -63,8 +63,8 @@ Slash::DB - Database Class for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB;
-  $my object = new Slash::DB("virtual_user");
+	use Slash::DB;
+	my $object = Slash::DB->new("virtual_user");
 
 =head1 DESCRIPTION
 
@@ -118,7 +118,7 @@ Return -1 on failure, and maxcid otherwise.
 
 This set has some logic to it and is not a
 generic set method. All values must be accounted
-for or this will not work. Basically this 
+for or this will not work. Basically this
 creates an entry in the moderator log.
 
 =over 4
@@ -287,7 +287,7 @@ No defined value.
 =head2 createSubmission(FORM)
 
 This creates a submission. Passing in the
-form is optional. 
+form is optional.
 
 =over 4
 
@@ -353,7 +353,7 @@ Fixed KEY.
 
 =head2 setContentFilter(FORM)
 
-Save data into a filter. 
+Save data into a filter.
 
 =over 4
 
@@ -848,7 +848,7 @@ Fixed KEY.
 
 You should call this whenever you delete comments
 belonging to a story with the count of the number
-of comments you deleted. 
+of comments you deleted.
 
 =over 4
 

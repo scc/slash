@@ -25,7 +25,7 @@ $task{$PROGNAME}{timespec} = '0 6 * * *';
 
 # Handles rotation of fakeemail address of all users.
 $task{$PROGNAME}{code} = sub {
-	my ($virtual_user, $constants, $slashdb, $user) = @_;
+	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	# Loop over all users.
 	my $nicks = ($slashdb->getDescriptions('users'))[0];
@@ -33,14 +33,14 @@ $task{$PROGNAME}{code} = sub {
 		$user = $slashdb->getUser($_);
 
 		# Should be a constant somewhere, probably. The naked '1' below
-		# refers to the code in $users->{emaildisplay} corresponding to 
+		# refers to the code in $users->{emaildisplay} corresponding to
 		# random rotation of $users->{fakeemail}. This would be much
 		# easier to do if $users->{emaildisplay} was in the schema.
 		next if $user->{emaildisplay} != 1;
 
 		# Randomize the email armor.
 		$user->{fakeemail} = getArmoredEmail($_);
-		
+
 		# If executed properly, $user->{fakeemail} should have a value.
 		# If so, save the result.
 		$slashdb->setUser($user->{uid}, {

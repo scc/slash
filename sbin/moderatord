@@ -6,7 +6,7 @@
 
 ###############################################################################
 # moderatord - the moderation "daemon". Calculates moderation information and
-# assigns results to users 
+# assigns results to users
 ###############################################################################
 
 use strict;
@@ -72,12 +72,12 @@ my $lc = $slashdb->getVar('lastComments', 'value');
 # a quorum and is of sufficient age to be handled.
 $slashdb->applyMetaModeration();
 
-# Maybe we should think about adding in a minimum 
-# value here which would affect the minimum # of 
+# Maybe we should think about adding in a minimum
+# value here which would affect the minimum # of
 # tokens/points distributed per execution. It would
-# be a way of injecting a certain amount of points 
+# be a way of injecting a certain amount of points
 # into the system without requiring the need to have
-# comments. Something a site admin might want to 
+# comments. Something a site admin might want to
 # consider with a small pool of moderatorsm ala...
 #
 #$newcomments += $constants->{moderatord_minnewcomments}
@@ -90,7 +90,7 @@ if ($newcomments > 0) {
 	$slashdb->setVar('lastComments', $tc);
 	comments2tokens($newcomments);
 	my $log = $slashdb->tokens2points();
-	for(@$log) {
+	for (@$log) {
 		moderatordLog(@_);
 	}
 }

@@ -31,7 +31,7 @@ $task{$me}{code} = sub {
 	$slashdb->setStoryIndex(@updatedsids);
 
 	my $x = 0;
-	# this deletes stories that have a writestatus of 5, 
+	# this deletes stories that have a writestatus of 5,
 	# which is the delete writestatus
 	$stories = $slashdb->getStoriesForSlashdb(5);
 	for my $aryref (@$stories) {

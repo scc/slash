@@ -65,8 +65,8 @@ sub main {
 
 		if ($ops{$form->{op}}) {
 			$ops{$form->{op}}->($form, $constants);
-		} 
-		footer();	
+		}
+		footer();
 	}
 
 	writeLog($form->{query})
@@ -86,7 +86,7 @@ sub _authors {
 
 #################################################################
 sub _buildargs {
-	my ($form) = @_;
+	my($form) = @_;
 	my $uri;
 
 	for (qw[threshold query author op topic section]) {
@@ -102,7 +102,7 @@ sub _buildargs {
 
 #################################################################
 sub commentSearch {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $slashdb = getCurrentDB();
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
@@ -141,7 +141,7 @@ sub commentSearch {
 
 #################################################################
 sub userSearch {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $start = $form->{start} || 0;
@@ -178,7 +178,7 @@ sub userSearch {
 
 #################################################################
 sub storySearch {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $start = $form->{start} || 0;
@@ -216,7 +216,7 @@ sub storySearch {
 
 #################################################################
 sub commentSearchRSS {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $slashdb = getCurrentDB();
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
@@ -252,7 +252,7 @@ sub commentSearchRSS {
 
 #################################################################
 sub userSearchRSS {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $start = $form->{start} || 0;
@@ -288,7 +288,7 @@ sub userSearchRSS {
 
 #################################################################
 sub storySearchRSS {
-	my ($form, $constants) = @_;
+	my($form, $constants) = @_;
 	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
 
 	my $start = $form->{start} || 0;

@@ -71,10 +71,10 @@ sub main {
 			$nickname ||= getCurrentUser('nickname');
 			# header text should be in templates
 			header("${nickname}'s Journal");
-			titlebar("100%","${nickname}'s Journal");
+			titlebar("100%", "${nickname}'s Journal");
 		} else {
 			header("$constants->{sitename} Journal System");
-			titlebar("100%","Journal System");
+			titlebar("100%", "Journal System");
 		}
 
 		print createMenu('journal');
@@ -315,7 +315,7 @@ sub saveArticle {
 					nickname	=> $user->{nickname},
 				}
 			};
-			
+
 			for (@$friends) {
 				$messages->create($_, MSG_CODE_JOURNAL_FRIEND, $data);
 			}

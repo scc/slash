@@ -6,7 +6,7 @@
 
 ###############################################################################
 # slashd - the primary "daemon" that runs various tasks and generates
-# static pages 
+# static pages
 ###############################################################################
 
 use sigtrap;
@@ -38,7 +38,7 @@ sub END { Carp::cluck("why am I here?") }
 
 sub slashdPid {
 	local *PID;
-	open PID,">$constants->{logdir}/slashd.pid"
+	open PID, ">$constants->{logdir}/slashd.pid"
 		or die "Can't open $constants->{logdir}/slashd.pid: $!";
 	print PID $$;
 	close PID;
@@ -137,7 +137,7 @@ sub process_tasks {
 	# Log success and failure, and if no successes, abort with die()
 
 	slashdLog(
-		  "processed $dir; "
+		"processed $dir; "
 		. (scalar keys %success) . " successful"
 		. (
 			%failure

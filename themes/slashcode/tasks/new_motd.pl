@@ -14,8 +14,8 @@ $task{$me}{code} = sub {
 	chomp(my $t = `/usr/games/fortune -s`);
 
 	if ($t) {
-	        my $tpid = $slashdb->getTemplateByName("motd", "tpid");
-	        $slashdb->setTemplate($tpid, { template => $t });
+		my $tpid = $slashdb->getTemplateByName("motd", "tpid");
+		$slashdb->setTemplate($tpid, { template => $t });
 	}
 };
 

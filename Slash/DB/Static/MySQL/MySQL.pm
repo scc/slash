@@ -20,7 +20,7 @@ use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: Bite my shiny, metal ass! 
+# BENDER: Bite my shiny, metal ass!
 
 ########################################################
 # for slashd
@@ -61,7 +61,7 @@ sub updateCommentTotals {
 			commentcount	=> $comments->[0]{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
-	if(getCurrentStatic('mysql_heap_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlUpdate("newstories", {
 				hitparade	=> $hp,
 				writestatus	=> 0,
@@ -76,11 +76,11 @@ sub updateCommentTotals {
 sub setStoryIndex {
 	my($self, @sids) = @_;
 
-# No op, aka does nothing
+# No op, i.e. does nothing
 #	my %stories;
 #
 #	for my $sid (@sids) {
-#		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
+#		$stories{$sid} = $self->sqlSelectHashref("*", "stories", "sid='$sid'");
 #	}
 #	$self->sqlTransactionStart("LOCK TABLES newstories WRITE");
 #
@@ -114,7 +114,7 @@ sub getNewStoryTopic {
 sub getStoriesForSlashdb {
 	my($self, $writestatus) = @_;
 
-	my $returnable = $self->sqlSelectAll("sid,title,section", 
+	my $returnable = $self->sqlSelectAll("sid,title,section",
 			"stories", "writestatus=$writestatus");
 
 	return $returnable;
@@ -123,7 +123,7 @@ sub getStoriesForSlashdb {
 ########################################################
 # For dailystuff
 sub deleteDaily {
-	my ($self) = @_;
+	my($self) = @_;
 	my $constants = getCurrentStatic();
 
 	my $delay1 = $constants->{archive_delay} * 2;
@@ -153,7 +153,7 @@ sub deleteDaily {
 ########################################################
 # For dailystuff
 sub countDaily {
-	my ($self) = @_;
+	my($self) = @_;
 	my %returnable;
 
 	my $constants = getCurrentStatic();
@@ -161,31 +161,31 @@ sub countDaily {
 	($returnable{'total'}) = $self->sqlSelect("count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1");
 
-	my $c = $self->sqlSelectMany("count(*)","accesslog",
+	my $c = $self->sqlSelectMany("count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1 GROUP BY host_addr");
 	$returnable{'unique'} = $c->rows;
 	$c->finish;
 
-#	my ($comments) = $self->sqlSelect("count(*)","accesslog",
+#	my($comments) = $self->sqlSelect("count(*)", "accesslog",
 #		"to_days(now()) - to_days(ts)=1 AND op='comments'");
 
-	$c = $self->sqlSelectMany("dat,count(*)","accesslog",
-		"to_days(now()) - to_days(ts)=1 AND 
+	$c = $self->sqlSelectMany("dat,count(*)", "accesslog",
+		"to_days(now()) - to_days(ts)=1 AND
 		(op='index' OR dat='index')
 		GROUP BY dat");
 
 	my(%indexes, %articles, %commentviews);
 
-	while(my($sect, $cnt) = $c->fetchrow) {
+	while (my($sect, $cnt) = $c->fetchrow) {
 		$indexes{$sect} = $cnt;
 	}
 	$c->finish;
 
-	$c = $self->sqlSelectMany("dat,count(*),op","accesslog",
+	$c = $self->sqlSelectMany("dat,count(*),op", "accesslog",
 		"to_days(now()) - to_days(ts)=1 AND op='article'",
 		"GROUP BY dat");
 
-	while(my($sid, $cnt) = $c->fetchrow) {
+	while (my($sid, $cnt) = $c->fetchrow) {
 		$articles{$sid} = $cnt;
 	}
 	$c->finish;
@@ -193,10 +193,10 @@ sub countDaily {
 	# clean the key table
 
 
-	$c = $self->sqlSelectMany("dat,count(*)","accesslog",
+	$c = $self->sqlSelectMany("dat,count(*)", "accesslog",
 		"to_days(now()) - to_days(ts)=1 AND op='comments'",
 		"GROUP BY dat");
-	while(my($sid, $cnt) = $c->fetchrow) {
+	while (my($sid, $cnt) = $c->fetchrow) {
 		$commentviews{$sid} = $cnt;
 	}
 	$c->finish;
@@ -211,7 +211,7 @@ sub countDaily {
 ########################################################
 # For dailystuff
 sub updateStamps {
-	my ($self) = @_;
+	my($self) = @_;
 	my $columns = "uid";
 	my $tables = "accesslog";
 	my $where = "to_days(now())-to_days(ts)=1 AND uid > 0";
@@ -230,8 +230,8 @@ sub updateStamps {
 
 ########################################################
 # For dailystuff
-sub getDailyMail {	
-	my ($self) = @_;
+sub getDailyMail {
+	my($self) = @_;
 	my $columns = "sid,title,section,users.nickname,tid,time,dept,introtext,bodytext";
 	my $tables = "stories,users";
 	my $where = "users.uid = stories.uid AND to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
@@ -266,7 +266,7 @@ sub getMailingList {
 #	my $tables = "stories";
 #	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $delay";
 #
-#	my $stories = $self->sqlSelectAll($columns,$tables,$where);
+#	my $stories = $self->sqlSelectAll($columns, $tables, $where);
 #
 #	return $stories;
 #}
@@ -321,12 +321,12 @@ sub randomBlock {
 # ugly method name
 sub getAccesLogCountTodayAndYestarday {
 	my($self) = @_;
-	my $c = $self->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",    "accesslog","","GROUP by d order by d asc");
+	my $c = $self->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",    "accesslog", "", "GROUP by d order by d asc");
 
 	my($today) = $c->fetchrow;
 	my($yesterday) = $c->fetchrow;
 	$c->finish;
-	
+
 	return ($today, $yesterday);
 
 }
@@ -348,12 +348,13 @@ sub getSitesRDF {
 # For portald
 sub getSectionMenu2{
 	my($self) = @_;
-	my $menu = $self->sqlSelectAll("section","sections",
+	my $menu = $self->sqlSelectAll("section", "sections",
 	    "isolate=0 and (section != '' and section != 'articles')
 			    ORDER BY section");
 
 	return $menu;
 }
+
 ########################################################
 # For portald
 sub getSectionMenu2Info{
@@ -377,9 +378,9 @@ sub tokens2points {
 	my $constants = getCurrentStatic();
 	my @log;
 	my $c = $self->sqlSelectMany('uid,tokens',
-		'users_info', 
+		'users_info',
 		"tokens >= $constants->{maxtokens}");
-	$self->sqlTransactionStart('LOCK TABLES users READ, 
+	$self->sqlTransactionStart('LOCK TABLES users READ,
 		users_info WRITE, users_comments WRITE');
 
 	while (my($uid, $tokens) = $c->fetchrow) {
@@ -395,7 +396,7 @@ sub tokens2points {
 	$c = $self->sqlSelectMany('users.uid as uid',
 		'users,users_comments,users_info',
 		"karma >= 0 AND
-		points > $constants->{maxpoints} AND 
+		points > $constants->{maxpoints} AND
 		seclev < 100 AND
 		users.uid=users_comments.uid AND
 		users.uid=users_info.uid");
@@ -454,7 +455,7 @@ sub getUserLast {
 ########################################################
 # For tailslash
 sub pagesServed {
-	my ($self) = @_;
+	my($self) = @_;
 	my $returnable = $self->sqlSelectAll("count(*),ts",
 			"accesslog", "1=1",
 			"GROUP BY ts ORDER BY ts ASC");
@@ -466,8 +467,8 @@ sub pagesServed {
 ########################################################
 # For tailslash
 sub maxAccessLog {
-	my ($self) = @_;
-	my ($returnable) = $self->sqlSelect("max(id)", "accesslog");;
+	my($self) = @_;
+	my($returnable) = $self->sqlSelect("max(id)", "accesslog");;
 
 	return $returnable;
 }
@@ -477,7 +478,7 @@ sub maxAccessLog {
 sub getAccessLogInfo {
 	my($self, $id) = @_;
 	my $returnable = $self->sqlSelectAll("host_addr,uid,op,dat,ts,id",
-				"accesslog","id > $id",
+				"accesslog", "id > $id",
 				"ORDER BY ts DESC");
 	formatDate($returnable, 4, 4, '%H:%M');
 	return $returnable;
@@ -488,14 +489,14 @@ sub getAccessLogInfo {
 sub fetchEligibleModerators {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
-	my $eligibleUsers = 
+	my $eligibleUsers =
 		$self->getLastUser() * $constants->{m1_eligible_percentage};
 
 	my $returnable =
 		$self->sqlSelectAll("users_info.uid,count(*) as c",
 			"users_info,users_prefs, accesslog",
 			"users_info.uid < $eligibleUsers
-			 AND users_info.uid=accesslog.uid 
+			 AND users_info.uid=accesslog.uid
 			 AND users_info.uid=users_prefs.uid
 			 AND (op='article' or op='comments')
 			 AND willing=1
@@ -507,43 +508,40 @@ sub fetchEligibleModerators {
 	return $returnable;
 }
 
-
 ########################################################
 # For moderatord
 sub updateTokens {
-	my ($self, $modlist) = @_;
+	my($self, $modlist) = @_;
 
 	$self->sqlTransactionStart("LOCK TABLES users_info WRITE");
 	for (@{$modlist}) {
-		$self->setUser($_, { 
+		$self->setUser($_, {
 			-tokens	=> "tokens+1",
 		});
 	}
 	$self->sqlTransactionFinish();
 }
 
-
 ########################################################
 # For moderatord
 sub applyMetaModeration {
-	my ($self) = @_;
+	my($self) = @_;
 
 	# Coming Soon!
 	# The meat behind consensus metamoderation!
 }
 
-
 ########################################################
 # For dailyStuff
 # 	This should only be run once per day, if this isn't
-#	true, the simple logic below, breaks. This can be 
-#	fixed by moving the by_days trigger to a date 
+#	true, the simple logic below, breaks. This can be
+#	fixed by moving the by_days trigger to a date
 #	based system as opposed to a counter-based one,
 #	or even adding a date component to expiry checks,
 #	which might be a better solution.
 sub checkUserExpiry {
-	my ($self) = @_;
-	my ($ret); 
+	my($self) = @_;
+	my($ret);
 
 	# Subtract one from number of 'registered days left' for all users.
 	$self->sqlTransactionStart("LOCK TABLES users_param WRITE");
@@ -551,8 +549,8 @@ sub checkUserExpiry {
 		-'value'	=> 'value-1',
 	}, "name='expiry_days' AND value >= 0");
 	$self->sqlTransactionFinish();
-	
-	# Now grab all UIDs that look to be expired, we explicitly exclude 
+
+	# Now grab all UIDs that look to be expired, we explicitly exclude
 	# authors from this search.
 	$ret = $self->sqlSelectAll('distinct uid', 'users_param',
 		"(name='expiry_days' OR name='expiry_comm')
@@ -570,22 +568,21 @@ sub checkUserExpiry {
 	return \@returnable;
 }
 
-
 ########################################################
-# For moderation scripts. 
-#	This sub returns the mmids of M2 votes 
+# For moderation scripts.
+#	This sub returns the mmids of M2 votes
 #	that are eligible for processing (comments that
 #	have the appropriate number of M2 votes)
 #
 sub getM2QuorumIDs {
-	my ($self) = @_;
+	my($self) = @_;
 	my $constants = getCurrentStatic();
 
 	# I hate having a literal '10' here, but that's the code that means
-	# "these M2 entries haven't been reconciled yet". This is yet 
+	# "these M2 entries haven't been reconciled yet". This is yet
 	# another argument for a Slash::Constants module.
 	my $list = $self->sqlSelectAll(
-		'mmid, count(*) as c', 'moderatorlog', 
+		'mmid, count(*) as c', 'moderatorlog',
 		'WHERE flag=10',
 		"GROUP BY mmid HAVING c >= $constants->{m2_quorum}"
 	);
@@ -596,21 +593,17 @@ sub getM2QuorumIDs {
 	return \@returnable;
 }
 
-
 ########################################################
-# For moderation scripts. 
+# For moderation scripts.
 #	This sub returns the meta-moderation information
 #	given the appropriate M2ID (primary
 #	key into the metamodlog table).
 #
 sub getMetamoderations {
-	my ($self, $mmid) = @_;
-
+	my($self, $mmid) = @_;
 	my $ret = $self->sqlSelectAllHashref('*', 'metamodlog', "mmid=$mmid");
-
 	return $ret;
 }
-
 
 1;
 
@@ -622,7 +615,7 @@ Slash::DB::Static::MySQL - MySQL Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::Static::MySQL;
+	use Slash::DB::Static::MySQL;
 
 =head1 DESCRIPTION
 

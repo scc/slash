@@ -68,7 +68,7 @@ sub list {
 	my($self, $uid, $limit) = @_;
 
 	my $order = "ORDER BY date DESC";
-	$order .= " LIMIT $limit" if $limit; 
+	$order .= " LIMIT $limit" if $limit;
 	my $answer = $self->sqlSelectAll('id, date, description', 'journals', "uid = $uid", $order);
 	return $answer;
 }
@@ -98,7 +98,7 @@ sub create {
 }
 
 sub remove {
-	my ($self, $id) = @_;
+	my($self, $id) = @_;
 	my $uid = $ENV{SLASH_USER};
 	$self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id");
 }
@@ -125,6 +125,8 @@ sub message_friends {
 	my $table = "journal_friends,users_param";
 	my $where = "journal_friends.friend=$uid AND " .
 		"journal_friends.uid=users_param.uid AND " .
+# ACK!  how can i select on the values of two users_param records?
+#		"users_param.deliverymodes >= 0 AND " .
 		"users_param.name='messagecodes_$code' AND " .
 		"users_param.value=1";
 
@@ -253,11 +255,11 @@ Slash::Journal - Journal system splace
 
 =head1 SYNOPSIS
 
-  use Slash::Journal;
+	use Slash::Journal;
 
 =head1 DESCRIPTION
 
-This is a port of Tangent's journal system. 
+This is a port of Tangent's journal system.
 
 Blah blah blah.
 

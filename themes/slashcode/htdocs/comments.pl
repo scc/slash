@@ -21,19 +21,22 @@ sub main {
 	my $id = getFormkeyId($user->{uid});
 
 	my %ops = (
-		default => \&displayComments,
-		index => \&commentIndex,
-		moderate => \&moderate,
-		reply => \&reply,
-		Reply => \&reply,
-		Edit => \&edit,
-		edit => \&edit,
-		post => \&edit,
-		Preview => \&edit,
-		preview => \&edit,
-		submit => \&submitComment,
-		Submit => \&submitComment,
+		default		=> \&displayComments,
+		index		=> \&commentIndex,
+		moderate	=> \&moderate,
+		reply		=> \&reply,
+		Reply		=> \&reply,
+		Edit		=> \&edit,
+		edit		=> \&edit,
+		post		=> \&edit,
+		Preview		=> \&edit,
+		preview		=> \&edit,
+		submit		=> \&submitComment,
+		Submit		=> \&submitComment,
 	);
+
+	# maybe do an $op = lc($form->{'op'}) to make it simpler?
+	# just a thought.  -- pudge
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -64,7 +67,7 @@ sub main {
 }
 
 sub edit {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	$slashdb->updateFormkeyId('comments',
 		$form->{formkey},
@@ -76,7 +79,7 @@ sub edit {
 	editComment($id);
 }
 sub reply {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	$form->{formkey} = getFormkey();
 	$slashdb->createFormkey("comments", $id, $form->{sid});
@@ -84,7 +87,7 @@ sub reply {
 }
 
 sub delete {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	titlebar("99%", "Delete $form->{cid}");
 
@@ -96,7 +99,7 @@ sub delete {
 }
 
 sub change {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
 		$slashdb->setUser($user->{uid}, {
@@ -109,7 +112,7 @@ sub change {
 }
 
 sub displayComments {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	if ($form->{cid}) {
 		printComments($form->{sid}, $form->{cid}, $form->{cid});
@@ -125,7 +128,7 @@ sub displayComments {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $slashdb->getDiscussions();
@@ -148,8 +151,8 @@ sub editComment {
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
-	# Get the comment we may be responding to. Remember to turn off 
-	# moderation elements for this instance of the comment. 
+	# Get the comment we may be responding to. Remember to turn off
+	# moderation elements for this instance of the comment.
 	my $reply = $slashdb->getCommentReply($form->{sid}, $form->{pid});
 	$reply->{no_moderation} = 1;
 
@@ -282,14 +285,14 @@ sub validateComment {
 	}
 
 
-	# test comment and subject using filterOk. If the filter is 
-	# matched against the content, display an error with the 
+	# test comment and subject using filterOk. If the filter is
+	# matched against the content, display an error with the
 	# particular message for the filter that was matched
-	my $fields = { 
+	my $fields = {
 			postersubj 	=> 	$$subj,
 			postercomment 	=>	$$comm,
 	};
-			
+
 	for (keys %$fields) {
 		# run through filters
 		if (! filterOk('comments', $_, $fields->{$_}, \$message)) {
@@ -303,16 +306,16 @@ sub validateComment {
 			last;
 		}
 		# run through compress test
-	 	if (! compressOk('comments', $_, $fields->{$_})) {
+		if (! compressOk('comments', $_, $fields->{$_})) {
 			# blammo luser
 			$$error_message = slashDisplay('errors', {
-			 	type	=> 'compress filter',
-			 	ratio	=> $_,
-			 }, 1);
+				type	=> 'compress filter',
+				ratio	=> $_,
+			}, 1);
 			editComment('', $$error_message), return unless $preview;
 			$form_success = 0;
 			last;
-	 	}
+		}
 
 	}
 
@@ -368,7 +371,7 @@ sub previewForm {
 ##################################################################
 # Saves the Comment
 sub submitComment {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 	my $error_message;
 
 	unless (checkFormPost("comments",
@@ -452,7 +455,7 @@ sub submitComment {
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	my $total_deleted = 0;
 	my $hasPosted;

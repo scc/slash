@@ -99,7 +99,7 @@ sub selectComments {
 	my $count = @$thisComment;
 
 	getCommentTotals($comments);
-	
+
 	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
 
 	my $hp = join ',', @{$comments->[0]{totals}};
@@ -478,7 +478,7 @@ sub displayThread {
 			$return .= $const->{indentbegin} if $indent;
 			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
 			$return .= $const->{indentend} if $indent;
-			$return .= $const->{cageend} if $cagedkids;			
+			$return .= $const->{cageend} if $cagedkids;
 		}
 
 		$return .= $const->{commentend} if $finish_list;
@@ -580,7 +580,7 @@ sub dispComment {
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
 		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = '' unless exists $comment->{$_};	
+		$comment->{$_} = '' unless exists $comment->{$_};
 	}
 
 	slashDisplay('dispComment', {
@@ -702,13 +702,13 @@ sub displayStory {
 	my $author = $slashdb->getAuthor($story->{uid},
 		['nickname', 'fakeemail', 'homepage']);
 	my $topic = $slashdb->getTopic($story->{tid});
-	
-	# convert the time of the story (this is database format) 
-	# and convert it to the user's prefered format 
-	# based on their preferences 
+
+	# convert the time of the story (this is database format)
+	# and convert it to the user's prefered format
+	# based on their preferences
 
 	# An interesting note... this is pretty much the
-	# only reason this function is even needed. 
+	# only reason this function is even needed.
 	# Everything else can easily be done with
 	# dispStory(). Even this could be worked
 	# into the logic for the template Display
@@ -776,7 +776,7 @@ sub getOlderStories {
 
 	$stories ||= $slashdb->getNewStories($section);
 	for (@$stories) {
-		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
+		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_};
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
 		push @$newstories, {
 			sid		=> $sid,
@@ -843,10 +843,10 @@ Returns data snippet with all necessary data interpolated.
 
 =item Dependencies
 
-Gets little snippets of data, determined by the value parameter, from 
-a data template. A data template is a colletion of data snippets 
-in one template, which are grouped together for efficiency. Each 
-script can have it's own data template (specified by the PAGE 
+Gets little snippets of data, determined by the value parameter, from
+a data template. A data template is a colletion of data snippets
+in one template, which are grouped together for efficiency. Each
+script can have it's own data template (specified by the PAGE
 parameter). If PAGE is unspecified, snippets will be retrieved from
 the last page visited by the user as determined by Slash::Apache::User.
 

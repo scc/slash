@@ -118,10 +118,10 @@ sub createSelect {
 	my($label, $hashref, $default, $return, $nsort, $ordered) = @_;
 
 	if (ref $hashref eq 'ARRAY') {
-	    $hashref = { map { ($_, $_) } @$hashref };
+		$hashref = { map { ($_, $_) } @$hashref };
 	}
 
-      	return unless (ref $hashref eq 'HASH' && keys %$hashref);
+	return unless (ref $hashref eq 'HASH' && keys %$hashref);
 
 	my $display = {
 		label	=> $label,
@@ -844,7 +844,7 @@ sub linkComment {
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
 		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = '' unless exists $comment->{$_};	
+		$comment->{$_} = '' unless exists $comment->{$_};
 	}
 
 	slashDisplay('linkComment', {
@@ -936,7 +936,7 @@ sub getImportantWords {
 
 ########################################################
 sub matchingStrings {
-	my($s1, $s2)=@_;
+	my($s1, $s2) = @_;
 	return '100' if $s1 eq $s2;
 	my @w1 = getImportantWords($s1);
 	my @w2 = getImportantWords($s2);

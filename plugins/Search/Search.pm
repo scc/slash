@@ -29,7 +29,7 @@ sub new {
 #################################################################
 # Private method used by the search methods
 sub _keysearch {
-	my ($self, $keywords, $columns) = @_;
+	my($self, $keywords, $columns) = @_;
 
 	my @words = split m/ /, $keywords;
 	my $sql;
@@ -73,14 +73,14 @@ sub findComments {
 
 	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
 
-	$sql .= "	  AND $key " 
+	$sql .= "	  AND $key "
 			if $form->{query};
 
-	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid}) 
+	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid})
 			if $form->{sid};
-	$sql .= "     AND points >= $form->{threshold} " 
+	$sql .= "     AND points >= $form->{threshold} "
 			if $form->{threshold};
-	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section}) 
+	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section})
 			if $form->{section};
 	$sql .= " ORDER BY date DESC, time DESC $limit ";
 
@@ -104,7 +104,7 @@ sub findUsers {
 	$sql .= ' FROM users ';
 	$sql .= ' WHERE seclev > 0 ';
 	my $x = 0;
-	if($users_to_ignore) {
+	if ($users_to_ignore) {
 		for my $user (@$users_to_ignore) {
 			$sql .= ' AND ' if $x != 0;
 			$sql .= " nickname != " .  $self->{_dbh}->quote($user);
@@ -139,13 +139,12 @@ sub findStory {
 
 	$sql .= " FROM stories, users WHERE displaystatus>=0 ";
 
-	$sql .= " AND $key " 
-		 if $form->{query};
+	$sql .= " AND $key " if $form->{query};
 
-	if($form->{section}) {
+	if ($form->{section}) {
 		$sql .= qq| AND ((displaystatus = 0 and "$form->{section}" = "")|;
-    $sql .= qq| OR (section = "$form->{section}" AND displaystatus >= 0))|;
-	} 
+		$sql .= qq| OR (section = "$form->{section}" AND displaystatus >= 0))|;
+	}
 
 	$sql .= " AND time < now() AND writestatus>=0 ";
 	$sql .= " AND stories.uid=" . $self->{_dbh}->quote($form->{author})
@@ -169,7 +168,7 @@ sub findStory {
 
 #################################################################
 sub DESTROY {
-	my ($self) = @_;
+	my($self) = @_;
 	$self->{_dbh}->disconnect unless $ENV{GATEWAY_INTERFACE};
 }
 
@@ -182,7 +181,7 @@ Slash::Search - Slash Search module
 
 =head1 SYNOPSIS
 
-  use Slash::Search;
+	use Slash::Search;
 
 =head1 DESCRIPTION
 

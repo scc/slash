@@ -44,7 +44,7 @@ sub main {
 		: " $local_ts $user->{tzcode} = $gmt_ts GMT";
 	header("backSlash$time_remark$tbtitle", 'admin');
 
-	
+
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $user->{seclev};
 
@@ -93,7 +93,7 @@ sub main {
 		colorEdit($user->{seclev});
 
 	} elsif ($form->{blockdelete_cancel} || $op eq 'blocked') {
-		blockEdit($user->{seclev},$form->{bid});
+		blockEdit($user->{seclev}, $form->{bid});
 
 	} elsif ($form->{blocknew}) {
 		blockEdit($user->{seclev});
@@ -130,7 +130,7 @@ sub main {
 
 	} elsif ($form->{templatenew}) {
 		templateEdit($user->{seclev});
-	
+
 	} elsif ($form->{templatepage} || $form->{templatesection}) {
 		templateEdit($user->{seclev}, '', $form->{page}, $form->{section});
 
@@ -138,11 +138,11 @@ sub main {
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
-		my ($page,$section);
+		my($page, $section);
 		if ($form->{save_new}) {
 			$section = $form->{newS} ? $form->{newsection} : $form->{section};
 			$page = $form->{newP} ? $form->{newpage} : $form->{page};
-		} else { 
+		} else {
 			$section = $form->{newS} ? $form->{newsection} : $form->{savesection};
 			$page = $form->{newP} ? $form->{newpage} : $form->{savepage};
 		}
@@ -182,7 +182,7 @@ sub main {
 		authorEdit($form->{myuid});
 
 	} elsif ($op eq 'vars') {
-		varEdit($form->{name});	
+		varEdit($form->{name});
 
 	} elsif ($op eq 'varsave') {
 		varSave();
@@ -206,7 +206,7 @@ sub main {
 
 	} elsif ($form->{siteinfo}) {
 		siteInfo();
-		
+
 	} else {
 		titlebar('100%', getTitle('listStories-title'));
 		listStories();
@@ -230,11 +230,11 @@ sub varEdit {
 	my $vars = $slashdb->getDescriptions('vars', '', 1);
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
-	if($name) {
+	if ($name) {
 		$varsref = $slashdb->getVar($name);
 	}
 
-	slashDisplay('varEdit', { 
+	slashDisplay('varEdit', {
 		vars_select 	=> $vars_select,
 		varsref		=> $varsref,
 	});
@@ -302,12 +302,12 @@ sub authorEdit {
 		section_select		=> $section_select,
 		deletebutton_flag 	=> $deletebutton_flag,
 		aid			=> $aid,
-	});	
+	});
 }
 
 ##################################################################
 sub siteInfo {
-	return if getCurrentUser('seclev') < 100; 
+	return if getCurrentUser('seclev') < 100;
 
 	my $slashdb = getCurrentDB();
 	my $plugins = $slashdb->getDescriptions('plugins');
@@ -316,7 +316,7 @@ sub siteInfo {
 	slashDisplay('siteInfo', {
 		plugins 	=> $plugins,
 		site_info	=> $site_info,
-	});	
+	});
 
 }
 
@@ -329,7 +329,7 @@ sub authorSave {
 	return if getCurrentUser('seclev') < 500;
 	if ($form->{thisaid}) {
 		# And just why do we take two calls to do
-		# a new user? 
+		# a new user?
 		if ($slashdb->createAuthor($form->{thisaid})) {
 			print getMessage('authorInsert-message');
 		}
@@ -397,7 +397,7 @@ sub templateEdit {
 		$savepage_select, $savesection_select,
 		$templatedelete_flag, $templateedit_flag, $templateform_flag);
 
-	return if $seclev < 100;	
+	return if $seclev < 100;
 	$page ||= 'misc';
 	$section ||= 'default';
 
@@ -468,7 +468,7 @@ sub templateEdit {
 		savepage_select		=> $savepage_select,
 		section_select		=> $section_select,
 		savesection_select	=> $savesection_select,
-	});	
+	});
 }
 
 ##################################################################
@@ -483,11 +483,11 @@ sub templateSave {
 	$form->{seclev} ||= 500;
 
 	my $id = $slashdb->getTemplate($tpid, '', 1);
-	my $temp = $slashdb->getTemplateByName($name, [ 'section','page','name','tpid' ], 1 ,$page,$section);
+	my $temp = $slashdb->getTemplateByName($name, [ 'section', 'page', 'name', 'tpid' ], 1 , $page, $section);
 
 	my $exists = 0;
-	$exists = 1 if ($name eq $temp->{name} && 
-			$section eq $temp->{section} && 
+	$exists = 1 if ($name eq $temp->{name} &&
+			$section eq $temp->{section} &&
 			$page eq $temp->{page});
 
 	if ($form->{save_new}) {
@@ -497,7 +497,7 @@ sub templateSave {
 		} else {
 			print "trying to insert $name<br>\n";
 			($tpid) = ($form->{thistpid}) = $slashdb->createTemplate({
-               			name		=> $name,
+				name		=> $name,
 				template        => $form->{template},
 				title		=> $form->{title},
 				description	=> $form->{description},
@@ -507,10 +507,10 @@ sub templateSave {
 			});
 
 			print getMessage('templateSave-inserted-message', { tpid => $tpid , name => $name});
-		} 
+		}
 	} else {
 
-		$slashdb->setTemplate($tpid, { 
+		$slashdb->setTemplate($tpid, {
 				name		=> $name,
 				template 	=> $form->{template},
 				description	=> $form->{description},
@@ -520,9 +520,9 @@ sub templateSave {
 				section		=> $section
 		});
 		print getMessage('templateSave-saved-message', { tpid => $tpid, name => $name });
-	}	
-
+	}
 }
+
 ##################################################################
 sub templateDelete {
 	my($name, $tpid) = @_;
@@ -535,13 +535,13 @@ sub templateDelete {
 }
 
 ##################################################################
-# Block Editing and Saving 
+# Block Editing and Saving
 # 020300 PMG modified the heck out of this code to allow editing
-# of sectionblock values retrieve, title, url, rdf, section 
+# of sectionblock values retrieve, title, url, rdf, section
 # to display a different form according to the type of block we're dealing with
-# based on value of new column in blocks "type". Added description field to use 
-# as information on the block to help the site editor get a feel for what the block 
-# is for, etc... 
+# based on value of new column in blocks "type". Added description field to use
+# as information on the block to help the site editor get a feel for what the block
+# is for, etc...
 # Why bother passing seclev? Just pull it from the user object.
 sub blockEdit {
 	my($seclev, $bid) = @_;
@@ -558,13 +558,13 @@ sub blockEdit {
 	if ($bid) {
 		$blockref = $slashdb->getBlock($bid, '', 1);
 	}
-	my $sectionbid = $blockref->{section}; 
+	my $sectionbid = $blockref->{section};
 
-	my $title = getTitle('blockEdit-title',{}, 1);
+	my $title = getTitle('blockEdit-title', {}, 1);
 
 	if ($form->{blockdelete} || $form->{blockdelete1} || $form->{blockdelete2}) {
 		$blockdelete_flag = 1;
-	} else { 
+	} else {
 		# get the static blocks
 		my $blocks = $slashdb->getDescriptions('static_block', $seclev, 1);
 		$block_select1 = createSelect('bid1', $blocks, $bid, 1);
@@ -574,17 +574,17 @@ sub blockEdit {
 
 	}
 
-	# if the pulldown has been selected and submitted 
+	# if the pulldown has been selected and submitted
 	# or this is a block save and the block is a portald block
 	# or this is a block edit via sections.pl
 	if (! $form->{blocknew} && $bid ) {
 		if ($blockref->{bid}) {
 			$blockedit_flag = 1;
 			$blockref->{ordernum} = "NA" if $blockref->{ordernum} eq '';
-			$retrieve_checked = "CHECKED" if $blockref->{retrieve} == 1; 
-			$portal_checked = "CHECKED" if $blockref->{portal} == 1; 
-		}	
-	}	
+			$retrieve_checked = "CHECKED" if $blockref->{retrieve} == 1;
+			$portal_checked = "CHECKED" if $blockref->{portal} == 1;
+		}
+	}
 
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
@@ -600,8 +600,7 @@ sub blockEdit {
 		portal_checked		=> $portal_checked,
 		retrieve_checked	=> $retrieve_checked,
 		sectionbid		=> $sectionbid,
-	});	
-			
+	});
 }
 
 ##################################################################
@@ -617,7 +616,7 @@ sub blockSave {
 	if (getCurrentForm('save_new') && $saved > 0) {
 		print getMessage('blockSave-exists-message', { bid => $bid } );
 		return;
-	}	
+	}
 
 	if ($saved == 0) {
 		print getMessage('blockSave-inserted-message', { bid => $bid });
@@ -653,11 +652,11 @@ sub colorEdit {
 		$colorblock_clean = $colorblock =
 			join ',', @{$form}{qw[fg0 fg1 fg2 fg3 fg4 bg0 bg1 bg2 bg3 bg4]};
 
-		# the #s will break the url 
+		# the #s will break the url
 		$colorblock_clean =~ s/#//g;
 
 	} else {
-		$colorblock = $slashdb->getBlock($form->{color_block}, 'block'); 
+		$colorblock = $slashdb->getBlock($form->{color_block}, 'block');
 	}
 
 	@colors = split m/,/, $colorblock;
@@ -669,7 +668,7 @@ sub colorEdit {
 
 	$block = $slashdb->getDescriptions('color_block', '', 1);
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
-	
+
 	slashDisplay('colorEdit', {
 		title 			=> $title,
 		colorblock_clean	=> $colorblock_clean,
@@ -702,18 +701,18 @@ sub topicEdit {
 	my $available_images = {};
 	my $image_select = "";
 
-	my ($imageseen_flag,$images_flag) = (0,0);
+	my($imageseen_flag, $images_flag) = (0, 0);
 
 	local *DIR;
 	opendir(DIR, "$basedir/images/topics");
-	# @$available_images = grep(/.*\.gif|jpg/i, readdir(DIR)); 
+	# @$available_images = grep(/.*\.gif|jpg/i, readdir(DIR));
 
 	$available_images = { map { ($_, $_) } grep /\.(?:gif|jpg)$/, readdir DIR };
 
 	closedir(DIR);
 
 	$topics_menu = $slashdb->getDescriptions('topics', '', 1);
-	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid},1);
+	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid}, 1);
 
 	if (!$form->{topicdelete}) {
 
@@ -723,14 +722,14 @@ sub topicEdit {
 			$topic = $slashdb->getTopic($form->{nexttid});
 		} else {
 			$topic = {};
-			$topic->{tid} = getTitle('topicEd-new-title',{},1);
+			$topic->{tid} = getTitle('topicEd-new-title', {}, 1);
 		}
 
 		if ($available_images) {
 			$images_flag = 1;
 			my $default = $topic->{image};
-			$image_select = createSelect('image', $available_images, $default,1);
-		} 
+			$image_select = createSelect('image', $available_images, $default, 1);
+		}
 	}
 
 	slashDisplay('topicEdit', {
@@ -739,7 +738,7 @@ sub topicEdit {
 		topic			=> $topic,
 		topics_select		=> $topics_select,
 		image_select		=> $image_select
-	});		
+	});
 }
 
 ##################################################################
@@ -764,11 +763,11 @@ sub topicSave {
 
 	if ($form->{tid}) {
 		if (!$form->{width} && !$form->{height}) {
-		    @{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
+			@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
 		}
 		$slashdb->saveTopic();
 	}
-	
+
 	$form->{nexttid} = $form->{tid};
 
 	print getMessage('topicSave-message');
@@ -789,7 +788,7 @@ sub listTopics {
 
 	for my $topic (values %$topics) {
 
-		$topicref->{$topic->{tid}} = { 
+		$topicref->{$topic->{tid}} = {
 			alttext  	=> $topic->{altext},
 			image 		=> $topic->{image},
 			height 		=> $topic->{height},
@@ -801,7 +800,7 @@ sub listTopics {
 		}
 
 		if ($seclev >= 500) {
-			$topicref->{$topic->{tid}}{topicedflag} = 1;		
+			$topicref->{$topic->{tid}}{topicedflag} = 1;
 		}
 	}
 
@@ -820,7 +819,7 @@ sub importImage {
 
 	my $rootdir = getCurrentStatic('rootdir');
 
- 	my $filename = getCurrentForm('importme');
+	my $filename = getCurrentForm('importme');
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -850,7 +849,7 @@ sub importFile {
 
 	my $rootdir = getCurrentStatic('rootdir');
 
- 	my $filename = getCurrentForm('importme');
+	my $filename = getCurrentForm('importme');
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -882,7 +881,7 @@ sub getsiddir {
 ##################################################################
 sub importText {
 	# Check for a file upload
- 	my $filename = getCurrentForm('importme');
+	my $filename = getCurrentForm('importme');
 	my($r, $buffer);
 	if ($filename) {
 		while (read $filename, $buffer, 1024) {
@@ -895,7 +894,7 @@ sub importText {
 ##################################################################
 # Generated the 'Related Links' for Stories
 sub getRelated {
-	my ($story_content) = @_;
+	my($story_content) = @_;
 
 	my $constants = getCurrentStatic();
 	my $related_links = "";
@@ -920,7 +919,7 @@ sub getRelated {
 
 	foreach my $key (keys %relatedLinks) {
 		if (exists $relatedLinks{$key} && /\W$key\W/i) {
-			my($label,$url) = split m/;/, $relatedLinks{$key};
+			my($label, $url) = split m/;/, $relatedLinks{$key};
 			$label =~ s/(\S{20})/$1 /g;
 			$related_links .= qq[<LI><A HREF="$url">$label</A></LI>\n];
 		}
@@ -967,14 +966,14 @@ sub editStory {
 		$sections, $topic_select, $section_select, $author_select,
 		$extracolumns, $displaystatus_select, $commentstatus_select, $description);
 	my $extracolref = {};
-	my($fixquotes_check,$autonode_check,$fastforward_check) = ('off','off','off');
+	my($fixquotes_check, $autonode_check, $fastforward_check) = ('off', 'off', 'off');
 
 	foreach (keys %{$form}) { $storyref->{$_} = $form->{$_} }
 
 	my $newarticle = 1 if (!$sid && !$form->{sid});
-	
+
 	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
-	if ($form->{title}) { 
+	if ($form->{title}) {
 		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
@@ -1016,14 +1015,14 @@ sub editStory {
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
 			. otherLinks($slashdb->getAuthor($storyref->{uid}, 'nickname'), $storyref->{tid}, $storyref->{uid});
 
-		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
+		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} elsif (defined $sid) { # Loading an existing SID
 		my $tmp = $user->{currentSection};
 		$user->{currentSection} = $slashdb->getStory($sid, 'section');
 		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
 		$user->{currentSection} = $tmp;
-		$storybox = fancybox($constants->{fancyboxwidth},'Related Links', $storyref->{relatedtext},0,1);
+		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} else { # New Story
 		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
@@ -1050,7 +1049,7 @@ sub editStory {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
 		$author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
-	} 
+	}
 
 	$storyref->{dept} =~ s/ /-/gi;
 
@@ -1058,10 +1057,10 @@ sub editStory {
 
 	unless ($user->{section}) {
 		$description = $slashdb->getDescriptions('displaycodes');
-		$displaystatus_select = createSelect('displaystatus', $description, $storyref->{displaystatus},1);
+		$displaystatus_select = createSelect('displaystatus', $description, $storyref->{displaystatus}, 1);
 	}
 	$description = $slashdb->getDescriptions('commentcodes');
-	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus},1);
+	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus}, 1);
 
 	$fixquotes_check = "on" if $form->{fixquotes};
 	$autonode_check = "on" if $form->{autonode};
@@ -1199,7 +1198,7 @@ sub listStories {
 		my $tbtitle = fixparam($title);
 		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {
 			$canedit = 1;
-		} 
+		}
 
 		$x++;
 		next if $x < $first;
@@ -1223,7 +1222,7 @@ sub listStories {
 			displaystatus	=> $displaystatus,
 			tbtitle		=> $tbtitle,
 		};
-		
+
 		$i++;
 	}
 
@@ -1237,7 +1236,7 @@ sub listStories {
 		storylistref	=> $storylistref,
 		'x'		=> $x,
 		left		=> $left
-	});	
+	});
 }
 
 ##################################################################
@@ -1264,10 +1263,10 @@ sub listFilters {
 	my $form_list = $slashdb->getDescriptions('forms');
 	my $form_select = createSelect('formname', $form_list, $formname, 1);
 
-	slashDisplay('listFilters', { 
-		title		=> $title, 
-		form_select	=> $form_select,	
-		filter_ref	=> $filter_ref 
+	slashDisplay('listFilters', {
+		title		=> $title,
+		form_select	=> $form_select,
+		filter_ref	=> $filter_ref
 	});
 }
 
@@ -1289,10 +1288,10 @@ sub editFilter {
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = strip_literal($filter->{'err_message'});
 
-	slashDisplay('editFilter', { 
+	slashDisplay('editFilter', {
 		form_select 	=> $form_select,
-		filter		=> $filter, 
-		filter_id	=> $filter_id 
+		filter		=> $filter,
+		filter_id	=> $filter_id
 	});
 }
 
@@ -1306,7 +1305,7 @@ sub updateFilter {
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
-	
+
 	if ($filter_action == 1) {
 		my $filter_id = $slashdb->createContentFilter($form->{formname});
 		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
@@ -1375,8 +1374,8 @@ sub saveStory {
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	my $sid = $slashdb->createStory($form);
-	$slashdb->createDiscussion($sid, $form->{title}, 
-		$form->{'time'}, 
+	$slashdb->createDiscussion($sid, $form->{title},
+		$form->{'time'},
 		"$rootdir/article.pl?sid=$sid"
 	);
 
@@ -1392,6 +1391,7 @@ sub getMessage {
 	return slashDisplay('messages', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
+
 ##################################################################
 sub getTitle {
 	my($value, $hashref, $nocomm) = @_;
@@ -1400,10 +1400,10 @@ sub getTitle {
 	return slashDisplay('titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
+
 ##################################################################
 sub getLinks {
 }
-
 
 createEnvironment();
 main();

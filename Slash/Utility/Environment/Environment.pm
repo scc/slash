@@ -74,6 +74,8 @@ my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward, $static_cookie,
 	$static_virtual_user);
 
+# FRY: I don't regret this.  But I both rue and lament it.
+
 #========================================================================
 
 =head2 getCurrentMenu([NAME])
@@ -416,8 +418,8 @@ A member from the cookies record to be returned.
 
 =item Return value
 
-A hash reference with the cookie incookieation is returned 
-unless VALUE is passed.  If MEMBER is passed in then 
+A hash reference with the cookie incookieation is returned
+unless VALUE is passed.  If MEMBER is passed in then
 only its value will be returned.
 
 =back
@@ -842,7 +844,7 @@ A random value based on alphanumeric characters
 }
 
 ########################################################
-sub getAnonCookie {	
+sub getAnonCookie {
 	my($user) = @_;
 	my $r = Apache->request;
 	my $cookies = getCurrentCookie();
@@ -1066,7 +1068,7 @@ sub prepareUser {
 	$cookies ||= {};
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
- 	my $hostip = $ENV{REMOTE_ADDR} || ''; 
+	my $hostip = $ENV{REMOTE_ADDR} || '';
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
@@ -1100,8 +1102,8 @@ sub prepareUser {
 	}
 
 	$user->{ipid}     = md5_hex($hostip);
-	$user->{subnetid} = $hostip; 
-	$user->{subnetid} =~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;	
+	$user->{subnetid} = $hostip;
+	$user->{subnetid} =~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;
 	$user->{subnetid} = md5_hex($user->{subnetid});
 
 	my @defaults = (
@@ -1202,14 +1204,21 @@ sub filter_params {
 
 	# fields that are numeric only
 	my %nums = map {($_ => 1)} qw(
-		last next artcount bseclev cid clbig clsmall
-		commentlimit commentsort commentspill commentstatus
-		del displaystatus filter_id height
-		highlightthresh isolate issue maillist max
-		maxcommentsize maximum_length maxstories min minimum_length
-		minimum_match ordernum pid start
-		retrieve seclev startat uid uthreshold voters width
-		writestatus ratio posttype
+		artcount bseclev cid clbig clsmall
+		commentlimit commentsort commentspill
+		commentstatus del displaystatus
+		filter_id height highlightthresh
+		isolate issue last maillist max
+		maxcommentsize maximum_length maxstories
+		min minimum_length minimum_match next
+		ordernum pid posttype ratio retrieve
+		seclev start startat threshold uid
+		uthreshold voters width writestatus
+	);
+
+	# fields that have ONLY a-zA-Z0-9_
+	my %alphas = map {($_ => 1)} qw(
+		mode
 	);
 
 	# regexes to match dynamically generated numeric fields
@@ -1217,9 +1226,9 @@ sub filter_params {
 
 	# special few
 	my %special = (
-		sid => sub { $_[0] =~ s|[^A-Za-z0-9/._]||g },
+		sid	=> sub { $_[0] =~ s|[^A-Za-z0-9/._]||g },
 	);
-	# qid is same as sid
+	# add more specials
 	$special{qid} = $special{sid};
 
 	for (keys %params) {
@@ -1233,6 +1242,8 @@ sub filter_params {
 		# clean up numbers
 		if (exists $nums{$_}) {
 			$form{$_} = fixint($form{$_});
+		} elsif (exists $alphas{$_}) {
+			$form{$_} =~ s|\W+||g;
 		} elsif (exists $special{$_}) {
 			$special{$_}->($form{$_});
 		} else {

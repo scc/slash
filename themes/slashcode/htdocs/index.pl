@@ -23,7 +23,7 @@ sub main {
 	}
 
 	# why is this commented out?  -- pudge
-	# $form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
+	# $form->{mode} = $user->{mode} = "dynamic" if $ENV{SCRIPT_NAME};
 
 	for ($form->{op}) {
 		my $c;
@@ -237,8 +237,8 @@ sub displayStories {
 			}
 
 			$cclink[1] = linkStory({
-				sid		=> $sid, 
-				threshold	=> -1, 
+				sid		=> $sid,
+				threshold	=> -1,
 				'link'		=> $cc || 0
 			});
 

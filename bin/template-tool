@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
@@ -36,12 +36,12 @@ version() if $opts{'v'};
 boiler() if $opts{'B'};
 
 # if deleting, then there should be no other operation or file flags
-usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
+usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} ));
 
 # can't have multiple IDs on a save
 usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
-$opts{'u'} ||= 'slash';  
+$opts{'u'} ||= 'slash';
 
 createEnvironment($opts{'u'});
 my $slashdb = getCurrentDB();
@@ -57,7 +57,7 @@ my($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0, 0, 0, 0);
 if ($opts{'c'}) {
 	# There is logic in making -i work with -P and -S, but I'm too tired to
 	# implement that right now.
-	die "Can't use -P or -S options with -i and -c!\n" 
+	die "Can't use -P or -S options with -i and -c!\n"
 		if $opts{i} && ($opts{P} || $opts{S});
 	# (-i) Sanity check. We only want an @ARGV full of numeric arguments.
 	map {
@@ -73,13 +73,13 @@ if ($opts{'O'}) {
 			# needs to use File::Path::mkpath(); and
 			# even if you wanted mkdir, why not use Perl's
 			# mkdir()?  fix please.
-			system("mkdir $opts{'O'}") 
+			system("mkdir $opts{'O'}")
 		} else {
 			print "Invalid directory $opts{'O'} \n";
 			exit(0);
 		}
 	}
-} 
+}
 
 if ($opts{'S'} and $opts{'P'}) {
 	$sectionpage_flag = 1;
@@ -137,20 +137,20 @@ if ($opts{'s'}) {
 			next unless $key =~ /$opts{'m'}/;
 		}
 
-		if ( 	($sectionpage_flag && 
-			$opts{'S'} eq $templates->{$key}{section} && 
-			$opts{'P'} eq $templates->{$key}{page}) 
-			|| 
-			($section_flag && $templates->{$key}{section} eq $opts{'S'}) 
-			|| 
-			($page_flag and $templates->{$key}{page} eq $opts{'P'}) ) 
+		if ( 	($sectionpage_flag &&
+			$opts{'S'} eq $templates->{$key}{section} &&
+			$opts{'P'} eq $templates->{$key}{page})
+			||
+			($section_flag && $templates->{$key}{section} eq $opts{'S'})
+			||
+			($page_flag and $templates->{$key}{page} eq $opts{'P'}) )
 		{
 			$sectionpage_match = 1;
 			# print "section_flag $section_flag template section $templates->{$key}{section}  opts section $opts{'S'}\n";
 
 		} elsif ($all_flag) {
 			$no_sectionpage = 1;
-		} 
+		}
 
 		if ($sectionpage_match || $no_sectionpage) {
 			if (@ARGV) {
@@ -196,19 +196,19 @@ sub dump_templates {
 
 	for my $template (keys %$templatelist) {
 		if (! $directory || -d $directory) {
-			$filename = $templatelist->{$template}{'name'} . ';' .  
-				$templatelist->{$template}{'page'} . ';' .  
+			$filename = $templatelist->{$template}{'name'} . ';' .
+				$templatelist->{$template}{'page'} . ';' .
 				$templatelist->{$template}{'section'};
 
 			$filename = catfile($directory, $filename);
 		} else {
 			$filename = $directory;
-		} 
+		}
 
 		print "dumping template to $filename\n";
 
 		$install->writeTemplateFile($filename, $templatelist->{$template});
-	} 
+	}
 }
 
 ###############################################
@@ -232,7 +232,7 @@ sub list_templates {
 		$templatelist->{$template}{description} =~ s/\015\012/\n/g
 			if $templatelist->{$template}{description};
 
-		print <<EOT; 
+		print <<EOT;
 --------------------------------------------------------
 Tpid: $templatelist->{$template}{tpid} Name: $templatelist->{$template}{name}
 Page: $templatelist->{$template}{page} Section: $templatelist->{$template}{section}
@@ -246,14 +246,15 @@ EOT
 
 	close(FILE);
 }
+
 ###############################################
 sub delete_templates {
 	my($templatelist) = @_;
-	my $list = join(" ",keys(%$templatelist));
+	my $list = join(" ", keys(%$templatelist));
 	print "are you sure you want to delete templates tpid(s) $list ? y/Y ";
 	chomp(my $answer = <STDIN>);
- 
-	if ($answer =~ /^[Yy]$/) { 
+
+	if ($answer =~ /^[Yy]$/) {
 		for my $template (keys %$templatelist) {
 			$slashdb->deleteTemplate($template);
 		}
@@ -282,7 +283,7 @@ sub compile_template {
 		if ($opts{i}) {
 			my $data = $slashdb->getTemplate($_, ['name', 'page', 'section']);
 			@{$user}{qw(currentPage currentSection)} =
-				@{$data}{qw(page section)};	
+				@{$data}{qw(page section)};
 			$template = $data->{name};
 
 		# this doesn't work, -f takes arg, filename
@@ -339,7 +340,7 @@ Main options:
 		this pattern
 	-f	<templatefilename> filename of template being dumped or
 		created (single template)
-	-s	create/save/update template 
+	-s	create/save/update template
 	-O	directory where templates are saved or created
 	-P	<page> template page
 	-S	<section> template section

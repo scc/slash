@@ -23,7 +23,7 @@ Slash::DB::Static::Oracle - Oracle Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::Static::Oracle;
+	use Slash::DB::Static::Oracle;
 
 =head1 DESCRIPTION
 

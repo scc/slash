@@ -31,7 +31,7 @@ sub main {
 sub topTopics {
 	my($section) = @_;
 	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm(); 
+	my $form = getCurrentForm();
 
 	$section->{issue} = 0;  # should this be local() ?  -- pudge
 

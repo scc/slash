@@ -11,9 +11,21 @@ en_US
 __name__
 messagenew
 __template__
+[% IF msg.mode == 1 %]
+
+<P>
+<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER fixparam; journal.nickname; END %]">[% journal.nickname %]</A> has posted a new journal entry,
+<B><A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% journal.uid %]&amp;id=[% journal.id %]">[% journal.description %]</A></B>.
+</P>
+
+[% ELSE %]
+
 [% journal.nickname %] has posted a new journal entry on [% constants.sitename %].
 
     [% journal.description %]
     [% constants.absolutedir %]/journal.pl?op=display&uid=[% journal.uid %]&id=[% journal.id %]
+
+[% END %]
+
 __seclev__
 100

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w 
+#!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
@@ -26,7 +26,7 @@ my %opts;
 usage() unless getopts('hvlu:L:', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
-$opts{'u'} ||= 'slash';  
+$opts{'u'} ||= 'slash';
 
 $| = 1;
 
@@ -53,7 +53,7 @@ unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
 
 		if ($select =~ /^\d\,/) {
 			@answers = split(/\,/, $select);
-			last;	
+			last;
 		} elsif ($select eq 'a') {
 			for (keys %$plugins) {
 				push @answers, $plugins->{$_}{'order'};

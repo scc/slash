@@ -21,7 +21,7 @@ Slash::DB::Oracle - Oracle Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::Oracle;
+	use Slash::DB::Oracle;
 
 =head1 DESCRIPTION
 

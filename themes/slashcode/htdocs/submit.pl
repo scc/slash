@@ -31,9 +31,9 @@ sub main {
 		$form->{section}, $form->{op});
 	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
 
-	$form->{from}	= strip_nohtml($form->{from})  if $form->{from}; 
-	$form->{subj}	= strip_nohtml($form->{subj})  if $form->{subj}; 
-	$form->{email}	= strip_nohtml($form->{email}) if $form->{email}; 
+	$form->{from}	= strip_nohtml($form->{from})  if $form->{from};
+	$form->{subj}	= strip_nohtml($form->{subj})  if $form->{subj};
+	$form->{email}	= strip_nohtml($form->{email}) if $form->{email};
 
 	# Show submission title on browser's titlebar.
 	my($tbtitle) = $form->{title};
@@ -224,7 +224,7 @@ sub submissionEd {
 		submissions	=> \@submissions,
 		selection	=> \%selection,
 	});
-}	
+}
 
 #################################################################
 sub displayRSS {
@@ -277,17 +277,17 @@ sub displayForm {
 			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
 				my $err = getData('filtererror', { err_message => $message});
 				titlebar('100%', $err);
-				print $err; 
+				print $err;
 				last;
 			}
 			# run through compress test
-		 	if (! compressOk('submissions', $_, $form->{$_})) {
+			if (! compressOk('submissions', $_, $form->{$_})) {
 				# blammo luser
 				my $err = getData('compresserror');
 				titlebar('100%', $err);
-				print $err; 
+				print $err;
 				last;
-		 	}
+			}
 		}
 	}
 
@@ -326,13 +326,11 @@ sub saveSub {
 			my $message = "";
 			# run through filters
 			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
-
-
-				displayForm($form->{from}, $form->{email}, $form->{section}, '','', $message);
+				displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $message);
 				return;
 			}
 			# run through compress test
-		 	if (! compressOk($form->{$_})) {
+			if (! compressOk($form->{$_})) {
 				my $err = getData('compresserror');
 				displayForm($form->{from}, $form->{email}, $form->{section}, '', '');
 				return;
@@ -376,7 +374,7 @@ sub processSub {
 	my $proto = qr[^(?:mailto|http|https|ftp|gopher|telnet):];
 
 	if ($home =~ /\@/ && $home !~ $proto) {
-		$home = "mailto:$home"; 
+		$home = "mailto:$home";
 	} elsif ($home ne '' && $home !~ $proto) {
 		$home = "http://$home";
 	}

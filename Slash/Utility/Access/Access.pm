@@ -374,7 +374,7 @@ include:
 	- Clearing the registration flag.
 	- Sending the registration email which notifies user of expiration.
 
-If $val is non-zero, then the above operations are "cleared" by 
+If $val is non-zero, then the above operations are "cleared" by
 performing the following:
 
 	- Clearing the registration ID associated with the user.
@@ -393,7 +393,7 @@ None.
 =cut
 
 sub setUserExpired {
-	my ($uid, $val) = @_;
+	my($uid, $val) = @_;
 
 	my $user = getCurrentUser($uid);
 	my $slashdb = getCurrentDB();
@@ -412,9 +412,9 @@ sub setUserExpired {
 		# Now, how likely is it that this will result in a collision?
 		# Note that we obscure with an MD5 hex has which is safer in URLs
 		# than base64 hashes.
-        	my $regid = md5_hex(
+		my $regid = md5_hex(
 			(sprintf "%s%s%d", time, $user->{nickname}, int(rand 256))
-        	);
+		);
 
 		# We now unregister the user, but we need to keep the ID for later.
 		# Consider removal of the 'registered' flag. This state can simply
@@ -425,7 +425,7 @@ sub setUserExpired {
 			'registered'    => '0',
 			'reg_id'        => $regid,
 		});
-		
+
 		my $reg_msg = slashDisplay('rereg_mail', {
 			# This should probably be renamed to prevent confusion.
 			# But there is no real need for the CURRENT user's value

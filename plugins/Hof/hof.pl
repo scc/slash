@@ -51,7 +51,7 @@ sub main {
 # 		}
 # 
 # 
-# 		#Something tells me we could simplify this with some 
+# 		#Something tells me we could simplify this with some
 # 		# thought -Brian
 # 		foreach my $bid (keys %b) {
 # 			$b{$bid} = $I{dbobject}->countUsersIndexExboxesByBid($bid);

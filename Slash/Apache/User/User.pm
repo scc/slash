@@ -6,10 +6,10 @@
 package Slash::Apache::User;
 
 use strict;
-use Apache; 
+use Apache;
 use Apache::Constants qw(:common REDIRECT);
-use Apache::Cookie; 
-use Apache::File; 
+use Apache::Cookie;
+use Apache::File;
 use Apache::ModuleConfig;
 use AutoLoader ();
 use DynaLoader ();
@@ -61,7 +61,7 @@ sub handler {
 	}
 
 	unless ($cfg->{auth}) {
-		#unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) 
+		#unless ($uri =~ m[(?:^/$)|(?:\.pl$)])
 		unless ($uri =~ m[(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			createCurrentUser();
@@ -80,7 +80,7 @@ sub handler {
 	my $form = filter_params($r->args, $r->content);
 	my $cookies = Apache::Cookie->fetch;
 
-	# So we are either going to pick the user up from 
+	# So we are either going to pick the user up from
 	# the form, a cookie, or they will be anonymous
 	my $uid;
 	my $op = $form->{op} || '';
@@ -136,14 +136,14 @@ sub handler {
 			delete $cookies->{user};
 			setCookie('user', '');
 		}
-	} 
+	}
 
 	# This has happened to me a couple of times.
 	delete $cookies->{user} if ($cookies->{user} and !($cookies->{user}->value));
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
-	# Ok, yes we could use %ENV here, but if we did and 
+	# Ok, yes we could use %ENV here, but if we did and
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
 	$r->subprocess_env(SLASH_USER => $uid);
@@ -275,14 +275,14 @@ Slash::Apache::User - Apache Authenticate for Slash user
 
 =head1 SYNOPSIS
 
-  use Slash::Apache::User;
+	use Slash::Apache::User;
 
 =head1 DESCRIPTION
 
 This is the user authenication system for Slash. This is
 where you want to be if you want to modify slashcode's
 method of authenication. The rest of Slash depends
-on finding the UID of the user in the SLASH_USER 
+on finding the UID of the user in the SLASH_USER
 environmental variable.
 
 =head1 SEE ALSO

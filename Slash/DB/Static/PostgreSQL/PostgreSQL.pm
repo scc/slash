@@ -25,7 +25,7 @@ Slash::DB::Static::PostgreSQL - PostgreSQL Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::Static::PostgreSQL;
+	use Slash::DB::Static::PostgreSQL;
 
 =head1 DESCRIPTION
 

@@ -98,7 +98,7 @@ sub newwml {
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
-<!DOCTYPE wml PUBLIC "-//PHONE.COM//DTD WML 1.1//EN" "http://www.phone.com/dtd/wml11.dtd" > 
+<!DOCTYPE wml PUBLIC "-//PHONE.COM//DTD WML 1.1//EN" "http://www.phone.com/dtd/wml11.dtd" >
 <wml>
                         <head><meta http-equiv="Cache-Control" content="max-age=3600" forua="true"/></head>
 <!--  Dev  -->
@@ -112,16 +112,16 @@ sub newwml {
 <select>
 EOT
 
-        my $z = 0;
-        my $body;
+	my $z = 0;
+	my $body;
 	for my $section (@$stories_and_topics) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			xmlencode(strip_nohtml($section->{title})) . 
+			xmlencode(strip_nohtml($section->{title})) .
 			"</option>\n";
 		$z++;
-        }     
+	}
 
-        $x .= <<EOT;
+	$x .= <<EOT;
 </select>
 </p>
 </card>
@@ -129,7 +129,7 @@ EOT
 EOT
 
 	my $file = site2file($virtual_user, $constants, $slashdb, $user, $section);
-        save2file("$constants->{basedir}/$file.wml", $x);
+	save2file("$constants->{basedir}/$file.wml", $x);
 }
 
 sub newxml {

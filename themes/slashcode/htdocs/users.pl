@@ -19,18 +19,17 @@ sub main {
 
 	my $op = $form->{op};
 	my $uid = $user->{uid};
+	my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
 
 	if ($op eq 'userlogin' && !$user->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
 		redirect($refer);
 		return;
 	} elsif ($op eq 'saveuser') {
-		my $note = saveUser($form->{uid});
-		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
-		return;
+		$note = saveUser($form->{uid});
+		$op = 'edituser';
 	}
 
-	my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
 	header("$constants->{sitename} Users");  # this needs to be in a template
 	print getMessage('note', { note => $note } ) if defined $note;
 
@@ -60,7 +59,7 @@ sub main {
 		if (!$user->{is_anon}) {
 			editUser($user->{uid});
 		} else {
-			displayForm(); 
+			displayForm();
 		}
 
 	} elsif ($op eq 'edithome' || $op eq 'preferences') {
@@ -68,7 +67,7 @@ sub main {
 		if (!$user->{is_anon}) {
 			editHome($user->{uid});
 		} else {
-			displayForm(); 
+			displayForm();
 		}
 
 	} elsif ($op eq 'editcomm') {
@@ -76,7 +75,7 @@ sub main {
 		if (!$user->{is_anon}) {
 			editComm($user->{uid});
 		} else {
-			displayForm(); 
+			displayForm();
 		}
 
 	} elsif ($op eq 'userinfo' || !$op) {
@@ -106,7 +105,7 @@ sub main {
 		editUser($slashdb->getUserUID($form->{name}));
 
 	} elsif ($op eq 'susaveuser' && $user->{seclev} >= 100) {
-		saveUser($form->{uid}); 
+		saveUser($form->{uid});
 
 	} elsif ($op eq 'sudeluser' && $user->{seclev} >= 100) {
 		delUser($form->{uid});
@@ -212,7 +211,7 @@ sub newUser {
 
 	if ($matchname ne '' && $form->{newuser} ne '' && $form->{email} =~ /\@/) {
 		my $uid;
-		my $rootdir = getCurrentStatic('rootdir','value');
+		my $rootdir = getCurrentStatic('rootdir', 'value');
 		if ($uid = $slashdb->createUser($matchname, $form->{email}, $form->{newuser})) {
 			$title = getTitle('newUser_title');
 
@@ -222,7 +221,7 @@ sub newUser {
 
 			return;
 		}
-	} 
+	}
 	# Duplicate User
 	displayForm();
 }
@@ -234,7 +233,7 @@ sub mailPassword {
 
 	my $slashdb = getCurrentDB();
 
-	my $user_email = $slashdb->getUser($uid, ['nickname','realemail']);
+	my $user_email = $slashdb->getUser($uid, ['nickname', 'realemail']);
 
 	unless ($uid) {
 		print getMessage('mailpasswd_notmailed_msg');
@@ -285,7 +284,7 @@ sub userInfo {
 
 	$form->{min} = 0 unless $form->{min};
 
- 	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uid} == $uid;
+	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uid} == $uid;
 
 	if ($userbio->{uid} == $user->{uid}) {
 		$nickmatch_flag = 1;
@@ -363,7 +362,7 @@ sub validateUser {
 		my($maxComm, $maxDays) = ($constants->{max_expiry_comm},
 			$constants->{max_expiry_days} );
 		my($userComm, $userDays) = ($user->{user_expiry_comm},
-			$user->{user_expiry_days});		
+			$user->{user_expiry_days});
 		my $exp = $constants->{expiry_exponent};
 
 		# Increment only the trigger that was used.
@@ -394,7 +393,7 @@ sub editKey {
 	my $slashdb = getCurrentDB();
 
 	my $pubkey = $slashdb->getUser($uid, 'pubkey');
-	my $editkey = slashDisplay('editKey', { pubkey => $pubkey }, 1);	
+	my $editkey = slashDisplay('editKey', { pubkey => $pubkey }, 1);
 	return $editkey;
 }
 
@@ -416,18 +415,18 @@ sub editUser {
 
 	my $tempnick = fixparam($user_edit->{nickname});
 	my $temppass = fixparam($user_edit->{passwd});
- 
+
 	my $description = $slashdb->getDescriptions('maillist');
 	my $maillist = createSelect('maillist', $description, $user_edit->{maillist}, 1);
 
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
-	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0; 
+	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
 	$admin_block = getUserAdmin($user_edit->{uid}, 0, 1) if $admin_flag;
 
-	slashDisplay('editUser', { 
-		user_edit 		=> $user_edit, 
+	slashDisplay('editUser', {
+		user_edit 		=> $user_edit,
 		admin_flag		=> $admin_flag,
 		author_select		=> $author_select,
 		title			=> $title,
@@ -441,7 +440,7 @@ sub editUser {
 #################################################################
 sub tildeEd {
 	my($extid, $exsect, $exaid, $exboxes, $userspace) = @_;
-	
+
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my($aidref, $tidref, $sectionref, $section_descref, $tilde_ed, $tilded_msg_box);
@@ -463,7 +462,7 @@ sub tildeEd {
 	}
 
 	my $sections = $slashdb->getDescriptions('sections');
-	while (my($section,$title) = each %$sections) {
+	while (my($section, $title) = each %$sections) {
 		$sectionref->{$section}{checked} = ($exsect =~ /'$section'/) ? ' CHECKED' : '';
 		$sectionref->{$section}{title} = $title;
 	}
@@ -487,7 +486,7 @@ sub tildeEd {
 	}
 
 	my $tilded_box_msg = getMessage('tilded_box_msg');
-	$tilde_ed = slashDisplay('tildeEd', { 
+	$tilde_ed = slashDisplay('tildeEd', {
 		title			=> $title,
 		tilded_box_msg		=> $tilded_box_msg,
 		aidref			=> $aidref,
@@ -509,7 +508,7 @@ sub editHome {
 	return if isAnon(getCurrentUser('uid'));
 
 	my $user_edit = $slashdb->getUser($uid);
-	my $title = getTitle('editHome_title'); 
+	my $title = getTitle('editHome_title');
 
 	my $formats;
 	$formats = $slashdb->getDescriptions('dateformats');
@@ -533,10 +532,10 @@ sub editHome {
 		user_edit		=> $user_edit,
 		tzformat_select		=> $tzformat_select,
 		tzcode_select		=> $tzcode_select,
-		l_check			=> $l_check,			
-		b_check			=> $b_check,			
-		i_check			=> $i_check,			
-		w_check			=> $w_check,			
+		l_check			=> $l_check,
+		b_check			=> $b_check,
+		i_check			=> $i_check,
+		w_check			=> $w_check,
 		tilde_ed		=> $tilde_ed
 	});
 }
@@ -575,10 +574,10 @@ sub editComm {
 	slashDisplay('editComm', {
 		title			=> $title,
 		user_edit		=> $user_edit,
-		h_check			=> $h_check,			
-		r_check			=> $r_check,			
-		n_check			=> $n_check,			
-		s_check			=> $s_check,			
+		h_check			=> $h_check,
+		r_check			=> $r_check,
+		n_check			=> $n_check,
+		s_check			=> $s_check,
 		commentmodes_select	=> $commentmodes_select,
 		commentsort_select	=> $commentsort_select,
 		highlightthresh_select	=> $highlightthresh_select,
@@ -631,9 +630,9 @@ sub saveUser {
 
 		$slashdb->setReadOnly(
 			$formname,
-			$uid, 
-			$form->{keyname}, 
-			$form->{$reason_keyname} 
+			$uid,
+			$form->{keyname},
+			$form->{$reason_keyname}
 		);
 	}
 
@@ -645,7 +644,7 @@ sub saveUser {
 	# Do the right thing with respect to the chosen email display mode
 	# and the options that can be displayed.
 	my @email_choices = ('', $user_fakeemail, $form->{realemail});
-	
+
 	# for the users table
 	my $users_table = {
 		sig		=> $form->{sig},
@@ -668,8 +667,8 @@ sub saveUser {
 	}
 
 	if ($user->{seclev} >= 100) {
-		$users_table->{seclev} = $form->{seclev}; 
-		$users_table->{author} = $author_flag; 
+		$users_table->{seclev} = $form->{seclev};
+		$users_table->{author} = $author_flag;
 	}
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
@@ -707,7 +706,7 @@ sub saveUser {
 
 	$slashdb->setUser($uid, $users_table);
 
-	return fixparam($note);
+	return $note;
 }
 
 #################################################################
@@ -754,7 +753,7 @@ sub saveComm {
 		hardthresh	=> ($form->{hardthresh} ? 1 : 0),
 	};
 
-	# Update users with the $users_comments_table hash ref 
+	# Update users with the $users_comments_table hash ref
 	$slashdb->setUser($uid, $users_comments_table);
 }
 
@@ -793,7 +792,7 @@ sub saveHome {
 		if ($k =~ /^extid_(.*)/)	{ $extid  .= "'$1'," }
 		if ($k =~ /^exaid_(.*)/)	{ $exaid  .= "'$1'," }
 		if ($k =~ /^exsect_(.*)/)	{ $exsect .= "'$1'," }
-		if ($k =~ /^exboxes_(.*)/) { 
+		if ($k =~ /^exboxes_(.*)/) {
 			# Only Append a box if it doesn't exist
 			my $box = $1;
 			$exboxes .= "'$box'," unless $exboxes =~ /'$box'/;
@@ -814,7 +813,7 @@ sub saveHome {
 		noicons		=> ($form->{noicons} ? 1 : 0),
 		willing		=> ($form->{willing} ? 1 : 0),
 	};
-	
+
 	if (defined $form->{tzcode} && defined $form->{tzformat}) {
 		$users_index_table->{tzcode} = $form->{tzcode};
 		$users_index_table->{dfid}   = $form->{tzformat};
@@ -896,49 +895,49 @@ sub getUserAdmin {
 
 	my $slashdb	= getCurrentDB();
 	my $user	= getCurrentUser();
-	my $form	= getCurrentForm();	
+	my $form	= getCurrentForm();
 
 	my $edituser = $slashdb->getUser($uid);
 
 	my($uid_checked, $nickname_checked, $readonly_comments, $readonly_submit,
-		$comments_ro_reason, $submit_ro_reason) = ('','','','','','');
+		$comments_ro_reason, $submit_ro_reason) = ('', '', '', '', '', '');
 
 	if ($form->{userfield_flag} eq 'userid') {
 		$uid_checked = ' CHECKED';
 	} else {
 		$nickname_checked = ' CHECKED';
-	}		
+	}
 
 	my $author_select;
-	my $author_flag = ($edituser->{author} == 1) ? ' CHECKED' : ''; 
-	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0; 
+	my $author_flag = ($edituser->{author} == 1) ? ' CHECKED' : '';
+	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 
-	$readonly_comments = $slashdb->checkReadOnly('comments',$uid) ? ' CHECKED' : '';
+	$readonly_comments = $slashdb->checkReadOnly('comments', $uid) ? ' CHECKED' : '';
 
-	$comments_ro_reason = $slashdb->getReadOnlyReason('comments',$uid);
+	$comments_ro_reason = $slashdb->getReadOnlyReason('comments', $uid);
 
 	$readonly_submit = $slashdb->checkReadOnly('submit', $uid) ? ' CHECKED' : '';
 
-	$submit_ro_reason = $slashdb->getReadOnlyReason('comments',$uid);
+	$submit_ro_reason = $slashdb->getReadOnlyReason('comments', $uid);
 
 	my $authors = $slashdb->getDescriptions('authors');
 
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
 	$author_select =~ s/\s{2,}//g;
 
-	return slashDisplay('getUserAdmin', { 
+	return slashDisplay('getUserAdmin', {
 		edituser		=> $edituser,
 		seclev_field		=> $seclev_field,
 		uid_checked 		=> $uid_checked,
 		nickname_checked 	=> $nickname_checked,
 		author_select		=> $author_select,
-		author_flag 		=> $author_flag, 
+		author_flag 		=> $author_flag,
 		form_flag		=> $form_flag,
 		readonly_comments	=> $readonly_comments,
 		readonly_submit		=> $readonly_submit,
 		comments_ro_reason	=> $comments_ro_reason,
 		submit_ro_reason	=> $submit_ro_reason,
-		authoredit_flag 	=> $authoredit_flag }, 
+		authoredit_flag 	=> $authoredit_flag },
 		{ Return 		=> 1 }
 	);
 }

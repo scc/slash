@@ -5,9 +5,9 @@
 # $Id$
 
 ###############################################################################
-# dailyStuff - this program runs various housekeeping tasks, sends out the 
-# the mailing list, and compiles site statistics report and sends the report 
-# to the site admin 
+# dailyStuff - this program runs various housekeeping tasks, sends out the
+# the mailing list, and compiles site statistics report and sends the report
+# to the site admin
 ###############################################################################
 
 use strict;
@@ -49,7 +49,7 @@ $constants->{sitename} Stats for yesterday
     unique $count->{'unique'}
 total hits $sdTotalHits
   homepage $count->{'index'}{'index'}
-   indexes 
+   indexes
 EOT
 
 	for (keys %{$count->{'index'}}) {
@@ -61,9 +61,9 @@ EOT
 # DOESN'T WORK
 # for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
 # 	my $value = $count->{'articles'}{$key};
-# 
+#
 # 	my $story = $slashdb->getStory($key, 'title', 'aid');
-# 
+#
 # 	$email .= "$value\t$key " . substr($story->{'title'}, 0, 30) .
 # 		" by $story->{'author'}\n" if $value > 100;
 # }

@@ -158,7 +158,7 @@ sub slashDisplay {
 
 	# save for later (local() seems not to work ... ?)
 	$origSection = $user->{currentSection};
-	$origPage = $user->{currentPage};	
+	$origPage = $user->{currentPage};
 
 	# allow slashDisplay(NAME, DATA, RETURN) syntax
 	if (! ref $opt) {
@@ -172,13 +172,13 @@ sub slashDisplay {
 		$user->{currentSection} = 'admin';
 	} elsif ($user->{light}) {
 		$user->{currentSection} = 'light';
-	} elsif ($opt->{Section}) {	
+	} elsif ($opt->{Section}) {
 		$user->{currentSection} = $opt->{Section};
 	}
 
 	if ($opt->{Page} eq 'NONE') {
 		$user->{currentPage} = 'misc';
-	} elsif ($opt->{Page}) {	
+	} elsif ($opt->{Page}) {
 		$user->{currentPage} = $opt->{Page};
 	}
 
@@ -369,7 +369,7 @@ sub _populate {
 	$data->{user} = getCurrentUser() unless exists $data->{user};
 	$data->{form} = getCurrentForm() unless exists $data->{form};
 	$data->{env} = { map { (lc, $ENV{$_}) } keys %ENV }
-		unless exists $data->{env}; 
+		unless exists $data->{env};
 }
 
 

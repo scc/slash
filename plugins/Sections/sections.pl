@@ -137,7 +137,7 @@ sub saveSection {
 	my $form = getCurrentForm();
 
 	# Non alphanumerics are not allowed in the section key.
-	# And I don't see a reason for underscores either, but 
+	# And I don't see a reason for underscores either, but
 	# dashes should be allowed.
 	$section =~ s/[^A-Za-z0-9\-]//g;
 

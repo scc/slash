@@ -12,7 +12,7 @@ use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: Oh no! Not the magnet! 
+# BENDER: Oh no! Not the magnet!
 
 my $timeout = 30; # This should eventualy be a parameter that is configurable
 
@@ -34,7 +34,7 @@ sub new {
 
 		if (exists $self->{'_where'}) {
 			for (keys %{ $self->{'_where'} }) {
-				$where .= "$_=$self->{'_where'}{$_} AND "; 
+				$where .= "$_=$self->{'_where'}{$_} AND ";
 			}
 			$where =~ s/ AND $//g if $where;
 			$self->{_wheresql} = $where;
@@ -269,7 +269,7 @@ sub sqlSelect {
 	$sql .= "FROM $from " if $from;
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
-	
+
 	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$self->sqlConnect();
 	if (!$sth->execute) {
@@ -294,7 +294,7 @@ sub sqlSelectArrayRef {
 	$sql .= "FROM $from " if $from;
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
-	
+
 	$self->sqlConnect();
 	my $sth = $self->{_dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
@@ -315,7 +315,7 @@ sub sqlSelectHash {
 
 ##########################################################
 # selectCount 051199
-# inputs: scalar string table, scaler where clause 
+# inputs: scalar string table, scaler where clause
 # returns: via ref from input
 # Simple little function to get the count of a table
 ##########################################################
@@ -342,12 +342,12 @@ sub sqlSelectHashref {
 
 	$self->sqlConnect();
 	my $sth = $self->{_dbh}->prepare_cached($sql);
-	
+
 	unless ($sth->execute) {
 		errorLog($sql);
 		$self->sqlConnect;
 		return;
-	} 
+	}
 	my $H = $sth->fetchrow_hashref;
 	$sth->finish;
 	return $H;
@@ -364,30 +364,30 @@ sub sqlSelectColArrayref {
 
 	$self->sqlConnect();
 	my $sth = $self->{_dbh}->prepare_cached($sql);
-	
+
 	my $array = $self->{_dbh}->selectcol_arrayref($sth);
 	unless (defined($array)) {
 		errorLog($sql);
 		$self->sqlConnect;
 		return;
-	} 
+	}
 
 	return $array;
 }
 
 ########################################################
-# sqlSelectAll - this function returns the entire 
+# sqlSelectAll - this function returns the entire
 # array ref of all records selected. Use this in the case
 # where you want all the records and have to do a time consuming
-# process that would tie up the db handle for too long.   
-# 
-# inputs: 
-# select - columns selected 
-# from - tables 
-# where - where clause 
+# process that would tie up the db handle for too long.
+#
+# inputs:
+# select - columns selected
+# from - tables
+# where - where clause
 # other - limit, asc ...
 #
-# returns: 
+# returns:
 # array ref of all records
 sub sqlSelectAll {
 	my($self, $select, $from, $where, $other) = @_;
@@ -408,17 +408,17 @@ sub sqlSelectAll {
 }
 
 ########################################################
-# sqlSelectAllHashref - this function returns the entire 
+# sqlSelectAllHashref - this function returns the entire
 # set of rows in a hash.
-# 
-# inputs: 
+#
+# inputs:
 # id -  column to use as the hash key
-# select - columns selected 
-# from - tables 
-# where - where clause 
+# select - columns selected
+# from - tables
+# where - where clause
 # other - limit, asc ...
 #
-# returns: 
+# returns:
 # array ref of all records
 sub sqlSelectAllHashref {
 	my($self, $id , $select, $from, $where, $other) = @_;
@@ -435,22 +435,21 @@ sub sqlSelectAllHashref {
 		$returnable->{$row->{$id}} = $row;
 	}
 	$sth->finish;
-	
-	
+
 	return $returnable;
 }
 
 ########################################################
-# sqlSelectAllHashrefArray - this function returns the entire 
+# sqlSelectAllHashrefArray - this function returns the entire
 # set of rows in a array where the elements are the hash.
-# 
-# inputs: 
-# select - columns selected 
-# from - tables 
-# where - where clause 
+#
+# inputs:
+# select - columns selected
+# from - tables
+# where - where clause
 # other - limit, asc ...
 #
-# returns: 
+# returns:
 # array ref of all records
 sub sqlSelectAllHashrefArray {
 	my($self, $select, $from, $where, $other) = @_;
@@ -467,8 +466,7 @@ sub sqlSelectAllHashrefArray {
 		push @returnable, $row;
 	}
 	$sth->finish;
-	
-	
+
 	return \@returnable;
 }
 
@@ -480,7 +478,7 @@ sub sqlUpdate {
 		if (/^-/) {
 			s/^-//;
 			$sql .= "\n  $_ = $data->{-$_},";
-		} else { 
+		} else {
 			$sql .= "\n $_ = " . $self->{_dbh}->quote($data->{$_}) . ',';
 		}
 	}
@@ -504,7 +502,7 @@ sub sqlInsert {
 		} else {
 			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
 		}
-		$names .= "$_,";	
+		$names .= "$_,";
 	}
 
 	chop($names);
@@ -547,7 +545,7 @@ Slash::DB::Utility - Generic SQL code which is common to all DB interfaces for S
 
 =head1 SYNOPSIS
 
-  use Slash::DB::Utility;
+	use Slash::DB::Utility;
 
 =head1 DESCRIPTION
 

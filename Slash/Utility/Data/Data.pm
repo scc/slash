@@ -1025,9 +1025,9 @@ sub HTML::FormatText::AddRefs::parse_refs {
 
 		# get nested elements
 		my $con = $self->{'_content'};
- 		while (ref($con->[0]) eq 'HTML::Element') {
- 			$con = $con->[0]{'_content'};
- 		}
+		while (ref($con->[0]) eq 'HTML::Element') {
+			$con = $con->[0]{'_content'};
+		}
 
 		# add "footnote" to text
 		$con->[0] = sprintf(
@@ -1121,7 +1121,7 @@ sub balanceTags {
 	# If the quoted slash in the next line bothers you, then feel free to
 	# remove it. It's just there to prevent broken syntactical highlighting
 	# on certain editors (vim AND xemacs).  -- Cliff
-	# maybe you should use a REAL editor, like BBEdit.  :) -- pudge 
+	# maybe you should use a REAL editor, like BBEdit.  :) -- pudge
 	while ($html =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
 		($tag, $close, $whole) = ($3, $2, $1);
 
@@ -1465,8 +1465,8 @@ The user's ID whose email address you wish to randomize.
 =cut
 
 sub getArmoredEmail {
-	my ($uid) = @_;
-	
+	my($uid) = @_;
+
 	my $slashdb = getCurrentDB();
 
 	my $armor = $slashdb->getRandomSpamArmor();
@@ -1476,30 +1476,39 @@ sub getArmoredEmail {
 	{
 		local $_ = $slashdb->getUser($uid, 'realemail');
 
+		# maybe this should be cached, something like the template
+		# cache in Slash::Display?  it has some significant
+		# overhead -- pudge
 		my $cpt = new Safe;
+
 		# We only permit basic arithmetic, loop and looping opcodes.
 		# We also explicitly allow join since some code may involve
 		# Separating the address so that obfuscation can be performed
 		# in parts.
+		# NOTE: these opcode classes cannot be in the database etc.,
+		# because that would compromise the security model.  -- pudge
 		$cpt->permit(qw[:base_core :base_loop :base_math join]);
-		# Each compartment should be designed to take input from, and 
+
+		# Each compartment should be designed to take input from, and
 		# send output to, $_.
 		$cpt->reval($armor->{code});
 		return $_ unless $@;
-		
+
 		# If we are here, an error occured in the block. This should be
 		# logged.
 		#
 		# Ideally, this text should be in a template, somewhere
 		# but I hesitate to use Slash::getData() in a module where I
 		# don't see it already in use. - Cliff
+		# it can be used anywhere, since Slash.pm is assumed to
+		# be loaded -- pudge
 		errorLog(<<EOT);
 Error randomizing realemail using armor '$armor->{name}':
 $@
 EOT
 
 	}
-}	
+}
 
 ########################################################
 # fix parameter input that should be integers

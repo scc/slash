@@ -44,7 +44,7 @@ $DEBUG     = $Template::Provider::DEBUG || 0 unless defined $DEBUG;
 
 use constant PREV => 0;
 use constant NAME => 1;
-use constant DATA => 2; 
+use constant DATA => 2;
 use constant LOAD => 3;
 use constant NEXT => 4;
 
@@ -54,7 +54,7 @@ my($anon_num, %anon_template);
 sub _get_anon_name {
 	my($text) = @_;
 	return $anon_template{$text} if exists $anon_template{$text};
-	return $anon_template{$text} = 'anon_' . ++$anon_num; 
+	return $anon_template{$text} = 'anon_' . ++$anon_num;
 }
 
 sub fetch {

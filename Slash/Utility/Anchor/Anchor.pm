@@ -282,7 +282,7 @@ sub ssiFoot {
 ########################################################
 sub getAd {
 	my $num = $_[0] || 1;
-	return qq|<!--#perl sub="sub { use Slash; print Slash::Utility::getAd($num); }" -->|
+	return qq|<!--#perl sub="sub { use Slash; print Slash::getAd($num); }" -->|
 		unless $ENV{SCRIPT_NAME};
 
 	return $ENV{"AD_BANNER_$num"};

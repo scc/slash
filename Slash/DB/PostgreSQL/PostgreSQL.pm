@@ -41,11 +41,11 @@ sub createUser {
 	return unless $matchname && $email && $newuser;
 
 	return if ($self->sqlSelect(
-		"count(uid)","users",
+		"count(uid)", "users",
 		"matchname=" . $self->{_dbh}->quote($matchname)
 	))[0];
 	return if ($self->sqlSelect(
-		"count(uid)","users",
+		"count(uid)", "users",
 		" realemail=" . $self->{_dbh}->quote($email)
 	))[0];
 
@@ -55,7 +55,7 @@ sub createUser {
 		matchname	=> $matchname,
 		passwd		=> encryptPassword(changePassword())
 	});
-	my($uid) = $self->sqlSelect('uid', 'users', 'nickname=' . 
+	my($uid) = $self->sqlSelect('uid', 'users', 'nickname=' .
 			$self->{_dbh}->quote($newuser)
 			);
 
@@ -117,7 +117,7 @@ sub getSubmissionForUser {
 sub getNewstoryTitle {
 	my($self, $storyid, $sid) = @_;
 	my($title) = $self->sqlSelect("title", "newstories",
-	      "sid=" . $self->{_dbh}->quote($sid)
+		"sid=" . $self->{_dbh}->quote($sid)
 	);
 
 	return $title;
@@ -144,18 +144,18 @@ sub saveStory {
 	my $suid;
 	if ($form->{subid}) {
 		my($suid) = $self->sqlSelect(
-			'uid','submissions',
+			'uid', 'submissions',
 			'subid=' . $self->{_dbh}->quote($form->{subid})
 		);
 
 		# i think i got this right -- pudge
- 		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
- 		my $newkarma = (($userkarma + $constants->{submission_bonus})
- 			> $constants->{maxkarma})
- 				? $constants->{maxkarma}
- 				: "karma+$constants->{submission_bonus}";
- 		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
- 			if $suid != $constants->{anonymous_coward_uid};
+		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
+		my $newkarma = (($userkarma + $constants->{submission_bonus})
+			> $constants->{maxkarma})
+				? $constants->{maxkarma}
+				: "karma+$constants->{submission_bonus}";
+		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
+			if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('users_info',
 			{ -karma => 'karma + 3' },
@@ -168,7 +168,7 @@ sub saveStory {
 		);
 	}
 
-	$self->sqlInsert('stories',{
+	$self->sqlInsert('stories', {
 		sid		=> $form->{sid},
 		uid		=> $form->{aid},
 		tid		=> $form->{tid},
@@ -204,7 +204,7 @@ sub getDay {
 sub setUser {
 	my($self, $uid, $hashref) = @_;
 	my(@param, %update_tables, $cache);
-	my $tables = [qw( users )]; 
+	my $tables = [qw( users )];
 	# special cases for password, exboxes
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
@@ -251,13 +251,14 @@ sub setUser {
 		$self->sqlDo(qq| INSERT INTO users_param (uid, name, value) VALUES ($uid, '$_->[0]', '$_->[1]') |);
 	}
 }
+
 ########################################################
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
 sub getUser {
 	my $answer = _genericGet('users', 'uid', @_);
 	my $user = getCurrentAnonymousCoward();
-	for(keys %$answer) {
+	for (keys %$answer) {
 		$user->{$_} = $answer->{$_};
 	}
 	return $user;
@@ -476,7 +477,7 @@ Slash::DB::PostgreSQL - PostgreSQL Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::PostgreSQL;
+	use Slash::DB::PostgreSQL;
 
 =head1 DESCRIPTION
 

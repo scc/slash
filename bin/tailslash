@@ -70,7 +70,7 @@ $opts{'u'} ||= 'slash';
 			if $opts{'y'} eq "sec";
 		for (@$info) {
 			my($host_addr, $uid, $op, $dat, $ts, $id) = @$_;
-			my $w="$ts $host_addr ($uid)";
+			my $w = "$ts $host_addr ($uid)";
 			$w .= "\t" if length $w < 24;
 			$w .= "\t$op";
 			$w .= "\t" if length($op) < 8;

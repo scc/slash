@@ -289,7 +289,7 @@ sub create_rss {
 		$channel{managingEditor} = delete $channel{publisher};
 		$channel{webMaster}      = delete $channel{creator};
 		$channel{copyright}      = delete $channel{rights};
-		
+
 	} else {  # 0.9
 		for (keys %channel) {
 			delete $channel{$_} unless /^(?:link|title|description)$/;
@@ -525,7 +525,7 @@ sub rss_item_description {
 	my($desc) = @_;
 
 	my $constants = getCurrentStatic();
-	
+
 	if ($constants->{rdfitemdesc} == 1) {
 		# keep $desc as-is
 	} elsif ($constants->{rdfitemdesc}) {

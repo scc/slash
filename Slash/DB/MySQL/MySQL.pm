@@ -124,7 +124,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") },
 
 	'forms'
-		=> sub { $_[0]->sqlSelectMany('value,value', 'site_info', "name = 'form'") },      
+		=> sub { $_[0]->sqlSelectMany('value,value', 'site_info', "name = 'form'") },
 
 );
 
@@ -172,8 +172,8 @@ sub init {
 #######################################################
 # Wrapper to get the latest ID from the database
 sub getLastInsertId {
-	my($self,$table,$col) = @_;
- 	my($answer) = $self->sqlSelect('LAST_INSERT_ID()');
+	my($self, $table, $col) = @_;
+	my($answer) = $self->sqlSelect('LAST_INSERT_ID()');
 	return $answer;
 }
 
@@ -220,7 +220,7 @@ sub createComment {
 		return -1;
 	}
 
-	$self->sqlInsert('comment_text',{
+	$self->sqlInsert('comment_text', {
 			cid	=> $cid,
 			comment	=>  $comment->{postercomment},
 	});
@@ -229,7 +229,7 @@ sub createComment {
 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
 	}
-	
+
 	return $cid;
 }
 
@@ -412,19 +412,19 @@ sub getSessionInstance {
 	my($self, $uid, $session_in) = @_;
 	my $admin_timeout = getCurrentStatic('admin_timeout');
 	my $session_out = '';
-  
+
 	if ($session_in) {
 		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
-  
+
 		my $session_in_q = $self->{_dbh}->quote($session_in);
-  
+
 		my($uid) = $self->sqlSelect(
 			'uid',
 			'sessions',
 			"session=$session_in_q"
 		);
-  
+
 		if ($uid) {
 			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND " .
 				"session != $session_in_q"
@@ -447,7 +447,7 @@ sub getSessionInstance {
 			-logintime => 'now()', -lasttime => 'now()',
 			lasttitle => $title }
 		);
-		$session_out = $self->getLastInsertId('sessions','session');
+		$session_out = $self->getLastInsertId('sessions', 'session');
 	}
 	return $session_out;
 
@@ -498,11 +498,11 @@ sub createAccessLog {
 		$uid = getCurrentStatic('anonymous_coward_uid');
 	}
 
-	my $ipid = getCurrentUser('ipid'); 
+	my $ipid = getCurrentUser('ipid');
 	my $subnetid = getCurrentUser('subnetid');
 
 	$self->sqlInsert('accesslog', {
-		host_addr	=> $ipid, 
+		host_addr	=> $ipid,
 		subnetid	=> $subnetid,
 		dat		=> $dat,
 		uid		=> $uid,
@@ -530,7 +530,7 @@ sub getDescriptions {
 	if ($flag) {
 		undef $self->{$cache};
 	} else {
-		return $self->{$cache} if $self->{$cache}; 
+		return $self->{$cache} if $self->{$cache};
 	}
 
 	$altdescs ||= {};
@@ -771,7 +771,7 @@ sub createContentFilter {
 		err_message	=> ''
 	});
 
-	my $filter_id = $self->getLastInsertId('content_filters','filter_id');
+	my $filter_id = $self->getLastInsertId('content_filters', 'filter_id');
 
 	return $filter_id;
 }
@@ -779,8 +779,8 @@ sub createContentFilter {
 sub checkEmail {
 	my($self, $email) = @_;
 
-	# Returns count of users matching $email. 
-	return ($self->sqlSelect('count(uid)', 'users', 
+	# Returns count of users matching $email.
+	return ($self->sqlSelect('count(uid)', 'users',
 		'realemail=' . $self->{_dbh}->quote($email)))[0];
 }
 
@@ -791,7 +791,7 @@ sub createUser {
 	return unless $matchname && $email && $newuser;
 
 	return if ($self->sqlSelect(
-		"count(uid)","users",
+		"count(uid)", "users",
 		"matchname=" . $self->{_dbh}->quote($matchname)
 	))[0] || $self->checkEmail($email);
 
@@ -806,10 +806,10 @@ sub createUser {
 
 # This is most likely a transaction problem waiting to
 # bite us at some point. -Brian
-	my $uid = $self->getLastInsertId('users','uid');
+	my $uid = $self->getLastInsertId('users', 'uid');
 	return unless $uid;
 	$self->sqlInsert("users_info", {
-		uid 			=> $uid, 
+		uid 			=> $uid,
 		-lastaccess		=> 'now()',
 	});
 	$self->sqlInsert("users_prefs", { uid => $uid } );
@@ -818,9 +818,9 @@ sub createUser {
 
 	# All param fields should be set here, as some code may not behave
 	# properly if the values don't exist.
-	# 
+	#
 	# You know, I know this might be slow, but maybe this thing could be
-	# initialized by a template? Wild thought, but that would prevent 
+	# initialized by a template? Wild thought, but that would prevent
 	# site admins from having to edit CODE to set this stuff up.
 	#
 	#	- Cliff
@@ -919,7 +919,7 @@ sub setSection {
 # thought is needed. -Brian
 	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
 	my $section_dbh = $self->{_dbh}->quote($section);
-	my($count) = $self->sqlSelect("count(*)","sections","section=$section_dbh");
+	my($count) = $self->sqlSelect("count(*)", "sections", "section=$section_dbh");
 	my($ok1, $ok2);
 
 	# This is a poor attempt at a transaction I might add. -Brian
@@ -949,7 +949,7 @@ sub setStoryCount {
 		-commentcount	=> "commentcount-$count",
 		writestatus	=> 1
 	}, 'sid=' . $self->{_dbh}->quote($sid));
-	if(getCurrentStatic('mysql_heap_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlUpdate('newstories', {
 			-commentcount	=> "commentcount-$count",
 			writestatus	=> 1
@@ -1325,7 +1325,7 @@ sub deleteStoryAll {
 
 	$self->sqlDo("DELETE from stories where sid=$db_sid");
 	$self->sqlDo("DELETE from story_text where sid=$db_sid");
-	if(getCurrentStatic('mysql_heap_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlDo("DELETE from newstories where sid=$db_sid");
 	}
 }
@@ -1362,14 +1362,17 @@ sub setStory {
 				if defined $hashref->{$key};
 		}
 		$self->sqlUpdate($table, \%minihash, 'sid=' . $sid, 1);
-		if(getCurrentStatic('mysql_heap_table') and $table eq 'stories') {
+		if (getCurrentStatic('mysql_heap_table') and $table eq 'stories') {
 			$self->sqlUpdate('newstories', \%minihash, 'sid=' . $sid, 1);
 		}
 	}
 
 	for (@param)  {
-		$self->sqlReplace($param_table, { sid => $sid, name => $_->[0], value => $_->[1]})
-			if defined $_->[1];
+		$self->sqlReplace($param_table, {
+			sid	=> $sid,
+			name	=> $_->[0],
+			value	=> $_->[1]
+		}) if defined $_->[1];
 	}
 }
 
@@ -1417,7 +1420,7 @@ sub createFormkey {
 		id 		=> $id,
 		sid		=> $sid,
 		uid		=> $ENV{SLASH_USER},
-		ipid		=> $ipid, 
+		ipid		=> $ipid,
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1495,7 +1498,7 @@ sub createAbuse {
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {
 		uid		=> $uid,
-		ipid		=> $ipid, 
+		ipid		=> $ipid,
 		subnetid	=> $subnetid,
 		pagename	=> $script_name,
 		querystring	=> $query_string || '',
@@ -1508,19 +1511,20 @@ sub createAbuse {
 sub checkExpired {
 	my($self, $uid) = @_;
 
-	my $where = "uid = $uid AND readonly = 1 AND reason = 'expired'"; 
+	my $where = "uid = $uid AND readonly = 1 AND reason = 'expired'";
 
 	$self->sqlSelect(
 		"readonly",
 		"accesslist", $where
 	);
 }
+
 ##################################################################
 sub checkReadOnly {
 	my($self, $formname, $id) = @_;
 
 	my $constants = getCurrentStatic();
-	my ($ref,$user);
+	my($ref, $user);
 	my $where = '';
 
 	if ($id) {
@@ -1528,20 +1532,16 @@ sub checkReadOnly {
 		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
 			$where = "uid = $user->{uid}";
 		} else {
-			$where = "(ipid = '$id' OR subnetid = '$id')"; 
+			$where = "(ipid = '$id' OR subnetid = '$id')";
 		}
 	} else {
 		$user = $self->getCurrentUser();
 		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'"; 
+	$where .= " AND readonly = 1 AND formname = '$formname'";
 
-
-	$self->sqlSelect(
-	 	"readonly",
-	 	"accesslist", $where
-	);
+	$self->sqlSelect("readonly", "accesslist", $where);
 }
 
 ##################################################################
@@ -1549,35 +1549,34 @@ sub getReadOnlyReason {
 	my($self, $formname, $id) = @_;
 
 	my $constants = getCurrentStatic();
-	my ($ref,$user);
-	my ($reason,$where) = ('','');
+	my($ref, $user);
+	my($reason, $where) = ('', '');
 
 	if ($id) {
 		$user = $self->getUser($id);
 		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
 			$where = "WHERE uid = $user->{uid}";
 		} else {
-			$where = "WHERE (ipid = '$id' OR subnetid = '$id')"; 
+			$where = "WHERE (ipid = '$id' OR subnetid = '$id')";
 		}
 	} else {
 		$user = $self->getCurrentUser();
 		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND readonly = 1 AND formname = '$formname'"; 
+	$where .= " AND readonly = 1 AND formname = '$formname'";
 
 	$ref = $self->sqlSelectAll("reason", "accesslist $where");
 
-	for ( @$ref ) {
+	for (@$ref) {
 		if ($reason eq '') {
 			$reason = $_->[0];
-		} 
-		elsif($reason ne $_->[0]) {
+		} elsif ($reason ne $_->[0]) {
 			$reason = 'multiple';
 			return($reason);
 		}
 	}
-	
+
 	return($reason);
 }
 
@@ -1585,20 +1584,20 @@ sub getReadOnlyReason {
 sub setReadOnly {
 	my($self, $formname, $id, $flag, $reason) = @_;
 
- 	my $user = $self->getUser($id);
-	
+	my $user = $self->getUser($id);
+
 	my $constants = getCurrentStatic();
 
 	my $where = '';
-	if($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
+	if ($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
 		$where = "uid = $user->{uid}";
 	} else {
-		$where = "(ipid = '$id' OR subnetid = '$id')"; 
+		$where = "(ipid = '$id' OR subnetid = '$id')";
 	}
 
-	$where .= " AND formname = '$formname'"; 
+	$where .= " AND formname = '$formname'";
 
-	if ($self->checkReadOnly($formname,$id) && $flag == 0) {
+	if ($self->checkReadOnly($formname, $id) && $flag == 0) {
 		if ($reason) {
 			$self->sqlUpdate("accesslist", {
 					-readonly => $flag,
@@ -1611,12 +1610,11 @@ sub setReadOnly {
 					}, $where
 			);
 		}
-	} 
-	elsif ($flag == 1) {
+	} elsif ($flag == 1) {
 		$user->{ipid} = '' if ! $user->{ipid};
 		$user->{subnetid} = '' if ! $user->{subnetid};
 
-		if ($self->_checkAccessList($formname,$id)) {
+		if ($self->_checkAccessList($formname, $id)) {
 			if ($reason) {
 				$self->sqlUpdate("accesslist", {
 						-readonly => $flag,
@@ -1629,38 +1627,36 @@ sub setReadOnly {
 			}
 		} else {
 			$self->sqlInsert("accesslist", {
-				-uid => $user->{uid},
-				ipid => $user->{ipid},
-				subnetid => $user->{subnetid}, 
-				formname => $formname,
-				-ts   => "now()",
-				-readonly => $flag,
-				reason => $reason, });
+				-uid		=> $user->{uid},
+				ipid		=> $user->{ipid},
+				subnetid	=> $user->{subnetid},
+				formname	=> $formname,
+				-ts		=> "now()",
+				-readonly	=> $flag,
+				reason		=> $reason
+			});
 		}
 	}
 }
 
 ##################################################################
 sub _checkAccessList {
-	my ($self, $formname, $id) = @_;
+	my($self, $formname, $id) = @_;
 
 	my $constants = getCurrentStatic();
- 	my $user = $self->getUser($id);
+	my $user = $self->getUser($id);
 
 	my $where = '';
 
 	if ($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
 		$where = "uid = $user->{uid}";
 	} else {
-		$where = "(ipid = '$id' OR subnetid = '$id')"; 
+		$where = "(ipid = '$id' OR subnetid = '$id')";
 	}
 
-	$where .= " AND formname = '$formname'"; 
+	$where .= " AND formname = '$formname'";
 
-	my ($rows) = $self->sqlSelect(
-	 	"count(*)",
-	 	"accesslist", $where
-	);
+	my($rows) = $self->sqlSelect("count(*)", "accesslist", $where);
 
 	return($rows);
 }
@@ -1687,13 +1683,13 @@ sub currentAdmin {
 }
 
 ########################################################
-# 
+#
 sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
 	my $table = getCurrentStatic('mysql_heap_table') ? 'newstories' : 'stories';
-	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,$table",
+	my $topics = $self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt", "topics,$table",
 		"topics.tid=$table.tid
 		$when
 		GROUP BY topics.tid
@@ -1828,7 +1824,7 @@ sub countCommentsBySidPid {
 
 ##################################################################
 # Search on block comparison! No way, easier on everything
-# if we just do a match on the signature (AKA MD5 of the comment) 
+# if we just do a match on the signature (AKA MD5 of the comment)
 # -Brian
 sub findCommentsDuplicate {
 	my($self, $sid, $comment) = @_;
@@ -1910,7 +1906,7 @@ sub getStoryByTime {
 sub countStories {
 	my($self) = @_;
 	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,users.nickname",
-		"stories,users","stories.uid=users.uid", "ORDER BY commentcount DESC LIMIT 10"
+		"stories,users", "stories.uid=users.uid", "ORDER BY commentcount DESC LIMIT 10"
 	);
 	return $stories;
 }
@@ -1918,7 +1914,7 @@ sub countStories {
 ########################################################
 sub setModeratorVotes {
 	my($self, $uid, $metamod) = @_;
-	$self->sqlUpdate("users_info",{
+	$self->sqlUpdate("users_info", {
 		-m2unfairvotes	=> "m2unfairvotes+$metamod->{unfair}",
 		-m2fairvotes	=> "m2fairvotes+$metamod->{fair}",
 		-lastmm		=> 'now()',
@@ -2003,7 +1999,7 @@ sub countUsers {
 sub countStoriesStuff {
 	my($self) = @_;
 	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,users.nickname",
-		"stories,storiestuff,users","stories.sid=storiestuff.sid AND stories.uid=users.uid",
+		"stories,storiestuff,users", "stories.sid=storiestuff.sid AND stories.uid=users.uid",
 		"ORDER BY hits DESC LIMIT 10"
 	);
 	return $stories;
@@ -2013,7 +2009,7 @@ sub countStoriesStuff {
 sub countStoriesAuthors {
 	my($self) = @_;
 	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
-		"stories, users","users.uid=stories.uid",
+		"stories, users", "users.uid=stories.uid",
 		"GROUP BY stories.uid ORDER BY c DESC LIMIT 10"
 	);
 	return $authors;
@@ -2037,7 +2033,7 @@ sub createVar {
 ########################################################
 sub deleteVar {
 	my($self, $name) = @_;
-	
+
 	$self->sqlDo("DELETE from vars WHERE name=" .
 		$self->{_dbh}->quote($name));
 }
@@ -2097,7 +2093,7 @@ sub setCommentCleanup {
 			"users_comments",
 			{ -points=>$user->{points} },
 			"uid=$user->{uid}"
-		); 
+		);
 		return 1;
 	}
 	return;
@@ -2135,10 +2131,10 @@ sub getCommentReply {
 ########################################################
 sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
-	
+
 	my $table = 'comments';
 
-	if(getCurrentStatic('mysql_heap_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comments_hash';
 	}
 
@@ -2177,8 +2173,8 @@ sub getCommentsForUser {
 # This is here to save us a database lookup when drawing comment pages.
 sub _getCommentText {
 	my($self, $cid) = @_;
-	if($self->{_comment_text}) {
-		return $self->{_comment_text}{$cid} if $self->{_comment_text}{$cid};
+	if ($self->{_comment_text} && $self->{_comment_text}{$cid}) {
+		return $self->{_comment_text}{$cid};
 	}
 
 	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
@@ -2323,7 +2319,7 @@ sub getTrollAddress {
 	my($self) = @_;
 
 	my $ipid = getCurrentUser('ipid');
-	my($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+	my($badIP) = $self->sqlSelect("sum(val)", "comments,moderatorlog",
 			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
 			AND ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
 			AND (to_days(now()) - to_days(ts) < 3) GROUP BY ipid"
@@ -2336,7 +2332,7 @@ sub getTrollAddress {
 sub getTrollUID {
 	my($self) = @_;
 	my $user = getCurrentUser();
-	my($badUID) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+	my($badUID) = $self->sqlSelect("sum(val)", "comments,moderatorlog",
 		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
 		AND comments.uid=$user->{uid} AND moderatorlog.active=1
 		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
@@ -2364,7 +2360,7 @@ sub createStory {
 	unless ($story) {
 		$story ||= getCurrentForm();
 	}
-	#Create a sid 
+	#Create a sid
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
 	$year = $year % 100;
 	# yes, this format is correct, don't change it :-)
@@ -2379,18 +2375,18 @@ sub createStory {
 	if ($story->{subid}) {
 		my $constants = getCurrentStatic();
 		my($suid) = $self->sqlSelect(
-			'uid','submissions',
+			'uid', 'submissions',
 			'subid=' . $self->{_dbh}->quote($story->{subid})
 		);
 
 		# i think i got this right -- pudge
- 		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
- 		my $newkarma = (($userkarma + $constants->{submission_bonus})
- 			> $constants->{maxkarma})
- 				? $constants->{maxkarma}
- 				: "karma+$constants->{submission_bonus}";
- 		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
- 			if $suid != $constants->{anonymous_coward_uid};
+		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
+		my $newkarma = (($userkarma + $constants->{submission_bonus})
+			> $constants->{maxkarma})
+				? $constants->{maxkarma}
+				: "karma+$constants->{submission_bonus}";
+		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
+			if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('users_info',
 			{ -karma => 'karma + 3' },
@@ -2425,7 +2421,7 @@ sub createStory {
 
 	$self->sqlInsert('stories', $data);
 	$self->sqlInsert('story_text', $text);
-	if(getCurrentStatic('mysql_heap_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlInsert('newstories', $data);
 	}
 	$self->_saveExtras($story);
@@ -2438,7 +2434,7 @@ sub updateStory {
 	my($self) = @_;
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-	$self->sqlUpdate('discussions',{
+	$self->sqlUpdate('discussions', {
 		sid	=> $form->{sid},
 		title	=> $form->{title},
 		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
@@ -2493,7 +2489,7 @@ sub getSlashConf {
 	# values are not present...
 	for (qw[min_expiry_days max_expiry_days min_expiry_comm max_expiry_comm]) {
 		$conf{$_}	= -1 unless exists $conf{$_};
-	} 
+	}
 
 	# no trailing newlines on directory variables
 	# possibly should rethink this for basedir,
@@ -2619,7 +2615,7 @@ sub getTime {
 # dunno ... sigh, i am still not sure this is best
 # (see getStories()) -- pudge
 sub getDay {
-#	my($self) = @_;	
+#	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
 	my $yesterday = timeCalc('epoch ' . time, '%Q');
 	return $yesterday;
@@ -2743,7 +2739,6 @@ sub getNewStory {
 	return $answer;
 }
 
-
 ########################################################
 sub getAuthor {
 	my($self, $id, $values, $cache_flag) = @_;
@@ -2773,7 +2768,7 @@ sub getAuthor {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,homepage,bio', 
+	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,homepage,bio',
 		'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
@@ -2996,7 +2991,7 @@ sub getSubmission {
 ########################################################
 sub getSection {
 	my($self, $section) = @_;
- 	if (!$section) {
+	if (!$section) {
 		my $constants = getCurrentStatic();
 		my $user      = getCurrentUser();
 		return {
@@ -3317,7 +3312,7 @@ sub _genericGet {
 	my $id_db = $self->{_dbh}->quote($id);
 
 	if ($param_table) {
-	# With Param table 
+	# With Param table
 		if (ref($val) eq 'ARRAY') {
 			my $cache = _genericGetCacheName($self, $table);
 
@@ -3356,7 +3351,7 @@ sub _genericGet {
 			}
 		}
 	} else {
-	# Without Param table 
+	# Without Param table
 		if (ref($val) eq 'ARRAY') {
 			my $values = join ',', @$val;
 			$answer = $self->sqlSelectHashref($values, $table, "$table_prime=$id_db");
@@ -3508,7 +3503,7 @@ sub createTemplate {
 		}
 	}
 	$self->sqlInsert('templates', $hash);
-	my $tpid  = $self->getLastInsertId('templates','tpid');
+	my $tpid  = $self->getLastInsertId('templates', 'tpid');
 	return $tpid;
 }
 
@@ -3646,7 +3641,7 @@ Slash::DB::MySQL - MySQL Interface for Slash
 
 =head1 SYNOPSIS
 
-  use Slash::DB::MySQL;
+	use Slash::DB::MySQL;
 
 =head1 DESCRIPTION
 

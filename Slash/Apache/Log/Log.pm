@@ -53,13 +53,13 @@ Slash::Apache::Log - Handles logging for slashdot
 
 =head1 SYNOPSIS
 
-  use Slash::Apache::Log;
+	use Slash::Apache::Log;
 
 =head1 DESCRIPTION
 
 No method are provided. Basically this handles grabbing the
 data out of the Apache process and logging it to the
-database. 
+database.
 
 =head1 SEE ALSO
 

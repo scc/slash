@@ -29,7 +29,7 @@ sub main {
 			$slashdb->setUser($user->{uid}, {
 				lastmmid => $last,
 			});
-       		}
+		}
 
 		if ($op eq 'MetaModerate') {
 			metaModerate($last);
@@ -79,7 +79,7 @@ sub metaModerate {
 
 	my %m2victims;
 	foreach (@mmids) {
-		if ($y < $constants->{m2_comments}) { 
+		if ($y < $constants->{m2_comments}) {
 			$y++;
 			my $muid = $slashdb->getModeratorLog($_, 'uid');
 
@@ -93,7 +93,7 @@ sub metaModerate {
 	#
 	# Also, it was probably unnecessary, but I want it to be understood that
 	# an M2 session can be retrieved by:
-	#		SELECT * from metamodlog WHERE uid=x and ts=y 
+	#		SELECT * from metamodlog WHERE uid=x and ts=y
 	# for a given x and y.
 	my($flag, $ts) = (0, time);
 	if ($y >= $constants->{m2_mincheck}) {
@@ -119,7 +119,7 @@ sub metaModerate {
 	my($change, $excon);
 	if ($y > $constants->{m2_mincheck} && !$user->{is_anon}) {
 		if (!$flag && karmaBonus()) {
-			# Bonus Karma For Helping Out - the idea here, is to not 
+			# Bonus Karma For Helping Out - the idea here, is to not
 			# let meta-moderators get the +1 posting bonus.
 			($change, $excon) =
 				("karma$constants->{m2_bonus}", "and karma<$constants->{m2_maxbonus}");
@@ -159,7 +159,7 @@ sub displayTheComments {
 #
 # Yeah, this should be a lot more flexible, but lets leave that
 # issue for when we revamp security. For now, we'll just use
-# $slashdb->checkForMetaModerator(). What we do lose is the 
+# $slashdb->checkForMetaModerator(). What we do lose is the
 # reporting behind WHY a user can't M2, which isn't all that
 # critical right now, since they will get an error of some sort.
 #						- Cliff
