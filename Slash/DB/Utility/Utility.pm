@@ -109,7 +109,7 @@ sub sqlSelectHashref {
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
-	#print STDERR "SQL: $sql \n";
+	print STDERR "SQL: $sql \n" if ($from eq 'stories');
 	unless ($sth->execute) {
 		apacheLog($sql);
 		return;
@@ -265,21 +265,12 @@ sub generatesession {
 }
 
 #################################################################
-sub getSectionBlocksByBid {
-	my($self, $bid) = @_;
-	$self->sqlConnect();
-	$self->sqlSelect(
-		"title,block,url", "blocks, sectionblocks",
-		"blocks.bid = sectionblocks.bid AND blocks.bid = "
-		. $self->{dbh}->quote($bid)
-	);
-}
-#################################################################
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
-	$self->{dbh}->do($sql);
+	$self->{dbh}->do($sql) || apacheLog($sql);
 }
+
 1;
 
 =head1 NAME

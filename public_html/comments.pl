@@ -46,7 +46,7 @@ sub main {
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
 	if ($I{F}{sid}) {
-		$stories = $I{dbobject}->getNewStory($I{F}{sid}, 'section','title','commentstatus')
+		$stories = $I{dbobject}->getNewStory($I{F}{sid}, ['section','title','commentstatus'])
 	} else {
 		$stories->{'title'} = "Comments";
 	}
@@ -574,7 +574,7 @@ sub previewForm {
 	$tempComment .= '<BR>' . $I{U}{sig};
 
 	my $preview = {
-		nickname  => $I{F}{postanon} ? $I{anon_name} : $I{U}{nickname},
+		nickname  => $I{F}{postanon} ? getCurrentAnonymousCoward('nickname') : $I{U}{nickname},
 		pid	  => $I{F}{pid},
 		homepage  => $I{F}{postanon} ? '' : $I{U}{homepage},
 		fakeemail => $I{F}{postanon} ? '' : $I{U}{fakeemail},

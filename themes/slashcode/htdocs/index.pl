@@ -80,17 +80,6 @@ sub main {
 
 	footer();
 
-	# zero the refresh flag 
-	# and undef sid sequence array
-	if ($I{story_refresh}) {
-		$I{story_refresh} = 0;
-
-		# garbage collection
-		undef $I{sid_array};
-	}
-	# zero the order count
-	$I{StoryCount} = 0;
-
 	$I{dbobject}->writelog('index', $form->{section} || 'index') unless $form->{ssi};
 }
 

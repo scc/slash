@@ -82,16 +82,6 @@ sub main {
 	printComments($I{F}{sid});
 	$I{dbobject}->writelog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
 	footer();
-
-	# zero the refresh flag 
-	# and undef sid sequence array
-	if ($I{story_refresh}) {
-		$I{story_refresh} = 0;
-		# garbage collection 
-		undef $I{sid_array};
-	}
-	# zero the order count
-	$I{StoryCount} = 0;
 }
 
 
@@ -144,7 +134,8 @@ EOT
 sub articleMenu {
 	my($story, $SECT) = @_;
 
-	print ' &lt;&nbsp; ' . nextStory('<', $story, $SECT);
+	my $front  = nextStory('<', $story, $SECT);
+	print " &lt;&nbsp; $front" if $front;
 
 	my $n = nextStory('>', $story, $SECT);
 	print " | $n &nbsp;&gt; " if $n;
@@ -155,48 +146,13 @@ sub articleMenu {
 ##################################################################
 sub nextStory {
 	my($sign, $story, $SECT) = @_;
-	my($array_place, $where);
 
-	if ($SECT->{isolate}) {
-		$where = 'AND section=' . $I{dbh}->quote($story->{section})
-			if $SECT->{isolate} == 1;
-	} else {
-		$where = 'AND displaystatus=0';
+	# Slightly less efficient then the way it had worked, but
+	# a heck of a lot easier to understand
+	if (my $next = $I{dbobject}->getStoryByTime($sign, $story, $SECT->{isolate})) {
+		return if ($next->{title} eq  $story->{title});
+		return linkStory({ 'link' => $next->{'title'}, sid => $next->{'sid'}, section => $next->{'section'} });
 	}
-
-	$where .= "   AND tid not in ($I{U}{extid})" if $I{U}{extid};
-	$where .= "   AND aid not in ($I{U}{exaid})" if $I{U}{exaid};
-	$where .= "   AND section not in ($I{U}{exsect})" if $I{U}{exsect};
-
-	my $order = $sign eq '<' ? 'DESC' : 'ASC';
-
-	# find out what sequence this is in from the storyBank
-	$array_place = $I{dbobject}->getStory($I{F}{sid}, 'story_order');
-
-	# next article, previous article	
-	$array_place += $sign eq '<' ? 1 : -1;
-
-	# if this is AC, and within the range of the number of stories in storyBank
-	# then get title,sid, and section from storyBank
-	if (	$I{sid_array}[$array_place]
-			&&
-		$I{dbobject}->getStory($I{sid_array}, $array_place )
-			&& 
-		$I{dbobject}->getStory($I{F}{sid}, 'story_order') != ($I{StoryCount} - 1)
-			&&
-		$array_place != -1
-			&&
-		$I{U}{is_anon}
-	) {
-		my $title   = $I{dbobject}->getStory($I{sid_array}[$array_place], 'title');
-		my $psid    = $I{sid_array}[$array_place];
-		my $section = $I{dbobject}->getStory($I{sid_array}[$array_place], 'section');
-		return linkStory({ 'link' => $title, sid => $psid, section => $section });
-
-	} elsif (my($title, $psid, $section) = $I{dbobject}->getStoryByTime($sign, $story->{sqltime}, $SECT->{isolate}, $story->{section}, $I{U}{extid}, $I{U}{exaid}, $I{U}{exsect} )) {
-		return linkStory({ 'link' => $title, sid => $psid, section => $section });
-	}
-	'';
 }
 
 main();

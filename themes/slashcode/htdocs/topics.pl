@@ -87,7 +87,7 @@ EOT
 		$limit = 3  if $limit < 3 or $I{F}{all};
 		$SECT->{issue} = 0;
 
-		my $stories = $I{dbobject}->getStories(\$I{U},\$I{F},$SECT, $limit, $tid);
+		my $stories = $I{dbobject}->getStories($SECT, $limit, $tid);
 		print getOlderStories($stories, $SECT);
 		$stories->finish;
 		print "\n\t</TD></TR>\n";

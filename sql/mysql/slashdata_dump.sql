@@ -1,3 +1,4 @@
+#=======
 # MySQL dump 6.0
 #
 # Host: localhost    Database: slashdot
@@ -429,7 +430,7 @@ INSERT INTO storiestuff VALUES ('00/01/25/1236215',2);
 # Dumping data for table 'submissions'
 #
 
-INSERT INTO submissions VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ','topic1',NULL,'articles',NULL,-1,0);
+INSERT INTO submissions VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ','topic1',NULL,'articles',NULL,1,0);
 
 #
 # Dumping data for table 'threshcodes'
@@ -664,4 +665,3 @@ INSERT INTO vars VALUES ('max_submissions_allowed','20','maximum number of submi
 INSERT INTO vars VALUES ('submission_speed_limit','300','How fast they can submit',NULL,NULL);
 INSERT INTO vars VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey',NULL,NULL);
 INSERT INTO vars VALUES ('submission_bonus','3','Bonus given to user if submission is used.',NULL,NULL);
-

@@ -169,7 +169,7 @@ EOT
 			? "$I{rootdir}/$section/$sid.shtml#$cid"
 			: "$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
 
-		my $user_email = $I{dbobject}->getUser($uid, 'fakeemail', 'nickname');
+		my $user_email = $I{dbobject}->getUser($uid, ['fakeemail', 'nickname']);
 		printf <<EOT, $match ? $match : $x;
 <BR><B>%s</B>
 	<A HREF="$href">$subj</A>

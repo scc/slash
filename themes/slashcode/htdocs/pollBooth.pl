@@ -73,7 +73,7 @@ sub editpoll {
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	# Display a form for the Question
-	my $question = $I{dbobject}->getPollQuestion($qid, 'question', 'voters');
+	my $question = $I{dbobject}->getPollQuestion($qid, ['question', 'voters']);
 
 	$question->{'voters'} = 0 if ! defined $question->{'voters'};
 
@@ -92,7 +92,7 @@ sub editpoll {
 	<BR><B>The Answers</B> (voters)<BR>
 EOT
 
-	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
+	my $answers = $I{dbobject}->getPollAnswers($qid, ['answer', 'votes']);
 	my $x = 0;
 	for (@$answers) {
 		my($answers, $votes) = @$_;
@@ -169,7 +169,7 @@ sub vote {
 		}
 	} 
 
-	my $question = $I{dbobject}->getPollQuestion($qid, 'voters', 'question');
+	my $question = $I{dbobject}->getPollQuestion($qid, ['voters', 'question']);
 
 	my $maxvotes  = $I{dbobject}->getPollVotesMax($qid);
 
@@ -181,7 +181,7 @@ EOT
 	titlebar("99%", $question->{'question'});
 	print qq!\t<FONT SIZE="2">$notes</FONT></TD></TR>!;
 
-	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
+	my $answers = $I{dbobject}->getPollAnswers($qid, ['answer', 'votes']);
 
 	for (@$answers) {
 		my($answer, $votes) = @$_;

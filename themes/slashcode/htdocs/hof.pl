@@ -111,13 +111,13 @@ sub topComments {
 	# and SID, article title, type and a link to the article
 	print "<P>";
 	titlebar("100%","Top 10 Comments");
-	my $story_comments = $I{dbobject}->getCommentsTop($I{F}{sid},$I{U});
+	my $story_comments = $I{dbobject}->getCommentsTop($I{F}{sid});
 
 	my $x = $I{F}{min};
 	for(@$story_comments) {
 		my($section, $sid, $aid, $title, $pid, $subj, $cdate, $sdate,
 				$uid, $cid, $score) = @$_;
-		my $user_email = $I{dbobject}->getUser($uid, 'fakeemail', 'nickname');
+		my $user_email = $I{dbobject}->getUser($uid, ['fakeemail', 'nickname']);
 	
 		print <<EOT;
 <BR><B>$score</B>

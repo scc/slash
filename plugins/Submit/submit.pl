@@ -140,7 +140,7 @@ sub previewForm {
 
 	my $writestatus = $I{dbobject}->getVar('defaultwritestatus', 'values');
 	my @values = qw(email name subj tid story time comment);
-	my $submission = $I{dbobject}->getSubmission($subid, @values);
+	my $submission = $I{dbobject}->getSubmission($subid, \@values);
 
 	$submission->{'introtext'} =~ s/\n\n/\n<P>/gi;
 	$submission->{'introtext'} .= " ";

@@ -3,7 +3,8 @@ package Slash::DB;
 use strict;
 
 $Slash::DB::VERSION = '0.01';
-
+# Note to me (AKA Brian) GATEWAY_INTERFACE is not working. Need
+# to find something else to determine this.
 sub new {
 	my($class, $user) = @_;
 	my $self = {};
@@ -15,9 +16,17 @@ sub new {
 		} elsif ($dsn =~ /oracle/) {
 			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
-		} elsif ($dsn =~ /postgress/) {
-			require Slash::DB::Postgress;
-			push(@Slash::DB::ISA, 'Slash::DB::Postgress');
+			if($ENV{GATEWAY_INTERFACE}) {
+				require Slash::DB::Static::Oracle;
+				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
+			}
+		} elsif ($dsn =~ /postgres/) {
+			require Slash::DB::PostgresSQL;
+			push(@Slash::DB::ISA, 'Slash::DB::PostgresSQL');
+			if($ENV{GATEWAY_INTERFACE}) {
+				require Slash::DB::Static::PostgresSQL;
+				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgresSQL');
+			}
 		}
 	} else {
 		die "We don't support the database specified";

@@ -79,6 +79,7 @@ sub getSlashConf {
 ###############################################################################
 # Entirely legacy at this point
 sub getSlash {
+	return unless $ENV{GATEWAY_INTERFACE};
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
@@ -388,7 +389,6 @@ EOT
 
 	my $voters = $dbslash->getPollQuestion($qid, 'voters');
 	my $comments = $dbslash->countComments($qid);
-#	my $comments = $dbslash->getPollComments($qid);
 	my $sect = "section=$constants->{currentSection}&" if $constants->{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
@@ -637,7 +637,8 @@ sub ssiFoot {
 
 ########################################################
 sub adminMenu {
-	my $seclev = $I{U}{aseclev};
+	my $user = getCurrentUser();
+	my $seclev = $user->{aseclev};
 	return unless $seclev;
 	print <<EOT;
 
@@ -646,7 +647,7 @@ sub adminMenu {
 EOT
 
 	print <<EOT if $seclev > 0;
-	[ <A HREF="$I{rootdir}/admin.pl?op=adminclose">Logout $I{U}{aid}</A>
+	[ <A HREF="$I{rootdir}/admin.pl?op=adminclose">Logout $user->{aid}</A>
 	| <A HREF="$I{rootdir}/">Home</A>
 	| <A HREF="$I{rootdir}/getting_started.shtml">Help</A>
 	| <A HREF="$I{rootdir}/admin.pl">Stories</A>
@@ -666,7 +667,7 @@ EOT
 	| <A HREF="$I{rootdir}/admin.pl?op=colored">Site Colors</A>
 EOT
 
-	print <<EOT if $seclev > 999 || ($I{U}{asection} && $seclev > 499);
+	print <<EOT if $seclev > 999 || ($user->{asection} && $seclev > 499);
 	| <A HREF="$I{rootdir}/sections.pl?op=list">Sections</A>
 	| <A HREF="$I{rootdir}/admin.pl?op=listfilters">Comment Filters</A>
 EOT
@@ -688,6 +689,7 @@ sub formLabel {
 ########################################################
 sub currentAdminUsers {
 	my $html_to_display;
+	my $user = getCurrentUser();
 
 	my $dbslash = getCurrentDB();
 	my $aids = $dbslash->currentAdmin();
@@ -695,11 +697,11 @@ sub currentAdminUsers {
 		my($aid, $lastsecs, $lasttitle) = @$_;
 		$html_to_display .= qq!\t<TR><TD BGCOLOR="$I{bg}[3]">\n!;
 		$html_to_display .= qq!\t<A HREF="$I{rootdir}/admin.pl?op=authors&thisaid=$aid">!
-			if $I{U}{aseclev} > 10000;
+			if $user->{aseclev} > 10000;
 		$html_to_display .= qq!<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}"><B>$aid</B></FONT>!;
-		$html_to_display .= '</A> ' if $I{U}{aseclev} > 10000;
+		$html_to_display .= '</A> ' if $user->{aseclev} > 10000;
 
-		if ($aid eq $I{U}{aid}) {
+		if ($aid eq $user->{aid}) {
 		    $lastsecs = "-";
 		} elsif ($lastsecs <= 99) {
 		    $lastsecs .= "s";
@@ -759,6 +761,7 @@ EOT
 ########################################################
 sub header {
 	my($title, $section, $status) = @_;
+	my $user = getCurrentUser();
 	my $adhtml = '';
 	$title ||= '';
 
@@ -769,7 +772,7 @@ sub header {
 		);
 		$params{-status} = $status if $status;
 		$params{-pragma} = "no-cache"
-			unless $I{U}{aseclev} || $ENV{SCRIPT_NAME} =~ /comments/;
+			unless $user->{aseclev} || $ENV{SCRIPT_NAME} =~ /comments/;
 
 		print CGI::header(%params);
 	}
@@ -798,7 +801,7 @@ EOT
 
 	my $dbslash = getCurrentDB();
 	my $topics;
-	unless ($I{U}{noicons} || $I{U}{light}) {
+	unless ($user->{noicons} || $user->{light}) {
 		$topics = $dbslash->getBlock('topics', 'block');
 	}
 
@@ -851,7 +854,7 @@ sub footer {
 	}
 
 	my $motd = '';
-	if ($I{U}{aseclev}) {
+	if (getCurrentUser('aseclev')) {
 		$motd .= currentAdminUsers();
 	} else {
 		$motd .= $dbslash->getBlock('motd', 'block');
@@ -905,12 +908,13 @@ sub fancybox {
 sub portalbox {
 	my($width, $title, $contents, $bid, $url) = @_;
 	return unless $title && $contents;
+	my $user = getCurrentUser();
 
 	$title = qq!<FONT COLOR="$I{fg}[3]">$title</FONT>!
-		if $url && !$I{U}{light};
+		if $url && !$user->{light};
 	$title = qq!<A HREF="$url">$title</A>! if $url;
 
-	unless ($I{U}{exboxes}) {
+	unless ($user->{exboxes}) {
 		fancybox($width, $title, $contents);
 		return;
 	}
@@ -940,19 +944,20 @@ sub portalbox {
 sub selectComments {
 	my($sid, $cid) = @_;
 	my $dbslash = getCurrentDB();
+	my $user = getCurrentUser();
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
 
 	my $thisComment = $dbslash->getCommentsForUser($sid, $cid);
 	for my $C (@$thisComment) {
-		$C->{pid} = 0 if $I{U}{commentsort} > 3; # Ignore Threads
+		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
-		$C->{points}++ if length($C->{comment}) > $I{U}{clbig}
-			&& $C->{points} < $I{comment_maxscore} && $I{U}{clbig} != 0;
+		$C->{points}++ if length($C->{comment}) > $user->{clbig}
+			&& $C->{points} < $I{comment_maxscore} && $user->{clbig} != 0;
 
-		$C->{points}-- if length($C->{comment}) < $I{U}{clsmall}
-			&& $C->{points} > $I{comment_minscore} && $I{U}{clsmall};
+		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
+			&& $C->{points} > $I{comment_minscore} && $user->{clsmall};
 
 		# fix points in case they are out of bounds
 		$C->{points} = $I{comment_minscore}
@@ -969,9 +974,9 @@ sub selectComments {
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
 		$comments->[0]{totals}[$C->{points} - $I{comment_minscore}]++;  # invert minscore
 		$comments->[$C->{pid}]{visiblekids}++
-			if $C->{points} >= $I{U}{threshold};
+			if $C->{points} >= $user->{threshold};
 
-		$I{U}{points} = 0 if $C->{uid} == $I{U}{uid}; # Mod/Post Rule
+		$user->{points} = 0 if $C->{uid} == $user->{uid}; # Mod/Post Rule
 	}
 
 	my $count = @$thisComment;
@@ -996,7 +1001,8 @@ sub reparentComments {
 	my ($comments) = @_;
 	my $depth = $I{max_depth} || 7;
 
-	return unless $depth || $I{U}{reparent};
+	my $user = getCurrentUser();
+	return unless $depth || $user->{reparent};
 
 	# adjust depth for root pid or cid
 	if (my $cid = $I{F}{cid} || $I{F}{pid}) {
@@ -1013,9 +1019,9 @@ sub reparentComments {
 		my $reparent;
 
 		# do threshold reparenting thing
-		if ($I{U}{reparent} && $comments->[$x]{points} >= $I{U}{threshold}) {
+		if ($user->{reparent} && $comments->[$x]{points} >= $user->{threshold}) {
 			my $tmppid = $pid;
-			while ($tmppid && $comments->[$tmppid]{points} < $I{U}{threshold}) {
+			while ($tmppid && $comments->[$tmppid]{points} < $user->{threshold}) {
 				$tmppid = $comments->[$tmppid]{pid};
 				$reparent = 1;
 			}
@@ -1058,11 +1064,12 @@ sub reparentComments {
 sub selectThreshold  {
 	my($counts) = @_;
 
+	my $constants = getCurrentStatic();
 	my $s = qq!<SELECT NAME="threshold">\n!;
-	foreach my $x ($I{comment_minscore}..$I{comment_maxscore}) {
-		my $select = ' SELECTED' if $x == $I{U}{threshold};
+	foreach my $x ($constants->{comment_minscore}..$constants->{comment_maxscore}) {
+		my $select = ' SELECTED' if $x == getCurrentUser('threshold');
 		$s .= <<EOT;
-	<OPTION VALUE="$x"$select>$x: $counts->[$x - $I{comment_minscore}] comments
+	<OPTION VALUE="$x"$select>$x: $counts->[$x - $constants->{comment_minscore}] comments
 EOT
 	}
 	$s .= "</SELECT>\n";
@@ -1072,6 +1079,8 @@ EOT
 sub printComments {
 	# return;
 	my($sid, $pid, $cid, $commentstatus) = @_;
+
+	my $user = getCurrentUser();
 
 	$pid ||= '0';
 	my $lvl = 0;
@@ -1085,13 +1094,13 @@ sub printComments {
 		$cc = $comments->[$cid || $pid]{visiblekids};
 	}
 
-	$lvl++ if $I{U}{mode} ne 'flat' && $I{U}{mode} ne 'archive'
-		&& $cc > $I{U}{commentspill}
-		&& ($I{U}{commentlimit} > $cc || $I{U}{commentlimit} > $I{U}{commentspill});
+	$lvl++ if $user->{mode} ne 'flat' && $user->{mode} ne 'archive'
+		&& $cc > $user->{commentspill}
+		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
 
 	print qq!<TABLE WIDTH="100%" BORDER="0" CELLSPACING="1" CELLPADDING="2">\n!;
 
-	if ($I{U}{mode} ne 'archive') {
+	if ($user->{mode} ne 'archive') {
 		print qq!\t<TR><TD BGCOLOR="$I{bg}[3]" ALIGN="CENTER">!,
 			qq!<FONT SIZE="${\( $I{fontbase} + 2 )}" COLOR="$I{fg}[3]">!;
 
@@ -1102,7 +1111,7 @@ sub printComments {
 			$title = $dbslash->getStory($sid, 'title');
 			$section = $dbslash->getStory($sid, 'section');
 		} else {
-			my $story = $dbslash->getNewStory($sid, 'title', 'section');
+			my $story = $dbslash->getNewStory($sid, ['title', 'section']);
 			$title = $story->{'title'};
 			$section = $story->{'section'};
 		}
@@ -1122,7 +1131,7 @@ sub printComments {
 
 		print ' | ';
 
-		if ($I{U}{is_anon}) {
+		if ($user->{is_anon}) {
 			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
 		} else {
@@ -1135,14 +1144,14 @@ sub printComments {
 			color=> $I{fg}[3], subject => 'Top'
 		}) if $pid;
 
-		print " | <B>$I{U}{points}</B> ",
+		print " | <B>$user->{points}</B> ",
 			qq!<A HREF="$I{rootdir}/moderation.shtml"><FONT COLOR="$I{fg}[3]">!,
-			"moderator</FONT></A> points " if $I{U}{points};
+			"moderator</FONT></A> points " if $user->{points};
 
 		print " | <B>$count</B> comments " if $count;
 		# print " | <B>$cc</B> siblings " if $cc;
-		print " (Spill at <B>$I{U}{commentspill}</B>!)",
-			" | Index Only " if $lvl && $I{U}{mode} eq 'thread';
+		print " (Spill at <B>$user->{commentspill}</B>!)",
+			" | Index Only " if $lvl && $user->{mode} eq 'thread';
 
 		print " | Starting at #$I{F}{startat}" if $I{F}{startat};
 
@@ -1164,7 +1173,7 @@ EOT
 
 
 		print qq!\t\tSave:<INPUT TYPE="CHECKBOX" NAME="savechanges">!
-			unless $I{U}{is_anon};
+			unless $user->{is_anon};
 
 		print <<EOT;
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
@@ -1176,7 +1185,7 @@ EOT
 
 		print $dbslash->getBlock('commentswarning', 'block'), "</FONT></FORM></TD></TR>";
 
-		if ($I{U}{mode} eq 'nocomment') {
+		if ($user->{mode} eq 'nocomment') {
 			print "</TABLE>";
 			return;
 		}
@@ -1189,7 +1198,7 @@ EOT
 EOT
 	}
 
-	print <<EOT if $I{U}{aseclev} || $I{U}{points};
+	print <<EOT if $user->{aseclev} || $user->{points};
 	<FORM ACTION="$I{rootdir}/comments.pl" METHOD="POST">
 	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$sid">
 	<INPUT TYPE="HIDDEN" NAME="cid" VALUE="$cid">
@@ -1219,16 +1228,16 @@ EOT
 
 	my $lcp = linkCommentPages($sid, $pid, $cid, $cc);
 	print $lcp;
-	print "\t<TR><TD>\n" if $lvl; #|| $I{U}{mode} eq "nested" and $lvl);
+	print "\t<TR><TD>\n" if $lvl; #|| $user->{mode} eq "nested" and $lvl);
 	displayThread($sid, $pid, $lvl, $comments, $cid);
-	print "\n\t</TD></TR>\n" if $lvl; # || ($I{U}{mode} eq "nested" and $lvl);
+	print "\n\t</TD></TR>\n" if $lvl; # || ($user->{mode} eq "nested" and $lvl);
 	print $lcp;
 
-	my $delete_text = ($I{U}{aseclev} > 99 && $I{authors_unlimited})
+	my $delete_text = ($user->{aseclev} > 99 && $I{authors_unlimited})
 		? "<BR><B>NOTE: Checked comments will be deleted.</B>"
 		: "";
 
-	print <<EOT if ($I{U}{aseclev} || $I{U}{points}) && $I{U}{uid} > 0;
+	print <<EOT if ($user->{aseclev} || $user->{points}) && $user->{uid} > 0;
 	<TR><TD>
 		<P>Have you read the
 		<A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A>
@@ -1245,10 +1254,11 @@ EOT
 sub moderatorCommentLog {
 	my($sid, $cid) = @_;
 	my $slashdb = getCurrentDB();
+	my $aseclev = getCurrentUser('aseclev');
 	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
 	if (@$comments) {
-		print <<EOT if $I{U}{aseclev} > 1000;
+		print <<EOT if $aseclev > 1000;
 <TABLE BGCOLOR="$I{bg}[2]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 	<TR BGCOLOR="$I{bg}[3]">
 		<TH><FONT COLOR="$I{fg}[3]"> val </FONT></TH>
@@ -1258,7 +1268,7 @@ sub moderatorCommentLog {
 EOT
 
 		for my $C (@$comments) {
-			print <<EOT if $I{U}{aseclev} > 1000;
+			print <<EOT if $aseclev > 1000;
 	<TR>
 		<TD> <B>$C->{val}</B> </TD>
 		<TD> $I{reasons}[$C->{reason}] </TD>
@@ -1270,7 +1280,7 @@ EOT
 			$reasonTotal++;
 		}
 
-		print "</TABLE>\n" if $I{U}{aseclev} > 1000;
+		print "</TABLE>\n" if $aseclev > 1000;
 	}
 
 	return unless $reasonTotal;
@@ -1286,9 +1296,10 @@ EOT
 sub linkCommentPages {
 	my($sid, $pid, $cid, $total) = @_;
 	my($links, $page);
-	return if $total < $I{U}{commentlimit} || $I{U}{commentlimit} < 1;
+	my $user = getCurrentUser();
+	return if $total < $user->{commentlimit} || $user->{commentlimit} < 1;
 
-	for (my $x = 0; $x < $total; $x += $I{U}{commentlimit}) {
+	for (my $x = 0; $x < $total; $x += $user->{commentlimit}) {
 		$links .= ' | ' if $page++ > 0;
 		$links .= "<B>(" if $I{F}{startat} && $x == $I{F}{startat};
 		$links .= linkComment({
@@ -1297,8 +1308,8 @@ sub linkCommentPages {
 		});
 		$links .= ")</B>" if $I{F}{startat} && $x == $I{F}{startat};
 	}
-	if ($I{U}{breaking}) {
-		$links .= " ($I{sitename} Overload: CommentLimit $I{U}{commentlimit})";
+	if ($user->{breaking}) {
+		$links .= " ($I{sitename} Overload: CommentLimit $user->{commentlimit})";
 	}
 
 	return <<EOT;
@@ -1311,11 +1322,12 @@ EOT
 ########################################################
 sub linkComment {
 	my($C, $comment, $date) = @_;
+	my $user = getCurrentUser();
 	my $x = qq!<A HREF="$I{rootdir}/comments.pl?sid=$C->{sid}!;
 	$x .= "&op=$C->{op}" if $C->{op};
-	$x .= "&threshold=" . ($C->{threshold} || $I{U}{threshold});
-	$x .= "&commentsort=$I{U}{commentsort}";
-	$x .= "&mode=$I{U}{mode}";
+	$x .= "&threshold=" . ($C->{threshold} || $user->{threshold});
+	$x .= "&commentsort=$user->{commentsort}";
+	$x .= "&mode=$user->{mode}";
 	$x .= "&startat=$C->{startat}" if $C->{startat};
 
 	if ($comment) {
@@ -1332,7 +1344,7 @@ sub linkComment {
 	$x .= qq!">$s</A>!;
 	$x .= " by $C->{nickname}" if $C->{nickname};
 	$x .= qq! <FONT SIZE="-1">(Score:$C->{points})</FONT> !
-		if !$I{U}{noscores} && $C->{points};
+		if !$user->{noscores} && $C->{points};
 	$x .= qq! <FONT SIZE="-1"> $C->{'time'} </FONT>! if $date;
 	$x .= "\n";
 	return $x;
@@ -1341,6 +1353,7 @@ sub linkComment {
 ########################################################
 sub displayThread {
 	my($sid, $pid, $lvl, $comments, $cid) = @_;
+	my $user = getCurrentUser();
 
 	my $displayed = 0;
 	my $skipped = 0;
@@ -1349,10 +1362,10 @@ sub displayThread {
 	my $full = !$lvl;
 	my $cagedkids = $full;
 
-	if ($I{U}{mode} eq 'flat' || $I{U}{mode} eq 'archive') {
+	if ($user->{mode} eq 'flat' || $user->{mode} eq 'archive') {
 		$indent = 0;
 		$full = 1;
-	} elsif ($I{U}{mode} eq 'nested') {
+	} elsif ($user->{mode} eq 'nested') {
 		$indent = 1;
 		$full = 1;
 	}
@@ -1367,14 +1380,14 @@ sub displayThread {
 
 		$I{F}{startat} = 0; # Once We Finish Skipping... STOP
 
-		if ($C->{points} < $I{U}{threshold}) {
-			if ($I{U}{is_anon} || $I{U}{uid} != $C->{uid})  {
+		if ($C->{points} < $user->{threshold}) {
+			if ($user->{is_anon} || $user->{uid} != $C->{uid})  {
 				$hidden++;
 				next;
 			}
 		}
 
-		my $highlight = 1 if $C->{points} >= $I{U}{highlightthresh};
+		my $highlight = 1 if $C->{points} >= $user->{highlightthresh};
 		my $finish_list = 0;
 
 		if ($full || $highlight) {
@@ -1386,7 +1399,7 @@ sub displayThread {
 		} else {
 			my $pcnt = @{$comments->[$C->{pid}]{kids} } + 0;
 			printf "\t\t<LI>%s\n",
-				linkComment($C, $pcnt > $I{U}{commentspill}, "1");
+				linkComment($C, $pcnt > $user->{commentspill}, "1");
 			$finish_list++;
 		}
 
@@ -1400,10 +1413,10 @@ sub displayThread {
 
 		print "</LI>\n" if $finish_list;
 
-		last if $displayed >= $I{U}{commentlimit};
+		last if $displayed >= $user->{commentlimit};
 	}
 
-	if ($hidden && !$I{U}{hardthresh} && $I{U}{mode} ne 'archive') {
+	if ($hidden && !$user->{hardthresh} && $user->{mode} ne 'archive') {
 		print qq!\n<TR><TD BGCOLOR="$I{bg}[2]">\n! if $cagedkids;
 		print qq!<LI><FONT SIZE="${\( $I{fontbase} + 2 )}"><B> !,
 			linkComment({
@@ -1422,13 +1435,14 @@ sub dispComment  {
 	my $time = $C->{'time'};
 	my $username;
 
+	my $user = getCurrentUser();
 	$username = $C->{fakeemail} ? <<EOT : $C->{nickname};
 <A HREF="mailto:$C->{fakeemail}">$C->{nickname}</A>
 <B><FONT SIZE="${\( $I{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
 EOT
 
 	my $nickname = fixparam($C->{nickname});
-	my $userinfo = <<EOT unless $C->{nickname} eq $I{anon_name};
+	my $userinfo = <<EOT unless $C->{nickname} eq getCurrentAnonymousCoward('nickname');
 (<A HREF="$I{rootdir}/users.pl?op=userinfo&nick=$nickname">User #$C->{uid} Info</A>)
 EOT
 
@@ -1436,18 +1450,18 @@ EOT
 		if length($C->{homepage}) > 8;
 
 	my $score = '';
-	unless ($I{U}{noscores}) {
+	unless ($user->{noscores}) {
 		$score  = " (Score:$C->{points}";
 		$score .= ", $I{reasons}[$C->{reason}]" if $C->{reason};
 		$score .= ")";
 	}
 
-	$C->{comment} .= "<BR>$C->{sig}" unless $I{U}{nosigs};
+	$C->{comment} .= "<BR>$C->{sig}" unless $user->{nosigs};
 
-	if ($I{F}{mode} ne 'archive' && length($C->{comment}) > $I{U}{maxcommentsize}
+	if ($I{F}{mode} ne 'archive' && length($C->{comment}) > $user->{maxcommentsize}
 		&& $I{F}{cid} ne $C->{cid}) {
 
-		$C->{comment} = substr $C->{comment}, 0, $I{U}{maxcommentsize};
+		$C->{comment} = substr $C->{comment}, 0, $user->{maxcommentsize};
 		$C->{comment} .= sprintf '<P><B>%s</B>', linkComment({
 			sid => $C->{sid}, cid => $C->{cid}, pid => $C->{cid},
 			subject => "Read the rest of this comment..."
@@ -1460,7 +1474,7 @@ EOT
 	print eval $execme;
 	print "\nError:$@\n" if $@;
 
-	if ($I{U}{mode} ne 'archive') {
+	if ($user->{mode} ne 'archive') {
 		my $pid = $C->{realpid} || $C->{pid};
 		my $m = sprintf '%s | %s', linkComment({
 			sid => $C->{sid}, pid => $C->{cid}, op => 'Reply',
@@ -1472,12 +1486,12 @@ EOT
 			subject => 'Parent'
 		}, $pid);
 
-		if (((	   $I{U}{willing}
-			&& $I{U}{points} > 0
-			&& $C->{uid} ne $I{U}{uid}
-			&& $C->{lastmod} ne $I{U}{uid})
-		    || ($I{U}{aseclev} > 99 && $I{authors_unlimited}))
-		    	&& !$I{U}{is_anon}) {
+		if (((	   $user->{willing}
+			&& $user->{points} > 0
+			&& $C->{uid} ne $user->{uid}
+			&& $C->{lastmod} ne $user->{uid})
+		    || ($user->{aseclev} > 99 && $I{authors_unlimited}))
+		    	&& !$user->{is_anon}) {
 
 			my $o;
 			foreach (0 .. @{$I{reasons}} - 1) {
@@ -1488,7 +1502,7 @@ EOT
 		    }
 
 		$m .= qq! | <INPUT TYPE="CHECKBOX" NAME="del_$C->{cid}"> !
-			if $I{U}{aseclev} > 99;
+			if $user->{aseclev} > 99;
 		print qq!\n\t<TR><TD><FONT SIZE="${\( $I{fontbase} + 2 )}">\n! .
 			qq![ $m ]\n\t</FONT></TD></TR>\n<TR><TD>!;
 	}
@@ -1501,6 +1515,7 @@ EOT
 sub dispStory {
 	my($S, $A, $T, $full) = @_;
 	my $title = $S->{title};
+	my $user = getCurrentUser();
 	if (!$full && index($S->{title}, ':') == -1
 		&& $S->{section} ne $I{defaultsection}
 		&& $S->{section} ne $I{F}{section}) {
@@ -1514,7 +1529,7 @@ sub dispStory {
 		# comes along (and using a block, here might be an
 		# even uglier hack...but would solve the immediate
 		# problem.
-		$title = $I{U}{light} ? <<LIGHT : <<NORMAL;
+		$title = $user->{light} ? <<LIGHT : <<NORMAL;
 \t\t\t<A HREF="$I{rootdir}/$S->{section}/">$SECT->{title}</A>: $S->{title}
 LIGHT
 \t\t\t<A HREF="$I{rootdir}/$S->{section}/"><FONT COLOR="$I{fg}[3]">$SECT->{title}</FONT></A>: $S->{title}
@@ -1527,10 +1542,10 @@ NORMAL
 	my $author = qq!<A HREF="$A->{url}">$S->{aid}</A>!;
 
 	my $topicicon = '';
-	$topicicon .= ' [ ' if $I{U}{noicons};
+	$topicicon .= ' [ ' if $user->{noicons};
 	$topicicon .= qq!<A HREF="$I{rootdir}/search.pl?topic=$T->{tid}">!;
 
-	if ($I{U}{noicons}) {
+	if ($user->{noicons}) {
 		$topicicon .= "<B>$T->{alttext}</B>";
 	} else {
 		$topicicon .= <<EOT;
@@ -1540,7 +1555,7 @@ EOT
 	}
 
 	$topicicon .= '</A>';
-	$topicicon .= ' ] ' if $I{U}{noicons};
+	$topicicon .= ' ] ' if $user->{noicons};
 
 	my $execme = getWidgetBlock('story');
 	print eval $execme;
@@ -1560,74 +1575,22 @@ sub displayStory {
 	# caller is the pagename of the calling script
 	my($sid, $full, $caller) = @_;
 
-	# we need this for time stamping
-	my $code_time = time;
-
-	# this is a timestamp, in memory of this apache child
-	# process, in raw seconds since 1970
-	$I{storyBank}{timestamp} ||= $code_time;
-
-	# set this to 0 if the calling page is index.pl and it's not
-	# already defined
-	# index.pl is the only script that loops through all of the stories
-	# so this is the only script that will allow us to increment an array
-	# to hold the proper count and sequence of the stories and their sids .
-	$I{StoryCount} ||= 0 if $caller eq 'index';
-
-	# this array is to store sids of the stories that are displayed on the front
-	# index page. This is used for anonymous coward in article.pl to get the next
-	# and previous query without hitting the database
-	$I{sid_array}[$I{StoryCount}] = $sid
-		if !$I{sid_array}[$I{StoryCount}] && $caller eq 'index';
-
-	# difference between the timestamp on storyBank and the time this
-	# code is executing
-	my $diff = $code_time - $I{storyBank}{timestamp};
-
-	# this will force the storyBank to refresh if one of it's members is
-	# older than the value we set for $story_expire
 	my $dbslash = getCurrentDB();
-	if ($code_time - $I{storyBank}{timestamp} > $I{story_expire} && $I{story_refresh} != 1) {
-		$I{story_refresh} = 1;
 
-		# This clears the stories from the cache (doesn't harm the database)
-		$dbslash->clearStory();
-
-		# smack a time stamp on it with the current time (this is the new timestamp)
-		$I{storyBank}{timestamp} = $code_time;
-	}
-
-	# give this member of storyBank the current iteration of
-	# StoryCount if it's not already defined and the calling page is
-	# index.pl
-
-	$dbslash->setStory($sid, 'story_order',$I{StoryCount})
-	    if !$dbslash->getStory($sid, 'story_order') && $caller eq 'index';
-
-
-	# increment if the calling page was index.pl 
-	$I{StoryCount}++ if $caller eq 'index';
-
-	my $S = $dbslash->getStory($sid);
+	my $story = $dbslash->getStory($sid);
 	
-
 	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
 	# based on their preferences 
-	setCurrentUser('storytime', timeCalc($S->{'time'}));
+	setCurrentUser('storytime', timeCalc($story->{'time'}));
 
-#	if ($full && sqlTableExists($S->{section}) && $S->{section}) {
-#		my $E = sqlSelectHashref('*', $S->{section}, "sid='$S->{sid}'");
-#		foreach (keys %$E) {
-#			$S->{$_} = $E->{$_};
-#		}
-#	}
+	$dbslash->setSectionExtra($full, $story);
 
 	# No, we do not need this variable, but for readability 
 	# I think it is justified (and it is just a reference....)
-	my $topic = $dbslash->getTopic($S->{tid});
-	dispStory($S, $dbslash->getAuthor($S->{aid}), $topic, $full);
-	return($S, $dbslash->getAuthor($S->{aid}), $topic);
+	my $topic = $dbslash->getTopic($story->{tid});
+	dispStory($story, $dbslash->getAuthor($story->{aid}), $topic, $full);
+	return($story, $dbslash->getAuthor($story->{aid}), $topic);
 }
 
 #######################################################################
@@ -1673,11 +1636,12 @@ my $timeformats = {
 
 sub timeCalc {
 	# raw mysql date of story
-	my $date = shift;
+	my ($date) = @_;
 
 	# lexical
 	my(@dateformats, $err);
 
+	my $user = getCurrentUser();
 	# I put this here because
 	# when they select "6 ish" it
 	# looks really stupid for it to
@@ -1685,24 +1649,24 @@ sub timeCalc {
 	# It looks better for it to read:
 	# "posted by xxx around 6 ish"
 	# call me anal!
-	if ($I{U}{'format'} eq '%l ish' || $I{U}{'format'} eq '%h ish') {
-		$I{U}{aton} = " around ";
+	if ($user->{'format'} eq '%l ish' || $user->{'format'} eq '%h ish') {
+		$user->{aton} = " around ";
 	} else {
-		$I{U}{aton} = " on ";
+		$user->{aton} = " on ";
 	}
 
 	# find out the user's time based on personal offset
 	# in seconds
-	$date = DateCalc($date, "$I{U}{offset} SECONDS", \$err);
+	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
 
 	# create a new U{} hash key member for storing the new format
-	$I{U}{perlformat} = $I{U}{'format'};
+	$user->{perlformat} = $user->{'format'};
 
 	# interpolate from mysql format to perl format
-	$I{U}{perlformat} =~ s/(\%\w)/$timeformats->{$1}/g;
+	$user->{perlformat} =~ s/(\%\w)/$timeformats->{$1}/g;
 
 	# convert the raw date to pretty formatted date
-	$date = UnixDate($date, $I{U}{perlformat});
+	$date = UnixDate($date, $user->{perlformat});
 
 	# return the new pretty date
 	return $date;
@@ -1810,7 +1774,7 @@ sub lockTest {
 	my $locks = $dbslash->getLock();
 	for (@$locks) {
 		my ($thissubj, $aid) = @$_;
-		if ($aid ne $I{U}{aid} && (my $x = matchingStrings($thissubj, $subj))) {
+		if ($aid ne getCurrentUser('aid') && (my $x = matchingStrings($thissubj, $subj))) {
 			$msg .= <<EOT
 <B>$x%</B> matching with <FONT COLOR="$I{fg}[1]">$thissubj</FONT> by <B>$aid</B><BR>
 EOT

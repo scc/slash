@@ -95,6 +95,7 @@ sub handler {
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
 	$r->subprocess_env('REMOTE_USER' => $uid);
+	$uid ||= $constants->{anonymous_coward_uid};
 	$cfg->{user} = getUser($r, $constants, $dbslash, $form, $cookies, $uid);
 	$cfg->{form} = $form;
 

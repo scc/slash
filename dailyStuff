@@ -35,112 +35,47 @@ use Slash::Utility;
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
 my($constants, $slashdb) = createEnvironment($virtual_user);
 
-my($total) = $slashdb->sqlSelect("count(*)", "accesslog",
-	"to_days(now()) - to_days(ts)=1");
-
-my $c = $slashdb->sqlSelectMany("count(*)","accesslog",
-	"to_days(now()) - to_days(ts)=1 GROUP BY host_addr");
-my($unique) = $c->rows;
-$c->finish;
-
-my($comments) = $slashdb->sqlSelect("count(*)","accesslog",
-	"to_days(now()) - to_days(ts)=1 AND op='comments'");
-
-$c = $slashdb->sqlSelectMany("dat,count(*)","accesslog",
-	"to_days(now()) - to_days(ts)=1 AND 
-	(op='index' OR dat='index')
-	GROUP BY dat");
-
-my(%indexes, %articles, %commentviews);
-
-while(my($sect, $cnt) = $c->fetchrow) {
-	$indexes{$sect} = $cnt;
-}
-$c->finish;
-
-$c = $slashdb->sqlSelectMany("dat,count(*),op","accesslog",
-	"to_days(now()) - to_days(ts)=1 AND op='article'",
-	"GROUP BY dat");
-
-while(my($sid, $cnt) = $c->fetchrow) {
-	$articles{$sid} = $cnt;
-}
-$c->finish;
-
-# clean the key table
-
-my $delete_time = time() - $constants->{formkey_timeframe};
-$slashdb->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
-
-sub updateStamps {
-	my $columns = "uid";
-	my $tables = "accesslog";
-	my $where = "to_days(now())-to_days(ts)=1 AND uid > 0";
-	my $other = "GROUP BY uid";
-
-	my $E = $slashdb->sqlSelectAll($columns, $tables, $where, $other);
-
-	$slashdb->sqlDo("LOCK TABLES users_info WRITE");
-
-	for (@{$E}) {
-		my $uid=$_->[0];
-		$slashdb->setUser($uid, {-lastaccess=>'now()'});
-	}
-	$slashdb->sqlDo("UNLOCK TABLES");
-}
-
-updateStamps();
-
-$c = $slashdb->sqlSelectMany("dat,count(*)","accesslog",
-	"to_days(now()) - to_days(ts)=1 AND op='comments'",
-	"GROUP BY dat");
-while(my($sid, $cnt) = $c->fetchrow) {
-	$commentviews{$sid} = $cnt;
-}
-$c->finish;
-
-$slashdb->sqlDo("delete from accesslog where date_add(ts,interval 48 hour) < now()");
+my $count = $slashdb->countDaily();
 
 my $sdTotalHits = $slashdb->getVar("totalhits");
 
-$sdTotalHits = $sdTotalHits + $total;
+$sdTotalHits = $sdTotalHits + $count->{'total'};
 $slashdb->setVar("totalhits", $sdTotalHits);
+
+$slashdb->cleanFormKeys();
+
+
+$slashdb->updateStamps();
 
 my $email = <<EOT;
 $constants->{sitename} Stats for yesterday
 
-     total $total
-    unique $unique
+     total $count->{'total'}
+    unique $count->{'unique'}
 total hits $sdTotalHits
-  homepage $indexes{'index'}
+  homepage $count->{'index'}es{'index'}
    indexes 
 EOT
 
 foreach (keys %indexes) {
-	$email .= "\t   $_=$indexes{$_}\n"
+	$email .= "\t   $_=$count->{'index'}es{$_}\n"
 }
 
 $email .= "\n-----------------------\n";
 
-foreach my $key (sort { $articles{$b} <=> $articles{$a} } keys %articles) {
-	my $value = $articles{$key};
+for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %articles) {
+	my $value = $count->{'articles'}{$key};
 
-	my($title, $author) = $slashdb->sqlSelect("title,aid", "stories",
-		"sid=" . $slashdb->{dbh}->quote($key));
+	my $story = $slashdb->getStory($key, 'title', 'aid');
 
-	$email .= "$value\t$key " . substr($title, 0, 30) .
-		" by $author\n" if $value > 100;
+	$email .= "$value\t$key " . substr($story->{'title'}, 0, 30) .
+		" by $story->{'author'}\n" if $value > 100;
 }
 
 $email .= "\n-----------------------\n";
 $email .= `$constants->{datadir}/bin/tailslash today`;
 $email .= "\n-----------------------\n";
 
-$slashdb->sqlDo("DELETE from pollvoters");
-$slashdb->sqlDo("DELETE from moderatorlog WHERE
-	to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
-$slashdb->sqlDo("DELETE from metamodlog WHERE
-	to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 
 my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
 my $comlim = $slashdb->getUser($anonymous_coward_uid, 'commentlimit');
@@ -169,31 +104,17 @@ for (@{$E}) {
 }
 $slashdb->setUser($anonymous_coward_uid, { commentlimit=>$comlim });
 
-my $delay1 = $constants->{archive_delay} * 2;
-my $delay2 = $constants->{archive_delay} * 9;
-$constants->{defaultsection} ||= 'articles';
-
-$slashdb->sqlDo("delete from newstories WHERE 
-	(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
-	or (to_days(now()) - to_days(time) > $delay2)");
-
-$slashdb->sqlDo("delete from comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 sub generateDailyMail {
-	my $columns = "sid,title,section,aid,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";
-	my $tables = "stories";
-	my $where = "to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
-	my $other = " ORDER BY time DESC";
-
-	my $E = $slashdb->sqlSelectAll($columns,$tables,$where,$other);
+	my $email = $slashdb->getDailyEmail();
 
 	my $r = "$constants->{sitename} Daily Headline Mailer\n\n";
 	$r .= $slashdb->getBlock("emailsponsor");
 	# newlines after advert 
 	$r .= "\n\n";
 
-	return unless @$E;
-	for (@{$E}) {
+	return unless @$email;
+	for (@{$email}) {
 		my($sid, $title, $section, $aid, $tid, $time, $dept) = @$_;
 		$dept = $constants->{use_dept} ? "\n     from the $dept dept." : "";
 
@@ -209,14 +130,9 @@ EOT
 sub mailingList {
 	my $p = generateDailyMail() or return;
 
-	my $columns ="realemail,mode,nickname";
-	my $tables = "users,users_comments,users_info";
-	my $where = "users.uid=users_comments.uid AND users.uid=users_info.uid AND maillist=1";
-	my $other = "order by realemail";
+	my $users = $slashdb->getMailingList();
 
-	my $E = $slashdb->sqlSelectAll($columns,$tables,$where,$other);
-
-	for (@{$E}) {
+	for (@{$users}) {
 		sendEmail($_->[0], "24 Hours of $constants->{sitename} Headlines For $_->[2]", <<EOT);
       $p
       You are getting this message because you subscribed to it.

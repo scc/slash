@@ -256,7 +256,7 @@ sub mailPassword {
 		return;
 	}
 
-	my $user_email = $I{dbobject}->getUser($uid, qw(nickname realemail));
+	my $user_email = $I{dbobject}->getUser($uid, [qw(nickname realemail)]);
 	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
 	my $tempnick = fixparam($user_email->{nickname});
 
@@ -288,7 +288,7 @@ sub userInfo {
 	}
 
 	my @values = qw(homepage fakeemail bio seclev karma nickname);
-	my $userbio = $I{dbobject}->getUser($uid, @values);
+	my $userbio = $I{dbobject}->getUser($uid, \@values);
 
 	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
 	if ($I{U}{nickname} eq $nick) {
@@ -329,7 +329,7 @@ EOT
 
 	$I{F}{min} = 0 unless $I{F}{min};
 
-	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
+	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min});
 
 	my $rows = @$comments;
 	print "<B>$nick has posted $rows" 
@@ -382,7 +382,7 @@ sub editUser {
 		realname realemail fakeemail homepage nickname
 		passwd sig seclev bio maillist
 	);
-	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	my $user_edit = $I{dbobject}->getUser($uid, \@values);
 	$user_edit->{uid} = $uid;
 
 	return if isAnon($user_edit->{uid});
@@ -575,10 +575,10 @@ sub editHome {
 	my $user_edit = getCurrentUser();
 	if ($uid == $user_edit->{uid}) {
 		@values = grep ! exists $user_edit->{$_}, @values;
-		my $tmpuser = $I{dbobject}->getUser($uid, @values);
+		my $tmpuser = $I{dbobject}->getUser($uid, \@values);
 		@{$user_edit}{ keys %$tmpuser} = values %$tmpuser;
 	} else {
-		$user_edit = $I{dbobject}->getUser($uid, @values);
+		$user_edit = $I{dbobject}->getUser($uid, \@values);
 		$user_edit->{uid} = $uid;
 	}
 
@@ -646,7 +646,7 @@ sub editComm {
 	my($uid) = @_;
 
 	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
-	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	my $user_edit = $I{dbobject}->getUser($uid, \@values);
 	$user_edit->{uid} = $uid;
 
 	titlebar("100%", "Comment Options");
@@ -745,7 +745,7 @@ EOT
 #################################################################
 sub saveUser {
 	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $user_email  = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
+	my $user_email  = $I{dbobject}->getUser($uid, ['nickname', 'realemail']);
 	my $note;
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
@@ -927,6 +927,7 @@ EOT
 
 #################################################################
 sub displayForm {
+	my $anon_name = getCurrentAnonymousCoward('nickname');
 	print <<EOT;
 <TABLE WIDTH="100%" CELLPADDING="10"><TR><TD WIDTH="50%" VALIGN="TOP">
 
@@ -943,7 +944,7 @@ EOT
 	or clicking that mail password button if you forgot your password.
 EOT1
 	Logging in will allow you to post comments as yourself.  If you
-	don't login, you will only be able to post as $I{anon_name}.
+	don't login, you will only be able to post as $anon_name.
 EOT2
 	Logging in will allow you to post comments.  If you
 	don't login, you will not be able to post.

@@ -124,7 +124,6 @@ sub sqlConnect {
 	my($self) = @_;
 
 	if (defined($self->{dbh})) {
-		#unless (eval {$self->{dbh}->ping}) {
 		unless ($self->{dbh}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
 			$self->{dbh}->disconnect;
@@ -273,10 +272,6 @@ sub getModeratorCommentLog {
 			     AND comments.cid=moderatorlog.cid"
 	);
 	my(@comments, $comment);
-	# $_ is not automatically set by while.  also, we could
-	# assign to $_, but only if we call local() on it first,
-	# so we don't overwrite $_ somewhere else -- pudge
-	# push @comments, $_ while ($comments->fetchrow_hashref);
 	push @comments, $comment while ($comment = $comments->fetchrow_hashref);
 	return \@comments;
 }
@@ -445,6 +440,20 @@ sub setContentFilter {
 			err_message	=> $form->{err_message},
 		}, "filter_id=$form->{filter_id}"
 	);
+}
+
+########################################################
+# Only Slashdot uses this method
+sub setSectionExtra {
+	my($self, $full, $story) = @_;
+
+	if ($full && $self->sqlTableExists($story->{section}) && $story->{section}) {
+		my $extra = $self->sqlSelectHashref('*', $story->{section}, "sid='$story->{sid}'");
+		for (keys %$extra) {
+			$story->{$_} = $extra->{$_};
+		}
+	}
+
 }
 
 ########################################################
@@ -800,14 +809,12 @@ sub setSessionByAid {
 
 ########################################################
 sub setAuthor {
-	my($self, $author, $value) = @_;
-	$self->sqlUpdate('authors', $value, 'name=' . $self->{dbh}->quote($author));
+	_genericSet('authors', 'aid', @_);
 }
 
 ########################################################
 sub setBlock {
-	my($self, $bid, $block) = @_;
-	$self->sqlUpdate('blocks', $block, 'bid=' . $self->{dbh}->quote($bid));
+	_genericSet('blocks', 'bid', @_);
 }
 
 ########################################################
@@ -1149,26 +1156,6 @@ sub getAuthorDescription {
 }
 
 ########################################################
-sub getAuthorNameByAid {
-# Ok, this is really similair to the code get methods
-# for the moment it will stay seperate just becuase
-# those tables will change. My be a good idea to
-# cache this at some point.
-# We should be smart at some point and actually see if
-# we can just grab data from the author bank hash
-	my($self) = @_;
-
-	my $author_hash_ref = {};
-	my $sth = $self->sqlSelectMany('aid,name', 'authors');
-	while (my($id, $desc) = $sth->fetchrow) {
-		$author_hash_ref->{$id} = $desc;
-	}
-	$sth->finish;
-
-	return  $author_hash_ref;
-}
-
-########################################################
 # This method does not follow basic guidlines
 sub getPollVoter {
 	my($self, $id) = @_;
@@ -1289,57 +1276,21 @@ sub getBackendStories {
 
 	$cursor->execute;
 	my $returnable = [];
-	while (my $row = $cursor->fetchrow_hashref) {
-		push(@$returnable, $row);
-	}
+	my $row;
+	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
 
 	return $returnable;
 }
 
-########################################################
-# This needs to be made to look like other methods so
-# you can request multiple objects
-sub getStory {
-	my($self, $sid, $member) = @_;
-
-	if ($member) {
-		return $self->{_storyBank}{$sid}->{$member} if $self->{_storyBank}{$sid}->{$member};
-	} else {
-		return $self->{_storyBank}{$sid} if $self->{_storyBank}{$sid};
-	}
-	my $hashref = $self->sqlSelectHashref('title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid, tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
-		'stories', 'sid=' . $self->{dbh}->quote($sid)
-	);
-	$self->{_storyBank}{$sid} = $hashref;
-	if ($member) {
-		$self->{_storyBank}{$sid}->{$member};
-	} else {
-		return $self->{_storyBank}{$sid};
-	}
-}
 
 ########################################################
 sub clearStory {
-	my($self, $sid) = @_;
-	if ($sid) {
-		undef $self->{_storyBank}{$sid};
-	} else {
-		undef $self->{_storyBank};
-	}
+	 _genericClearCache('stories', @_);
 }
 
 ########################################################
 sub setStory {
-	my($self, $sid, $key, $value, $perm) = @_;
-	# The idea with $perm, is that at some point, if you set it
-	# it will update the database with the change you requested
-	$self->{_storyBank}{$sid}{$key} = $value;
-	$self->sqlUpdate(
-		"discussions",
-		{ $key => $value },
-			"sid=" . $self->{dbh}->quote($sid)
-		) if $perm;
-
+	_genericSet('blocks', 'bid', @_);
 }
 
 ########################################################
@@ -1747,26 +1698,35 @@ sub refreshStories {
 }
 
 ##################################################################
+# Oranges to Apples. Would it be faster to grab some of this
+# data from the cache? Or is it just as fast to grab it from
+# the database?
 sub getStoryByTime {
-	my($self, $sign, $sqltime, $isolate, $section, $extid, $exaid, $exsect) = @_;
-	my($where, $order);
-	$order = $sign eq '<' ? 'DESC' : 'ASC';
+	my($self, $sign, $story, $isolate, $section) = @_;
+	my($where);
+	my $user = getCurrentUser();
+
+	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 	if ($isolate) {
-		$where = 'AND section=' . $self->{dbh}->quote($section)
+		$where = 'AND section=' . $self->{dbh}->quote($story->{'section'})
 			if $isolate == 1;
 	} else {
 		$where = 'AND displaystatus=0';
 	}
 
-	$where .= "   AND tid not in ($extid)" if $extid;
-	$where .= "   AND aid not in ($exaid)" if $exaid;
-	$where .= "   AND section not in ($exsect)" if $exsect;
+	$where .= "   AND tid not in ($user->{'extid'})" if $user->{'extid'};
+	$where .= "   AND aid not in ($user->{'exaid'})" if $user->{'exaid'};
+	$where .= "   AND section not in ($user->{'exsect'})" if $user->{'exsect'};
+	$where .= "   AND sid != '$story->{'sid'}'";
 
-	$self->sqlSelect(
+	my $time = $story->{'time'};
+	my $returnable = $self->sqlSelectHashref(
 			'title, sid, section', 'newstories',
-			"time $sign '$sqltime' AND writestatus >= 0 AND time < now() $where",
+			"time $sign '$time' AND writestatus >= 0 AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
+
+	return $returnable;
 }
 
 ########################################################
@@ -2025,9 +1985,10 @@ sub getCommentsForUser {
 
 	my $thisComment = $self->{dbh}->prepare_cached($sql) or apacheLog($sql);
 	$thisComment->execute or apacheLog($sql);
-	my(@comments, $comment);
-	# see note above from getModeratorCommentLog
-	push @comments, $comment while ($comment = $thisComment->fetchrow_hashref);
+	my(@comments);
+	while (my $comment = $thisComment->fetchrow_hashref){
+		push @comments, $comment;
+	}
 	return \@comments;
 }
 
@@ -2092,7 +2053,8 @@ sub getStories {
 
 ########################################################
 sub getCommentsTop {
-	my($self, $sid, $user) = @_;
+	my($self, $sid) = @_;
+	my $user = getCurrentUser();
 	my $where = "stories.sid=comments.sid";
 	$where .= " AND stories.sid=" . $self->{dbh}->quote($sid) if $sid;
 	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject,"
@@ -2653,74 +2615,14 @@ sub getKeys {
 	return \@keys;
 }
 
-########################################################
-# This is protected and don't call it from your
-# scripts directly.
-sub _genericGet {
-	my($table, $table_prime, $self, $id, @val) = @_;
-	my $members = @val;
-	my $answer;
-	if ($members == 1) {
-		($answer) = $self->sqlSelect($val[0], $table, "$table_prime=" . $self->{dbh}->quote($id));
-	} elsif ($members > 1) {
-		my $values = join ',', @val;
-		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=" . $self->{dbh}->quote($id));
-	} else {
-		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
-	} 
 
+########################################################
+sub getStory {
+	my ($self) = @_;
+	# We need to expire stories
+  _genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
+	my $answer = _genericGetCache('stories', 'sid', @_);
 	return $answer;
-}
-
-########################################################
-# This is protected and don't call it from your
-# scripts directly.
-sub _genericGetCache {
-	my($table, $table_prime, $self, $id, @values) = @_;
-	my $table_cache= '_' . $table . '_cache';
-
-	my $count = @values;
-	if ($count == 1) {
-		return $self->{$table_cache}{$id}{$values[0]} if $self->{$table_cache}{$id};
-	} else {
-		return $self->{$table_cache}{$id} if $self->{$table_cache}{$id};
-	}
-	# Lets go knock on the door of the database
-	# and grab the Topic's since they are not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
-	my $sth = $self->sqlSelectMany('*', $table);
-	while (my $row = $sth->fetchrow_hashref) {
-		$self->{$table_cache}{ $row->{$table_prime} } = $row;
-	}
-	$sth->finish;
-
-	if ($count == 1) {
-		return $self->{$table_cache}{$id}{$values[0]};
-	} else {
-		return $self->{$table_cache}{$id};
-	}
-}
-
-########################################################
-# This is protected and don't call it from your
-# scripts directly.
-sub _genericGetsCache {
-	my($table, $table_prime, $self) = @_;
-	my $table_cache= '_' . $table . '_cache';
-
-	return $self->{$table_cache} if (keys %{$self->{$table_cache}});
-	# Lets go knock on the door of the database
-	# and grab the Topic's since they are not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
-	my $sth = $self->sqlSelectMany('*', $table);
-	while (my $row = $sth->fetchrow_hashref) {
-		$self->{$table_cache}{ $row->{$table_prime} } = $row;
-	}
-	$sth->finish;
-
-	return $self->{$table_cache};
 }
 
 ########################################################
@@ -2813,43 +2715,6 @@ sub getUser {
 	return $answer;
 }
 
-########################################################
-sub _genericGetCombined {
-	my($tables, $table_prime, $self, $id, @val) = @_;
-	my $members = @val;
-	my $answer;
-	# The sort makes sure that someone will always get the cache if
-	# they have the same tables
-	my $cache = _getCache($self, $tables);
-	my $id_db = $self->{dbh}->quote($id);
-	if ($members == 1) {
-		my $table = $self->{$cache}{$val[0]};
-		($answer) = $self->sqlSelect($val[0], $table, $table_prime . '=' .$id_db);
-	} elsif ($members > 1) {
-		my $values = join ',', @val;
-		my %tables;
-		my $where;
-		for (@val) {
-			$tables{$self->{$cache}{$_}} = 1;
-		}
-		for (keys %tables) {
-			$where .= "$_.$table_prime=$id_db AND ";
-		}
-		$where =~ s/ AND $//;
-		my $table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, $where);
-	} else {
-		my $where;
-		for (@$tables) {
-			$where .= "$_.$table_prime=$id_db AND ";
-		}
-		$where =~ s/ AND $//;
-		my $table = join ',', @$tables;
-		$answer = $self->sqlSelectHashref('*', $table, $where);
-	} 
-
-	return $answer;
-}
 
 ########################################################
 # 
@@ -2869,12 +2734,50 @@ sub setUser {
 	my $answer = _genericSetCombined($tables, 'uid', @_);
 	return $answer;
 }
+
+########################################################
+sub _genericGetCombined {
+	my($tables, $table_prime, $self, $id, $val) = @_;
+	my $answer;
+	# The sort makes sure that someone will always get the cache if
+	# they have the same tables
+	my $cache = _genericGetCacheName($self, $tables);
+	my $id_db = $self->{dbh}->quote($id);
+
+
+	if((ref($val) eq 'ARRAY')) {
+		my $values = join ',', @$val;
+		my %tables;
+		my $where;
+		for (@$val) {
+			$tables{$self->{$cache}{$_}} = 1;
+		}
+		for (keys %tables) {
+			$where .= "$_.$table_prime=$id_db AND ";
+		}
+		$where =~ s/ AND $//;
+		my $table = join ',', keys %tables;
+		$answer = $self->sqlSelectHashref($values, $table, $where);
+	} elsif ($val) {
+		my $table = $self->{$cache}{$val->[0]};
+		($answer) = $self->sqlSelect($val->[0], $table, $table_prime . '=' .$id_db);
+	} else {
+		my $where;
+		for (@$tables) {
+			$where .= "$_.$table_prime=$id_db AND ";
+		}
+		$where =~ s/ AND $//;
+		my $table = join ',', @$tables;
+		$answer = $self->sqlSelectHashref('*', $table, $where);
+	}
+
+	return $answer;
+}
 ########################################################
 # This could be optimized by not making multiple calls
 # to getKeys or by fixing getKeys() to return multiple
 # values
-
-sub _getCache {
+sub _genericGetCacheName {
 	my($self, $tables) = @_;
 	my $cache = '_' . join ('_', sort(@$tables), 'cache');
 	unless (keys %{$self->{$cache}}) {
@@ -2893,7 +2796,7 @@ sub _getCache {
 sub _genericSetCombined {
 	my($tables, $table_prime, $self, $id, $hashref) = @_;
 	my %update_tables;
-	my $cache = _getCache($self, $tables);
+	my $cache = _genericGetCacheName($self, $tables);
 	for(keys %$hashref) {
 		my $key = $self->{$cache}->{$_};
 		push @{$update_tables{$key}}, $_;
@@ -2909,52 +2812,147 @@ sub _genericSetCombined {
 }
 
 ########################################################
-# For slashdb
-sub setStoryIndex {
-	my($self) = @_;
+# Now here is the thing. We want setUser to look like
+# a generic, despite the fact that it is not :)
+# We assum most people called set to hit the database
+# and just not the cache (if one even exists)
+sub _genericSet {
+	my($table, $table_prime, $self, $id, $value) = @_;
+	$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{dbh}->quote($id));
 
-	my %stories;
-
-	for my $sid (@_) {
-		$stories{$sid} = $self->sqlSelectHashref("*","stories","sid='$sid'");
+	my $table_cache= '_' . $table . '_cache';
+	return unless (keys %{$self->{$table_cache}});
+	my $table_cache_time= '_' . $table . '_cache_time';
+	$self->{$table_cache_time} = time();
+	for(keys %$value) {
+		$self->{$table_cache}{$id}{$_} = $value->{$_}; 
 	}
-	$self->{dbh}->do("LOCK TABLES newstories WRITE");
+}
+########################################################
+# You can use this to reset cache's in a timely
+# manner :)
+sub _genericCacheRefresh {
+	my ($self, $table,  $expiration) = @_;
+	return unless $expiration;	
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time = '_' . $table . '_cache_time';
+	my $table_cache_full = '_' . $table . '_cache_full';
+	return unless $self->{$table_cache_time};
+	my $time = time();
+	my $diff = $time - $self->{$table_cache_time};
 
-	foreach my $sid (keys %stories) {
-		$self->sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
+	if ($diff > $expiration) {
+	print STDERR "TIME:$diff:$expiration:$time:$self->{$table_cache_time}:\n";
+		$self->{$table_cache} = {};
+		$self->{$table_cache_time} = 0;
+		$self->{$table_cache_full} = 0;
 	}
+}
+########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGetCache {
+	my($table, $table_prime, $self, $id, $values, $cache_flag) = @_;
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time= '_' . $table . '_cache_time';
 
-	$self->{dbh}->do("UNLOCK TABLES");
+	########################################
+	# Debug stuff:
+	my $DEBUG = 1;
+	my $DEBUG_TABLE = 'stories';
+	########################################
+	print STDERR "_genericGetCache: $table:$id cache hit($self->{$table_cache}{$id})\n"
+			if ($self->{$table_cache}{$id} and $DEBUG and $table eq $DEBUG_TABLE);
+	my $type;
+	if((ref($values) eq 'ARRAY')) {
+		$type = 0;
+	} else {
+		$type  = $values ? 1 : 0;
+	}
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values} 
+			if (keys %{$self->{$table_cache}{$id}});
+	} else {
+		return $self->{$table_cache}->{$id} 
+			if (keys %{$self->{$table_cache}{$id}});
+	}
+	print STDERR "_genericGetCache: $table:$id was not found in cache\n"
+		if($DEBUG and $table eq $DEBUG_TABLE);
+	# Lets go knock on the door of the database
+	# and grab the data's since it is not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	$self->{$table_cache}->{$id} = {};
+	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+	$self->{$table_cache}->{$id} = $answer;
+	print STDERR "_genericGetCache: $table:$id now has $self->{$table_cache}{$id}\n"
+		if($DEBUG and $table eq $DEBUG_TABLE);
+
+	$self->{$table_cache_time} = time();
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values};
+	} else {
+		return $self->{$table_cache}{$id};
+	}
 }
 
 ########################################################
-# For slashdb
-sub getNewStoryTopic {
-	my($self) = @_;
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericClearCache {
+	my($table, $self) = @_;
+	my $table_cache= '_' . $table . '_cache';
 
-	my $returnable = $self->sqlSelectHashref(
-				"alttext,image,width,height,newstories.tid",
-				"newstories,topics",
-				"newstories.tid=topics.tid
-				AND displaystatus = 0
-				AND writestatus >= 0
-				AND time < now()
-				ORDER BY time DESC");
-
-	return $returnable;
+	$self->{$table_cache} = {};
 }
 
 ########################################################
-# For slashdb
-sub getStoriesForSlashdb {
-	my($self) = @_;
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGet {
+	my($table, $table_prime, $self, $id, $val) = @_;
+	my $answer;
+	my $type;
 
-	my $returnable = $self->sqlSelectAll("sid,title,section", 
-			"stories", "writestatus=1");
+	if((ref($val) eq 'ARRAY')) {
+		my $values = join ',', @$val;
+		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=" . $self->{dbh}->quote($id));
+	} elsif ($val) {
+		($answer) = $self->sqlSelect($val, $table, "$table_prime=" . $self->{dbh}->quote($id));
+	} else {
+		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+	}
 
-	return $returnable;
+	return $answer;
 }
 
+########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGetsCache {
+	my($table, $table_prime, $self, $cache_flag) = @_;
+	my $table_cache= '_' . $table . '_cache';
+	my $table_cache_time= '_' . $table . '_cache_time';
+	my $table_cache_full= '_' . $table . '_cache_full';
+
+
+	return $self->{$table_cache} if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag);
+	# Lets go knock on the door of the database
+	# and grab the data since it is not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	$self->{$table_cache} = {};
+	my $sth = $self->sqlSelectMany('*', $table);
+	while (my $row = $sth->fetchrow_hashref) {
+		$self->{$table_cache}{ $row->{$table_prime} } = $row;
+	}
+	$self->{$table_cache_full} = 1;
+	$sth->finish;
+	$self->{$table_cache_time} = time();
+
+	return $self->{$table_cache};
+}
 1;
 
 __END__
