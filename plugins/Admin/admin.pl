@@ -677,7 +677,7 @@ sub topicEdit {
 
 	$topics_menu = $slashdb->getDescriptions('topics_all', '', 1);
 	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid} ? $form->{nexttid} : $constants->{defaulttopic}, 1);
-	my $sections = $slashdb->getDescriptions('sections', '', 1);
+	my $sections = $slashdb->getDescriptions('sections-all', '', 1);
 	my $section_topics = $slashdb->getDescriptions('topic-sections', $form->{nexttid}, 1);
 	my $sectionref;
 	while (my($section, $title) = each %$sections) {

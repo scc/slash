@@ -92,6 +92,9 @@ my %descriptions = (
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
 
+	'sections-all'
+		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', '', 'order by title') },
+
 	'static_block'
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[2] >= seclev AND type != 'portald'") },
 
@@ -4209,7 +4212,7 @@ sub _saveExtras {
 
 	# Update main-page write status if saved story is marked 
 	# "Always Display" or "Never Display".
-	$self->setVar('writestatus', 'dirty') if $story->{writestatus} < 1;
+	$self->setVar('writestatus', 'dirty') if $story->{writestatus} eq 'dirty';
 
 	my $extras = $self->getSectionExtras($story->{section});
 	return unless $extras;
