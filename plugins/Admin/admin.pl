@@ -960,8 +960,6 @@ sub editStory {
 	
 	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) { 
-		$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
-
 		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
@@ -1072,6 +1070,8 @@ sub editStory {
 # hmmmm
 #Import Image (don't even both trying this yet :)<BR>
 #	<INPUT TYPE="file" NAME="importme"><BR>
+
+	$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
 	slashDisplay('editStory', {
 		storyref 		=> $storyref,

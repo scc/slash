@@ -366,35 +366,39 @@ sub getDiscussions {
 
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
-# matches).  Called during authenication
+# matches).  Called during authentication
 sub getSessionInstance {
-	my($self, $uid, $session) = @_;
+	my($self, $uid, $session_in) = @_;
 	my $admin_timeout = getCurrentStatic('admin_timeout');
-
-	if ($session) {
+	my $session_out = '';
+  
+	if ($session_in) {
 		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
-
-		my $session_q = $self->{_dbh}->quote($session);
-
+  
+		my $session_in_q = $self->{_dbh}->quote($session_in);
+  
 		my($uid) = $self->sqlSelect(
 			'uid',
 			'sessions',
-			"session=$session_q"
+			"session=$session_in_q"
 		);
-
+  
 		if ($uid) {
 			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND " .
-				"session != $session_q"
+				"session != $session_in_q"
 			);
 			$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-				"session=$session_q"
+				"session = $session_in_q"
 			);
+			$session_out = $session_in;
 		}
-	} else {
+	}
+	if (!$session_out) {
 		my($title) = $self->sqlSelect('lasttitle', 'sessions',
 			"uid=$uid"
 		);
+		$title ||= "";
 
 		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 
@@ -402,11 +406,10 @@ sub getSessionInstance {
 			-logintime => 'now()', -lasttime => 'now()',
 			lasttitle => $title }
 		);
-		my($sid) = $self->sqlSelect("LAST_INSERT_ID()");
-
-		return $sid;
+		($session_out) = $self->sqlSelect("LAST_INSERT_ID()");
 	}
-	return;
+	return $session_out;
+
 }
 
 ########################################################
@@ -1347,7 +1350,7 @@ sub checkForm {
 # Current admin users
 sub currentAdmin {
 	my($self) = @_;
-	my $aids = $self->sqlSelectAll('nickname,now()-lasttime,lasttitle', 'sessions,users',
+	my $aids = $self->sqlSelectAll('nickname,lasttime,lasttitle', 'sessions,users',
 		'sessions.uid=users.uid GROUP BY sessions.uid'
 	);
 

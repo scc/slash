@@ -36,6 +36,7 @@ use Symbol 'gensym';
 use HTML::Entities;
 use Mail::Sendmail;
 use URI;
+use Date::Manip qw( ParseDate UnixDate );
 
 use Slash::DB;
 use Slash::Display;
@@ -723,16 +724,22 @@ sub currentAdminUsers {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
+	my $now = UnixDate(ParseDate($slashdb->getTime()), "%s");
 	my $aids = $slashdb->currentAdmin();
-	for (@$aids) {
-		if ($_->[0] eq $user->{nickname}) {
-		    $_->[1] = "-";
-		} elsif ($_->[1] <= 99) {
-		    $_->[1] .= "s";
-		} elsif ($_->[1] <= 99*60) {
-		    $_->[1] = int($_->[1]/60+0.5) . "m";
+	for my $data (@$aids) {
+		my($usernick, $usertime, $lasttitle) = @$data;
+		if ($usernick eq $user->{nickname}) {
+			$usertime = "-";
 		} else {
-		    $_->[1] = int($_->[1]/3600+0.5) . "h";
+			$usertime = $now - UnixDate(ParseDate($usertime), "%s");
+			if ($usertime <= 99) {
+				$usertime .= "s";
+			} elsif ($usertime <= 3600) {
+				$usertime = int($usertime/60+0.5) . "m";
+			} else {
+				$usertime = int($usertime/3600) . "h"
+					. int(($usertime%3600)/60+0.5) . "m";
+			}
 		}
 	}
 
