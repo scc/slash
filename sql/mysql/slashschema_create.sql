@@ -255,7 +255,8 @@ CREATE TABLE menus (
   menuorder int(5),
   type varchar(20) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
-  KEY page_labels (menu,label)
+  KEY page_labels (menu,label),
+  UNIQUE page_labels_un (menu,label)
 );
 
 #
