@@ -59,6 +59,9 @@ my %descriptions = (
 	'authors'
 		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
 
+	'templates'
+		=> sub { $_[0]->sqlSelectMany('bid,title', 'authors') },
+
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
 
@@ -848,7 +851,7 @@ sub setAuthor {
 }
 
 ########################################################
-sub setBlock {
+sub setTemplate {
 	_genericSet('blocks', 'bid', @_);
 }
 
@@ -1046,9 +1049,9 @@ sub revertBlock {
 }
 
 ########################################################
-sub deleteBlock {
-	my($self, $bid) = @_;
-	$self->sqlDo('DELETE FROM blocks WHERE bid=' . $self->{_dbh}->quote($bid));
+sub deleteTemplate {
+	my($self, $tpid) = @_;
+	$self->sqlDo('DELETE FROM templates WHERE tpid=' . $self->{_dbh}->quote($tpid));
 }
 
 ########################################################
@@ -1168,6 +1171,7 @@ sub saveColorBlock {
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
 			}, "bid = '$form->{color_block}'"
+		);
 		$self->sqlUpdate('backup_blocks', {
 				block => $colorblock,
 			}, "bid = '$form->{color_block}'"
@@ -2626,6 +2630,14 @@ sub getBlock {
 }
 
 ########################################################
+sub getTemplate {
+	my($self) = @_;
+	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
+	my $answer = _genericGetCache('templates', 'tpid', @_);
+	return $answer;
+}
+
+########################################################
 sub getTopic {
 	my $answer = _genericGetCache('topics', 'tid', @_);
 	return $answer;
@@ -2987,6 +2999,12 @@ sub _genericGets {
 }
 ########################################################
 sub createBlock {
+	my($self, $hash) = @_;
+	$self->sqlInsert('blocks', $hash);
+}
+
+########################################################
+sub createTemplate {
 	my($self, $hash) = @_;
 	$self->sqlInsert('blocks', $hash);
 }
