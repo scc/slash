@@ -57,14 +57,11 @@ EOT
 
 	header($title, $story->{section});
 	slashDisplay('article-display', {
-		constants		=> $constants,
-		form			=> $form,
 		poll			=> pollbooth($story->{sid}, 1),
 		section			=> $SECT,
 		section_block	=> $dbslash->getBlock($SECT->{section}),
 		show_poll		=> $dbslash->getPollQuestion($story->{sid}),
 		story			=> $story,
-		user			=> $user,
 		'next'			=> $dbslash->getStoryByTime('>', $story, $SECT),
 		prev			=> $dbslash->getStoryByTime('<', $story, $SECT),
 	});

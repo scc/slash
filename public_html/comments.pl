@@ -58,8 +58,6 @@ sub main {
 	if ($user->{uid} < 1 && length($form->{upasswd}) > 1) {
 		slashDisplay('comments-error', {
 			type		=> 'login error',
-			nickname	=> $form->{unickname},
-			op			=> $form->{op},
 		});
 		$form->{op} = "Preview";
 	}
@@ -137,7 +135,6 @@ sub commentIndex {
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $db->getDiscussions();
 	slashDisplay('comments-discussion-list', {
-		rootdir => $c->{rootdir},
 		discussions => $discussions,
 	});
 }
@@ -158,7 +155,6 @@ sub editComment {
 	if (!$c->{allow_anonymous} && $u->{is_anon}) {
 		slashDisplay('comments-error', {
 			type	=> 'no anonymous posting',
-			rootdir => $c->{rootdir},
 		});
 	    return;
 	}
@@ -197,18 +193,12 @@ sub editComment {
 
 	# Consider passing $c.
 	slashDisplay('comments-edit-comment', {
-		form => $f,
-		user => $u,
 		cgi => new CGI,
-		admin_mail => $c->{adminmail},
-		admin_name => $c->{siteadmin_name},
 		approved_tags => $approvedtags,
 		error_message => $error_message,
 		format_select => $formatSelect,
-		goodkarma => $c->{goodkarma},
 		preview => $previewForm,
 		reply => $reply,
-		rootdir => $c->{rootdir},
 	});
 }
 
@@ -226,7 +216,6 @@ sub validateComment {
 	if (isTroll($u, $c, $db)) {
 		my $err_msg = slashDisplay('comments-errors', {
 			type 		=> 'troll message',
-			admin_mail	=> $c->{adminmail},
 		}, 1);
 		return (undef, undef, $err_msg);
 	}
@@ -234,7 +223,6 @@ sub validateComment {
 	if (!$c->{allow_anonymous} && ($u->{uid} < 1 || $f->{postanon})) { 
 		my $err_msg = slashDisplay('comments-errors', {
 			type	=> 'anonymous disallowed', 
-			rootdir => $c->{rootdir},
 		}, 1);
 		return (undef, undef, $err_msg);
 	}
@@ -321,7 +309,6 @@ sub validateComment {
 	if ($dupRows || !$f->{sid}) { 
 		my $err_msg = slashDisplay('comments-errors', {
 			type	=> 'validation error',
-			form	=> $f,
 			dups	=> $dupRows,
 		});
 		editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
