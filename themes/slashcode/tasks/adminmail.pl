@@ -128,6 +128,9 @@ EOT
 	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
 
 # NewsForge's code...
+# this should be put in an adminmail.pl in the newsforge theme,
+# so it is just copied over; you probably know that, though
+# -- pudge
 #	my($c) = sqlSelectMany("count(*),date_format(date_sub(ts,interval 5 hour),\"%d %H\") as h,
 #				date_format(date_sub(ts,interval 5 hour),\"%d\") as d",
 #				"accesslog",

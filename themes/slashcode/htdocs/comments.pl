@@ -1084,7 +1084,7 @@ sub isTroll {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	return 0 if $user->{seclev} > 99;
+	return 0 if $user->{seclev} >= 100;
 
 	my $good_behavior = 0;
 	if (!$user->{is_anon} and $user->{karma} >= 1) {
