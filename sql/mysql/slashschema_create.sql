@@ -3,6 +3,8 @@
 # Host: localhost	  Database: dump
 #--------------------------------------------------------
 # Server version	3.23.26-beta
+#
+# $Id$
 
 #
 # Table structure for table 'abusers'
@@ -135,7 +137,7 @@ CREATE TABLE comments (
 	uid mediumint UNSIGNED NOT NULL,
 	points tinyint DEFAULT '0' NOT NULL,
 	lastmod tinyint DEFAULT '-1' NOT NULL,
-	reason mediumint DEFAULT '0' NOT NULL,
+	reason tinyint UNSIGNED DEFAULT '0' NOT NULL,
 	signature char(32) DEFAULT '' NOT NULL,
 	PRIMARY KEY (cid),
 	KEY display (sid,points,uid),
@@ -162,7 +164,7 @@ CREATE TABLE comment_heap (
 	uid mediumint UNSIGNED NOT NULL,
 	points tinyint DEFAULT '0' NOT NULL,
 	lastmod tinyint DEFAULT '-1' NOT NULL,
-	reason mediumint DEFAULT '0' NOT NULL,
+	reason tinyint UNSIGNED DEFAULT '0' NOT NULL,
 	signature char(32) DEFAULT '' NOT NULL,
 	PRIMARY KEY (cid),
 	KEY display (sid,points,uid),
@@ -179,7 +181,7 @@ CREATE TABLE comment_heap (
 
 DROP TABLE IF EXISTS comment_text;
 CREATE TABLE comment_text (
-	cid mediumint NOT NULL,
+	cid mediumint UNSIGNED NOT NULL,
 	comment text NOT NULL,
 	FOREIGN KEY (cid) REFERENCES comments(cid),
 	PRIMARY KEY (cid)
@@ -212,7 +214,7 @@ CREATE TABLE content_filters (
 
 DROP TABLE IF EXISTS dateformats;
 CREATE TABLE dateformats (
-	id tinyint DEFAULT '0' NOT NULL,
+	id tinyint UNSIGNED DEFAULT '0' NOT NULL,
 	format varchar(32),
 	description varchar(64),
 	PRIMARY KEY (id)
@@ -252,10 +254,10 @@ CREATE TABLE formkeys (
 	uid mediumint UNSIGNED NOT NULL,
 	ipid	char(32) DEFAULT '' NOT NULL,
 	value tinyint DEFAULT '0' NOT NULL,
-	cid mediumint DEFAULT '0' NOT NULL,
-	ts mediumint DEFAULT '0' NOT NULL,
-	submit_ts mediumint DEFAULT '0' NOT NULL,
-	content_length tinyint DEFAULT '0' NOT NULL,
+	cid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	ts int UNSIGNED DEFAULT '0' NOT NULL,
+	submit_ts int UNSIGNED DEFAULT '0' NOT NULL,
+	content_length smallint UNSIGNED DEFAULT '0' NOT NULL,
 	PRIMARY KEY (formkey),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	KEY formname (formname),
@@ -302,13 +304,13 @@ CREATE TABLE metamodlog (
 
 DROP TABLE IF EXISTS moderatorlog;
 CREATE TABLE moderatorlog (
-	id mediumint UNSIGNED NOT NULL auto_increment,
+	id int UNSIGNED NOT NULL auto_increment,
 	uid mediumint UNSIGNED NOT NULL,
 	val tinyint DEFAULT '0' NOT NULL,
-	sid mediumint DEFAULT '' NOT NULL,
+	sid mediumint UNSIGNED DEFAULT '' NOT NULL,
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	cid tinyint DEFAULT '0' NOT NULL,
-	reason mediumint DEFAULT '0',
+	cid mediumint UNSIGNED NOT NULL,
+	reason tinyint UNSIGNED DEFAULT '0',
 	active tinyint DEFAULT '1' NOT NULL,
 	PRIMARY KEY (id),
 	KEY sid (sid,cid),
@@ -459,12 +461,12 @@ CREATE TABLE stories (
 	sid char(16) NOT NULL,
 	tid smallint UNSIGNED NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	commentcount tinyint UNSIGNED DEFAULT '0',
+	commentcount smallint UNSIGNED DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	writestatus tinyint DEFAULT '0' NOT NULL,
-	hits tinyint UNSIGNED DEFAULT '0' NOT NULL,
+	hits mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	section varchar(30) DEFAULT '' NOT NULL,
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
@@ -488,12 +490,12 @@ CREATE TABLE story_heap (
 	sid char(16) NOT NULL,
 	tid smallint UNSIGNED NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
-	commentcount tinyint UNSIGNED DEFAULT '0',
+	commentcount smallint UNSIGNED DEFAULT '0',
 	title varchar(100) DEFAULT '' NOT NULL,
 	dept varchar(100),
 	time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	writestatus tinyint DEFAULT '0' NOT NULL,
-	hits tinyint UNSIGNED DEFAULT '0' NOT NULL,
+	hits mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	section varchar(30) DEFAULT '' NOT NULL,
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
@@ -653,18 +655,18 @@ CREATE TABLE users_acl (
 DROP TABLE IF EXISTS users_comments;
 CREATE TABLE users_comments (
 	uid mediumint UNSIGNED NOT NULL,
-	points mediumint DEFAULT '0' NOT NULL,
+	points smallint UNSIGNED DEFAULT '0' NOT NULL,
 	posttype mediumint DEFAULT '2' NOT NULL,
-	defaultpoints mediumint DEFAULT '1' NOT NULL,
-	highlightthresh mediumint DEFAULT '4' NOT NULL,
-	maxcommentsize mediumint DEFAULT '4096' NOT NULL,
+	defaultpoints tinyint DEFAULT '1' NOT NULL,
+	highlightthresh tinyint DEFAULT '4' NOT NULL,
+	maxcommentsize smallint UNSIGNED DEFAULT '4096' NOT NULL,
 	hardthresh tinyint DEFAULT '0' NOT NULL,
-	clbig mediumint DEFAULT '0' NOT NULL,
-	clsmall mediumint DEFAULT '0' NOT NULL,
+	clbig smallint UNSIGNED DEFAULT '0' NOT NULL,
+	clsmall smallint UNSIGNED DEFAULT '0' NOT NULL,
 	reparent tinyint DEFAULT '1' NOT NULL,
 	nosigs tinyint DEFAULT '0' NOT NULL,
-	commentlimit mediumint DEFAULT '100' NOT NULL,
-	commentspill mediumint DEFAULT '50' NOT NULL,
+	commentlimit smallint UNSIGNED DEFAULT '100' NOT NULL,
+	commentspill smallint UNSIGNED DEFAULT '50' NOT NULL,
 	commentsort tinyint DEFAULT '0',
 	noscores tinyint DEFAULT '0' NOT NULL,
 	mode varchar(10) DEFAULT 'thread',
@@ -684,7 +686,7 @@ CREATE TABLE users_index (
 	exaid varchar(100),
 	exsect varchar(100),
 	exboxes varchar(255),
-	maxstories mediumint DEFAULT '30' NOT NULL,
+	maxstories tinyint UNSIGNED DEFAULT '30' NOT NULL,
 	noboxes tinyint DEFAULT '0' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
@@ -704,16 +706,16 @@ CREATE TABLE users_info (
 	lastgranted date DEFAULT '0000-00-00' NOT NULL,
 	karma mediumint DEFAULT '0' NOT NULL,
 	maillist tinyint DEFAULT '0' NOT NULL,
-	totalcomments tinyint DEFAULT '0',
+	totalcomments mediumint UNSIGNED DEFAULT '0',
 	lastmm date DEFAULT '0000-00-00' NOT NULL,
 	lastaccess date DEFAULT '0000-00-00' NOT NULL,
-	lastmmid mediumint DEFAULT '0' NOT NULL,
-	m2fair mediumint DEFAULT '0' NOT NULL,
-	m2unfair mediumint DEFAULT '0' NOT NULL,
-	m2fairvotes mediumint DEFAULT '0' NOT NULL,
-	m2unfairvotes mediumint DEFAULT '0' NOT NULL,
-	upmods mediumint DEFAULT '0' NOT NULL,
-	downmods mediumint DEFAULT '0' NOT NULL,
+	lastmmid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2fair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2unfair mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2fairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	m2unfairvotes mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	upmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	downmods mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	session_login tinyint DEFAULT '0' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
@@ -743,7 +745,7 @@ DROP TABLE IF EXISTS users_prefs;
 CREATE TABLE users_prefs (
 	uid mediumint UNSIGNED NOT NULL,
 	willing tinyint DEFAULT '1' NOT NULL,
-	dfid mediumint DEFAULT '0' NOT NULL,
+	dfid tinyint UNSIGNED DEFAULT '0' NOT NULL,
 	tzcode char(3) DEFAULT 'EDT' NOT NULL,
 	noicons tinyint DEFAULT '0' NOT NULL,
 	light tinyint DEFAULT '0' NOT NULL,
