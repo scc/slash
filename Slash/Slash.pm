@@ -57,7 +57,7 @@ BEGIN {
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
-		dispComment linkComment redirect fixurl
+		dispComment linkComment redirect fixurl fixparam
 		getFormkeyId checkSubmission errorMessage createSelect getFormkey
 	);
 	$CRLF = "\015\012";
@@ -860,23 +860,32 @@ sub approveTag {
 }
 
 ########################################################
+sub fixparam {
+	fixurl($_[0], 1);
+}
+
+########################################################
 sub fixurl {
 	my($url, $parameter) = @_;
 
-	# encode all non-safe, non-reserved characters
-	# different char set if destined to be a query string parameter
+	# RFC 2396
+	my $mark = quotemeta(q"-_.!~*'()");
+	my $alphanum = 'a-zA-Z0-9';
+	my $unreserved = $alphanum . $mark;
+	my $reserved = quotemeta(';|/?:@&=+$,');
+	my $extra = quotemeta('%#');
+
 	if ($parameter) {
-		$url =~ s/([^\w.!*'(),;:@\$\/% -])/sprintf "%%%02X", ord $1/ge;
-		$url =~ s/ /+/g;
+		$url =~ s/([^$unreserved])/sprintf "%%%02X", ord $1/ge;
+		return $url;
 	} else {
 		$url =~ s/[" ]//g;
 		$url =~ s/^'(.+?)'$/$1/g;
-		$url =~ s/([^\w.!*'(),;:@\$\/%?=&#+-])/sprintf "%%%02X", ord $1/ge;
+		$url =~ s/([^$unreserved$reserved$extra])/sprintf "%%%02X", ord $1/ge;
 		$url = fixHref($url) || $url;
+		my $decoded_url = decode_entities($url);
+		return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 	}
-
-	my $decoded_url = decode_entities($url);
-	return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 }
 
 ########################################################
