@@ -25,9 +25,14 @@ use strict;
 use Apache;
 use Digest::MD5 'md5_hex';
 require Exporter;
+use vars qw($REVISION $VERSION @ISA @EXPORT);
 
-@Slash::Utility::ISA = qw(Exporter);
-@Slash::Utility::EXPORT = qw(
+# $Id$
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+
+@ISA = qw(Exporter);
+@EXPORT = qw(
 	addToMenu
 	errorLog	
 	stackTrace
@@ -60,7 +65,6 @@ require Exporter;
 	fixHref
 	stripByMode
 );
-$Slash::Utility::VERSION = '0.01';
 
 # LEELA: We're going to deliver this crate like professionals.
 # FRY: Aww, can't we just dump it in the sewer and say we delivered it?
@@ -71,6 +75,24 @@ $Slash::Utility::VERSION = '0.01';
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward);
+
+INIT {
+	unless ($ENV{GATEWAY_INTERFACE}) {
+		# maybe get a default from DBIx::Password if there is only
+		# one entry there?
+		my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+
+		my $slashdb = Slash::DB->new($virtual_user);
+		my $constants = $slashdb->getSlashConf();
+
+		# We assume that the user for scripts is the anonymous user
+		my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
+		createCurrentDB($slashdb);
+		createCurrentStatic($constants);
+		createCurrentUser($user);
+		createCurrentAnonymousCoward($user);
+	}
+}
 
 #========================================================================
 
