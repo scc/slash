@@ -13,7 +13,7 @@ my $me = 'refresh_sectionindex.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '*/3 * * * *';
+$task{$me}{timespec} = '1-30,55-59/3 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $sections = $slashdb->getSectionInfo();
@@ -23,7 +23,11 @@ $task{$me}{code} = sub {
 	}, 1);
 
 	my $tpid = $slashdb->getTemplateByName('sectionindex_display','tpid');
-	my %template = ( tpid => $tpid, template => $new_template );
+	my %template = ( 
+		name => 'sectionindex_display',
+		tpid => $tpid, 
+		template => $new_template,
+	);
 	# If it exists, we update it, if not, we create it.
 	if ($tpid) {
 		$slashdb->setTemplate($tpid, \%template);
