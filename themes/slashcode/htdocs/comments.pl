@@ -726,44 +726,7 @@ sub moderateCid {
 		return;
 	}
 
-	my $strsql = "UPDATE comments SET
-		points=points$val,
-		reason=$reason,
-		lastmod=$I{U}{uid}
-		WHERE sid=" . $I{dbh}->quote($sid)."
-		AND cid=$cid 
-		AND points " .
-			($val < 0 ? " > $I{comment_minscore}" : "") .
-			($val > 0 ? " < $I{comment_maxscore}" : "");
-
-	$strsql .= " AND lastmod<>$I{U}{uid}"
-		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
-
-	if ($val ne "+0" && $I{dbh}->do($strsql)) {
-		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
-
-		# Adjust comment posters karma
-		sqlUpdate(
-			"users_info",
-			{ -karma => "karma$val" }, 
-			"uid=$cuid"
-		) if $val && $cuid != $I{anonymous_coward};
-
-		# Adjust moderators total mods
-		sqlUpdate(
-			"users_info",
-			{ -totalmods => 'totalmods+1' }, 
-			"uid=$I{U}{uid}"
-		);
-
-		# And deduct a point.
-		$I{U}{points} = $I{U}{points} > 0 ? $I{U}{points} - 1 : 0;
-		sqlUpdate(
-			"users_comments",
-			{ -points=>$I{U}{points} }, 
-			"uid=$I{U}{uid}"
-		); # unless ($I{U}{aseclev} > 99 && $I{authors_unlimited});
-
+	if($I{dbobject}->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
 		print <<EOT;
 	<LI>$val ($I{reasons}[$reason]) $subj
 		($sid-$cid, <B>$I{U}{points}</B> points left)</LI>

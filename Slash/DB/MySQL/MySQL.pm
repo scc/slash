@@ -12,8 +12,8 @@ use Slash::Utility;
 @Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-my $user; #Who we are to DBIx
 my $timeout = 30; #This should eventualy be a parameter that is configurable
+#Yes, the following need to be moved into %self
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
 my %topicBank; # This is here to save us a database call
@@ -265,8 +265,8 @@ sub getModeratorLogID {
 ########################################################
 sub unsetModeratorlog {
 	my($self, $uid, $sid, $max, $min) = @_;
-	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
-		"uid=$uid and sid=" . $self->{dbh}->quote($sid)
+	my $cursor = $self->sqlSelectMany("cid,val", "moderatorlog",
+			"uid=$uid and sid=" . $self->{dbh}->quote($sid)
 	);
 	my @removed;
 
@@ -1561,6 +1561,65 @@ sub countPollquestions {
 	);
 	return $pollquestions;
 }
+########################################################
+sub countUsersIndexExboxesByBid{
+	my ($self, $bid) = @_;
+	my ($count) = $self->sqlSelect("count(*)","users_index",
+			qq!exboxes like "%'$bid'%" !
+			);
+
+	return $count;
+}
+########################################################
+# I'm not happy with this method at all
+sub setCommentCleanup {
+	my ($self, $val, $sid, $reason, $modreason, $cid) = @_;
+	# Grab the user object.
+	my $user = getCurrentUser();
+	my $constants = getSlashConstants();
+	my($cuid, $ppid, $subj, $points, $oldreason) = $self->getComments($sid, $cid);
+
+	my $strsql = "UPDATE comments SET
+		points=points$val,
+		reason=$reason,
+		lastmod=$user->{uid}
+		WHERE sid=" . $self->{dbh}->quote($sid)."
+		AND cid=$cid 
+		AND points " .
+			($val < 0 ? " > $constants->{comment_minscore}" : "") .
+			($val > 0 ? " < $constants->{comment_maxscore}" : "");
+
+	$strsql .= " AND lastmod<>$user->{uid}"
+		unless $user->{aseclev} > 99 && $constants->{authors_unlimited};
+
+	if ($val ne "+0" && $self->sqlDo($strsql)) {
+		$self->setModeratorLog($cid, $sid, $user->{uid}, $modreason, $val);
+
+		# Adjust comment posters karma
+		$self->sqlUpdate(
+			"users_info",
+			{ -karma => "karma$val" }, 
+			"uid=$cuid"
+		) if $val && $cuid != $constants->{anonymous_coward};
+
+		# Adjust moderators total mods
+		$self->sqlUpdate(
+			"users_info",
+			{ -totalmods => 'totalmods+1' }, 
+			"uid=$user->{uid}"
+		);
+
+		# And deduct a point.
+		$user->{points} = $user->{points} > 0 ? $user->{points} - 1 : 0;
+		$self->sqlUpdate(
+			"users_comments",
+			{ -points=>$user->{points} }, 
+			"uid=$user->{uid}"
+		); # unless ($user->{aseclev} > 99 && $comments->{authors_unlimited});
+		return 1;
+	}
+	return;
+}
 
 ########################################################
 sub countUsersIndexExboxesByBid {
@@ -1568,55 +1627,9 @@ sub countUsersIndexExboxesByBid {
 	my($count) = $self->sqlSelect("count(*)","users_index",
 		qq!exboxes like "%'$bid'%" !
 	);
-
-	return $count;
 }
-
 ########################################################
-#sub somethingComment {
-#	my($val) = @_;
-#	my $strsql = "UPDATE comments SET
-#		points=points$val,
-#		reason=$reason,
-#		lastmod=$I{U}{uid}
-#		WHERE sid=" . $I{dbh}->quote($sid)."
-#		AND cid=$cid
-#		AND points " .
-#			($val < 0 ? " > $I{comment_minscore}" : "") .
-#			($val > 0 ? " < $I{comment_maxscore}" : "");
-#
-#	$strsql .= " AND lastmod<>$I{U}{uid}"
-#		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
-#
-#	if ($val ne "+0" && $IsqlDo($strsql)) {
-#		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
-#
-#		# Adjust comment posters karma
-#		$self->sqlUpdate(
-#			"users_info",
-#			{ -karma => "karma$val" },
-#			"uid=$cuid"
-#		) if $val && $cuid != $I{anonymous_coward};
-#
-#		# Adjust moderators total mods
-#		$self->sqlUpdate(
-#			"users_info",
-#			{ -totalmods => 'totalmods+1' },
-#			"uid=$I{U}{uid}"
-#		);
-#
-#		# And deduct a point.
-#		$I{U}{points} = $I{U}{points} > 0 ? $I{U}{points} - 1 : 0;
-#		$self->sqlUpdate(
-#			"users_comments",
-#			{ -points=>$I{U}{points} },
-#			"uid=$I{U}{uid}"
-#		); # unless ($I{U}{aseclev} > 99 && $I{authors_unlimited});
-#	}
-#}
-#
-########################################################
-sub getCommentReply {
+sub getCommentReply{	
 	my($self, $time, $sid, $pid) = @_;
 	my $reply = $self->sqlSelectHashref("$time, subject,comments.points as points,
 		comment,realname,nickname,
