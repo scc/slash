@@ -70,7 +70,14 @@ sub selectComments {
 		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
 	}
 
-	my $thisComment = $slashdb->getCommentsForUser($header->{id}, $cid, (($header->{writestatus} eq 'archived') ? 1 : 0 ));
+	# When we pull comment text from the DB, we only want to cache it if
+	# there's a good chance we'll use it again.
+	my $cache_read_only = 0;
+	$cache_read_only = 1 if $header->{writestatus} eq 'archived';
+	$cache_read_only = 1 if timeCalc($header->{ts}, '%s') <
+		time - 3600 * $constants->{comment_cache_max_hours};
+
+	my $thisComment = $slashdb->getCommentsForUser($header->{id}, $cid, $cache_read_only);
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
