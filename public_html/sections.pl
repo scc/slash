@@ -182,7 +182,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('sections-data', $hashref, 1, 1);
+	return slashDisplay('sections-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

@@ -763,7 +763,8 @@ sub getMessage {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('users-messages', $hashref, 1, $nocomm);
+	return slashDisplay('users-messages', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
 }
 
 #################################################################
@@ -773,7 +774,8 @@ sub getTitle {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('users-titles', $hashref, 1, $nocomm);
+	return slashDisplay('users-titles', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
 }
 
 #################################################################

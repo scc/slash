@@ -144,7 +144,8 @@ sub previewForm {
 sub genQuickies {
 	my $slashdb = getCurrentDB();
 	my $submissions = $slashdb->getQuickies();
-	my $stuff = slashDisplay('submit-genQuickies', { submissions => $submissions }, 1, 1);
+	my $stuff = slashDisplay('submit-genQuickies', { submissions => $submissions },
+		{ Return => 1, Nocomm => 1 });
 	$slashdb->setQuickies($stuff);
 }
 
@@ -308,7 +309,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('submit-data', $hashref, 1, 1);
+	return slashDisplay('submit-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 createEnvironment();

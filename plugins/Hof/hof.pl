@@ -97,7 +97,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('hof-data', $hashref, 1, 1);
+	return slashDisplay('hof-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

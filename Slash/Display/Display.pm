@@ -8,7 +8,7 @@ Slash::Display - Display library for Slash
 =head1 SYNOPSIS
 
 	slashDisplay('some template', { key => $val });
-	my $data = slashDisplay('template', $hashref, 1);
+	my $text = slashDisplay('template', \%data, 1);
 
 
 =head1 DESCRIPTION
@@ -32,8 +32,6 @@ L<Template> for more information about templates.
 
 =head1 EXPORTED FUNCTIONS
 
-=over 4
-
 =cut
 
 use strict;
@@ -47,57 +45,113 @@ use Template;
 # $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
-@EXPORT		= qw(slashDisplay slashDisplaySection);
+@EXPORT		= qw(slashDisplay);
 
 # BENDER: Well I don't have anything else planned for today, let's get drunk!
 
 #========================================================================
 
-=item slashDisplay(NAME [, DATA, RETURN, NOCOMM])
+=head2 slashDisplay(NAME [, DATA, OPTIONS])
 
 Processes a template.
 
-Parameters
+=over 4
 
-	NAME
-	Can be either the name of a template block in the Slash DB,
-	or a reference to a scalar containing a template to be
-	processed.  In both cases, the template will be compiled
-	and the processed, unless it has previously been compiled,
-	in which case the cached, compiled template will be pulled
-	out and processed.
+=item Parameters
 
-	DATA
-	Hashref of additional parameters to pass to the template.
-	Default passed parameters include constants, env, user, and
-	form, which can be overriden (see C<_populate>).
+=over 4
 
-	RETURN
-	Boolean for whether to print (false) or return (true) the
-	processed template data.
+=item NAME
 
-	NOCOMM
-	Boolean for whether to print (true) or not print (false)
-	HTML comments surrounding template, stating what template
-	block this is.
+Can be either the name of a template block in the Slash DB,
+or a reference to a scalar containing a template to be
+processed.  In both cases, the template will be compiled
+and the processed, unless it has previously been compiled,
+in which case the cached, compiled template will be pulled
+out and processed.
 
-Return value
+=item DATA
 
-	If RETURN is true, the processed template data.  Otherwise,
-	returns true/false for success/failure.
+Hashref of additional parameters to pass to the template.
+Default passed parameters include constants, env, user, and
+form, which can be overriden (see C<_populate>).
 
-Side effects
+=item OPTIONS
 
-	Compiles templates and caches them.
+Hashref of options.  Currently supported options are below.
+If OPTIONS is the value C<1> instead of a hashref, that will
+be the same as if the hashref were C<{ Return =E<gt> 1 }>.
+
+=over 4
+
+=item Return
+
+Boolean for whether to print (false) or return (true) the
+processed template data.  Default is print.
+
+=item Nocomm
+
+Boolean for whether to include (false) or not include (true)
+HTML comments surrounding template, stating what template
+block this is.  Default is to include comments.
+
+=item Section
+
+All templates named NAME may be overriden by a template named
+"SECTION_NAME" (e.g., the "header" template, may be overridden
+in the "tacohell" section with a template named "tacohell_header").
+
+By default, that section will be determined by whatever the current
+section is (or "light" if the user is in light mode).  However,
+the default can be overriden by the Section option.  Also, a Section
+value of "NONE" will cause no section to be used.
+
+=back
+
+=back
+
+=item Return value
+
+If OPTIONS-E<gt>{Return} is true, the processed template data.
+Otherwise, returns true/false for success/failure.
+
+=item Side effects
+
+Compiles templates and caches them.
+
+=back
 
 =cut
 
 sub slashDisplay {
-	my($name, $hashref, $return, $nocomm) = @_;
+	# options: return, nocomm, section
+	my($name, $data, $opt) = @_;
 	my(@comments, $ok, $out);
 	return unless $name;
-	$hashref ||= {};
-	_populate($hashref);
+
+	# this should be stored persistently, either for the request,
+	# or for the virtual host
+	my $slashdb = getCurrentDB();
+	my $templates = $slashdb->getDescriptions('templates');
+
+	# allow slashDisplay(NAME, DATA, RETURN) syntax
+	if (! ref $opt) {
+		$opt = $opt == 1 ? { Return => 1 } : {};
+	}
+
+	if ($opt->{Section} eq 'NONE') {
+		delete $opt->{Section};
+	} else {
+		$opt->{Section} ||= getCurrentUser('light') ? 'light' :
+			getCurrentStatic('currentSection');
+	}
+
+	if (!ref $name && $opt->{Section} && exists $templates->{"$opt->{Section}_$name"}) {
+		$name = "$opt->{Section}_$name";
+	}
+
+	$data ||= {};
+	_populate($data);
 
 	@comments = (
 		"\n\n<!-- start template: $name -->\n\n",
@@ -106,120 +160,77 @@ sub slashDisplay {
 
 	my $template = _template();
 
-	if ($return) {
-		$ok = $template->process($name, $hashref, \$out);
+	if ($opt->{Return}) {
+		$ok = $template->process($name, $data, \$out);
 		$out = join '', $comments[0], $out, $comments[1]
-			unless $nocomm;
+			unless $opt->{Nocomm};
 		
 	} else {
-		print $comments[0] unless $nocomm;
-		$ok = $template->process($name, $hashref);
-		print $comments[1] unless $nocomm;
+		print $comments[0] unless $opt->{Nocomm};
+		$ok = $template->process($name, $data);
+		print $comments[1] unless $opt->{Nocomm};
 	}
 
 	errorLog($template->error) unless $ok;
 
-	return $return ? $out : $ok;
+	return $opt->{Return} ? $out : $ok;
 }
 
-#========================================================================
-
-=item slashDisplaySection(NAME [, DATA, RETURN, NOCOMM])
-
-Processes a template by section.  Determines proper name to use,
-then calls C<slashDisplay>.
-
-Should C<slashDisplay> do this automatically?  If it had a persistent
-hash or quick way to look up block IDs, we could do it efficiently.
-Also, is there ever a time we don't want a section block to override
-the default if it exists?
-
-Parameters
-
-	NAME
-	We try to find a template block of this name in the current
-	section (or if the user has "light" mode, we use that).  If
-	NAME is not a reference, and there is a current section, and
-	there is a section block for that section and NAME, then
-	that NAME (SECTION_NAME) is used.  Otherwise, the NAME by
-	itself is used.  Then all the passed data (with the new
-	NAME) is passed to slashDisplay.
-
-	DATA
-	See slashDisplay.
-
-	RETURN
-	See slashDisplay.
-
-	NOCOMM
-	See slashDisplay.
-
-Return value
-
-	See slashDisplay.
-
-Side effects
-
-	See slashDisplay.
+=head1 PRIVATE FUNCTIONS
 
 =cut
 
-sub slashDisplaySection {
-	my $name = shift;  # yes, shift
-	my $slashdb = getCurrentDB();
-	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
-
-	if (!ref $name && $thissect && $slashdb->getTemplate($thissect . "_$name", 'template')) {
-		slashDisplay($thissect . "_$name", @_);
-	} else {
-		slashDisplay($name, @_);
-	}
-}
-
 #========================================================================
 
-=back
+=head2 _populate(DATA)
 
-=head2 PRIVATE FUNCTIONS
+Put universal data stuff into each template: constants, user, form, env.
+Each can be overriden by passing a hash key of the same name to
+C<slashDisplay>.
 
 =over 4
 
-=item _populate(DATA)
+=item Parameters
 
-Private function.  Put universal data stuff into each template:
-constants, user, form, env.  Each can be overriden
-by passing a hash key of the same name to C<slashDisplay>.
+=over 4
 
-Parameters
+=item DATA
 
-	DATA
-	A hashref to be populated.
+A hashref to be populated.
 
-Return value
+=back
 
-	Populated hashref.
+=item Return value
+
+Populated hashref.
+
+=back
 
 =cut
 
 sub _populate {
-	my($hashref) = @_;
-	$hashref->{constants} = getCurrentStatic()
-		unless exists $hashref->{constants};
-	$hashref->{user} = getCurrentUser() unless exists $hashref->{user};
-	$hashref->{form} = getCurrentForm() unless exists $hashref->{form};
-	$hashref->{env} = { map { (lc $_, $ENV{$_}) } keys %ENV }
-		unless exists $hashref->{env}; 
+	my($data) = @_;
+	$data->{constants} = getCurrentStatic()
+		unless exists $data->{constants};
+	$data->{user} = getCurrentUser() unless exists $data->{user};
+	$data->{form} = getCurrentForm() unless exists $data->{form};
+	$data->{env} = { map { (lc $_, $ENV{$_}) } keys %ENV }
+		unless exists $data->{env}; 
 }
 
 #========================================================================
 
-=item _template()
+=head2 _template()
 
 Return a Template object.
 
-Return value
+=over 4
 
-	A Template object (see below).
+=item Return value
+
+A Template object.  See L<"TEMPLATE ENVIRONMENT">.
+
+=back
 
 =cut
 
@@ -270,31 +281,38 @@ names in the Slash API:
 
 require Template::Filters;
 
+my $stripByMode = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], @args) };
+};
+
 $filters = Template::Filters->new({
 	FILTERS => {
 		fixparam	=> \&fixparam,
 		fixurl		=> \&fixurl,
-		stripByMode	=> [ \&myStripByMode => 1 ]
+		stripByMode	=> [ $stripByMode, 1 ]
 	}
 });
-
-sub myStripByMode {
-	my($context, @args) = @_;
-	return sub { stripByMode($_[0], @args) };
-}
 
 
 require Template::Stash;
 
-$Template::Stash::LIST_OPS->{'rand'} = sub {
-	my $list = shift;
-	return $list->[rand @$list];
-};
+my %list_ops = (
+	'rand'		=> sub {
+		my $list = shift;
+		return $list->[rand @$list];
+	}
+);
 
-$Template::Stash::SCALAR_OPS->{'uc'} = sub { uc $_[0] };
-$Template::Stash::SCALAR_OPS->{'lc'} = sub { lc $_[0] };
-$Template::Stash::SCALAR_OPS->{'ucfirst'} = sub { ucfirst $_[0] };
-$Template::Stash::SCALAR_OPS->{'lcfirst'} = sub { lcfirst $_[0] };
+my %scalar_ops = (
+	'uc'		=> sub { uc $_[0] },
+	'lc'		=> sub { lc $_[0] },
+	'ucfirst'	=> sub { ucfirst $_[0] },
+	'lcfirst'	=> sub { lcfirst $_[0] },
+);
+
+@{$Template::Stash::LIST_OPS}  {keys %list_ops}   = values %list_ops;
+@{$Template::Stash::SCALAR_OPS}{keys %scalar_ops} = values %scalar_ops;
 
 1;
 

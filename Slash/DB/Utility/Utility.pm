@@ -227,7 +227,7 @@ sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
 	my $rows = $self->{_dbh}->do($sql);
-	errorLog($sql) unless($rows);
+	errorLog($sql) unless $rows;
 
 	return $rows;
 }

@@ -170,7 +170,7 @@ sub displayStandardBlocks {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
-				slashDisplay('userlogin', 0, 1, 1),
+				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
 				$boxBank->{$bid}{bid},
 				$boxBank->{$bid}{url}
 			);
@@ -273,7 +273,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('index-data', $hashref, 1, 1);
+	return slashDisplay('index-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 #################################################################

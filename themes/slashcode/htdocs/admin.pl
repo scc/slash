@@ -212,10 +212,9 @@ sub varEdit {
 	}
 
 	slashDisplay('admin-varEdit', { 
-			vars_select 	=> $vars_select,
-			varsref		=> $varsref,
-			}
-	);
+		vars_select 	=> $vars_select,
+		varsref		=> $varsref,
+	});
 }
 
 ##################################################################
@@ -263,13 +262,12 @@ sub authorEdit {
 	}
 
 	slashDisplay('admin-authorEdit', {
-			author 			=> $author,
-			author_select		=> $author_select,
-			section_select		=> $section_select,
-			deletebutton_flag 	=> $deletebutton_flag,
-			aid			=> $aid,
-			}
-	);	
+		author 			=> $author,
+		author_select		=> $author_select,
+		section_select		=> $section_select,
+		deletebutton_flag 	=> $deletebutton_flag,
+		aid			=> $aid,
+	});	
 }
 
 ##################################################################
@@ -384,21 +382,20 @@ sub blockEdit {
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
 	slashDisplay('admin-blockEdit', {
-			bid 			=> $bid,
-			title 			=> $title,
-			blockref		=> $blockref,
-			blockedit_flag		=> $blockedit_flag,
-			blockdelete_flag	=> $blockdelete_flag,
-			block_select1		=> $block_select1,
-			block_select2		=> $block_select2,
-			blockform_flag		=> $blockform_flag,
-			portal_checked		=> $portal_checked,
-			retrieve_checked	=> $retrieve_checked,
-			description_ta		=> $description_ta,
-			block_ta		=> $block_ta,
-			sectionbid		=> $sectionbid,
-			}
-	);	
+		bid 			=> $bid,
+		title 			=> $title,
+		blockref		=> $blockref,
+		blockedit_flag		=> $blockedit_flag,
+		blockdelete_flag	=> $blockdelete_flag,
+		block_select1		=> $block_select1,
+		block_select2		=> $block_select2,
+		blockform_flag		=> $blockform_flag,
+		portal_checked		=> $portal_checked,
+		retrieve_checked	=> $retrieve_checked,
+		description_ta		=> $description_ta,
+		block_ta		=> $block_ta,
+		sectionbid		=> $sectionbid,
+	});	
 			
 }
 
@@ -475,12 +472,11 @@ sub colorEdit {
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
 	
 	slashDisplay('admin-colorEdit', {
-			title 			=> $title,
-			colorblock_clean	=> $colorblock_clean,
-			colors			=> $colors,
-			color_select		=> $color_select,
-			}
-	);
+		title 			=> $title,
+		colorblock_clean	=> $colorblock_clean,
+		colors			=> $colors,
+		color_select		=> $color_select,
+	});
 			
 }
 
@@ -549,14 +545,12 @@ sub topicEdit {
 	}
 
 	slashDisplay('admin-topicEdit', {
-			imageseen_flag		=> $imageseen_flag,
-			images_flag		=> $images_flag,
-			topic			=> $topic,
-			topics_select		=> $topics_select,
-			image_select		=> $image_select
-			}
-	);
-			
+		imageseen_flag		=> $imageseen_flag,
+		images_flag		=> $images_flag,
+		topic			=> $topic,
+		topics_select		=> $topics_select,
+		image_select		=> $image_select
+	});		
 }
 
 ##################################################################
@@ -754,11 +748,10 @@ sub otherLinks {
 	my $topic = $slashdb->getTopic($tid);
 
 	return slashDisplay('admin-otherLinks', {
-			aid		=> $aid,
-			tid		=> $tid,
-			topic		=> $topic,
-			} , 1, 1
-	);
+		aid		=> $aid,
+		tid		=> $tid,
+		topic		=> $topic,
+	}, { Return => 1, Nocomm => 1 });
 }
 
 ##################################################################
@@ -918,30 +911,29 @@ sub editStory {
 #	<INPUT TYPE="file" NAME="importme"><BR>
 
 	slashDisplay('admin-editStory', {
-			storyref 		=> $storyref,
-			story			=> $story,
-			storycontent		=> $storycontent,
-			storybox		=> $storybox,
-			sid			=> $sid,
-			editbuttons		=> $editbuttons,
-			topic_select		=> $topic_select,
-			section_select		=> $section_select,
-			author_select		=> $author_select,
-			locktest		=> $locktest,
-			displaystatus_select	=> $displaystatus_select,
-			commentstatus_select	=> $commentstatus_select,
-			fixquotes_check		=> $fixquotes_check,
-			autonode_check		=> $autonode_check,
-			fastforward_check	=> $fastforward_check,
-			extracolumn_flag	=> $extracolumn_flag,
-			extracolref		=> $extracolref,
-			introtext		=> $introtext,
-			bodytext		=> $bodytext,
-			relatedtext		=> $relatedtext,
-			user			=> $user,
-			authoredit_flag			=> $authoredit_flag,
-			}
-	);
+		storyref 		=> $storyref,
+		story			=> $story,
+		storycontent		=> $storycontent,
+		storybox		=> $storybox,
+		sid			=> $sid,
+		editbuttons		=> $editbuttons,
+		topic_select		=> $topic_select,
+		section_select		=> $section_select,
+		author_select		=> $author_select,
+		locktest		=> $locktest,
+		displaystatus_select	=> $displaystatus_select,
+		commentstatus_select	=> $commentstatus_select,
+		fixquotes_check		=> $fixquotes_check,
+		autonode_check		=> $autonode_check,
+		fastforward_check	=> $fastforward_check,
+		extracolumn_flag	=> $extracolumn_flag,
+		extracolref		=> $extracolref,
+		introtext		=> $introtext,
+		bodytext		=> $bodytext,
+		relatedtext		=> $relatedtext,
+		user			=> $user,
+		authoredit_flag		=> $authoredit_flag,
+	});
 }
 
 ##################################################################
@@ -1002,13 +994,13 @@ sub listStories {
 		}
 
 		$storylistref->[$i] = {
-			x		=> $x,
+			'x'		=> $x,
 			hits		=> $hits,
 			comments	=> $comments,
 			sid		=> $sid,
 			title		=> $title,
 			aid		=> $slashdb->getAuthor($aid, 'nickname'),
-			time		=> $time,
+			'time'		=> $time,
 			canedit		=> $canedit,
 			substrtid	=> $substrtid,
 			section		=> $section,
@@ -1028,12 +1020,10 @@ sub listStories {
 	$left = $count - $x;
 
 	slashDisplay('admin-listStories', {
-			storylistref		=> $storylistref,
-			x			=> $x,
-			left			=> $left
-			}
-	);
-		
+		storylistref	=> $storylistref,
+		'x'		=> $x,
+		left		=> $left
+	});	
 }
 
 ##################################################################
@@ -1058,10 +1048,9 @@ sub listFilters {
 	my $filter_ref = $slashdb->getContentFilters();
 
 	slashDisplay('admin-listFilters', { 
-			title => $title, 
-			filter_ref => $filter_ref 
-			}
-	);
+		title		=> $title, 
+		filter_ref	=> $filter_ref 
+	});
 }
 
 ##################################################################
@@ -1080,11 +1069,9 @@ sub editFilter {
 	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
 
 	slashDisplay('admin-editFilter', { 
-				filter => $filter, 
-				filter_id => $filter_id 
-				}
-	);
-
+		filter		=> $filter, 
+		filter_id	=> $filter_id 
+	});
 }
 
 ##################################################################
@@ -1121,7 +1108,8 @@ sub updateFilter {
 ##################################################################
 sub editbuttons {
 	my($newarticle) = @_;
-	my $editbuttons = slashDisplay('admin-editbuttons',{newarticle => $newarticle},1);
+	my $editbuttons = slashDisplay('admin-editbuttons',
+		{ newarticle => $newarticle }, 1);
 	return $editbuttons
 }
 
@@ -1175,17 +1163,19 @@ sub saveStory {
 
 #################################################################
 sub getMessage {
-	my($value, $hashref,$nocomm) = @_;
+	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('admin-messages', $hashref, 1, $nocomm);
+	return slashDisplay('admin-messages', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
 }
 ##################################################################
 sub getTitle {
-	my($value, $hashref,$nocomm) = @_;
+	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('admin-titles', $hashref, 1, $nocomm);
+	return slashDisplay('admin-titles', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
 }
 ##################################################################
 sub getLinks {

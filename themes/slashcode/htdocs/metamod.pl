@@ -167,7 +167,7 @@ sub isEligible {
 	my $result = slashDisplay('metamod-eligibility-tests', {
 		user_count	=> $tuid,
 		'last'		=> $last,
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 
 	if ($result ne 'Eligible') {
 		print $result;

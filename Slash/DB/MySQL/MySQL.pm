@@ -9,8 +9,6 @@ use URI ();
 
 # BENDER: I hate people who love me.  And they hate me.
 
-# The following two are for CommonPortals
-
 # For the getDecriptions() method
 my %descriptions = (
 	'sortcodes'
@@ -1226,7 +1224,7 @@ sub savePollQuestion {
 
 		} else {
 			$self->sqlDo("DELETE from pollanswers WHERE qid="
-					. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
+				. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
 		}
 	}
 }
@@ -2116,7 +2114,7 @@ sub getSubmissionForUser {
 	$sql .= ")";
 	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
 	$sql .= "         and section=" . $self->{_dbh}->quote($user->{section}) if $user->{section};
-	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section})  if $form->{section};
+	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
 	$sql .= "	  ORDER BY time";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
@@ -2448,7 +2446,7 @@ sub getStoryList {
 			FROM stories,storiestuff
 			WHERE storiestuff.sid=stories.sid];
 	$sql .= "	AND section='$user->{section}'" if $user->{section};
-	$sql .= "	AND section='$form->{section}'"  if $form->{section} && !$user->{section};
+	$sql .= "	AND section='$form->{section}'" if $form->{section} && !$user->{section};
 	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
 	$sql .= "	ORDER BY time DESC";
 
@@ -2557,7 +2555,7 @@ sub getAuthor {
 	# -Brian
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,bio', 
-			'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
+		'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();

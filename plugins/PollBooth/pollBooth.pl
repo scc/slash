@@ -189,7 +189,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('pollBooth-data', $hashref, 1, 1);
+	return slashDisplay('pollBooth-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 createEnvironment();

@@ -275,7 +275,7 @@ sub selectThreshold  {
 		$data{$c} = slashDisplay('selectThresholdLabel', {
 			points	=> $c,
 			count	=> $counts->[$c - $constants->{comment_minscore}],
-		}, 1, 1);
+		}, { Return => 1, Nocomm => 1 });
 	}
 
 	createSelect('threshold', \%data, getCurrentUser('threshold'), 1, 1);
@@ -406,7 +406,7 @@ sub linkStory {
 		sid		=> $c->{sid},
 		section		=> $c->{section},
 		text		=> $c->{'link'}
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 }
 
 ########################################################
@@ -582,7 +582,7 @@ sub formLabel {
 	$data{value} = $value;
 	$data{comment} = $comment if defined $_[1];
 
-	slashDisplay('formLabel', \%data, 1, 1);
+	slashDisplay('formLabel', \%data, { Return => 1, Nocomm => 1 });
 }
 
 #========================================================================
@@ -738,7 +738,7 @@ sub header {
 
 	$title =~ s/<(.*?)>//g;
 
-	slashDisplay('html-header', { title => $title }, 0, 1) if $title;
+	slashDisplay('html-header', { title => $title }, { Nocomm => 1 }) if $title;
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
 	if ($form->{ssi} eq 'yes') {
@@ -750,7 +750,7 @@ sub header {
 		$adhtml = getAd(1);
 	}
 
-	slashDisplaySection('header');
+	slashDisplay('header');
 
 	print createMenu('admin') if $user->{is_admin};
 }
@@ -779,7 +779,7 @@ sub footer {
 		return;
 	}
 
-	slashDisplaySection('footer', 0, 0, 1);
+	slashDisplay('footer', {}, { Nocomm => 1 });
 }
 
 #========================================================================
@@ -800,7 +800,7 @@ Dependencies
 =cut
 
 sub horizmenu {
-	my $horizmenu = slashDisplay('mainmenu', {}, 1, 1);
+	my $horizmenu = slashDisplay('mainmenu', {}, { Return => 1, Nocomm => 1 });
 	$horizmenu =~ s/^\s*//mg;
 	$horizmenu =~ s/^-\s*//mg;
 	$horizmenu =~ s/\s*$//mg;
@@ -817,7 +817,7 @@ sub horizmenu {
 
 Prints a titlebar widget.  Deprecated; exactly equivalent to:
 
-	slashDisplaySection('titlebar', {
+	slashDisplay('titlebar', {
 		width	=> $width,
 		title	=> $title
 	});
@@ -842,7 +842,7 @@ Dependencies
 
 sub titlebar {
 	my($width, $title) = @_;
-	slashDisplaySection('titlebar', {
+	slashDisplay('titlebar', {
 		width	=> $width,
 		title	=> $title
 	});
@@ -900,7 +900,7 @@ sub fancybox {
 		}
 	}
 
-	slashDisplaySection('fancybox', {
+	slashDisplay('fancybox', {
 		width		=> $width,
 		contents	=> $contents,
 		title		=> $title,
@@ -951,16 +951,16 @@ sub portalbox {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	$title = slashDisplaySection('portalboxtitle', {
+	$title = slashDisplay('portalboxtitle', {
 		title	=> $title,
 		url	=> $url,
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 
 	if ($user->{exboxes}) {
-		$title = slashDisplaySection('portalmap', {
+		$title = slashDisplay('portalmap', {
 			title	=> $title,
 			bid	=> $bid,
-		}, 1, 1);
+		}, { Return => 1, Nocomm => 1 });
 	}
 
 	fancybox($width, $title, $contents, 0, 1);
@@ -1248,7 +1248,7 @@ sub moderatorCommentLog {
 		comments	=> $comments,
 		reasonTotal	=> $reasonTotal,
 		reasonHist	=> \@reasonHist,
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 }
 
 #========================================================================
@@ -1332,7 +1332,7 @@ sub linkComment {
 		commentsort	=> $user->{commentsort},
 		mode		=> $user->{mode},
 		comment		=> $printcomment,
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 }
 
 #========================================================================
@@ -1448,7 +1448,8 @@ sub displayThread {
 			pid		=> $pid,
 			subject		=> getData('displayThreadLink', { hidden => $hidden })
 		});
-		$return .= slashDisplay('displayThread', { 'link' => $link}, 1, 1);
+		$return .= slashDisplay('displayThread', { 'link' => $link },
+			{ Return => 1, Nocomm => 1 });
 		$return .= $const->{cagebigend} if $cagedkids;
 	}
 
@@ -1510,7 +1511,7 @@ sub dispComment {
 		can_mod		=> $comment->{no_moderation} ? 0 : $can_mod,
 		is_anon		=> isAnon($comment->{uid}),
 		fixednickname	=> fixparam($comment->{nickname}),
-	}, 1, 1);
+	}, { Return => 1, Nocomm => 1 });
 }
 
 ###########################################################
@@ -1568,8 +1569,9 @@ sub dispStory {
 			&& $story->{section} ne $form->{section})
 	);
 
-	my $title = slashDisplaySection('dispStoryTitle', \%data, 1, 1);
-	slashDisplaySection('dispStory', {
+	my $title = slashDisplay('dispStoryTitle', \%data,
+		{ Return => 1, Nocomm => 1 });
+	slashDisplay('dispStory', {
 		%data,
 		width	=> $constants->{titlebar_width},
 		title	=> $title,
@@ -1987,8 +1989,8 @@ sub createMenu {
 	for my $item (sort { $a->{menuorder} <=> $b->{menuorder} } @$menu_items) {
 		next unless $user->{seclev} >= $item->{seclev};
 		push @$items, {
-			value => slashDisplay(\$item->{value}, 0, 1, 1),
-			label => slashDisplay(\$item->{label}, 0, 1, 1)
+			value => slashDisplay(\$item->{value}, {}, { Return => 1, Nocomm => 1 }),
+			label => slashDisplay(\$item->{label}, {}, { Return => 1, Nocomm => 1 })
 		};
 	}
 
@@ -2003,7 +2005,8 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('Slash-data', $hashref, 1, 1);
+	return slashDisplay('Slash-data', $hashref,
+		{ Return => 1, Nocomm => 1 });
 }
 
 1;
