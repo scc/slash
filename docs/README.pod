@@ -8,17 +8,6 @@ __END__
 
 README - Slash Readme
 
-=head1 WARNING
-
-This release is B<BETA> software.  It is not intended or recommended
-for production use, and is constantly changing.  Please use this only
-for development and testing purposes.
-
-The upgrade procedures are available (L<INSTALL>).  Standard
-disclaimer applies.  Please test them if you are so inclined, and
-let us know how they work for you.
-
-
 =head1 DESCRIPTION
 
 Slash -- Slashdot Like Automated Storytelling Homepage -- is the code

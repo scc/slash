@@ -10,8 +10,7 @@ INSTALL - Slash Installation
 
 =head1 SYNOPSIS
 
-This document describes how to install Slash 2.1/2.2 (where you see
-"2.2" you may safely assume "2.1", except where specified).  For instructions on
+This document describes how to install Slash 2.2.  For instructions on
 installation or upgrade of previous versions of Slash, see the INSTALL
 document included with those distributions.
 

@@ -18,7 +18,7 @@ require AutoLoader;
 use vars qw($REVISION $VERSION @ISA $USER_MATCH);
 
 @ISA		= qw(DynaLoader);
-$VERSION   	= '2.001001';  # v2.1.1
+$VERSION   	= '2.002000';  # v2.2.0
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $USER_MATCH = qr{ \buser=(?!	# must have user, but NOT ...
