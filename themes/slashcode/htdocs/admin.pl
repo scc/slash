@@ -341,7 +341,7 @@ sub authorSave {
 			$I{dbobject}->setAuthor($I{F}{thisaid}, \%author);
 		} else {
 			print "<B>Deleted $I{F}{thisaid}!</B><BR>";
-			$I{dbobject}->setAuthor($I{F}{thisaid});
+			$I{dbobject}->deleteAuthor($I{F}{thisaid});
 		}
 	}
 }
@@ -1319,7 +1319,7 @@ sub editFilter {
 <FORM ENCTYPE="multipart/form-data" action="$ENV{SCRIPT_NAME}" method="POST">
 EOT
 	my @values = qw (regex modifier field ratio minimum_match minimum_length maximum_length err_message);
-	my $filter = $I{dbobject}->getContentFilterById($filter_id, @values);
+	my $filter = $I{dbobject}->getContentFilter($filter_id, @values);
 
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);

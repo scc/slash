@@ -70,14 +70,12 @@ sub main {
 #################################################################
 sub editpoll {
 	my($qid) = @_;
-	my $qid_dbi = $I{dbh}->quote($qid);
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	# Display a form for the Question
-	my($question, $voters) = sqlSelect(
-		"question, voters", "pollquestions", "qid=$qid_dbi");
+	my $question = $I{dbobject}->getPollQuestion($qid, 'question', 'voters');
 
-	$voters = 0 if ! defined $voters;
+	$question->{'voters'} = 0 if ! defined $question->{'voters'};
 
 	my($currentqid) = $I{dbobject}->getVar("currentqid");
 	printf <<EOT, $currentqid eq $qid ? " CHECKED" : "";
@@ -89,15 +87,16 @@ sub editpoll {
 	<INPUT TYPE="CHECKBOX" NAME="currentqid"%s> (appears on homepage)
 
 	<BR><B>The Question</B> (followed by the total number of voters so far)<BR>
-	<INPUT TYPE="TEXT" NAME="question" VALUE="$question" SIZE="40">
-	<INPUT TYPE="TEXT" NAME="voters" VALUE="$voters" SIZE="5">
+	<INPUT TYPE="TEXT" NAME="question" VALUE="$question->{'question'}" SIZE="40">
+	<INPUT TYPE="TEXT" NAME="voters" VALUE="$question->{'voters'}" SIZE="5">
 	<BR><B>The Answers</B> (voters)<BR>
 EOT
 
 
-	my $c = sqlSelectMany("answer,votes", "pollanswers", "qid=$qid_dbi ORDER by aid");
+	my $answers = $I{dbobject}->getPollAnswers($qid, 'answer', 'votes');
 	my $x = 0;
-	while (my($answers, $votes) = $c->fetchrow) {
+	for(@$answers) {
+		my($answers, $votes) = @$_;
 		$x++;
 		print <<EOT;
 	<INPUT TYPE="text" NAME="aid$x" VALUE="$answers" SIZE="40">
@@ -105,7 +104,6 @@ EOT
 EOT
 	}
 
-	$c->finish;
 
 	while ($x < 8) {
 		$x++;
@@ -127,34 +125,12 @@ EOT
 #################################################################
 sub savepoll {
 	return unless $I{F}{qid};
-	# Check if QID exists, and either update/insert
-
-	$I{F}{voters} ||= "0";
-	sqlReplace("pollquestions", {
-		qid		=> $I{F}{qid},
-		question	=> $I{F}{question},
-		voters		=> $I{F}{voters},
-		-date		=>'now()'
-	});
-
-	$I{dbobject}->setVar("currentqid", $I{F}{qid}) if $I{F}{currentqid};
-
-	# Loop through 1..8 and insert/update if defined
 	for (my $x = 1; $x < 9; $x++) {
 		if ($I{F}{"aid$x"}) {
 			print qq!<BR>Answer $x '$I{F}{"aid$x"}' $I{F}{"votes$x"}!;
-			sqlReplace("pollanswers", {
-				aid	=> $x,
-				qid	=> $I{F}{qid},
-				answer	=> $I{F}{"aid$x"},
-				votes	=> $I{F}{"votes$x"}
-			});
-
-		} else {
-			$I{dbh}->do("DELETE from pollanswers WHERE 
-				qid=" . $I{dbh}->quote($I{F}{qid}) . " and aid=$x"); 
 		}
 	}
+	$I{dbobject}->savePollQuestion();
 }
 
 #################################################################
@@ -279,5 +255,5 @@ EOT
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+#$I{dbh}->disconnect if $I{dbh};
 1;

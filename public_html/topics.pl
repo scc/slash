@@ -101,36 +101,32 @@ EOT
 
 #################################################################
 sub listTopics {
-	my $cursor = $I{dbh}->prepare("SELECT tid,image,alttext,width,height
-					 FROM topics
-				     ORDER BY alttext");
-
 	titlebar("99%", "Current Topic Categories");
 	my $x = 0;
-	$cursor->execute;
 
 	print qq!\n<TABLE ALIGN="CENTER">\n\t<TR>\n!;
 
-	while (my($tid, $image, $alttext, $width, $height) = $cursor->fetchrow) {
+	my $topics = $I{dbobject}->getTopic();
+	# Somehow sort by the alttext? Need to return to this -Brian
+	for my $topic (%{$topics}) {
 		unless ($x++ % 6) {
 			print "\t</TR><TR>";
 		}
 
 		my $href = $I{U}{aseclev} > 500 ? <<EOT : '';
-</A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$tid">
+</A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$topic->{'tid'}">
 EOT
 
 		print <<EOT;
 <TD ALIGN="CENTER">
-		<A HREF="$I{rootdir}/search.pl?topic=$tid"><IMG
-			SRC="$I{imagedir}/topics/$image" ALT="$alttext"
-			WIDTH="$width" HEIGHT="$height"
-			BORDER="0">$href<BR>$alttext</A>
+		<A HREF="$I{rootdir}/search.pl?topic=$topic->{'tid'}"><IMG
+			SRC="$I{imagedir}/topics/$topic->{'image'}" ALT="$topic->{'alttext'}"
+			WIDTH="$topic->{'width'}" HEIGHT="$topic->{'height'}"
+			BORDER="0">$href<BR>$topic->{'alttext'}</A>
 		</TD>
 EOT
 	}
 
-	$cursor->finish;
 	print "\t</TR>\n</TABLE>\n\n";
 }
 

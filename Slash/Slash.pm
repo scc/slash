@@ -329,10 +329,10 @@ sub getUser {
 	} else {
 		getAnonCookie($user);
 		my $coward = getCurrentAnonymousCoward();
-		$I{SETCOOKIE} = setCookie('anon', $coward->{uid}, 1);
+		$I{SETCOOKIE} = setCookie('anon', $user->{anon_id}, 1);
 		#Now, we copy $coward into user
 		#Probably should improve on this
-		for(keys %$coward) {
+		for(keys %{$coward}) {
 			$user->{$_} =  $coward->{$_};
 		}
 
@@ -2068,12 +2068,13 @@ EOT
 }
 
 ########################################################
-sub getAnonCookie {
+sub getAnonCookie {	
+	my ($user) = @_;
 	if (my $cookie = $I{query}->cookie('anon')) {
-		$I{U}{anon_id} = $cookie;
-		$I{U}{anon_cookie} = 1;
+		$user->{anon_id} = $cookie;
+		$user->{anon_cookie} = 1;
 	} else {
-		$I{U}{anon_id} = getAnonId();
+		$user->{anon_id} = getAnonId();
 	}
 }
 
@@ -2099,7 +2100,7 @@ sub getFormkeyId {
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
 	if ($I{U}{uid} > 0 && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
-		getAnonCookie();
+		getAnonCookie($I{U});
 		$id = $I{U}{anon_id};
 	} elsif ($uid > 0) {
 		$id = $uid;

@@ -66,5 +66,5 @@ EOT
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+#$I{dbh}->disconnect if $I{dbh};
 

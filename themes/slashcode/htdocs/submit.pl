@@ -66,7 +66,7 @@ sub main {
 
 	} elsif ($op eq "Update" && $seclev > 99) {
 		titlebar("100%", "Deleting $I{F}{subid}");
-		rmSub();
+		$I{dbobect}->deleteSubmission();
 		submissionEd();
 
 	} elsif ($op eq "GenQuickies" && $seclev > 99) {
@@ -107,7 +107,7 @@ sub main {
 #################################################################
 sub yourPendingSubmissions {
 	return unless $I{U}{uid} != $I{anonymous_coward_uid};
-	my $submissions = $I{dbobject}->getSubmissions($I{U}{uid});
+	my $submissions = $I{dbobject}->getSubmissionsPending();
 	if ($submissions) {
 		my $count = $I{dbobject}->getSubmissionCount();
 		titlebar("100%", "Your Recent Submissions (total:$count)");
@@ -134,48 +134,46 @@ EOT
 #################################################################
 sub previewForm {
 	my($aid, $subid) = @_;
-	my $subid_dbi = $I{dbh}->quote($subid);
 
 	my $admin = $I{U}{aseclev} > 99;
 
 	my $writestatus = $I{dbobject}->getVar("defaultwritestatus");
-	($subid, my($email, $name, $title, $tid, $introtext, $time, $comment)) =
-		sqlSelect("subid,email,name,subj,tid,story,time,comment",
-		"submissions", "subid=$subid_dbi");
+	my @values = qw(email name subj tid story time comment);
+	my $submission = $I{dbobject}->getSubmission($subid, @values);
 
-	$introtext =~ s/\n\n/\n<P>/gi;
-	$introtext .= " ";
-	$introtext =~  s{(?<!"|=|>)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
+	$submission->{'introtext'} =~ s/\n\n/\n<P>/gi;
+	$submission->{'introtext'} .= " ";
+	$submission->{'introtext'} =~  s{(?<!"|=|>)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
 			{<A HREF="$1://$2">$1://$2</A> }gi;
-	$introtext =~ s/\s+$//;
-	$introtext = qq!<I>"$introtext"</I>! if $name;
+	$submission->{'introtext'} =~ s/\s+$//;
+	$submission->{'introtext'} = qq!<I>"$submission->{'introtext'}"</I>! if $submission->{'name'};
 
-	if ($comment && $admin) {
+	if ($submission->{'comment'} && $admin) {
 		# This probably should be a block.
 		print <<EOT;
 <P>Submission Notes:
-<TABLE WIDTH="95%"><TR><TD BGCOLOR="$I{bg}[2]"><FONT SIZE="-1" COLOR="$I{fg}[2]">$comment</FONT></TD></TR></TABLE>
+<TABLE WIDTH="95%"><TR><TD BGCOLOR="$I{bg}[2]"><FONT SIZE="-1" COLOR="$I{fg}[2]">$submission->{'comment'}</FONT></TD></TR></TABLE>
 EOT
 	}
 
-	if ($email) {
-		local $_ = $email;
+	if ($submission->{'email'}) {
+		local $_ = $submission->{'email'};
 		if (/@/) {
-			$email = "mailto:$email"; 
+			$submission->{'email'} = "mailto:$submission->{'email'}"; 
 		} elsif (!/http/) {
-			$email = "http://$email";
+			$submission->{'email'} = "http://$submission->{'email'}";
 		}
 
-		$introtext = qq!<A HREF="$email">$name</A> writes $introtext! if $name;
+		$submission->{'introtext'} = qq!<A HREF="$submission->{'email'}">$submission->{'name'}</A> writes $submission->{'introtext'}! if $submission->{'name'};
 
 	} else {
-		$introtext = "$name writes $introtext" if $name;
+		$submission->{'introtext'} = "$submission->{'name'} writes $submission->{'introtext'}" if $submission->{'name'};
 
 	}
 
 	my @fs = (
-		$I{query}->textfield(-name => 'title', -default => $title, -size => 50),
-		lockTest($title)
+		$I{query}->textfield(-name => 'title', -default => $submission->{'title'}, -size => 50),
+		lockTest($submission->{'title'})
 	);
 
 	push @fs, sprintf("\n\t\tdept %s<BR>",
@@ -183,9 +181,9 @@ EOT
 	) if $I{use_dept};
 
 	print <<EOT;
-	<P>Submitted by <B>$name <A HREF="$email">$email</A></B> at $time
+	<P>Submitted by <B>$submission->{'name'} <A HREF="$submission->{'email'}">$submission->{'email'}</A></B> at $submission->{'time'}
 
-	<P>$introtext<P>
+	<P>$submission->{'introtext'}<P>
 EOT
 
 	printf <<ADMIN, @fs if $admin;
@@ -198,10 +196,10 @@ EOT
 ADMIN
 
 	if ($admin) {
-		selectTopic("tid", $tid);
+		selectTopic("tid", $submission->{'tid'});
 		selectSection("section", $I{F}{section} || $I{defaultsection});
 
-		print <<ADMIN, stripByMode($introtext, 'literal');
+		print <<ADMIN, stripByMode($submission->{'introtext'}, 'literal');
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
 		<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL">%s</TEXTAREA><BR>
@@ -211,54 +209,7 @@ ADMIN
 ADMIN
 	}
 
-	sqlUpdate("sessions", { lasttitle => $title },
-		"aid=" . $I{dbh}->quote($I{U}{aid})
-	);
-}
-
-#################################################################
-sub rmSub {
-	if ($I{F}{subid}) {
-		sqlUpdate("submissions", { del => 1 }, 
-			"subid=" . $I{dbh}->quote($I{F}{subid})
-		);
-
-		sqlUpdate("authors",
-			{ -deletedsubmissions => 'deletedsubmissions+1' },
-			"aid='$I{U}{aid}'"
-		);
-	}
-
-	foreach (keys %{$I{F}}) {
-		next unless /(.*)_(.*)/;
-		my($t,$n) = ($1,$2);
-		if ($t eq "note" || $t eq "comment" || $t eq "section") {
-			$I{F}{"note_$n"} = "" if $I{F}{"note_$n"} eq " ";
-			if ($I{F}{$_}) {
-				my %sub = (
-					note	=> $I{F}{"note_$n"},
-					comment	=> $I{F}{"comment_$n"},
-					section	=> $I{F}{"section_$n"}
-				);
-
-				if (!$sub{note}) {
-					delete $sub{note};
-					$sub{-note} = 'NULL';
-				}
-
-				sqlUpdate("submissions", \%sub,
-					"subid=" . $I{dbh}->quote($n));
-			}
-		} else {
-			my $key = $n;
-			print "$key " if sqlUpdate(
-				"submissions", { del => 1 }, "subid='$key'"
-			) && sqlUpdate("authors",
-				{ -deletedsubmissions => 'deletedsubmissions+1' },
-				"aid='$I{U}{aid}'"
-			);
-		}
-	}
+	$I{dbobject}->setSessionByAid($I{U}{aid}, { lasttitle => $submission->{'title'}});
 }
 
 #################################################################
@@ -284,7 +235,6 @@ EOT
 
 	$I{F}{del} = 0 if $admin;
 
-	my $c = sqlSelectMany("section,note,count(*)", "submissions WHERE del=$I{F}{del} GROUP BY section,note");
 
 	print qq!\n<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" BGCOLOR="$I{bg}[2]"><TR>\n\t!;
 
@@ -293,15 +243,16 @@ EOT
 
 	my(%all_sections, %all_notes, %sn);
 
-	while (my($section, $note, $cnt) = $c->fetchrow) {
+	my $sections = $I{dbobject}->getSubmissionsSections();
+
+	for(@$sections) {
+		my($section, $note, $cnt) = @$_;
 		my $section_str = $section;
 		$all_sections{$section_str} = 1;
 		my $note_str = $note || 'Unclassified';
 		$all_notes{$note_str} = 1;
 		$sn{$section_str}{$note_str} = $cnt;
 	}
-
-	$c->finish;
 
 	for my $note_str (keys %all_notes) {
 		$sn{'All Sections'}{$note_str} = 0;
@@ -349,7 +300,7 @@ EOT
 
 
 	my $date = getDateOffset("time", $I{U});
-	my $submission = $I{dbobject}->getSubmission($date, $I{F}, $I{U});
+	my $submission = $I{dbobject}->getSubmissionForUser($date);
 
 	my @select = (qw(DEFAULT Hold Quik),
 		(ref $I{submit_categories} ? @{$I{submit_categories}} : ())
@@ -532,28 +483,12 @@ sub saveSub {
 			unless length $I{F}{from} > 2;
 
 		print "<B>There are currently ",
-			sqlSelect("count(*)", "submissions", "del=0"),
+			$I{dbobject}->getSubmissionCount(),
 			" submissions pending.</B><P>";
 
 		print getblock("submit_after");
 
-		my($sec, $min, $hour, $mday, $mon, $year) = localtime;
-
-		my $subid = "$hour$min$sec.$mon$mday$year";
-
-		sqlInsert("submissions", {
-			email	=> $I{F}{email},
-			uid	=> $I{U}{uid},
-			name	=> $I{F}{from},
-			story	=> $I{F}{story},
-			-'time'	=> 'now()',
-			subid	=> $subid,
-			subj	=> $I{F}{subj},
-			tid	=> $I{F}{tid},
-			section	=> $I{F}{section}
-		});
-
-		$I{dbobject}->formSuccess($I{F}{formkey},0,length($I{F}{subj}));
+		$I{dbobject}->createSubmission();
 	}
 }
 

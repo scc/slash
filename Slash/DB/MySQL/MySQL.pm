@@ -305,6 +305,28 @@ sub getContentFilters {
 }
 
 ########################################################
+sub createSubmission {
+	my($self) = @_;
+	my $form = getCurrentForm();
+	my $uid = getCurrentUser('uid');
+	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
+	my $subid = "$hour$min$sec.$mon$mday$year";
+
+	$self->sqlInsert("submissions", {
+			email => $form->{email},
+			uid => $uid,
+			name  => $form->{from},
+			story => $form->{story},
+			-'time' => 'now()',
+			subid => $subid,
+			subj  => $form->{subj},
+			tid => $form->{tid},
+			section => $form->{section}
+	});
+	$self->formSuccess($form->{formkey},0,length($form->{subj}));
+}
+
+########################################################
 sub createDiscussions {
 	my($self, $sid) = @_;
 	# Posting from outside discussions...
@@ -752,17 +774,12 @@ sub setVar {
 ########################################################
 sub setSessionByAid {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('sessions', {value => $value}, 'aid=' . $self->{dbh}->quote($name));
+	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
 }
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
-	if ($value) {
-		$self->sqlUpdate('authors', {value => $value}, 'name=' . $self->{dbh}->quote($author));
-	} else {
-		$self->{dbh}->do('DELETE from authors WHERE aid=' 
-				. $self->{dbh}->quote($author));
-	}
+	$self->sqlUpdate('authors', $value, 'name=' . $self->{dbh}->quote($author));
 }
 
 ########################################################
@@ -902,6 +919,57 @@ sub getSectionTitle {
 	return $sections;
 }
 
+########################################################
+# Long term, this needs to be modified to take in account
+# of someone wanting to delete a submission that is
+# not part in the form
+sub deleteSubmission {
+	my($self, $subid) = @_;
+	my $aid = getCurrentUser('aid');
+	my $form = getCurrentForm();
+
+	if ($form->{subid}) {
+		$self->sqlUpdate("submissions", { del => 1 }, 
+			"subid=" . $self->{dbh}->quote($form->{subid})
+		);
+
+		$self->sqlUpdate("authors",
+			{ -deletedsubmissions => 'deletedsubmissions+1' },
+			"aid='$aid'"
+		);
+	}
+
+	foreach (keys %{$form}) {
+		next unless /(.*)_(.*)/;
+		my($t,$n) = ($1,$2);
+		if ($t eq "note" || $t eq "comment" || $t eq "section") {
+			$form->{"note_$n"} = "" if $form->{"note_$n"} eq " ";
+			if ($form->{$_}) {
+				my %sub = (
+					note	=> $form->{"note_$n"},
+					comment	=> $form->{"comment_$n"},
+					section	=> $form->{"section_$n"}
+				);
+
+				if (!$sub{note}) {
+					delete $sub{note};
+					$sub{-note} = 'NULL';
+				}
+
+				$self->sqlUpdate("submissions", \%sub,
+					"subid=" . $self->{dbh}->quote($n));
+			}
+		} else {
+			my $key = $n;
+			print "$key " if $self->sqlUpdate(
+				"submissions", { del => 1 }, "subid='$key'"
+			) && self->sqlUpdate("authors",
+				{ -deletedsubmissions => 'deletedsubmissions+1' },
+				"aid='$aid'"
+			);
+		}
+	}
+}
 ########################################################
 sub deleteSession {
 	my($self, $aid) = @_;
@@ -1090,10 +1158,18 @@ sub getTopicByTid {
 	return $topic;
 }
 ########################################################
-sub getContentFilterById {
+sub getContentFilter {
 	my($self, $id, @val) = @_;
 	my $values = join ',', @val;
 	my $filter = $self->sqlSelectHashref($values, 'content_filters', "filter_id='$id'");
+
+	return $filter;
+}
+########################################################
+sub getSubmission {
+	my($self, $id, @val) = @_;
+	my $values = join ',', @val;
+	my $filter = $self->sqlSelectHashref($values, 'submissions', "subid='$id'");
 
 	return $filter;
 }
@@ -1152,6 +1228,53 @@ sub getAuthorNameByAid {
 	$sth->finish;
 
 	return  $author_hash_ref;
+}
+
+########################################################
+sub getPollQuestion {
+	my($self, $id, @val) = @_;
+	my $values = join ',', @val;
+	my $question = $self->sqlSelectHashref($values, 'pollquestions', "qid=" . $self->{dbh}->quote($id));
+
+	return $question;
+}
+########################################################
+sub savePollQuestion {
+	my ($self) = @_;
+	my $form = getCurrentForm();
+	$form->{voters} ||= "0";
+	$self->sqlReplace("pollquestions", {
+		qid		=> $form->{qid},
+		question	=> $form->{question},
+		voters		=> $form->{voters},
+		-date		=>'now()'
+	});
+
+	$self->setVar("currentqid", $form->{qid}) if $form->{currentqid};
+
+	# Loop through 1..8 and insert/update if defined
+	for (my $x = 1; $x < 9; $x++) {
+		if ($form->{"aid$x"}) {
+			$self->sqlReplace("pollanswers", {
+				aid	=> $x,
+				qid	=> $form->{qid},
+				answer	=> $form->{"aid$x"},
+				votes	=> $form->{"votes$x"}
+			});
+
+		} else {
+			$self->{dbh}->do("DELETE from pollanswers WHERE qid=" 
+					. $self->{dbh}->quote($form->{qid}) . " and aid=$x"); 
+		}
+	}
+}
+########################################################
+sub getPollAnswers {
+	my($self, $id, @val) = @_;
+	my $values = join ',', @val;
+	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{dbh}->quote($id), 'ORDER by aid');
+
+	return $answers;
 }
 
 ########################################################
@@ -1570,6 +1693,7 @@ sub getPollVoters {
 	return $voters;
 }
 
+##################################################################
 sub getPollComments {
 	my($self, $qid) = @_;
 	my($comments) = $self->sqlSelect('count(*)', 'comments', " sid=$self-{dbh}->quote($qid)");
@@ -1577,12 +1701,29 @@ sub getPollComments {
 	return $comments;
 }
 
+
+##################################################################
+sub getSubmissionsSections {
+	my ($self) = @_;
+	my $del = getCurrentForm('del');
+	
+	my $hash = $self->sqlSelectAll("section,note,count(*)", "submissions WHERE del=$del GROUP BY section,note");
+
+	return $hash;
+}
+
 ##################################################################
 # Get submission count
-sub getSubmissions {
+sub getSubmissionsPending {
 	my($self, $uid) = @_;
-	my $submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
+	my $submissions;
 
+	if($uid) {
+		$submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
+	} else {
+		$uid = getCurrentUser('uid');
+		$submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
+	}
 	return $submissions;
 }
 
@@ -1978,8 +2119,11 @@ sub setQuickies {
 }
 
 ########################################################
-sub getSubmission {
-	my($self, $dateformat, $form, $user) = @_;
+# What an ugly method
+sub getSubmissionForUser {
+	my($self, $dateformat) = @_;
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
 	my $sql = "SELECT subid, subj, date_format($dateformat, 'm/d  H:i'), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
 	$sql .= $form->{note} ? "note=" . $self->{dbh}->quote($form->{note}) : "isnull(note)";
