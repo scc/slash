@@ -528,7 +528,7 @@ CREATE TABLE users (
   sig varchar(160),
   seclev int(11) DEFAULT '0' NOT NULL,
   matchname varchar(20),
-  newpasswd varchar(32),
+  newpasswd char(8),
   PRIMARY KEY (uid),
   KEY login (uid,passwd,nickname),
   KEY chk4user (nickname,realemail),
