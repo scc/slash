@@ -369,37 +369,43 @@ sub tokens2points {
 	my $constants = getCurrentStatic();
 	my @log;
 	# rtbl
-	my $cursor = $self->sqlSelectMany('uid,tokens,value as rtbl',
-		'users_info, users_param',
-		"tokens >= $constants->{maxtokens}
-		 AND users_param.uid = users_info.uid
-		 AND name='rtbl' AND value=1");
-	$self->sqlTransactionStart('LOCK TABLES users READ,
-		users_info WRITE, users_comments WRITE');
+	my $cursor = $self->sqlSelectMany(
+		'uid', 
+		'users_info',
+		"tokens >= $constants->{maxtokens}"
+	);
 
+	# For some reason, the underlying calls to setUser will not work
+	# without the extra locks on users_acl or users_param.
+	$self->sqlTransactionStart('LOCK TABLES
+		users READ,
+		users_acl READ,
+		users_info WRITE,
+		users_comments WRITE,
+		users_param READ,
+		users_prefs WRITE'
+	);
 	# rtbl
-	while (my($uid, $tokens, $rtbl) = $cursor->fetchrow) {
+	while (my($uid) = $cursor->fetchrow) {
+		my $rtbl = $self->getUser($uid, 'rtbl') || 0;
+
 		# rtbl
-		if ($rtbl) {
-			push @log, getData(
-				'moderatord_tokennotgrantmsg', { uid => $uid }
-			);
-		} else {
-			push @log, getData(
-				'moderatord_tokengrantmsg', { uid => $uid }
-			);
-		}
-
-		my %userFields = (
-			-lastgranted	=> 'now()',
-			-tokens		=>
-				"tokens*$constants->{token_retention}",
+		push @log, Slash::getData(
+			($rtbl) ? 'moderatord_tokennotgrantmsg' :
+				  'moderatord_tokengrantmsg',
+			{ uid => $uid }
 		);
-		$userFields{'-points'} =
-			($constants->{maxtokens} / $constants->{tokensperpoint})
-			if ! $rtbl;
 
-		$self->setUser($uid, \%userFields);
+		$self->setUser($uid, {
+			-lastgranted	=> 'now()',
+			-tokens		=> ($rtbl) ? 
+				'0' :
+				"tokens*$constants->{token_retention}",
+			-points		=> ($rtbl) ?
+				'0' :
+				($constants->{maxtokens} /
+				 $constants->{tokensperpoint}),
+		});
 	}
 
 	$cursor->finish;
@@ -458,6 +464,7 @@ sub stirPool {
 # For moderatord and some utils
 sub getLastUser {
 	my($self) = @_;
+	# Why users_info instead of users?	- Cliff
 	my($totalusers) = $self->sqlSelect("max(uid)", "users_info");
 
 	return $totalusers;
@@ -503,6 +510,8 @@ sub fetchEligibleModerators {
 	my $eligibleUsers =
 		$self->getLastUser() * $constants->{m1_eligible_percentage};
 
+	# Should this list include authors if var[authors_unlimited] is 
+	# non-zero?
 	my $returnable =
 		$self->sqlSelectAll("users_info.uid,count(*) as c",
 			"users_info,users_prefs, accesslog",
@@ -623,8 +632,8 @@ sub getMetaModerations {
 # For moderation scripts.
 #
 #
-sub updateMMFlag {
-	my($self, $id, $val);
+sub updateM2Flag {
+	my($self, $id, $val) = @_;
 
 	$self->sqlUpdate('metamodlog', {
 		-flag => $val,

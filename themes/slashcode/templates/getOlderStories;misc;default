@@ -32,6 +32,7 @@ __template__
 	<LI>[% story.link %] ([% story.commentcount %])</LI>
 [% END %]
 
+<A HREF="[% constants.rootdir %]/search.pl?section=[% section %]&min=[% start %]>Older Articles</A><BR>
 [% IF section.issue %]
 	<P ALIGN="RIGHT">
 	[% IF section.issue == 1 || section.issue == 3 %]

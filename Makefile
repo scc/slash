@@ -201,9 +201,9 @@ install: slash plugins
 	 		mv $$a.bak $$a;	 					\
 		fi;								\
 	done)
-	# Remove any kruft thay may be installed which shouldn't be.
-	-find $(SLASH_PREFIX) \( -name CVS -type d \) -o \
-		\( -name \.#\* \) -exec rm -rf {} \; 2> /dev/null
+	# Remove any kruft thay may have been copied that shouldn't have been.
+	-find $(SLASH_PREFIX) \( -name CVS -type d -o -name \.\#\* -type f \) \
+		-printf '(cleaning out %p)\n' -exec rm -rf {} \; 2> /dev/null
 
 	touch $(SLASH_PREFIX)/slash.sites
 	chown $(USER):$(GROUP) $(SLASH_PREFIX)

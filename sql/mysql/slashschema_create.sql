@@ -82,7 +82,7 @@ DROP TABLE IF EXISTS blocks;
 CREATE TABLE blocks (
 	bid varchar(30) DEFAULT '' NOT NULL,
 	block text,
-	seclev mediumint UNSIGNED NOT NULL,
+	seclev mediumint UNSIGNED NOT NULL DEFAULT '0',
 	type ENUM("static","color","portald") DEFAULT 'static' NOT NULL,
 	description text,
 	section varchar(30) NOT NULL,

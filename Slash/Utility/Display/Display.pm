@@ -506,13 +506,14 @@ sub pollbooth {
 	return "" if $qid eq "";
 	my $sect = getCurrentUser('currentSection');
 	my $polls = $slashdb->getPoll($qid);
+	my $poll_q = $slashdb->getPollQuestion($qid);
 
 	my $pollbooth = slashDisplay('pollbooth', {
 		polls		=> $polls,
 		question	=> $polls->[0][0],
 		qid		=> $qid,
-		voters		=> $slashdb->getPollQuestion($qid, 'voters'),
-		comments	=> $slashdb->countCommentsBySid($qid),
+		voters		=> $poll_q->{voters},
+		comments	=> $slashdb->countCommentsBySid($poll_q->{discussion}),
 		sect		=> $sect,
 	}, 1);
 
