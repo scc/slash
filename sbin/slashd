@@ -185,6 +185,10 @@ sub get_next_event {
 	for my $file (keys %task) {
 		my $timespec = $task{$file}{timespec};
 		my $entry_time = $cron->get_next_execution_time($timespec, $time);
+		if ($entry_time < $time) {
+			slashdLog("error: entry_time in the past ($entry_time < $time) $file $timespec $min_time");
+			next;
+		}
 		if ($entry_time < $min_time) {
 			$min_time = $entry_time;
 			$min_file = $file;
