@@ -32,6 +32,7 @@ sub main {
 		Preview => \&edit,
 		preview => \&edit,
 		submit => \&submitComment,
+		Submit => \&submitComment,
 	);
 
 	my $stories;
