@@ -17,6 +17,7 @@ use Slash::Utility;
 
 sub main {
 	my %ops = (
+		get		=> \&getArticle,
 		list		=> \&listArticle,
 		preview		=> \&editArticle,
 		edit		=> \&editArticle,
@@ -201,6 +202,77 @@ sub displayTopRSS {
 	return $rss->as_string;
 }
 
+sub getArticle {
+	my($form, $journal, $constants) = @_;
+	my $slashdb = getCurrentDB();
+	my($uid, $nickname, $date, $forward, $back, @sorted_articles);
+	my $collection = {};
+
+	if ($form->{uid}) {
+		$nickname = $slashdb->getUser($form->{uid}, 'nickname');
+		$uid = $form->{uid};
+	} else {
+		$nickname = getCurrentUser('nickname');
+		$uid = getCurrentUser('uid');
+	}
+
+	# clean it up
+	my $start = fixint($form->{start}) || 0;
+	my $articles = $journal->getsByUid($uid, $start,
+		$constants->{journal_default_display} + 1, $form->{id}
+	);
+
+	# check for extra articles ... we request one more than we need
+	# and if we get the extra one, we know we have extra ones, and
+	# we pop it off
+	if (@$articles == $constants->{journal_default_display} + 1) {
+		pop @$articles;
+		$forward = $start + $constants->{journal_default_display};
+	} else {
+		$forward = 0;
+	}
+
+	# if there are less than journal_default_display remaning,
+	# just set it to 0
+	if ($start > 0) {
+		$back = $start - $constants->{journal_default_display};
+		$back = $back > 0 ? $back : 0;
+	} else {
+		$back = -1;
+	}
+
+	for my $article (@$articles) {
+		my($date_current) = timeCalc($article->[0], "%A %B %d, %Y");
+		if ($date eq $date_current) {
+			push @{$collection->{article}}, {
+				article		=> strip_mode($article->[1], $article->[4]),
+				date		=> $article->[0],
+				description	=> $article->[2]
+			};
+		} else {
+			push @sorted_articles, $collection if ($date and (keys %$collection));
+			$collection = {};
+			$date = $date_current;
+			$collection->{day} = $article->[0];
+			push @{$collection->{article}}, {
+				article		=> strip_mode($article->[1], $article->[4]),
+				date		=> $article->[0],
+				description	=> $article->[2]
+			};
+		}
+	}
+	push @sorted_articles, $collection;
+	my $theme = $slashdb->getUser($uid, 'journal-theme');
+	$theme ||= $constants->{journal_default_theme};
+
+	slashDisplay($theme, {
+		articles	=> \@sorted_articles,
+		uid		=> $form->{uid},
+		back		=> $back,
+		forward		=> $forward,
+	});
+}
+
 sub displayArticle {
 	my($form, $journal, $constants) = @_;
 	my $slashdb = getCurrentDB();
@@ -317,7 +389,6 @@ sub saveArticle {
 		if ($constants->{journal_comments}) {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
-			# i hope sid=$id is correct here ... krow? -- pudge
 			$slashdb->createDiscussion('', $description, $slashdb->getTime(), 
 				"$rootdir/journal.pl?sid=$id", $constants->{journal_default_topic}
 			);

@@ -387,7 +387,7 @@ sub deleteSectionTopicsByTopic {
 sub createSectionTopic {
 	my($self, $section, $tid) = @_;
 
-	$self->sqlDo("INSERT INTO section_topics VALUES (section, tid) ('$section','$tid')");
+	$self->sqlDo("INSERT INTO section_topics VALUES (section, tid) ('$section',$tid)");
 }
 
 ########################################################
@@ -1211,26 +1211,29 @@ sub deleteContentFilter {
 
 ########################################################
 sub saveTopic {
-	my($self) = @_;
-	my $form = getCurrentForm();
-	my($rows) = $self->sqlSelect('count(*)', 'topics', 'tid=' . $self->{_dbh}->quote($form->{tid}));
+	my($self, $topic) = @_;
+	my($rows) = $self->sqlSelect('count(*)', 'topics', "tid=$topic->{tid}");
 	if ($rows == 0) {
 		$self->sqlInsert('topics', {
-			tid	=> $form->{tid},
-			image	=> $form->{image},
-			alttext	=> $form->{alttext},
-			width	=> $form->{width},
-			height	=> $form->{height}
+			name	=> $topic->{name},
+			image	=> $topic->{image},
+			alttext	=> $topic->{alttext},
+			width	=> $topic->{width},
+			height	=> $topic->{height}
 		});
+		$topic->{tid} = $self->getLastInsertId();
+	} else {
+		$self->sqlUpdate('topics', {
+				image	=> $topic->{image},
+				alttext	=> $topic->{alttext},
+				width	=> $topic->{width},
+				height	=> $topic->{height},
+				name	=> $topic->{name},
+			}, "tid=$topic->{tid}"
+		);
 	}
 
-	$self->sqlUpdate('topics', {
-			image	=> $form->{image},
-			alttext	=> $form->{alttext},
-			width	=> $form->{width},
-			height	=> $form->{height}
-		}, 'tid=' . $self->{_dbh}->quote($form->{tid})
-	);
+	return $topic->{tid};
 }
 
 ##################################################################

@@ -15,19 +15,19 @@ __template__
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">
 		<TD VALIGN="TOP">
+			[% INCLUDE formLabel value => "Select a topic" comment => "hit the create button if you wish to create a new topic" %]
 			[% topics_select %]
 
 			<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
-			<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>
 
-			[% IF ! form.topicdelete %]
-
-				[% IF topic.tid %]
+			[% IF topic.tid %]
 			[% INCLUDE formLabel value => "Image as seen" %]
 			<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
-				[% END %]
+			[% END %]
 
 			<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
+			[% INCLUDE formLabel value => "Short Name" comment => "used in admin interface" %]
+			<INPUT TYPE="TEXT" NAME="name" VALUE="[% FILTER strip_attribute %][% topic.name %][% END %]">
 			[% INCLUDE formLabel value => "Alt Text" %]
 			<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
 			[% INCLUDE formLabel value => "Dimensions", comment => "leave blank to determine automatically" %]
@@ -39,19 +39,19 @@ __template__
 
 				[% INCLUDE formLabel value => "Image" %]
 				[% image_select %]
+				<br><br>
 
 				[% ELSE %]
 
-				<P>No images were found in the topic images directory
+				[% INCLUDE formLabel value => "No images were found in the topic images directory" %]
 					([% constants.basedir %]/images/topics).<BR>
 					<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]"><BR><BR>
 
 				[% END %]
 
+			<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic">
 			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
 			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
-
-			[% END %]
 
 		</TD>
 		<TD VALIGN="TOP">

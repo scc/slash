@@ -711,9 +711,8 @@ sub topicEdit {
 
 	closedir(DIR);
 
-	$topics_menu = $slashdb->getDescriptions('topics', '', 1);
-	$form->{nexttid} ||= $constants->{defaulttopic};
-	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid}, 1);
+	$topics_menu = $slashdb->getDescriptions('topics_all', '', 1);
+	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid} ? $form->{nexttid} : $constants->{defaulttopic}, 1);
 	my $sections = $slashdb->getDescriptions('sections', '', 1);
 	my $section_topics = $slashdb->getDescriptions('topic-sections', $form->{nexttid}, 1);
 	my $sectionref;
@@ -723,25 +722,20 @@ sub topicEdit {
 	}
 
 	if (!$form->{topicdelete}) {
-
-		$imageseen_flag = 1 if ($form->{nexttid} && ! $form->{topicnew} && ! $form->{topicdelete});
-
-		if (!$form->{topicnew}) {
+		if (!$form->{topicnew} && $form->{nexttid}) {
 			$topic = $slashdb->getTopic($form->{nexttid});
 		} else {
 			$topic = {};
-			$topic->{tid} = getTitle('topicEd-new-title', {}, 1);
-		}
-
-		if ($available_images) {
-			$images_flag = 1;
-			my $default = $topic->{image};
-			$image_select = createSelect('image', $available_images, $default, 1);
 		}
 	}
 
+	if ($available_images) {
+		$images_flag = 1;
+		my $default = $topic->{image};
+		$image_select = createSelect('image', $available_images, $default, 1);
+	}
+
 	slashDisplay('topicEdit', {
-		imageseen_flag		=> $imageseen_flag,
 		images_flag		=> $images_flag,
 		topic			=> $topic,
 		topics_select		=> $topics_select,
@@ -752,14 +746,16 @@ sub topicEdit {
 
 ##################################################################
 sub topicDelete {
+	my ($tid) = @_;
 	my $slashdb = getCurrentDB();
-	my $form_tid = getCurrentForm('tid');
+	my $form = getCurrentForm();
 
-	my $tid = $_[0] || $form_tid;
+	my $tid ||= $form->{tid};
 
 	print getMessage('topicDelete-message', { tid => $tid });
-	$slashdb->deleteTopic($form_tid);
-	$form_tid = '';
+	$slashdb->deleteTopic($tid);
+	$slashdb->deleteSectionTopicsByTopic($form->{tid});
+	$form->{tid} = '';
 }
 
 ##################################################################
@@ -768,16 +764,14 @@ sub topicSave {
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
 
-	if ($form->{tid}) {
-		if (!$form->{width} && !$form->{height}) {
-			@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
-		}
-		$slashdb->saveTopic();
+	if (!$form->{width} && !$form->{height}) {
+		@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
 	}
+	$form->{tid} = $slashdb->saveTopic($form);
 
 	$slashdb->deleteSectionTopicsByTopic($form->{tid});
 	for my $item (keys %$form) {
-		if ($form->{$item} =~ /^exsect_(.*)/) {
+		if ($item =~ /^exsect_(.*)/) {
 			$slashdb->createSectionTopic($1, $form->{tid});
 		}
 	}

@@ -124,6 +124,13 @@ sub writeTemplateFile {
 	close(FILE);
 }
 
+sub installTheme {
+	my($self, $answer, $themes, $symlink) = @_;
+	$themes ||= $self->{'_themes'};
+
+	$self->_install($themes->{$answer}, $symlink);
+}
+
 sub installPlugin {
 	my($self, $answers, $plugins, $symlink) = @_;
 	$plugins ||= $self->{'_plugins'};
@@ -131,48 +138,140 @@ sub installPlugin {
 	for my $answer (@$answers) {
 		for (keys %$plugins) {
 			if ($answer eq $plugins->{$_}{order}) {
-				$self->_install($plugins->{$_}, $symlink);
+				$self->_install($plugins->{$_}, $symlink,1);
 			}
 		}
 	}
 }
 
 sub _install {
-	my($self, $plugin, $symlink) = @_;
+	my($self, $hash, $symlink, $flag) = @_;
 	# Yes, performance wise this is questionable, if getValue() was
 	# cached.... who cares this is the install. -Brian
-	if ($self->exists('plugin', $plugin->{name})) {
-		print STDERR "Plugin $plugin->{name} has already been installed\n";
+	if ($self->exists('hash', $hash->{name})) {
+		print STDERR "Plugin $hash->{name} has already been installed\n";
 		return;
 	}
-	return if $self->exists('plugin', $plugin->{name});
+	if($flag) {
+		return if $self->exists('plugin', $hash->{name});
+
+		$self->create({
+			name            => 'plugin',
+			value           => $hash->{'name'},
+			description     => $hash->{'description'},
+		});
+	} else {
+		$self->create({
+			name            => 'theme',
+			value           => $hash->{'name'},
+			description     => $hash->{'description'},
+		});
+	}
 	my $hostname = $self->getValue('basedomain');
 	my $email = $self->getValue('adminmail');
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
 
-	$self->create({
-		name            => 'plugin',
-		value           => $plugin->{'name'},
-		description     => $plugin->{'description'},
-	});
-
-	for my $subdir (qw( htdoc image task )) {
-		my $subdir_s = "${subdir}s";
-		for (@{$plugin->{$subdir}}) {
-			if ($symlink) {
-				symlink "$plugin->{dir}/$_", "$prefix_site/$subdir_s/$_";
+	# YEs, the next bit could be cleaned up -Brian
+	if($hash->{htdoc}){
+		my $filename;
+		for (@{$hash->{htdoc}}) {
+			if($_ =~ /\//) {
+				$_ =~ /.*\/(.*)$/;
+				$filename = $1;
 			} else {
-				copy "$plugin->{dir}/$_", "$prefix_site/$subdir_s/$_";
-				chmod 0755, "$prefix_site/$subdir_s/$_";
+				$filename = $_;
+			}
+
+			if ($symlink) {
+				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/$filename";
+			} else {
+				copy "$hash->{dir}/$_", "$prefix_site/htdocs/$filename";
+				chmod 0755, "$prefix_site/htdocs/$_";
+			}
+		}
+	}
+
+	if($hash->{task}){
+		my $filename;
+		for (@{$hash->{task}}) {
+			if($_ =~ /\//) {
+				$_ =~ /.*\/(.*)$/;
+				$filename = $1;
+			} else {
+				$filename = $_;
+			}
+
+			if ($symlink) {
+				symlink "$hash->{dir}/$_", "$prefix_site/tasks/$filename";
+			} else {
+				copy "$hash->{dir}/$_", "$prefix_site/tasks/$filename";
+				chmod 0755, "$prefix_site/tasks/$_";
+			}
+		}
+	}
+
+	if($hash->{misc}){
+		my $filename;
+		for (@{$hash->{misc}}) {
+			if($_ =~ /\//) {
+				$_ =~ /.*\/(.*)$/;
+				$filename = $1;
+			} else {
+				$filename = $_;
+			}
+
+			if ($symlink) {
+				symlink "$hash->{dir}/$_", "$prefix_site/misc/$filename";
+			} else {
+				copy "$hash->{dir}/$_", "$prefix_site/misc/$filename";
+				chmod 0755, "$prefix_site/misc/$_";
+			}
+		}
+	}
+
+	if($hash->{image}){
+		my $filename;
+		for (@{$hash->{image}}) {
+			if($_ =~ /\//) {
+				$_ =~ /.*\/(.*)$/;
+				$filename = $1;
+			} else {
+				$filename = $_;
+			}
+
+			if ($symlink) {
+				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/$filename";
+			} else {
+				copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/$filename";
+				chmod 0755, "$prefix_site/htdocs/images/$_";
+			}
+		}
+	}
+
+	if($hash->{topic}){
+		my $filename;
+		for (@{$hash->{topic}}) {
+			if($_ =~ /\//) {
+				$_ =~ /.*\/(.*)$/;
+				$filename = $1;
+			} else {
+				$filename = $_;
+			}
+
+			if ($symlink) {
+				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/topics/$filename";
+			} else {
+				copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/topics/$filename";
+				chmod 0755, "$prefix_site/htdocs/images/topics/$filename";
 			}
 		}
 	}
 
 	my($sql, @sql, @create);
 
-	if ($plugin->{"${driver}_schema"}) {
-		if (my $schema_file = "$plugin->{dir}/" . $plugin->{"${driver}_schema"}) {
+	if ($hash->{"${driver}_schema"}) {
+		if (my $schema_file = "$hash->{dir}/" . $hash->{"${driver}_schema"}) {
 			open(CREATE, "< $schema_file");
 			while (<CREATE>) {
 				chomp;
@@ -189,8 +288,8 @@ sub _install {
 		}
 	}
 
-	if ($plugin->{"${driver}_dump"}) {
-		if (my $dump_file = "$plugin->{dir}/" . $plugin->{"${driver}_dump"}) {
+	if ($hash->{"${driver}_dump"}) {
+		if (my $dump_file = "$hash->{dir}/" . $hash->{"${driver}_dump"}) {
 			open(DUMP, "< $dump_file") or warn "Can't open $dump_file: $!";
 			while (<DUMP>) {
 				next unless /^INSERT/;
@@ -211,14 +310,14 @@ sub _install {
 		}
 	}
 
-	if ($plugin->{'template'}) {
-		for (@{$plugin->{'template'}}) {
-			my $template = $self->readTemplateFile("$plugin->{'dir'}/$_");
+	if ($hash->{'template'}) {
+		for (@{$hash->{'template'}}) {
+			my $template = $self->readTemplateFile("$hash->{'dir'}/$_");
 			$self->{slashdb}->createTemplate($template) if $template;
 		}
 	}
-	if ($plugin->{note}) {
-		my $file = "$plugin->{dir}/$plugin->{note}";
+	if ($hash->{note}) {
+		my $file = "$hash->{dir}/$hash->{note}";
 		open(FILE, $file);
 		while (<FILE>) {
 			print;
@@ -227,44 +326,54 @@ sub _install {
 }
 
 sub getPluginList {
-	my($self, $prefix) = @_;
+	return _getList(@_, 'plugins', 'PLUGIN');
+}
+
+sub getThemeList {
+	return _getList(@_, 'themes', 'THEME');
+}
+
+sub _getList {
+	my($self, $prefix,$subdir,$type) = @_;
 	$self->{'_install_dir'} = $prefix;
-	opendir(PLUGINDIR, "$prefix/plugins");
-	my %plugins;
-	while (my $dir = readdir(PLUGINDIR)) {
+	opendir(DIR, "$prefix/$subdir");
+	my %hash;
+	while (my $dir = readdir(DIR)) {
 		next if $dir =~ /^\.$/;
 		next if $dir =~ /^\.\.$/;
 		next if $dir =~ /^CVS$/;
-		open(PLUGIN, "< $prefix/plugins/$dir/PLUGIN") or next;
-		$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir";
-		#This should be override by the actual name of the plugin
-		$plugins{$dir}->{'name'} = $dir;
+		open(FILE, "< $prefix/$subdir/$dir/$type") or next;
+		$hash{$dir}->{'dir'} = "$prefix/$subdir/$dir";
+		#This should be overridden by the actual name of the plugin
+		$hash{$dir}->{'name'} = $dir;
 
 		my @info;
 		{
 			local $/;
-			@info = split /\015\012?|\012/, <PLUGIN>;
+			@info = split /\015\012?|\012/, <FILE>;
 		}
 
 		for (@info) {
 			next if /^#/;
 			my($key, $val) = split(/=/, $_, 2);
 			$key = lc $key;
-			if ($key =~ /^(htdoc|template|image|task)s?$/) {
-				push @{$plugins{$dir}->{$key}}, $val;
+			if ($key =~ /^(htdoc|template|image|task|misc|topic)s?$/) {
+				push @{$hash{$dir}->{$key}}, $val;
+			} elsif ($key =~ /^(plugin)s?$/) {
+				$hash{$dir}->{plugin}{$val} = 1;
 			} else {
-				$plugins{$dir}->{$key} = $val;
+				$hash{$dir}->{$key} = $val;
 			}
 		}
 	}
 	my $x = 0;
-	for (sort keys %plugins) {
+	for (sort keys %hash) {
 		$x++;
-		$plugins{$_}->{'order'} = $x;
+		$hash{$_}->{'order'} = $x;
 	}
 
-	$self->{'_plugins'} = \%plugins;
-	return \%plugins;
+	$self->{"_" . $subdir} = \%hash;
+	return \%hash;
 }
 
 sub reloadArmors {
