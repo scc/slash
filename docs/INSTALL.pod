@@ -184,7 +184,7 @@ want to change.
 	====================================================
 	PREFIX	/usr/local/slash	Location for
 					installed files
-	INIT	/etc/rc.d		Location for init
+	INIT	/etc		Location for init
 					scripts
 	USER	nobody			User to own files
 	GROUP	nobody			Group to own files
@@ -194,8 +194,8 @@ in step 6. while running F<install-slashsite>.)
 
 So, for example, you might type:
 
-	make INIT=/etc PREFIX=/home/slash
-	make install INIT=/etc PREFIX=/home/slash
+	make INIT=/etc/rc.d PREFIX=/home/slash
+	make install INIT=/etc/rc.d PREFIX=/home/slash
 
 When done, a configuration file for Apache will be created at
 F<$PREFIX/slash.conf>.  You can put its contents into your httpd.conf,

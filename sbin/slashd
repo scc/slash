@@ -76,12 +76,6 @@ sub copy {
 }
 
 
-# should we add code here to wrap in CDATA if there are
-# "bad" characters? -- pudge
-sub xmlEncodeStr  {
-	XML::Parser::Expat->xml_escape($_[0])
-}
-
 sub geturl {
 	my $ua = new LWP::UserAgent;
 	my $request = new HTTP::Request('GET', $_[0]);
@@ -268,22 +262,22 @@ sub newrdf {	# RSS 0.9
 		: "$constants->{sitename}: $SECT->{title}";
 
 	$rss->channel(
-		title		=> xmlEncodeStr($title),
+		title		=> xmlencode($title),
 		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
 #		language	=> $constants->{rdflanguage},
-		description	=> xmlEncodeStr($constants->{slogan}),
+		description	=> xmlencode($constants->{slogan}),
 	);
 
 	$rss->image(
-		title		=> xmlEncodeStr($constants->{sitename}),
-		url		=> xmlEncodeStr($constants->{rdfimg}),
+		title		=> xmlencode($constants->{sitename}),
+		url		=> xmlencode($constants->{rdfimg}),
 		'link'		=> $constants->{absolutedir} . '/',
 	);
 
 
 	for my $section (@$stories_and_topics) {
 		$rss->add_item(
-			title	=> xmlEncodeStr($section->{title}),
+			title	=> xmlencode($section->{title}),
 			'link'	=> "$constants->{absolutedir}/article.pl?sid=$section->{sid}",
 		);
 	}
@@ -315,18 +309,18 @@ sub newrss {	# RSS 1.0
 		: $constants->{sitename};
 
 	$rss->channel(
-		title		=> xmlEncodeStr($title),
-		description	=> xmlEncodeStr($constants->{slogan}),
+		title		=> xmlencode($title),
+		description	=> xmlencode($constants->{slogan}),
 		'link'		=> $constants->{absolutedir} .
 			($section ? "/index.pl?section=$section" : '/'),
 
 		dc => {
 			date		=> date2iso8601(),
-			subject		=> xmlEncodeStr($constants->{rdfsubject}),
+			subject		=> xmlencode($constants->{rdfsubject}),
 			language	=> $constants->{rdflanguage},
-			creator		=> xmlEncodeStr($constants->{adminmail}),
-			publisher	=> xmlEncodeStr($constants->{rdfpublisher}),
-			rights		=> xmlEncodeStr($constants->{rdfrights}),
+			creator		=> xmlencode($constants->{adminmail}),
+			publisher	=> xmlencode($constants->{rdfpublisher}),
+			rights		=> xmlencode($constants->{rdfrights}),
 		},
 
 		syn => {
@@ -337,14 +331,14 @@ sub newrss {	# RSS 1.0
 	);
 
 	$rss->image(
-		title		=> xmlEncodeStr($constants->{sitename}),
-		url		=> xmlEncodeStr($constants->{rdfimg}),
+		title		=> xmlencode($constants->{sitename}),
+		url		=> xmlencode($constants->{rdfimg}),
 		'link'		=> $constants->{absolutedir} . '/',
 	);
 
 	$rss->textinput(
-		title		=> 'Search ' . xmlEncodeStr($constants->{sitename}),
-		description	=> 'Search ' . xmlEncodeStr($constants->{sitename}) . ' stories',
+		title		=> 'Search ' . xmlencode($constants->{sitename}),
+		description	=> 'Search ' . xmlencode($constants->{sitename}) . ' stories',
 		name		=> 'query',
 		'link'		=> "$constants->{absolutedir}/search.pl"
 	);
@@ -361,9 +355,9 @@ sub newrss {	# RSS 1.0
 		}
 
 		$rss->add_item(
-			title		=> xmlEncodeStr($story->{title}),
+			title		=> xmlencode($story->{title}),
 			'link'		=> "$constants->{absolutedir}/article.pl?sid=$story->{sid}",
-			$desc ? (description => xmlEncodeStr($desc)) : (),
+			$desc ? (description => xmlencode($desc)) : (),
 
 			dc => {
 				date		=> date2iso8601($story->{'time'}),
@@ -373,7 +367,7 @@ sub newrss {	# RSS 1.0
 
 			slash => {
 				section		=> $story->{section},
-				department	=> xmlEncodeStr($story->{dept}),
+				department	=> xmlencode($story->{dept}),
 				comments	=> $story->{commentcount},
 				hitparade	=> $story->{hitparade},
 			},
@@ -409,7 +403,7 @@ EOT
         my $body;
 	for my $section (@$stories_and_topics) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			xmlEncodeStr(strip_nohtml($section->{title})) . 
+			xmlencode(strip_nohtml($section->{title})) . 
 			"</option>\n";
 		$z++;
         }     
@@ -437,7 +431,7 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 EOT
 
 	for my $section (@$stories_and_topics) {
-		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept}));
+		my @str = (xmlencode($section->{title}), xmlencode($section->{dept}));
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>

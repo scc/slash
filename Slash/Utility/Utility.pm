@@ -33,6 +33,7 @@ use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 use URI;
+use XML::Parser;
 require Exporter;
 use vars qw($REVISION $VERSION @ISA @EXPORT);
 
@@ -87,6 +88,8 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	timeCalc
 	writeLog
 	url2abs
+	xmlencode
+	xmldecode
 );
 
 # LEELA: We're going to deliver this crate like professionals.
@@ -1960,6 +1963,140 @@ sub balanceTags {
 	$html .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
 
 }
+
+#========================================================================
+
+=head2 xmlencode(TEXT)
+
+Encodes / escapes a string for putting into XML.
+The text goes through three phases: we first convert
+all "&" that are not part of an entity to "&amp;"; then
+we convert all "&", "<", and ">" to their entities.
+Then all characters that are not printable ASCII characters
+(\040 to \176) are converted to their numeric entities
+(such as "&#192;").
+
+Note that this is basically encoding a string into valid
+HTML, then escaping it for XML.  When run through regular
+XML unescaping, a valid HTML string should remain
+(that is, the characters will be valid for HTML, while it
+may not be syntactically correct).  You may use something
+like C<HTML::Entities::decode_entities> if you wish to get
+the regular text.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TEXT
+
+Whatever text it is you want to encode.
+
+=back
+
+=item Return value
+
+The encoded string.
+
+=item Dependencies
+
+XML::Parser::Expat(3).
+
+=back
+
+=cut
+
+sub xmlencode {
+	my($text) = @_;
+
+	# if there is an & that is not part of an entity, convert it
+	# to &amp;
+	$text =~ s/&(?!#?[a-zA-Z0-9]+;)/&amp;/g;
+
+	# convert & < > to XML entities
+	$text = XML::Parser::Expat->xml_escape($text, ">");
+
+	# convert ASCII-non-printable to numeric entities
+	$text =~ s/([^\s\040-\176])/ "&#" . ord($1) . ";" /ge;
+
+	return $text;
+}
+
+
+#========================================================================
+
+=head2 xmldecode(TEXT)
+
+Decodes / unescapes an XML string.  It basically just
+decodes the five entities used to encode "<", ">", '"',
+"'", and "&".  "&" is only decoded if it is not the start
+of an entity.
+
+This will decode the named, decimal numeric, or hex numeric
+versions of the entities.
+
+Note that while C<xmlencode> will make sure the characters
+in the string are proper HTML characters, C<xmldecode> will
+not take the extra step to get back the original non-HTML
+text; we want to leave the text as OK to put directly into
+HTML.  You may use something like
+C<HTML::Entities::decode_entities> if you wish to get
+the regular text.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TEXT
+
+Whatever text it is you want to decode.
+
+=back
+
+=item Return value
+
+The decoded string.
+
+=back
+
+=cut
+
+{
+	# for all following chars but &, convert entities back to
+	# the actual character
+
+	# for &, convert &amp; back to &, but only if it is the
+	# beginning of an entity (like "&amp;#32;")
+
+	# precompile these so we only do it once
+
+	my %e = qw(< lt > gt " quot ' apos & amp);
+	for my $chr (keys %e) {
+		my $word = $e{$chr};
+		my $ord = ord $chr;
+		my $hex = sprintf "%x", $ord;
+		$hex =~ s/([a-f])/[$1\U$1]/g;
+		my $regex = qq/&(?:$word|#$ord|#[xX]$hex);/;
+		$regex .= qq/(?=#?[a-zA-Z0-9]+;)/ if $chr eq "&";
+		$e{$chr} = qr/$regex/;
+	}
+
+	sub xmldecode {
+		my($text) = @_;
+
+		# do & only _after_ the others
+		for my $chr ( (grep !/^&$/, keys %e), "&") {
+			$text =~ s/$e{$chr}/$chr/g;
+		}
+
+		return $text;
+	}
+}
+
 
 #========================================================================
 

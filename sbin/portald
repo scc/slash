@@ -170,7 +170,9 @@ sub getRDF {
 	} else {
 		my $str;
 		foreach my $item (@{$rss->{items}}) {
-			$str .= qq!<LI><A HREF="$item->{'link'}">$item->{title}</A></LI>\n!;
+			# hopefully this xmldecode() will break nothing
+			my($link, $title) = map { xmldecode($_) } @{$item}{'link', 'title'};
+			$str .= qq!<LI><A HREF="$link">$title</A></LI>\n!;
 		}
 		setblock($bid, "$str$other");
 		return 1;
