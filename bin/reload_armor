@@ -36,7 +36,7 @@ $opts{'u'} ||= 'slash';
 	my $cpt = new Safe;
 	$cpt->permit(qw[:base_core :base_loop :base_math join]);
 	for my $a (@{$armors}) {
-		$_ = '';
+		local $_ = '';
 		$cpt->reval($a->{code});
 		die "Error in Armor '$a->{name}': $@\n" if $@;
 	}

@@ -30,43 +30,22 @@ $task{$PROGNAME}{code} = sub {
 	# Loop over all users.
 	my $nicks = ($slashdb->getDescriptions('users'))[0];
 	for (keys %{$nicks}) {
-		# Iterates over an array of array references. Each array
-		# reference contains ($uid, $nickname).
 		$user = $slashdb->getUser($_);
 
-		print STDERR "EMAILDISPLAY: [$user->{uid}/$user->{emaildisplay}]\n";
-		
 		# Should be a constant somewhere, probably. The naked '1' below
 		# refers to the code in $users->{emaildisplay} corresponding to 
 		# random rotation of $users->{fakeemail}. This would be much
 		# easier to do if $users->{emaildisplay} was in the schema.
 		next if $user->{emaildisplay} != 1;
 
-		# Get a random record from the 'spamarmor' table and then 
-		# create a Safe compartment to execute its regexp code.
-		my $armor_code = $slashdb->getRandomSpamArmor()->{code};
-		print STDERR "CODE:[$armor_code]\n";
-		my $cpt = new Safe;
-		# We only permit basic arithmetic, loop and looping opcodes.
-		# We also explicitly allow join since some code may involve
-		# Separating the address so that obfuscation can be performed
-		# in parts.
-		$cpt->permit(qw[:base_core :base_loop :base_math join]);
-		# Each compartment should be designed to take input from, and 
-		# send output to, $_.
-		$_ = $user->{realemail};
-		$cpt->reval($armor_code);
-
-		# Now check for errors.
-		if ($@) {
-			print "Error in compartment execution: $@\n";
-			next;
-		} else {
-			# If no errors? Save the result.
-			$slashdb->setUser($user->{uid}, {
-				fakeemail	=> $_,
-			});
-		}
+		# Randomize the email armor.
+		$user->{fakeemail} = getArmoredEmail($_);
+		
+		# If executed properly, $user->{fakeemail} should have a value.
+		# If so, save the result.
+		$slashdb->setUser($user->{uid}, {
+			fakeemail	=> $user->{fakeemail},
+		}) if $user->{fakeemail};
 	}
 };
 

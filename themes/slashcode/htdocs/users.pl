@@ -595,7 +595,12 @@ sub saveUser {
 	my $constants = getCurrentStatic();
 
 	my $uid = $user->{seclev} >= 100 ? shift : $user->{uid};
-	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
+	my $user_email = $slashdb->getUser(
+		$uid,
+		['nickname', 'realemail', 'fakeemail', 'emaildisplay']
+	);
+	my $user_fakeemail = ($user_email->{emaildisplay} == 1) ?
+		$user_email->{fakeemail} : getArmoredEmail($uid);
 	my($note, $author_flag);
 
 	# We start with the 'Saved ...' message.
@@ -607,7 +612,7 @@ sub saveUser {
 
 	# Check to insure that if a user is changing his email address, that
 	# it doesn't already exist in the userbase.
-	if ($user->{realemail} ne $form->{realemail}) {
+	if ($user_email->{realemail} ne $form->{realemail}) {
 		if ($slashdb->checkEmail($form->{realemail})) {
 			$note = getMessage('emailexists_msg', 0, 1);
 			return fixparam($note);
@@ -638,12 +643,10 @@ sub saveUser {
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
-	# Close, but not quite, if a user moves from NODISP/SHOWREAL to 
-	# SHOWARMORED, then the code should do-the-right-thing to fakeemail,
-	# namely regenerate it.
-	my @email_choices = ('', undef, $form->{realemail});
-	$form->{fakeemail} 	= $email_choices[$form->{emaildisplay}];
-
+	# Do the right thing with respect to the chosen email display mode
+	# and the options that can be displayed.
+	my @email_choices = ('', $user_fakeemail, $form->{realemail});
+	
 	# for the users table
 	my $users_table = {
 		sig		=> $form->{sig},
@@ -656,10 +659,8 @@ sub saveUser {
 		quote		=> $form->{quote},
 		session_login	=> $form->{session_login},
 		emaildisplay	=> $form->{emaildisplay},
+		fakeemail	=> $email_choices[$form->{emaildisplay}],
 	};
-	# Properly reset fakeemail based on user selection.
-	$users_table->{fakeemail} = $form->{fakeemail}
-		if defined $form->{fakeemail};
 
 	# don't want undef, want to be empty string so they
 	# will overwrite the existing record

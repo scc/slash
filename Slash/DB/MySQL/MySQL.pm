@@ -3492,6 +3492,18 @@ sub sqlSelectColumns {
 	return $rows;
 }
 
+
+sub getRandomSpamArmor {
+	my ($self) = @_;
+
+	my $ret = $self->sqlSelectAllHashref(
+		'armor_id', '*', 'spamarmors', 'active=1'
+	);
+	my @armor_keys = keys %{$ret};
+
+	return $ret->{$armor_keys[int(rand ($#armor_keys + 1))]};
+}
+
 ########################################################
 # Get a unique string for an admin session
 #sub generatesession {
