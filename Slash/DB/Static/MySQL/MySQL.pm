@@ -15,9 +15,8 @@ use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
-use vars qw($VERSION @ISA);
+use vars qw($VERSION);
 
-@ISA = qw( Slash::DB::Utility );
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: Bite my shiny, metal ass! 

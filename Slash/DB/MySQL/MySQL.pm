@@ -8,8 +8,9 @@ use strict;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
-use vars qw($VERSION);
+use vars qw($VERSION @ISA);
 
+@ISA = qw( Slash::DB::Utility );
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: I hate people who love me.  And they hate me.
