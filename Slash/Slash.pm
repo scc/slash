@@ -172,7 +172,8 @@ sub reparentComments {
 	}
 
 	# You know, we do assume comments are linear -Brian
-	for my $x (sort(keys(%$comments))) {
+	# how about numeric sorting ... ?  -- pudge
+	for my $x (sort { $a <=> $b } keys %$comments) {
 
 		my $pid = $comments->{$x}{pid};
 		my $reparent;
@@ -264,7 +265,7 @@ sub printComments {
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
 
-	unless($discussion) {
+	unless ($discussion) {
 		print getData('no_such_sid');
 		return 0;
 	}
