@@ -22,6 +22,9 @@ sub handler {
 	return OK;
 }
 
+sub DESTROY{
+}
+
 1;
 __END__
 

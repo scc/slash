@@ -118,39 +118,6 @@ my $whereFormkey = sub {
 #   is kinda slow...).
 #	 the getAuthorEdit() methods need to be refined
 ########################################################
-sub sqlConnect {
-# What we are going for here, is the ability to reuse
-# the database connection.
-# Ok, first lets see if we already have a connection
-	my($self) = @_;
-
-	if (defined($self->{_dbh})) {
-		unless ($self->{_dbh}) {
-			print STDERR ("Undefining and calling to reconnect: $@\n");
-			$self->{_dbh}->disconnect;
-			undef $self->{_dbh};
-			$self->sqlConnect();
-		}
-	} else {
-# Ok, new connection, lets create it
-		{
-			local @_;
-			eval {
-				local $SIG{'ALRM'} = sub { die "Connection timed out" };
-				alarm $timeout;
-				$self->{_dbh} = DBIx::Password->connect($self->{virtual_user});
-				alarm 0;
-			};
-			if ($@) {
-				#In the future we should have a backupdatabase
-				#connection in here. For now, we die
-				print STDERR "Major Mojo Bad things\n";
-				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
-				kill 9, $$ unless $self->{_dbh};	 # The Suicide Die
-			}
-		}
-	}
-}
 
 ########################################################
 sub init {
@@ -831,7 +798,6 @@ sub createUser {
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
-	$self->sqlInsert("users_key", { uid => $uid } );
 
 	return $uid;
 }
@@ -1074,7 +1040,9 @@ sub deleteTopic {
 ########################################################
 sub revertBlock {
 	my($self, $bid) = @_;
-	$self->sqlDo("update blocks set block = blockbak where bid = '$bid'");
+	my $db_bid = $self->{_dbh}->quote($bid);
+	my $block = $self->{_dbh}->selectrow_array("SELECT block from backup_blocks WHERE bid=$db_bid");
+	$self->sqlDo("update blocks set block = $block where bid = $db_bid");
 }
 
 ########################################################
@@ -1148,7 +1116,6 @@ sub saveBlock {
 		$self->sqlUpdate('blocks', {
 			seclev		=> $form->{bseclev},
 			block		=> $form->{block},
-			blockbak	=> $form->{block},
 			description	=> $form->{description},
 			type		=> $form->{type},
 			ordernum	=> $form->{ordernum},
@@ -1158,6 +1125,9 @@ sub saveBlock {
 			section		=> $form->{section},
 			retrieve	=> $form->{retrieve},
 			portal		=> $form->{portal},
+		}, 'bid=' . $self->{_dbh}->quote($bid));
+		$self->sqlUpdate('backup_blocks', {
+			block		=> $form->{block},
 		}, 'bid=' . $self->{_dbh}->quote($bid));
 	} else {
 		$self->sqlUpdate('blocks', {
@@ -1197,13 +1167,17 @@ sub saveColorBlock {
 		# save into colors and colorsback
 		$self->sqlUpdate('blocks', {
 				block => $colorblock,
-				blockbak => $colorblock,
+			}, "bid = '$form->{color_block}'"
+		$self->sqlUpdate('backup_blocks', {
+				block => $colorblock,
 			}, "bid = '$form->{color_block}'"
 		);
 
 	} elsif ($form->{colororig}) {
 		# reload original version of colors
-		$self->{_dbh}->do("update blocks set block = blockbak where bid = '$form->{color_block}'");
+		my $db_bid = $self->{_dbh}->quote($form->{color_block});
+		my $block = $self->{_dbh}->selectrow_array("SELECT block from backup_blocks WHERE bid=$db_bid");
+		$self->sqlDo("update blocks set block = $block where bid = $db_bid");
 	}
 }
 
@@ -2214,34 +2188,6 @@ sub getSubmissionForUser {
 	return $submission;
 }
 
-########################################################
-sub getSearch {
-	my($self) = @_;
-	# select comment ID, comment Title, Author, Email, link to comment
-	# and SID, article title, type and a link to the article
-	my $form = getCurrentForm();
-	my $threshold = getCurrentUser('threshold');
-	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
-		getDateFormat("time","d") . ",".
-		getDateFormat("date","t") . ",
-		uid, cid, ";
-
-	$sqlquery .= "	  " . $keysearch->($self, $form->{query}, "subject", "comment") if $form->{query};
-	$sqlquery .= "	  1 as kw " unless $form->{query};
-	$sqlquery .= "	  FROM newstories, comments
-			 WHERE newstories.sid=comments.sid ";
-	$sqlquery .= "     AND newstories.sid=" . $self->{_dbh}->quote($form->{sid}) if $form->{sid};
-	$sqlquery .= "     AND points >= $threshold ";
-	$sqlquery .= "     AND section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
-	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
-
-
-	my $cursor = $self->{_dbh}->prepare($sqlquery);
-	$cursor->execute;
-
-	my $search = $cursor->fetchall_arrayref;
-	return $search;
-}
 
 ########################################################
 sub getNewstoryTitle {
@@ -2253,73 +2199,6 @@ sub getNewstoryTitle {
 	return $title;
 }
 
-########################################################
-# Search users, you can also optionally pass it
-# array of users that can be ignored
-sub getSearchUsers {
-	my($self, $form, @users_to_ignore) = @_;
-	# userSearch REALLY doesn't need to be ordered by keyword since you
-	# only care if the substring is found.
-	my $sqlquery = "SELECT fakeemail,nickname,uid ";
-	$sqlquery .= " FROM users";
-	$sqlquery .= " WHERE uid not $users_to_ignore[1]" if $users_to_ignore[1];
-	shift @users_to_ignore;
-	for my $user (@users_to_ignore) {
-		$sqlquery .= " AND uid not $user";
-	}
-	if ($form->{query}) {
-		my $kw = $keysearch->($self, $form->{query}, 'nickname', 'ifnull(fakeemail,"")');
-		$kw =~ s/as kw$//;
-		$kw =~ s/\+/ OR /g;
-		$sqlquery .= "AND ($kw) ";
-	}
-	$sqlquery .= "ORDER BY uid LIMIT $form->{min}, $form->{max}";
-	my $sth = $self->{_dbh}->prepare($sqlquery);
-	$sth->execute;
-
-	my $users = $sth->fetchall_arrayref;
-
-	return $users;
-}
-
-########################################################
-sub getSearchStory {
-	my($self, $form) = @_;
-	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
-		", commentcount,section ";
-	$sqlquery .= "," . $keysearch->($self, $form->{query}, "title", "introtext") . " "
-		if $form->{query};
-	$sqlquery .= "	,0 " unless $form->{query};
-
-	if ($form->{query} || $form->{topic}) {
-		$sqlquery .= "  FROM stories ";
-	} else {
-		$sqlquery .= "  FROM newstories ";
-	}
-
-	$sqlquery .= $form->{section} ? <<EOT : 'WHERE displaystatus >= 0';
-WHERE ((displaystatus = 0 and "$form->{section}"="")
-        OR (section="$form->{section}" and displaystatus>=0))
-EOT
-
-	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
-	$sqlquery .= "   AND aid=" . $self->{_dbh}->quote($form->{author})
-		if $form->{author};
-	$sqlquery .= "   AND section=" . $self->{_dbh}->quote($form->{section})
-		if $form->{section};
-	$sqlquery .= "   AND tid=" . $self->{_dbh}->quote($form->{topic})
-		if $form->{topic};
-
-	$sqlquery .= " ORDER BY ";
-	$sqlquery .= " kw DESC, " if $form->{query};
-	$sqlquery .= " time DESC LIMIT $form->{min},$form->{max}";
-
-	my $cursor = $self->{_dbh}->prepare($sqlquery);
-	$cursor->execute;
-	my $stories = $cursor->fetchall_arrayref;
-
-	return $stories;
-}
 
 ########################################################
 sub getTrollAddress {
@@ -2806,7 +2685,7 @@ sub setUser {
 	my(@param, %update_tables, $cache);
 	my $tables = [qw(
 		users users_comments users_index
-		users_info users_key users_prefs
+		users_info users_prefs
 	)];
 
 	# special cases for password, exboxes
@@ -2860,7 +2739,7 @@ sub getUser {
 	my $answer;
 	my $tables = [qw(
 		users users_comments users_index
-		users_info users_key users_prefs
+		users_info users_prefs
 	)];
 	# The sort makes sure that someone will always get the cache if
 	# they have the same tables
@@ -3154,6 +3033,74 @@ sub getMenus {
 	}
 
 	return $menus;
+}
+########################################################
+sub sqlReplace {
+	my($self, $table, $data) = @_;
+	my($names, $values);
+
+	foreach (keys %$data) {
+		if (/^-/) {
+			$values .= "\n  $data->{$_},";
+			s/^-//;
+		} else {
+			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
+		}
+		$names .= "$_,";
+	}
+
+	chop($names);
+	chop($values);
+
+	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
+	$self->sqlConnect();
+	return $self->{_dbh}->do($sql) or errorLog($sql);
+}
+
+########################################################
+sub getKeys {
+	my($self, $table) = @_;
+	$self->sqlSelectColumns($table)
+		if $self->sqlTableExists($table);
+
+}
+
+########################################################
+sub sqlTableExists {
+	my($self, $table) = @_;
+	return unless $table;
+
+	my $sth = $self->{_dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
+	$self->sqlConnect();
+	$sth->execute;
+	my $te = $sth->rows;
+	$sth->finish;
+	return $te;
+}
+
+########################################################
+sub sqlSelectColumns {
+	my($self, $table) = @_;
+	return unless $table;
+
+	my $sth = $self->{_dbh}->prepare_cached("SHOW COLUMNS FROM $table");
+	$self->sqlConnect();
+	$sth->execute;
+	my @ret;
+	while (my @d = $sth->fetchrow) {
+		push @ret, $d[0];
+	}
+	$sth->finish;
+	return @ret;
+}
+
+########################################################
+# Get a unique string for an admin session
+sub generatesession {
+	my $newsid = crypt(rand(99999), $_[0]);
+	$newsid =~ s/[^A-Za-z0-9]//i;
+
+	return $newsid;
 }
 
 1;

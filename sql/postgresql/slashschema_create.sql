@@ -535,13 +535,18 @@ CREATE TABLE users_info (
 
 
 
-CREATE TABLE users_key (
-  uid SERIAL,
-  pubkey text,
-  PRIMARY KEY (uid)
+#
+# Table structure for table 'users_param'
+#
+DROP TABLE IF EXISTS users_param;
+CREATE TABLE users_param (
+	param_id int6 DEFAULT '0' NOT NULL auto_increment,
+	uid int4 DEFAULT '0' NOT NULL,
+	name varchar(32) NOT NULL,
+	value text,
+	UNIQUE uid_key (uid, name),
+	PRIMARY KEY (param_id)
 );
-
-
 
 
 CREATE TABLE users_prefs (

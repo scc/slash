@@ -710,17 +710,6 @@ INSERT INTO users_info VALUES (6,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','
 INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
 INSERT INTO users_info VALUES (8,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
 
-#
-# Dumping data for table 'users_key'
-#
-
-INSERT INTO users_key VALUES (2,NULL);
-INSERT INTO users_key VALUES (3,NULL);
-INSERT INTO users_key VALUES (4,NULL);
-INSERT INTO users_key VALUES (5,NULL);
-INSERT INTO users_key VALUES (6,NULL);
-INSERT INTO users_key VALUES (7,NULL);
-INSERT INTO users_key VALUES (8,NULL);
 
 #
 # Dumping data for table 'users_prefs'

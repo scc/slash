@@ -314,6 +314,8 @@ sub testExStr {
 	return $_;
 }
 
+sub DESTROY {
+}
 
 1;
 

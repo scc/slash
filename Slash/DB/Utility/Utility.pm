@@ -10,12 +10,43 @@ use Slash::Utility;
 #Class variable that stores the database handle
 
 ########################################################
-# Useful SQL Wrapper Functions
+# This should be inherited by all 3rd party modules
 ########################################################
-sub sanityCheck {
-	print STDERR "Sanity Check for Utility\n";
-}
+sub sqlConnect {
+# What we are going for here, is the ability to reuse
+# the database connection.
+# Ok, first lets see if we already have a connection
+	my($self) = @_;
 
+	if (defined($self->{_dbh})) {
+		unless ($self->{_dbh}) {
+			print STDERR ("Undefining and calling to reconnect: $@\n");
+			$self->{_dbh}->disconnect;
+			undef $self->{_dbh};
+			$self->sqlConnect();
+		}
+	} else {
+# Ok, new connection, lets create it
+		{
+			local @_;
+			eval {
+				local $SIG{'ALRM'} = sub { die "Connection timed out" };
+				alarm $timeout;
+				$self->{_dbh} = DBIx::Password->connect($self->{virtual_user});
+				alarm 0;
+			};
+			if ($@) {
+				#In the future we should have a backupdatabase
+				#connection in here. For now, we die
+				print STDERR "Major Mojo Bad things\n";
+				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
+				kill 9, $$ unless $self->{_dbh};	 # The Suicide Die
+			}
+		}
+	}
+}
+########################################################
+# Useful SQL Wrapper Functions
 ########################################################
 sub sqlSelectMany {
 	my($self, $select, $from, $where, $other) = @_;
@@ -108,7 +139,6 @@ sub sqlSelectHashref {
 
 	$self->sqlConnect();
 	my $sth = $self->{_dbh}->prepare_cached($sql);
-	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
 	unless ($sth->execute) {
 		errorLog($sql);
@@ -168,29 +198,6 @@ sub sqlUpdate {
 }
 
 ########################################################
-sub sqlReplace {
-	my($self, $table, $data) = @_;
-	my($names, $values);
-
-	foreach (keys %$data) {
-		if (/^-/) {
-			$values .= "\n  $data->{$_},";
-			s/^-//;
-		} else {
-			$values .= "\n  " . $self->{_dbh}->quote($data->{$_}) . ',';
-		}
-		$names .= "$_,";
-	}
-
-	chop($names);
-	chop($values);
-
-	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
-	$self->sqlConnect();
-	return $self->{_dbh}->do($sql) or errorLog($sql);
-}
-
-########################################################
 sub sqlInsert {
 	my($self, $table, $data) = @_;
 	my($names, $values);
@@ -213,51 +220,7 @@ sub sqlInsert {
 	return $self->{_dbh}->do($sql) or errorLog($sql);
 }
 
-########################################################
-sub getKeys {
-	my($self, $table) = @_;
-	$self->sqlSelectColumns($table)
-		if $self->sqlTableExists($table);
 
-}
-
-########################################################
-sub sqlTableExists {
-	my($self, $table) = @_;
-	return unless $table;
-
-	my $sth = $self->{_dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
-	$self->sqlConnect();
-	$sth->execute;
-	my $te = $sth->rows;
-	$sth->finish;
-	return $te;
-}
-
-########################################################
-sub sqlSelectColumns {
-	my($self, $table) = @_;
-	return unless $table;
-
-	my $sth = $self->{_dbh}->prepare_cached("SHOW COLUMNS FROM $table");
-	$self->sqlConnect();
-	$sth->execute;
-	my @ret;
-	while (my @d = $sth->fetchrow) {
-		push @ret, $d[0];
-	}
-	$sth->finish;
-	return @ret;
-}
-
-########################################################
-# Get a unique string for an admin session
-sub generatesession {
-	my $newsid = crypt(rand(99999), $_[0]);
-	$newsid =~ s/[^A-Za-z0-9]//i;
-
-	return $newsid;
-}
 
 #################################################################
 sub sqlDo {

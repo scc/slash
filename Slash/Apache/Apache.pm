@@ -45,12 +45,28 @@ sub IndexHandler {
 			return OK;
 		} else {
 			$r->filename($r->document_root . '/index.shtml');
+			writeLog("index.shtml",'');
 			return OK;
 		}
 	}
 	
 	return DECLINED;
 }
+
+sub InitHandler {
+	my($r) = @_;
+	my $cfg = Apache::ModuleConfig->get($r);
+	
+	unless($cfg->{slashdb}) {
+		$cfg->{slashdb}->sqlConnect();
+	}
+
+	return DECLINED;
+}
+
+sub DESTROY {
+}
+
 
 1;
 

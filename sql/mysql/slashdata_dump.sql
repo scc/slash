@@ -19,7 +19,6 @@
 #
 
 INSERT INTO authors VALUES ('God','God','mailto:god@god.gov','god@god.gov','','','HACKME',10000,'','',0,'god',1);
-INSERT INTO authors VALUES ('','All Authors',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,0);
 
 #
 # Dumping data for table 'blocks'
@@ -649,12 +648,6 @@ INSERT INTO users_index VALUES (1,'','','','',30,0);
 #
 
 INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0,0,0,0,0,0,0);
-
-#
-# Dumping data for table 'users_key'
-#
-
-INSERT INTO users_key VALUES (1,NULL);
 
 #
 # Dumping data for table 'users_param'

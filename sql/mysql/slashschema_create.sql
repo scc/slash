@@ -48,7 +48,6 @@ CREATE TABLE authors (
   quote char(50),
   copy char(255),
   pwd char(8),
-  seclev int(11),
   lasttitle char(20),
   section char(20),
   deletedsubmissions int(11) DEFAULT '0',
@@ -58,17 +57,25 @@ CREATE TABLE authors (
 );
 
 #
+# Table structure for table 'backup_blocks'
+#
+DROP TABLE IF EXISTS backup_blocks;
+CREATE TABLE backup_blocks (
+  bid varchar(30) DEFAULT '' NOT NULL,
+  block text,
+  PRIMARY KEY (bid)
+);
+
+#
 # Table structure for table 'blocks'
 #
 DROP TABLE IF EXISTS blocks;
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
-  aid varchar(20),
   seclev int(1),
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
-  blockbak text,
   section varchar(30) DEFAULT '' NOT NULL,
   ordernum tinyint(4) DEFAULT '0',
   title varchar(128),
@@ -81,6 +88,17 @@ CREATE TABLE blocks (
   KEY section (section)
 );
 
+# Table structure for table 'block_param'
+#
+DROP TABLE IF EXISTS block_param;
+CREATE TABLE blocks_param (
+  param_id int(11) DEFAULT '0' NOT NULL auto_increment,
+  uid int(11) DEFAULT '0' NOT NULL,
+  name varchar(32) NOT NULL,
+  value text,
+  UNIQUE uid_key (uid, name),
+  PRIMARY KEY (param_id)
+);
 #
 # Table structure for table 'commentcodes'
 #
@@ -588,16 +606,6 @@ CREATE TABLE users_info (
   m2unfairvotes int(11) DEFAULT '0' NOT NULL,
   upmods int(11) DEFAULT '0' NOT NULL,
   downmods int(11) DEFAULT '0' NOT NULL,
-  PRIMARY KEY (uid)
-);
-
-#
-# Table structure for table 'users_key'
-#
-DROP TABLE IF EXISTS users_key;
-CREATE TABLE users_key (
-  uid int(11) DEFAULT '0' NOT NULL,
-  pubkey text,
   PRIMARY KEY (uid)
 );
 
