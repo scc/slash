@@ -5,14 +5,6 @@
 
 package Slash::DB::MySQL;
 use strict;
-# note that we do not currently save subnets at all, so the only way to
-# get the IP address or subnet is brute force.  i have a script that
-# can get an IP from an MD5 in many cases within 15 hours (better on
-# a faster machine).
-# a file to contain all this data would be 126 GB, uncompressed.
-# although, we can make the dataset smaller by removing illegal IP
-# addresses (like 0., 192.168., 10., etc.).
-# -- pudge
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 use Slash::Utility;
@@ -1328,7 +1320,7 @@ sub savePollQuestion {
 			voters		=> $poll->{voters},
 			topic		=> $poll->{topic},
 			sid		=> $poll->{sid},
-			uid			=> getCurrentUser('uid'),
+			uid		=> getCurrentUser('uid'),
 			-date		=>'now()'
 		});
 		$poll->{qid} = $self->getLastInsertId();
@@ -2515,7 +2507,7 @@ sub createDiscussion {
 		url	=> $url,
 		topic	=> $topic,
 		type	=> $type,
-		uid			=> getCurrentUser('uid'),
+		uid	=> getCurrentUser('uid'),
 	});
 
 	return $self->getLastInsertId();
@@ -3251,7 +3243,7 @@ sub setUser {
 			$self->sqlReplace('users_acl', { uid => $uid, name => $_->[1]->{name}, value => $_->[1]->{value}});
 		} else {
 			$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]})
- 			if defined $_->[1];
+	 			if defined $_->[1];
 		}
 	}
 }

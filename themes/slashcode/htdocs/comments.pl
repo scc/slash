@@ -154,7 +154,7 @@ sub commentIndex {
 sub createDiscussion {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
-	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		$form->{url} ||= $ENV{HTTP_REFERER};
 		$slashdb->createDiscussion('', $form->{title},
 			$slashdb->getTime(), $form->{url}, $form->{topic}, 1
@@ -172,7 +172,7 @@ sub createDiscussionPage {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	commentIndex(@_);
-	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		slashDisplay('discussioncreate');
 	}
 }
