@@ -551,7 +551,7 @@ sub currentAdminUsers {
 	my $now = timeCalc($slashdb->getTime(), "%s", 0);
 	my $aids = $slashdb->currentAdmin();
 	for my $data (@$aids) {
-		my($usernick, $usertime, $lasttitle) = @$data;
+		my($usernick, $usertime, $lasttitle, $uid) = @$data;
 		if ($usernick eq $user->{nickname}) {
 			$usertime = "-";
 		} else {
@@ -565,7 +565,7 @@ sub currentAdminUsers {
 					. int(($usertime%3600)/60+0.5) . "m";
 			}
 		}
-		@$data = ($usernick, $usertime, $lasttitle);
+		@$data = ($usernick, $usertime, $lasttitle, $uid);
 	}
 
 	return slashDisplay('currentAdminUsers', {

@@ -2279,7 +2279,7 @@ sub checkForm {
 # Current admin users
 sub currentAdmin {
 	my($self) = @_;
-	my $aids = $self->sqlSelectAll('nickname,lasttime,lasttitle', 'sessions,users',
+	my $aids = $self->sqlSelectAll('nickname,lasttime,lasttitle,sessions.uid', 'sessions,users',
 		'sessions.uid=users.uid GROUP BY sessions.uid'
 	);
 
