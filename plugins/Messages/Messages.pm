@@ -139,8 +139,8 @@ sub create {
 
 		my $user = getCurrentUser();
 		$data->{_NAME}    = delete($data->{template_name});
-		$data->{_PAGE}    = $user->{currentPage};
-		$data->{_SECTION} = $user->{currentSection};
+		$data->{_PAGE}    = delete($data->{template_page})    || $user->{currentPage};
+		$data->{_SECTION} = delete($data->{template_section}) || $user->{currentSection};
 
 		# set subject
 		if (exists $data->{subject} && ref($data->{subject}) eq 'HASH') {
@@ -150,8 +150,8 @@ sub create {
 			}
 
 			$data->{subject}{_NAME}    = delete($data->{subject}{template_name});
-			$data->{subject}{_PAGE}    = $user->{currentPage};
-			$data->{subject}{_SECTION} = $user->{currentSection};
+			$data->{subject}{_PAGE}    = delete($data->{subject}{template_page})    || $user->{currentPage};
+			$data->{subject}{_SECTION} = delete($data->{subject}{template_section}) || $user->{currentSection};
 		}
 
 		$message = $data;
