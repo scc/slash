@@ -441,6 +441,16 @@ sub getSectionTopicsNamesBySection {
 }
 
 ########################################################
+sub getSectionExtras {
+	my($self, $section) = @_;
+	return unless $section;
+
+	my $answer = $self->sqlSelectAll('name,value', 'section_extras', " section = '$section'");
+
+	return $answer;
+}
+
+########################################################
 sub getContentFilters {
 	my($self, $formname, $field) = @_;
 
@@ -3199,6 +3209,7 @@ sub createStory {
 	# yes, this format is correct, don't change it :-)
 	my $sid = sprintf('%02d/%02d/%02d/%02d%0d2%02d',
 		$year, $mon+1, $mday, $hour, $min, $sec);
+	$story->{sid} = $sid;
 
 	# If this came from a submission, update submission and grant
 	# Karma to the user
@@ -3538,15 +3549,16 @@ sub getPollVotesMax {
 ##################################################################
 # Probably should make this private at some point
 sub _saveExtras {
-	my($self, $form) = @_;
-	return unless $self->sqlTableExists($form->{section});
-	my $extras = $self->sqlSelectColumns($form->{section});
-	my $E;
-
-	for (@$extras) { $E->{$_} = $form->{$_} }
-
-	if ($self->sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
-		$self->sqlInsert($form->{section}, $E);
+	my($self, $story) = @_;
+	my $extras = $self->getSectionExtras($story->{section});
+	return unless $extras;
+	for (@$extras) {
+		my $key = $_->[1];
+		$self->sqlReplace('story_param', { 
+				sid => $story->{sid}, 
+				name => $key,
+				value => $story->{$key},
+				}) if($story->{$key});
 	}
 }
 

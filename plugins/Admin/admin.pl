@@ -1014,18 +1014,14 @@ sub editStory {
 
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 
-	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) {
+		$extracolumns = $slashdb->getSectionExtras($storyref->{section}) || [ ];
 		$storyref->{writestatus} = "dirty";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
 		$storyref->{uid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
-
-		for (@{$extracolumns}) {
-			$storyref->{$_} = $form->{$_} || $storyref->{$_};
-		}
 
 		$storyref->{writestatus} = $form->{writestatus} if exists $form->{writestatus};
 		$storyref->{displaystatus} = $form->{displaystatus} if exists $form->{displaystatus};
@@ -1063,10 +1059,12 @@ sub editStory {
 		my $tmp = $user->{currentSection};
 		$user->{currentSection} = $slashdb->getStory($sid, 'section');
 		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
+		$extracolumns = $slashdb->getSectionExtras($user->{currentSection}) || [ ];
 		$user->{currentSection} = $tmp;
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} else { # New Story
+		$extracolumns = $slashdb->getSectionExtras($storyref->{section}) || [ ];
 		$storyref->{displaystatus} =	$slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} =	$slashdb->getVar('defaultcommentstatus', 'value');
 		$storyref->{tid} =		$slashdb->getVar('defaulttopic', 'value');
@@ -1075,6 +1073,11 @@ sub editStory {
 		$storyref->{'time'} = $slashdb->getTime();
 		$storyref->{uid} = $user->{uid};
 		$storyref->{writestatus} = "dirty";
+	}
+
+	for (@{$extracolumns}) {
+		my $key = $_->[1];
+		$storyref->{$key} = $form->{$key} || $storyref->{$key};
 	}
 
 	$sections = $slashdb->getDescriptions('sections');
@@ -1104,18 +1107,18 @@ sub editStory {
 	$autonode_check = "on" if $form->{autonode};
 	$fastforward_check = "on" if $form->{fastforward};
 
-	if (@{$extracolumns}) {
-		$extracolumn_flag = 1;
-
-		for (@{$extracolumns}) {
-			next if $_ eq 'sid';
-			my($sect, $col) = split m/_/;
-			$storyref->{$_} = $form->{$_} || $storyref->{$_};
-
-			$extracolref->{$_}{sect} = $sect;
-			$extracolref->{$_}{col} = $col;
-		}
-	}
+#	if (@{$extracolumns}) {
+#		$extracolumn_flag = 1;
+#
+#		for (@{$extracolumns}) {
+#			next if $_ eq 'sid';
+#			my($sect, $col) = split m/_/;
+#			$storyref->{$_} = $form->{$_} || $storyref->{$_};
+#
+#			$extracolref->{$_}{sect} = $sect;
+#			$extracolref->{$_}{col} = $col;
+#		}
+#	}
 
 # hmmmm
 #Import Image (don't even both trying this yet :)<BR>
@@ -1144,11 +1147,10 @@ sub editStory {
 		fixquotes_check		=> $fixquotes_check,
 		autonode_check		=> $autonode_check,
 		fastforward_check	=> $fastforward_check,
-		extracolumn_flag	=> $extracolumn_flag,
-		extracolref		=> $extracolref,
 		user			=> $user,
 		authoredit_flag		=> $authoredit_flag,
 		ispell_comments		=> $ispell_comments,
+		extras		=> $extracolumns,
 	});
 }
 

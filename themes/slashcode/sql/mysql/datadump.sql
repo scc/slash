@@ -61,7 +61,6 @@ INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put i
 # Dumping data for table 'content_filters'
 #
 
-INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('.*first.*post.*','comments','gi','postersubj',0.0000,0,0,'What do you want? A medal?');
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('^(?:\\s+)','comments','gi','postersubj',0.0000,7,0,'Lots of space in the subject ... lots of space in the head.');
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('^(?:\\s+)','comments','gi','postercomment',0.0000,40,0,'Lots of space in the comment ... lots of space in the head.');
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('(?:(?:\\W){5,})','comments','gi','postercomment',0.0000,5,25,'Junk character post.');

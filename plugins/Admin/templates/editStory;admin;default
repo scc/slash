@@ -95,6 +95,16 @@ __template__
 	</TR>
 	[% END %]
 
+	[% FOR extra = extras %]
+		<TR>
+			<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
+			<B>[% extra.0 %]</B> </FONT></TD>
+			<TD BGCOLOR="[% user.bg.2 %]">
+			<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% FILTER strip_attribute; storyref.${extra.1}; END %]" SIZE="50">
+			</TD>
+		</TR>
+	[% END %]
+
 	<TR>
 		<TD BGCOLOR="[% user.bg.3 %]">&nbsp; </TD>
 		<TD BGCOLOR="[% user.bg.2 %]"><FONT COLOR="[% user.fg.2 %]">
@@ -129,29 +139,6 @@ __template__
 <TD><TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">[% FILTER strip_literal; storyref.introtext; END %]</TEXTAREA></TD>
 <TD valign="top">[% ispell_comments.introtext %]</TD>
 </TR></TABLE><BR>
-
-[% IF extracolumn_flag %]
-<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
-	<TR>
-		<TD ALIGN="RIGHT" COLSPAN="2" BGCOLOR="[% user.bg.3 %]">
-		<FONT COLOR="[% user.fg.3 %]"> <B>Extra Data for This Section</B> </FONT>
-		</TD>
-	</TR>
-
-	[% FOREACH val = extracolref.keys %]
-	<TR>
-		<TD BGCOLOR="[% user.bg.3 %]">
-		<FONT COLOR="[% user.fg.3 %]">
-		<B>[% extracolref.$val.col %]</B> </FONT>
-		</TD>
-		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="[% val %]" VALUE="[% FILTER strip_attribute; storyref.$val; END %]" SIZE="64">
-		</TD>
-	</TR>
-	[% END %]
-
-</TABLE>
-[% END %]
 
 [% INCLUDE editbuttons %]
 

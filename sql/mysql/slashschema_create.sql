@@ -410,6 +410,22 @@ CREATE TABLE sections (
 ) TYPE = myisam;
 
 #
+# Table structure for table 'section_extras'
+#
+
+DROP TABLE IF EXISTS section_extras;
+CREATE TABLE section_extras (
+	param_id mediumint UNSIGNED NOT NULL auto_increment,
+	section varchar(30) NOT NULL,
+	name varchar(100) NOT NULL,
+	value varchar(100) NOT NULL,
+	FOREIGN KEY (section) REFERENCES sections(section),
+	UNIQUE extra (section,name),
+	PRIMARY KEY (param_id)
+) TYPE = myisam;
+
+
+#
 # Table structure for table 'section_topics'
 #
 
@@ -545,7 +561,7 @@ CREATE TABLE story_param (
 	param_id mediumint UNSIGNED NOT NULL auto_increment,
 	sid char(16) NOT NULL,
 	name varchar(32) DEFAULT '' NOT NULL,
-	value varchar(254) DEFAULT '' NOT NULL,
+	value text DEFAULT '' NOT NULL,
 	UNIQUE story_key (sid,name),
 	PRIMARY KEY (param_id)
 ) TYPE = myisam;

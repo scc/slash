@@ -61,7 +61,7 @@ END %]
 	</TABLE>
 
 
-[% IF full && (story.bodytext || story.books_publisher) %]
+[% IF full && story.bodytext %]
 
 <BR>
 
