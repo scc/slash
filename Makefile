@@ -35,10 +35,10 @@ CP = cp
 PLUGINS = `find . -name CVS -prune -o -type d -maxdepth 1 -print`
 
 # Perl scripts, grouped by directory.
-BINFILES = `find bin -name CVS -prune -o -type f -print`
-SBINFILES = `find sbin -name CVS -prune -o -type f -print`
-THEMEFILES = `find themes -name CVS -prune -o -name \*.pl -print`
-PLUGINFILES = `find plugins -name CVS -prune -o -name \*.pl -print`
+BINFILES = `find bin -name CVS -prune -o -name [a-zA-Z]\* -type f -print`
+SBINFILES = `find sbin -name CVS -prune -o -name [a-zA-Z]\* -type f -print`
+THEMEFILES = `find themes -name CVS -prune -o -name [a-zA-z]\*.pl -print`
+PLUGINFILES = `find plugins -name CVS -prune -o -name [a-zA-Z]\*.pl -print`
 
 # What do we use to invoke perl?
 REPLACEWITH = `$(PERL) -MConfig -e 'print $$Config{startperl}' | sed 's/@/\\@/g'`

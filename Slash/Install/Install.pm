@@ -266,7 +266,7 @@ sub getPluginList {
 	return \%plugins;
 }
 
-sub reloadArmorFile {
+sub reloadArmors {
 	my($self, $armors) = @_;
 	my $count = 0;
 

@@ -531,9 +531,11 @@ sub applyMetaModeration {
 ########################################################
 # For dailyStuff
 # 	This should only be run once per day, if this isn't
-#	true, the simple logic below, breaks. This returns 
-# 	a list of RECENTLY expired users. We define RECENTLY
-#	as since-the-last-time-this-code-was-executed.
+#	true, the simple logic below, breaks. This can be 
+#	fixed by moving the by_days trigger to a date 
+#	based system as opposed to a counter-based one,
+#	or even adding a date component to expiry checks,
+#	which might be a better solution.
 sub checkUserExpiry {
 	my ($self) = @_;
 	my ($ret); 
@@ -561,6 +563,47 @@ sub checkUserExpiry {
 	} @{$ret};
 
 	return \@returnable;
+}
+
+
+########################################################
+# For moderation scripts. 
+#	This sub returns the mmids of M2 votes 
+#	that are eligible for processing (comments that
+#	have the appropriate number of M2 votes)
+#
+sub getM2QuorumIDs {
+	my ($self) = @_;
+	my $constants = getCurrentStatic();
+
+	# I hate having a literal '10' here, but that's the code that means
+	# "these M2 entries haven't been reconciled yet". This is yet 
+	# another argument for a Slash::Constants module.
+	my $list = $self->sqlSelectAll(
+		'mmid, count(*) as c', 'moderatorlog', 
+		'WHERE flag=10',
+		"GROUP BY mmid HAVING c >= $constants->{m2_quorum}"
+	);
+
+	# Flatten returned list into a list of MMIDs.
+	my @returnable = map { $_ = $_->[0]; } @{$list};
+
+	return \@returnable;
+}
+
+
+########################################################
+# For moderation scripts. 
+#	This sub returns the meta-moderation information
+#	given the appropriate M2ID (primary
+#	key into the metamodlog table).
+#
+sub getMetamoderations {
+	my ($self, $mmid) = @_;
+
+	my $ret = $self->sqlSelectAllHashref('*', 'metamodlog', "mmid=$mmid");
+
+	return $ret;
 }
 
 
