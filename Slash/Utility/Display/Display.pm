@@ -406,18 +406,46 @@ The 'linkStory' template block.
 sub linkStory {
 	my($story_link) = @_;
 	my $user = getCurrentUser();
-	my($mode, $threshold, $dynamic);
+	my $constants = getCurrentStatic();
+	my $slashdb = getCurrentDB();
 
-	if ($ENV{SCRIPT_NAME} || !$story_link->{section}) {
-		$mode = $story_link->{mode} || $user->{mode};
-		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
-		# all the logic for whether to do dynamic or static link
-		# goes right here
-		$dynamic = 1 if $story_link->{mode} || exists $story_link->{threshold} || $ENV{SCRIPT_NAME};
+	my $mode = $story_link->{mode} || $user->{mode};
+	my $threshold = undef;
+	$threshold = $story_link->{threshold} if exists $story_link->{threshold};
+	my $dynamic = 0;
+
+	# Setting $dynamic properly is important.  When generating the
+	# AC index.shtml, it's a big win if we link to other
+	# prerendered .shtml URLs whenever possible/appropriate.
+	# But, we must link to the .pl when necessary.
+
+	if ($ENV{SCRIPT_NAME} or !$user->{is_anon}) {
+		# Whenever we're invoked from Apache, use dynamic links.
+		# This test will be true 99% of the time we come through
+		# here, so it's first.
+		$dynamic = 1;
+	} elsif ($mode) {
+		# If we're an AC script, but this is a link to e.g.
+		# mode=nocomment, then we need to have it be dynamic.
+		$dynamic = 1 if $mode ne $slashdb->getUser(
+			$constants->{anonymous_coward_uid},
+			'mode',
+		);
+	}
+	if (!$dynamic and defined($threshold)) {
+		# If we still think we can get away with a nondynamic link,
+		# we need to check one more thing.  Even an AC linking to
+		# an article needs to make the link dynamic if it's the
+		# "n comments" link, where threshold = -1.  For maximum
+		# compatibility we check against the AC's threshold.
+		$dynamic = 1 if $threshold != $slashdb->getUser(
+			$constants->{anonymous_coward_uid},
+			'threshold'
+		);
 	}
 
 	return _hard_linkStory($story_link, $mode, $threshold, $dynamic)
-		if getCurrentStatic('comments_hardcoded');
+		if $constants->{comments_hardcoded};
 
 	return slashDisplay('linkStory', {
 		mode		=> $mode,
@@ -880,6 +908,9 @@ sub linkComment {
 		adminflag	=> $adminflag,
 		date		=> $date,
 		pid		=> $comment->{realpid} || $comment->{pid},
+			# $comment->{threshold}? Hmm. I'm not sure what it
+			# means for a comment to have a threshold. If it's 0,
+			# does the following line do the right thing? - Jamie
 		threshold	=> $comment->{threshold} || $user->{threshold},
 		commentsort	=> $user->{commentsort},
 		mode		=> $user->{mode},
@@ -1015,13 +1046,13 @@ sub _hard_linkStory {
 
 	if ($dynamic) {
 	    my $link = qq[<A HREF="$constants->{rootdir}/article.pl?sid=$story_link->{sid}];
-            $link .= "&amp;mode=$mode" if $mode;
-            $link .= "&amp;threshold=$threshold" if $threshold;
+	    $link .= "&amp;mode=$mode" if $mode;
+	    $link .= "&amp;threshold=$threshold" if defined($threshold);
 	    $link .= qq[">$story_link->{link}</A>];
-            return $link;
-        } else {
+	    return $link;
+	} else {
 	    return qq[<A HREF="$constants->{rootdir}/$story_link->{section}/$story_link->{sid}.shtml">$story_link->{link}</A>];
-        }
+	}
 }
 
 
@@ -1038,6 +1069,9 @@ sub _hard_linkComment {
 
 	my $display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}|;
 	$display .= "&op=$comment->{op}" if $comment->{op};
+		# $comment->{threshold}? Hmm. I'm not sure what it
+		# means for a comment to have a threshold. If it's 0,
+		# does the following line do the right thing? - Jamie
 	$display .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
 	$display .= "&commentsort=$user->{commentsort}";
 	$display .= "&mode=$user->{mode}";

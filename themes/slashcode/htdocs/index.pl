@@ -242,7 +242,8 @@ sub displayStories {
 				'link'	=> length($story->{bodytext}) . ' ' .
 					   getData('bytes'),
 				sid	=> $sid,
-				mode	=> 'nocomment'
+				mode	=> 'nocomment',
+				section	=> $thissection
 			}) if $story->{bodytext};
 
 			my @cclink;
@@ -253,7 +254,8 @@ sub displayStories {
 					$cclink[0] = linkStory({
 						sid		=> $sid,
 						threshold	=> $user->{threshold},
-						'link'		=> $thresh
+						'link'		=> $thresh,
+						section		=> $thissection
 					});
 				}
 			}
@@ -261,7 +263,8 @@ sub displayStories {
 			$cclink[1] = linkStory({
 				sid		=> $sid,
 				threshold	=> -1,
-				'link'		=> $cc || 0
+				'link'		=> $cc || 0,
+				section		=> $thissection
 			});
 
 			push @cclink, $thresh, ($cc || 0);
