@@ -257,12 +257,10 @@ sub createComment {
 	# is correct?  -- pudge
 	# This is fine as is; if the insert failed, we've already
 	# returned out of this method. - Jamie
+	$self->setStoryDirty($header);
 	$self->sqlUpdate(
 		"discussions",
-		{
-			-commentcount	=> 'commentcount+1',
-			flags		=> "dirty",
-		},
+		{ -commentcount	=> 'commentcount+1' },
 		"id=$header",
 	);
 
@@ -1561,6 +1559,42 @@ sub deleteStory {
 }
 
 ########################################################
+# Interim kludgy method to do something that has to get done
+# a lot:  set a story dirty, given either its sid or its
+# discussion ID.
+sub setStoryDirty {
+	my($self, $id) = @_;
+	return unless $id;
+	my $sid = '';
+	if ($id =~ /\D/) {
+		# There's a non-numeric character in it, so it's not a
+		# discussion ID.  Assume it's a story sid.
+		$sid = $id;
+		# Don't bother trying to get the corresponding
+		# discussion ID (if any);  serves no purpose at the
+		# moment, so we might as well not waste time.
+		$id = '';
+	} else {
+		# It's numeric, so it must be a discussion ID.  Get the
+		# corresponding story sid, if there is one.
+		$sid = $self->sqlSelect('sid', 'discussions', "id=$id");
+		# As long as we already know the discussion ID, keep it
+		# around, we'll dirty it up in a moment.
+	}
+
+	# Mark the story dirty if we have a valid story sid.
+	$self->setStory($sid, { writestatus => 'dirty' }) if $sid;
+	# If we know the discussion ID as well, we should set it dirty
+	# (too).  But we won't because noplace in the code reads this
+	# field right now, so nobody would care!
+#	$self->sqlUpdate('discussions',
+#		{ flags => 'dirty' },
+#		"id=$id") if $id;
+	# And update the global write var too.
+	$self->setVar('writestatus', 'dirty');
+}
+
+########################################################
 sub setStory {
 	my($self, $sid, $hashref) = @_;
 	my(@param, %update_tables, $cache);
@@ -2774,7 +2808,7 @@ sub getCommentsForUser {
 	my $cids = [];
 	while (my $comment = $thisComment->fetchrow_hashref) {
 		push @$comments, $comment;
-		push @$cids, $comment->{cid} if $comment->{points} >= $user->{threshold};
+		push @$cids, $comment->{cid};# if $comment->{points} >= $user->{threshold};
 	}
 	$thisComment->finish;
 
@@ -2788,6 +2822,8 @@ sub getCommentsForUser {
 	# grabs their full text as well.  Wasteful.  We could probably
 	# just refuse to push $comment (above) when
 	# ($comment->{points} < $user->{threshold}). - Jamie
+	# That has side effects and doesn't do that much good anyway,
+	# see SF bug 452558. - Jamie
 	my $comment_texts = $self->_getCommentText($cids);
 	# Now distribute those texts into the $comments hashref.
 
@@ -2795,7 +2831,7 @@ sub getCommentsForUser {
 		# we need to check for *existence* of the hash key,
 		# not merely definedness; exists is faster, too -- pudge
 		if (!exists($comment_texts->{$comment->{cid}})) {
-#			errorLog("no text for cid " . $comment->{cid});
+			errorLog("no text for cid " . $comment->{cid});
 		} else {
 			$comment->{comment} = $comment_texts->{$comment->{cid}};
 		}
@@ -2819,7 +2855,7 @@ sub _getCommentText {
 	# If this is the first time this is called, create an empty comment text
 	# cache (a hashref).
 	$self->{_comment_text} ||= { };
-	if (scalar(keys %{$self->{_comment_text}}) > 10_000) {
+	if (scalar(keys %{$self->{_comment_text}}) > 8_000) {
 		# Cache too big. Big cache bad. Kill cache. Kludge.
 		undef $self->{_comment_text};
 		$self->{_comment_text} = { };
