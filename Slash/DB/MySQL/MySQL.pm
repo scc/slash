@@ -1765,7 +1765,8 @@ sub checkResponseTime {
 	my($response_time) = $self->sqlSelect("$now - ts", 'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}));
 
-	if ($constants->{DEBUG}) {
+#	if ($constants->{DEBUG}) {
+	if (1) { # this looks fishy to me, let's check it - Jamie
 		print STDERR "SQL select $now - ts from formkeys where formkey = '$form->{formkey}'\n";
 		print STDERR "LIMIT REACHED $response_time\n";
 	}
@@ -1786,10 +1787,12 @@ sub validFormkey {
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	my $where = $self->_whereFormkey($id);
-	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
+	my($is_valid) = $self->sqlSelect(
+		'COUNT(*)',
+		'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}) .
-		" AND $where " .
-		"AND ts >= $formkey_earliest AND formname = '$formname'");
+			" AND $where" .
+			" AND ts >= $formkey_earliest AND formname = '$formname'");
 
 	print STDERR "ISVALID $is_valid\n" if $constants->{DEBUG};
 	return($is_valid);
@@ -1805,7 +1808,8 @@ sub getFormkeyTs {
 
 	my($ts) = $self->sqlSelect(
 		$tscol,
-		"formkeys", "formkey='$formkey'");
+		"formkeys",
+		"formkey='" . $self->sqlQuote($formkey));
 
 	print STDERR "FORMKEY TS $ts\n" if $constants->{DEBUG};
 	return($ts);
@@ -1917,10 +1921,12 @@ sub checkMaxReads {
 		comments 	=> $constants->{max_comments_viewings},
 		users		=> $constants->{max_users_viewings},
 	};
+	my $count_max = $maxreads->{$formname} || 0;
 	my($limit_reached) = $self->sqlSelect(
-		"count(*) >= $maxreads->{$formname}",
+		"COUNT(*) AS count",
 		"formkeys",
-		"$where AND ts >= $formkey_earliest AND formname = '$formname'");
+		"$where AND ts >= $formkey_earliest AND formname = '$formname'",
+		"HAVING count >= $count_max");
 
 	return $limit_reached ? $maxreads->{$formname} : 0;
 }
@@ -1950,9 +1956,10 @@ sub checkMaxPosts {
 		: $constants->{"max_${formname}_allowed"};
 
 	my($limit_reached) = $self->sqlSelect(
-		"count(*) >= $maxposts",
+		"COUNT(*) AS count",
 		"formkeys",
-		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'");
+		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'",
+		"HAVING count >= $maxposts");
 
 	if ($constants->{DEBUG}) {
 		print STDERR "LIMIT REACHED (times posted) $limit_reached\n";
@@ -2215,7 +2222,9 @@ sub checkForm {
 	my($self, $formkey, $formname) = @_;
 	$self->sqlSelect(
 		"value,submit_ts",
-		"formkeys", "formkey='$formkey' and formname = '$formname'"
+		"formkeys",
+		"formkey=" . $self->sqlQuote($formkey)
+			. " AND formname = '$formname'"
 	);
 }
 

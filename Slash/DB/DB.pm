@@ -12,7 +12,7 @@ use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: Bender's a genius!
+# FRY: Would you cram a sock in it, Bender?
 
 # Registry of DBI DSNs => Slash::DB driver modules
 # If you add another driver, make sure there's an entry here
