@@ -528,7 +528,7 @@ sub check_daily {
 	my $is_tomorrow = 0;
 	my $timezones = $slashdb->getDescriptions('tzcodes');
 	# Assume the SQL server is on GMT, like the INSTALL dictates
-	my $gmt_last = UnixDate(ParseDate($slashdb->getVar('daily_last', 'value')), "%s");
+	my $gmt_last = UnixDate(ParseDate($slashdb->getVar('daily_last', 'value')), "%s") || 0;
 	# What the DB thinks is now, in unix epoch seconds
 	my $gmt_now = UnixDate(ParseDate($slashdb->getTime()), "%s");
 	# Get the offset to local time in seconds
@@ -536,28 +536,18 @@ sub check_daily {
 		"tzcodes.off_set",
 		"tzcodes,vars",
 		"vars.name='daily_tz' AND tzcodes.tz=vars.value"
-	) || 0;
+	);
+	$loc_gmt_offset ||= 0;
 	# Get the offset to the daily_attime in seconds
-	my $daily_attime = join(" ", "1970-01-01", $slashdb->getVar('daily_attime', 'value'));
+	my $daily_attime = join(" ", "1970-01-01",
+		($slashdb->getVar('daily_attime', 'value') || "00:00:00"));
 	my $loc_attime_offset = UnixDate(ParseDate($daily_attime), "%s");
-	# Offset "now" to account for the requested daily attime
-	my $loc_last_offset = $gmt_last - $loc_gmt_offset + $loc_attime_offset;
-	# Find the next boundary point by going back two days and then
-	# skipping forward until we pass "last"
-	my $loc_next_offset_dayboundary = int($loc_last_offset / 86400 - 2) * 86400;
-	$loc_next_offset_dayboundary += 86400 while $loc_next_offset_dayboundary <= $gmt_last;
-	# XXX For debugging - delete before release
-	slashdLog(join(" ",
-		"(debug code)",
-		"gmt_last $gmt_last",
-		"gmt_now $gmt_now",
-		"loc_gmt_offset $loc_gmt_offset",
-		"daily_attime $daily_attime",
-		"loc_attime_offset $loc_attime_offset",
-		"loc_last_offset $loc_last_offset",
-		"loc_next_offset_dayboundary $loc_next_offset_dayboundary",
-	));
-	if ($loc_next_offset_dayboundary < $gmt_now) {
+	# Find the boundary point several days ago
+	my $loc_dayboundary = int($gmt_last / 86400 - 3) * 86400;
+	$loc_dayboundary += $loc_attime_offset - $loc_gmt_offset;
+	# Find the boundary point we need to cross to get to "tomorrow"
+	$loc_dayboundary += 86400 while $loc_dayboundary <= $gmt_last;
+	if ($loc_dayboundary < $gmt_now) {
 		$is_tomorrow = 1;
 		my $gmt_now_sqlformat = UnixDate(
 			ParseDateString("epoch $gmt_now"), "%Y-%m-%d %T"
