@@ -1261,7 +1261,7 @@ sub listStories {
 			section		=> $section,
 			td		=> $td,
 			td2		=> $td2,
-			writestatus		=> $writestatus,
+			writestatus	=> $writestatus,
 			displaystatus	=> $displaystatus,
 			tbtitle		=> $tbtitle,
 		};
@@ -1273,8 +1273,8 @@ sub listStories {
 	slashDisplay('listStories', {
 		sectionflag	=> $sectionflag,
 		storylistref	=> $storylistref,
-		'x'		=> $i + $first_story, # XXX minus one? possible fencepost error
-		left		=> $count - $i,
+		'x'		=> $i + $first_story,
+		left		=> $count - ($i + $first_story),
 	});
 }
 

@@ -83,7 +83,7 @@ END %]
 
 </TABLE>
 
-[% IF story.x > 0 %]
+[% IF story.x > 0 and left > 0 %]
 <P ALIGN="RIGHT">
 <B>
 <A HREF="[% env.script_name %]?section=[% form.section %]&op=list&next=[% story.x %]">[% left %] More</A></B></P>
