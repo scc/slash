@@ -32,6 +32,7 @@ use DBI;
 use Data::Dumper;  # the debuggerer's best friend
 use Exporter ();
 use File::Spec::Functions;
+use Symbol 'gensym';
 use HTML::Entities;
 use Mail::Sendmail;
 use URI;
@@ -55,7 +56,7 @@ $VERSION = '1.001015';	# v1.1.15
 	header horizmenu linkComment linkStory lockTest
 	moderatorCommentLog pollbooth portalbox printComments
 	redirect selectMode selectSection selectSortcode
-	selectThreshold selectTopic sendEmail titlebar
+	selectThreshold selectTopic sendEmail titlebar gensym
 );  # anonLog
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
