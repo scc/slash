@@ -351,6 +351,7 @@ sub _install {
 				next unless /^INSERT/;
 				next unless /^UPDATE/;
 				next unless /^REPLACE/;
+				next unless /^ALTER/;
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;
