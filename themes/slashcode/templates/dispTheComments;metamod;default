@@ -52,9 +52,9 @@ Play fairly and help make [% constants.sitename %] a little better for everyone.
 <LI>Scores and information identifying the posters of these comments have been
 removed to help prevent bias in meta moderation. If you really need to know,
 you can click through and see the original message, but we encourage you not
-to do this unless you need more context to fairly meta moderate.</LI>
+to do this unless you need more context to fairly meta moderate.<BR><BR></LI>
 
-<LI>Today, you have [% comments.size %] moderations to meta-moderate.
+<LI>Today, you have [% comments.size %] moderations to meta-moderate.</LI>
 
 </UL>
 
