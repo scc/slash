@@ -8,7 +8,7 @@
 ##
 
 #   the used tools
-VERSION = 1.1.3-bender
+VERSION = 1.1.4-bender
 DISTNAME = slash
 DISTVNAME = $(DISTNAME)-$(VERSION)
 
