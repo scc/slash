@@ -30,6 +30,7 @@ Unless otherwise noted, they are publically available functions.
 use strict;
 use Apache;
 use Apache::ModuleConfig;
+use Compress::Zlib;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
@@ -98,6 +99,8 @@ use vars qw($VERSION @ISA @EXPORT);
 	url2abs
 	writeLog
 	xmldecode
+	filterOk
+	compressOk
 	xmlencode
 );
 
@@ -2371,6 +2374,105 @@ The decoded string.
 	}
 }
 
+
+#========================================================================
+sub filterOk {
+	my($formname, $field, $content, $error_message) = @_;
+
+	my $slashdb = getCurrentDB();
+
+	my $filters = $slashdb->getContentFilters($formname, $field);
+
+	# hash ref from db containing regex, modifier (gi,g,..),field to be
+	# tested, ratio of field (this makes up the {x,} in the regex, minimum
+	# match (hard minimum), minimum length (minimum length of that comment
+	# has to be to be tested), err_message message displayed upon failure
+	# to post if regex matches contents. make sure that we don't select new
+	# filters without any regex data.
+	for (@$filters) {
+		my($number_match, $regex);
+		my $raw_regex		= $_->[2];
+		my $modifier		= 'g' if $_->[3] =~ /g/;
+		my $case		= 'i' if $_->[3] =~ /i/;
+		my $field		= $_->[4];
+		my $ratio		= $_->[5];
+		my $minimum_match	= $_->[6];
+		my $minimum_length	= $_->[7];
+		my $err_message		= $_->[8];
+		my $isTrollish		= 0;
+
+		my $text_to_test = decode_entities($content);
+
+		$text_to_test		=~ s/\xA0/ /g;
+		$text_to_test		=~ s/\<br\>/\n/gi;
+
+		next if ($minimum_length && length($text_to_test) < $minimum_length);
+
+		if ($minimum_match) {
+			$number_match = "{$minimum_match,}";
+		} elsif ($ratio > 0) {
+			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
+		}
+
+		$regex = $raw_regex . $number_match;
+		my $tmp_regex = $regex;
+
+		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
+
+		if ($modifier eq 'g') {
+			$isTrollish = 1 if $text_to_test =~ /$regex/g;
+		} else {
+			$isTrollish = 1 if $text_to_test =~ /$regex/;
+		}
+
+		if ($isTrollish) {
+			$$error_message = $err_message;
+			return(0);
+		}
+	}
+	return(1);
+}
+
+
+#========================================================================
+
+sub compressOk {
+	my($content) = @_;
+
+	# interpolative hash ref. Got these figures by testing out
+	# several paragraphs of text and saw how each compressed
+	# the key is the ratio it should compress, the array lower,upper
+	# for the ratio. These ratios are _very_ conservative
+	# a comment has to be absolute shit to trip this off
+	my $limits = {
+		1.3 => [10,19],
+		1.1 => [20,29],
+		.8 => [30,44],
+		.5 => [45,99],
+		.4 => [100,199],
+		.3 => [200,299],
+		.2 => [300,399],
+		.1 => [400,1000000],
+	};
+
+	# Ok, one list ditch effort to skew out the trolls!
+	if (length($content) >= 10) {
+		for (keys %$limits) {
+			# if it's within lower to upper
+			if (length($content) >= $limits->{$_}->[0] &&
+				length($content) <= $limits->{$_}->[1]) {
+
+				# if is >= the ratio, then it's most likely a
+				# troll comment
+				if ((length(compress($content)) /
+					length($content)) <= $_) {
+					return(0);
+				}
+			}
+		}
+	}
+	return(1);
+}
 
 #========================================================================
 

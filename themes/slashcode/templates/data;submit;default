@@ -41,6 +41,9 @@ __template__
 [% CASE 'filtererror' %]
 	<P>Lameness filter: <B>[% err_message %]</B></P>
 
+[% CASE 'compresserror' %]
+	<B>compression has detected something wrong with your submission</B>
+
 [% CASE 'badsubject' %]
 	Please enter a reasonable subject.
 

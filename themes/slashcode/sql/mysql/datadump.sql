@@ -117,9 +117,9 @@ INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match,
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','subj',0.0000,0,0,'too smelly to submit');
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','story',0.0000,0,0,'too smelly to submit');
 INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','email',0.0000,0,0,'too smelly to submit');
-INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','subj',0.0000,0,0,'definitely tired...');
-INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','story',0.0000,0,0,'definitely tired...');
-INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','email',0.0000,0,0,'definitely tired...');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\\.cx','submissions', '','subj',0.0000,0,0,'definitely tired...');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\\.cx','submissions', '','story',0.0000,0,0,'definitely tired...');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\\.cx','submissions', '','email',0.0000,0,0,'definitely tired...');
 
 #
 # Dumping data for table 'dateformats'

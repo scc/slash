@@ -238,11 +238,21 @@ sub displayForm {
 	} else {
 		for ( keys %$form ) {
 			my $message = "";
-			if (! $slashdb->filterOk('submissions', $_, $form->{$_}, \$message)) {
-				titlebar('100%', getData('filtererror', { err_message => $message}));
-				print getData('filtererror', { err_message => $message });
+			# run through filters
+			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
+				my $err = getData('filtererror', { err_message => $message});
+				titlebar('100%', $err);
+				print $err; 
 				last;
 			}
+			# run through compress test
+		 	if (! compressOk($form->{$_})) {
+				# blammo luser
+				my $err = getData('compresserror');
+				titlebar('100%', $err);
+				print $err; 
+				last;
+		 	}
 		}
 	}
 
@@ -278,10 +288,17 @@ sub saveSub {
 
 		for ( keys %$form ) {
 			my $message = "";
+			# run through filters
 			if (! $slashdb->filterOk('submissions', $_, $form->{$_}, \$message)) {
 
 
 				displayForm($form->{from}, $form->{email}, $form->{section}, '','', $message);
+				return;
+			}
+			# run through compress test
+		 	if (! compressOk($form->{$_})) {
+				my $err = getData('compresserror');
+				displayForm($form->{from}, $form->{email}, $form->{section}, '', '');
 				return;
 			}
 		}

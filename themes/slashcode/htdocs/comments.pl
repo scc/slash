@@ -6,7 +6,6 @@
 
 use strict;
 use Date::Manip;
-use Compress::Zlib;
 use HTML::Entities;
 use Slash;
 use Slash::Display;
@@ -265,8 +264,9 @@ sub validateComment {
 			postercomment 	=>	$$comm,
 	};
 			
-	for (keys %$fields) {
-		if (! $slashdb->filterOk('comments', $_, $fields->{$_}, \$message)) {
+	for ( keys %$fields) {
+		# run through filters
+		if ( ! filterOk('comments', $_, $fields->{$_}, \$message)) {
 			$$error_message = slashDisplay('errors', {
 					type		=> 'filter message',
 					err_message	=> $message,
@@ -276,54 +276,20 @@ sub validateComment {
 			editComment('', $$error_message), return unless $preview;
 			last;
 		}
+		# run through compress test
+	 	if (! compressOk($fields->{$_})) {
+			# blammo luser
+			$$error_message = slashDisplay('errors', {
+			 	type	=> 'compress filter',
+			 	ratio	=> $_,
+			 }, 1);
+			editComment('', $$error_message), return unless $preview;
+			$form_success = 0;
+			last;
+	 	}
+
 	}
 
-
-	# interpolative hash ref. Got these figures by testing out
-	# several paragraphs of text and saw how each compressed
-	# the key is the ratio it should compress, the array lower,upper
-	# for the ratio. These ratios are _very_ conservative
-	# a comment has to be absolute shit to trip this off
-	if ($form_success) {
-		my $limits = {
-			1.3 => [10,19],
-			1.1 => [20,29],
-			.8 => [30,44],
-			.5 => [45,99],
-			.4 => [100,199],
-			.3 => [200,299],
-			.2 => [300,399],
-			.1 => [400,1000000],
-		};
-
-		# Ok, one list ditch effort to skew out the trolls!
-		if (length($$comm) >= 10) {
-			for (keys %$limits) {
-				# DEBUG
-				# print "ratio $_ lower $limits->{$_}->[0] upper $limits->{$_}->[1]<br>\n";
-				# if it's within lower to upper
-				if (length($$comm) >= $limits->{$_}->[0] &&
-					length($$comm) <= $limits->{$_}->[1]) {
-
-					# if is >= the ratio, then it's most likely a
-					# troll comment
-					if ((length(compress($$comm)) /
-						length($$comm)) <= $_) {
-
-						# blammo luser
-						$$error_message = slashDisplay('errors', {
-							type	=> 'compress filter',
-							ratio	=> $_,
-						}, 1);
-						editComment('', $$error_message), return unless $preview;
-						$form_success = 0;
-						last;
-					}
-
-				}
-			}
-		}
-	}
 
 	# Return false if error condition...
 	return if ! $form_success;
