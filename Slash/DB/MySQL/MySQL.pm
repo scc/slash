@@ -2773,7 +2773,7 @@ sub getCommentsForUser {
 	my $cids = [];
 	while (my $comment = $thisComment->fetchrow_hashref) {
 		push @$comments, $comment;
-		push @$cids, $comment->{cid};
+		push @$cids, $comment->{cid} if $comment->{points} >= $user->{threshold};
 	}
 	$thisComment->finish;
 
@@ -2794,7 +2794,7 @@ sub getCommentsForUser {
 		# we need to check for *existence* of the hash key,
 		# not merely definedness; exists is faster, too -- pudge
 		if (!exists($comment_texts->{$comment->{cid}})) {
-			errorLog("no text for cid " . $comment->{cid});
+#			errorLog("no text for cid " . $comment->{cid});
 		} else {
 			$comment->{comment} = $comment_texts->{$comment->{cid}};
 		}
@@ -2818,6 +2818,11 @@ sub _getCommentText {
 	# If this is the first time this is called, create an empty comment text
 	# cache (a hashref).
 	$self->{_comment_text} ||= { };
+	if (scalar(keys %{$self->{_comment_text}}) > 10_000) {
+		# Cache too big. Big cache bad. Kill cache. Kludge.
+		undef $self->{_comment_text};
+		$self->{_comment_text} = { };
+	}
 	if (ref $cid) {
 		if (ref $cid ne "ARRAY") {
 			errorLog("_getCommentText called with ref to non-array: $cid");
