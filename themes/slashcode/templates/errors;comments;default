@@ -103,7 +103,9 @@ Due to excessive bad posting from this IP or Subnet, comment posting
 has temporarily been disabled. If it's you, consider this a chance to
 sit in the timeout corner. If it's someone else, this is a chance to
 hunt them down.
-If you think this is unfair, please email jamie@mccarthy.vg.
+If you think this is unfair, please email
+[% IF constants.adminmail_mod; constants.adminmail_mod;
+ELSE constants.adminmail %].
 
 [% # NESTING TOO DEEP
 CASE "nesting too deep" %]
