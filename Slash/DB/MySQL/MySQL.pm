@@ -97,6 +97,21 @@ my $keysearch = sub {
 };
 
 ########################################################
+my $whereFormkey = sub {
+	my($formkey_id, $user) = @_;
+	my $where;
+
+	# anonymous user without cookie, check host, not formkey id
+	if ($user->{anon_id} && ! $user->{anon_cookie}) {
+		$where = "host_name = '$ENV{REMOTE_ADDR}'";
+	} else {
+		$where = "id='$formkey_id'";
+	}
+
+	return $where;
+};
+
+########################################################
 # Notes:
 #  formAbuse, use defaults as ENV, be able to override
 #  	(pudge idea).
@@ -769,9 +784,9 @@ sub setStoryBySid {
 
 ########################################################
 sub getSubmissionLast {
-	my($self, $id, $formname) = @_;
+	my($self, $id, $formname, $user) = @_;
 
-	my $where = $self->whereFormkey($id);
+	my $where = $whereFormkey->($id, $user);
 	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
@@ -846,31 +861,15 @@ sub getLock {
 }
 
 
-########################################################
-sub whereFormkey {
-	my($self, $formkey_id) = @_;
-	my $where;
-
-	# anonymous user without cookie, check host, not formkey id
-	if ($I{U}{anon_id} && ! $I{U}{anon_cookie}) {
-		$where = "host_name = '$ENV{REMOTE_ADDR}'";
-	} else {
-		$where = "id='$formkey_id'";
-	}
-
-	return $where;
-}
 
 ########################################################
 sub updateFormkeyId {
-	my($self, $formname, $formkey) = @_;
-	if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
-		sqlUpdate("formkeys", {
-			id	=> $I{U}{uid},
-			uid	=> $I{U}{uid},
-		}, "formname='$formname' AND uid = $I{anonymous_coward} AND formkey=" .
-			$self->{dbh}->quote($formkey));
-	}
+	my($self, $formname, $formkey, $anon, $uid) = @_;
+	sqlUpdate("formkeys", {
+		id	=> $uid,
+		uid	=> $uid,
+	}, "formname='$formname' AND uid = $anon AND formkey=" .
+		$self->{dbh}->quote($formkey));
 }
 
 ########################################################
@@ -892,11 +891,11 @@ sub insertFormkey {
 }
 ########################################################
 sub checkFormkey {
-	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
+	my($self, $formkey_earliest, $formname, $formkey_id, $formkey, $user) = @_;
 
-	my $where = $self->whereFormkey($formkey_id);
+	my $where = $whereFormkey->($formkey_id, $user);
 	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
-		'formkey = ' . $self->{dbh}->quote($I{F}{formkey}) .
+		'formkey = ' . $self->{dbh}->quote($formkey) .
 		" AND $where " .
 		"AND ts >= $formkey_earliest AND formname = '$formname'");
 	return($is_valid);
@@ -904,9 +903,9 @@ sub checkFormkey {
 
 ##################################################################
 sub checkTimesPosted {
-	my($self, $formname, $max, $id, $formkey_earliest) = @_;
+	my($self, $formname, $max, $id, $formkey_earliest, $user) = @_;
 
-	my $where = $self->whereFormkey($id);
+	my $where = $whereFormkey->($id, $user);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		"formkeys",
@@ -1387,6 +1386,67 @@ sub getNewstoryTitle {
 				);
 
 	return $title;
+}
+
+########################################################
+sub getSearchUsers {
+	my ($self, $form) = @_;
+	# userSearch REALLY doesn't need to be ordered by keyword since you 
+	# only care if the substring is found.
+	my $sqlquery = "SELECT fakeemail,nickname,uid ";
+	$sqlquery .= " FROM users WHERE uid > 0 ";
+	if ($form->{query}) {
+		my $kw = $keysearch->($form->{query}, 'nickname', 'ifnull(fakeemail,"")');
+		$kw =~ s/as kw$//;
+		$kw =~ s/\+/ OR /g;
+		$sqlquery .= "AND ($kw) ";
+	}
+	$sqlquery .= "ORDER BY uid LIMIT $form->{min}, $form->{max}";
+	my $sth = $dbh->prepare($sqlquery);
+	$sth->execute;
+
+	my $users = $sth->fetchall_arrayref;
+
+	return $users;
+}
+
+########################################################
+sub getSearchStory {
+my ($self, $form) = @_;
+	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
+		", commentcount,section ";
+	$sqlquery .= "," . keysearch($form->{query}, "title", "introtext") . " "
+		if $form->{query};
+	$sqlquery .="	,0 " unless $form->{query};
+
+	if ($form->{query} || $form->{topic}) {
+		$sqlquery .= "  FROM stories ";
+	} else {
+		$sqlquery .= "  FROM newstories ";
+	}
+
+	$sqlquery .= $form->{section} ? <<EOT : 'WHERE displaystatus >= 0';
+WHERE ((displaystatus = 0 and "$form->{section}"="")
+        OR (section="$form->{section}" and displaystatus>=0))
+EOT
+
+	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
+	$sqlquery .= "   AND aid=" . $dbh->quote($form->{author})
+		if $form->{author};
+	$sqlquery .= "   AND section=" . $dbh->quote($form->{section})
+		if $form->{section};
+	$sqlquery .= "   AND tid=" . $dbh->quote($form->{topic})
+		if $form->{topic};
+
+	$sqlquery .= " ORDER BY ";
+	$sqlquery .= " kw DESC, " if $form->{query};
+	$sqlquery .= " time DESC LIMIT $form->{min},$form->{max}";
+
+	my $cursor = $dbh->prepare($sqlquery);
+	$cursor->execute;
+	my $stories = $cursor->fetchall_arrayref;
+
+	return $stories;
 }
 
 1;

@@ -196,41 +196,25 @@ sub userSearch {
 		min	=> $prev
 	}), "<P>" if $prev >=0;
 
-	# userSearch REALLY doesn't need to be ordered by keyword since you 
-	# only care if the substring is found.
-	my $sqlquery = "SELECT fakeemail,nickname,uid ";
-	$sqlquery .= " FROM users WHERE uid > 0 ";
-	if ($I{F}{query}) {
-		my $kw = keysearch($I{F}{query}, 'nickname', 'ifnull(fakeemail,"")');
-		$kw =~ s/as kw$//;
-		$kw =~ s/\+/ OR /g;
-		$sqlquery .= "AND ($kw) ";
-	}
-	$sqlquery .= "ORDER BY uid LIMIT $I{F}{min}, $I{F}{max}";
-	my $c = $I{dbh}->prepare($sqlquery);
-	undef $c unless $c->execute;
-
-	return unless $c;
-
-	my $total = $c->{rows};
 	my($x, $cnt) = 0;
 
-	while(my $N = $c->fetchrow_hashref) {
-		my $ln = $N->{nickname};
+	my $users = $I{dbobject}->getSearchUsers($I{F});
+	for (@$users) {
+		my($fakeemail, $nickname, $uid) = @$_;
+		my $ln = $nickname;
 		$ln =~ s/ /+/g;
 
-		my $fake = $N->{fakeemail} ? <<EOT : '';
-	email: <A HREF="mailto:$N->{fakeemail}">$N->{fakeemail}</A>
+		my $fake = $fakeemail ? <<EOT : '';
+	email: <A HREF="mailto:$fakeemail">$fakeemail</A>
 EOT
 		print <<EOT;
-<A HREF="$I{rootdir}/users.pl?nick=$ln">$N->{nickname}</A> &nbsp;
-($N->{uid}) $fake<BR>
+<A HREF="$I{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp;
+($uid) $fake<BR>
 EOT
 
 		$x++;
 	}
 
-	$c->finish;
 
 	print "No Matches Found for your query" if $x < 1;
 
@@ -249,45 +233,12 @@ sub storySearch {
 		min	=> $prev
 	}), "<P>" if $prev >= 0;
 
-	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
-		", commentcount,section ";
-	$sqlquery .= "," . keysearch($I{F}{query}, "title", "introtext") . " "
-		if $I{F}{query};
-	$sqlquery .="	,0 " unless $I{F}{query};
-
-	if ($I{F}{query} || $I{F}{topic}) {
-		$sqlquery .= "  FROM stories ";
-	} else {
-		$sqlquery .= "  FROM newstories ";
-	}
-
-	$sqlquery .= $I{F}{section} ? <<EOT : 'WHERE displaystatus >= 0';
-WHERE ((displaystatus = 0 and "$I{F}{section}"="")
-        OR (section="$I{F}{section}" and displaystatus>=0))
-EOT
-
-	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
-	$sqlquery .= "   AND aid=" . $I{dbh}->quote($I{F}{author})
-		if $I{F}{author};
-	$sqlquery .= "   AND section=" . $I{dbh}->quote($I{F}{section})
-		if $I{F}{section};
-	$sqlquery .= "   AND tid=" . $I{dbh}->quote($I{F}{topic})
-		if $I{F}{topic};
-
-	$sqlquery .= " ORDER BY ";
-	$sqlquery .= " kw DESC, " if $I{F}{query};
-	$sqlquery .= " time DESC LIMIT $I{F}{min},$I{F}{max}";
-
-#	print "<P><TT>$sqlquery</TT></P>";
-
-	my $cursor = $I{dbh}->prepare($sqlquery);
-	$cursor->execute;
-
 	my($x, $cnt) = 0;
 	print " ";
 
-	while (my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = 
-		$cursor->fetchrow) {
+	my $stories = $I{dbobject}->getSearchStory($I{F});
+	for ($stories) {
+		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $I{F}{query};
 		print $cnt ? $cnt :  $x + $I{F}{min};
 		print " ";

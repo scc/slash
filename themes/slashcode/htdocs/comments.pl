@@ -86,7 +86,9 @@ sub main {
 			$I{F}{formkey} = getFormkey();
 			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid}, $ENV{REMOTE_ADDR});	
 		} else {
-			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey});
+			if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
+				$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey}, $I{anonymous_coward}, $I{U}{uid});
+			}
 		}
 
 		# find out their Karma

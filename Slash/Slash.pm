@@ -2283,7 +2283,7 @@ sub checkSubmission {
 	my($formname, $limit, $max, $id) = @_;
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	my $last_submitted = $I{dbobject}->getSubmissionLast($id, $formname);
+	my $last_submitted = $I{dbobject}->getSubmissionLast($id, $formname, $I{U});
 
 	my $interval = time() - $last_submitted;
 
@@ -2300,10 +2300,10 @@ EOT
 		return(0);
 
 	} else {
-		if ($I{dbobject}->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{F}{formkey})) {
+		if ($I{dbobject}->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{F}{formkey}, $I{U})) {
 			undef $I{F}{formkey} unless $I{F}{formkey} =~ /^\w{10}$/;
 
-			unless ($I{F}{formkey} && $I{dbobject}->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey})) {
+			unless ($I{F}{formkey} && $I{dbobject}->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey}, $I{U})) {
 				$I{dbobject}->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				my $invalid_formkey_err = "<P><B>Invalid form key!</B></P>\n";
 				errorMessage($invalid_formkey_err);
