@@ -26,6 +26,11 @@ bootstrap Slash::Apache::User $VERSION;
 # BENDER: Oh, so, just 'cause a robot wants to kill humans
 # that makes him a radical?
 
+my $user_match = qr{ \buser=(?!	# must have user, but NOT ...
+	(?: nobody | %[20]0 )?	# nobody or space or null or nothing ...
+	(?: \s | ; | $ )	# followed by whitespace, ;, or EOS
+)}x;
+
 sub SlashEnableENV ($$$) {
 	my($cfg, $params, $flag) = @_;
 	$cfg->{env} = $flag;
@@ -240,8 +245,39 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
+	if ($r->header_in('Cookie') =~ $user_match) {
+		if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
+			my($toss,$op) = split /\//, $1, 3;
+			# Its past five, and the below makes it go -Brian
+			$op ||= $toss;
+			if ($op eq 'journal') {
+				$r->args("op=list");
+				$r->uri('/journal.pl');
+				$r->filename($constants->{basedir} . '/journal.pl');
+			} elsif ($op eq 'discussions') {
+				$r->args("op=personal_index");
+				$r->uri('/comments.pl');
+				$r->filename($constants->{basedir} . '/comments.pl');
+			} else {
+				$r->uri('/users.pl');
+				$r->filename($constants->{basedir} . '/users.pl');
+			}
+			return OK;
+		}
+	}
+
 	if ($uri =~ m[^/~(.+)]) {
 		my($nick, $op) = split /\//, $1, 3;
+		# Slashdot hack, early on a few people had accounts
+		# that were number only.
+		# -Brian
+		if ($nick !~ /^\d+$/) {
+			$r->args("nick=$nick");
+		} else {
+			my $slashdb = getCurrentDB();
+			my $nickname = $slashdb->getUser($nick, 'nickname');
+			$r->args("nick=$nickname");
+		}
 		if ($op eq 'journal') {
 			$r->args("nick=$nick&op=display");
 			$r->uri('/journal.pl');
@@ -251,16 +287,6 @@ sub userdir_handler {
 			$r->uri('/comments.pl');
 			$r->filename($constants->{basedir} . '/comments.pl');
 		} else {
-			# Slashdot hack, early on a few people had accounts
-			# that were number only.
-			# -Brian
-			if ($nick !~ /^\d+$/) {
-				$r->args("nick=$nick");
-			} else {
-				my $slashdb = getCurrentDB();
-				my $nickname = $slashdb->getUser($nick, 'nickname');
-				$r->args("nick=$nickname");
-			}
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
 		}

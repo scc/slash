@@ -143,7 +143,13 @@ sub main {
 			function		=> \&commentIndexCreator,
 			seclev			=> 0,
 			formname 		=> 'discussions',
-			checks			=> [],
+			checks			=> ['generate_formkey'],
+		},
+		personal_index			=> {
+			function		=> \&commentIndexPersonal,
+			seclev			=> 1,
+			formname 		=> 'discussions',
+			checks			=> ['generate_formkey'],
 		},
 		moderate		=> {
 			function		=> \&moderate,
@@ -364,6 +370,23 @@ sub commentIndexCreator {
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 			supress_create	=> 1,
+		});
+	} else {
+		print getData('users_no_discussions');
+	}
+}
+
+##################################################################
+# Index of recent discussions: Used if comments.pl is called w/ no
+# parameters
+sub commentIndexPersonal {
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
+
+	titlebar("90%", getData('user_discussion', { name => $user->{nickname}}));
+	my $discussions = $slashdb->getDiscussionsByCreator($user->{uid});
+	if(@$discussions) {
+		slashDisplay('discuss_list', {
+			discussions	=> $discussions,
 		});
 	} else {
 		print getData('users_no_discussions');
