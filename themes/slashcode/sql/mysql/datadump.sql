@@ -456,10 +456,10 @@ INSERT INTO users_prefs (uid, willing, dfid, tzcode, noicons, light, mylinks) VA
 #
 
 INSERT INTO vars (name, value, description) VALUES ('absolutedir','http://www.example.com','Absolute base URL of site; used for creating links external to site that need a complete URL');
-INSERT INTO vars (name, value, description) VALUES ('adminmail','admin@example.com','All admin mail goes here');
 INSERT INTO vars (name, value, description) VALUES ('admin_timeout','30','time in minutes before idle admin session ends');
+INSERT INTO vars (name, value, description) VALUES ('adminmail','admin@example.com','All admin mail goes here');
 INSERT INTO vars (name, value, description) VALUES ('allow_anonymous','1','allow anonymous posters');
-INSERT INTO vars (name, value, description) VALUEs ('allow_moderation','1','allows use of the moderation system');
+INSERT INTO vars (name, value, description) VALUES ('allow_moderation','1','allows use of the moderation system');
 INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|OL|UL|EM|BR|TT|STRONG|BLOCKQUOTE|DIV','Tags that you can use');
 INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
@@ -472,10 +472,12 @@ INSERT INTO vars (name, value, description) VALUES ('basedomain','www.example.co
 INSERT INTO vars (name, value, description) VALUES ('block_expire','3600','Default expiration time for the block cache');
 INSERT INTO vars (name, value, description) VALUES ('breaking','100','Undefined');
 INSERT INTO vars (name, value, description) VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not');
-INSERT INTO vars (name, value, description) VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');
-INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars (name, value, description) VALUES ('comment_maxscore','5','Maximum score for a specific comment');
 INSERT INTO vars (name, value, description) VALUES ('comment_minscore','-1','Minimum score for a specific comment');
+INSERT INTO vars (name, value, description) VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');
+INSERT INTO vars (name, value, description) VALUES ('comments_response_limit','20','interval between reply and submit');
+INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','10','seconds delay before repeat posting');
+INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain for cookie to be active (normally leave blank)');
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
 INSERT INTO vars (name, value, description) VALUES ('cookiesecure','0','Whether or not to set secure flag in cookies if SSL is on (not working)');
@@ -491,6 +493,7 @@ INSERT INTO vars (name, value, description) VALUES ('defaulttopic','1','Default 
 INSERT INTO vars (name, value, description) VALUES ('discussion_archive','15','Number of days till discussions are set to read only.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');
 INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');
+INSERT INTO vars (name, value, description) VALUES ('discussions_speed_limit','300','seconds delay before repeat discussion');
 INSERT INTO vars (name, value, description) VALUES ('do_expiry','1','Flag which controls whether we expire users.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
 INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What size should the boxes be in?');
@@ -517,27 +520,25 @@ INSERT INTO vars (name, value, description) VALUES ('m2_toomanyunfair','0.3','Mi
 INSERT INTO vars (name, value, description) VALUES ('m2_userpercentage','0.9','UID must be below this percentage of the total userbase to metamoderate');
 INSERT INTO vars (name, value, description) VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here');
 INSERT INTO vars (name, value, description) VALUES ('mainfontface','verdana,helvetica,arial','Fonts');
-INSERT INTO vars (name, value, description) VALUES ('maxkarma','50','Maximum karma a user can accumulate');
-INSERT INTO vars (name, value, description) VALUES ('maxpoints','5','The maximum number of points any moderator can have');
-INSERT INTO vars (name, value, description) VALUES ('maxtokens','40','Token threshold that must be hit to get any points');
 INSERT INTO vars (name, value, description) VALUES ('max_comments_allowed','30','maximum number of posts per day allowed');
-INSERT INTO vars (name, value, description) VALUES ('max_discussions_allowed','3','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_depth','7','max depth for nesting of comments');
+INSERT INTO vars (name, value, description) VALUES ('max_discussions_allowed','3','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_expiry_comm','250','Largest value for comment expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('max_expiry_days','365','Largest value for duration expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('max_posts_allowed','30','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed');
+INSERT INTO vars (name, value, description) VALUES ('max_userchanges_allowed','50','How many changes a user can submit');
+INSERT INTO vars (name, value, description) VALUES ('max_users_viewings','30','how many times users.pl can be viewed');
+INSERT INTO vars (name, value, description) VALUES ('maxkarma','50','Maximum karma a user can accumulate');
+INSERT INTO vars (name, value, description) VALUES ('maxpoints','5','The maximum number of points any moderator can have');
+INSERT INTO vars (name, value, description) VALUES ('maxtokens','40','Token threshold that must be hit to get any points');
 INSERT INTO vars (name, value, description) VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)');
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_comm','10','Lowest value for comment expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_days','7','Lowest value for duration expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
 INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','1','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
-
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
-INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','10','seconds delay before repeat posting');
-INSERT INTO vars (name, value, description) VALUES ('discussions_speed_limit','300','seconds delay before repeat discussion');
-INSERT INTO vars (name, value, description) VALUES ('comments_response_limit','20','interval between reply and submit');
 INSERT INTO vars (name, value, description) VALUES ('rdfencoding','ISO-8859-1','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfimg','http://www.example.com/images/topics/topicslash.gif','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
@@ -564,10 +565,10 @@ INSERT INTO vars (name, value, description) VALUES ('smtp_server','localhost','T
 INSERT INTO vars (name, value, description) VALUES ('stats_reports','admin@example.com','Who to send daily stats reports to');
 INSERT INTO vars (name, value, description) VALUES ('stir','3','Number of days before unused moderator points expire');
 INSERT INTO vars (name, value, description) VALUES ('story_expire','600','Default expiration time for story cache');
-INSERT INTO vars (name, value, description) VALUES ('submission_bonus','3','Bonus given to user if submission is used');
-INSERT INTO vars (name, value, description) VALUES ('submission_speed_limit','300','How fast they can submit');
 INSERT INTO vars (name, value, description) VALUES ('submiss_ts','1','print timestamp in submissions view');
 INSERT INTO vars (name, value, description) VALUES ('submiss_view','1','allow users to view submissions queue');
+INSERT INTO vars (name, value, description) VALUES ('submission_bonus','3','Bonus given to user if submission is used');
+INSERT INTO vars (name, value, description) VALUES ('submission_speed_limit','300','How fast they can submit');
 INSERT INTO vars (name, value, description) VALUES ('submit_categories','Back','Extra submissions categories');
 INSERT INTO vars (name, value, description) VALUES ('template_cache_size','0','Number of templates to store in cache (0 = unlimited)');
 INSERT INTO vars (name, value, description) VALUES ('template_post_chomp','0','Chomp whitespace after directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
@@ -581,8 +582,5 @@ INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total n
 INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
-INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
 INSERT INTO vars (name, value, description) VALUES ('userchange_speed_limit','10','How fast a user can change their prefs');
-INSERT INTO vars (name, value, description) VALUES ('max_userchanges_allowed','50','How many changes a user can submit');
-INSERT INTO vars (name, value, description) VALUES ('max_users_viewings','30','how many times users.pl can be viewed');
-INSERT INTO vars (name, value, description) VALUES ('max_comments_viewings','1000','how many times users.pl can be viewed');
+INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
