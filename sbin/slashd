@@ -37,6 +37,8 @@ use XML::RSS;
 use Slash;
 use Slash::Utility;
 
+createEnvironment();
+my $virtual_user = $ARGV[0];
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 

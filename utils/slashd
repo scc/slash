@@ -36,7 +36,7 @@ case "$1" in
 			SERVER_NAME=`echo $server_name |$WHICH_CUT -d":" -f1`
 			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
 			echo -n "Starting slashd $SERVER_NAME: "
-			su - $USERNAME -c $SLASHD &
+			su - $USERNAME -c "$SLASHD $SERVER_NAME" &
 			echo $! > $RUNNING_PID/slashd.$SERVER_NAME.pid 
 			echo "ok PID = $! "
 		done

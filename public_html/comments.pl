@@ -749,5 +749,6 @@ sub isTroll {
 	return 0;
 }
 
+createEnvironment();
 main();
 1;

@@ -1229,5 +1229,6 @@ sub getLinks {
 }
 
 
+createEnvironment();
 main();
 1;

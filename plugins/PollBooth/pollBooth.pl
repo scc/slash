@@ -194,6 +194,7 @@ sub getData {
 	return slashDisplay('pollBooth-data', $hashref, 1, 1);
 }
 
+createEnvironment();
 main();
 
 1;

@@ -73,5 +73,6 @@ EOT
 	footer();
 }
 
+createEnvironment();
 main();
 1;

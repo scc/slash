@@ -311,6 +311,7 @@ sub getData {
 	return slashDisplay('submit-data', $hashref, 1, 1);
 }
 
+createEnvironment();
 main();
 
 1;

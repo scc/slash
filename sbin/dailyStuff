@@ -31,6 +31,7 @@ use File::Path;
 use Slash;
 use Slash::Utility;
 
+createEnvironment();
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 
@@ -141,7 +142,7 @@ EOT
 sub prog2file {
 	my($c, $f) = @_;
 
-	my $d = `$c`;
+	my $d = `$c $ARGV[0]`;
 	my $dir = dirname($f);
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {

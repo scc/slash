@@ -45,6 +45,7 @@ use XML::RSS;
 use Slash;
 use Slash::Utility;
 
+createEnvironment();
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 my $totalChangedStories = 1;

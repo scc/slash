@@ -184,5 +184,6 @@ sub isEligible {
 	return $last->{'lastmmid'}; # Hooray!
 }
 
+createEnvironment();
 main();
 

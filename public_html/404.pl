@@ -57,6 +57,7 @@ sub main {
 	footer();
 }
 
+createEnvironment();
 main();
 
 1;

@@ -50,4 +50,5 @@ sub main {
 	footer($form->{ssi});
 }
 
+createEnvironment();
 main();

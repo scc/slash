@@ -27,6 +27,7 @@
 use strict;
 use Slash;
 
+createEnvironment();
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 

@@ -50,6 +50,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	createCurrentStatic
 	createCurrentDB
 	createCurrentAnonymousCoward
+	createEnvironment
 	setCurrentUser
 	isAnon
 	getAnonId
@@ -76,23 +77,6 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward);
 
-INIT {
-	unless ($ENV{GATEWAY_INTERFACE}) {
-		# maybe get a default from DBIx::Password if there is only
-		# one entry there?
-		my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-
-		my $slashdb = Slash::DB->new($virtual_user);
-		my $constants = $slashdb->getSlashConf();
-
-		# We assume that the user for scripts is the anonymous user
-		my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
-		createCurrentDB($slashdb);
-		createCurrentStatic($constants);
-		createCurrentUser($user);
-		createCurrentAnonymousCoward($user);
-	}
-}
 
 #========================================================================
 
@@ -1029,6 +1013,39 @@ sub writeLog {
 
 	$r->notes('SLASH_LOG_OPERATION', $op);
 	$r->notes('SLASH_LOG_DATA', $dat);
+}
+
+#========================================================================
+
+=item createEnvironment(DBIx::Password_virtual_user)
+
+Places data into the request records notes table. The two keys
+it uses are SLASH_LOG_OPERATION and SLASH_LOG_DATA. 
+
+Parameters
+
+	DBIx::Password_virtual_user
+	You can pass in a virtual user that will be used instead of ARGV[0]
+
+Return value
+
+	No value is returned.
+
+=cut
+
+sub createEnvironment {
+	return if ($ENV{GATEWAY_INTERFACE});
+	my ($virtual_user) = @_;
+	$virtual_user = $ARGV[0] unless $virtual_user;
+	my $slashdb = Slash::DB->new($virtual_user);
+	my $constants = $slashdb->getSlashConf();
+
+	# We assume that the user for scripts is the anonymous user
+	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
+	createCurrentDB($slashdb);
+	createCurrentStatic($constants);
+	createCurrentUser($user);
+	createCurrentAnonymousCoward($user);
 }
 
 1;
