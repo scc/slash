@@ -86,6 +86,12 @@ my %descriptions = (
 	'templates'
 		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates') },
 
+	'templatesbypage'
+		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates', "page = '$_[3]'") },
+
+	'templatepages'
+		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
+
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
 
