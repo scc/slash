@@ -535,7 +535,7 @@ sub compressOk {
 
 	# These could be tweaked.  $slice_size could be roughly 300-2000;
 	# the $x_space vars could go up or down by a factor of roughly 2.
-	my $slice_size = 600;
+	my $slice_size = 500;
 	my $nbsp_space = " " x 12;
 	my $breaktag_space = " " x 4;
 	my $spacerun_min = 5;
@@ -575,7 +575,7 @@ sub compressOk {
 		$content_slice =~ s{(\s{$spacerun_min,})}
 			{" " x (length($1) ** $spacerun_exp)}ge;
 		# Whitespace _tags_ also get converted to runs of spaces.
-		$content_slice =~ s/<\/?(BR|P)>/$breaktag_space/gi;
+		$content_slice =~ s/<\/?(BR|P|DIV)>/$breaktag_space/gi;
 		# Whitespace entities get similar special treatment.
 		$content_slice =~ s/\&(nbsp|#160|#xa0);/$nbsp_space/gi;
 		# Other entities just get decoded before the compress check.
