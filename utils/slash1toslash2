@@ -184,6 +184,8 @@ sub ask {
 
 ####################################
 sub fill_newstories {
+	print "Processing newstories\n";
+
 	$dbh_new->do('DROP TABLE newstories');
 	$dbh_new->do('CREATE TABLE newstories SELECT * FROM stories');
 }
@@ -191,6 +193,8 @@ sub fill_newstories {
 ####################################
 # get vars out of slashdotrc.pl
 sub fix_vars {
+	print "Processing vars\n";
+
 	for (qw(mailfrom siteadmin siteadmin_name smtp_server
 		sitename slogan mainfontface updatemin
 		archive_delay submiss_ts articles_only
@@ -215,7 +219,7 @@ sub fix_vars {
 	my $vars = $dbh_old->selectall_arrayref("SELECT name,value FROM vars");
 	for my $var (@$vars) {
 		my @data = map { $dbh_new->quote($_) } @$var;
-		$dbh_new->do("UPDATE vars SET name=$data[0], value=$data[1]");
+		$dbh_new->do("UPDATE vars SET value=$data[1] WHERE name=$data[0]");
 	}
 }
 
@@ -282,6 +286,8 @@ sub fix_sectionblocks {
 ####################################
 # get users keys into users_param table
 sub users_keys {
+	print "Processing users_keys\n";
+
 	my $users = $dbh_old->selectall_arrayref("SELECT uid,pubkey FROM users_key");
 	for my $user (@$users) {
 		my $string = $dbh_new->quote($user->[1]);
