@@ -262,7 +262,6 @@ sub getsiddir {
 # We need to have logging occur in its own module
 # for the next version
 sub anonLog {
-	my $dbslash = getCurrentDB();
 	my($op, $data) = ('/', '');
 
 	local $_ = $ENV{REQUEST_URI};
@@ -282,7 +281,7 @@ sub anonLog {
 	$data =~ s/_F//;
 	$op =~ s/_F//;
 
-	$dbslash->writelog($op, $data);
+	writeLog($op, $data);
 }
 
 
