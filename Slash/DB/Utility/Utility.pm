@@ -181,7 +181,7 @@ sub sqlSelectColArrayref {
 	my $sth = $self->{_dbh}->prepare_cached($sql);
 	
 	my $array = $self->{_dbh}->selectcol_arrayref($sth);
-	if ($array = undef) {
+	unless (defined($array)) {
 		errorLog($sql);
 		$self->sqlConnect;
 		return;
@@ -253,6 +253,38 @@ sub sqlSelectAllHashref {
 	
 	
 	return $returnable;
+}
+
+########################################################
+# sqlSelectAllHashrefArray - this function returns the entire 
+# set of rows in a array where the elements are the hash.
+# 
+# inputs: 
+# select - columns selected 
+# from - tables 
+# where - where clause 
+# other - limit, asc ...
+#
+# returns: 
+# array ref of all records
+sub sqlSelectAllHashrefArray {
+	my($self, $select, $from, $where, $other) = @_;
+
+	# Yes, if ID is not in $select things will be bad
+	my $sql = "SELECT $select ";
+	$sql .= "FROM $from " if $from;
+	$sql .= "WHERE $where " if $where;
+	$sql .= "$other" if $other;
+
+	my $sth = $self->sqlSelectMany($select, $from, $where, $other);
+	my @returnable;
+	while (my $row = $sth->fetchrow_hashref) {
+		push @returnable, $row;
+	}
+	$sth->finish;
+	
+	
+	return \@returnable;
 }
 
 ########################################################

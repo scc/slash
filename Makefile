@@ -25,7 +25,7 @@ PREOP = @$(NOOP)
 POSTOP = @$(NOOP)
 TO_UNIX = @$(NOOP)
 PREFIX = /usr/local/slash
-INIT = /etc/rc.d
+INIT = /etc
 USER = nobody
 GROUP = nobody
 
