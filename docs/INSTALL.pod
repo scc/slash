@@ -215,6 +215,15 @@ When done, a configuration file for Apache will be created at
 F<$SLASH_PREFIX/slash.conf>.  You can put its contents into your
 httpd.conf, or you can just C<Include> it in your httpd.conf.
 
+******************** W  A  R  N  I  N  G ********************
+
+Please be aware that if you include F<$SLASH_PREFIX/slash.conf>
+more than once, or if this file shares contents with directives
+in httpd.conf, that your slash sit WILL break. The directives
+in F<$SLASH_PREFIX/slash.conf> should be run only ONCE
+in any any site context.
+
+*************************************************************
 
 =item 6.
 
