@@ -261,9 +261,9 @@ sub userInfo {
 
 	my $userbio = $slashdb->getUser($uid);
 
-	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0;
+	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
 
-	$admin_block = getUserAdmin($userbio->{uid}, $userbio->{seclev}, 1, 0) if $author_flag;
+	$admin_block = getUserAdmin($userbio->{uid}, 1, 0) if $admin_flag;
 
 	my($title, $commentstruct, $points, $nickmatch_flag);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
@@ -323,7 +323,7 @@ sub userInfo {
 		mod_flag		=> $mod_flag,
 		karma_flag		=> $karma_flag,
 		admin_block		=> $admin_block,
-		author_flag 		=> $author_flag,
+		admin_flag 		=> $admin_flag,
 	});
 }
 
@@ -363,12 +363,12 @@ sub editUser {
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
-	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0; 
-	$admin_block = getUserAdmin($user_edit->{uid}, $user_edit->{seclev}, 0, 1) if $author_flag;
+	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0; 
+	$admin_block = getUserAdmin($user_edit->{uid}, 0, 1) if $admin_flag;
 
 	slashDisplay('editUser', { 
 		user_edit 		=> $user_edit, 
-		author_flag		=> $author_flag,
+		admin_flag		=> $admin_flag,
 		author_select		=> $author_select,
 		title			=> $title,
 		editkey 		=> editKey($user_edit->{uid}),
@@ -537,7 +537,7 @@ sub saveUser {
 
 	my $uid = $user->{seclev} ? shift : $user->{uid};
 	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
-	my $note;
+	my ($note, $author_flag);
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if isAnon($uid);
@@ -553,6 +553,7 @@ sub saveUser {
 	$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
+	$author_flag		= $form->{author} ? 1 : 0;
 
 	# for the users table
 	my $users_table = {
@@ -564,7 +565,8 @@ sub saveUser {
 		bio		=> $form->{bio},
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
-		quote		=> $form->{quote}
+		quote		=> $form->{quote},
+		author		=> $author_flag
 	};
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
@@ -776,7 +778,7 @@ sub getTitle {
 # getUserAdmin - returns a block of text
 # containing fields for admin users
 sub getUserAdmin {
-	my($uid, $seclev, $form_flag, $seclev_field) = @_;
+	my($uid, $form_flag, $seclev_field) = @_;
 
 	my $slashdb	= getCurrentDB();
 	my $user	= getCurrentUser();
@@ -784,7 +786,7 @@ sub getUserAdmin {
 
 	my $edituser = $slashdb->getUser($uid);
 
-	my($uid_checked, $nickname_checked);
+	my($uid_checked, $nickname_checked) = ('','');
 
 	if ($form->{userfield_flag} eq 'userid') {
 		$uid_checked = ' CHECKED';
@@ -793,7 +795,7 @@ sub getUserAdmin {
 	}		
 
 	my $author_select;
-	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0; 
+	my $author_flag = ($user->{author} == 1) ? ' CHECKED' : ''; 
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0; 
 
 	my $authors = $slashdb->getDescriptions('authors');

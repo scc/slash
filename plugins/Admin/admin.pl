@@ -122,12 +122,17 @@ sub main {
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
-		templateSave($form->{thistpid});
-		if ($form->{newpage}) {
-			templateEdit($user->{seclev}, $form->{thistpid}, $form->{newpage}, $form->{section});
-		} else {
-			templateEdit($user->{seclev}, $form->{thistpid}, $form->{page}, $form->{section});
+		my ($page,$section);
+		if ($form->{save_new}) {
+			$section = $form->{newS} ? $form->{newsection} : $form->{section};
+			$page = $form->{newP} ? $form->{newpage} : $form->{page};
+		} else { 
+			$section = $form->{newS} ? $form->{newsection} : $form->{savesection};
+			$page = $form->{newP} ? $form->{newpage} : $form->{savepage};
 		}
+		
+		templateSave($form->{thistpid}, $form->{name},  $page, $section);
+		templateEdit($user->{seclev}, $form->{thistpid}, $page, $section);
 
 	} elsif ($form->{templaterevert}) {
 		my $slashdb = getCurrentDB();
@@ -353,6 +358,7 @@ sub templateEdit {
 	my($seclev, $tpid, $page, $section) = @_;
 	my($slashdb, $form, $pagehashref, $title, $templateref,
 		$template_select, $page_select, $section_select,
+		$savepage_select, $savesection_select,
 		$templatedelete_flag, $templateedit_flag, $templateform_flag);
 
 	return if $seclev < 100;	
@@ -373,7 +379,7 @@ sub templateEdit {
 		my $templates = {};
 
 		if ($form->{templatesection}) {
-			if ($section eq 'All Sections') {
+			if ($section eq 'All') {
 				$templates = $slashdb->getDescriptions('templates', $page, 1);
 			} else {
 				$templates = $slashdb->getDescriptions('templatesbysection', $section, 1);
@@ -388,11 +394,12 @@ sub templateEdit {
 
 		# is this $page supposed to be in quotes?  single quotes?  -- pudge
 		my $pages = $slashdb->getDescriptions('pages', '$page', 1);
-		my $sections = $slashdb->getDescriptions('sections', '', 1);
+		my $sections = $slashdb->getDescriptions('templatesections', '$section', 1);
 
 		$pages->{All} = 'All';
 		$pages->{misc} = 'misc';
 		$sections->{default} = 'default';
+		$sections->{All} = 'All';
 
 		# put these in alpha order by label, and add tpid to label
 		my @ordered;
@@ -402,8 +409,10 @@ sub templateEdit {
 		}
 
 		$page_select = createSelect('page', $pages, $page, 1);
+		$savepage_select = createSelect('savepage', $pages, $templateref->{page}, 1) if $templateref->{tpid};
 		$template_select = createSelect('tpid', $templates, $tpid, 1, 0, \@ordered);
 		$section_select = createSelect('section', $sections, $section, 1);
+		$savesection_select = createSelect('savesection', $sections, $templateref->{section}, 1) if $templateref->{tpid};
 	}
 
 	if (!$form->{templatenew} && $tpid && $templateref->{tpid}) {
@@ -421,13 +430,15 @@ sub templateEdit {
 		template_select		=> $template_select,
 		templateform_flag	=> $templateform_flag,
 		page_select		=> $page_select,
+		savepage_select		=> $savepage_select,
 		section_select		=> $section_select,
+		savesection_select	=> $savesection_select,
 	});	
 }
 
 ##################################################################
 sub templateSave {
-	my($tpid) = @_;
+	my($tpid, $name, $page, $section) = @_;
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -436,43 +447,44 @@ sub templateSave {
 
 	$form->{seclev} ||= 500;
 
-	my $id = $slashdb->getTemplate($tpid);
-	my $temp = $slashdb->getTemplateByName($form->{name});
+	my $id = $slashdb->getTemplateByID($tpid);
+	my $temp = $slashdb->getTemplate($name, [ 'section','page','name','tpid' ], 1 ,$page,$section);
 
 	my $exists = 0;
-	$exists = 1 if ($form->{name} eq $temp->{name} && 
-			$form->{section} eq $temp->{section} && 
-			$form->{page} eq $temp->{page});
+	$exists = 1 if ($name eq $temp->{name} && 
+			$section eq $temp->{section} && 
+			$page eq $temp->{page});
 
 	if ($form->{save_new}) {
 		if ($id->{tpid} || $exists) {
-			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $form->{name} } );
+			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $name } );
 			return;
 		} else {
-			print "trying to insert $form->{name}<br>\n";
+			print "trying to insert $name<br>\n";
 			$slashdb->createTemplate({
-               			name		=> $form->{name},
+               			name		=> $name,
 				template        => $form->{template},
 				title		=> $form->{title},
 				description	=> $form->{description},
 				seclev          => $form->{seclev},
-				page		=> $form->{newpage},
-				section		=> $form->{section}
+				page		=> $page,
+				section		=> $section
 			});
 
-			print getMessage('templateSave-inserted-message', { tpid => $tpid , name => $form->{name}});
+			print getMessage('templateSave-inserted-message', { tpid => $tpid , name => $name});
 		} 
 	} else {
+
 		$slashdb->setTemplate($tpid, { 
-				name		=> $form->{name},
+				name		=> $name,
 				template 	=> $form->{template},
 				description	=> $form->{description},
 				title		=> $form->{title},
 				seclev		=> $form->{seclev},
-				page		=> $form->{page},
-				section		=> $form->{section}
+				page		=> $page,
+				section		=> $section
 		});
-		print getMessage('templateSave-saved-message', { tpid => $tpid, name => $form->{name} });
+		print getMessage('templateSave-saved-message', { tpid => $tpid, name => $name });
 	}	
 
 }
