@@ -128,7 +128,7 @@ sub main {
 			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
 		},
 		change		=> { 
-			function		=> \&change,
+			function		=> \&displayComments,
 			seclev			=> 0,
 			formname		=> 'discussions',
 			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
@@ -668,6 +668,10 @@ sub submitComment {
 
 	$form->{postercomment} = addDomainTags($form->{postercomment});
 
+#	# Slash is not a file exchange system
+#	# still working on this...stay tuned for real commit
+#	$form->{postercomment} = distressBinaries($form->{postercomment});
+
 	# this has to be a template -- pudge
 	titlebar("95%", "Submitted Comment");
 
@@ -1024,10 +1028,7 @@ sub deleteThread {
 		$count += deleteThread($sid, $cid, $level+1, $comments_deleted);
 	}
 	# And now delete $cid.
-	# XXX Brian, check out deleteComment(); we should change its interface
-	# to accept only the $cid, because it doesn't need the $sid.  Right?
-	# - Jamie 2001/07/08
-	$slashdb->deleteComment($cid);
+	$count += $slashdb->deleteComment($cid);
 
 	if (!$level) {
 		# SID remains for display purposes, only.
