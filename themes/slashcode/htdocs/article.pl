@@ -32,14 +32,27 @@ sub main {
 			"$SECT->{title} | $story->{title}" :
 			"$constants->{sitename} | $story->{title}";
 
-		header($title, $story->{section});
+		# set things up to use the <LINK> tag in the header
+		my $next = $slashdb->getStoryByTime('>', $story, $SECT);
+		my $prev = $slashdb->getStoryByTime('<', $story, $SECT);
+
+		my $links = {
+			title	=> $title,
+			'link'	=> {
+				section	=> $SECT->{title},
+				prev	=> $prev,
+				'next'	=> $next,
+				author	=> $story->{uid},
+			},
+		};
+		header($links, $story->{section});
 
 		if ($user->{seclev} >= 100) {
 			my $newestthree = $slashdb->getBlock('newestthree','block'); 
 			my $nextthree = $slashdb->getNextThree($story->{time});
 			my $nextstories = {};
 
-			for(@$nextthree) {
+			for (@$nextthree) {
 				my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
 				my $author = $slashdb->getUser($tmpstory->{uid},'nickname');
 				$nextstories->{$_->[0]}{author} = $slashdb->getUser($tmpstory->{uid},'nickname');
@@ -59,8 +72,8 @@ sub main {
 			section_block		=> $slashdb->getBlock($SECT->{section}),
 			show_poll		=> $pollbooth ? 1 : 0,
 			story			=> $story,
-			'next'			=> $slashdb->getStoryByTime('>', $story, $SECT),
-			prev			=> $slashdb->getStoryByTime('<', $story, $SECT),
+			'next'			=> $next,
+			prev			=> $prev,
 		});
 
 		my $discussion = $slashdb->getDiscussionBySid($story->{sid});

@@ -102,7 +102,12 @@ sub header {
 	my $form = getCurrentForm();
 
 	my $adhtml = '';
-	$title ||= '';
+	if (ref($title)) {
+		$title->{title} ||= '';
+	} else {
+		$title ||= '';
+		$title = { title => $title };
+	}
 
 	unless ($form->{ssi}) {
 		my $r = Apache->request;
@@ -135,10 +140,10 @@ sub header {
 	$user->{currentSection} = $section || '';
 	getSectionColors();
 
-	$title =~ s/<(.*?)>//g;
+	$title->{title} =~ s/<(.*?)>//g;
 
 	# This is ALWAYS displayed. Let the template handle $title.
-	slashDisplay('html-header', { title => $title }, { Nocomm => 1 })
+	slashDisplay('html-header', { title => $title->{title} }, { Nocomm => 1 })
 		unless $noheader;
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
@@ -151,7 +156,7 @@ sub header {
 	#	$adhtml = getAd(1);
 	# }
 
-	slashDisplay('header');
+	slashDisplay('header', $title);
 
 	print createMenu('admin') if $user->{is_admin};
 }
