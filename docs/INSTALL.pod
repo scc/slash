@@ -329,7 +329,7 @@ Go to your installation directory (by default, F</usr/local/slash>)
 and execute (where C<VIRTUAL_USER> is the name of the virtual
 user given in the DBIx::Password distribution):
 
-	bin/install-slashsite VIRTUAL_USER
+	bin/install-slashsite -u VIRTUAL_USER
 
 The program will prompt for answers to several configuration questions.
 Answer the questions.  When done, another configuration

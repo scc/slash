@@ -274,7 +274,7 @@ INSTALLATION
         execute (where "VIRTUAL_USER" is the name of the virtual user given
         in the DBIx::Password distribution):
 
-                bin/install-slashsite VIRTUAL_USER
+                bin/install-slashsite -u VIRTUAL_USER
 
         The program will prompt for answers to several configuration
         questions. Answer the questions. When done, another configuration
