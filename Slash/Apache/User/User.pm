@@ -135,9 +135,14 @@ sub handler {
 			# set cookie every time, in case session_login
 			# value changes, or time is almost expired on
 			# saved cookie, or password changes, or ...
-			setCookie('user', bakeUserCookie($uid, $cookpasswd),
-				$slashdb->getUser($uid, 'session_login')
-			);
+
+			# can't set it every time, it upsets people.
+			# we need to set it only if password or
+			# session_login changes. -- pudge
+
+# 			setCookie('user', bakeUserCookie($uid, $cookpasswd),
+# 				$slashdb->getUser($uid, 'session_login')
+# 			);
 		} else {
 			$uid = $constants->{anonymous_coward_uid};
 			delete $cookies->{user};
@@ -225,7 +230,8 @@ sub userLogin {
 		$slashdb->getUserAuthenticate($name, $passwd); #, 1
 
 	if (!isAnon($uid)) {
-		setCookie('user', bakeUserCookie($uid, $cookpasswd));
+		setCookie('user', bakeUserCookie($uid, $cookpasswd),
+			$slashdb->getUser($uid, 'session_login'));
 		return($uid, $newpass);
 	} else {
 		return getCurrentStatic('anonymous_coward_uid');

@@ -57,7 +57,6 @@ use vars qw($VERSION @EXPORT);
 	createEnvironment
 	getObject
 	getAnonId
-	getAnonCookie
 	isAnon
 	prepareUser
 	filter_params
@@ -835,19 +834,6 @@ A random value based on alphanumeric characters
 	}
 }
 
-########################################################
-sub getAnonCookie {
-	my($user) = @_;
-	my $r = Apache->request;
-	my $cookies = getCurrentCookie();
-	if (my $cookie = $cookies->{anon}->value) {
-		$user->{anon_id} = $cookie;
-		$user->{anon_cookie} = 1;
-	} else {
-		$user->{anon_id} = getAnonId();
-	}
-}
-
 #========================================================================
 
 =head2 bakeUserCookie(UID, PASSWD)
@@ -1078,14 +1064,6 @@ sub prepareUser {
 		}
 		$user->{is_anon} = 1;
 
-		if ($cookies->{anon} && $cookies->{anon}->value) {
-			$user->{anon_id} = $cookies->{anon}->value;
-			$user->{anon_cookie} = 1;
-		} else {
-			$user->{anon_id} = getAnonId();
-		}
-
-		setCookie('anon', $user->{anon_id}, 1);
 	} else {
 		$user  = $slashdb->getUser($uid); # getUserInstance($uid, $uri) {}
 		$user->{is_anon} = 0;

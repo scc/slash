@@ -6,6 +6,7 @@ Change password form
 * useredit = hashref of user info
 * author_flag = user is author
 * title = passed to titlebar
+* session = popup for session login
 
 __title__
 

@@ -147,11 +147,11 @@ sub displayStandardBlocks {
 
 	if ($user->{exboxes} && $getblocks eq 'index') {
 		@boxes = getUserBoxes();
-		$boxcache = $cache->{slashboxes}{index_map} ||= {};
+		$boxcache = $cache->{slashboxes}{index_map}{$user->{light}} ||= {};
 	} else {
 		@boxes = @{$sectionBoxes->{$getblocks}}
 			if ref $sectionBoxes->{$getblocks};
-		$boxcache = $cache->{slashboxes}{$getblocks} ||= {};
+		$boxcache = $cache->{slashboxes}{$getblocks}{$user->{light}} ||= {};
 	}
 
 	for my $bid (@boxes) {

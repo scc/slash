@@ -69,7 +69,9 @@ sub getFormkeyId {
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
 	if ($user->{uid} > 0 && $form->{rlogin} && length($form->{upasswd}) > 1) {
-		getAnonCookie($user);
+# i am commenting this out until getFormkeyId itself is removed, since
+# getAnonCookie is now gone
+# 		getAnonCookie($user);
 		$id = $user->{anon_id};
 	} elsif ($uid > 0) {
 		$id = $uid;

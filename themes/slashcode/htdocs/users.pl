@@ -250,7 +250,6 @@ sub main {
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
 		if ($user->{seclev} < 100 && ! $error_flag) {
-			# why assign to an unused variable? -- pudge
 			$slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
 		}
 		$op = $error_flag ? 'changepasswd' : 'userinfo';
@@ -879,8 +878,8 @@ sub editUser {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my($user_edit, $session) = ({}, {});
-	my($admin_block, $title, $session_select);
+	my $user_edit = {};
+	my($admin_block, $title);
 	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $fieldkey;
 
@@ -905,15 +904,11 @@ sub editUser {
 
 	$title = getTitle('editUser_title', { user_edit => $user_edit});
 
-	$session = $slashdb->getDescriptions('session_login');
-	$session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
-
 	slashDisplay('editUser', {
 		useredit 		=> $user_edit,
 		admin_flag		=> $admin_flag,
 		title			=> $title,
 		editkey 		=> editKey($user_edit->{uid}),
-		session 		=> $session_select,
 		admin_block		=> $admin_block
 	});
 }
@@ -1174,30 +1169,37 @@ sub savePasswd {
 	$user_edit = $slashdb->getUser($uid);
 
 	if (!$user_edit->{nickname}) {
-		$$note .= getError('cookie_err', { titlebar => 0}, 0, 1);
+		$$note .= getError('cookie_err', { titlebar => 0 }, 0, 1);
 		$error_flag++;
 	}
 
 	if ($form->{pass1} ne $form->{pass2}) {
-		$$note .= getError('saveuser_passnomatch_err', { titlebar => 0},  0, 1);
+		$$note .= getError('saveuser_passnomatch_err', { titlebar => 0 }, 0, 1);
 		$error_flag++;
 	}
 
-	if (length $form->{pass1} < 6 && $form->{pass1}) {
-		$$note .= getError('saveuser_passtooshort_err', { titlebar => 0} , 0, 1);
+	if (length $form->{pass1} < 6 && $form->{pass1} && $form->{pass1} ne "") {
+		$$note .= getError('saveuser_passtooshort_err', { titlebar => 0 }, 0, 1);
 		$error_flag++;
 	}
 
 	if (! $error_flag) {
-		$user_edits_table->{passwd} = $form->{pass1};
-		$user_edits_table->{session_login} => $form->{session_login};
+		$user_edits_table->{passwd} = $form->{pass1} if $form->{pass1};
+		$user_edits_table->{session_login} = $form->{session_login};
+		my $pass = bakeUserCookie($uid,
+			$user_edits_table->{passwd}
+				? encryptPassword($user_edits_table->{passwd})
+				: $user_edit->{passwd}
+		);
+
 		if ($form->{uid} eq $user->{uid}) {
-			setCookie('user', bakeUserCookie($uid, encryptPassword($user_edits_table->{passwd})));
+			setCookie('user', $pass, $user_edits_table->{session_login});
 		}
 
 		$slashdb->setUser($uid, $user_edits_table) ;
-		$$note .= getMessage('saveuser_passchanged_msg', { nick => $user_edit->{nickname}, uid => $user_edit->{uid}}, 0, 1);
-		
+		$$note .= getMessage('saveuser_passchanged_msg',
+			{ nick => $user_edit->{nickname}, uid => $user_edit->{uid} },
+		0, 1);
 	}
 
 	return $error_flag;
@@ -1268,7 +1270,6 @@ sub saveUser {
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
-		session_login	=> $form->{session_login},
 	};
 
 	# don't want undef, want to be empty string so they
