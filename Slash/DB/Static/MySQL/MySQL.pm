@@ -225,9 +225,9 @@ sub updateStamps {
 # For dailystuff
 sub getDailyMail {	
 	my ($self) = @_;
-	my $columns = "sid,title,section,aid,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";
-	my $tables = "stories";
-	my $where = "to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
+	my $columns = "sid,title,section,users.nickname,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";
+	my $tables = "stories,users";
+	my $where = "users.uid = stories.uid AND to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
 	my $other = " ORDER BY time DESC";
 
 	my $email = $self->sqlSelectAll($columns,$tables,$where,$other);
