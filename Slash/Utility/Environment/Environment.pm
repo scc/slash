@@ -26,6 +26,7 @@ LONG DESCRIPTION.
 
 use strict;
 use Apache::ModuleConfig;
+use Digest::MD5 'md5_hex';
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -830,7 +831,8 @@ A random value based on alphanumeric characters
 {
 	my @chars = (0..9, 'A'..'Z', 'a'..'z');
 	sub getAnonId {
-		my $str = '-1-' if $_[0];
+		my $str;
+		$str = '-1-' unless $_[0];
 		$str .= join('', map { $chars[rand @chars] }  0 .. 9);
 		return $str;
 	}
@@ -971,6 +973,7 @@ sub setCookie {
 	my($name, $val, $session) = @_;
 	return unless $name;
 
+	my $r = Apache->request;
 	my $constants = getCurrentStatic();
 
 	# We need to actually determine domain from preferences,
@@ -1248,7 +1251,13 @@ sub _testExStr {
 }
 
 ########################################################
-*fixint = *Slash::Utility::Data::fixint{CODE};
+# fix parameter input that should be integers
+sub fixint {
+	my($int) = @_;
+	$int =~ s/^\+//;
+	$int =~ s/^(-?[\d.]+).*$/$1/s or return;
+	return $int;
+}
 
 #========================================================================
 

@@ -271,7 +271,7 @@ sub compressOk {
 	# leave it here, it causes problems if use'd in the
 	# apache startup phase
 	require Compress::Zlib;
-	my($content) = @_;
+	my($formname, $field, $content) = @_;
 
 	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
@@ -313,7 +313,7 @@ sub compressOk {
 			# if is >= the ratio, then it's most likely a
 			# troll comment
 			my $comlen = length(Compress::Zlib::compress($content));
-			if (($complen / $ratio) <= $_) {
+			if (($comlen / $length) <= $_) {
 				$slashdb->createAbuse("content compress", $formname, $content);
 				return 0;
 			}
