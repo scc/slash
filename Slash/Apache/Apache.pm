@@ -33,7 +33,7 @@ sub SlashVirtualUser ($$$) {
 	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf($user));
 
 	# placeholders ... store extra placeholders in DB?  :)
-	for (qw[user form themes template cookie objects]) {
+	for (qw[user form themes template cookie objects cache]) {
 		$cfg->{$_} = '';
 	}
 

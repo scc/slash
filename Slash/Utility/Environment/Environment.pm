@@ -73,7 +73,7 @@ use vars qw($VERSION @EXPORT);
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward, $static_cookie,
-	$static_virtual_user, $static_objects);
+	$static_virtual_user, $static_objects, $static_cache);
 
 # FRY: I don't regret this.  But I both rue and lament it.
 
@@ -1472,6 +1472,30 @@ sub createEnvironment {
 	my $user = prepareUser($constants->{anonymous_coward_uid}, $form, $0);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
+}
+######################################################################
+# Quick intro -Brian
+sub getCurrentCache {
+	my($value) = @_;
+	my $cache;
+
+	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$cache = $cfg->{'cache'};
+	} else {
+		$cache = $static_cache;
+	}
+
+	$cache ||= {};
+
+	# i think we want to test defined($foo), not just $foo, right?
+	if ($value) {
+		return defined($cache->{$value})
+			? $cache->{$value}
+			: undef;
+	} else {
+		return $cache;
+	}
 }
 
 1;
