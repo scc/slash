@@ -949,6 +949,17 @@ sub moderateCid {
 			);
 			if (@$users) {
 				my $discussion = $slashdb->getDiscussion($sid);
+				if ($discussion->{sid}) {
+					# Story discussion, link to it.
+					$discussion->{realurl} =
+						"$constants->{absolutedir}/article.pl?sid=$discussion->{sid}";
+				} else {
+					# Some other kind of discussion,
+					# probably poll, journal entry, or
+					# user-created;  don't trust its url.
+					$discussion->{realurl} =
+						"$constants->{absolutedir}/comments.pl?sid=$discussion->{id}";
+				}
 				my $data  = {
 					template_name	=> 'mod_msg',
 					subject		=> {

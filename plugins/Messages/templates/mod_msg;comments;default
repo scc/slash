@@ -30,7 +30,7 @@ your comment.
 
 Attached to:
     [% discussion.title %]
-    [% discussion.url %]
+    [% discussion.realurl %]
 
 Your comment is currently scored [% comment.points %].
 [% END %]

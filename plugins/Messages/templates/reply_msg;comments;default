@@ -34,7 +34,7 @@ Replied to:
 
 Attached to:
     [% discussion.title %]
-    [% discussion.url %]
+    [% discussion.realurl %]
 
 [% END %]
 

@@ -121,8 +121,10 @@ sub reconcileM2 {
 		if ($con_avg > $constants->{m2_consensus_trigger}) {
 			my %slots;
 			my $pool = $constants->{m2_reward_pool};
-			my($goodk, $badk) =
-				@{$constants}{qw(goodkarma badkarma)};
+			my($goodk, $badk, $m2maxk) =
+				@{$constants}{qw(
+					goodkarma badkarma m2_maxbonus
+				)};
 
 			# Randomly distribute points from among the
 			# consensus.
@@ -139,7 +141,7 @@ sub reconcileM2 {
 					# Uncomment only one of these at a time!
 					#-karma => "karma+$slots{$_}",
 					-karma => "karma+1",
-				}) if $userkarm < $goodk;
+				}) if $userkarm < rand($m2maxk);
 			}
 
 			# Adjust moderator karma. 
