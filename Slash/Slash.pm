@@ -967,6 +967,7 @@ sub _hard_dispComment {
 		$time_to_display, $comment_link_to_display, $userinfo_to_display);
 
 	if ($comment_shrunk) {
+		# Guess what should be in a template? -Brian
 		my $link = linkComment({
 			sid	=> $comment->{sid},
 			cid	=> $comment->{cid},

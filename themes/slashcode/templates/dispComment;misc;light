@@ -26,6 +26,9 @@ __template__
 		<BR>IPID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% ipid %]">[% ipid %]</A>&nbsp;&nbsp;SubnetID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% subnetid %]">[% subnetid %]</A>
 		[% END %]
 		<P>[% comment %]
+		[% UNLESS user.nosigs %]
+			<BR>[% sig %]
+		[% END %]
 		</TD>
 	</TR>
 

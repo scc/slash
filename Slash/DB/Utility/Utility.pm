@@ -231,13 +231,15 @@ sub sqlConnect {
 				#connection in here. For now, we die
 				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
-				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
+				#die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
+				return 0;
 			}# else {
 			#	my $time = localtime();
 			#	print STDERR "Rebuilt at $time\n";
 			#}
 		}
 	}
+	return 1; # We return true that the sqlConnect was ok.
 }
 
 ########################################################
