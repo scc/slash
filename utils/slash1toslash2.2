@@ -337,6 +337,7 @@ EOT
 			if exists $ac_uid{$data->{uid}};
 
 		$data->{tid} = $topics{$data->{tid} || ''};
+		$data->{submitter} = $ac_uid{-1};
 		$data->{ALLOWED_FIELDS} = [qw(
 			subid email name time subj story tid note section
 			comment uid del
