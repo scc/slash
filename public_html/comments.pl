@@ -464,10 +464,8 @@ sub previewForm {
 
 	$user->{sig} = "" if $form->{postanon};
 
-	my $tempComment = stripByMode($form->{postercomment},
-				      $form->{posttype});
-	my $tempSubject = strip_nohtml($form->{postersubj},
-				      $user->{seclev});
+	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
+	my $tempSubject = strip_nohtml($form->{postersubj}, $user->{seclev});
 	my $error_message;
 
 	($tempComment, $tempSubject, $error_message) =
@@ -507,7 +505,7 @@ sub submitComment {
 	my $error_message;
 
 	$f->{postersubj} = strip_nohtml($f->{postersubj}, $u->{seclev});
-	$f->{postercomment} = stripByMode($f->{postercomment}, $f->{posttype});
+	$f->{postercomment} = strip_mode($f->{postercomment}, $f->{posttype});
 
 	($f->{postercomment}, $f->{postersubj}, $error_message) =
 		validateComment($f, $u);

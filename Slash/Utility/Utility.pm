@@ -26,7 +26,7 @@ use Apache;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 require Exporter;
-use vars qw($REVISION $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
+use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 
 # $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -66,7 +66,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 	fixurl
 	chopEntity
 	fixHref
-	stripByMode
+	strip_mode
 	strip_attribute
 	strip_code
 	strip_extrans
@@ -76,19 +76,19 @@ use vars qw($REVISION $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 	strip_plaintext
 );
 
-@EXPORT_OK = qw(
-	ATTRIBUTE
-	LITERAL
-	NOHTML
-	PLAINTEXT
-	HTML
-	EXTRANS
-	CODE
-);
-
-%EXPORT_TAGS = (
-	all => [@EXPORT, @EXPORT_OK],
-);
+# @EXPORT_OK = qw(
+# 	ATTRIBUTE
+# 	LITERAL
+# 	NOHTML
+# 	PLAINTEXT
+# 	HTML
+# 	EXTRANS
+# 	CODE
+# );
+# 
+# %EXPORT_TAGS = (
+# 	all => [@EXPORT, @EXPORT_OK],
+# );
 
 # LEELA: We're going to deliver this crate like professionals.
 # FRY: Aww, can't we just dump it in the sewer and say we delivered it?
@@ -829,6 +829,12 @@ sub stripByMode {
 	}
 
 	return $str;
+}
+
+sub strip_mode {
+	my($string, $mode, @args) = @_;
+	return if $mode < 1;	# user-supplied modes > 0
+	return stripByMode($string, $mode, @args);
 }
 
 sub strip_attribute	{ stripByMode($_[0], ATTRIBUTE,	@_[1 .. $#_]) }

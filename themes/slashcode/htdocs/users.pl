@@ -561,7 +561,7 @@ sub saveUser {
 		$note .= getMessage('cookiemsg', 0, 1);
 	}
 
-	# stripByMode _after_ fitting sig into schema, 120 chars
+	# strip_mode _after_ fitting sig into schema, 120 chars
 	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
 	$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';

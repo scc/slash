@@ -39,7 +39,7 @@ use base 'Exporter';
 use vars qw($REVISION $VERSION @EXPORT);
 use Exporter ();
 use Slash::Display::Provider;
-use Slash::Utility ':all';
+use Slash::Utility;
 use Template;
 
 # $Id$
@@ -289,44 +289,44 @@ But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugi
 
 require Template::Filters;
 
-my $stripByMode = sub {
+my $strip_mode = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], @args) };
+	return sub { strip_mode($_[0], @args) };
 };
 
 my $strip_attribute = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], ATTRIBUTE, @args) };
+	return sub { strip_attribute($_[0], @args) };
 };
 
 my $strip_code = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], CODE, @args) };
+	return sub { strip_code($_[0], @args) };
 };
 
 my $strip_extrans = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], EXTRANS, @args) };
+	return sub { strip_extrans($_[0], @args) };
 };
 
 my $strip_html = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], HTML, @args) };
+	return sub { strip_html($_[0], @args) };
 };
 
 my $strip_literal = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], LITERAL, @args) };
+	return sub { strip_literal($_[0], @args) };
 };
 
 my $strip_nohtml = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], NOHTML, @args) };
+	return sub { strip_nohtml($_[0], @args) };
 };
 
 my $strip_plaintext = sub {
 	my($context, @args) = @_;
-	return sub { stripByMode($_[0], PLAINTEXT, @args) };
+	return sub { strip_plaintext($_[0], @args) };
 };
 
 $filters = Template::Filters->new({
@@ -340,7 +340,7 @@ $filters = Template::Filters->new({
 		strip_literal	=> [ $strip_literal,	1 ],
 		strip_nohtml	=> [ $strip_nohtml,	1 ],
 		strip_plaintext	=> [ $strip_plaintext,	1 ],
-		stripByMode	=> [ $stripByMode,	1 ]
+		strip_mode	=> [ $strip_mode,	1 ]
 	}
 });
 
