@@ -391,6 +391,7 @@ sub createSubmission {
 	$submission->{'-time'} = 'now()';
 	$submission->{'subid'} = $subid;
 	$self->sqlInsert('submissions', $submission);
+	return $subid;
 }
 
 #################################################################
@@ -3112,7 +3113,7 @@ sub getUser {
 		$where =~ s/ AND $//;
 
 		$table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, $where);
+		$answer = $self->sqlSelectHashref($values, $table, $where) if $values;
 		for (@param) {
 			my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
 			$answer->{$_} = $val;

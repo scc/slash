@@ -284,24 +284,36 @@ List of UIDs from UIDS that are set to receive messages for CODE.
 =cut
 
 sub checkMessageCodes {
-	my($self, $code, $uids);
+	my($self, $code, $uids) = @_;
 	my @newuids;
 	$code = "messagecodes_$code";
-	for (@$uids) {
-		# test this!
-		my $user = $self->getUser($_, ['deliverymodes', $code]);
-		push @newuids, $_
+	for my $uid (@$uids) {
+		my $user = $self->getUser($uid, ['deliverymodes', $code]);
+		push @newuids, $uid
 			if $user->{deliverymodes} >= 0 && $user->{$code};
 	}
 	return \@newuids;
 }
 
+
+sub getMessageUsers {
+	my($self, $code) = @_;
+	my $coderef = $self->getMessageCode($code) or return MSG_MODE_NOCODE;
+	my $users = $self->_getMessageUsers($code, $coderef->{seclev});
+}
+
+
 sub getMode {
 	my($self, $msg) = @_;
 	my $mode = $msg->{user}{deliverymodes};
+	my $code = $msg->{code};
 
-	# user not set to receive this message type
-	return MSG_MODE_NOCODE if !$msg->{user}{"messagecodes_$msg->{code}"};
+	my $coderef = $self->getMessageCode($code) or return MSG_MODE_NOCODE;
+
+	# user not allowed to receive this message type
+	return MSG_MODE_NOCODE if
+		!$msg->{user}{"messagecodes_$code"} ||
+		$msg->{user}{seclev} < $coderef->{seclev};
 
 	# user has no delivery mode set
 	return MSG_MODE_NONE if	$mode == MSG_MODE_NONE
@@ -316,8 +328,8 @@ sub getMode {
 		$mode = MSG_MODE_WEB;
 	}
 
-	# if newsletter or headline message, must be email (or none)
-	if ($msg->{code} =~ /^(?:0|1)$/) {
+	# check if mode is allowed; default to email
+	if (length($coderef->{modes}) && !grep /\b$mode\b/, $coderef->{modes}) {
 		if (0 && !$msg->{user}{registered}) {
 			$mode == MSG_MODE_NONE;
 		} else {
@@ -757,11 +769,11 @@ sub getDescription {
 		}
 		return wantarray ? ($key, $codes->{$key}) : $codes->{$key};
 	} else {
-		my $rcodes = { map { ($codes->{$_}, $_) } %$codes };
+		my $rcodes = { map { ($codes->{$_}, $_) } keys %$codes };
 		unless (exists $rcodes->{$key}) {
 			return;
 		}
-		return wantarray ? ($rcodes->{$key}, $key) : $rcodes->{key};
+		return wantarray ? ($rcodes->{$key}, $key) : $rcodes->{$key};
 	}
 }
 

@@ -11,6 +11,8 @@ use Slash::Utility;
 use Slash::XML;
 use URI;
 
+use constant MSG_CODE_NEW_SUBMISSION => 6;
+
 #################################################################
 sub main {
 	my $slashdb = getCurrentDB();
@@ -352,8 +354,22 @@ sub saveSub {
 			tid	=> $form->{tid},
 			section	=> $form->{section}
 		};
-		$slashdb->createSubmission($submission);
+		$submission->{subid} = $slashdb->createSubmission($submission);
 		$slashdb->formSuccess($form->{formkey}, 0, length($form->{subj}));
+
+		my $messages = getObject('Slash::Messages');
+		if ($messages) {
+			my $users = $messages->getMessageUsers(MSG_CODE_NEW_SUBMISSION);
+			my $data  = {
+				template_name	=> 'messagenew',
+				subject		=> { template_name => 'messagenew_subj' },
+				submission	=> $submission,
+			};
+
+			for (@$users) {
+				$messages->create($_, MSG_CODE_NEW_SUBMISSION, $data);
+			}
+		}
 
 		slashDisplay('saveSub', {
 			title		=> 'Saving',

@@ -22,12 +22,11 @@ LONG DESCRIPTION.
 
 use strict;
 use Slash::DB;
-use Slash::DB::Utility;
 use Slash::Utility;
 use Storable qw(freeze thaw);
 
 use vars '$VERSION';
-use base 'Slash::DB::Utility';
+use base 'Slash::DB::Utility';	# first for object init stuff
 use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -36,13 +35,36 @@ my %descriptions = (
 	'deliverymodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='deliverymodes'") },
 	'messagecodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='messagecodes'") },
+		=> sub { $_[0]->sqlSelectMany('code,type', 'message_codes') },
 );
 
 sub getDescriptions {
 	my($self, $codetype, $optional, $flag) =  @_;
 	# handle in Slash::DB::MySQL (or whatever)
 	return $self->SUPER::getDescriptions($codetype, $optional, $flag, \%descriptions);
+}
+
+sub getMessageCode {
+	my($self, $code, $flag) = @_;
+	return unless $code =~ /^-?\d+$/;
+
+	my $codeBank = {};
+	my $cache = '_getMessageCodes_' . $code;
+
+	if ($flag) {
+		undef $self->{$cache};
+	} else {
+		return $self->{$cache}{$code}
+			if $self->{$cache} && $self->{$cache}{$code};
+	}
+
+	my $row = $self->sqlSelectHashref('code,type,seclev,modes',
+		'message_codes', "code=$code");
+	$codeBank->{$code} = $row if $row;
+
+	$self->{$cache} = $codeBank if getCurrentStatic('cache_enabled');
+
+	return $codeBank->{$code};
 }
 
 sub init {
@@ -218,6 +240,7 @@ sub _delete_all {
 	$self->sqlDo("DELETE FROM $table WHERE 1=1");
 }
 
+# rewrite
 sub _getMailingUsers {
 	my($self, $code) = @_;
 	return unless $code =~ /^-?\d+$/;
@@ -228,6 +251,23 @@ sub _getMailingUsers {
 		"users_param.value=1";
 
 	my $users = $self->sqlSelectAll($cols, $table, $where);
+	return $users;
+}
+
+sub _getMessageUsers {
+	my($self, $code, $seclev) = @_;
+	return unless $code =~ /^-?\d+$/;
+	my $cols  = "u.uid";
+	my $table = "users as u, users_param AS up1, users_param AS up2";
+	my $where = "u.uid=up1.uid AND u.uid=up2.uid
+		AND  up1.name = 'deliverymodes'      AND up1.value >= 0
+		AND  up2.name = 'messagecodes_$code' AND up2.value  = 1";
+
+	if ($seclev && $seclev =~ /^-?\d+$/) {
+		$where .= " AND u.seclev >= $seclev";
+	}
+
+	my $users  = $self->sqlSelectArrayRef($cols, $table, $where);
 	return $users;
 }
 

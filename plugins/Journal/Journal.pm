@@ -121,14 +121,12 @@ sub message_friends {
 	my($self) = @_;
 	my $code  = MSG_CODE_JOURNAL_FRIEND;
 	my $uid   = $ENV{SLASH_USER};
-	my $cols  = "journal_friends.uid";
-	my $table = "journal_friends,users_param";
-	my $where = "journal_friends.friend=$uid AND " .
-		"journal_friends.uid=users_param.uid AND " .
-# ACK!  how can i select on the values of two users_param records?
-#		"users_param.deliverymodes >= 0 AND " .
-		"users_param.name='messagecodes_$code' AND " .
-		"users_param.value=1";
+	my $cols  = "jf.uid";
+	my $table = "journal_friends AS jf, users_param AS up1, users_param AS up2";
+	my $where = "jf.friend=$uid
+		AND  jf.uid=up1.uid AND jf.uid=up2.uid
+		AND  up1.name = 'deliverymodes'      AND up1.value >= 0
+		AND  up2.name = 'messagecodes_$code' AND up2.value  = 1";
 
 	my $friends  = $self->sqlSelectArrayRef($cols, $table, $where);
 	return $friends;

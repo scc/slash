@@ -61,6 +61,12 @@ sub display_prefs {
 	my $deliverymodes = $messages->getDescriptions('deliverymodes');
 	my $messagecodes  = $messages->getDescriptions('messagecodes');
 
+	for my $code (keys %$messagecodes) {
+		my $coderef = $messages->getMessageCode($code);
+		delete $messagecodes->{$code}
+			if $user->{seclev} < $coderef->{seclev};
+	}
+
 	header(getData('header'));
 	slashDisplay('display_prefs', {
 		note		=> $note,
@@ -77,8 +83,11 @@ sub save_prefs {
 	$params{'deliverymodes'} = fixint($form->{'deliverymodes'});
 
 	my $messagecodes = $messages->getDescriptions('messagecodes');
-	for (keys %$messagecodes) {
-		my $key = 'messagecodes_' . $_;
+	for my $code (keys %$messagecodes) {
+		my $coderef = $messages->getMessageCode($code);
+		next if $user->{seclev} < $coderef->{seclev};
+
+		my $key = 'messagecodes_' . $code;
 		$params{$key} = $form->{$key} ? 1 : 0;
 	}
 

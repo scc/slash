@@ -1,0 +1,32 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+messagenew
+__template__
+[% IF msg.mode == 1 %]
+
+<P>
+[% submission.name %] has submitted a new story,
+<B><A HREF="[% constants.rootdir %]/submit.pl?op=viewsub&amp;subid=[% submission.subid %]&amp;title=[%
+FILTER fixparam; submission.subj; END %]">[% FILTER strip_nohtml; submission.subj; END %]</A></B>.
+</P>
+
+[% ELSE %]
+
+[% submission.name %] has submitted a new story on [% constants.sitename %].
+
+    [% FILTER strip_nohtml; submission.subj; END %]
+    [% constants.absolutedir %]/submit.pl?op=viewsub&subid=[% submission.subid %]&title=[% FILTER fixparam; submission.subj; END %]
+
+[% END %]
+
+__seclev__
+100
