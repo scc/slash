@@ -115,7 +115,10 @@ $werder = new Silly::Werder;
 			} keys %{$comments};
 		}
  
-		my $comment = make_werds(rand(20)*rand(20)+rand(10) + 1, 0.1);
+		my $num_werds = rand(20)*rand(20)+rand(10) + 1;
+		$num_werds += 200 if rand(1) < 0.1;
+		$num_werds += 300 if rand(1) < 0.1;
+		my $comment = make_werds($num_werds, 0.1);
 		$comment = strip_mode($comment, 2); # HTML mode
 		$comment = balanceTags($comment, 1);
 		$comment = addDomainTags($comment);
