@@ -6,14 +6,17 @@
 
 use strict;
 use Getopt::Std;
+use FindBin '$Bin';
 use File::Basename;
 
 (my $PROGNAME) = basename($0);
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('P:s:d:o:u:p:U:S:H:?XThv', \%opts);
+usage('Options used incorrectly')
+	unless getopts('Y:Z:f:F:w:W:x:X:H:?kKhv', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 
@@ -27,9 +30,9 @@ $SIG{INT} = sub { die "Interrupted.\n"; };
 my(%aidCache) = ( '' => 0 );
 # Show usage under the necessary conditions.
 usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
-			($opts{s} && ($opts{U} || $opts{H}));
+			($opts{Z} && ($opts{x} || $opts{X} || $opts{H}));
 {
-	my @options = qw[u p U P];
+	my @options = qw[x X w W];
 	my ($a, $b);
 
 	do {
@@ -42,137 +45,146 @@ usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
 			usage();
 		}
 		if ($opts{$a} && !length($opts{$b})) {
-			printf "Enter %s password: ", ($b eq 'P') ? 'slave':'master';
+			printf "Enter %s password: ", ($b eq 'x') ? 'slave':'master';
 			chomp($opts{$b} = <STDIN>);
 		}
 	} until $b eq 'P';
 }
 
 # Perform sensible tilde expansion.
-my(@fileopts) = qw[P d s o];
+my(@fileopts) = qw[Y f Z F];
 map {
 	$opts{$_} =~ s/^\~(\w+)?/(($1) ? getpwnam($1):getpwuid($<))[7]/e
 		if $opts{$_}; 
 } @fileopts;
 
-my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd, $t_user, $t_pwd, $dbhost) =
-	@opts{qw[S d s o u p U P H]};
+my ($tempDBname, $g_dbh, $dbh, @rtables, @otables);
+my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd, $t_user, $t_pwd,
+	$dbhost) = @opts{qw[Y f Z F w W x X H]};
 $prefix 	||= '/usr/local/slash';
 $dumpfile	||= './site.dump';
 $rcfile 	||= './slashdotrc.pl';
 $outfile	||= './bender.dump';
 $dbhost		||= 'localhost';
 
-if (!$t_user) {
-	die "FATAL ERROR: Can't read $rcfile: $!\n" if ! -r $rcfile;
-	$rcfile =~ s!^(.+)/!!;
-	unshift(@INC, $1 || '.');
-	require $rcfile;
-	*my_conf = $Slash::conf{DEFAULT};
-	$Slash::conf{DEFAULT} = undef;
+# Main program logic.
+{
+	if (!$t_user) {
+		die "FATAL ERROR: Can't read $rcfile: $!\n" if ! -r $rcfile;
+		$rcfile =~ s!^(.+)/!!;
+		unshift(@INC, $1 || '.');
+		require $rcfile;
+		*my_conf = $Slash::conf{DEFAULT};
+		$Slash::conf{DEFAULT} = undef;
 
-	# Grab any necessary defaults from the rc file.
-	$g_user	||= $my_conf{dbuser};
-	$g_pwd 	||= $my_conf{dbpass};
-	$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
-	$dbhost = $1;
-}
-
-die "FATAL ERROR: Can't read input dump file: $!\n"
-	if ! -r $dumpfile;
-
-my(@updateFile);
-open(INFILE, "<$prefix/sql/updates/$PROGNAME")
-	or die "Can't read update file $prefix/sql/updates/$PROGNAME: $!\n";
-@updateFile = <INFILE>;
-map { chomp } @updateFile;
-close(INFILE);
-
-# Process table status directives from update file.
-my(@rtables, @otables);
-for (@updateFile) {
-	/^#### \%REQUIRED TABLES: (.+)$/ && do {
-		push (@rtables, split(/\s*,\s*/, $1));
-		next;
-	};
-
-	/^#### \%OBSOLETE TABLES: (.+)$/ && do {
-		push (@otables, split(/\s*,\s*/, $1));
-		next;
-	};
-}
-
-# Sanitize array of all unnecessary entries.
-@updateFile = grep { ! /^(#.+|\s+)?$/ } @updateFile;
-
-# Create temporary database.
-my $tempDBname = tempDBname();
-# We can just exit if the global handle has errors because we're being wordy in
-# the connect.
-my $g_dbh =
-	DBI->connect("DBI:mysql:database=;host=$dbhost", $g_user, $g_pwd, {
-		PrintError => 1, 
-	}) or exit 1;
-$g_dbh->do("CREATE DATABASE $tempDBname") or
-	print "\n\nCREATE DATABASE failed for '$tempDBname'\n" && exit 1;
-# Can't forget the grant...
-$g_dbh->do("GRANT ALL on $tempDBname.* TO $t_user\@$dbhost") or
-	print "\n\nGRANT failed!\n" && exit 1;
-my $dbh =
-	DBI->connect(	"DBI:mysql:database=$tempDBname;host=$dbhost", 
-					$t_user, $t_pwd, {PrintError=>0});
-die "\n\nCan't connect to temporary conversion database!\n" if ! $dbh;
-
-# Perform selective import of given dump.
-importDump();
-
-# Perform schema updates on loaded tables (this should probably be a sub).
-my $cmd;
-for (@updateFile) {
-	$cmd = "${cmd}${_}";
-	if ($cmd =~ /;(\s)*$/) {
-		$dbh->do($cmd) or
-			printf STDERR "Error executing '$_': %s\n", $dbh->errstr;
-		$cmd = '';
+		# Grab any necessary defaults from the rc file.
+		$g_user	||= $my_conf{dbuser};
+		$g_pwd 	||= $my_conf{dbpass};
+		$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
+		$dbhost = $1;
 	}
-}
 
-# Perform version specific conversion process.
-#ditchAC();
-authors2Users();
-aid2uid();
-# Don't do codes, leave that to the new dump --Brian
-#codes2CodeParam();
-md5Users();
-userskey2Param();
+	die "FATAL ERROR: Can't read input dump file: $!\n"
+		if ! -r $dumpfile;
 
-# Drop obsolete tables.
-unless ($opts{T}) {
-	for (@otables) {
-		print "-- Dropping obsolete table '$_'\n";
-		$dbh->do("DROP TABLE $_");
+	my(@updateFile);
+	open(INFILE, "<$prefix/sql/updates/$PROGNAME")
+		or die "Can't read update file $prefix/sql/updates/$PROGNAME: $!\n";
+	@updateFile = <INFILE>;
+	map { chomp } @updateFile;
+	close(INFILE);
+
+	# Process table status directives from update file.
+	for (@updateFile) {
+		/^#### \%REQUIRED TABLES: (.+)$/ && do {
+			push (@rtables, split(/\s*,\s*/, $1));
+			next;
+		};
+
+		/^#### \%OBSOLETE TABLES: (.+)$/ && do {
+			push (@otables, split(/\s*,\s*/, $1));
+			next;
+		};
 	}
+
+	# Sanitize array of all unnecessary entries.
+	@updateFile = grep { ! /^(#.+|\s+)?$/ } @updateFile;
+
+	# Create temporary database.
+	$tempDBname = tempDBname();
+	# We can just exit if the global handle has errors because we're being 
+	# wordy in the connect.
+	$g_dbh =
+		DBI->connect("DBI:mysql:database=;host=$dbhost", $g_user, $g_pwd, {
+			PrintError => 1, 
+		}) or exit 1;
+	$g_dbh->do("CREATE DATABASE $tempDBname") or
+		print "\n\nCREATE DATABASE failed for '$tempDBname'\n" && exit 1;
+	# Can't forget the grant...
+	$g_dbh->do("GRANT ALL on $tempDBname.* TO $t_user\@$dbhost") or
+		print "\n\nGRANT failed!\n" && exit 1;
+	$dbh = DBI->connect("DBI:mysql:database=$tempDBname;host=$dbhost", 
+						$t_user, $t_pwd, {PrintError=>0});
+	die "\n\nCan't connect to temporary conversion database!\n" if ! $dbh;
+
+	# Perform selective import of given dump.
+	importDump();
+
+	# Perform schema updates on loaded tables (this should probably be a sub).
+	my $cmd;
+	for (@updateFile) {
+		$cmd = "${cmd}${_}";
+		if ($cmd =~ /;(\s)*$/) {
+			$dbh->do($cmd) or
+				printf STDERR "Error executing '$_': %s\n", $dbh->errstr;
+			$cmd = '';
+		}
+	}
+
+	# Perform version specific conversion process.
+	#ditchAC();
+	authors2Users();
+	aid2uid();
+	# Don't do codes, leave that to the new dump --Brian
+	#
+	# But what if users have already edited some of these tables? Said 
+	# information is lost. Is there something REALLY wrong with the routine? 
+	# ...aside from the fact that it was broken? ;) - Cliff
+	codes2CodeParam();
+	md5Users();
+	userskey2Param();
+
+	# Drop obsolete tables.
+	unless ($opts{k}) {
+		for (@otables) {
+			print "-- Dropping obsolete table '$_'\n";
+			$dbh->do("DROP TABLE $_");
+		}
+	}
+
+	# Make dump of temporary database.
+	print "-- Creating output dump '$outfile'\n";
+	system("mysqldump -u $t_user -p$t_pwd $tempDBname > $outfile");
+	print "DONE!\n";
 }
 
-# Make dump of temporary database.
-print "-- Creating output dump '$outfile'\n";
-system("mysqldump -u $t_user -p$t_pwd $tempDBname > $outfile");
-print "DONE!\n";
+# End Main program code.
 
+
+# Subroutine definitions.
 
 END {
 	# Destroy temporary database.
-	if ($g_dbh && !$opts{'X'}) {
+	if ($g_dbh && !$opts{'K'}) {
 		# Destroy the one we've create.
 		$g_dbh->do("DROP DATABASE $tempDBname") or
 			print "\n\nDatabase drop should be performed manually!\n";
 		$g_dbh->disconnect;
 	}
-	print STDERR "(Not deleting temporary database, '$tempDBname', upon request)\n"
-		if $opts{X};
+	print STDERR
+		"(Not deleting temporary database, '$tempDBname', upon request)\n"
+		if $opts{K};
 };
-
-
 
 
 sub tempDBname {
@@ -435,36 +447,38 @@ sub usage {
 
 	print <<EOT;
 
-usage: $PROGNAME {-PsdoupUPH?hv}
+usage: $PROGNAME {-YZfFwWxXkKH?hv}
 
-	-S Prefix for Slash install 		[default: /usr/local/slash]
-	-d Location of source MySQL dump	[default: ./site.dump]
-	-o Location of output dump 		[default: ./bendersite.dump]
+	-Y Prefix for Slash install 		[default: /usr/local/slash]
+	-f Location of source MySQL dump	[default: ./site.dump]
+	-F Location of output dump 		[default: ./bendersite.dump]
 
-	-u [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
-	-p Password for user given by -u
-	-X Do NOT delete temporary database after performing conversion.
-	-T Do NOT delete obsolete tables after performing conversion.
+	-w [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
+	-W Password for user given by -w
 
-	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
+	-Z Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
 
-	-U [SLAVE] User which will perform conversions
-	-P Password for user given by -U
+	-x [SLAVE] User which will perform conversions
+	-X Password for user given by -x
 
 	-H Database hostname
 
 	-h Displays this help screen (also -?)
 	-v Displays version information.
 
+	-K Do NOT delete temporary database after performing conversion.
+	-k Do NOT delete obsolete tables after performing conversion.
+
 Notes: 
 	User given in slashdotrc.pl should have global CREATE/DROP priviledges
 	when this program is run. See INSTALL file for more details.	
 
-	You must specify -p if you specify -u, if no user is given, the one
-	in the rc file specified by -s will be used. If you specify -p with no
-	password, then the user will be prompted.
+	If you specify "-w ''" (ie use the null string as the password) then the
+	script will prompt you for the appropriate password. Just hit return
+	here if the database user password is NULL. These caveats also apply
+	to the -x/-X option pair.
 
-	Use of the -H, -U and -P options are not allowed with -s.
+	Use of the -H, -x and -X options are not allowed with -Z.
 
 EOT
 
