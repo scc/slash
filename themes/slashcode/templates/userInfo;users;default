@@ -65,7 +65,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 [% END %]
 </P>
 
-[% IF karma_flag && nickmatch_flag %]
+[% IF karma_flag && (nickmatch_flag || user.is_admin) %]
         <B>Karma</B> [% useredit.karma %] (mostly the sum of moderation done to users comments)<BR>
 [% END %]
 
@@ -74,9 +74,9 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 [% END %]
 
 [% IF useredit.pubkey %]
-   <B>Public Key</B><BR><PRE>
-  [% FILTER strip_literal; useredit.pubkey; END %]
- </PRE><P>
+		<B>Public Key</B><BR>
+		[% constants.rootdir %]/~[% nick %]/pubkey/
+		<P>
 [% END %]
 
 <BR><B>[% nick %] has posted [% commentcount %] comments. [% IF commentcount > constants.user_comment_display_default %]Below are the most recent [% constants.user_comment_display_default %] comments.[% END %]</B><P>
