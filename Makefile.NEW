@@ -30,6 +30,11 @@ USER = nobody
 GROUP = nobody
 CP = cp
 
+# Perl scripts, grouped by directory.
+BINFILES = `find bin -name CVS -prune -o -type f -print`
+SBINFILES = `find sbin -name CVS -prune -o -type f -print`
+THEMEFILES = `find themes -name CVS -prune -o -name \*.pl -print`
+PLUGINFILES = `find plugins -name CVS -prune -o -name \*.pl -print`
 
 #   install the shared object file into Apache 
 # We should run a script on the binaries to get the right
@@ -72,13 +77,32 @@ install: slash plugins
                 (cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install); \
 	fi
 
-	# First we do the default sutff
-	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/plugins/ $(PREFIX)/httpd/
-	install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(PREFIX)/bin/
-	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
-	$(CP) sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
-	$(CP) sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
+	# Create all necessary directories.
+	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/ $(PREFIX)/httpd/
+	
+	# Insure we use the proper perl interpreter in all scripts that we install.
+	# Note the use of Perl as opposed to dirname(1) and basename(1) which
+	# may or may not exist on any given system.
+	# <jamie> I would suggest, Cliff, instead of using sed to write temp files to /tmp, use perl -i.bak -pe, and delete the .bak files immediately afterwards.
+	# <jamie> Writing files with predictable names to /tmp and then assuming they still contain the same data 140 microseconds later is a small but nonzero security risk...
+	(if [ "$(PERL)" != "perl" ]; then \
+		replacewith=`$(PERL) -MConfig -e 'print $$Config{startperl}' | sed -e 's/\([.?/*]\)/\\\\\1/g'`; \
+		echo "REPLACEWITH=$$replacewith"; \
+		for f in $(BINFILES) $(SBINFILES) $(THEMEFILES) $(PLUGINFILES); do \
+			b=`echo $$f | $(PERL) -MFile::Basename -e 'print basename(<STDIN>)'`; \
+			d=`echo $$f | $(PERL) -MFile::Basename -e 'print dirname(<STDIN>)'`; \
+			cat $$f | sed -e "s|#!/usr/bin/perl|$$replacewith|" > \
+				/tmp/$$b.temp; \
+			install -D /tmp/$$b.temp $(PREFIX)/$$d/$$b; \
+			rm /tmp/$$b.temp; \
+			echo "Installing $$f in $(PREFIX)/$$d"; \
+		done; \
+	fi)
 
+	#install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(PREFIX)/bin/
+	#install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
+	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
+	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
 	if [ -f $(PREFIX)/httpd/slash.conf ]; then\
 		echo "Preserving old slash.conf"; \
 	else \
@@ -87,11 +111,13 @@ install: slash plugins
 
 	$(CP) httpd/slash.conf $(PREFIX)/httpd/slash.conf.def 
 
+	# Note the use of -u in the copy commands below. We don't want to overwrite
+	# any of the perl scritps we've already modified and put into place!
 
 	# Now for the default theme (be nice when this goes in themes)
-	$(CP) -r plugins/* $(PREFIX)/plugins/
+	cp -ruv plugins/* $(PREFIX)/plugins/
 	# Now all other themes
-	$(CP) -r themes/* $(PREFIX)/themes
+	cp -ruv themes/* $(PREFIX)/themes
 
 	# this needs BSD support (and Solaris)
 	if [ -d /etc/init.d ]; then\

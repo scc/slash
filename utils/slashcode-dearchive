@@ -35,7 +35,7 @@ my %idextractor_regexps = (
 
 # Parameter validation.
 my(%opts);
-getopts('d:s:f:y:e:n:CX', \%opts);
+getopts('d:s:f:y:e:n:CXO', \%opts);
 &usage if !keys(%opts);
 # Optionally use single parameter as virtual username, however specification
 # with -d <virtualuser> will override anything given in @ARGV.
@@ -122,9 +122,14 @@ if (! $opts{s}) {
 }
 die "\nCan't find ID using any extractor!\n" if !$sid;
 print STDERR "'$sid'\n" if $debug && $sid;
-if ($slashdb->sqlSelect('*', 'comments', 'sid=' . quote($sid)) && !$opts{O}) {
-	print "Data already exists for article '$sid'!!\n";
-	exit 1;
+if ($slashdb->sqlSelect('*', 'comments', 'sid=' . quote($sid))) {
+	if (!$opts{O}) {
+		print "Data already exists for article '$sid'!!\n";
+		exit 1;
+	} else {
+		print "Deleting all existing comments from article '$sid'\n";
+		$slashdb->sqlDo('DELETE FROM comments WHERE sid=' . quote($sid));
+	}
 }
 print "Beginning extraction for article '$sid'...\n";
 
@@ -158,15 +163,22 @@ while ($bigscalar =~ /$en_regexp/sg) {
 		 $comment,
 		 $sig) = ($1, $2, $3, $4, $5, $6, $7, $8, $9);
 
-		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n" if $debug;
+		next if !$cid;
+
+		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n"
+			if $debug;
 
 		# Copy $username.
 		$uname = $username;
-		# Fix $uname if it is a link.
-		$uname =~ s/<A HREF=".*?">(.+?)<\/A>/$1/;
-		# Also extract and remove email information.
-		$uname =~ s/ <B><FONT.+?>\((.+?)\)<\/FONT><\/B>// and
+		# Extract and remove email information.
+		if ($uname =~ s/<B><FONT.+?>\((.+?)\)<\/FONT><\/B>//) {
 			$email_addy = $1;
+		}
+		# Fix $uname if it is a link.
+		$uname =~ s/<A HREF=".*?">(.+?)<\/A>.+$/$1/s;
+		# Remove any and all backtics (`) from the user name since this breaks
+		# the API for some reason.
+		$uname =~ s/\`//g;
 
 		# Grab score from indicator.
 		if ($score_ind =~ /Score:(\d+)/) {
@@ -211,7 +223,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 			# year. So the simple solution is to strip the DoW which appears
 			# at the beginning of the string. This really depends on the site
 			# but this is the default for Slashcode and also works on Slashdot.
-			$ts =~ s/(?:Mon|Tues|Wednes|Thurs|Fri|Sat|Sun)day\s+//;
+			$ts =~ s/(?:Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\s+//;
 
 			# Now grab the zone associated with the date.
 			$ts =~ /\s([^\ ]+?)$/;
@@ -234,8 +246,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 
 		# Attribute comment to the proper nickname in the comment if the 
 		# user doesn't turn up in the database.
-		$comment = "Posted by $username:<BR><BR>$comment"
-			if (! $uid);
+		$comment = "Posted by $username:<BR><BR>$comment" if (! $uid);
 
 		print	"\n", header("Extracted ${\(length($x_data))} bytes"),
 				($cid ? "#$cid\n" : ""),
@@ -256,7 +267,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 
 		# Assign data to hash.
 		$data{$cid}->{subject} = $subj;
-		$data{$cid}->{'-uid'} = ($uid) ? $uid : -1;
+		$data{$cid}->{'-uid'} = $uid;
 		$data{$cid}->{date} = $gmt_ts;
 		$data{$cid}->{comment} = $comment;
 		$data{$cid}->{'-points'} = ($score) ? $score : 0;
@@ -280,8 +291,9 @@ $bigscalar  = '';
 # Now write data to database.
 print "Writing to database...";
 my $nr = 0;
-foreach (sort { $data{$a}->{ts} cmp $data{$b}->{ts} } keys(%data)) {
-	# We process comments into the database serially by DATE.
+foreach (keys(%data)) {
+	# We process comments into the database by CID and let it worry about
+	# all of the sorting.
 
 	# Copy and sanitize data for insert into the comments table.
 	my(%sqldata) = %{$data{$_}};
