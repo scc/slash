@@ -352,7 +352,8 @@ sub getMetamodComments {
 		$comments = $self->sqlSelectAllHashref(
 			'cid',
 			"$comment_table.cid, $comment_table.sid as sid, date, subject,
-			comment, comments.uid, pid, reason, sig, url, title, nickname",
+			discussions.sid as discussions_sid,
+			comment, comments.uid, pid, reason, sig, title, nickname",
 	
 			"$comment_table, comment_text, discussions, users",
 
@@ -376,6 +377,23 @@ sub getMetamodComments {
 			$m2Mod->{$key} = '0' if $key eq 'points';
 			# No longer anonymizing sig.
 			#$m2Mod->{$key} = '' if $key eq 'sig';
+		}
+		# We also need to provide the url, but the question is,
+		# where to link to?
+		if ($m2Mod->{discussions_sid}) {
+			# This is a comment posted to a story discussion, so
+			# we can link straight to the story, providing even
+			# more context for this comment.
+			$m2Mod->{url} = getCurrentStatic('rootdir')
+				. "/article.pl?sid=$m2Mod->{discussions_sid}";
+		} else {
+			# This is a comment posted to a discussion that isn't
+			# a story.  It could be attached to a poll, a journal
+			# entry, or nothing at all (user-created discussion).
+			# Whatever the case, we can't trust the url field, so
+			# we should just link to the discussion itself.
+			$m2Mod->{url} = getCurrentStatic('rootdir')
+				. "/comments.pl?sid=$m2Mod->{sid}";
 		}
 		$m2Mod->{no_moderation} = 1;
 
