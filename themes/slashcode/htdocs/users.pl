@@ -2,7 +2,7 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
+$Id$
 
 use strict;
 use Date::Manip;
@@ -19,15 +19,33 @@ sub main {
 	my $curuser = getCurrentUser();
 	my $form = getCurrentForm();
 
+	my $suadminflag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
+	my $postflag = $ENV{REQUEST_METHOD} eq 'POST' ? 1 : 0 ;
 	my $op = $form->{op};
+
+	if ( $suadminflag ) {
+		if ( $form->{userfield_flag} eq 'uid') {
+			$user = $slashdb->getUser($form->{userfield});
+
+		} elsif ( $form->{userfield_flag} eq 'nickname') {
+			$user = $slashdb->getUser(getUserUID($form->{userfield}));
+		} else {
+			$user = getCurrentUser();
+		}
+
+	} elsif ( $form->{uid} ) {
+		$user = $slashdb->getUser($form->{uid});
+		if ($user->{uid} != $curuser->{uid}) {
+			displayForm();
+			return();
+		}
+	} else {
+		$user = getCurrentUser();
+	}
+
 	my $uid = $user->{uid};
 
-	my $suadminflag = $user->{seclev} >= 10000 ? 1 : 0 ;
-	my $postflag = $ENV{REQUEST_METHOD} eq 'POST' ? 1 : 0 ;
-
-	my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
-
-	if ($op eq 'userlogin' && !$user->{is_anon}) {
+	if ($op eq 'userlogin' && !$curuser->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
 		print STDERR "refer $refer\n";
 		redirect($refer);
@@ -39,9 +57,8 @@ sub main {
 	# }
 
 	header(getMessage('user_header'));
-	print getMessage('note', { note => $note } ) if defined $note;
 
-	print createMenu('users') if ! $user->{is_anon};
+	print createMenu('users') if ! $curuser->{is_anon};
 
 	my %ops = (
 		userlogin	=> \&userInfo,
@@ -50,8 +67,10 @@ sub main {
 		savehome	=> \&saveHome,
 		savecomm	=> \&saveComm,
 		saveuser	=> \&saveUser,
+		edituser	=> \&editUser,
 		edithome	=> \&editHome,
 		editcomm	=> \&editComm,
+		newuser		=> \&newUser,
 		newuseradmin	=> \&newUserForm,
 		previewbox	=> \&previewSlashbox,
 		mailpasswd	=> \&mailPassword,
@@ -60,9 +79,9 @@ sub main {
 		default		=> \&displayForm,
 	);
 
-
 	my $user_calls = { 
 		userinfo	=> 1,
+		userlogin 	=> 1,
 		savehome	=> 1,
 		savecomm	=> 1,
 		saveuser	=> 1,
@@ -86,6 +105,7 @@ sub main {
 
 	if ($curuser->{is_anon}) {
 		$op = 'default' if $user_calls->{$op};
+
 	} elsif (! $suadminflag) {
 		$op = 'userinfo' if $admin_calls->{$op};
 		# $op = 'userinfo' if $post_calls->{$op} ; # && ! $postflag ;
@@ -114,18 +134,18 @@ sub main {
 		newUser();
 
 	} elsif ($op eq 'mailpasswd') {
-		mailPassword($slashdb->getUserUID($form->{unickname}));
+		mailPassword();
 
 	} elsif ($op eq 'userclose') {
 		displayForm();
 
-	} elsif ($op eq 'userlogin' && !$user->{is_anon}) {
+	} elsif ($op eq 'userlogin') {
 		userInfo($user->{uid});
 
 	} elsif ($form->{validateuser}) {
 		validateUser();
 
-	} elsif ($form->{previewbox}) {
+	} elsif ($op eq 'previewbox') {
 		previewSlashbox();
 
 	# su admin actions
@@ -168,7 +188,7 @@ sub main {
 		} 
 	# regular user admin
 	############################################
-	} elsif (! ($user->{is_anon}))  { 
+	} elsif (! ($curuser->{is_anon}))  { 
 
 		if ($op eq 'userinfo') {
 			userInfo();
@@ -294,8 +314,13 @@ sub mailPassword {
 	my($uid) = @_;
 
 	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
 
-	my $user_email = $slashdb->getUser($uid, ['nickname', 'realemail']);
+	if (! $uid ) {
+		$uid = $slashdb->getUserUID($form->{unickname});
+	}
+
+	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
 
 	unless ($uid) {
 		print getMessage('mailpasswd_notmailed_msg');
@@ -303,10 +328,10 @@ sub mailPassword {
 	}
 
 	my $newpasswd = $slashdb->getNewPasswd($uid);
-	my $tempnick = fixparam($user_email->{nickname});
+	my $tempnick = fixparam($user->{nickname});
 
 	my $emailtitle = getTitle('mailPassword_email_title', {
-		nickname	=> $user_email->{nickname}
+		nickname	=> $user->{nickname}
 	}, 1);
 
 	my $msg = getMessage('mailpasswd_msg', {
@@ -314,8 +339,8 @@ sub mailPassword {
 		tempnick	=> $tempnick
 	}, 1);
 
-	doEmail($uid, $emailtitle, $msg) if $user_email->{nickname};
-	print getMessage('mailpasswd_mailed_msg', { name => $user_email->{nickname} });
+	doEmail($uid, $emailtitle, $msg) if $user->{nickname};
+	print getMessage('mailpasswd_mailed_msg', { name => $user->{nickname} });
 }
 
 #################################################################
@@ -797,6 +822,8 @@ sub editUser {
 
 	return if isAnon($user->{uid});
 
+	print getMessage('note', { note => $form->{note}}) if $form->{note};	
+
 	$title = getTitle('editUser_title', { user_edit => $user});
 
 	my $tempnick = fixparam($user->{nickname});
@@ -1071,7 +1098,7 @@ sub saveUserAdmin {
 		}
 	}
 
-	print $note;
+	print getMessage('note', { note => $note } ) if defined $note;
 
 	userInfo($id);
 }
@@ -1233,7 +1260,7 @@ sub saveUser {
 	print STDERR "passwd $form->{pass1} passwd2 $form->{pass2}\n";
 	print STDERR "calling editUser($uid)\n";
 
-	print $note;
+	print getMessage('note', { note => $note } ) if defined $note;
 
 	editUser($uid);
 }
