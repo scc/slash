@@ -415,8 +415,7 @@ INSERT INTO vars (name, value, description) VALUES ('minkarma','-25','Minimum ka
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_comm','10','Lowest value for comment expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('min_expiry_days','7','Lowest value for duration expiry trigger.');
 INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
-INSERT INTO vars (name, value, description) VALUES ('moderatord_debug_info', '1', 'Add in more detailed information into slashd.log for moderation task info. This WILL increase the size by slashd.log quite a bit, so use only if you need to.');
-INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','1','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
+INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','1','Use the mysql hash tables. This requires work so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('newsletter_body','0','Print bodytext, not merely introtext, in newsletter.');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
@@ -432,6 +431,7 @@ INSERT INTO vars (name, value, description) VALUES ('rdfupdatefrequency','1','Ho
 INSERT INTO vars (name, value, description) VALUES ('rdfupdateperiod','hourly','When to update');
 INSERT INTO vars (name, value, description) VALUES ('reasons','Normal|Offtopic|Flamebait|Troll|Redundant|Insightful|Interesting|Informative|Funny|Overrated|Underrated','first is neutral, next $badreasons are bad, the last two are \"special\", the rest are good');
 INSERT INTO vars (name, value, description) VALUES ('rootdir','//www.example.com','Base URL of site; used for creating on-site links that need protocol-inspecific URL (so site can be used via HTTP and HTTPS at the same time)');
+INSERT INTO vars (name, value, description) VALUES ('runtask_verbosity','3','How much information runtask should write to slashd.log: 0-3 or empty string to use slashd_verbosity');
 INSERT INTO vars (name, value, description) VALUES ('run_ads','0','Should we be running ads?');
 INSERT INTO vars (name, value, description) VALUES ('sbindir','/usr/local/slash/sbin','Where are the sbin scripts kept');
 INSERT INTO vars (name, value, description) VALUES ('send_mail','1','Turn On/Off to allow the system to send email messages.');
@@ -442,6 +442,7 @@ INSERT INTO vars (name, value, description) VALUES ('sitename','Slash Site','Nam
 INSERT INTO vars (name, value, description) VALUES ('siteowner','slash','What user this runs as');
 INSERT INTO vars (name, value, description) VALUES ('sitepublisher','Me','The entity that publishes the site');
 INSERT INTO vars (name, value, description) VALUES ('slashdir','/usr/local/slash','Directory where Slash was installed');
+INSERT INTO vars (name, value, description) VALUES ('slashd_verbosity','2','How much information slashd (and runtask) should write to slashd.log: 0-3, 3 can be a lot');
 INSERT INTO vars (name, value, description) VALUES ('slogan','Slash Site','Slogan of the site');
 INSERT INTO vars (name, value, description) VALUES ('smtp_server','localhost','The mailserver for the site');
 INSERT INTO vars (name, value, description) VALUES ('stats_reports','admin@example.com','Who to send daily stats reports to');
@@ -458,10 +459,9 @@ INSERT INTO vars (name, value, description) VALUES ('template_pre_chomp','0','Ch
 INSERT INTO vars (name, value, description) VALUES ('template_show_comments', '1', 'Show HTML comments before and after template (see Slash::Display)');
 INSERT INTO vars (name, value, description) VALUES ('titlebar_width','100%','The width of the titlebar');
 INSERT INTO vars (name, value, description) VALUES ('today','730512','(Obviated) Today converted to days past a long time ago');
-INSERT INTO vars (name, value, description) VALUES ('token_retention', '0.25', 'Amount of tokens a user keeps at cleanup time.');
 INSERT INTO vars (name, value, description) VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment');
 INSERT INTO vars (name, value, description) VALUES ('tokensperpoint','8','Number of tokens per point');
-INSERT INTO vars (name, value, description) VALUES ('token_retention', 0.3, 'Percentage of tokens user retains after each run of the moderator daemon.');
+INSERT INTO vars (name, value, description) VALUES ('token_retention', '0.25', 'Amount of tokens a user keeps at cleanup time.');
 INSERT INTO vars (name, value, description) VALUES ('totalComments','0','Total number of comments posted');
 INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total number of hits the site has had thus far');
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
