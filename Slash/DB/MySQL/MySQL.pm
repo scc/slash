@@ -2873,7 +2873,7 @@ sub countStorySubmitters {
 	my $in_list = join(",", @$uid);
 
 	my $submitters = $self->sqlSelectAll('count(*) as c, users.nickname',
-		'stories, users', "users.uid=stories.submitter AND NOT IN ($in_list)",
+		'stories, users', "users.uid=stories.submitter AND submitter NOT IN ($in_list)",
 		'GROUP BY users.uid ORDER BY c DESC LIMIT 10'
 	);
 
