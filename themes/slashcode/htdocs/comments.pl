@@ -116,7 +116,7 @@ sub displayComments {
 	} elsif ($form->{sid}) {
 		printComments($form->{sid}, $form->{pid});
 	} else {
-		commentIndex();
+		commentIndex(@_);
 	}
 }
 
