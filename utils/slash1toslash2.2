@@ -36,7 +36,7 @@ SLASH v1.0 (The Beast) to Slash v2.2 (Fry) Conversion Utility
 By running this I realize that there is no warranty, expressed or implied.
 Any data loss as a result of running this program is my responsibility.
 I have read the documentation for this program, I understand it, and I
-have taken the necessary precautions and done the require preparation.
+have taken the necessary precautions and done the required preparation.
 [yes/no]
 EOT
 	exit unless $answer eq 'yes';
@@ -44,7 +44,9 @@ EOT
 
 ####################################
 # setup
-require $rcfile;
+
+# Turn off warnings while processing the RC file.
+$^W = 0; require $rcfile; $^W = 1;
 *my_conf = $Slash::conf{DEFAULT} = $Slash::conf{DEFAULT};
 
 my $dbh_old = DBI->connect(@my_conf{qw[dsn dbuser dbpass]});
@@ -59,8 +61,8 @@ END {
 
 
 ####################################
-# fix AC UID
-my($ac_uid, $del_uid2);
+# Questions: fix AC UID, heaps.
+my($ac_uid, $del_uid2, $do_heaps);
 {
 	$ac_uid = ask(<<'EOT');
 Please select a UID for the anonymous user of the site.  It is probably
@@ -92,6 +94,14 @@ EOT
 			$dbh_new->do("DELETE FROM $_ WHERE uid=2");
 		}
 	}
+
+	$do_heaps = ask(<<'EOT') =~ /^y/i;
+Should we populate the heap tables during this conversion? 
+(Recommended: Only answer NO to this question if you know what you are doing)
+[yes/no]
+EOT
+
+	
 }
 
 ####################################
@@ -131,7 +141,12 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 		$data->{'topic'} = -1;
 		# Admins must disable stories via their own criterion.
 		$data->{'type'} = 0;
-		return $data;
+
+		$data->{'ALLOWED_FIELDS'} = [qw(
+			id sid title url topic ts type
+		)];
+			
+		return $data
 	});
 	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
 
@@ -150,9 +165,31 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 		$data->{passwd} = md5_hex($data->{passwd})
 			if exists $data->{passwd};
 
+		# Valid fields for ALL user_* tables since they all use
+		# the same filter. Anything not in this list will be dropped
+		# from $data at INSERT time.
+		$data->{ALLOWED_FIELDS} = [qw(
+			uid nickname realemail fakeemail homepage passwd sig
+			seclev matchname newpasswd
+			points posttype defaultpoints highlightthresh
+			maxcommentsize hardthresh clbig clsmall reparent nosigs
+			commentlimit commentspill commentsort noscores mode
+			threshold
+			extid exaid exsect exboxes maxstories noboxes
+			totalmods realname bio tokens lastgranted karma maillist
+			totalcomments lastmm lastaccess lastmmid m2fair m2unfair
+			m2unfairvotes upmods downmods session_login
+			willing dfid tzcode noicons light mylinks lang
+		)];
+
+
 		return $data;
 	};
 	for (qw(users users_comments users_index users_info users_prefs)) {
+		# This should even handle the cases of new additions to MAIN
+		# code (read: Slashdot-only) -- IE users_info.rtbl. -- If 
+		# the MAIN based site uses these fields, they'll get copied
+		# if they don't, no problem.
 		duplicate($_, 0, $usersub);
 	}
 
@@ -162,10 +199,15 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 	# update aid's etc.
 	my $story_authors = fix_authors();
 
+	# Stories: Merge with storiestuff data, uid, aid, sid, tid
+	# removal of all text fields into their own table (story_text).
 	load_storystuff();
 	duplicate('stories', 1, sub {
 		my($data) = @_;
-		$data->{uid} = $story_authors->{$data->{aid}};
+		$data->{uid} = $story_authors->{lc($data->{aid})};
+		# This is fatal.
+		die "NULL UID DETECTED FOR AUTHOR '$data->{aid}'\n"
+			if !$data->{uid};
 		delete $data->{aid};
 		$data->{tid} = $topics{$data->{tid}};
 		$data->{discussion} = $discussions{$data->{sid}};
@@ -176,7 +218,7 @@ my(%topics, %discussions, %polls, %storystuff, %comments);
 		map { $newfields{$_} = $dbh_new->quote($data->{$_}) }
 			qw[sid introtext bodytext relatedtext];
 		$dbh_new->do(<<EOT);
-INSERT (sid introtext, bodytext, relatedtext) INTO story_text VALUES
+INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES
 	($newfields{sid},
 	 $newfields{introtext}, 
 	 $newfields{bodytext},
@@ -191,14 +233,17 @@ EOT
 		return $data;
 	});
 	# free up some memory here, we're done with %storystuff.
-	%storystuff = undef;
+	%storystuff = ();
 	
-	duplicate('sessions', 1, sub {
-		my($data) = @_;
-		$data->{uid} = $story_authors->{$data->{aid}};
-		delete $data->{aid};
-		return $data;
-	});
+	# We should ignore sessions. The system has changed so much, why
+	# leave stale ones lying around?
+	#
+	#duplicate('sessions', 1, sub {
+	#	my($data) = @_;
+	#	$data->{uid} = $story_authors->{$data->{aid}};
+	#	delete $data->{aid};
+	#	return $data;
+	#});
 
 	duplicate('pollquestions', 1, sub {
 		my($data) = @_;
@@ -212,7 +257,7 @@ EOT
 
 	duplicate('pollanswers', 1, sub {
 		my($data) = @_;
-		$data->{aid} = $story_authors->{$data->{aid}};
+		# Note AID here does means "ANSWER ID", not "author id".
 		$data->{qid} = $polls{$data->{qid}};
 		return $data;
 	});
@@ -231,6 +276,10 @@ EOT
 		my($data) = @_;
 		$data->{uid} = $ac_uid if $data->{uid} == -1;
 		$data->{tid} = $topics{$data->{tid}};
+		$data->{ALLOWED_FIELDS} = [qw(
+			subid email name time subj story tid note section
+			comment uid del
+		)];
 		return $data;
 	});
 
@@ -249,8 +298,9 @@ EOT
 	# Moderatorlog: Fix sid, cid.
 	duplicate('moderatorlog', 1, sub {
 		my($data) = @_;
+		my $sid = $data->{sid};
 		$data->{sid} = $discussions{$data->{sid}};
-		$data->{cid} = $comments{$data->{sid}}->{$data->{cid}};
+		$data->{cid} = $comments{$sid}->{$data->{cid}};
 		return $data;
 	});
 		
@@ -261,7 +311,7 @@ EOT
 	fix_vars();
 
 	# populate heap tables.
-	fill_heaps();
+	fill_heaps() if $do_heaps;
 }
 
 
@@ -290,6 +340,7 @@ sub fill_heaps {
 sub fix_vars {
 	print "Processing vars\n";
 
+	# Some of these 'm2_*' vars should be removed.
 	for (qw(mailfrom siteadmin siteadmin_name smtp_server
 		sitename slogan mainfontface updatemin
 		archive_delay submiss_ts articles_only
@@ -423,30 +474,46 @@ EOT
 		}
 	}
 
+	my %other_authors;
+	print "\n== RESOLVING MISSING AUTHORS ==\n";
 	for my $nf (@not_found) {
 		print <<EOT;
-No corresponding user found for Author '$nf'
+
+== No corresponding user found for Author '$nf->[0]'
 
 Please select UID:
 EOT
 		print "\n\tCurrent Authors\n\t---------------\n";
 		for (keys %story_authors) {
-			print "\t$_ : UID #$story_authors{$_}\n";
+			printf "\t%-30s: #$story_authors{$_}\n", $_;
+		}
+		if (keys %other_authors) {
+			print <<EOT;
+
+	Current Author Assigns
+	----------------------
+EOT
+			for (keys %other_authors) {
+				printf "\t%-30s-> #$other_authors{$_}\n", $_;
+			}
 		}
 
 		my $uid;
-		while ($uid && $uid=~/^\d+$/) {
-			$uid = ask("UID for AUTHOR '$nf':");
+		while (!$uid || $uid !~ /^\d+$/) {
+			$uid = ask("UID for AUTHOR '$nf->[0]': ");
 		}
-		$story_authors{$nf} = $uid;
+		$other_authors{$nf->[0]} = $uid;
 	}
+	map { $story_authors{lc($_)} = $other_authors{$_} } keys %other_authors;
 
 	return \%story_authors;
 }
 
 
 sub load_storystuff {
-	my $sth_s = $dbh_old->prepare('SELECT hits FROM storiestuff');
+	print "Loading hitcounts into story metadata...\n";
+	my $sth_s = $dbh_old->prepare('SELECT sid, hits FROM storiestuff');
+	$sth_s->execute;
 	while (my $data = $sth_s->fetchrow_hashref) {
 		$storystuff{$data->{sid}} = $data->{hits};
 	}
@@ -456,6 +523,7 @@ sub load_storystuff {
 sub copy_comments {
 	print "Copying comment data and texts...\n";
 	my $sth_s = $dbh_old->prepare('SELECT * FROM comments');
+	$sth_s->execute;
 	while (my $data = $sth_s->fetchrow_hashref) {
 		# Fix UID.
 		$data->{uid} = $ac_uid if $data->{uid} == -1;
@@ -464,23 +532,25 @@ sub copy_comments {
 		my $insert_q = sprintf
 			qq[
 INSERT INTO comments
-(sid, cid, pid, date, subject, uid, points, lastmod, reason)
+(sid, pid, date, subject, uid, points, lastmod, reason)
 VALUES ($sid, %s)
 			],
 			scalar join(', ', 
 				map { $dbh_new->quote($data->{$_}) }
-				qw [cid pid date subject uid points lastmod
-				    reason]
+				qw [pid date subject uid points lastmod reason]
 			);
 		$dbh_new->do($insert_q);
 		my $sth_d = $dbh_new->prepare('SELECT LAST_INSERT_ID()');
-		$comments{$data->{sid}}->{cid} = ($sth_d->fetchrow_array)[0];
+		$sth_d->execute;
+		$comments{$data->{sid}}->{$data->{cid}} = 
+			($sth_d->fetchrow_array)[0];
 		$data->{comment} = $dbh_new->quote($data->{comment});
-		$dbh_new->do(<<EOT);
+		my $sql = <<EOT;
 INSERT INTO comment_text (cid, comment)
 VALUES ($comments{$data->{sid}}->{$data->{cid}}, $data->{comment})
 EOT
 
+		$dbh_new->do($sql);
 	}
 	$sth_s->finish;
 
@@ -490,13 +560,16 @@ EOT
 	$sth_s->execute;
 	while (my $data = $sth_s->fetchrow_hashref) {
 		next if ! $data->{pid};
-		$dbh_new->do(<<EOT);
+
+			my $SQL = <<EOT;
 UPDATE comments SET
 	pid = $comments{$data->{sid}}->{$data->{pid}}
 WHERE 	sid = $discussions{$data->{sid}} AND
-	pid = $data->{pid};
+	pid = $data->{pid}
 EOT
 
+		#print STDERR "SQL: $SQL\n";
+		$dbh_new->do($SQL);
 	}
 }
 
@@ -541,19 +614,30 @@ sub duplicate {
 	while (my $data = $sth_s->fetchrow_hashref) {
 		$data = $filter->($data, @extra) if $filter;
 		next unless $data;
+
+		# Remove any potential extraneous fields if specified.
+		if (exists $data->{ALLOWED_FIELDS}) {
+			my @fieldlist;
+			push @fieldlist, @{$data->{ALLOWED_FIELDS}};
+			delete $data->{ALLOWED_FIELDS};
+			my $fl = join ('|', @fieldlist);
+			map { delete $data->{$_} }
+				grep { ! /^($fl)$/ } keys %{$data};
+		}
 		
 		map {
-			next if $data =~ /^-/;
-			$data->{$_} = $dbh_new->quote($data->{$_});
-		}
+			$data->{$_} = (/^-/) ? $_:$dbh_new->quote($data->{$_});
+		} keys %$data;
 		my $insert = sprintf("INSERT INTO $table (%s) VALUES (%s)",
-			join(', ', map { s/^-//; } keys %$data),
+			join(', ', map { s/^\-//; $_ } keys %$data),
 			join(', ', values %$data)
 		);
 
 		if ($opt =~ /[a-zA-Z]/) {
-			my $val = $dbh_new->quote($data->{$opt});
-			$dbh_new->do("DELETE FROM $table WHERE $opt = $val");
+			$dbh_new->do(<<EOT);
+DELETE FROM $table WHERE $opt = $data->{$opt}
+EOT
+
 		}
 
 		$dbh_new->do($insert);
