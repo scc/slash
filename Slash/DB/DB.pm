@@ -6,6 +6,8 @@ use Slash::DB::Utility;
 
 $Slash::DB::VERSION = '0.01';
 @Slash::DB::ISA = qw[ Slash::Utility ];
+@Slash::DB::ISAPg = qw[ Slash::Utility Slash::DB::PostgreSQL Slash::DB::MySQL ];
+@Slash::DB::ISAMySQL = qw[ Slash::Utility Slash::DB::MySQL ];
 
 # BENDER: Bender's a genius!
 
@@ -18,31 +20,31 @@ sub new {
 		if ($dsn =~ /mysql/) {
 #			print STDERR "Picking MySQL \n";
 			require Slash::DB::MySQL;
-			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
+			@Slash::DB::ISA = @Slash::DB::ISAMySQL;
 			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::MySQL;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+				push(@Slash::DB::ISAMySQL, 'Slash::DB::Static::MySQL');
 			}
-		} elsif ($dsn =~ /oracle/) {
-			print STDERR "Picking Oracle \n";
-			require Slash::DB::Oracle;
-			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
-			require Slash::DB::MySQL;
-			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
-			unless ($ENV{GATEWAY_INTERFACE}) {
-				require Slash::DB::Static::Oracle;
-				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
-# should these be here, in addition? -- pudge
-#				require Slash::DB::Static::MySQL;
-#				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
-			}
+#		} elsif ($dsn =~ /oracle/) {
+#			print STDERR "Picking Oracle \n";
+#			require Slash::DB::Oracle;
+#			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
+#			require Slash::DB::MySQL;
+#			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
+#			unless ($ENV{GATEWAY_INTERFACE}) {
+#				require Slash::DB::Static::Oracle;
+#				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
+## should these be here, in addition? -- pudge
+## Longterm yes, right now it is pretty much pointless though --Brian
+##				require Slash::DB::Static::MySQL;
+##				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+#			}
 		} elsif ($dsn =~ /Pg/) {
 			print STDERR "Picking PostgreSQL \n";
 			require Slash::DB::PostgreSQL;
 			require Slash::DB::MySQL;
-
-			push(@Slash::DB::ISA, 'Slash::DB::PostgreSQL');
-			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
+			@Slash::DB::ISA = @Slash::DB::ISAPg;
 #			unless ($ENV{GATEWAY_INTERFACE}) {
 #				require Slash::DB::Static::PostgreSQL;
 #				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
@@ -54,6 +56,7 @@ sub new {
 	}
 	bless($self, $class);
 	$self->{virtual_user} = $user;
+	$self->{db_driver} = $dsn;
 	$self->SUPER::sqlConnect();
 #	$self->init();
 	return $self;
@@ -70,6 +73,18 @@ sub new {
 sub DESTROY {
 	my($self) = @_;
 	$self->{_dbh}->disconnect if $self->{_dbh};
+}
+
+# This is for sites running in multiple threaded/process environments
+# where you want to run two different database types
+sub fixup {
+	my ($self) = @_;
+
+	if ($self->{db_driver} =~ /mysql/) {
+		@Slash::DB::ISA = @Slash::DB::ISAMySQL;
+	} elsif ($self->{db_driver} =~ /Pg/) {
+		@Slash::DB::ISA = @Slash::DB::ISAPg;
+	} 
 }
 
 

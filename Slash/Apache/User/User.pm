@@ -56,6 +56,9 @@ sub handler {
 	}
 
 	$slashdb->sqlConnect;
+	#Ok, this solves the annoying issue of not having true OOP in perl
+	# You can comment this out if you want if you only use one database type
+	$slashdb->fixup;
 
 	# Don't remove this. This solves a known bug in Apache -- brian
 	$r->method('GET');
