@@ -106,6 +106,7 @@ __template__
 
 		[% posttype_select %]
 
+[% DEFAULT user.domaintags = 1 %]
 [% domaintags.${user.domaintags} = " CHECKED" -%]
 		<P><B>Display Link Domains?</B> (shows the actual domain of any link in brackets)<BR>
 		&nbsp;&nbsp;&nbsp;
