@@ -161,6 +161,16 @@ sub handler {
 	createEnv($r) if $cfg->{env};
 	authors($r) if $form->{'slashcode_authors'};
 
+# Weird hack for getCurrentCache() till I can code up propper logic for it
+	{
+		my $cache = getCurrentCache();
+		if(!exists($cache->{_cache_time}) or ((time() - $cache->{_cache_time}) > $constants->{apache_cache})) {
+			$cache = {};
+			$cache->{_cache_time} = time();
+		}
+
+	}
+
 	return OK;
 }
 

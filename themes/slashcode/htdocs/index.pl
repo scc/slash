@@ -43,7 +43,7 @@ sub main {
 	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
 	$section->{mainsize} = int($section->{artcount} / 3);
 
-	my $title = getData('head', { section => $section->{section} });
+	my $title = getData('head', { section => $section });
 	header($title, $section->{section} ne 'index' ? $section->{section} : '');
 
 	my $limit ||= $section->{section} eq 'index' ?
@@ -133,6 +133,7 @@ sub displayStandardBlocks {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $cache = getCurrentCache();
 
 	return if $user->{noboxes};
 
@@ -157,7 +158,7 @@ sub displayStandardBlocks {
 			);
 
 		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
-			$return .= portalbox(
+			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				getData('morehead'),
 				getOlderStories($older_stories_essentials, $section),
@@ -168,7 +169,7 @@ sub displayStandardBlocks {
 			# do nothing!
 
 		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-			$return .= portalbox(
+			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
 				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
@@ -186,7 +187,7 @@ sub displayStandardBlocks {
 			);
 
 		} else {
-			$return .= portalbox(
+			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
 				$slashdb->getBlock($bid, 'block'),
