@@ -24,47 +24,48 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
 use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	*I = getSlashConf();
 	getSlash();
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $SECT=getSection(getCurrentForm('section'));
 
-	header("$constants->{sitename}: Authors", $SECT->{section});
-	titlebar("90%","The Authors");
-	print <<EOT;
-<P>I keep getting asked 'Who are you guys', so to help unload
-some of that extra mail from my box I have now provided
-this nice little page with a summary of the active $constants->{sitename}
-authors here, along with the number of articles that they
-have posted.
-EOT
-
 	my $list = $slashdb->getAuthorDescription();
 	my $authors = $slashdb->getAuthors();
 
-	for (@$list) {
-		my ($count, $aid, $copy) = @$_;
-		next if $count < 1; 
-		print <<EOT;
-<H2><B><A HREF="$constants->{rootdir}/search.pl?author=$aid">$count</A></B>
-	<A HREF="$authors->{$aid}{'url'}">$aid</A></H2>
-EOT
-		print qq![ <A HREF="$constants->{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
-			if getCurrentUser('aseclev') > 1000;
-		print $authors->{$aid}{'copy'};
-	}
+	header("$constants->{sitename}: Authors", $SECT->{section});
+	slashDisplay('authors_page', {
+		sitename => $constants->{sitename},
+		aids => $list,
+		authors => $authors,
+		title => "The Authors",
+		admin => getCurrentUser('aseclev') >= 1000,
+		time => scalar localtime,
+	});
+
+#	for (@$list) {
+#		my ($count, $aid, $copy) = @$_;
+#		next if $count < 1; 
+#		print <<EOT;
+#<H2><B><A HREF="$constants->{rootdir}/search.pl?author=$aid">$count</A></B>
+#	<A HREF="$authors->{$aid}{'url'}">$aid</A></H2>
+#EOT
+#		print qq![ <A HREF="$constants->{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
+#			if getCurrentUser('aseclev') > 1000;
+#		print $authors->{$aid}{'copy'};
+#	}
 
 	
-	printf <<EOT, scalar localtime;
-<P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
-EOT
+#	printf <<EOT, scalar localtime;
+#<P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
+#EOT
+
+
 
 	writeLog("authors");
 	footer(getCurrentForm('ssi'));

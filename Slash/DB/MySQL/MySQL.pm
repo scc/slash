@@ -943,7 +943,7 @@ sub deleteSubmission {
 		$subid{$form->{subid}}++;
 	}
 
-	foreach (keys %{$form}) {
+	for (keys %{$form}) {
 		next unless /(.*)_(.*)/;
 		my($t, $n) = ($1, $2);
 		if ($t eq "note" || $t eq "comment" || $t eq "section") {
