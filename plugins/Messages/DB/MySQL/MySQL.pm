@@ -35,7 +35,7 @@ my %descriptions = (
 	'deliverymodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='deliverymodes'") },
 	'messagecodes'
-		=> sub { $_[0]->sqlSelectMany('code,type', 'message_codes') },
+		=> sub { $_[0]->sqlSelectMany('code,type', 'message_codes', "code >= 0") },
 );
 
 sub getDescriptions {

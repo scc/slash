@@ -29,6 +29,7 @@ use Digest::MD5 'md5_hex';
 use HTML::Entities;
 use Slash::Display;
 use Slash::Utility::Environment;
+use Slash::Utility::System;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -441,10 +442,8 @@ sub setUserExpired {
 
 		my $reg_subj = Slash::getData('rereg_email_subject', '', '');
 
-		# Error check here? If so, what do we do?
-		my $messages = getObject('Slash::Messages');
-		# Send the message.
-		$messages->quicksend($uid, $reg_subj, $reg_msg, 0, 0);
+		# Send the message (message code == -2)
+		doEmail($uid, $reg_subj, $reg_msg, -2);
 	} else {
 		# We only need to clear these.
 		$slashdb->setUser($uid, {

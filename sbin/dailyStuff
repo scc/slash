@@ -114,6 +114,7 @@ sub generateDailyMail {
 }
 
 sub mailingList {
+	return unless $messages;
 	my($newsletter, $headlines) = generateDailyMail();
 	return unless $headlines;
 
