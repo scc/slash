@@ -348,12 +348,8 @@ To read the README for any module, before or after installing:
 
 	cpan> readme MODULE
 
-When Bundle::Slash is finished, install the DBIx::Password
-module:
-
-	cpan> install DBIx::Password
-
-When asked, give the info for accessing the Slash database created
+When it is installing the DBIx::Password module, it will ask for
+some information.  Give the info for accessing the Slash database created
 in step 1.  This is your B<virtual user> information; it is a single
 name that is used to refer to a configuration for connecting to your
 database.
@@ -635,13 +631,17 @@ the Bundle::Slash distribution.
 
 =item AppConfig
 
+=item DBIx-Password
+
+=item Time::HiRes
+
+=item Schedule::Cron
+
 =back
 
 Also required:
 
 =over 4
-
-=item DBIx-Password
 
 =back
 

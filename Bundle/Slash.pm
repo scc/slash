@@ -51,12 +51,17 @@ AppConfig		- Should be installed with TT, but sometimes not?
 
 Template		- Template Toolkit
 
+DBIx::Password
+
+Time::HiRes
+
+Schedule::Cron
+
 
 =head1 DESCRIPTION
 
 mod_perl must be installed by hand, because of the special configuration
-required for it.  DBIx::Password is special, and also installed by hand,
-but needed.
+required for it.
 
 If CPAN starts downloading "perl-5.6.0" or somesuch, ctrl-C it, exit
 the CPAN shell, and start it again.  The latest CPAN.pm version does not
