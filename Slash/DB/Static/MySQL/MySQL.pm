@@ -132,7 +132,7 @@ sub archiveComments {
 	$self->sqlDo(
 		"UPDATE stories SET writestatus='archived'
 		 WHERE to_days(now()) - to_days(time) > $days_to_archive AND
-		       writestatus='ok' OR type='dirty'"
+		       writestatus='ok' OR writestatus='dirty'"
 	);
 
 	my $comments = $self->sqlSelectAll(
