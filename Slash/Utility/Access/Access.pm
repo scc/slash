@@ -279,11 +279,13 @@ sub formkeyHandler {
 			$form->{upasswd}
 		);
 	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
-		if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
-			my $max_unused	= $constants->{"max_${formname}_unusedfk"};
-			$msg = formkeyError('unused', $formname, $max_unused);
-			$error_flag++;
-		} 
+		# another nobel attempt at trying to prevent abusers from saving up formkeys
+		# more trouble than it's worth. I'll leave it in for now Patrick 8/16/01
+		# if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
+		#	my $max_unused	= $constants->{"max_${formname}_unusedfk"};
+		#	$msg = formkeyError('unused', $formname, $max_unused);
+		#	$error_flag++;
+		#} 
 
 		# if ($formkey_op eq 'generate_formkey') {
 
