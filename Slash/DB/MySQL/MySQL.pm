@@ -2871,10 +2871,10 @@ sub _genericGetCache {
 	}
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values} 
-			if (keys %{$self->{$table_cache}{$id}});
+			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	} else {
 		return $self->{$table_cache}->{$id} 
-			if (keys %{$self->{$table_cache}{$id}});
+			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	}
 	print STDERR "_genericGetCache: $table:$id was not found in cache\n"
 		if($DEBUG and $table eq $DEBUG_TABLE);
@@ -2937,7 +2937,7 @@ sub _genericGetsCache {
 	my $table_cache_full= '_' . $table . '_cache_full';
 
 
-	return $self->{$table_cache} if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag);
+	return $self->{$table_cache} if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} and !$cache_flag);
 	# Lets go knock on the door of the database
 	# and grab the data since it is not cached
 	# On a side note, I hate grabbing "*" from a database
