@@ -90,13 +90,13 @@ Last Journal Entry was [% journal_date %]</A>
 		label    = comment.story.title;
 	ELSE;
 		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.question.sid";
-		label   = question.question;
+		label   = "Poll: $comment.question.question";
         END %]
 <P><B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">
    [% comment.subj %]</A> posted on [% comment.cdate %]
         (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
-           <BR>attached to <A HREF="[% href %]">[% comment.story.title %]</A>
+           <BR>attached to <A HREF="[% href %]">[% label %]</A>
       </FONT>
 [% END %]
 
