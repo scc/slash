@@ -224,6 +224,11 @@ sub createComment {
 			cid => $cid,
 			comment =>  $comment->{postercomment},
 	});
+	if(getCurrentStatic('mysql_hash_table')) {
+		my $insline = "INSERT into comments_hash (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db,$cid," .
+			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
+			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
+	}
 	
 	return $cid;
 }
@@ -3085,7 +3090,7 @@ sub _genericSet {
 		# need for a fully sql92 database.
 		# transactions baby, transactions... -Brian
 		for (@param)  {
-			$self->sqlReplace($param_table, { $table_prime => $self->sqlQuote($id), name => $_->[0], value => $_->[1]});
+			$self->sqlReplace($param_table, { $table_prime => $id, name => $_->[0], value => $_->[1]});
 		}
 	} else {
 		$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
