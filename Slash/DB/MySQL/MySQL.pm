@@ -318,7 +318,7 @@ sub createPollVoter {
 	$self->{dbh}->do("update pollquestions set 
 		voters=voters+1 where qid=$qid");
 	$self->{dbh}->do("update pollanswers set votes=votes+1 where 
-		qid=$qid and aid=" . $I{dbh}->quote($aid));
+		qid=$qid and aid=" . $self->{dbh}->quote($aid));
 }
 ########################################################
 sub createSubmission {
