@@ -2,12 +2,30 @@ package Slash::DB;
 
 use strict;
 
-@ISA = qw();
-@EXPORT = qw(
-	
-);
-$VERSION = '0.01';
+$Slash::DB::VERSION = '0.01';
 
+sub new {
+  my ($class, $dsn ,$dbuser, $dbpass) = @_;
+	my $self = {};
+	if(defined ($dsn)){
+		if($dsn =~ /mysql/) {
+			eval { require Slash::DB::MySQL;};
+			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
+		} elsif ($dsn =~ /oracle/) {
+			eval { require Slash::DB::Oracle;};
+			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
+		}elsif ($dsn =~ /postgress/) {
+			eval { require Slash::DB::Postgress;};
+			push(@Slash::DB::ISA, 'Slash::DB::Postgress');
+		}
+	} else {
+		die "We don't support the database specified";
+	}
+	push (@Slash::DB::EXPORT, 'sqlConnect');
+	bless ($self,$class);
+	$self->SUPER::sqlConnect($dsn ,$dbuser, $dbpass);
+	return $self;
+}
 
 
 1;

@@ -31,6 +31,8 @@ use Date::Manip;
 use Apache::SIG ();
 use Mail::Sendmail;
 use File::Spec::Functions;
+use Slash::DB;
+use Slash::Utility;
 Apache::SIG->set;
 
 BEGIN {
@@ -47,7 +49,7 @@ BEGIN {
 		sqlTableExists sqlSelectColumns getSlash linkStory getSection
 		selectForm selectGeneric selectTopic selectSection fixHref
 		getvars getvar setvar newvar getblock getsid getsiddir getWidgetBlock
-		writelog anonLog pollbooth stripByMode header footer pollItem
+		anonLog pollbooth stripByMode header footer pollItem
 		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc getBlockBank
@@ -58,8 +60,9 @@ BEGIN {
 }
 
 getSlashConf();
+$I{dbobject} = new Slash::DB(@I{qw[dsn dbuser dbpass]});
 
-# The actual connect statement appears in this function.  Edit it.
+# The actual connect statement appears in this function.
 sqlConnect();
 
 
@@ -129,7 +132,7 @@ sub getSlash {
 	if (($op eq 'userlogin' || $I{query}->param('rlogin') ) 
 		&& length($I{F}{upasswd}) > 1) {
 
-		$I{U} = getUser(userLogin($I{F}{unickname}, $I{F}{upasswd}));
+		$I{U} = $I{dbobject}->getUser(userLogin($I{F}{unickname}, $I{F}{upasswd}));
 
 	} elsif ($op eq 'userclose' ) {
 		$I{SETCOOKIE} = setCookie('user', ' ');
@@ -222,14 +225,7 @@ sub selectSection {
 
 ########################################################
 sub selectSortcode {
-	# Get a sortcode hash
-	unless ($I{sortcodeBank}) {
-		my $c = sqlSelectMany('code,name', 'sortcodes');
-		while (my($id, $desc) = $c->fetchrow) {
-			$I{sortcodeBank}{$id} = $desc;
-		}
-		$c->finish;
-	}
+	$I{dbobject}->getCodes(\$I{sortcodeBank}, 'sortcodes') unless ($I{sortcodeBank});
 
 	my $o .= qq!<SELECT NAME="commentsort">\n!;
 	foreach my $id (keys %{$I{sortcodeBank}}) {
@@ -448,10 +444,7 @@ sub getUser {
 	undef $I{U};
 
 	if($uid > 0) { # Authenticate
-		$I{U} = sqlSelectHashref('*', 'users',
-			' uid = ' . $I{dbh}->quote($uid) .
-			' AND passwd = ' . $I{dbh}->quote($passwd)
-		);
+		$I{U} = $I{dbobject}->getUserInfo($uid, $passwd);
 	}
 
 	if ($uid > 0 && $I{U}{uid}) { #  registered user 
@@ -459,23 +452,11 @@ sub getUser {
 		getExtraStuff('prefs');
 
 		# Get the Timezone Stuff
-		unless (defined $I{timezones}) {
-			my $c = sqlSelectMany('tz,offset', 'tzcodes');
-			while (my($tzcode, $offset) = $c->fetchrow) {
-				$I{timezones}{$tzcode} = $offset;
-			}
-			$c->finish;
-		}
+		$I{dbobject}->getCodes(\$I{timezones}, 'tzcodes') unless (defined $I{timezones});
 
 		$I{U}{offset} = $I{timezones}{ $I{U}{tzcode} };
 
-		unless (defined $I{dateformats}) {
-			my $c = sqlSelectMany('id,format', 'dateformats');
-			while (my($dfid, $dateformat) = $c->fetchrow) {
-				$I{dateformats}{$dfid} = $dateformat;
-			}
-			$c->finish;
-		}
+		$I{dbobject}->getCodes(\$I{dateformats}, 'dateformats') unless (defined $I{dateformats});
 
 		$I{U}{'format'} = $I{dateformats}{ $I{U}{dfid} };
 
@@ -494,17 +475,10 @@ sub getUser {
 		unless ($I{AC}) {
 			# Get ourselves an AC if we don't already have one.
 			# (we have to get it /all/ remember!)
-			$I{AC} = sqlSelectHashref('*',
-				'users, users_index, users_comments, users_prefs',
-				'users.uid=-1 AND users_index.uid=-1 AND ' .
-				'users_comments.uid=-1 AND users_prefs.uid=-1'
-			);
+			$I{AC} = $I{dbobject}->getAC();
 
 			# timezone stuff 
-		 	$I{ACTZ} = sqlSelectHashref('*',
-				'tzcodes,dateformats',
-				"tzcodes.tz='$I{AC}{tzcode}' AND dateformats.id=$I{AC}{dfid}"
-			);
+		 	$I{ACTZ} =  $I{dbobject}->getACTz($I{AC}{tzcode}, $I{AC}{dfid});
 
 			@{$I{AC}}{ keys %{$I{ACTZ}} } = values %{$I{ACTZ}};
 		}
@@ -515,12 +489,18 @@ sub getUser {
 
 	# Add On Admin Junk
 	if ($I{F}{op} eq 'adminlogin') {
-		($I{U}{aid}, $I{U}{aseclev}) =
-			setAdminInfo($I{F}{aaid}, $I{F}{apasswd});
+		my $sid;
+		($I{U}{aseclev}, $sid) = $I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
+		if($I{U}{aseclev}) {
+			$I{U}{aid} = $I{F}{aaid};
+			$I{SETCOOKIE} = setCookie('session', $sid);
+		} else {
+			$I{U}{aid} = undef;
+		}
 
 	} elsif (length($I{query}->cookie('session')) > 3) {
 		(@{$I{U}}{qw[aid aseclev asection url]}) =
-			getAdminInfo($I{query}->cookie('session'));
+			$I{dbobject}->getAdminInfo($I{query}->cookie('session'), $I{admin_timeout});
 
 	} else { 
 		$I{U}{aid} = '';
@@ -558,59 +538,6 @@ sub getUser {
 	$I{U}{points}	= 0 unless $I{U}{willing}; # No points if you dont wan 'em
 
 	return $I{U};
-}
-
-########################################################
-# Handles admin logins (checks the sessions table for a cookie that
-# matches).  Called by getSlash
-sub getAdminInfo {
-	my($session) = @_;
-
-	$I{dbh}->do("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $I{admin_timeout} MINUTE)");
-
-	my($aid, $seclev, $section, $url) = sqlSelect(
-		'sessions.aid, authors.seclev, section, url',
-		'sessions, authors',
-		'sessions.aid=authors.aid AND session=' . $I{dbh}->quote($session)
-	);
-
-	unless ($aid) {
-		return('', 0, '', '');
-	} else {
-		$I{dbh}->do("DELETE from sessions WHERE aid = '$aid' AND session != " .
-			$I{dbh}->quote($session)
-		);
-		sqlUpdate('sessions', {-lasttime => 'now()'},
-			'session=' . $I{dbh}->quote($session)
-		);
-		return($aid, $seclev, $section, $url);
-	}
-}
-
-########################################################
-# Initial Administrator Login.  
-sub setAdminInfo {
-	my($aid, $pwd) = @_;
-
-	if (my($aid, $seclev) = sqlSelect('aid,seclev', 'authors',
-			'aid=' . $I{dbh}->quote($aid) .
-			' AND pwd=' . $I{dbh}->quote($pwd) ) ) {
-		my $sid = generatesession($aid);
-		my($title) = sqlSelect('lasttitle', 'sessions',
-			'aid=' . $I{dbh}->quote($aid)
-		);
-
-		$I{dbh}->do('DELETE FROM sessions WHERE aid=' . $I{dbh}->quote($aid) );
-
-		sqlInsert('sessions', { session => $sid, aid => $aid,
-			-logintime => 'now()', -lasttime => 'now()',
-			lasttitle => $title }
-		);
-		$I{SETCOOKIE} = setCookie('session', $sid);
-		return($aid, $seclev);
-	} else {
-		return('', 0);
-	}
 }
 
 ###############################################################	
@@ -652,14 +579,6 @@ sub getsid {
 	return $sid;
 }
 
-########################################################
-# Get a unique string for an admin session
-sub generatesession {
-	my $newsid = crypt(rand(99999), shift);
-	$newsid =~ s/[^A-Za-z0-9]//i;
-	return $newsid;
-}
-
 
 ########################################################
 # Returns the directory (eg YY/MM/DD/) that stories are being written in today
@@ -670,17 +589,6 @@ sub getsiddir {
 	return $sid;
 }
 
-########################################################
-# writes error message to apache's error_log if we're running under mod_perl
-# Called wherever we have errors.
-sub apacheLog {
-	if ($ENV{SCRIPT_NAME}) {
-		$I{r}->log_error("$ENV{SCRIPT_NAME}:@_");
-	} else {
-		print @_, "\n";
-	}
-	return 0;
-}
 
 ########################################################
 # Saves an entry to the access log for static pages
@@ -706,31 +614,7 @@ sub anonLog {
 	$data =~ s/_F//;
 	$op =~ s/_F//;
 
-	writelog($op, $data);
-}
-
-########################################################
-sub writelog {
-	my $op = shift;
-	my $dat = join("\t", @_);
-
-	sqlInsert('accesslog', {
-		host_addr	=> $ENV{REMOTE_ADDR} || '0',
-		dat		=> $dat,
-		uid		=> $I{U}{uid} || '-1',
-		op		=> $op,
-		-ts		=> 'now()',
-		query_string	=> $ENV{QUERY_STRING} || '0',
-		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
-	}, 2);
-
-	if ($dat =~ m[/]) {
-		sqlUpdate('storiestuff', { -hits => 'hits+1' }, 
-			'sid=' . $I{dbh}->quote($dat)
-		);
-	} elsif ($op eq 'index') {
-		# Update Section Counter
-	}
+	writelog($I{U}{uid},$op,$data);
 }
 
 
@@ -921,14 +805,6 @@ EOT
 	fancybox(200, 'Poll', $tablestuff, 'c');
 }
 
-
-########################################################
-sub sqlConnect {
-	$I{dbh} ||= DBI->connect(@I{qw[dsn dbuser dbpass]}) or die $DBI::errstr;
-
-	kill 9, $$ unless $I{dbh};	 # The Suicide Die
-	# return \$dbh;
-}
 
 ###############################################################################
 #
@@ -2368,4 +2244,46 @@ sub CLOSE { $I{dbh}->disconnect if $I{dbh} }
 ########################################################
 sub handler { 1 }
 ########################################################
+
+########################################################
+# All of these methods are just for backwards
+# compatibility. They will all go away.
+
+sub sqlConnect {
+	$I{dbobject}->sqlConnect();
+}
+sub sqlSelectMany {
+	$I{dbobject}->sqlSelectMany(@_);
+}
+sub sqlSelect {
+	$I{dbobject}->sqlSelect(@_);
+}
+sub sqlSelectHash {
+	$I{dbobject}->sqlSelect(@_);
+}
+sub selectCount  {
+	$I{dbobject}->selectCount(@_);
+}
+sub sqlSelectHashref {
+	$I{dbobject}->sqlSelectHashref(@_);
+}
+sub sqlSelectAll {
+	$I{dbobject}->sqlSelectAll(@_);
+}
+sub sqlUpdate {
+	$I{dbobject}->sqlUpdate(@_);
+}
+sub sqlReplace {
+	$I{dbobject}->sqlReplace(@_);
+}
+sub sqlInsert {
+	$I{dbobject}->sqlInsert(@_);
+}
+sub sqlTableExists {
+	$I{dbobject}->sqlTableExists(@_);
+}
+sub sqlSelectColumns {
+	$I{dbobject}->sqlSelectColumns(@_);
+}
+
 1;
