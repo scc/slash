@@ -41,7 +41,7 @@ L<Template> for more information about templates.
 
 use strict;
 use base 'Exporter';
-use vars qw($REVISION $VERSION @EXPORT);
+use vars qw($REVISION $VERSION @EXPORT $CONTEXT);
 use Exporter ();
 use Slash::Display::Provider;
 use Slash::Utility;
@@ -141,7 +141,7 @@ Compiles templates and caches them.
 sub slashDisplay {
 	# options: return, nocomm, section
 	my($name, $data, $opt) = @_;
-	my(@comments, $ok, $out, $origSection, $origPage);
+	my(@comments, $err, $ok, $out, $origSection, $origPage, $tempname);
 	return unless $name;
 
 	my $user = getCurrentUser();
@@ -174,28 +174,30 @@ sub slashDisplay {
 		$user->{$_} = defined $user->{$_} ? $user->{$_} : '';
 	}
 
+	$tempname = "$name ; $user->{currentPage} ; $user->{currentSection}";
+	@comments = (
+		"\n\n<!-- start template: $tempname -->\n\n",
+		"\n\n<!-- end template: $tempname -->\n\n"
+	);
+
 	$data ||= {};
 	_populate($data);
 
-	@comments = (
-		"\n\n<!-- start template: $name ; $user->{currentPage} ; $user->{currentSection} -->\n\n",
-		"\n\n<!-- end template: $name ; $user->{currentPage} ; $user->{currentSection} -->\n\n"
-	);
+	# let us pass in a context if we have one
+	my $template = $CONTEXT || _template();
 
-	my $template = _template();
-
-	if ($opt->{Return}) {
-		$ok = $template->process($name, $data, \$out);
-		$out = join '', $comments[0], $out, $comments[1]
-			unless $opt->{Nocomm};
-		
+	if ($CONTEXT) {
+		$ok = eval { $out = $template->include($name, $data) };
+		$err = $@ if !$ok;
 	} else {
-		print $comments[0] unless $opt->{Nocomm};
-		$ok = $template->process($name, $data);
-		print $comments[1] unless $opt->{Nocomm};
+		$ok = $template->process($name, $data, \$out);
+		$err = $template->error if !$ok;
 	}
 
-	errorLog($template->error) unless $ok;
+	$out = join '', $comments[0], $out, $comments[1] unless $opt->{Nocomm};
+	print $out unless $opt->{Return};
+
+	errorLog("$tempname : $err") if !$ok;
 
 	$user->{currentSection}	= $origSection;
 	$user->{currentPage}	= $origPage;
@@ -283,12 +285,6 @@ my $filters = Template::Filters->new({
 	}
 });
 
-
-# damn, why is it bad to reuse the same object ... ?
-# i can't remember, it was almost two months ago.  sigh.
-# maybe something to do with calling templates from templates?
-# i don't think so, but cannot recall.
-# -- pudge
 sub _template {
 	my $cfg = {};
 
@@ -306,6 +302,7 @@ sub _template {
 		: 0;						# cache off
 
 	return $cfg->{template} = Template->new({
+		AUTO_RESET	=> 1,
 		LOAD_FILTERS	=> $filters,
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({

@@ -62,12 +62,13 @@ sub AUTOLOAD {
 	# pull off first param before sending to function;
 	# that's the whole reason we have AUTOLOAD here,
 	# to de-OOP the call
-	shift;
+	my $obj = shift;
 	(my $name = $AUTOLOAD) =~ s/^.*://;
 	return if $name eq 'DESTROY';
 
 	if (exists $subs{$name}) {
-		goto &{$subs{$name}};
+		local $Slash::Display::CONTEXT = $obj->{_CONTEXT};
+		return $subs{$name}->(@_);
 	} else {
 		warn "Can't find $name";
 		return;
