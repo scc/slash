@@ -29,6 +29,9 @@ use Slash;
 use Slash::Utility;
 
 #################################################################
+my $user = getCurrentUser();
+my $form = getCurrentForm();
+#################################################################
 sub main {
 	*I = getSlashConf();
 	getSlash();
@@ -263,6 +266,4 @@ sub displayStories {
 
 #################################################################
 main();
-my $user = getCurrentUser();
-my $form = getCurrentForm();
 #################################################################
