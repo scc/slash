@@ -223,12 +223,16 @@ sub displayTopRSS {
 
 sub displayArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
-	my($date, $forward, $back, @sorted_articles);
+	my($date, $forward, $back, @sorted_articles, $nickname, $uid);
 	my $collection = {};
 
-	$user		= $slashdb->getUser($form->{uid}, ['nickname']) if $form->{uid};
-	my $uid		= $form->{uid} || $user->{uid};
-	my $nickname	= $user->{nickname};
+	if($form->{uid} or $form->{nick}) {
+		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		$nickname = $slashdb->getUser($uid, 'nickname');
+	} else {
+		$nickname	= $user->{nickname};
+		$uid	= $user->{uid};
+	}
 
 	_printHead("userhead", { nickname => $nickname });
 

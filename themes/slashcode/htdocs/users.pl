@@ -47,7 +47,15 @@ sub main {
 		},
 		userinfo	=>  {
 			function	=> \&showInfo,
-			seclev		=> 1,
+			#I made this change, not all sites are going to care. -Brian
+			seclev		=> $constants->{users_show_info_seclev},
+			formname	=> $formname,
+			checks		=> ['max_reads_check'],
+		},
+		display	=>  {
+			function	=> \&showInfo,
+			#I made this change, not all sites are going to care. -Brian
+			seclev		=> $constants->{users_show_info_seclev},
 			formname	=> $formname,
 			checks		=> ['max_reads_check'],
 		},

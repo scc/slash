@@ -230,10 +230,17 @@ sub userdir_handler {
 
 	if ($uri =~ m[^/~(.*)]) {
 		my $clean = $1;
-		$clean =~ s|\/.*$||;
-		$r->args("nick=$clean");
-		$r->uri('/users.pl');
-		$r->filename($constants->{basedir} . '/users.pl');
+		my ($nick,$op) = split /\//, $1, 3;
+		$nick =~ s|\/.*$||;
+		if($op eq 'journal') {
+			$r->args("nick=$nick&op=display");
+			$r->uri('/journal.pl');
+			$r->filename($constants->{basedir} . '/journal.pl');
+		} else {
+			$r->args("nick=$nick");
+			$r->uri('/users.pl');
+			$r->filename($constants->{basedir} . '/users.pl');
+		}
 		return OK;
 	}
 

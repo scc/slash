@@ -4527,6 +4527,8 @@ sub getSessions {
 sub createBlock {
 	my($self, $hash) = @_;
 	$self->sqlInsert('blocks', $hash);
+
+	return $hash->{bid};
 }
 
 ########################################################

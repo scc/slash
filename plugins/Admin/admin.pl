@@ -673,7 +673,7 @@ sub colorSave {
 
 ##################################################################
 # Keyword Editor
-sub keywordEdit {
+sub editKeyword {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
@@ -688,7 +688,7 @@ sub keywordEdit {
 }
 
 ##################################################################
-sub keywordDelete {
+sub deleteKeyword {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
@@ -699,7 +699,7 @@ sub keywordDelete {
 }
 
 ##################################################################
-sub keywordSave {
+sub saveKeyword {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
