@@ -1139,6 +1139,11 @@ sub get_ispell_comments {
 	$ispell = $ispell->{value} if $ispell;
 	return "" if !$ispell;
 	return "bad ispell var '$ispell'" unless $ispell eq 'ispell' or $ispell =~ /^\//;
+	return "insecure ispell var '$ispell'" if $ispell =~ /\s/;
+	if ($ispell ne 'ispell') {
+		return "no file, not readable, or not executable '$ispell'"
+			if !-e $ispell or !-f _ or !-r _ or !-x _;
+	}
 
 	my $ok = $slashdb->getTemplateByName('ispellok', '', 1);
 	$ok = $ok ? ($ok->{template} || "") : "";
@@ -1149,7 +1154,7 @@ sub get_ispell_comments {
 	my $tmpok = "";
 	$tmpok = write_to_temp_file($ok) if $ok;
 	$tmpok = " -p $tmpok" if $tmpok;
-	if (!open(ISPELL, "-|", "$ispell -a -B -S -W 3$tmpok < $tmptext 2> /dev/null")) {
+	if (!open(ISPELL, "$ispell -a -B -S -W 3$tmpok < $tmptext 2> /dev/null |")) {
 		warn "could not pipe to $ispell from $tmptext, $!";
 		return "could not pipe to $ispell from $tmptext, $!";
 	}
