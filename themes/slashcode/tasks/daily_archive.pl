@@ -27,7 +27,7 @@ $task{$me}{code} = sub {
 	# Mark discussions as archived.
 	$slashdb->updateArchivedDiscussions();
 	# Archive stories.
-	my $limit = $consts->{task_options}{archive_limit} || 10;
+	my $limit = $consts->{task_options}{archive_limit} || 500;
 	my $dir   = $consts->{task_options}{archive_dir}   || 'ASC';
 	my $astories = $slashdb->getArchiveList($limit, $dir);
 	if (@{$astories}) {
