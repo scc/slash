@@ -202,7 +202,7 @@ sub formatDate {
 		$as  ||= 'time';
 		for (@$data) {
 			errorLog("Not hashref"), return unless ref($_) eq 'HASH';
-			$_->{$as} = timeCalc($_->{col}, $format);
+			$_->{$as} = timeCalc($_->{$col}, $format);
 		}
 	}
 }

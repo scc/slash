@@ -503,7 +503,7 @@ sub submitComment {
 	my ($f, $u, $db, $c) = @_;
 	my $error_message;
 
-	$f->{postersubj} = strip_nohtml($f->{postersubj}, $u->{seclev});
+	$f->{postersubj} = strip_nohtml($f->{postersubj});
 	$f->{postercomment} = strip_mode($f->{postercomment}, $f->{posttype});
 
 	($f->{postercomment}, $f->{postersubj}, $error_message) =

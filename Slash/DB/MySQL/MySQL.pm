@@ -735,14 +735,13 @@ sub createUser {
 	return if ($self->sqlSelect(
 		"count(uid)","users",
 		"matchname=" . $self->{_dbh}->quote($matchname)
-	))[0];
-	return if ($self->sqlSelect(
+	))[0] || ($self->sqlSelect(
 		"count(uid)","users",
 		" realemail=" . $self->{_dbh}->quote($email)
 	))[0];
 
 	$self->sqlInsert("users", {
-		uid	=> '',
+		uid		=> '',  # this would be done automatically ... ? -- pudge
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
@@ -2115,7 +2114,7 @@ sub getTrollAddress {
 ########################################################
 sub getTrollUID {
 	my($self) = @_;
-	my $user =  getCurrentUser();
+	my $user = getCurrentUser();
 	my($badUID) = $self->sqlSelect("sum(val)","newcomments,moderatorlog",
 		"newcomments.sid=moderatorlog.sid AND newcomments.cid=moderatorlog.cid
 		AND newcomments.uid=$user->{uid} AND moderatorlog.active=1

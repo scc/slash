@@ -40,6 +40,8 @@ sub new {
 			print STDERR "Picking PostgreSQL \n";
 			require Slash::DB::PostgreSQL;
 			require Slash::DB::MySQL;
+
+# is this the right order?  that puts MySQL _before_ PostgreSQL -- pudge
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 			push(@Slash::DB::ISA, 'Slash::DB::PostgreSQL');
 #			unless ($ENV{GATEWAY_INTERFACE}) {

@@ -387,12 +387,12 @@ sub templateEdit {
 				$template_ref->{$_} = $_ if $page eq 'Slash';
 			}
 		}
-		$page_select = createSelect('page',$pagehashref,$page,1);
+		$page_select = createSelect('page', $pagehashref, $page, 1);
 		$template_select = createSelect('tpid', $template_ref, $tpid, 1);
 	}
 
 
-	if(! $form->{templatenew} && $tpid && $templateref->{tpid}) {
+	if (!$form->{templatenew} && $tpid && $templateref->{tpid}) {
 		$templateedit_flag = 1;
 	}
 
@@ -990,7 +990,7 @@ sub editStory {
 	if ($user->{seclev} > 100) {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
-		$author_select = createSelect('uid', $authors, $storyref->{aid},1);
+		$author_select = createSelect('uid', $authors, $storyref->{aid}, 1);
 	} 
 
 	$storyref->{dept} =~ s/ /-/gi;

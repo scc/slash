@@ -1614,7 +1614,7 @@ sub displayStory {
 	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
 	# based on their preferences 
-	setCurrentUser('storytime', timeCalc($story->{'time'}));
+	$story->{storytime} = timeCalc($story->{'time'});
 
 	# get extra data from section table for this story
 	# (if exists)
@@ -1956,6 +1956,53 @@ sub getData {
 1;
 
 __END__
+
+=head1 TOP TEN BENDER MOST FREQUENTLY UTTERED WORDS
+
+=over 4
+
+=item 1.
+
+ass
+
+=item 2.
+
+daffodil
+
+=item 3.
+
+shiny
+
+=item 4.
+
+my
+
+=item 5.
+
+bite
+
+=item 6.
+
+pimpmobile
+
+=item 7.
+
+up
+
+=item 8.
+
+yours
+
+=item 9.
+
+chumpette
+
+=item 10.
+
+chump
+
+=back
+
 
 =head1 AUTHOR
 
