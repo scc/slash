@@ -131,7 +131,8 @@ sub sqlConnect {
 	my ($self) = @_;
 
 	if (defined($self->{dbh})) {
-		unless (eval {$self->{dbh}->ping}) {
+		#unless (eval {$self->{dbh}->ping}) {
+		unless ($self->{dbh}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
 			$self->{dbh}->disconnect;
 			undef $self->{dbh};

@@ -36,7 +36,6 @@ use URI;
 
 use Slash::DB;
 use Slash::Utility;
-Apache::SIG->set;
 BEGIN {
 	# this is the worst damned warning ever, so SHUT UP ALREADY!
 	$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };

@@ -31,10 +31,12 @@ sub handler{
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	# Lets do this to make it a bit easier to handle
 	my $dbslash = $dbcfg->{'dbslash'};
+	$dbslash->sqlConnect;
 
 	my %params = ($r->args, $r->content);
 	# Don't remove this. This solves a known bug in Apache
 	$r->header_in('Content-Length' => '0');
+	$r->method('GET');
 	my %form;
 	#
 	# Ok, we are going to go on and process the form pieces
