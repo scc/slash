@@ -2325,11 +2325,13 @@ sub getCommentsForUser {
 			   FROM $table,users
 			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
 			    AND $table.uid=users.uid";
-	$sql .= "	    AND (";
-	$sql .= "		$table.uid=$user->{uid} OR " unless $user->{is_anon};
-	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		$table.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
-	$sql .= "		  1=1)   ";
+	if ($user->{hardthresh}) {
+		$sql .= "    AND (";
+		$sql .= "	$table.points >= " . $self->{_dbh}->quote($user->{threshold});
+		$sql .= "     OR $table.uid=$user->{uid}" unless $user->{is_anon};
+		$sql .= "     OR cid=$cid" if $cid;
+		$sql .= "	)";
+	}
 	$sql .= "	  ORDER BY ";
 	$sql .= "$table.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
@@ -2349,6 +2351,11 @@ sub getCommentsForUser {
 
 ########################################################
 # This is here to save us a database lookup when drawing comment pages.
+# 
+# Couldn't this go faster by having getCommentsForUser() (10 lines up) collect a list
+# of all the cid's it needs (i.e. doesn't already have in cache) and then grabbing them
+# all with one SELECT?  SELECT cid,comment_text FROM comment WHERE cid IN (2,3,5,7...);
+# - Jamie
 sub _getCommentText {
 	my($self, $cid) = @_;
 	if ($self->{_comment_text} && $self->{_comment_text}{$cid}) {

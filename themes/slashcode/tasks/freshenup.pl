@@ -7,7 +7,7 @@ my $me = 'freshenup.pl';
 
 use vars qw( %task );
 
-my $total_changed_stories = 0;
+my $total_freshens = 0;
 
 $task{$me}{timespec} = '4-59/5 * * * *';
 $task{$me}{code} = sub {
@@ -24,7 +24,7 @@ $task{$me}{code} = sub {
 		slashdLog("Updating $title $sid");
 		$updates{$section} = 1;
 		makeDir($bd, $section, $sid);
-		++$total_changed_stories;
+		++$total_freshens;
 		push @updatedsids, $sid;
 	}
 
@@ -57,7 +57,7 @@ $task{$me}{code} = sub {
 		prog2file("$bd/index.pl", "ssi=yes section=$key", "$bd/$key/index.shtml");
 	}
 
-	slashdLog("$me total_changed_stories $total_changed_stories");
+	slashdLog("$me total_freshens $total_freshens");
 
 };
 
