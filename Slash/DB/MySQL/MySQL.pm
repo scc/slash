@@ -79,7 +79,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('U.uid,U.nickname', 'users as U, users_param as P', "P.name = 'author' AND U.uid = P.uid") },
+		=> sub { $_[0]->sqlSelectMany('U.uid,U.nickname', 'users as U, users_param as P', "P.name = 'author' AND U.uid = P.uid and P.value = 1") },
 
 	'admins'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 100') },
@@ -103,7 +103,12 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('distinct section,section', 'templates') },
 
 	'sectionblocks'
-		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
+		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') },
+
+	'plugins'
+		=> sub { $_[0]->sqlSelectMany('value,description', 'site_info', "name='plugin'") },
+	'site_info'
+		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") }
 
 );
 

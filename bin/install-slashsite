@@ -94,9 +94,10 @@ unless ($opts{'o'}) {
 $owner_id = getpwnam($owner) or die "$owner is not a valid user name.\n";
 
 unless ($opts{'g'}) {
-	print "\nWhat group would you like to run your slash site under? [nobody] ";
-	chomp($group = <STDIN>);
+	$group = getgrgid($owner_id); 
 	$group ||= 'nobody';
+	print "\nWhat group would you like to run your slash site under? [$group] ";
+	chomp($group = <STDIN>);
 } else {
 	$group = $opts{'g'};
 }
@@ -272,8 +273,11 @@ $install->create({ name => 'site_install_directory', value => "$prefix_site/$sit
 $install->create({ name => 'db_driver', value => "$driver"});
 my $time = localtime();
 $install->create({ name => 'installed', value => $time});
-for(@answers) {
-	$install->create({ name => 'plugin', value => $_});
+
+for(keys %$plugins) {
+	if ($answers[$plugins->{$_}{'order'}]) {
+		$install->create({ name => 'plugin', value => $plugins->{$_}{'order'}, description => $plugins->{$_}{'description'} });
+	}
 }
 
 $install->installPlugin(\@answers);

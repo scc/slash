@@ -189,6 +189,9 @@ sub main {
 	} elsif ($form->{deletefilter}) {
 		updateFilter(3);
 
+	} elsif ($form->{siteinfo}) {
+		siteInfo();
+		
 	} else {
 		titlebar('100%', getTitle('listStories-title'));
 		listStories();
@@ -283,6 +286,21 @@ sub authorEdit {
 		deletebutton_flag 	=> $deletebutton_flag,
 		aid			=> $aid,
 	});	
+}
+
+##################################################################
+sub siteInfo {
+	return if getCurrentUser('seclev') < 100; 
+
+	my $slashdb = getCurrentDB();
+	my $plugins = $slashdb->getDescriptions('plugins');
+	my $site_info = $slashdb->getDescriptions('site_info');
+
+	slashDisplay('siteInfo', {
+		plugins 	=> $plugins,
+		site_info	=> $site_info,
+	});	
+
 }
 
 ##################################################################
@@ -392,8 +410,6 @@ sub templateEdit {
 			}
 		}
 
-		# PatG, is this $page and $section supposed to be in single quotes?
-		# I removed them for now.  -- pudge
 		my $pages = $slashdb->getDescriptions('pages', $page, 1);
 		my $sections = $slashdb->getDescriptions('templatesections', $section, 1);
 
@@ -448,8 +464,8 @@ sub templateSave {
 
 	$form->{seclev} ||= 500;
 
-	my $id = $slashdb->getTemplateByID($tpid);
-	my $temp = $slashdb->getTemplate($name, [ 'section','page','name','tpid' ], 1 ,$page,$section);
+	my $id = $slashdb->getTemplate($tpid, '', 1);
+	my $temp = $slashdb->getTemplateByName($name, [ 'section','page','name','tpid' ], 1 ,$page,$section);
 
 	my $exists = 0;
 	$exists = 1 if ($name eq $temp->{name} && 

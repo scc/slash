@@ -18,11 +18,7 @@ sub main {
 	my $op = $form->{op};
 	my $uid = $user->{uid};
 
-	if ($op eq 'userlogin' && !$user->{is_anon}) {
-		my $refer = $form->{returnto} || $constants->{rootdir};
-		redirect($refer);
-		return;
-	} elsif ($op eq 'saveuser') {
+	if ($op eq 'saveuser') {
 		my $note = saveUser($form->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;
@@ -535,7 +531,10 @@ sub saveUser {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my $uid = $user->{seclev} ? shift : $user->{uid};
+	# we need to come up with a new seclev system. What seclev
+	# should allow an admin user to save another user on 
+	# the system? 
+	my $uid = $user->{seclev} >= 100 ? shift : $user->{uid};
 	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my ($note, $author_flag);
 
@@ -566,8 +565,12 @@ sub saveUser {
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
-		author		=> $author_flag
 	};
+
+	if ($user->{seclev} >= 100) {
+		$users_table->{seclev} = $form->{seclev}; 
+		$users_table->{author} = $author_flag; 
+	}
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
 		$users_table->{realemail} = chopEntity(strip_attribute($form->{realemail}), 50);
@@ -795,10 +798,11 @@ sub getUserAdmin {
 	}		
 
 	my $author_select;
-	my $author_flag = ($user->{author} == 1) ? ' CHECKED' : ''; 
+	my $author_flag = ($edituser->{author} == 1) ? ' CHECKED' : ''; 
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0; 
 
 	my $authors = $slashdb->getDescriptions('authors');
+
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
 	$author_select =~ s/\s{2,}//g;
 
