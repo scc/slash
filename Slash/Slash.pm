@@ -147,9 +147,9 @@ sub createSelect {
 	my ($label, $hashref, $default) = @_;
 	print qq!\n<SELECT name="$label">\n!;
 
-	while(my($code, $name) = each %$hashref) {
+	for my $code (sort(keys %$hashref)) {
 		my $selected = ($default eq $code) ? ' SELECTED' : '';
-		print qq!\t<OPTION value="$code"$selected>$name</OPTION>\n!;
+		print qq!\t<OPTION value="$code"$selected>$hashref->{$code}</OPTION>\n!;
 	}
 	print "</SELECT>\n";
 }
@@ -174,7 +174,7 @@ sub selectTopic {
 # Drop down list of available sections (based on admin seclev)
 sub selectSection {
 	my($name, $section, $SECT) = @_;
-	my $sectionBank = $I{dbobject}->getSectionBank();
+	my $sectionBank = $I{dbobject}->getSections();
 
 	if ($SECT->{isolate}) {
 		print qq!<INPUT TYPE="hidden" NAME="$name" VALUE="$section">\n!;
@@ -253,9 +253,9 @@ sub getSectionBlock {
 	my $thissect = getCurrentUser('light')? 'light' : $I{currentSection};
 	my $block;
 	if ($thissect) {
-		$block = $I{dbobject}->getBlock($thissect . "_$name");
+		$block = $I{dbobject}->getBlock($thissect . "_$name", 'block');
 	}
-	$block ||= $I{dbobject}->getBlock($name);
+	$block ||= $I{dbobject}->getBlock($name, 'block');
 	return $block;
 }
 
@@ -515,7 +515,7 @@ sub getSection {
 	my ($section) = @_;
 	return { title => $I{slogan}, artcount => $I{U}{maxstories} || 30, issue => 3 }
 		unless $section;
-	return $I{dbobject}->getSectionBank($section);
+	return $I{dbobject}->getSection($section);
 }
 
 
@@ -966,10 +966,10 @@ EOT
 
 	my $topics;
 	unless ($I{U}{noicons} || $I{U}{light}) {
-		$topics = $I{dbobject}->getBlock('topics');
+		$topics = $I{dbobject}->getBlock('topics', 'block');
 	}
 
-	my $vertmenu = $I{dbobject}->getBlock('mainmenu');
+	my $vertmenu = $I{dbobject}->getBlock('mainmenu', 'block');
 	my $menu = eval prepBlock($vertmenu);
 
 	my $horizmenu = $menu;
@@ -989,12 +989,12 @@ EOT
 
 ########################################################
 sub getSectionMenu {
-	my $menu = $I{dbobject}->getBlock('sectionindex_html1');
+	my $menu = $I{dbobject}->getBlock('sectionindex_html1', 'block');
 
 	# the reason this is three calls is that sectionindex regularly is
 	# updated by portald, so it's a more dynamic block
-	$menu .= $I{dbobject}->getBlock('sectionindex');
-	$menu .= $I{dbobject}->getBlock('sectionindex_html2');
+	$menu .= $I{dbobject}->getBlock('sectionindex', 'block');
+	$menu .= $I{dbobject}->getBlock('sectionindex_html2', 'block');
 
 	my $org_code = getEvalBlock('organisation');
 	my $execme = prepEvalBlock($org_code);
@@ -1019,10 +1019,10 @@ sub footer {
 	if ($I{U}{aseclev}) {
 		$motd .= currentAdminUsers();
 	} else {
-		$motd .= $I{dbobject}->getBlock('motd');
+		$motd .= $I{dbobject}->getBlock('motd', 'block');
 	}
 
-	my $vertmenu = $I{dbobject}->getBlock('mainmenu');
+	my $vertmenu = $I{dbobject}->getBlock('mainmenu', 'block');
 	my $menu = prepBlock($vertmenu);
 
 	my $horizmenu = eval $menu;
@@ -1363,7 +1363,7 @@ EOT
 		<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}">
 EOT
 
-		print $I{dbobject}->getBlock('commentswarning'), "</FONT></FORM></TD></TR>";
+		print $I{dbobject}->getBlock('commentswarning', 'block'), "</FONT></FORM></TD></TR>";
 
 		if ($I{U}{mode} eq 'nocomment') {
 			print "</TABLE>";

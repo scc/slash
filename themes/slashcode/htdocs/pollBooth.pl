@@ -195,8 +195,8 @@ EOT
 		pollItem($answer, $imagewidth, $votes, $percent);
 	}
 
-	my $postvote = $I{dbobject}->getBlock("$I{currentSection}_postvote")
-		|| $I{dbobject}->getBlock("postvote");
+	my $postvote = $I{dbobject}->getBlock("$I{currentSection}_postvote", 'block')
+		|| $I{dbobject}->getBlock("postvote", 'block');
 
 	print <<EOT;
 	<TR><TD COLSPAN="2" ALIGN="RIGHT">

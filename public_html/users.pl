@@ -172,8 +172,8 @@ sub checkList {
 
 #################################################################
 sub previewSlashbox {
-	my ($title, $content, $url) = $I{dbobject}->getSectionBlocksByBid($I{F}{bid});
-	my $cleantitle = $title;
+	my $section = $I{dbobject}->getSection($I{F}{bid});
+	my $cleantitle = $section->{'title'};
 	$cleantitle =~ s/<(.*?)>//g;
 
 	titlebar("100%","Preview $cleantitle");
@@ -192,7 +192,7 @@ EOT
 
 	print qq!</TD><TD WIDTH="180" VALIGN="TOP">!;
 
-	print portalbox($I{fancyboxwidth}, $title, $content, "", $url);
+	print portalbox($I{fancyboxwidth}, $section->{'title'}, $section->{'content'}, "", $section->{'url'});
 }
 
 #################################################################
@@ -258,11 +258,6 @@ sub mailPassword {
 	my $user_email = $I{dbobject}->getUser($uid, qw(nickname realemail));
 	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
 	my $tempnick = fixparam($user_email->{nickname});
-
-# temporarily make a message here
-#	my $msg = $I{dbobject}->getBlock("newusermsg");
-#	$msg = prepBlock($msg);
-#	$msg = eval $msg;
 
 	my $msg = <<EOT;
 Your new password is $newpasswd.  Your old password will still work until
@@ -524,7 +519,7 @@ EOT
 	<P><MULTICOL COLS="3">
 EOT
 
-	my $sections_description = $I{dbobject}->getSectionblocks();
+	my $sections_description = $I{dbobject}->getSectionBlocks();
 	for (@$sections_description) {
 		my($bid,$title,$o) = @$_;
 		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";

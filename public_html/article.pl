@@ -26,6 +26,8 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
+use Slash::Utility;
 
 ##################################################################
 sub main {
@@ -73,7 +75,7 @@ sub main {
 	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
 
 	# Display this section's Section Block (if Found)
-	fancybox($I{fancyboxwidth}, $SECT->{title}, $I{dbobject}->getBlock($SECT->{section}));
+	fancybox($I{fancyboxwidth}, $SECT->{title}, $I{dbobject}->getBlock($SECT->{section}, 'block'));
 
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 
@@ -96,7 +98,7 @@ sub main {
 ##################################################################
 sub pleaseLogin {
 	return unless getCurrentUser('is_anon');
-	my $block = eval prepBlock $I{dbobject}->getBlock('userlogin');
+	my $block = eval prepBlock $I{dbobject}->getBlock('userlogin', 'block');
 	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
 	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
 	fancybox($I{fancyboxwidth}, "$I{sitename} Login", $block);

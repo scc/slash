@@ -409,7 +409,7 @@ EOT
 	print qq|<INPUT TYPE="hidden" NAME="formkey" VALUE="$I{F}{formkey}">\n|
 		if $I{F}{op} eq 'PreviewStory';
 
-	print $I{dbobject}->getBlock("submit_before");
+	print $I{dbobject}->getBlock("submit_before", 'block');
 
 	$user = $I{F}{from} || $user;
 	$fakeemail = $I{F}{email} || $fakeemail;
@@ -486,7 +486,8 @@ sub saveSub {
 			$I{dbobject}->getSubmissionCount(),
 			" submissions pending.</B><P>";
 
-		print $I{dbobject}->getBlock("submit_after");
+		my $submit_after = $I{dbobject}->getBlock("submit_after", 'block');
+		print $submit_after->{'block'}
 
 		$I{dbobject}->createSubmission();
 	}

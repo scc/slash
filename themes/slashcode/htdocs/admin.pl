@@ -259,7 +259,7 @@ sub authorEdit {
 	$aid = '' if $I{F}{authornew};
 
 	print qq!<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">!;
-	my $authors = $I{dbobject}->getAuthorNameByAid();
+	my $authors = $I{dbobject}->getDescriptions('authors');
 	createSelect('myaid', $authors, $aid);
 
 	
@@ -436,8 +436,9 @@ EOT
 	# or this is a block save and the block is a portald block
 	# or this is a block edit via sections.pl
 	if (! $I{F}{blocknew} && $bid ) {
+		# getSection() is cached so you might as well grab it all
 		my @values = qw (bid title url rdf ordernum retrieve section portal);
-		$section = $I{dbobject}->getSectionBlockByBid($bid, @values);
+		$section = $I{dbobject}->getSection($bid, @values);
 		if ($section->{'isabid'}) {
 			$section->{'title'} = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$section->{'title'}"></TD>\n\t</TR>];
 			$section->{'url'} = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$section->{'url'}"></TD>\n\t</TR>];
@@ -468,8 +469,10 @@ EOT
 
 	my $bidblock;
 	if ($bid) {
+		# You know, since this is a cached piece you can just grab
+		# the entire piece if you want. Cost is the same.
 		my @values = qw (block seclev type description);
-		$bidblock = $I{dbobject}->getBlockByBid($bid, @values);
+		$bidblock = $I{dbobject}->getBlock($bid, @values);
 	}
 
 	my $description_ta = stripByMode($bidblock->{'description'}, 'literal', 1);
@@ -562,7 +565,7 @@ print <<EOT;
 <!-- end block editing form -->
 EOT
 
-	my $sectionbid = $I{dbobject}->getSectionBlockByBid($bid, 'section');
+	my $sectionbid = $I{dbobject}->getSection($bid, 'section');
 	print <<EOT;
 <B><A HREF="$I{rootdir}/sections.pl?section=$sectionbid&op=editsection">$sectionbid</A></B>
 (<A HREF="$I{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
@@ -617,7 +620,7 @@ sub colorEdit {
 	
 EOT
 	} else {
-		$colorblock = $I{dbobject}->getBlockByBid($I{F}{color_block}, 'block'); 
+		$colorblock = $I{dbobject}->getBlock($I{F}{color_block}, 'block'); 
 	}
 
 	my @colors = split m/,/, $colorblock;
@@ -729,7 +732,7 @@ sub topicEd {
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 EOT
 
-	my $topics_menu = $I{dbobject}->getDescriptions('vars');
+	my $topics_menu = $I{dbobject}->getDescriptions('topics');
 	createSelect('nexttid', $topics_menu, $I{F}{nexttid});
 
 	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
@@ -737,8 +740,7 @@ EOT
 
 	if (!$I{F}{topicdelete}) {
 		if (!$I{F}{topicnew}) {
-			my @values = qw (tid width height alttext image);
-			$topic = $I{dbobject}->getTopicByTid($I{F}{nexttid}, @values);
+			$topic = $I{dbobject}->getTopic($I{F}{nexttid});
 		} else {
 			$topic = {};
 			$topic->{'tid'} = 'new topic';
@@ -755,7 +757,6 @@ EOT
 		<BR>Alt Text<BR>
 		<INPUT TYPE="TEXT" NAME="alttext" VALUE="$topic->{'alttext'}"><BR>
 		<BR>Image<BR>
-		<SELECT name="image">
 EOT
 
 		if (@available_images) {
@@ -813,7 +814,7 @@ sub topicSave {
 ##################################################################
 sub listtopics {
 	my($seclev) = @_;
-	my $topics = $I{dbobject}->getTopic();
+	my $topics = $I{dbobject}->getTopics();
 	titlebar('100%', 'Topic Lister');
 
 	my $x = 0;
@@ -1081,7 +1082,7 @@ EOT
 	print qq!\n<INPUT TYPE="HIDDEN" NAME="writestatus" VALUE="$S->{writestatus}">!;
 
 	if ($I{U}{aseclev} > 100 and $S->{aid}) {
-		my $authors = $I{dbobject}->getAuthorNameByAid();
+		my $authors = $I{dbobject}->getDescriptions('authors');
 		createSelect('aid', $authors, $S->{aid});
 	} elsif ($S->{aid}) {
 		print qq!\n<INPUT TYPE="HIDDEN" NAME="aid" VALUE="$S->{aid}">!;

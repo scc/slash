@@ -108,8 +108,9 @@ sub listTopics {
 
 	print qq!\n<TABLE ALIGN="CENTER">\n\t<TR>\n!;
 
-	my $topics = $I{dbobject}->getTopics;
+	my $topics = $I{dbobject}->getTopics();
 	# Somehow sort by the alttext? Need to return to this -Brian
+	# HEre is an idea, private sort methods for sort()
 	for (values %$topics) {
 		unless ($x++ % 6) {
 			print "\t</TR><TR>";

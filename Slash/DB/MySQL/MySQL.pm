@@ -61,6 +61,9 @@ my %descriptions = (
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
 
+	'authors'
+		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
+
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'sections', 'portal=1') }
 
@@ -166,15 +169,12 @@ sub init {
 	for my $table (@user_tables) {
 		my $keys = $self->getKeys($table);
 		for (@$keys) {
-			$self->{'_all_user_keys'}{$_} = $table;
+			$self->{'_all_user_keys'}->{$_} = $table;
 		}
 	}
 	$self->{_user_tables} = \@user_tables;
 	# These are here to remind us of what exists
-	$self->{_authorBank} = {};
 	$self->{_storyBank} = {};
-	$self->{_topicBank} = {};
-	$self->{_blockBank} = {};
 	$self->{_codeBank} = {};
 	$self->{_sectionBank} = {};
 	$self->{_boxes} = {};
@@ -533,6 +533,7 @@ sub getDescriptions {
 # become a generic getDescription method
 	my $self = shift; # Shift off to keep things clean
 	my $codetype = shift; # Shift off to keep things clean
+	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $sth = $descriptions{$codetype}->($self);
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -852,68 +853,6 @@ sub getNicknameByUID {
 }
 
 ########################################################
-# All cache'ing happens in here.
-sub getBlock {
-	my($self, $bid) = @_;
-	return $self->{_blockBank}{$bid} if $self->{_blockBank}{$bid};
-
-	my $sth = $self->sqlSelectMany ('bid,block', 'blocks');
-	while (my($thisbid, $thisblock) = $sth->fetchrow) {
-		$self->{_blockBank}{$thisbid} = $thisblock;
-	}
-	$sth->finish;
-
-	return $self->{_blockBank}{$bid};
-}
-
-########################################################
-sub getSectionBank {
-	my($self, $section) = @_;
-	if ($section) {
-		return $self->{_sectionBank}{$section} if $self->{_sectionBank}{$section};
-	} else {
-		return $self->{_sectionBank} if keys %{$self->{_sectionBank}};
-	}
-
-	my $sth = $self->sqlSelectMany('*', 'sections');
-	while (my $section = $sth->fetchrow_hashref) {
-		$self->{_sectionBank}{ $section->{section} } = $section;
-	}
-	$sth->finish;
-
-	if ($section) {
-		return $self->{_sectionBank}{$section};
-	} else {
-		return $self->{_sectionBank};
-	}
-}
-
-########################################################
-#This should be made to be generic
-# This should be combinded with the above method
-sub getSection {
-	my($self, $section) = @_;
-	$self->sqlSelect(
-		"artcount,title,qid,isolate,issue",
-		"sections", "section=" . $self->{dbh}->quote($section)
-	);
-}
-
-########################################################
-sub getSections {
-	my($self, $id, @val) = @_;
-	my $values;
-	unless (scalar @val) {
-		$values = '*';
-	} else {
-		my $values = join ',', @val;
-	}
-	my $answers = $self->sqlSelectAll($values, 'sections');
-
-	return $answers;
-}
-
-########################################################
 sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
@@ -1180,19 +1119,6 @@ sub getSectionBlock {
 	return $block;
 }
 
-########################################################
-sub getAuthor {
-	my($self, $aid) = @_;
-
-	return $self->{_authorBank}{$aid} if $self->{_authorBank}{$aid};
-	# Get all the authors and throw them in a hash for later use:
-	my $sth = $self->sqlSelectMany('*', 'authors');
-	while (my $author = $sth->fetchrow_hashref) {
-		$self->{_authorBank}{ $author->{aid} } = $author;
-	}
-	$sth->finish;
-	return $self->{_authorBank}{$aid};
-}
 
 ########################################################
 sub getAuthorDescription {
@@ -1480,7 +1406,7 @@ sub getColorBlock {
 }
 
 ########################################################
-sub getSectionblocks {
+sub getSectionBlocks {
 	my($self) = @_;
 
 	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
@@ -1612,41 +1538,6 @@ sub currentAdmin {
 	);
 
 	return $aids;
-}
-
-########################################################
-# getTopics()
-# I'm torn, currently we just dump the entire database
-# into topicBank if we don't find our topic. I am
-# wondering if it wouldn't be better to just grab them
-# as needed (when we need them).
-# Probably ought to spend some time to actually figure
-# this out.
-#
-# -Brian
-sub getTopics {
-	my($self, $topic) = @_;
-
-	if ($topic) {
-		return $self->{_topicBank}{$topic} if $self->{_topicBank}{$topic};
-	} else {
-		return $self->{_topicBank} if (keys %{$self->{_topicBank}});
-	}
-	# Lets go knock on the door of the database
-	# and grab the Topic's since they are not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
-	my $sth = $self->sqlSelectMany('*', 'topics');
-	while (my $single_topic = $sth->fetchrow_hashref) {
-		$self->{_topicBank}{ $single_topic->{tid} } = $single_topic;
-	}
-	$sth->finish;
-
-	if ($topic) {
-		return $self->{_topicBank}{$topic};
-	} else {
-		return $self->{_topicBank};
-	}
 }
 
 ########################################################
@@ -1885,6 +1776,17 @@ sub getStoryByTime {
 			"time $sign '$sqltime' AND writestatus >= 0 AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
+}
+
+########################################################
+sub setUsers {
+	my($self, $uid, $hashref) = @_;
+	if (exists $hashref->{passwd}) {
+		# get rid of newpasswd if defined in DB
+		$hashref->{newpasswd} = '';
+		$hashref->{passwd} = md5_hex($hashref->{passwd});
+	}
+	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
 }
 
 ########################################################
@@ -2699,6 +2601,67 @@ sub _genericGet {
 }
 
 ########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGetCache {
+	my($table, $table_prime, $self, $id, @values) = @_;
+	my $table_cache= '_' . $table;
+
+	my $count = @values;
+	if($count == 1) {
+		return $self->{$table_cache}{$id}{$values[0]} if $self->{$table_cache}{$id};
+	} else {
+		return $self->{$table_cache}{$id} if $self->{$table_cache}{$id};
+	}
+	# Lets go knock on the door of the database
+	# and grab the Topic's since they are not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	my $sth = $self->sqlSelectMany('*', $table);
+	while (my $row = $sth->fetchrow_hashref) {
+		$self->{$table_cache}{ $row->{$table_prime} } = $row;
+	}
+	$sth->finish;
+
+	if($count == 1) {
+		return $self->{$table_cache}{$id}{$values[0]};
+	} else {
+		return $self->{$table_cache}{$id};
+	}
+}
+
+########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGetsCache {
+	my($table, $table_prime, $self) = @_;
+	my $table_cache= '_' . $table;
+
+	return $self->{$table_cache} if (keys %{$self->{$table_cache}});
+	# Lets go knock on the door of the database
+	# and grab the Topic's since they are not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	my $sth = $self->sqlSelectMany('*', $table);
+	while (my $row = $sth->fetchrow_hashref) {
+		$self->{$table_cache}{ $row->{$table_prime} } = $row;
+	}
+	$sth->finish;
+
+	return $self->{$table_cache};
+}
+
+########################################################
+sub getAuthor {
+	my $answer = _genericGetCache('authors', 'aid', @_);
+	return $answer;
+}
+########################################################
+sub getAuthors {
+	my $answer = _genericGetsCache('authors', 'aid', @_);
+	return $answer;
+}
+########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', @_);
 	return $answer;
@@ -2711,16 +2674,19 @@ sub getPollAnswer {
 }
 
 ########################################################
-sub getBlockByBid {
-	my $answer = _genericGet('blocks', 'bid', @_);
+sub getBlock {
+	my $answer = _genericGetCache('blocks', 'bid', @_);
 	return $answer;
 }
 
 ########################################################
-# This should go along with the cached data and not
-# hit the database
-sub getTopicByTid {
-	my $answer = _genericGet('topics', 'tid', @_);
+sub getTopic {
+	my $answer = _genericGetCache('topics', 'tid', @_);
+	return $answer;
+}
+########################################################
+sub getTopics {
+	my $answer = _genericGetsCache('topics', 'tid', @_);
 	return $answer;
 }
 
@@ -2737,8 +2703,13 @@ sub getSubmission {
 }
 
 ########################################################
-sub getSectionBlockByBid {
-	my $answer = _genericGet('sectionblocks', 'bid', @_);
+sub getSection {
+	my $answer = _genericGetCache('sectionblocks', 'bid', @_);
+	return $answer;
+}
+########################################################
+sub getSections {
+	my $answer = _genericGetsCache('sectionblocks', 'bid', @_);
 	return $answer;
 }
 
@@ -2768,7 +2739,7 @@ sub getUser {
 	my $members = @val;
 	my $answer;
 	if ($members == 1) {
-		my $table = $self->{_all_user_keys}{$val[0]};
+		my $table = $self->{_all_user_keys}->{$val[0]};
 		($answer) = $self->sqlSelect($val[0], $table, 'uid=' .$self->{dbh}->quote($uid));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
@@ -2776,7 +2747,7 @@ sub getUser {
 		my $where;
 		my $uid_db = $self->{dbh}->quote($uid);
 		for(@val) {
-			$tables{$self->{_all_user_keys}{$_}} = 1;
+			$tables{$self->{_all_user_keys}->{$_}} = 1;
 		}
 		for(keys %tables) {
 			$where .= "$_.uid=$uid_db AND ";
@@ -2807,29 +2778,18 @@ sub getUser {
 sub setUser {
 	my($self, $uid, $hashref) = @_;
 	my %tables;
-
-	# encrypt password  --  done here OK?
-	if (exists $hashref->{passwd}) {
-		# get rid of newpasswd if defined in DB
-		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = md5_hex($hashref->{passwd});
+	for(keys %$hashref) {
+		my $key = $self->{_all_user_keys}->{$_};
+		push @{$tables{$key}}, $_;
 	}
-
-	for my $key (keys %$hashref) {
-		my $table = $self->{_all_user_keys}{$key};
-		push @{$tables{$table}}, $key;
-	}
-
 	for my $table (keys %tables) {
 		my %minihash;
-		for my $key (@{$tables{$table}}){
-			$minihash{$key} = $hashref->{$key}
-				if defined $hashref->{$key};
+		for(@{$tables{$table}}){
+			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
 		}
-		$self->sqlUpdate($table, \%minihash, "uid=$uid", 1);
+		$self->sqlUpdate($table, \%minihash, "uid=" . $uid, 1);
 	}
 }
-
 ########################################################
 # For slashdb
 sub setStoryIndex {

@@ -86,8 +86,7 @@ sub searchForm {
 
 	my $t = lc $I{sitename};
 	$t = $I{F}{topic} if $I{F}{topic};
-	my $tref = $I{dbobject}->getTopics($t);
-	print "<H2>TREF $tref: $t</H2>\n";
+	my $tref = $I{dbobject}->getTopic($t);
 	print <<EOT if $tref;
 
 <IMG SRC="$I{imagedir}/topics/$tref->{image}"
@@ -115,7 +114,7 @@ EOT
 EOT
 
 	if ($I{F}{op} eq "stories") {
-		my $authors = $I{dbobject}->getAuthorNameByAid();
+		my $authors = $I{dbobject}->getDescriptions('authors');
 		createSelect('author', $authors, $I{F}{author});
 	} elsif ($I{F}{op} eq "comments") {
 		print <<EOT;
@@ -239,7 +238,7 @@ sub storySearch {
 	print " ";
 
 	my $stories = $I{dbobject}->getSearchStory($I{F});
-	for ($stories) {
+	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $I{F}{query};
 		print $cnt ? $cnt :  $x + $I{F}{min};

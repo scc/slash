@@ -140,7 +140,7 @@ EOT
 sub editSection {
 	my($seclev, $section) = @_;
 
-	my($artcount, $title, $qid, $isolate, $issue) = $I{dbobject}->getSection($section)
+	my $sectioninstance = $I{dbobject}->getSection($section)
 		unless $I{F}{addsection};
 
 	print <<EOT;
@@ -153,47 +153,48 @@ sub editSection {
 	<BR><BR><B>Section name:</B><BR>
 	<INPUT TYPE="TEXT" NAME="section" VALUE="$section"><BR><BR> 
 	<BR><B>Article Count</B> (how many articles to display on section index)<BR>
-	<INPUT TYPE="TEXT" NAME="artcount" SIZE="4" VALUE="$artcount">
+	<INPUT TYPE="TEXT" NAME="artcount" SIZE="4" VALUE="$sectioninstance->{'artcount'}">
 		1/3rd of these will display intro text, 2/3rds just headers<BR><BR>
 
 	<B>Title</B>
-	<BR><INPUT TYPE="TEXT" NAME="title" SIZE="30" VALUE="$title"><BR>
+	<BR><INPUT TYPE="TEXT" NAME="title" SIZE="30" VALUE="$sectioninstance->{'title'}"><BR>
 
 EOT
 
 	my $formats;
 	print qq|<BR><BR><B>Polls for this section:</B><br>\n|;
 	$formats = $I{dbobject}->getPollQuestions();
-	createSelect('qui', $formats, $qid);
+	createSelect('qui', $formats, $sectioninstance->{'qid'});
 
 	print qq|<BR><BR><B>Isolate mode:</B><br>\n|;
 	$formats = $I{dbobject}->getDescriptions('isolatemodes');
-	createSelect('isolate', $formats, $isolate);
+	createSelect('isolate', $formats, $sectioninstance->{'isolate'});
 
 	print qq|<BR><BR><B>Issue mode:</B><br>\n|;
 	$formats = $I{dbobject}->getDescriptions('issuemodes');
-	createSelect('issue', $formats, $issue);
+	createSelect('issue', $formats, $sectioninstance->{'issue'});
 	
 
 	unless ($I{F}{addsection}) {
 		my $blocks =  $I{dbobject}->getSectionBlock($section);
 		
-		if($blocks) {
+		if(@$blocks) {
 			print <<EOT;
 <BR><BR><B>edit section slashboxes (blocks)</B><BR><BR>
 <TABLE BORDER="1">
 EOT
 			for(@$blocks) {
-				my ($section, $bid, $ordernum, $title, $portal, $url) = @$_;	
+				my ($section, $bid, $ordernum, $title, $portal, $url) = @$_;  
 				$title =~ s/<(.*?)>//g;
 				printf <<EOT, $ordernum > 0 ? '(default)' : '';
-			<TR>
+				<TR>
 				<TD>
 				<B><A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$bid">$title</A></B>
-			<A HREF="$url">$url</A> %s 
+				<A HREF="$url">$url</A> %s 
 				</TD>
-			</TR>
+				</TR>
 EOT
+
 
 			}
 			print "</TABLE>\n";
