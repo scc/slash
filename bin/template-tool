@@ -280,7 +280,7 @@ sub save_template {
 		close(FILE);
 
 		if($tpid) {
-			$tmp = $slash->getTemplateByID($tpid);
+			$tmp = $slash->getTemplate($tpid);
 			if ($tmp && $tmp->{tpid} == $tpid) {
 				$exists = 1 ;
 				$tname = $name eq '' ? $tmp->{name} : $name ;
@@ -290,7 +290,7 @@ sub save_template {
 			
 		} else {
 			if ($filename_flag && $dirflag) {
-				$tmp = $slash->getTemplate($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
+				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
 				if (	$tmp &&
 					$tmp->{page} eq $ppage && 
 					$tmp->{section} eq $psection && 
@@ -299,7 +299,7 @@ sub save_template {
 					$exists = 1; 
 				}
 			} else {
-				$tmp = $slash->getTemplate($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
+				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
 				if (	$tmp &&
 					$tmp->{page} eq $tpage && 
 					$tmp->{section} eq $tsection && 

@@ -364,7 +364,7 @@ sub templateEdit {
 	$pagehashref = {};
 	$templatedelete_flag = $templateedit_flag = $templateform_flag = 0;
 
-	$templateref = $slashdb->getTemplateByID($tpid, '', 1) if $tpid;
+	$templateref = $slashdb->getTemplate($tpid, '', 1) if $tpid;
 	$title = getTitle('templateEdit-title', {}, 1);
 
 	if ($form->{templatedelete}) {
@@ -436,8 +436,8 @@ sub templateSave {
 
 	$form->{seclev} ||= 500;
 
-	my $id = $slashdb->getTemplateByID($tpid);
-	my $temp = $slashdb->getTemplate($form->{name});
+	my $id = $slashdb->getTemplate($tpid);
+	my $temp = $slashdb->getTemplateByName($form->{name});
 
 	my $exists = 0;
 	$exists = 1 if ($form->{name} eq $temp->{name} && 

@@ -2393,7 +2393,7 @@ sub _getTemplateNameCache {
 }
 
 ########################################################
-sub getTemplateByID {
+sub getTemplate {
 	my($self) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
 	my $answer = _genericGetCache('templates', 'tpid', '', @_);
@@ -2402,7 +2402,7 @@ sub getTemplateByID {
 
 ########################################################
 # This is a bit different
-sub getTemplate {
+sub getTemplateByName {
 	my($self, $name, $values, $cache_flag, $page, $section) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
 

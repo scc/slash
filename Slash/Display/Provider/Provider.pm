@@ -70,7 +70,7 @@ sub fetch {
 	# if regular scalar, get proper template ID ("name") from DB
 	} else {
 		my $slashdb = getCurrentDB();
-		$name = $slashdb->getTemplate($text, 'tpid');
+		$name = $slashdb->getTemplateByName($text, 'tpid');
 		undef $text;
 	}
 
@@ -108,7 +108,7 @@ sub _load {
 	if (! defined $text) {
 		$slashdb = getCurrentDB();
 		# in arrayref so we also get _modtime
-		my $temp = $slashdb->getTemplateByID($name, ['template']);
+		my $temp = $slashdb->getTemplate($name, ['template']);
 		$text = $temp->{template};
 		$time = $temp->{_modtime};
 	}
@@ -136,7 +136,7 @@ sub _refresh {
 	# compare load time with current _modtime from API to see if
 	# its modified and we need to reload it
 	if ($slot->[ DATA ]{modtime}) {
-		my $temp = $slashdb->getTemplateByID($slot->[ NAME ], ['tpid']);
+		my $temp = $slashdb->getTemplate($slot->[ NAME ], ['tpid']);
 		if ($slot->[ DATA ]{modtime} < $temp->{_modtime}) {
 			print STDERR "refreshing cache file ", $slot->[ NAME ], "\n"
 				if $DEBUG;
