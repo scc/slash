@@ -13,6 +13,8 @@
 #
 # Cliff++; -CaptTofu
 use strict;
+use File::Basename;
+use FindBin '$Bin';
 use File::Spec::Functions;
 use Slash;
 use Slash::Utility;
@@ -21,7 +23,10 @@ use Slash::Install;
 use Getopt::Std;
 use Cwd;
 
-my $VERSION = '0.9';
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
 chomp(my $COPYRIGHT = <<'EOT');
 This code is a part of Slash, and is released under the GPL.
 Copyright 1997-2001 by Open Source Development Network. See README
@@ -31,7 +36,7 @@ EOT
 my %opts;
 usage('options used incorrectly') unless getopts('cdilrsvg:D:O:P:S:p:f:u:?', \%opts);
 usage('no options supplied to program') unless keys %opts;
-usage('help requested') if $opts{'?'};
+usage() if $opts{'h'};
 boiler() if $opts{'B'};
 
 # if deleting, then there should be no other operation or file flags
@@ -53,7 +58,7 @@ my($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0, 0, 0, 0);
 ##################################
 # version
 if ($opts{'v'}) {
-	print "$0, version $VERSION\n$COPYRIGHT\n";
+	print "$PROGNAME, version $VERSION\n$COPYRIGHT\n";
 	exit();
 }
 
@@ -320,7 +325,8 @@ sub compile_template {
 sub usage {
 	print "*** $_[0] \n" if $_[0];
 	print <<EOT;
-Usage: template-tool [OPTIONS] <template templateN>
+
+Usage: $PROGNAME [OPTIONS] <template templateN>
 
 OPTIONS
 
