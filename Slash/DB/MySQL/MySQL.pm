@@ -12,7 +12,7 @@ use Slash::Utility;
 @Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-my ($user); #Who we are to DBIx
+my $user; #Who we are to DBIx
 my $timeout = 30; #This should eventualy be a parameter that is configurable
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
@@ -21,6 +21,7 @@ my %codeBank; # This is here to save us a database call
 my $commonportals; # portals on the front page.
 my $boxes;
 my $sectionBoxes;
+my $dbh;
 
 # For the getDecriptionsk() method
 my %descriptions = (
@@ -71,12 +72,35 @@ my %descriptions = (
 	
 );
 
+#################################################################
+# Private method used by the search methods
+my $keysearch = sub {
+	my $keywords = shift;
+	my @columns = @_;
+
+	my @words = split m/ /, $keywords;
+	my $sql;
+	my $x = 0;
+
+	foreach my $w (@words) {
+		next if length $w < 3;
+		last if $x++ > 3;
+		foreach my $c (@columns) { 
+			$sql .= "+" if $sql;
+			$sql .= "($c LIKE " . $dbh->quote("%$w%") . ")";
+		}
+	}
+#	void context, does nothing?
+	$sql = "0" unless $sql;
+	$sql .= " as kw";
+	return $sql;
+};
 
 ########################################################
 # Notes:
 #  formAbuse, use defaults as ENV, be able to override
 #  	(pudge idea).
-#  description method cleanup.
+#  description method cleanup. (done)
 #  fetchall_rowref vs fetch the hashses and push'ing
 #  	them into an array (good arguments for both)
 #	 break up these methods into multiple classes and
@@ -84,7 +108,6 @@ my %descriptions = (
 #   could end up being very slow though since the march
 #   is kinda slow...).
 #	 the getAuthorEdit() methods need to be refined
-########################################################
 ########################################################
 sub sqlConnect {
 # What we are going for here, is the ability to reuse
@@ -119,6 +142,7 @@ sub sqlConnect {
 	}
 	#This is only here for backwards compatibility
 	$Slash::I{dbh} = $self->{dbh};
+	$dbh = $self->{dbh};
 }
 
 ########################################################
@@ -1297,6 +1321,43 @@ sub getSubmission {
 	my $submission = $cursor->fetchall_arrayref;
 
 	return $submission;
+}
+
+########################################################
+sub getSearch{
+	my ($self, $form, $user) =  @_;
+	# select comment ID, comment Title, Author, Email, link to comment
+	# and SID, article title, type and a link to the article
+	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
+		getDateFormat("time","d", $user) . ",".
+		getDateFormat("date","t", $user) . ", 
+		uid, cid, ";
+
+	$sqlquery .= "	  " . $keysearch->($form->{query}, "subject", "comment") if $form->{query};
+	$sqlquery .= "	  1 as kw " unless $form->{query};
+	$sqlquery .= "	  FROM newstories, comments
+			 WHERE newstories.sid=comments.sid ";
+	$sqlquery .= "     AND newstories.sid=" . $self->{dbh}->quote($form->{sid}) if $form->{sid};
+	$sqlquery .= "     AND points >= $user->{threshold} ";
+	$sqlquery .= "     AND section=" . $self->{dbh}->quote($form->{section}) if $form->{section};
+	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
+
+
+	my $cursor = $self->{dbh}->prepare($sqlquery);
+	$cursor->execute;
+
+	my $search = $cursor->fetchall_arrayref;
+	return $search;
+}
+
+########################################################
+sub getNewstoryTitle {
+	my ($self, $storyid, $sid) = @_;
+	my($title) = sqlSelect("title", "newstories",
+	      "sid=" . $self->{dbh}->quote($sid)
+				);
+
+	return $title;
 }
 
 1;

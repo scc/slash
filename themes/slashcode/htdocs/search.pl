@@ -26,6 +26,7 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::Utility;
 
 #################################################################
 sub main {
@@ -72,29 +73,6 @@ sub linkSearch {
 	$r = qq!<A HREF="$ENV{SCRIPT_NAME}?$r">$C->{'link'}</A>!;
 }
 
-#################################################################
-sub keysearch {
-	my $keywords = shift;
-	my @columns = @_;
-
-	my @words = split m/ /, $keywords;
-	my $sql;
-	my $x = 0;
-
-	foreach my $w (@words) {
-		next if length $w < 3;
-		last if $x++ > 3;
-		foreach my $c (@columns) { 
-			$sql .= "+" if $sql;
-			$sql .= "($c LIKE " . $I{dbh}->quote("%$w%") . ")";
-		}
-	}
-#	void context, does nothing?
-#	substr $sql, 1, length($sql)-1;
-	$sql = "0" unless $sql;
-	$sql .= " as kw";
-	return $sql;
-}
 
 #################################################################
 sub searchForm {
@@ -161,40 +139,24 @@ EOT
 	
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
-	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
-		getDateFormat("time","d", $I{U}) . ",".
-		getDateFormat("date","t", $I{U}) . ", 
-		uid, cid, ";
-
-	$sqlquery .= "	  " . keysearch($I{F}{query}, "subject", "comment") if $I{F}{query};
-	$sqlquery .= "	  1 as kw " unless $I{F}{query};
-	$sqlquery .= "	  FROM newstories, comments
-			 WHERE newstories.sid=comments.sid ";
-	$sqlquery .= "     AND newstories.sid=" . $I{dbh}->quote($I{F}{sid}) if $I{F}{sid};
-	$sqlquery .= "     AND points >= $I{U}{threshold} ";
-	$sqlquery .= "     AND section=" . $I{dbh}->quote($I{F}{section}) if $I{F}{section};
-	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $I{F}{min},20 ";
 
 	if ($I{F}{sid}) {
-		my($t) = sqlSelect("title", "newstories",
-			"sid=" . $I{dbh}->quote($I{F}{sid})
-		) || "discussion";
+		my $title = $I{dbobject}->getNewstoryTitle($I{F}{sid}) || "discussion";
 
 		printf "<B>Return to %s</B><P>", linkComment({
 			sid	=> $I{F}{sid},
 			pid	=> 0,
-			subject	=> $t
+			subject	=> $title
 		});
 		print "</B><P>";
 		return unless $I{F}{query};
 	}
 
-	my $cursor = $I{dbh}->prepare($sqlquery);
-	$cursor->execute;
-
+	my $search = $I{dbobject}->getSearch($I{F}, $I{U});
 	my $x = $I{F}{min};
-	while (my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,
-		$cdate, $uid, $cid, $match) = $cursor->fetchrow) {
+	for(@$search) {
+		my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,
+		$cdate, $uid, $cid, $match) = @$_;
 		last if $I{F}{query} && !$match;
 		$x++;
 
@@ -212,7 +174,6 @@ EOT
 EOT
 	}
 
-	$cursor->finish;
 
 	print "No Matches Found for your query" unless $x > 0 || $I{F}{query};
 
@@ -308,7 +269,6 @@ EOT
 	$cursor->execute;
 
 	my($x, $cnt) = 0;
-	# print $sqlquery if $I{U}{uid}==1;
 	print " ";
 
 	while (my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = 
@@ -336,5 +296,6 @@ EOT
 }
 
 main;
-$I{dbh}->disconnect if $I{dbh};
+# Don't kick the baby
+#$I{dbh}->disconnect if $I{dbh};
 1;
