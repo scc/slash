@@ -18,6 +18,7 @@ CREATE TABLE users_param (
 
 $dbh->do('ALTER TABLE stories add uid int(11)');
 $dbh->do('ALTER TABLE newstories add uid int(11)');
+$dbh->do('DROP TABLE newstories');
 $dbh->do($users_param);
 $dbh->do('DELETE FROM users WHERE UID < 1');
 $dbh->do('DELETE FROM users_comments WHERE UID < 1');
@@ -55,19 +56,26 @@ for my $author (keys %story_authors) {
 		$dbh->do("UPDATE stories SET uid=$story_authors{$author} WHERE sid='$sid'");	
 	}
 }
-for my $author (keys %story_authors) {
-	print "Doing $author newstories \n";
-	my $sids = $dbh->selectcol_arrayref("SELECT sid FROM newstories WHERE aid='$author'");
-	for my $sid (@$sids) {
-		$dbh->do("UPDATE newstories SET uid=$story_authors{$author} WHERE sid='$sid'");	
+
+my $null_sids;
+if($null_sids = $dbh->selectall_arrayref('select sid from stories WHERE uid is NULL')) {
+	printf("Found stories lacking authors, select a uid to assign them to\n");
+	for(keys %story_authors) {
+		print "Authors $_ : $story_authors{$_}\n";
 	}
+	my $uid;
+	chomp($uid = <STDIN>);
+	die "You did not select a valid author uid\n" unless $story_authors{$uid};
+	$dbh->do("update stories SET uid=$uid WHERE uid is NULL");
 }
 $dbh->do('UPDATE users_prefs SET tzcode=UCASE(tzcode)');
+
 
 # This is what pudge will probably want to change :) 		-Brian
 $dbh->do('ALTER TABLE users change passwd passwd varchar(32)');
 $dbh->do('UPDATE users SET passwd=MD5(passwd)');
 $dbh->do('CREATE TABLE newcomments SELECT * from comments');
+$dbh->do('CREATE TABLE newstories SELECT * from stories');
 
 #cleanup time
 $dbh->do('ALTER TABLE stories drop aid');
