@@ -12,7 +12,7 @@ $task{$me}{code} = sub {
 
 	my $nowtime = time();
 
-	$slashdb->sqlDo("delete from formkeys where ts < ($nowtime - ".$constants->{formkey_timeframe}.")");
+	$slashdb->sqlDo("delete from formkeys where ts < ($nowtime - (2*".$constants->{formkey_timeframe}."))");
 
 };
 
