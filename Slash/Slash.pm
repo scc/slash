@@ -58,7 +58,7 @@ BEGIN {
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect
-		createEnvironment writeLog
+		createEnvironment 
 	);
 	$CRLF = "\015\012";
 }
@@ -1954,16 +1954,16 @@ EOT
 	return 1;
 }
 
-########################################################
-sub writeLog {
-	my $op = shift;
-	my $dat = join("\t", @_);
-
-	my $r = Apache->request;
-
-	$r->notes('SLASH_LOG_OPERATION', $op);
-	$r->notes('SLASH_LOG_DATA', $dat);
-}
+# ########################################################
+# sub writeLog {
+# 	my $op = shift;
+# 	my $dat = join("\t", @_);
+# 
+# 	my $r = Apache->request;
+# 
+# 	$r->notes('SLASH_LOG_OPERATION', $op);
+# 	$r->notes('SLASH_LOG_DATA', $dat);
+# }
 ########################################################
 # Ok, in a CGI we need to set up enough of an
 # environment so that methods that are accustom

@@ -30,6 +30,7 @@ require Exporter;
 	bakeUserCookie
 	eatUserCookie
 	setCookie
+	writeLog
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -322,6 +323,16 @@ sub setCookie {
 
 	# we need to support multiple cookies, like my tummy does
 	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
+}
+########################################################
+sub writeLog {
+	my $op = shift;
+	my $dat = join("\t", @_);
+
+	my $r = Apache->request;
+
+	$r->notes('SLASH_LOG_OPERATION', $op);
+	$r->notes('SLASH_LOG_DATA', $dat);
 }
 
 1;
