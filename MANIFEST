@@ -184,6 +184,7 @@ plugins/Search/MANIFEST
 plugins/Search/Makefile.PL
 plugins/Search/PLUGIN
 plugins/Search/Search.pm
+plugins/Search/dump
 plugins/Search/search.pl
 plugins/Search/templates/commentsearch;search;default
 plugins/Search/templates/pagination;search;default

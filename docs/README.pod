@@ -30,11 +30,11 @@ Through a plugin system, developers can add functionality to Slash.
 Through themes and templates (which are written using Template Toolkit),
 the look and feel of a Slash site can be customized.
 
-See F<INSTALL> for information about installing Slash, including hardware
+See F<INSTALL> for information about B<installing> Slash, including hardware
 and software requirements.  Read that document carefully, and follow the
 instructions as precisely as possible.
 
-Also see F<INSTALL> for information on upgrading from previous versions
+Also see F<INSTALL> for information on B<upgrading> from previous versions
 of Slash.
 
 As noted in the FAQ, please send any bug reports, and subscribe to
