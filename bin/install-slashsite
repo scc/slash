@@ -380,6 +380,8 @@ sub apache_site_conf {
     PerlAccessHandler Slash::Apache::User
     # Enable the line below if you are worried about performance
     #PerlTransHandler Slash::Apache::IndexHandler
+    #The following line enables the userdir hack.
+    #PerlTransHandler Slash::Apache::User::userdir_handler
     PerlLogHandler Slash::Apache::Log
 
     AddType text/xml .rdf 

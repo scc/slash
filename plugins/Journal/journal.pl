@@ -11,6 +11,8 @@ use Slash::Utility;
 use Slash::Journal;
 use Slash::Display;
 use Date::Manip;
+use XML::RSS;
+use Apache;
 
 
 sub main {
@@ -27,6 +29,7 @@ sub main {
 		top => \&displayTop,
 		friends => \&displayFriends,
 		default => \&displayDefault,
+		rss => \&displayRSS,
 		);
 	my %safe = (
 		list => 1,
@@ -35,31 +38,45 @@ sub main {
 		top => 1,
 		friends => 1,
 		default => 1,
+		rss => 1,
 		);
 
 	my $journal = Slash::Journal->new(getCurrentSlashUser());
 	my $form = getCurrentForm();
 	my $op = $form->{'op'};
 	$op = 'default' unless $ops{$op};
+
 	if (getCurrentUser('is_anon')) {
 		$op = 'default' unless $safe{$op};
 	}
-	my $uid = $form->{'uid'};
-	header();
-	if($op eq 'display') {
-		my $slashdb = getCurrentDB();
-		my $nickname = $slashdb->getUser($form->{uid}, 'nickname') if $form->{uid};
-		$nickname ||= getCurrentUser('nickname');
-		titlebar("100%","${nickname}'s Journal");
+
+	if ($op eq 'rss') {
+		my $r = Apache->request;
+		$r->header_out('Cache-Control', 'private');
+		$r->content_type('text/plain');
+		$r->status(200);
+		$r->send_http_header;
+		$r->rflush;
+		$r->print(displayRSS($form, $journal));
+		$r->status(200);
 	} else {
-		titlebar("100%","Journal System");
+		my $uid = $form->{'uid'};
+		header();
+		if($op eq 'display') {
+			my $slashdb = getCurrentDB();
+			my $nickname = $slashdb->getUser($form->{uid}, 'nickname') if $form->{uid};
+			$nickname ||= getCurrentUser('nickname');
+			titlebar("100%","${nickname}'s Journal");
+		} else {
+			titlebar("100%","Journal System");
+		}
+
+		print createMenu('journal');
+
+		$ops{$op}->($form, $journal);
+
+		footer();
 	}
-
-	print createMenu('journal');
-
-	$ops{$op}->($form, $journal);
-
-	footer();
 }
 
 sub displayDefault {
@@ -82,6 +99,47 @@ sub displayFriends {
 		friends => $friends,
 		url => '/journal.pl',
 	});
+}
+
+sub displayRSS {
+	my ($form, $journal) = @_;
+	my $rss = XML::RSS->new(
+		version => '0.91',
+		encoding=>'UTF-8'
+	);
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my ($uid, $nickname);
+	if($form->{uid}) {
+		$nickname = $slashdb->getUser($form->{uid}, 'nickname');
+		$uid = $form->{uid};
+	} else {
+		$nickname = getCurrentUser('nickname');
+		$uid = getCurrentUser('uid');
+	}
+
+	$rss->channel(
+		title   => xmlencode($constants->{sitename} . " Journals"),
+		'link'    => $constants->{absolutedir} . "/journal.pl?op=display&uid=$uid",
+		description => xmlencode("${nickname}'s Journal"),
+	);
+
+	$rss->image(
+		title   => xmlencode($constants->{sitename}),
+		url   => xmlencode($constants->{rdfimg}),
+		'link'    => $constants->{absolutedir} . '/',
+	);
+
+
+	my $articles = $journal->gets($uid,[qw|id article  description|]);
+	for my $article (@$articles) {
+			$rss->add_item(
+				title => xmlencode($article->[2]),
+				link  => "$constants->{absolutedir}/journal.pl?op=get&id=$article->[0]",
+				description => xmlencode("$nickname wrote: " . $article->[1])
+		);
+	}
+	return $rss->as_string;
 }
 
 sub displayArticle {

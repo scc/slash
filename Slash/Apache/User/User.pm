@@ -221,6 +221,35 @@ sub userLogin {
 }
 
 ########################################################
+sub userdir_handler {
+	my($r) = @_;
+
+	my $cfg = Apache::ModuleConfig->get($r);
+
+	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $constants = $dbcfg->{constants};
+
+	my $uri = $r->uri;
+
+	if ($constants->{rootdir}) {
+		my $path = URI->new($constants->{rootdir})->path;
+		$uri =~ s/^\Q$path//;
+	}
+
+	if($uri =~ m[^/~(.*)]) {
+		my $clean = $1;
+		$clean =~ s/\///g;
+		$r->args("nick=$clean");
+		$r->uri('/users.pl');
+		$r->filename($constants->{basedir} . '/users.pl');
+		return OK;
+	}
+
+	return DECLINED;
+}
+
+
+########################################################
 #
 sub DESTROY { }
 

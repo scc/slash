@@ -63,7 +63,7 @@ sub IndexHandler {
 		# since I don't think anyone has tried 
 		# it). -Brian
 			$r->filename($r->document_root . '/index.shtml');
-			writeLog('index', 'shtml');
+			writeLog('shtml');
 			return OK;
 		}
 	}
