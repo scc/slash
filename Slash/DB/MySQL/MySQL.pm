@@ -2284,33 +2284,28 @@ sub getNetIDList {
 ########################################################
 sub getBanList {
 	my($self, $refresh) = @_;
-	my $constants = getCurrentStatic();
+	my $acuid = getCurrentStatic('anon_coward_uid');
+	my $expire = getCurrentStatic('banlist_expire');
 	
-	if ($refresh || ! exists $self->{banlist}) {
-		my $banlist_ref;
+	_genericCacheRefresh($self, 'banlist', $expire);
+    my $banlist_ref = $self->{'_banlist_cache'} ||= {};
+	
+	%$banlist_ref = () if $refresh;
+
+	if ($refresh || ! keys %$banlist_ref) {
 		my $sth = $self->{_dbh}->prepare("SELECT ipid,subnetid,uid from accesslist WHERE isbanned = 1");
 		$sth->execute;
 		my $list = $sth->fetchall_arrayref;
 		for (@$list) {
 			$banlist_ref->{$_->[0]} = 1 if $_->[0] ne '';
 			$banlist_ref->{$_->[1]} = 1 if $_->[1] ne '';
-			$banlist_ref->{$_->[2]} = 1 if ($_->[2] ne '' and $_->[2] ne "$constants->{anon_coward_uid}");
+			$banlist_ref->{$_->[2]} = 1 if ($_->[2] ne '' and $_->[2] ne $acuid);
 		}
-		$self->{banlist} = $banlist_ref;
+		# why this? in case there are no banned users.
+		$banlist_ref->{'junk'} = 1;
 	}
 
-	return $self->{banlist};
-}
-
-########################################################
-sub isBanned {
-	my($self, $id) = @_;
-
-	if ($self->{banlist}{$id}) {
-		return(1);
-	} else { 
-		return(0);
-	}
+	return $banlist_ref;
 }
 
 ##################################################################

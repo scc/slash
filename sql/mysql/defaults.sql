@@ -343,6 +343,7 @@ INSERT INTO vars (name, value, description) VALUES ('badreasons','4','number of 
 INSERT INTO vars (name, value, description) VALUES ('basedir','/usr/local/slash/www.example.com/htdocs','Where should the html/perl files be found?');
 INSERT INTO vars (name, value, description) VALUES ('basedomain','www.example.com','The URL for the site');
 INSERT INTO vars (name, value, description) VALUES ('block_expire','3600','Default expiration time for the block cache');
+INSERT INTO vars (name, value, description) VALUES ('banlist_expire','900','Default expiration time for the banlist cache');
 INSERT INTO vars (name, value, description) VALUES ('breaking','100','Undefined');
 INSERT INTO vars (name, value, description) VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not');
 INSERT INTO vars (name, value, description) VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');

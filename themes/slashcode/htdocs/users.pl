@@ -1148,6 +1148,7 @@ sub saveUserAdmin {
 	my $id;
 	my $user_editfield_flag;
 	my $banned = 0;
+	my $banref;
 
 	if ($form->{uid}) {
 		$user_editfield_flag = 'uid';
@@ -1199,19 +1200,16 @@ sub saveUserAdmin {
 		# $note .= getError('saveuseradmin_notsaved', { field => $user_editfield_flag, id => $id });
 	}
 
-	$slashdb->getBanList(1);
-	$banned = $slashdb->isBanned($id);
+	$banref = $slashdb->getBanList(1);
+	$banned = $banref->{$id} ? 1 : 0;
 	$form->{banned} = $form->{banned} eq 'on' ? 1 : 0 ;
-	print STDERR "banned $banned form->{banned} $form->{banned}\n";
 	if ($banned) {
 		if ($form->{banned} == 0) {
-			print STDERR "trying to unset banned\n";
 			$slashdb->setReadOnly('', $user_edit, 0, 1, $form->{banned_reason});
 			$slashdb->getBanList(1);
 		}
 	} else {
 		if ($form->{banned} == 1) {
-			print STDERR "trying to set banned\n";
 			$slashdb->setReadOnly('', $user_edit, $form->{banned}, 1, $form->{banned_reason});
 			$slashdb->getBanList(1);
 		}
@@ -1740,7 +1738,7 @@ sub getUserAdmin {
 	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $topabusers, $thresh_select);
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
-	my($isbanned, $banned, $banned_reason);
+	my($banned, $banned_reason);
 
 	$field ||= 'uid';
 	if ($field eq 'uid') {
@@ -1789,10 +1787,9 @@ sub getUserAdmin {
 		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, 0, $user_edit) if $readonly->{$formname};
 	}
 	
-	$slashdb->getBanList(1);
-	$isbanned = $slashdb->isBanned($id);
-	$banned = $isbanned ? ' CHECKED' : '';
-	print STDERR "\nbanned $banned\n";
+	my $banref = $slashdb->getBanList(1);
+
+	$banned = $banref->{$id} ? ' CHECKED' : '';
 	$banned_reason = $slashdb->getReadOnlyReason('', 1, $user_edit);
 
 	for (@$uidlist) {
