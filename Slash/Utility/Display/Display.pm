@@ -412,7 +412,8 @@ sub linkStory {
 		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
 	}
 
-	return _hard_linkComment($story_link, $mode, $threshold) if $constants->{comments_hardcoded};
+	return _hard_linkComment($story_link, $mode, $threshold)
+		if getCurrentStatic('comments_hardcoded');
 
 	return slashDisplay('linkStory', {
 		mode		=> $mode,
