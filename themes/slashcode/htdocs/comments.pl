@@ -187,6 +187,7 @@ sub editComment {
 	my $form = getCurrentForm();
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	my $preview;
 
 	# Get the comment we may be responding to. Remember to turn off
 	# moderation elements for this instance of the comment.
@@ -201,13 +202,17 @@ sub editComment {
 	}
 
 	my $max_posts = $constants->{max_posts_allowed};
-	my $preview;
-	# Don't munge the current error_message if there already is one.
-	if (! $slashdb->checkTimesPosted('comments', $max_posts, $id, $formkey_earliest)) {
-		$error_message ||= slashDisplay('errors', {
-			type		=> 'max posts',
-			max_posts 	=> $max_posts,
-		}, 1);
+
+	# check if user has  max comments successfully posted
+	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
+                my $timeframe_string = intervalString($constants->{formkey_timeframe});
+                slashDisplay('errors', { 
+				type => 'max posts', 
+				max_posts => $max_posts,
+				timeframe => $timeframe_string 
+		});
+                return;
+
 	} elsif ($form->{postercomment}) {
 		$preview = previewForm(\$error_message);
 	}
@@ -411,14 +416,96 @@ sub previewForm {
 # story id.
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $id) = @_;
+
 	my $error_message;
 
-	unless (checkFormPost("comments",
-		$constants->{post_limit},
-		$constants->{max_posts_allowed},
-		$id,
-		\$error_message)) {
-		print $error_message;
+	# check the max posts
+	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
+                $slashdb->createAbuse( (slashDisplay('errors', { 
+				no_error_comment 	=> 	1,
+				type 			=> 	'formabuse_maxposts', 
+				maxposts 		=> 	$maxposts 
+				}, { Return => 1, Nocomm => 1})),
+			'comments',
+			$ENV{QUERY_STRING},
+			$user->{uid},
+			$user->{ipid},
+			$user->{subnetid} 
+		);
+                        
+                my $timeframe_string = intervalString($constants->{formkey_timeframe});
+               	slashDisplay('errors', { 
+				type => 'max posts', 
+				timeframe => $timeframe_string 
+		});
+                return;
+        }
+
+	# verify a valid formkey
+	if (! $slashdb->validFormkey('comments', $id)) {	
+		$slashdb->createAbuse( slashDisplay ('errors', {
+				no_error_comment 	=> 	1,
+				type 			=> 	'formabuse_invalidformkey',
+				formkey 		=> 	$form->{formkey}
+				}, { Return => 1, Nocomm => 1}),
+			'comments',
+			$ENV{QUERY_STRING},
+			$user->{uid},
+			$user->{ipid},
+			$user->{subnetid} 
+		);
+
+		slashDisplay('errors', {
+			type => 'invalid formkey',
+			formkey => $form->{formkey}
+		});
+
+		return;
+	}
+	
+	# check response time
+	if ( my $response_time = $slashdb->checkResponseTime('comments', $id)) {
+		my $limit_string = intervalString($constants->{comments_response_limit});
+		my $response_string = intervalString($response_time);
+		slashDisplay('errors', {
+			type		=>	'response limit',
+			limit		=> 	$limit_string,
+			response 	=> 	$response_string
+		});
+		return;
+	}
+
+	# check interval from this attempt to last successful post
+	if ( my $interval = $slashdb->checkPostInterval('comments', $id)) {	
+		my $limit_string = intervalString($constants->{comments_speed_limit});
+		my $interval_string = intervalString($interval);
+		slashDisplay('errors', {
+			type 		=> 	'post limit',
+			limit 		=> 	$limit_string,
+			interval 	=> 	$interval_string
+		});
+		return;
+	}
+
+	# check if form already used
+	unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
+		my $interval_string = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
+		slashDisplay('errors', {
+			type 		=>	'used form',
+			interval	=>	$interval_string
+		});
+
+		$slashdb->createAbuse(slashDisplay('errors', {
+				no_error_comment => 1,
+				type		=> 	'formabuse_usedform',
+				formkey 	=>	$form->{formkey}
+			}, { Return => 1, Nocomm => 1}),
+			'comments',
+			$ENV{QUERY_STRING},
+			$user->{uid},
+			$user->{ipid},
+			$user->{subnetid} 
+		);
 		return;
 	}
 
@@ -484,7 +571,9 @@ sub submitComment {
 
 		$slashdb->setUser($user->{uid}, { -totalcomments => 'totalcomments+1' });
 
-		$slashdb->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
+		# successful submission		
+		my $updated = $slashdb->updateFormkey($form->{formkey}, $maxCid, length($form->{postercomment})); 
+		# yeah, ok, I should do something with $updated
 
 		my $messages = getObject('Slash::Messages') if $form->{pid};
 		if ($form->{pid} && $messages) {

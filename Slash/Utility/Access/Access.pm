@@ -44,6 +44,7 @@ use vars qw($VERSION @EXPORT);
 	submittedAlready
 	allowExpiry
 	setUserExpired
+	intervalString
 );
 
 # really, these should not be used externally, but we leave them

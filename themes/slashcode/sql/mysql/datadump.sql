@@ -480,14 +480,15 @@ INSERT INTO vars (name, value, description) VALUES ('maxkarma','50','Maximum kar
 INSERT INTO vars (name, value, description) VALUES ('maxpoints','5','The maximum number of points any moderator can have');
 INSERT INTO vars (name, value, description) VALUES ('maxtokens','40','Token threshold that must be hit to get any points');
 INSERT INTO vars (name, value, description) VALUES ('max_depth','7','max depth for nesting of comments');
-INSERT INTO vars (name, value, description) VALUES ('max_posts_allowed','30','maximum number of posts per day allowed');
+INSERT INTO vars (name, value, description) VALUES ('max_comments_allowed','30','maximum number of posts per day allowed');
 INSERT INTO vars (name, value, description) VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed');
 INSERT INTO vars (name, value, description) VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)');
 INSERT INTO vars (name, value, description) VALUES ('modviewseclev','100','Minimum seclev to see moderation totals on a comment');
 INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','1','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
-INSERT INTO vars (name, value, description) VALUES ('post_limit','10','seconds delay before repeat posting');
+INSERT INTO vars (name, value, description) VALUES ('comments_speed_limit','10','seconds delay before repeat posting');
+INSERT INTO vars (name, value, description) VALUES ('comments_response_limit','20','interval between reply and submit');
 INSERT INTO vars (name, value, description) VALUES ('rdfencoding','ISO-8859-1','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfimg','http://www.example.com/images/topics/topicslash.gif','Site encoding');
 INSERT INTO vars (name, value, description) VALUES ('rdfitemdesc','0','1 == include introtext in item description; 0 == don\'t.  Any other number is substr() of introtext to use');
@@ -531,3 +532,6 @@ INSERT INTO vars (name, value, description) VALUES ('totalhits','383','Total num
 INSERT INTO vars (name, value, description) VALUES ('updatemin','5','do slashd updates, default 5');
 INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\" field');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
+INSERT INTO vars (name, value, description) VALUES ('userchange_speed_limit','10','How fast a user can change their prefs');
+INSERT INTO vars (name, value, description) VALUES ('max_userchanges_allowed','50','How many changes a user can submit');
+INSERT INTO vars (name, value, description) VALUES ('max_user_viewings','100','how many times users.pl can be viewed');
