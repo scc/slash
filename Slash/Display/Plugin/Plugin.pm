@@ -29,7 +29,6 @@ use strict;
 use vars qw($VERSION $AUTOLOAD);
 use Slash ();
 use Slash::Utility ();
-use Template::Plugin ();
 use base qw(Template::Plugin);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
