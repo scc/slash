@@ -505,7 +505,7 @@ sub createAccessLog {
 		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
 	}, 2);
 
-	if ($dat =~ m[/]) {
+	if ($dat =~ /\//) {
 		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' },
 			'sid=' . $self->{dbh}->quote($dat)
 		);
