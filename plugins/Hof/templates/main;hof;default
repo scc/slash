@@ -49,7 +49,7 @@ __template__
 	by <A HREF="mailto:[% top.fakeemail %]">[% top.nickname %]</A> on [% top.cdate %]<BR>
 
 	<FONT SIZE="2">attached to [% Slash.linkStory({ link => top.title, section => top.section, sid => top.sid }) %]
-	posted on [% top.sdate %] by [% top.aid %]</FONT><BR><BR>
+	posted on [% top.sdate %] by [% top.anickname %]</FONT><BR><BR>
 [% END %]</P>
 
 <P><FONT SIZE="2"><CENTER>generated on [% currtime %]</CENTER></FONT></P>

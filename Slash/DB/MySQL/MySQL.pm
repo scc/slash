@@ -1887,11 +1887,11 @@ sub getNewStories {
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $where = "stories.sid=comments.sid";
+	my $where = "stories.sid=comments.sid and stories.uid=users.uid";
 	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, stories.sid, stories.uid, title, pid, subject,"
+	my $stories = $self->sqlSelectAll("section, stories.sid, users.nickname, title, pid, subject,"
 		. "date, time, comments.uid, cid, points"
-		, "stories, comments"
+		, "stories, comments, users"
 		, $where
 		, " ORDER BY points DESC, date DESC LIMIT 10 ");
 
