@@ -251,6 +251,7 @@ plugins/Messages/Makefile.PL
 plugins/Messages/Messages.pm
 plugins/Messages/PLUGIN
 plugins/Messages/dump
+plugins/Messages/message_delete.pl
 plugins/Messages/message_delivery.pl
 plugins/Messages/messages.pl
 plugins/Messages/mysql_schema

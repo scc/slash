@@ -3,6 +3,7 @@ description="Messaging system"
 mysql_schema=mysql_schema
 mysql_dump=dump
 htdoc=messages.pl
+task=message_delete.pl
 task=message_delivery.pl
 template=templates/dailyheadlines;messages;default
 template=templates/dailynews;messages;default
