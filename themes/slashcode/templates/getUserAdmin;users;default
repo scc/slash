@@ -3,7 +3,7 @@ default
 __description__
 Template for editing user
 
-* user = hashref for user being edited
+* useredit = hashref for user being edited
 * seclev_field = boolean to display seclev editing field
 * uid_checked = whether or not uid is checked
 * nickname_checked = whether or not nickname is checked

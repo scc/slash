@@ -71,6 +71,17 @@ EOT
 	$email .= "\n-----------------------\n";
 	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
 	$email .= "\n-----------------------\n";
+	my $points = $slashdb->sqlSelect('sum(points)', 'users_comments');
+	my @time = localtime;
+	my $yesterday = sprintf "%4d-%02d-%02d", 
+		$time[5] + 1900, $time[4] + 1, $time[3] - 1;
+	my $used = $slashdb->sqlCount(
+		'moderatorlog', 
+		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'"
+	);
+	$email .= "moderator points in system 	$points\n";
+	$email .= "points used yesterday		$used\n";
+	$email .= "\n-----------------------\n";
 
 	# Send a message to the site admin.
 	for (@{$constants->{stats_reports}}) {
