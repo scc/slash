@@ -58,7 +58,8 @@ BEGIN {
 		getEvalBlock getTopic dispStory lockTest getSlashConf
 		getDateFormat dispComment getDateOffset linkComment redirect
 		insertFormkey getFormkeyId checkSubmission checkTimesPosted
-		formSuccess formAbuse formFailure errorMessage
+		formSuccess formAbuse formFailure errorMessage intervalString
+		getFormkey checkFormkey createSelect
 	);
 	$CRLF = "\015\012";
 }
@@ -214,6 +215,19 @@ sub selectGeneric {
 	}
 
 	$c->finish;
+	print "</SELECT>\n";
+}
+
+# This method will take an array of arrays as input and then print 
+# out a select html object.
+sub createSelect {
+	my ($label, $hashref, $default) = @_;
+	print qq!\n<SELECT name="$label">\n!;
+
+	while(my($code, $name) = each %$hashref) {
+		my $selected = ($default eq $code) ? ' SELECTED' : '';
+		print qq!\t<OPTION value="$code"$selected>$name</OPTION>\n!;
+	}
 	print "</SELECT>\n";
 }
 

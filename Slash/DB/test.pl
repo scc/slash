@@ -35,14 +35,14 @@ print "Testing getStoryBySid()\n";
 my $story = $object->getStoryBySid('00/01/25/1236215');
 print "Should dump the data for a story now\n";
 while(my ($key, $val) = each %$story) {
-	print "$key = $val \n";
+	print "\t$key = $val \n";
 }
 print "ok 6\n";
 print "Testing getAuthor()\n";
 my $author = $object->getAuthor('God');
 print "Should dump the data for an author now\n";
 while(my ($key, $val) = each %$author) {
-	print "$key = $val \n";
+	print "\t$key = $val \n";
 }
 print "ok 7\n";
 print "Testing setStoryBySid()\n";
@@ -50,7 +50,7 @@ $object->setStoryBySid('00/01/25/1236215', 'nuts', 'flavored');
 $story = $object->getStoryBySid('00/01/25/1236215');
 print "Should dump the data for the story now\n";
 while(my ($key, $val) = each %$story) {
-	print "$key = $val \n";
+	print "\t$key = $val \n";
 }
 print "ok 8\n";
 print "Testing clearStory()\n";
@@ -58,7 +58,7 @@ $object->clearStory();
 $story = $object->getStoryBySid('00/01/25/1236215');
 print "Should dump the data for the story now\n";
 while(my ($key, $val) = each %$story) {
-	print "$key = $val \n";
+	print "\t$key = $val \n";
 }
 if($story->{'nuts'} eq 'flavored') {
 	print "Something is up, stories were not removed from cache\n";

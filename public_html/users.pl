@@ -614,8 +614,13 @@ sub editHome {
 		<B>Date/Time Format</B><NOBR>
 EOT
 
-	selectGeneric("dateformats", "tzformat", "id", "description", $tzformat);
-	selectGeneric("tzcodes", "tzcode", "tz", "description", $tzcode);
+	my $formats;
+	$formats = $I{dbobject}->getFormatDescriptions('dateformats');
+	createSelect('tzformat', $formats, $tzformat);
+
+	$formats = $I{dbobject}->getFormatDescriptions('tzcodes');
+	createSelect('tzcode', $formats, $tzcode);
+
 	print "</NOBR>";
 
 	my $l_check = $light	? " CHECKED" : "";
@@ -678,14 +683,19 @@ sub editComm {
 	<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>
 EOT
 
+	my $formats;
+
 	print "<B>Display Mode</B>";
-	selectGeneric("commentmodes", "umode", "mode", "name", $mode);
+	$formats = $I{dbobject}->getFormatDescriptions('commentmodes');
+	createSelect('umode', $formats, $mode);
 
 	print "<P><B>Sort Order</B> (self explanatory?	I hope?)\n";
-	selectForm("sortcodes", "commentsort", $commentsort);
+	$formats = $I{dbobject}->getFormatDescriptions('sortcodes');
+	createSelect('commentsort', $formats, $commentsort);
 
 	print "<P><B>Threshold</B>";
-	selectGeneric("threshcodes", "uthreshold", "thresh", "description", $threshold);
+	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
+	createSelect('uthreshold', $formats, $threshold);
 
 	print <<EOT;
 	<BR>(comments scored less than this setting will be ignored.
@@ -695,7 +705,8 @@ EOT
 EOT
 
 	print "<P><B>Highlight Threshold</B>";
-	selectGeneric("threshcodes", "highlightthresh", "thresh", "description", $highlightthresh);
+	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
+	createSelect('highlightthresh', $formats, $highlightthresh);
 
 	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
 
@@ -744,7 +755,8 @@ EOT
 	<P><B>Comment Post Mode</B>
 EOT
 
-	selectGeneric("postmodes", "posttype", "code", "name", $posttype);
+	$formats = $I{dbobject}->getFormatDescriptions('postmodes');
+	createSelect('posttype', $formats, $posttype);
 
 	print <<EOT;
 

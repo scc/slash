@@ -157,6 +157,40 @@ sub getCodes {
 }
 
 ########################################################
+sub getFormatDescriptions {
+# Creating three different methods for this seems a bit
+# silly. Really I should change these over to just 
+# grabbing hashref's.
+#
+  my ($self, $codetype) = @_;
+	my $sth;
+	my $codeBank_hash_ref={};
+	if($codetype eq 'sortcodes') {
+		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
+	}
+	if($codetype eq 'tzcodes') {
+		$sth = $self->sqlSelectMany('tz,description', 'tzcodes');
+	}
+	if($codetype eq 'dateformats') {
+		$sth = $self->sqlSelectMany('id,description', 'dateformats');
+	}
+	if($codetype eq 'commentmodes') {
+		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
+	}
+	if($codetype eq 'threshcodes') {
+		$sth = $self->sqlSelectMany('thresh,description', 'threshcodes');
+	}
+	if($codetype eq 'postmodes') {
+		$sth = $self->sqlSelectMany('code,name', 'postmodes');
+	}
+	while (my($id, $desc) = $sth->fetchrow) {
+		$codeBank_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $codeBank_hash_ref;
+}
+########################################################
 # Get user info from the users table.
 sub getUserInfo{
   my($self, $uid, $passwd, $script) = @_;
@@ -365,6 +399,7 @@ sub setStoryBySid {
 	# it will update the database with the change you requested
 	$storyBank{$sid}{$key} = $value;
 }
+
 
 1;
 
