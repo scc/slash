@@ -1144,7 +1144,11 @@ sub isAnon {
 	my($uid) = @_;
 	# this might be undefined in the event of a comment preview
 	# when a data structure is not fully filled out, etc.
-	return 1 unless defined($uid) && $uid ne '';
+	return 1 if	!defined($uid)		# no undef
+		||	$uid eq ''		# no empty string
+		||	$uid =~ /[^0-9]/	# only integers
+		||	$uid < 1		# only positive
+	;
 	return $uid == getCurrentStatic('anonymous_coward_uid');
 }
 

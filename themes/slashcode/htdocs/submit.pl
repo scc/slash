@@ -283,7 +283,7 @@ sub processSub {
 
 	if ($home =~ /\@/ && $home !~ $proto) {
 		$home = "mailto:$home"; 
-	} elsif ($home !~ $proto) {
+	} elsif ($home ne '' && $home !~ $proto) {
 		$home = "http://$home";
 	}
 

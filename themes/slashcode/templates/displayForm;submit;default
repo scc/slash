@@ -41,7 +41,7 @@ want to save it.</P>
 [% INCLUDE formLabel value => "Your Name", comment => "Leave Blank to be Anonymous" %]
 <INPUT TYPE="text" NAME="from" VALUE="[% username %]" SIZE="50">
 
-[% INCLUDE formLabel value => "Your Email or Homepage", comment => "Leave Blank to be Anonymous" %]
+[% INCLUDE formLabel value => "Your Email or Homepage", comment => "Where Users Can Contact You" %]
 <INPUT TYPE="text" NAME="email" VALUE="[% fakeemail %]" SIZE="50">
 
 [% INCLUDE formLabel value => "Subject", comment => "Be Descriptive, Clear and Simple!" %]

@@ -335,13 +335,16 @@ sub createPollVoter {
 sub createSubmission {
 	my($self, $form) = @_;
 	$form ||= getCurrentForm();
-	my $uid = getCurrentUser('uid');
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
 	my $subid = "$hour$min$sec.$mon$mday$year";
 
+	my $uid = $form->{from}
+		? getCurrentUser('uid')
+		: getCurrentStatic('anonymous_coward_uid');
+
 	$self->sqlInsert("submissions", {
 			email	=> $form->{email},
-			uid	=> $ENV{SLASH_USER},
+			uid	=> $uid,
 			name	=> $form->{from},
 			story	=> $form->{story},
 			-'time'	=> 'now()',
@@ -2761,7 +2764,7 @@ sub _genericCacheRefresh {
 	my $diff = $time - $self->{$table_cache_time};
 
 	if ($diff > $expiration) {
-	print STDERR "TIME:$diff:$expiration:$time:$self->{$table_cache_time}:\n";
+		# print STDERR "TIME:$diff:$expiration:$time:$self->{$table_cache_time}:\n";
 		$self->{$table_cache} = {};
 		$self->{$table_cache_time} = 0;
 		$self->{$table_cache_full} = 0;

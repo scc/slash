@@ -240,6 +240,7 @@ sub displayStories {
 					'link'		=> $cc || 0
 				});
 
+				push @cclink, $thresh, ($cc || 0);
 				push @links, getData('comments', { cc => \@cclink });
 			}
 
