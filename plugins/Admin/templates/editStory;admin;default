@@ -77,7 +77,7 @@ __template__
 		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
 		<B>Title</B> </FONT></TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="title" VALUE="[% storyref.title %]" SIZE="50">
+		<INPUT TYPE="TEXT" NAME="title" VALUE="[% FILTER strip_attribute; storyref.title; END %]" SIZE="50">
 		</TD>
 	</TR>
 
@@ -86,7 +86,7 @@ __template__
 		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
 		<B>Dept</B> </FONT></TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="dept" VALUE="[% storyref.dept %]" SIZE="50">
+		<INPUT TYPE="TEXT" NAME="dept" VALUE="[% FILTER strip_attribute; storyref.dept; END %]" SIZE="50">
 		</TD>
 	</TR>
 	[% END %]
@@ -136,7 +136,7 @@ __template__
 		<B>[% extracolref.$val.col %]</B> </FONT>
 		</TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="[% val %]" VALUE="[% storyref.val %]" SIZE="64">
+		<INPUT TYPE="TEXT" NAME="[% val %]" VALUE="[% FILTER strip_attribute; storyref.val; END %]" SIZE="64">
 		</TD>
 	</TR>
 	[% END %]
