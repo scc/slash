@@ -90,6 +90,8 @@ sub xmlDisplay {
 
 	my $class = "Slash::XML::\U$type";
 	my $file  = "Slash/XML/\U$type\E.pm";
+
+	# fix this to check can('create')
 	if (!exists($INC{$file}) && !eval("require $class")) {
 		errorLog($@);
 		return;

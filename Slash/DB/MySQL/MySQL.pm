@@ -2446,6 +2446,18 @@ sub setAccessList {
 }
 
 ##################################################################
+# Check to see if the formkey already exists
+# i know this slightly overlaps what checkForm does, but checkForm
+# returns data i don't want, and checks for formname which isn't
+# necessary, since formkey is a unique key
+sub existsFormkey {
+	my($self, $formkey) = @_;
+	my $keycheck = $self->sqlSelect("formkey", "formkeys", "formkey='$formkey'");
+	return $keycheck eq $formkey ? 1 : 0;
+}
+
+
+##################################################################
 # Check to see if the form already exists
 sub checkForm {
 	my($self, $formkey, $formname) = @_;
@@ -4942,7 +4954,7 @@ sub fzGetStories {
 # stories as S for when we did a join, keep in case we do another
 # at some point -- pudge
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-S.sid, S.title, S.time
+S.sid, S.title, S.time, S.commmentcount
 S
 stories AS S
 F

@@ -99,7 +99,29 @@ Return a random value based on alphanumeric characters
 =cut
 
 sub getFormkey {
-	return getAnonId(1);
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+
+	my $formkey;
+	my $count = 0;
+
+	while (!$formkey || $slashdb->existsFormkey($formkey)) {
+		if ($formkey) {
+			if (++$count > 50) {
+				print STDERR "get formkey failed (count:$count) ",
+					"$user->{uid}/ipid:$user->{ipid}\n";
+				return "a" x 10;
+			}
+
+			print STDERR "$formkey already exists (count:$count) ",
+				"$user->{uid}/ipid:$user->{ipid}\n";
+		}
+		$formkey = getAnonId(1);
+	}
+
+	print STDERR "$formkey is good! (count:$count) ",
+		"$user->{uid}/ipid:$user->{ipid}\n";
+	return $formkey;
 }
 
 #========================================================================
