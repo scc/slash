@@ -43,14 +43,17 @@ sub main {
 	for(@$portals) {
 		my($block, $title, $bid, $url) = @$_ ;
 		if ($bid eq "mysite") {
-			$b = portalbox(200, "$I{U}{nickname}'s Slashbox",
+			$b = portalbox($I{fancyboxwidth},
+				"$I{U}{nickname}'s Slashbox",
 				$I{U}{mylinks} ||  $block
 			);
 
 		} elsif ($bid =~ /_more$/) {
 		} elsif ($bid eq "userlogin") {
 		} else {
-			$b = portalbox(200, $title, $block, "", $url);
+			$b = portalbox($I{fancyboxwidth},
+				$title, $block, "", $url
+			);
 		}
 
 		print $b;

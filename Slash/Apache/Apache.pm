@@ -18,12 +18,14 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{VirtualUser} = $user;
 	$cfg->{dbslash} = Slash::DB->new($user);
 	$cfg->{constants} = $cfg->{dbslash}->getSlashConf();
-	my $anonymous_coward = 
-			$cfg->{dbslash}->getUser($cfg->{constants}->{anonymous_coward_uid});
-	my $actz =  
-			$cfg->{dbslash}->getACTz($anonymous_coward->{tzcode}, $anonymous_coward->{dfid});
-	for(keys %$actz) {
-		$anonymous_coward->{$_} =  $actz->{$_};
+	my $anonymous_coward = $cfg->{dbslash}->getUser(
+		$cfg->{constants}{anonymous_coward_uid}
+	);
+	my $actz = $cfg->{dbslash}->getACTz(
+		$anonymous_coward->{tzcode}, $anonymous_coward->{dfid}
+	);
+	for (keys %$actz) {
+		$anonymous_coward->{$_} = $actz->{$_};
 	}
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 }

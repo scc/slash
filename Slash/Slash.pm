@@ -44,7 +44,7 @@ BEGIN {
 
 	require Exporter;
 	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS %I $CRLF);
-	$VERSION = '1.0.7';
+	$VERSION = '1.0.8';
 	@ISA	 = 'Exporter';
 	@EXPORT  = qw(
 		sqlSelectMany sqlSelect sqlSelectHash sqlSelectAll approveTag
@@ -57,7 +57,7 @@ BEGIN {
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
-		dispComment linkComment redirect fixurl fixparam
+		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect getFormkey
 	);
 	$CRLF = "\015\012";
@@ -399,10 +399,12 @@ sub getUser {
 #  What is it?  Where does it go?  The Random Leftover Shit
 
 ########################################################
+# is this in User.pm now, or here, or both?
 sub setCookie {
 	my($name, $val, $session) = @_;
 
 	return unless $name;
+	# Can't we set a cookie with no value?  or is that not allowed?
 	return unless $val;
 	# domain must start with a . and have one more .
 	# embedded in it, else we ignore it
@@ -412,7 +414,7 @@ sub setCookie {
 	my %cookie = (
 		-name		=> $name,
 		-path		=> $I{cookiepath},
-		-value		=> $val,
+		-value		=> $val || '',
 	);
 
 	$cookie{-expires} = '+1y' unless $session;
@@ -585,7 +587,7 @@ EOT
 	$tablestuff .="</FORM>\n";
 
 	return $tablestuff if $notable;
-	fancybox(200, 'Poll', $tablestuff, 'c');
+	fancybox($I{fancyboxwidth}, 'Poll', $tablestuff, 'c');
 }
 
 
@@ -623,7 +625,7 @@ sub stripByMode {
 		$str =~ s/>//g;
 
 	} elsif ($fmode eq 'attribute') {
-		$str =~ s/"/&#22;/g;
+		$str =~ s/"/&#34;/g;
 
 	} else {
 		$str = stripBadHtml($str);
@@ -798,6 +800,14 @@ sub fixint {
 	return $int;
 }
 
+########################################################
+sub chopEntity {
+	my($text, $length) = @_;
+	$text = substr($text, 0, $length) if $length;
+	$text =~ s/&#?[a-zA-Z0-9]*$//;
+	return $text;
+}
+
 ###############################################################################
 # Look and Feel Functions Follow this Point
 
@@ -903,18 +913,13 @@ EOT
 
 ########################################################
 sub getAd {
-	return "<!--#perl sub=\"sub { require Slash; use Slash; print Slash::getAd(); }\" -->"
+	my $num = $_[0] || 1;
+	return qq|<!--#perl sub="sub { use Slash; print Slash::getAd($num); }" -->|
 		unless $ENV{SCRIPT_NAME};
 
 	anonLog() unless $ENV{SCRIPT_NAME} =~ /\.pl/; # Log non .pl pages
 
-	my $ad .= <<EOT;
-<center>
-$ENV{AD_BANNER_1}
-</center>
-<p>
-EOT
-	return $ad;
+	return $ENV{"AD_BANNER_$num"};
 }
 
 ########################################################
@@ -979,7 +984,7 @@ EOT
 	}
 
 	if ($I{run_ads}) {
-		$adhtml = getAd();
+		$adhtml = getAd(1);
 	}
 
 	my $topics;
@@ -1068,8 +1073,17 @@ sub fancybox {
 	my($width, $title, $contents) = @_;
 	return unless $title && $contents;
 
-	my $mainwidth = $width-4;
+	my $tmpwidth = $width;
+	my $pct = 1 if $tmpwidth =~ s/%$//;
+	# used in some blocks
+	my $mainwidth = $tmpwidth-4;
 	my $insidewidth = $mainwidth-8;
+	if ($pct) {
+		for ($mainwidth, $insidewidth) {
+			$_ .= '%';
+		}
+	}
+
 	my $execme = getWidgetBlock('fancybox');
 	print eval $execme;
 	print "\nError:$@\n" if $@;
@@ -1092,8 +1106,16 @@ sub portalbox {
 	my $execme = getWidgetBlock('portalmap');
 	$title = eval $execme if $bid;
 
-	my $mainwidth = $width-4;
+	my $tmpwidth = $width;
+	my $pct = 1 if $tmpwidth =~ s/%$//;
+	# used in some blocks
+	my $mainwidth = $tmpwidth-4;
 	my $insidewidth = $mainwidth-8;
+	if ($pct) {
+		for ($mainwidth, $insidewidth) {
+			$_ .= '%';
+		}
+	}
 
 	$execme = getWidgetBlock('fancybox');
 	my $e = eval $execme;
@@ -1252,7 +1274,9 @@ sub selectThreshold  {
 	my $s = qq!<SELECT NAME="threshold">\n!;
 	foreach my $x ($I{comment_minscore}..$I{comment_maxscore}) {
 		my $select = ' SELECTED' if $x == $I{U}{threshold};
-		$s .= qq!\t<OPTION VALUE="$x"$select>$x: $counts->[$x+1] comments\n!;
+		$s .= <<EOT;
+	<OPTION VALUE="$x"$select>$x: $counts->[$x - $I{comment_minscore}] comments
+EOT
 	}
 	$s .= "</SELECT>\n";
 }

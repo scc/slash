@@ -167,7 +167,7 @@ sub setCookie {
 	my $servername = Apache->server->server_hostname;
 
 	# this goes back in as soon as vars / slashdotrc
-	# stuff is done
+	# stuff is done -- pudge
 # 	my $domain = ($I{cookiedomain} && $I{cookiedomain} =~ /^\..+\./)
 # 		? $I{cookiedomain}
 # 		: '';
@@ -177,12 +177,12 @@ sub setCookie {
 # Add path back in when slashdotrc.pl is completed
 # there may be another way to determine this
 #			-path   => $I{cookiepath},
-			-value    => $val,
+			-value    => $val || '',
 	);
 	$cookie{-expires} = '+1y' unless $session;
 
 	# this goes back in as soon as vars / slashdotrc
-	# stuff is done
+	# stuff is done -- pudge
 # 	$cookie{-domain}  = $domain if $domain;
 
 	my $bakedcookie = CGI::Cookie->new(\%cookie);

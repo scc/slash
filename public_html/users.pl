@@ -148,7 +148,7 @@ sub checkList {
 	my $string = shift;
 	$string = substr($string, 0, -1);
 
-	$string =~ s/[^\w,]//g;
+	$string =~ s/[^\w,-]//g;
 	my @e = split m/,/, $string;
 	$string = sprintf "'%s'", join "','", @e;
 
@@ -185,7 +185,7 @@ EOT
 
 	print qq!</TD><TD WIDTH="180" VALIGN="TOP">!;
 
-	print portalbox("200", $title, $content, "", $url);
+	print portalbox($I{fancyboxwidth}, $title, $content, "", $url);
 }
 
 #################################################################
@@ -275,7 +275,8 @@ clicking the "Edit User Info" and "Customize..." links you see up top there so y
 customize $I{sitename}, change your password, or just click pretty widgets to kill time.
 EOT
 
-			if ($I{U}{seclev} && $points > 0) {
+			# Users should be able to see their own points.
+			if ($I{U}{uid} == $uid && $points > 0) {
 				print <<EOT;
 <P>You're a moderator with $points points. Please read the
 <A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A> before you do any moderation.
@@ -701,9 +702,9 @@ EOT
 
 	# stripByMode _after_ fitting sig into schema, 120 chars
 	$I{F}{sig}	 = stripByMode(substr($I{F}{sig}, 0, 120), 'html');
-	$I{F}{fakeemail} = stripByMode($I{F}{fakeemail});
+	$I{F}{fakeemail} = chopEntity(stripByMode($I{F}{fakeemail}, 'attribute'), 50);
 	$I{F}{homepage}	 = "" if $I{F}{homepage} eq "http://";
-	$I{F}{homepage}	 = stripByMode($I{F}{homepage});
+	$I{F}{homepage}	 = fixurl($I{F}{homepage});
 
 	# for the users table
 	my $H = {
@@ -721,7 +722,7 @@ EOT
 
 
 	if ($user->{realemail} ne $I{F}{realemail}) {
-		$H->{realemail} = $I{F}{realemail};
+		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
 		print "\nNotifying $user->{realemail} of the change to their account.<BR>\n";
 
 		sendEmail($user->{realemail}, "$I{sitename} user email change for $user->{nickname}", <<EOT);

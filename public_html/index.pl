@@ -49,9 +49,11 @@ sub main {
 	# $main::form->{mode} = $main::user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
 
 	for ($main::form->{op}) {
-		/^u$/ and upBid($main::form->{bid});
-		/^d$/ and dnBid($main::form->{bid});
-		/^x$/ and rmBid($main::form->{bid});
+		my $c;
+		upBid($main::form->{bid}), $c++ if /^u$/;
+		dnBid($main::form->{bid}), $c++ if /^d$/;
+		rmBid($main::form->{bid}), $c++ if /^x$/;
+		redirect($ENV{SCRIPT_NAME}) if $c;
 	}
 
 	my $SECT = getSection($main::form->{section});
@@ -165,12 +167,12 @@ sub displayStandardBlocks {
 	foreach my $bid (@boxes) {
 		if ($bid eq 'mysite') {
 			print portalbox(
-				200, "$main::user->{nickname}'s Slashbox",
+				$I{fancyboxwidth}, "$main::user->{nickname}'s Slashbox",
 				$main::user->{mylinks} || 'This is your user space.  Love it.',
 				$bid
 			);
 		} elsif ($bid =~ /_more$/) {
-			print portalbox(200,"Older Stuff",
+			print portalbox($I{fancyboxwidth}, "Older Stuff",
 				getOlderStories($olderStuff, $SECT),
 				$bid) if $olderStuff;
 		} elsif ($bid eq "userlogin" && $main::user->{uid} != $I{anonymous_coward_uid}) {
@@ -178,11 +180,11 @@ sub displayStandardBlocks {
 		} elsif ($bid eq "userlogin") {
 			my $SB = $boxBank->{$bid};
 			my $B = eval prepBlock $I{blockBank}{$bid};
-			print portalbox(200, $SB->{title}, $B, $SB->{bid}, $SB->{url});
+			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		} else {
 			my $SB = $boxBank->{$bid};
 			my $B = $I{blockBank}{$bid};
-			print portalbox(200, $SB->{title}, $B, $SB->{bid}, $SB->{url});
+			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		}
 	}
 }

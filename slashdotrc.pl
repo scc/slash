@@ -58,6 +58,7 @@ my %my_conf = (
 	http_proxy		=> '',	# 'http://proxy.example.com/'
 	rdflanguage		=> 'en',
 	rdfencoding		=> 'ISO-8859-1',
+	fancyboxwidth		=> 200,
 
 # this controls the life of %storyBank
 	story_expire	=> 600,
@@ -82,10 +83,12 @@ my %my_conf = (
 	m2_toomanyunfair	=> 0.3,		# Minimum % of unfairs for which M2 is ignored.
 	m2_bonus		=> '+1',	# Bonus for participating in meta-moderation.
 	m2_penalty		=> '-1',	# Penalty for misuse of meta-moderation.
+	m2_userpercentage	=> 0.9,		# UID must be below this percentage of the total userbase to metamoderate.
 	comment_minscore	=> -1,		# Minimum score for a specific comment.
 	comment_maxscore	=> 5,		# Maximum score for a specific comment.
 	goodkarma		=> 25,		# Users get bonus points for posts if karma above this value
 	badkarma		=> -10,		# Users get penalized for posts if karma is below this value
+	maxkarma		=> 50,		# Maximum karma a user can accumulate.
 	metamod_sum		=> 3,		# sum of moderations 1 for release (deprecated)
 	maxtokens		=> 40,		# Token threshold that must be hit to get any points
 	tokensperpoint		=> 8,		# Number of tokens per point
@@ -100,6 +103,8 @@ my %my_conf = (
 	max_submissions_allowed => 20,		# maximum number of submissions per timeframe allowed
 	submission_speed_limit	=> 300,		# how fast they can submit
 	formkey_timeframe 	=> 14400,	# the time frame that we check for a formkey
+	submission_bonus	=> 3,		# Bonus given to user if submission is used.
+
 
 	# see Slash::fixHref()
 	fixhrefs => [

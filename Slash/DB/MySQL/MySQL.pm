@@ -311,7 +311,7 @@ sub createPollVoter {
 	$self->sqlInsert("pollvoters", {
 		qid	=> $qid, 
 		id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
-		-'time'	=> "now()" ,
+		-'time'	=> 'now()',
 		uid	=> $ENV{REMOTE_USER}
 	});
 
@@ -739,7 +739,7 @@ sub createUser {
 # This is most likely a transaction problem waiting to
 # bite us at some point. -Brian
 	my($uid) = $self->sqlSelect("LAST_INSERT_ID()");
-	$self->sqlInsert("users_info", { uid => $uid, lastaccess =>'now()' } );
+	$self->sqlInsert("users_info", { uid => $uid, -lastaccess => 'now()' } );
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
@@ -791,11 +791,13 @@ sub setSessionByAid {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
 }
+
 ########################################################
 sub setUserInfo {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('users_info', $value, 'uid=' . $self->{dbh}->quote($name));
 }
+
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
@@ -1812,13 +1814,18 @@ sub countStory {
 }
 
 ##################################################################
-sub checkForModerator {
+sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 	my($self, $user) = @_;
 	return unless $user->{willing};
 	return if $user->{uid} < 1;
 	return if $user->{karma} < 0;
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
-	'users_info', "uid = '$user->{uid}'");
+		'users_info', "uid = '$user->{uid}'");
+	return unless $d;
+	my($tuid) = sqlSelect('count(*)', 'users');
+	# what to do with %I here?
+#	return unless $user->{uid} < int($tuid * $I{m2_userpercentage});
+	return 1;  # OK to M2
 }
 
 ##################################################################
@@ -1915,7 +1922,7 @@ sub countStories {
 
 ########################################################
 sub setModeratorVotes {
-	my ($self, $uid, $metamod) = @_;
+	my($self, $uid, $metamod) = @_;
 	$self->sqlUpdate("users_info",{
 		-m2unfairvotes	=> "m2unfairvotes+$metamod->{unfair}",
 		-m2fairvotes	=> "m2fairvotes+$metamod->{fair}",
@@ -1933,27 +1940,24 @@ sub setMetaMod {
 
 	# Update $muid's Karma
 	$self->{dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
-	for(keys %{$m2victims}) {
+	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
 		my $val = $m2victims->{$_}[1];
 		next unless $val;
-		push (@$returns , [$muid, $val]);
+		push(@$returns , [$muid, $val]);
 
 		my $mmid = $_;
 		if ($muid && $val && !$flag) {
 			if ($val eq '+') {
 				$self->sqlUpdate("users_info", { -m2fair => "m2fair+1" }, "uid=$muid");
-				# The idea here is to not let meta moderators get the comment
-				# bonus...
+				# There is a limit on how much karma you can get from M2.
 				$self->sqlUpdate("users_info", { -karma => "karma+1" },
 					"$muid=uid and karma<$constants->{m2_maxbonus}");
 			} elsif ($val eq '-') {
 				$self->sqlUpdate("users_info", { -m2unfair => "m2unfair+1" },
 					"uid=$muid");
-				# ...while sufficiently bad moderators can still get the 
-				# comment penalty.
 				$self->sqlUpdate("users_info", { -karma => "karma-1" },
-					"$muid=uid and karma>$constants->{badkarma_limit}");
+					"$muid=uid and karma>$constants->{badkarma}");
 			}
 		}
 		# Time is now fixed at form submission time to ease 'debugging'
@@ -1971,9 +1975,10 @@ sub setMetaMod {
 
 	return $returns;
 }
+
 ########################################################
 sub getModeratorLast {
-	my ($self, $uid) = @_;
+	my($self, $uid) = @_;
 	my $last = sqlSelectHashref(
 		"(to_days(now()) - to_days(lastmm)) as lastmm, lastmmid",
 		"users_info",
@@ -1982,20 +1987,23 @@ sub getModeratorLast {
 
 	return $last;
 }
+
 ########################################################
 # No, this is not API, this is pretty specialized
 sub getModeratorLogRandom {
-	my ($self) = @_;
+	my($self) = @_;
 	my $m2 = getCurrentStatic('m2_comments');
 	my($min, $max) = $self->sqlSelect("min(id),max(id)", "moderatorlog");
 	return $min + int rand($max - $min - $m2);
 }
+
 ########################################################
 sub countUsers {
 	my($self) = @_;
 	my($users) = $self->sqlSelect("count(*)", "users");
 	return $users;
 }
+
 ########################################################
 sub countStoriesStuff {
 	my($self) = @_;
@@ -2073,11 +2081,18 @@ sub setCommentCleanup {
 		$self->setModeratorLog($cid, $sid, $user->{uid}, $modreason, $val);
 
 		# Adjust comment posters karma
-		$self->sqlUpdate(
-			"users_info",
-			{ -karma => "karma$val" }, 
-			"uid=$cuid"
-		) if $val && $cuid != $constants->{anonymous_coward};
+		if ($cuid != $constants->{anonymous_coward}) {
+			if ($val > 0) {
+				$self->sqlUpdate("users_info",
+					{ -karma => "karma$val" }, 
+					"uid=$cuid AND karma < $constants->{maxkarma}"
+				);
+			} elsif ($val < 0) {
+				$self->sqlUpdate("users_info",
+					{ -karma => "karma$val" }, "uid=$cuid"
+				);
+			}
+		}
 
 		# Adjust moderators total mods
 		$self->sqlUpdate(
@@ -2368,10 +2383,19 @@ sub saveStory {
 			'subid=' . $self->{dbh}->quote($form->{subid})
 		);
 
+		# i think i got this right -- pudge
+ 		my($userkarma) = sqlSelect('karma', 'users_info', "uid=$suid");
+ 		my $newkarma = (($userkarma + $constants->{submission_bonus})
+ 			> $constants->{maxkarma})
+ 				? $constants->{maxkarma}
+ 				: "karma+$constants->{submission_bonus}";
+ 		sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
+ 			if $suid != $constants->{anonymous_coward_uid};
+
 		$self->sqlUpdate('users_info',
 			{ -karma => 'karma + 3' }, 
 			"uid=$suid"
-		) if $suid != $constants->{anonymous_coward};
+		) if $suid != $constants->{anonymous_coward_uid};
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 }, 
@@ -2458,10 +2482,46 @@ sub getSlashConf {
 		m2_maxbonus
 	);
 
+=pod
+
+should these be added, too?
+
+adfu_dbpass	
+adfu_dbuser	
+adfu_dsn	
+badkarma	
+comment_maxscore	
+comment_minscore	
+dbpass	
+dbuser	
+dsn	
+fancyboxwidth
+goodkarma	
+m2_bonus	
+m2_comments	
+m2_maxunfair	
+m2_penalty	
+m2_toomanyunfair	
+m2_userpercentage
+maxkarma
+rdfencoding	
+rdfimg	
+rdflanguage	
+run_ads	
+submission_bonus
+
+=cut
+
+
 	for (@keys) {
 		my($value, $desc) = $self->getVar($_);
 		$conf{$_} = $value;
 	}
+
+
+	$conf{maxkarma} = 999 unless defined $conf{maxkarma};
+	$conf{m2_maxbonus} = $conf{maxkarma}
+		if !$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma};
 
 	$conf{submit_categories} = ['Back'];
 	$conf{fixhrefs} = []; 
@@ -2698,6 +2758,7 @@ sub getSectionBlockByBid {
 	my $answer = _genericGet('sectionblocks', 'bid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getModeratorLog {
 	my $answer = _genericGet('moderatorlog', 'id', @_);

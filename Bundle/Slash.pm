@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '1.0.4';
+$Bundle::Slash::VERSION = '1.0.8-bender';
 
 1;
 
@@ -9,6 +9,7 @@ __END__
 =head1 NAME
 
 Bundle::Slash - A bundle to install all modules used for Slash
+
 
 =head1 SYNOPSIS
 
@@ -21,6 +22,8 @@ Bundle::CPAN	- File::Spec,Digest::MD5,Compress::Zlib,libnet,Archive::Tar,Data::D
 Bundle::LWP	- URI,HTML::Parser,MIME::Base64
 
 Bundle::DBI	- Storable
+
+DBI::FAQ
 
 Bundle::DBD::mysql  - Data::ShowTable
 
@@ -50,5 +53,10 @@ required for it.
 
 IPC::Shareable no longer required for IPC, since we are no longer doing
 IPC.
+
+If CPAN starts downloading "perl-5.6.0" or somesuch, ctrl-C it, exit
+the CPAN shell, and start it again.  The latest CPAN.pm version does not
+have this problem, but older ones do, and you may have an older one
+installed.
 
 =cut

@@ -215,7 +215,7 @@ sub getRDF {
 		portaldLog("failed to get $bid: $@");
 		return;
 	}
-	$d =~ s/&(?!(?:[a-zA-Z0-9]+|#\d+);)/&amp;/g; #s/&/&amp;/g;
+	$d =~ s/&(?!#?[a-zA-Z0-9]+;)/&amp;/g;
 
 	eval { $rss->parse($d) };
 

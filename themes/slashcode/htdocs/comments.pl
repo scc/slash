@@ -59,12 +59,13 @@ sub main {
 		$I{F}{op} = "Preview";
 	}
 
+	$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
+		if $I{U}{uid} != $I{anonymous_coward_uid};
 	$I{dbobject}->createDiscussions($I{F}{sid}) unless ($I{F}{sid});
 
 	if ($I{F}{op} eq "Submit") {
 
 		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-			$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
 			submitComment();
 		}
 
@@ -83,14 +84,10 @@ sub main {
 		}
 
 		# find out their Karma
-		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
-			if $I{U}{uid} != $I{anonymous_coward_uid};
 		editComment($id);
 
 
 	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
-		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
-			if $I{U}{uid} != $I{anonymous_coward_uid};
 		titlebar("99%", "Delete $I{F}{cid}");
 
 		my $delCount = deleteThread($I{F}{sid}, $I{F}{cid});
@@ -98,8 +95,6 @@ sub main {
 		print "Deleted $delCount items from story $I{F}{sid}\n";
 
 	} elsif ($I{F}{op} eq "moderate") {
-		($I{U}{karma}) = $I{dbobject}->getUserKarma($I{U}{uid})
-			if $I{U}{uid} != $I{anonymous_coward_uid};
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();
 		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
@@ -695,11 +690,13 @@ sub moderateCid {
 
 	my($cuid, $ppid, $subj, $points, $oldreason) = $I{dbobject}->getComments($sid, $cid);
 	
-	my $mid = $I{dbobject}->getModeratorLogID($cid, $sid, $I{U}{uid});
-	if ($mid) {
-		print "<LI>$subj ($sid-$cid, <B>Already moderated</B>)</LI>";
-		return;
-	}	
+	unless ($I{U}{aseclev} > 99 && $I{authors_unlimited}) {
+		my $mid = $I{dbobject}->getModeratorLogID($cid, $sid, $I{U}{uid});
+		if ($mid) {
+			print "<LI>$subj ($sid-$cid, <B>Already moderated</B>)</LI>";
+			return;
+		}	
+	}
 
 	my $modreason = $reason;
 	my $val = "-1";

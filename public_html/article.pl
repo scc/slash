@@ -70,10 +70,10 @@ sub main {
 	pollbooth($I{F}{sid}) if $I{dbobject}->getPollQuestionID($S->{sid});
 
 	# Related Links
-	fancybox(200, 'Related Links', $S->{relatedtext});
+	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
 
 	# Display this section's Section Block (if Found)
-	fancybox(200, $SECT->{title}, getblock($SECT->{section}));
+	fancybox($I{fancyboxwidth}, $SECT->{title}, getblock($SECT->{section}));
 
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 
@@ -99,7 +99,7 @@ sub pleaseLogin {
 	my $block = eval prepBlock getblock('userlogin');
 	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
 	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
-	fancybox(200, "$I{sitename} Login", $block);
+	fancybox($I{fancyboxwidth}, "$I{sitename} Login", $block);
 }
 
 ##################################################################
@@ -135,7 +135,7 @@ EOT
 
 	$m .= "<P> $I{U}{mylinks} ";
 
-	fancybox(200, $I{U}{aid} || $I{U}{nickname}, $m);
+	fancybox($I{fancyboxwidth}, $I{U}{aid} || $I{U}{nickname}, $m);
 }
 
 ##################################################################

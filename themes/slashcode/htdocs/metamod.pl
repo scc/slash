@@ -32,7 +32,8 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma}=$I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
+	$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
+		if $I{U}{uid} != $I{anonymous_coward_uid};
 	header("Meta Moderation");
 
 	my $id = isEligible();
@@ -111,7 +112,7 @@ sub metaModerate {
 	}
 
 	my $changes = $I{dbobject}->setMetaMod(\%m2victims, $flag, $ts);
-	for(@$changes) {
+	for (@$changes) {
 		print "<BR>Updating $_[0] with $_[1]" if $I{U}{aseclev} > 10;
 	}
 
@@ -126,18 +127,24 @@ EOT
 	$metamod{unfair} ||= 0;
 	$metamod{fair} ||= 0;
 	$I{dbobject}->setModerationVotes($I{U}{uid}, \%metamod)
-			if ($I{U}{uid}> $I{anonymous_coward_uid});
+		if ($I{U}{uid}> $I{anonymous_coward_uid});
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
 	if ($y > $I{m2_mincheck}) {
 		if (!$flag && karmaBonus()) {
-			# Bonus Karma For Helping Out
-			($change, $excon) = ($I{m2_bonus}, "and karma<$I{m2_maxbonus}");
+			# Bonus Karma For Helping Out - the idea here, is to not 
+			# let meta-moderators get the +1 posting bonus.
+			($change, $excon) =
+				("karma$I{m2_bonus}", "and karma<$I{m2_maxbonus}");
+			$change = $I{m2_maxbonus}
+				if $I{m2_maxbonus} < $I{U}{karma} + $I{m2_bonus};
+
 		} elsif ($flag == 2) {
 			# Penalty for Abuse
-			($change, $excon) = ($I{m2_penalty}, '');
+			($change, $excon) = ("karma$I{m2_penalty}", '');
 		}
+
 		# Update karma.
 		# This is an abuse
 		$I{dbobject}->setUserInfo("$I{U}{uid} $excon", { -karma => "karma$change" })
@@ -178,8 +185,11 @@ and try to be impartial and fair.  You are not moderating to make your
 opinions heard, you are trying to help promote a rational discussion. 
 Play fairly and help make $I{sitename} a little better for everyone.</LI>
 
-<LI>Scores are removed.  You can click thru and get them if you want them,
-but they shouldn't be a factor in your M2 decision.</LI>
+<LI>Scores and information identifying the posters of these comments have been
+removed to help prevent bias in meta moderation.
+If you really need to know, you can click through and see the original message,
+but we encourage you not to do this unless you need more context to fairly
+meta moderate.</LI> 
 
 </UL>
 
@@ -216,7 +226,7 @@ EOT
 		# The '-' in place of nickname -may- be a problem, though. And we
 		# Probably shouldn't assume a score of 0, here either but we'll leave
 		# it for now.
-		@{%{$C}}{qw(nickname uid fakeemail homepage points)} =
+		@{$C}{qw(nickname uid fakeemail homepage points)} =
 			('-', -1, '', '', 0);
 		dispComment($C);
 		printf <<EOT, linkStory({ 'link' => $C->{title}, sid => $C->{sid} });
@@ -256,7 +266,7 @@ sub isEligible {
 
 	my $tuid = $I{dbobject}->countUsers();
 	
-	if ($I{U}{uid} > int($tuid * 0.75) ) {
+	if ($I{U}{uid} > int($tuid * $I{m2_userpercentage}) ) {
 		print "You haven't been a $I{sitename} user long enough.";
 		return 0;
 	}
@@ -267,11 +277,12 @@ sub isEligible {
 	}
 
 	my $last = $I{dbobject}->getModeratorLast($I{U}{uid});
+
+	# must be eq "0", since == 0 might return true improperly
 	if ($last->{'lastmm'} eq "0") {
 		print "You have recently meta moderated.";
 		return 0;
 	}
-
 
 	# Eligible for M2. Determine M2 comments by selecting random starting
 	# point in moderatorlog.
