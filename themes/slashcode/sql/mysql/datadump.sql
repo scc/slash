@@ -92,7 +92,7 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
+INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,1,-1,0,'8f2e0eec531acf0e836f6770d7990857');
 
 #
 # Dumping data for table 'comment_heap'
@@ -171,9 +171,9 @@ INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flag
 # Dumping data for table 'discussion_hitparade'
 #
 
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1, -1, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  0, 0);
-INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  1, 0);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1, -1, 1);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  0, 1);
+INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  1, 1);
 INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  2, 0);
 INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  3, 0);
 INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NULL, 1,  4, 0);

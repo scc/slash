@@ -121,15 +121,6 @@ sub selectComments {
 		$comments->[0]{natural_totals}[$x]	+= $comments->[0]{natural_totals}[$x+1];
 	}
 
-	if ($sid and $form->{ssi}) {
-		# We know the hitparade;  set it.
-		my $hp = { };
-		for my $score (0 .. $num_scores-1) {
-			$hp->{$score + $min} = $comments->[0]{natural_totals}[$score];
-		}
-		$slashdb->setDiscussionHitParade($sid, $hp);
-	}
-
 	reparentComments($comments);
 	return($comments, $count);
 }

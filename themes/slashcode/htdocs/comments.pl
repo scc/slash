@@ -276,10 +276,9 @@ sub delete {
 	titlebar("99%", "Delete $form->{cid}");
 
 	my $delCount = deleteThread($form->{sid}, $form->{cid});
-	# This does not exist in the API. Once I know what it was
-	# supposed to do I can create it. -Brian
-	# Looks OK now. - Jamie
-	$slashdb->setDiscussionDelCount($delCount);
+
+	$slashdb->setDiscussionDelCount($form->{sid}, $delCount);
+	$slashdb->setDiscussionFlagsBySid([$form->{sid}], 1, ["hitparade_dirty"]);
 }
 
 ##################################################################

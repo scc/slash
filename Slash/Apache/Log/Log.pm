@@ -48,7 +48,7 @@ sub UserLog {
 	my($r) = @_;
 
 	my $user = getCurrentUser();
-	return if $user->{is_anon};
+	return if !$user or !$user->{uid} or $user->{is_anon};
 	my $slashdb = getCurrentDB();
 
 	$slashdb->setUser($user->{uid}, {

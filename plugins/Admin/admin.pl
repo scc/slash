@@ -1002,7 +1002,7 @@ sub editStory {
 
 	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) {
-		$storyref->{flags} = "";
+		$storyref->{flags} = "data_dirty";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
@@ -1053,7 +1053,7 @@ sub editStory {
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext}, 0, 1);
 
 	} else { # New Story
-		$storyref->{flags} = "";
+		$storyref->{flags} = "data_dirty";
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 

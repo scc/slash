@@ -13,3 +13,4 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Vars'
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','[% USE Slash %][% Slash.db.getSubmissionCount(constants.articles_only) %] Submissions','[% constants.rootdir %]/submit.pl?op=list',500,7);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Site','[% constants.rootdir %]/admin.pl?siteinfo=1',100,16);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Help','[% constants.rootdir %]/getting_started.shtml',1,17);
+INSERT INTO vars (name, value, description) VALUES ('ispell', 'ispell', 'Location of ispell binary or empty string to turn off');

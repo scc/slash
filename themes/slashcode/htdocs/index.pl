@@ -206,7 +206,6 @@ sub displayStories {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) =
 			@$story_essentials{qw( sid section title time commentcount day hitparade )};
 		my @links;
-warn "sid '$sid' time '$time' hitparade '$hp'\n";
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
 		my($storytext, $story) = displayStory($sid);
 

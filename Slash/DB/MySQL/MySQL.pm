@@ -213,7 +213,6 @@ sub sqlTransactionCancel {
 # Bad need of rewriting....
 sub createComment {
 	my($self, $comment, $user, $pts, $default_user) = @_;
-	# why no quote() anymore?
 	my $header = $comment->{sid};
 	my $cid;
 
@@ -245,6 +244,12 @@ sub createComment {
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
 		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
 	}
+
+	$self->sqlUpdate(
+		"discussions",
+		{ -commentcount => 'commentcount+1' },
+		"id=$header",
+	);
 
 	return $cid;
 }
@@ -1023,11 +1028,10 @@ sub getCommentChildren {
 }
 
 ########################################################
-# Does what it says, deletes one comment.  NOTE that this is inefficient
-# as called from comments.pl deleteThread() -- discussions will get
-# marked as hitparade_dirty many times when only once would do.  But I'm
-# not going to optimize this just yet because I'm lazy and our current
-# comment deletion rate is one per four years :/  - Jamie 2001/07/08
+# Does what it says, deletes one comment.
+# For optimization's sake (not that Slashdot really deletes a lot of
+# comments, currently one every four years!) commentcount and hitparade
+# are updated from comments.pl's delete() function.
 sub deleteComment {
 	my($self, $cid, $discussion_id) = @_;
 	my @comment_tables = qw( comment_text comments );
@@ -1043,7 +1047,6 @@ sub deleteComment {
 	for my $table (@comment_tables) {
 		$self->sqlDo("DELETE FROM $table WHERE cid=$cid");
 	}
-	$self->setDiscussionFlagsById([$discussion_id], 1, ["hitparade_dirty"]);
 }
 
 ########################################################
@@ -1098,6 +1101,36 @@ sub setDiscussionDelCount {
 }
 
 ########################################################
+sub setStoryFlagsBySid {
+	my($self, $sid_ary, $onoff, $flags) = @_;
+	return 0 unless $sid_ary and @$sid_ary and $flags and @$flags;
+	my $rows = 0;
+	my $sid_list = join(",", map { $self->sqlQuote($_) } @$sid_ary);
+	if ($onoff) {
+		# Set
+		my $flagtext = join(",", map { $self->sqlQuote($_) } @$flags);
+		$rows = $self->sqlUpdate(
+			'discussions',
+			{ -flags => "CONCAT(flags, ',$flagtext')" },
+			"sid IN ($sid_list)"
+		);
+	} else {
+		# Clear
+		my $numeric = -1;
+		while (my $flag = shift @$flags) {
+			$numeric &= -2 if $flag =~ /delete_me/i;	# bit 0
+			$numeric &= -3 if $flag =~ /data_dirty/i;	# bit 1
+		}
+		$rows = $self->sqlUpdate(
+			'discussions',
+			{ -flags => "flags & $numeric" },
+			"sid IN ($sid_list)"
+		);
+	}
+	return $rows;
+}
+
+########################################################
 sub setDiscussionFlagsBySid {
 	my($self, $sid_ary, $onoff, $flags) = @_;
 	return 0 unless $sid_ary and @$sid_ary and $flags and @$flags;
@@ -1139,10 +1172,8 @@ sub setDiscussionFlagsById {
 
 ########################################################
 sub setDiscussionHitParade {
-	my($self, $sid, $hp) = @_;
-	return unless $sid;
-	my $sid_quoted = $self->sqlQuote($sid);
-	my($discussion_id) = $self->sqlSelect("id", "discussions", "sid=$sid_quoted");
+	my($self, $discussion_id, $hp) = @_;
+	return if !$discussion_id;
 	# Clear the hitparade_dirty flag.
 	my $rows_changed = $self->sqlUpdate(
 		"discussions",
@@ -2279,9 +2310,10 @@ sub countCommentsBySidPid {
 # -Brian
 sub findCommentsDuplicate {
 	my($self, $sid, $comment) = @_;
-	my $signature = md5_hex($comment);
+	my $sid_quoted = $self->sqlQuote($sid);
+	my $signature_quoted = $self->sqlQuote(md5_hex($comment));
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "sid=$sid AND signature='$signature'");
+	return $self->sqlCount($comment_table, "sid=$sid_quoted AND signature=$signature_quoted");
 }
 
 ##################################################################
@@ -2572,16 +2604,17 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
+	my $sid_quoted = $self->sqlQuote($sid);
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $reply = $self->sqlSelectHashref("date, subject,$comment_table.points as points,
 		comment_text.comment as comment,realname,nickname,
 		fakeemail,homepage,$comment_table.cid as cid,sid,users.uid as uid",
 		"$comment_table,comment_text,users,users_info,users_comments",
-		"sid=$sid
+		"sid=$sid_quoted
 		AND $comment_table.cid=$pid
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
-		AND $comment_table.cid=comment_text.cid
+		AND comment_text.cid=$pid
 		AND users.uid=$comment_table.uid"
 	) || {};
 
@@ -2593,6 +2626,7 @@ sub getCommentReply {
 sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 
+	my $sid_quoted = $self->sqlQuote($sid);
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	my $user = getCurrentUser();
@@ -2600,7 +2634,7 @@ sub getCommentsForUser {
 			  users.uid as uid, sig, $comment_table.points as points, pid, sid,
 			  lastmod, reason
 		   FROM $comment_table, users
-		   WHERE sid=" . $self->sqlQuote($sid)
+		   WHERE sid=$sid_quoted"
 		 . " AND $comment_table.uid = users.uid";
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
@@ -2654,10 +2688,11 @@ sub getComments {
 # XXX comments.pl moderateCid() wants host_name returned here, which is gonna
 # be tough considering that data is now stored only in MD5 - Jamie
 	my($self, $sid, $cid) = @_;
+	my $sid_quoted = $self->sqlQuote($sid);
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	$self->sqlSelect("uid, pid, subject, points, reason",
 		$comment_table,
-		"cid=$cid AND sid=$sid"
+		"cid=$cid AND sid=$sid_quoted"
 	);
 }
 
@@ -2982,7 +3017,7 @@ sub createStory {
 		displaystatus	=> $story->{displaystatus},
 		commentstatus	=> $story->{commentstatus},
 		submitter	=> $story->{submitter} ? $story->{submitter} : $story->{uid},
-		flags		=> "",
+		flags		=> "data_dirty",
 	};
 
 	my $text = {
