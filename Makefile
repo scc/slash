@@ -155,5 +155,5 @@ manifest :
 	$(PERL) -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest'
 
 rpm :
-	rpm -ba slash-1.1.4_bender-1.spec
+	rpm -ba slash.spec
 
