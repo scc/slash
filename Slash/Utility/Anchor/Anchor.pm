@@ -320,7 +320,7 @@ sub getSectionColors {
 	my $user = getCurrentUser();
 	my $slashdb = getCurrentDB();
 	my @colors;
-	my $colorblock ||= getCurrentForm('colorblock');
+	my $colorblock = getCurrentForm('colorblock');
 
 	# they damn well better be legit
 	if ($colorblock) {
