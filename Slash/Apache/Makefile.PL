@@ -10,7 +10,7 @@ my @directives = (
 	{ name			=> 'SlashVirtualUser',
 	errmsg			=> 'Takes a DBIx::Password virtual name',
 	args_how		=> 'TAKE1',
-	req_overrive => 'RSRC_CONF'
+	req_overrive => 'ACCESS_CONF'
 	}
 );
 
@@ -20,6 +20,4 @@ WriteMakefile(
     'NAME'	=> 'Slash::Apache',
     'VERSION_FROM' => 'Apache.pm',
     'INC'	=> Apache::src->new->inc, 
-#		'INSTALLSITEARCH'	=> '/usr/local/apache/lib/perl',
-#		'INSTALLSITELIB'	=> '/usr/local/apache/lib/perl',
 );
