@@ -102,7 +102,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('U.uid,U.nickname', 'users as U, users_param as P', "P.name = 'author' AND U.uid = P.uid and P.value = 1") },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', "author = 1") },
 
 	'admins'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 100') },
@@ -1596,8 +1596,8 @@ sub getSectionBlocks {
 sub getAuthorDescription {
 	my($self) = @_;
 	my $authors = $self->sqlSelectAll('count(*) as c, stories.uid',
-		'stories, users_param',
-		"users_param.uid = stories.uid AND users_param.name='author' AND VALUE = '1'",
+		'stories, users',
+		"users.uid = stories.uid AND users.author = 1",
 		'GROUP BY uid ORDER BY c DESC'
 	);
 
@@ -4118,15 +4118,15 @@ sub getAuthors {
 			(join ",", map { $self->sqlQuote($_) } @$cache_flag) .
 		')';
 	} else {
-		$where = 'users_param.name="author" AND users_param.value=1';
+		$where = 'users.author=1';
 	}
 
 	my %return;
 	my $sth = $self->sqlSelectMany(
 		'users.uid,nickname,fakeemail,homepage,bio',
-		'users,users_info,users_param',
+		'users,users_info',
 		$where .
-		'AND users.uid = users_param.uid AND users.uid = users_info.uid'
+		'AND users.uid = users_info.uid'
 	);
 	while (my $row = $sth->fetchrow_hashref) {
 		$return{ $row->{'uid'} } = $row;

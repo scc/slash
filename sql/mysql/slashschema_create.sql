@@ -610,12 +610,14 @@ CREATE TABLE users (
 	matchname varchar(20),
 	newpasswd varchar(8),
 	journal_last_entry_date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	author tinyint DEFAULT 0 NOT NULL,
 	PRIMARY KEY (uid),
 	KEY login (uid,passwd,nickname),
 	KEY chk4user (nickname,realemail),
 	KEY nickname_lookup (nickname),
 	KEY chk4email (realemail),
-	KEY chk4matchname (matchname)
+	KEY chk4matchname (matchname),
+	KEY author_lookup (author)
 ) TYPE = myisam;
 
 #
