@@ -43,7 +43,6 @@ sub main {
 	}
 
 	header("$I{sitename} Users");
-print STDERR "UID = $I{U}{uid}";
 	print <<EOT if $I{U}{uid} != $I{anonymous_coward} && $op ne "userclose";
  [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |

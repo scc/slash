@@ -430,10 +430,7 @@ EOT
 		}
 	}
 
-	my($dupRows) = sqlSelect(
-		'count(*)', 'comments', 'sid=' . $I{dbh}->quote($I{F}{sid}) .
-		' AND comment=' . $I{dbh}->quote($I{F}{postercomment})
-	);
+	my $dupRows = $I{dbobject}->countComment($I{F}{sid}, $I{F}{postercomment});
 
 	if ($dupRows || !$I{F}{sid}) { 
 		# $I{r}->log_error($ENV{SCRIPT_NAME} . " " . $insline);
@@ -638,7 +635,8 @@ sub submitComment {
 	}
 
 	# It would be nice to have an arithmatic if right here
-	if(my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward})) {
+	my $maxCid;
+	if($maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward})) {
 		if($maxCid == -1) {
 			print "<P>There was an unknown error in the submission.<BR>";
 		}else {
@@ -656,25 +654,22 @@ sub submitComment {
 
 ##################################################################
 # Handles moderation
+# gotta be a way to simplify this -Brian
 sub moderate {
 	my $totalDel = 0;
-	my $hasPosted = hasPosted($I{F}{sid});
+	my $hasPosted;
+	unless($I{U}{aseclev} > 99 && $I{authors_unlimited}) {
+		$hasPosted = $I{dbobject}->commentCount($I{F}{sid},'','', $I{U}{uid});
+	}
 
 	print "\n<UL>\n";
 
 	# Handle Deletions, Points & Reparenting
-	foreach (sort keys %{$I{F}}) {
+	for (sort keys %{$I{F}}) {
 		if (/^del_(\d+)$/) { # && $I{U}{points}) {
 			my $delCount = deleteThread($I{F}{sid}, $1);
 			$totalDel += $delCount;
-			sqlUpdate(
-				"stories",
-				{
-					-commentcount	=> "commentcount-$delCount",
-					writestatus	=> 1
-				},
-				"sid=" . $I{dbh}->quote($I{F}{sid}), 1
-			);
+			$I{dbobject}->setStoriesCount($I{F}{sid}, $delCount);
 
 			print <<EOT if $totalDel;
 	<LI>Deleted $delCount items from story $I{F}{sid} under comment $I{F}{$_}</LI>
@@ -690,15 +685,8 @@ EOT
 	if ($hasPosted && !$totalDel) {
 		print "You've already posted something in this discussion<BR>";
 	} elsif ($I{U}{aseclev} && $totalDel) {
-		my($cc) = sqlSelect(
-			"count(sid)", "comments", "sid=" . $I{dbh}->quote($I{F}{sid})
-		);
-		sqlUpdate(
-			"stories",
-			{ commentcount => $cc },
-			"sid=" . $I{dbh}->quote($I{F}{sid})
-		);
-		print "$totalDel comments deleted.  Comment count set to $cc<BR>\n";
+		my $count = $I{dbobject}->setCommentCount($I{F}{sid});
+		print "$totalDel comments deleted.  Comment count set to $count<BR>\n";
 	}
 }
 
@@ -717,15 +705,9 @@ sub moderateCid {
 		}
 	}
 
-	my($cuid, $ppid, $subj, $points, $oldreason) = sqlSelect(
-		"uid,pid,subject,points,reason","comments",
-		"cid=$cid and sid='$sid'"
-	);
+	my($cuid, $ppid, $subj, $points, $oldreason) = $I{dbobject}->getComments($sid, $cid);
 	
-	my($mid) = sqlSelect(
-		"id", "moderatorlog",
-		"uid=$I{U}{uid} and cid=$cid and sid='$sid'"
-	);
+	my $mid = $I{dbobject}->getModeratorLogID($cid, $sid, $I{U}{uid});
 	if ($mid) {
 		print "<LI>$subj ($sid-$cid, <B>Already moderated</B>)</LI>";
 		return;
@@ -751,15 +733,7 @@ sub moderateCid {
 	if ($scorecheck < $I{comment_minscore} || $scorecheck > $I{comment_maxscore}) {
 		# We should still log the attempt for M2, but marked as inactive so
 		# we don't mistakenly undo it.
-		sqlInsert("moderatorlog", {
-			uid	=> $I{U}{uid},
-			val	=> $val,
-			sid	=> $sid,
-			cid	=> $cid,
-			reason	=> $modreason,
-			-ts	=> 'now()',
-			active	=> 0
-		});
+		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
 
 		print "<LI>$subj ($sid-$cid, <B>Comment already at limit</B>)</LI>";
 		return;
@@ -779,14 +753,7 @@ sub moderateCid {
 		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
 
 	if ($val ne "+0" && $I{dbh}->do($strsql)) {
-		sqlInsert("moderatorlog", {
-			uid	=> $I{U}{uid},
-			val	=> $val,
-			sid	=> $sid,
-			cid	=> $cid,
-			reason	=> $modreason,
-			-ts	=> 'now()'
-		});
+		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
 
 		# Adjust comment posters karma
 		sqlUpdate(
@@ -827,33 +794,20 @@ sub deleteThread {
 
 	print "Deleting $cid from $sid, ";
 
-	my $delkids = sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
+	my $delkids = $I{dbobject}->getCommentCid($sid,$cid);
 
-	while (my($scid) = $delkids->fetchrow_array) {
-		$delCount += deleteThread($sid, $scid);
+	for (@$delkids) {
+		$delCount += deleteThread($sid, $_);
 	}
 
 	$delkids->finish;
 
-	$I{dbh}->do("delete from comments WHERE sid=" .
-		$I{dbh}->quote($sid) . " and cid=" . $I{dbh}->quote($cid)
-	);
+	$I{dbobject}->removeComment($sid, $cid);
 
 	print "<BR>";
 	return $delCount;
 }
 
-##################################################################
-# Checks if this user has posted in this discussion or not (to determine
-# if they can moderate or not)
-sub hasPosted {
-	return if $I{U}{aseclev} > 99 && $I{authors_unlimited};
-	my($sid) = @_;
-	my($c) = sqlSelect("count(*)", "comments",
-		"sid=" . $I{dbh}->quote($sid) . " and uid=$I{U}{uid}"
-	);
-	return $c;
-}
 
 ##################################################################
 # If you moderate, and then post, all your moderation is undone.

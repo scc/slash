@@ -236,6 +236,28 @@ sub setComment{
 	}
 }
 ########################################################
+sub setModeratorLog {
+	my ($self, $cid, $sid, $uid, $val, $reason) = @_;
+	$self->sqlInsert("moderatorlog", {
+			uid => $uid,
+			val => $val,
+			sid => $sid,
+			cid => $cid,
+			reason  => $reason,
+			-ts => 'now()'
+	});
+}
+########################################################
+sub getModeratorLogID {
+	my ($self, $cid, $sid, $uid) = @_;
+	my($mid) = sqlSelect(
+	    "id", "moderatorlog",
+			"uid=$uid and cid=$cid and sid='$sid'"
+	);
+	return $mid;
+
+}
+########################################################
 sub unsetModeratorlog{
 	my ($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
@@ -692,6 +714,21 @@ sub updateCommentTotals {
 }
 
 ########################################################
+sub getCommentCid {
+	my($self, $sid, $cid) = @_;
+	my ($cid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
+
+	retunr $cid;
+}
+########################################################
+sub removeComment{
+	my($self, $sid, $cid) = @_;
+	  $dbh->do("delete from comments WHERE sid=" .
+		    $dbh->quote($sid) . " and cid=" . $dbh->quote($cid)
+		);
+
+}
+########################################################
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 	$self->sqlSelect('pid', 'comments',
@@ -760,6 +797,19 @@ sub setSection {
 
 	return $count;
 		
+}
+########################################################
+sub setStoriesCount {
+	my ($self, $sid, $count) = @_;
+	$self->sqlUpdate(
+			"stories",
+			{
+				-commentcount => "commentcount-$count",
+				writestatus => 1
+			},
+			"sid=" . $dbh->quote($sid)
+	);
+
 }
 ########################################################
 sub getSectionTitle {
@@ -1300,11 +1350,33 @@ sub getPortalsCommon {
 }
 ##################################################################
 # counts the number of comments for a user
+# This is pretty questionable -Brian
 sub countComments {
-	my ($self, $sid, $cid) = @_;
-	my ($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+	my ($self, $sid, $cid, $comment, $uid) = @_;
+	my $value;
+	if($uid) {
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
+	} elsif($cid) {
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+	} elsif($comment) {
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . ' AND comment=' . $dbh->quote($comment));
+	} else {
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid));
+	}
 
 	return $value;
+}
+##################################################################
+sub method {
+	my ($self, $sid) = @_;
+	my $count = $self->countComments($sid);
+	$self->sqlUpdate(
+			"stories",
+			{ commentcount => $count },
+			"sid=" . $dbh->quote($sid)
+	);
+
+	return $count;
 }
 ##################################################################
 # counts the number of stories
@@ -1438,6 +1510,14 @@ sub countUsersIndexExboxesByBid{
 			);
 
 	return $count;
+}
+########################################################
+sub getComments{
+	my ($self, $sid, $cid) = @_;
+	$self->sqlSelect( "uid,pid,subject,points,reason","comments",
+			"cid=$cid and sid='$sid'"
+	);
+
 }
 ########################################################
 sub getCommentsTop{
