@@ -43,6 +43,8 @@ sub main {
 
 	my $journal = Slash::Journal->new(getCurrentSlashUser());
 	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
 	my $op = $form->{'op'};
 	$op = 'default' unless $ops{$op};
 
@@ -61,19 +63,20 @@ sub main {
 		$r->status(200);
 	} else {
 		my $uid = $form->{'uid'};
-		header();
 		if($op eq 'display') {
 			my $slashdb = getCurrentDB();
 			my $nickname = $slashdb->getUser($form->{uid}, 'nickname') if $form->{uid};
 			$nickname ||= getCurrentUser('nickname');
+			header("${nickname}'s Journal");
 			titlebar("100%","${nickname}'s Journal");
 		} else {
+			header("$constants->{sitename} Journal System");
 			titlebar("100%","Journal System");
 		}
 
 		print createMenu('journal');
 
-		$ops{$op}->($form, $journal);
+		$ops{$op}->($form, $journal, $constants);
 
 		footer();
 	}
@@ -84,8 +87,8 @@ sub displayDefault {
 }
 
 sub displayTop {
-	my ($form, $journal) = @_;
-	my $journals = $journal->top(30);
+	my ($form, $journal, $constants) = @_;
+	my $journals = $journal->top($constants->{journal_top});
 	slashDisplay('journaltop', {
 		journals => $journals,
 		url => '/journal.pl',
@@ -102,13 +105,12 @@ sub displayFriends {
 }
 
 sub displayRSS {
-	my ($form, $journal) = @_;
+	my ($form, $journal, $constants) = @_;
 	my $rss = XML::RSS->new(
 		version => '0.91',
 		encoding=>'UTF-8'
 	);
 	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
 	my ($uid, $nickname);
 	if($form->{uid}) {
 		$nickname = $slashdb->getUser($form->{uid}, 'nickname');
@@ -131,7 +133,7 @@ sub displayRSS {
 	);
 
 
-	my $articles = $journal->gets($uid,[qw|id article  description|]);
+	my $articles = $journal->gets($uid,[qw|id article  description|], $constants->{journal_default_display});
 	for my $article (@$articles) {
 			$rss->add_item(
 				title => xmlencode($article->[2]),
@@ -143,7 +145,7 @@ sub displayRSS {
 }
 
 sub displayArticle {
-	my ($form, $journal) = @_;
+	my ($form, $journal, $constants) = @_;
 	my $slashdb = getCurrentDB();
 	my $uid;
 	my $nickname;
@@ -155,7 +157,7 @@ sub displayArticle {
 		$nickname = getCurrentUser('nickname');
 		$uid = getCurrentUser('uid');
 	}
-	my $articles = $journal->gets($uid,[qw|date article  description|]);
+	my $articles = $journal->gets($uid,[qw|date article  description|], $constants->{journal_default_display});
 	my @sorted_articles;
 	my $date;
 	my $collection = {};
@@ -173,7 +175,7 @@ sub displayArticle {
 	}
 	push @sorted_articles, $collection;
 	my $theme = $slashdb->getUser($uid, 'journal-theme');
-	$theme ||= 'generic';
+	$theme ||= $constants->{journal_default_theme};
 	slashDisplay($theme, {
 		articles => \@sorted_articles,
 		uid => $form->{uid},
@@ -182,7 +184,7 @@ sub displayArticle {
 }
 
 sub listArticle {
-	my ($form, $journal) = @_;
+	my ($form, $journal, $constants) = @_;
 	my $list = $journal->gets(getCurrentUser('uid'),[qw| id date description |]);
 	my $themes = $journal->themes;
 	if($form->{theme}) {
@@ -191,7 +193,7 @@ sub listArticle {
 			if (grep /$form->{theme}/, @$themes);
 	}
 	my $theme = getCurrentUser('journal-theme');
-	$theme ||= 'journalpage-grey';
+	$theme ||= $constants->{journal_default_theme};
 	slashDisplay('journallist', {
 		articles => $list,
 		url => '/journal.pl',
@@ -237,7 +239,7 @@ sub deleteFriend {
 }
 
 sub editArticle {
-	my ($form, $journal) = @_;
+	my ($form, $journal, $constants) = @_;
 	# This is where we figure out what is happening
 	my $article = {};
 
@@ -252,10 +254,15 @@ sub editArticle {
 	
 	my $disp_article = [$article->{date},  strip_mode($article->{article}, $form->{posttype}), strip_nohtml($article->{description})] if ($article->{article});
 
-	slashDisplay('journalentry', {
-		article => $disp_article,
-		author => getCurrentUser('nickname'),
-	}) if ($article->{article});
+	if ($article->{article}) {
+		my $theme = getCurrentUser('journal-theme');
+		$theme ||= $constants->{journal_default_theme};
+		slashDisplay($theme, {
+			articles => [{day => $article->{date}, article =>[ $article ]}],
+			uid => $article->{uid},
+			url => '/journal.pl'
+		});
+	}
 
 	my $slashdb = getCurrentDB();
 	my $formats = $slashdb->getDescriptions('postmodes');
@@ -272,15 +279,15 @@ sub editArticle {
 }
 
 sub getArticle {
-	my ($form, $journal) = @_;
+	my ($form, $journal, $constants) = @_;
 	# This is where we figure out what is happening
-	my $article = $journal->get($form->{id}, [ qw( article date description uid) ]);
-	my $slashdb = getCurrentDB();
-	my $nickname = $slashdb->getUser($article->{uid}, 'nickname');
-	my $disp_article = [$article->{date}, $article->{article}, $article->{description}] if ($article->{article});
-	slashDisplay('journalentry', {
-		article => $disp_article,
-		author => $nickname,
+	my $article = $journal->get($form->{id}, [ qw( article date description ) ]);
+	my $theme = getCurrentUser('journal-theme');
+	$theme ||= $constants->{journal_default_theme};
+	slashDisplay($theme, {
+		articles => [{day => $article->{date}, article =>[ $article ]}],
+		uid => $article->{uid},
+		url => '/journal.pl'
 	});
 }
 

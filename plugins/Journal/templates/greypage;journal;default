@@ -24,9 +24,11 @@ __template__
 			</TR>
 			[% END %]
 		[% END %]
-		<TR VALIGN="TOP">
-			<TD ALIGN="RIGHT" BGCOLOR="#E0E0E0" ><A HREF="[% url %]?op=add&uid=[% uid %]">Make a friend</A></TD>
-		</TR>
+		[% IF uid %]
+			<TR VALIGN="TOP">
+				<TD ALIGN="RIGHT" BGCOLOR="#E0E0E0" ><A HREF="[% url %]?op=add&uid=[% uid %]">Make a friend</A></TD>
+			</TR>
+		[% END %]
 	</TD></TR>
 </TABLE>
 

@@ -29,9 +29,11 @@ __template__
 			[% END %]
 		</TABLE>
 		[% END %]
+		[% IF uid %]
 		<TR VALIGN="TOP" BGCOLOR="#FFFFFF">
 			<TD ALIGN="RIGHT" BGCOLOR="#FFFFFF" ><A HREF="[% url %]?op=add&uid=[% uid %]">Add user to friend's list</A></TD>
 		</TR>
+		[% END %]
 	</TD></TR>
 </TABLE>
 

@@ -39,6 +39,7 @@ sub gets {
 	my $keys = join ',', @$values if $values;
 	$keys ||= '*';
 	my $order = "ORDER BY date DESC";
+	$order .= " LIMIT $limit" if $limit; 
 	my $answer = $self->sqlSelectAll($keys, 'journals', "uid = $uid", $order);
 	return $answer;
 }
@@ -51,11 +52,14 @@ sub create {
 	$self->sqlInsert("journals", {
 		uid => $uid,
 		description => $description,
-		article => $article,
 		-date => 'now()'
 	});
+
 	my($id) = $self->sqlSelect("LAST_INSERT_ID()");
-print STDERR "CREATED $id\n";
+	$self->sqlInsert("journals_text", {
+		id => $id,
+		article => $article
+	});
 	
 	return $id;
 }
@@ -124,11 +128,16 @@ sub get {
 
 	if((ref($val) eq 'ARRAY')) {
 		my $values = join ',', @$val;
-		$answer = $self->sqlSelectHashref($values, 'journals', 'id=' . $self->{_dbh}->quote($id));
+		$answer = $self->sqlSelectHashref($values, 'journals', "id=$id");
 	} elsif ($val) {
-		($answer) = $self->sqlSelect($val, 'journals', 'id='  . $self->{_dbh}->quote($id));
+		if($key eq 'article') {
+			($answer) = $self->sqlSelect('article', 'journals', "id=$id");
+		} else {
+			($answer) = $self->sqlSelect($val, 'journals', "id=$id");
+		}
 	} else {
-		$answer = $self->sqlSelectHashref('*', 'journals', 'id=' . $self->{_dbh}->quote($id));
+		$answer = $self->sqlSelectHashref('*', 'journals', "id=$id");
+		($answer->{article}) = $self->sqlSelect('article', 'journals_text', "id=$id");
 	}
 
 	return $answer;
