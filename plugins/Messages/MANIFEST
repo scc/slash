@@ -3,7 +3,7 @@ Makefile.PL
 Messages.pm
 PLUGIN
 dump
-messaged
+message_delivery.pl
 messages.pl
 mysql_schema
 templates/dailyheadlines;messages;default

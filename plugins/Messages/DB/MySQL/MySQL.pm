@@ -26,7 +26,8 @@ use Slash::Utility;
 use Storable qw(freeze thaw);
 
 use vars '$VERSION';
-use base 'Slash::DB::Utility';	# first for object init stuff
+use base 'Slash::DB::Utility';	# first for object init stuff, but really
+				# needs to be second!  figure it out. -- pudge
 use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -81,6 +82,21 @@ sub init {
 	$self->{_web_prime}  = 'message_web.id=message_web_text.id AND message_web.id';
 	$self->{_web_prime1} = 'id';
 	$self->{_web_prime2} = 'id';
+
+	$self->{_log_table}  = 'message_log';
+}
+
+sub log {
+	my($self, $msg, $mode) = @_;
+	my $table = $self->{_log_table};
+
+	$self->sqlInsert($table, {
+		id	=> $msg->{id},
+		user	=> $msg->{user}{uid},
+		fuser	=> (ref($msg->{fuser}) ? $msg->{fuser}{uid} : $msg->{fuser}),
+		code	=> $msg->{code},
+		mode	=> $mode,
+	});
 }
 
 sub _create_web {

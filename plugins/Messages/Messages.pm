@@ -112,7 +112,8 @@ sub create {
 
 	# must not contain non-numeric
 	if (!defined($fid) || $fid =~ /\D/) {
-		$fid = 0;	# default
+		$fid = 0;	# default for now, should be a variable and a
+				# real actual UID for "database integrity"
 	}
 
 	(my($code), $type) = $self->getDescription('messagecodes', $type);
@@ -388,6 +389,7 @@ sub send {
 		$subject = $self->callTemplate('msg_email_subj', $msg);
 
 		if (sendEmail($addr, $subject, $content, $msg->{priority})) {
+			$self->log($msg, MSG_MODE_EMAIL);
 			return 1;
 		} else {
 			messagedLog(getData("send mail error", {
@@ -400,6 +402,7 @@ sub send {
 
 	} elsif ($mode == MSG_MODE_WEB) {
 		if ($self->create_web($msg)) {
+			$self->log($msg, MSG_MODE_WEB);
 			return 1;
 		} else {
 			return 0;
