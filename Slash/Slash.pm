@@ -1562,7 +1562,7 @@ EOT
 	$c->finish;
 	return unless $reasonTotal;
 
-	print qq!<FONT COLOR="$I{fg}[3]"><B>Moderation Totals</B></FONT>:!;
+	print qq!<FONT COLOR="$I{fg}[1]"><B>Moderation Totals</B></FONT>:!;
 	foreach (0 .. @reasonHist) { 
 		print "$I{reasons}->[$_]=$reasonHist[$_], " if $reasonHist[$_];
 	}
