@@ -653,7 +653,7 @@ INSERT INTO users_index VALUES (1,'','','','',30,0);
 # Dumping data for table 'users_info'
 #
 
-INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
+INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0,0,0,0,0);
 
 #
 # Dumping data for table 'users_key'
