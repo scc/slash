@@ -812,34 +812,42 @@ The 'getOlderStories' template block.
 =cut
 
 sub getOlderStories {
-	my($stories_essentials, $section) = @_;
-	my($count, $stories_bigarray, $today, $stuff);
+	my($stories, $section) = @_;
+	my($count, $newstories, $today, $stuff);
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	for my $sr (@$stories_essentials) {
-
-		my @wordy_split = split / /, $sr->{wordytime};
-		for my $i (0..5) {
-			$sr->{ (qw( w m d h min ampm ))[$i] } = $wordy_split[$i]
-		}
-		$sr->{link} = linkStory({
-			link	=> $sr->{title},
-			sid	=> $sr->{sid},
-			section	=> $sr->{section},
-		});
-		push @$stories_bigarray, $sr;
-
+	for (@$stories) {
+		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
+		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
+		push @$newstories, {
+			sid		=> $sid,
+			section		=> $sect,
+			title		=> $title,
+			'time'		=> $time,
+			commentcount	=> $commentcount,
+			day		=> $day,
+			w		=> $w,
+			'm'		=> $m,
+			d		=> $d,
+			h		=> $h,
+			min		=> $min,
+			ampm		=> $ampm,
+			'link'		=> linkStory({
+				'link'	=> $title,
+				sid	=> $sid,
+				section	=> $sect
+			})
+		};
 	}
 
-	my $yesterday = $slashdb->getDay()
-		unless $form->{issue} > 1 || $form->{issue};
+	my $yesterday = $slashdb->getDay() unless $form->{issue} > 1 || $form->{issue};
 	$yesterday ||= int($form->{issue}) - 1;
 
 	slashDisplay('getOlderStories', {
-		stories		=> $stories_bigarray,
+		stories		=> $newstories,
 		section		=> $section,
 		yesterday	=> $yesterday,
 		start		=> $section->{artcount} + $form->{start},
