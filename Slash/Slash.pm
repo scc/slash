@@ -64,10 +64,19 @@ BEGIN {
 }
 
 getSlashConf();
-$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
+#$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
 																				# put the info for Apache
 																				# to do this later.
 																				# 	-Brian
+{
+	my $r = Apache->request();
+	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	# Even bothering to populate %I will go away soon.
+	# We should be bootstrapped to the point where we 
+	# do not need it.
+	$I{dbobject} = $cfg->{'Apache'}->{'dbslash'};
+}
+
 																				
 
 
