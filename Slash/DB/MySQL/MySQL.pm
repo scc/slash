@@ -2868,8 +2868,12 @@ sub countStorySubmitters {
 	my($self) = @_;
 
 	my $ac_uid = getCurrentAnonymousCoward('uid');
-	my $submitters = $self->sqlSelectAll('count(*) as c, nickname',
-		'stories, users, authors_cache', "users.uid=stories.submitter AND users.uid != $ac_uid AND stories.submitter != authors_cache.uid ",
+	my $uid = $self->sqlSelectColArrayref('uid', 'authors_cache');
+	push @$uid, $ac_uid;
+	my $in_list = join(",", @$uid);
+
+	my $submitters = $self->sqlSelectAll('count(*) as c, users.nickname',
+		'stories, users', "users.uid=stories.submitter AND NOT IN ($in_list)",
 		'GROUP BY users.uid ORDER BY c DESC LIMIT 10'
 	);
 
