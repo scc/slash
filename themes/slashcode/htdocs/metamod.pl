@@ -54,41 +54,41 @@ sub main {
 
 #################################################################
 sub karmaBonus {
-	my ($u, $c) = @_;
+	my ($user, $constants) = @_;
 
-	my $x = $c->{m2_maxbonus} - $u->{karma};
+	my $x = $constants->{m2_maxbonus} - $user->{karma};
 
 	return 0 unless $x > 0;
-	return 1 if rand($c->{m2_maxbonus}) < $x;
+	return 1 if rand($constants->{m2_maxbonus}) < $x;
 	return 0;
 }
 
 #################################################################
 sub metaModerate {
-	my ($id, $f, $u, $db, $c) = @_;
+	my ($id, $form, $user, $dbslash, $constants) = @_;
 
 	my $y = 0;								# Sum of elements from form.
 	my (%metamod, @mmids);
 
 	$metamod{unfair} = $metamod{fair} = 0;
-	foreach (keys %{$f}) {
+	foreach (keys %{$form}) {
 		# Meta mod form data can only be a '+' or a '-' so we apply some
 		# protection from taint.
-		next if $f->{$_} !~ /^[+-]$/; # bad input, bad!
+		next if $form->{$_} !~ /^[+-]$/; # bad input, bad!
 		if (/^mm(\d+)$/) {
-			push(@mmids, $1) if $f->{$_};
-			$metamod{unfair}++ if $f->{$_} eq '-';
-			$metamod{fair}++ if $f->{$_} eq '+';
+			push(@mmids, $1) if $form->{$_};
+			$metamod{unfair}++ if $form->{$_} eq '-';
+			$metamod{fair}++ if $form->{$_} eq '+';
 		}
 	}
 
 	my %m2victims;
 	foreach (@mmids) {
-		if ($y < $c->{m2_comments}) { 
+		if ($y < $constants->{m2_comments}) { 
 			$y++;
-			my $muid = $db->getModeratorLog($_, 'uid');
+			my $muid = $dbslash->getModeratorLog($_, 'uid');
 
-			$m2victims{$_} = [$muid, $f->{"mm$_"}];
+			$m2victims{$_} = [$muid, $form->{"mm$_"}];
 		}
 	}
 
@@ -101,16 +101,16 @@ sub metaModerate {
 	#		SELECT * from metamodlog WHERE uid=x and ts=y 
 	# for a given x and y.
 	my($flag, $ts) = (0, time);
-	if ($y >= $c->{m2_mincheck}) {
+	if ($y >= $constants->{m2_mincheck}) {
 		# Test for excessive number of unfair votes (by percentage)
 		# (Ignore M2 & penalize user)
-		$flag = 2 if ($metamod{unfair}/$y >= $c->{m2_maxunfair});
+		$flag = 2 if ($metamod{unfair}/$y >= $constants->{m2_maxunfair});
 		# Test for questionable number of unfair votes (by percentage)
 		# (Ignore M2).
-		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $c->{m2_toomanyunfair}));
+		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $constants->{m2_toomanyunfair}));
 	}
 
-	my $changes = $db->setMetaMod(\%m2victims, $flag, $ts);
+	my $changes = $dbslash->setMetaMod(\%m2victims, $flag, $ts);
 
 	slashDisplay('results', {
 		changes => $changes,
@@ -118,37 +118,37 @@ sub metaModerate {
 		metamod => \%metamod,
 	});
 
-	$db->setModeratorVotes($u->{uid}, \%metamod) unless $u->{is_anon};
+	$dbslash->setModeratorVotes($user->{uid}, \%metamod) unless $user->{is_anon};
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
-	if ($y > $c->{m2_mincheck} && !$u->{is_anon}) {
-		if (!$flag && karmaBonus($u, $c)) {
+	if ($y > $constants->{m2_mincheck} && !$user->{is_anon}) {
+		if (!$flag && karmaBonus($user, $constants)) {
 			# Bonus Karma For Helping Out - the idea here, is to not 
 			# let meta-moderators get the +1 posting bonus.
 			($change, $excon) =
-				("karma$c->{m2_bonus}", "and karma<$c->{m2_maxbonus}");
-			$change = $c->{m2_maxbonus}
-				if $c->{m2_maxbonus} < $u->{karma} + $c->{m2_bonus};
+				("karma$constants->{m2_bonus}", "and karma<$constants->{m2_maxbonus}");
+			$change = $constants->{m2_maxbonus}
+				if $constants->{m2_maxbonus} < $user->{karma} + $constants->{m2_bonus};
 
 		} elsif ($flag == 2) {
 			# Penalty for Abuse
-			($change, $excon) = ("karma$c->{m2_penalty}", '');
+			($change, $excon) = ("karma$constants->{m2_penalty}", '');
 		}
 
 		# Update karma.
 		# This is an abuse
-		$db->setUser($u->{uid}, { -karma => "karma$change" }) if $change;
+		$dbslash->setUser($user->{uid}, { -karma => "karma$change" }) if $change;
 	}
 }
 
 
 #################################################################
 sub displayTheComments {
-	my ($id, $u, $db, $c) = @_;
+	my ($id, $user, $dbslash, $constants) = @_;
 
-	$u->{points} = 0;
-	my $comments = $db->getMetamodComments($id, $u->{uid}, $c->{m2_comments});
+	$user->{points} = 0;
+	my $comments = $dbslash->getMetamodComments($id, $user->{uid}, $constants->{m2_comments});
 
 	slashDisplay('display', {
 		comments 	=> $comments,
@@ -159,10 +159,10 @@ sub displayTheComments {
 #################################################################
 # This is going to break under replication
 sub isEligible {
-	my ($u, $db, $c) = @_;
+	my ($user, $dbslash, $constants) = @_;
 
-	my $tuid = $db->countUsers();
-	my $last = $db->getModeratorLast($u->{uid});
+	my $tuid = $dbslash->countUsers();
+	my $last = $dbslash->getModeratorLast($user->{uid});
 
 	my $result = slashDisplay('eligibility-tests', {
 		user_count	=> $tuid,
@@ -177,8 +177,8 @@ sub isEligible {
 	# Eligible for M2. Determine M2 comments by selecting random starting
 	# point in moderatorlog.
 	unless ($last->{'lastmmid'}) {
-		$last->{'lastmmid'} = $db->getModeratorLogRandom();
-		$db->setUser($u->{uid}, { lastmmid => $last->{'lastmmid'} });
+		$last->{'lastmmid'} = $dbslash->getModeratorLogRandom();
+		$dbslash->setUser($user->{uid}, { lastmmid => $last->{'lastmmid'} });
 	}
 
 	return $last->{'lastmmid'}; # Hooray!
