@@ -1,0 +1,90 @@
+=head1 NAME
+
+How to write and use plugins
+
+=head1 What is a plugin?
+
+A plugin is an extension to the slash system
+that adds some sort of functionality to
+the site. It should inherit its basic look
+and feel from the currently running theme
+(this means using bg/fg colors and calling
+header and footer components from the main
+site). 
+
+=head1 How do I get my plugin into the install system?
+
+Two ways to do this, first you can put it in the plugin directory 
+with the distribution. During the install it will be copied
+to the plugin directory in /usr/local/slash. The second
+option is to copy it in there yourself and make sure
+that your library files (perl modules) are install in
+site_perl. If you decide to go the first route you
+may want to consider adding you libraries to the list
+that get installed from the Makefile.
+
+=head1 Ok, what does my plugin have to have to make it work with the install?
+
+If you look at the plugins that come with slash you will find a 
+file called PLUGIN. This handles how the plugin installer will
+see your plugin. The following are the keywords it knows:
+
+=over 2
+
+=item description
+
+This is what will be displayed during the install for the user
+to decide what your plugin does.
+
+=item mysql_schema
+
+Schema for MySQL
+
+=item mysql_dump
+
+Dumpfile for MySQL
+
+=item pg_schema
+
+Schema for PostgreSQL
+
+=item pg_dump
+
+Dumpfile for PostgreSQL
+
+=item htdoc
+
+A document that needs to be installed to the htdocs
+of the slashsite.
+
+=item template
+
+A template that needs to be loaded during the install.
+
+=item image
+
+And image to be installed in the image directory.
+
+=item note
+
+A note to show the user when the install is over.
+Good place to put notes about aditional libraries
+needed, or other dependencies.
+
+=back
+
+=head1 How do I install a plugin once my site is installed?
+
+Use the install-plugin tool. 
+
+=head1 Do install-plugin and install-slashsite use the same logic?
+
+Yes, you can find it in the Slash::Install library.
+
+=head1 I have a really cool plugin and I would like to see it added to the slash distribution. Will you distributed mine?
+
+Maybe? We don't have any rules concerning this at the moment, so it will be
+on a case by case basis. At some point in the future we will come up
+with a much better answer.
+
+=cut
