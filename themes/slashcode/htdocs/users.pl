@@ -218,14 +218,8 @@ sub main {
 			formname	=> $formname,
 			checks		=> [],
 		},
-		default		=> {
-			function	=> \&displayForm,
-			seclev		=> 0,
-			formname	=> $formname,
-			checks		=>
-			[ qw (max_post_check generate_formkey) ],
-		},
 	} ;
+	$ops->{default} = $ops->{displayform};
 
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {

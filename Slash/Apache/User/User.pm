@@ -266,16 +266,6 @@ sub userdir_handler {
 
 	if ($uri =~ m[^/~(.+)]) {
 		my($nick, $op) = split /\//, $1, 3;
-		# Slashdot hack, early on a few people had accounts
-		# that were number only.
-		# -Brian
-		if ($nick !~ /^\d+$/) {
-			$r->args("nick=$nick");
-		} else {
-			my $slashdb = getCurrentDB();
-			my $nickname = $slashdb->getUser($nick, 'nickname');
-			$r->args("nick=$nickname");
-		}
 		if ($op eq 'journal') {
 			$r->args("nick=$nick&op=display");
 			$r->uri('/journal.pl');
@@ -287,6 +277,7 @@ sub userdir_handler {
 		} else {
 			$r->uri('/users.pl');
 			$r->filename($constants->{basedir} . '/users.pl');
+			$r->args("nick=$nick");
 		}
 		return OK;
 	}
