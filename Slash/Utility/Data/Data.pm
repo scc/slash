@@ -1245,7 +1245,7 @@ sub addDomainTags {
 
 sub _url_to_domain_tag {
 	my($link) = @_;
-	my $absolutedir = getConstants('absolutedir');
+	my $absolutedir = getCurrentStatic('absolutedir');
 	my $uri = URI->new_abs($link, $absolutedir);
 	my $info = "";
 	if ($uri->can("host")) {
