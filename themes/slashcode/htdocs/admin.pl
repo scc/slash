@@ -30,8 +30,6 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
@@ -121,6 +119,7 @@ sub main {
 		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockrevert}) {
+		my $slashdb = getCurrentDB();
 		$slashdb->revertBlock($form->{thisbid}) if $user->{seclev} < 500;
 		blockEdit($user->{seclev}, $form->{thisbid});
 
@@ -194,12 +193,6 @@ sub main {
 ##################################################################
 # Misc
 sub adminLoginForm {	
-
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-
 	slashDisplay('admin-adminLoginForm');
 }
 
@@ -209,9 +202,6 @@ sub varEdit {
 	my($name) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 	my $varsref;
 
 	my $vars = $slashdb->getDescriptions('vars');
@@ -232,9 +222,7 @@ sub varEdit {
 sub varSave {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	if ($form->{thisname}) {
 		$slashdb->saveVars();
@@ -253,8 +241,7 @@ sub authorEdit {
 
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $authornew = getCurrentForm('authornew');
 
 	return if $user->{seclev} < 500;
 
@@ -262,14 +249,14 @@ sub authorEdit {
 	my $deletebutton_flag = 0;
 
 	$aid ||= $user->{uid};
-	$aid = '' if $form->{authornew};
+	$aid = '' if $authornew;
 
 	my $authors = $slashdb->getDescriptions('authors');
 	my $author = $slashdb->getAuthor($aid) if $aid;
 
 	$author_select = createSelect('myaid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;
-	$deletebutton_flag = 1 if (! $form->{authornew} && $aid ne $user->{uid}) ;
+	$deletebutton_flag = 1 if (! $authornew && $aid ne $user->{uid}) ;
 
 	for ($author->{email}, $author->{copy}) {
 		$_ = stripByMode($_, 'literal', 1);
@@ -289,11 +276,9 @@ sub authorEdit {
 sub authorSave {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 	if ($form->{thisaid}) {
 		# And just why do we take two calls to do
 		# a new user? 
@@ -325,11 +310,9 @@ sub authorDelete {
 	my $aid = shift;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 
 	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
 	print getMessage('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
@@ -357,9 +340,7 @@ sub blockEdit {
 	return if $seclev < 500;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	my($hidden_bid) = "";
 	my ($blockref, $saveflag, $block_select, $retrieve_checked, $portal_checked) ;
@@ -426,15 +407,12 @@ sub blockSave {
 	my($bid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 	return unless $bid;
 	my $saved = $slashdb->saveBlock($bid);
 
-	if ($form->{save_new} && $saved > 0) {
+	if (getCurrentForm('save_new') && $saved > 0) {
 		print getMessage('blockSave-exists-message', { bid => $bid } );
 		return;
 	}	
@@ -450,11 +428,8 @@ sub blockDelete {
 	my($bid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 	$slashdb->deleteBlock($bid);
 	print getMessage('blockDelete-message', { bid => $bid });
 }
@@ -463,13 +438,12 @@ sub blockDelete {
 sub colorEdit {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
 	my($color_select,$block,$colorblock_clean,$title);
 	my $colors = [];
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
@@ -488,6 +462,10 @@ sub colorEdit {
 
 	@{$colors} = split m/,/, $colorblock;
 
+	###########################################################################
+	# This will not give you the desired behavior
+	# Constants are constant
+	###########################################################################
 	$constants->{fg} = [@{$colors}->[0..3]];
 	$constants->{bg} = [@{$colors}->[4..7]];
 
@@ -510,11 +488,9 @@ sub colorEdit {
 sub colorSave {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 500;
+	return if getCurrentUser('seclev') < 500;
 	my $colorblock = join ',', @{$constants}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
 
 	$slashdb->saveColorBlock($colorblock);
@@ -525,11 +501,10 @@ sub colorSave {
 sub topicEdit {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $basedir = getCurrentStatic('basedir');
 
-	return if $user->{seclev} < 1;
+	return if getCurrentUser('seclev') < 1;
 	my($topic, $topics_menu, $topics_select);
 	my @available_images;
 	my $image_select = "";
@@ -537,7 +512,7 @@ sub topicEdit {
 	my ($imageseen_flag,$images_flag) = (0,0);
 
 	local *DIR;
-	opendir(DIR, "$constants->{basedir}/images/topics");
+	opendir(DIR, "$basedir/images/topics");
 	@available_images = grep(/.*\.gif|jpg/i, readdir(DIR)); 
 
 	closedir(DIR);
@@ -588,28 +563,31 @@ sub topicEdit {
 sub topicDelete {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $form_tid = getCurrentForm('tid');
 
-	my $tid = $_[0] || $form->{tid};
+	my $tid = $_[0] || $form_tid;
+########################################
+# WARNING
+# HTML STILL IN CODE
+########################################
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	print "<B>Deleted $tid!</B><BR>";
-	$slashdb->deleteTopic($form->{tid});
-	$form->{tid} = '';
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	$slashdb->deleteTopic($form_tid);
+	$form_tid = '';
 }
 
 ##################################################################
 sub topicSave {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $basedir = getCurrentStatic('basedir');
 
 	if ($form->{tid}) {
 		$slashdb->saveTopic();
 		if (!$form->{width} && !$form->{height}) {
-		    @{ $form }{'width', 'height'} = imgsize("$constants->{basedir}/images/topics/$form->{image}");
+		    @{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
 		}
 	}
 	
@@ -623,9 +601,7 @@ sub listTopics {
 	my($seclev) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $imagedir = getCurrentStatic('imagedir');
 
 	my $topics = $slashdb->getTopics();
 	titlebar('100%', getTitle('listTopics-title'));
@@ -647,7 +623,7 @@ sub listTopics {
 			print qq[\t\t<A NAME="">];
 		}
 
-		print qq[<IMG SRC="$constants->{imagedir}/topics/$topic->{image}" ALT="$topic->{alttext}"
+		print qq[<IMG SRC="$imagedir/topics/$topic->{image}" ALT="$topic->{alttext}"
 			WIDTH="$topic->{width}" HEIGHT="$topic->{height}" BORDER="0"><BR>$topic->{tid}</A>\n\t</TD>\n];
 
 	}
@@ -660,12 +636,9 @@ sub importImage {
 	# Check for a file upload
 	my $section = $_[0];
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $rootdir = getCurrentStatic('rootdir');
 
- 	my $filename = $form->{'importme'};
+ 	my $filename = getCurrentForm('importme');
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -684,7 +657,7 @@ sub importImage {
 	}
 
 	my($w, $h) = imgsize("/tmp/slash/$tf");
-	return qq[<IMG SRC="$constants->{rootdir}/$section/] .  getsiddir() . $filename
+	return qq[<IMG SRC="$rootdir/$section/] .  getsiddir() . $filename
 		. qq[" WIDTH="$w" HEIGHT="$h" ALT="$section">];
 }
 
@@ -693,12 +666,9 @@ sub importFile {
 	# Check for a file upload
 	my $section = $_[0];
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my $rootdir = getCurrentStatic('rootdir');
 
- 	my $filename = $form->{'importme'};
+ 	my $filename = getCurrentForm('importme');
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -714,20 +684,14 @@ sub importFile {
 	} else {
 		return "<attach:not found>";
 	}
-	return qq[<A HREF="$constants->{rootdir}/$section/] . getsiddir() . $filename
+	return qq[<A HREF="$rootdir/$section/] . getsiddir() . $filename
 		. qq[">Attachment</A>];
 }
 
 ##################################################################
 sub importText {
-
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-
 	# Check for a file upload
- 	my $filename = $form->{'importme'};
+ 	my $filename = getCurrentForm('importme');
 	my($r, $buffer);
 	if ($filename) {
 		while (read $filename, $buffer, 1024) {
@@ -969,7 +933,6 @@ sub listStories {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	my($x, $first) = (0, $form->{'next'});
 	my $storylist = $slashdb->getStoryList();
@@ -1061,8 +1024,6 @@ sub rmStory {
 	my($sid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
 	$slashdb->deleteStory($sid);
@@ -1075,9 +1036,6 @@ sub listFilters {
 	my($header, $footer);
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	my $title = getTitle('listFilters-title');
 	my $filter_ref = $slashdb->getContentFilters();
@@ -1094,11 +1052,8 @@ sub editFilter {
 	my($filter_id) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
-	$filter_id ||= $form->{filter_id};
+	$filter_id ||= getCurrentForm('filter_id');
 
 	my @values = qw(regex modifier field ratio minimum_match
 		minimum_length maximum_length err_message);
@@ -1120,9 +1075,7 @@ sub updateFilter {
 	my($filter_action) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 	
 	if ($filter_action == 1) {
 		my $filter_id = $slashdb->createContentFilter();
@@ -1159,13 +1112,11 @@ sub editbuttons {
 sub updateStory {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	# Some users can only post to a fixed section
-	if ($user->{section}) {
-		$form->{section} = $user->{section};
+	if (my $section = getCurrentUser('section')) {
+		$form->{section} = $section;
 		$form->{displaystatus} = 1;
 	}
 
@@ -1173,7 +1124,7 @@ sub updateStory {
 
 	$form->{dept} =~ s/ /-/g;
 
-	($form->{aid}) = $slashdb->getStory($form->{sid}, 'aid')
+	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid')
 		unless $form->{aid};
 	$form->{relatedtext} = getRelated("$form->{title} $form->{bodytext} $form->{introtext}")
 		. otherLinks($slashdb->getAuthor($form->{aid}, 'nickname'), $form->{tid});
@@ -1189,7 +1140,6 @@ sub saveStory {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	$form->{sid} = getsid();
 	$form->{displaystatus} ||= 1 if $user->{section};
