@@ -225,7 +225,7 @@ sub updateStamps {
 # For dailystuff
 sub getDailyMail {	
 	my ($self) = @_;
-	my $columns = "sid,title,section,users.nickname,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";
+	my $columns = "sid,title,section,users.nickname,tid,time,dept";
 	my $tables = "stories,users";
 	my $where = "users.uid = stories.uid AND to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
 	my $other = " ORDER BY time DESC";
@@ -443,10 +443,9 @@ sub getUserLast {
 # For tailslash
 sub pagesServed {
 	my ($self) = @_;
-	my $returnable = $self->sqlSelectAll("count(*),date_format(ts,\"%d_%H\") as h,
-			date_format(ts,\"%d\") as d",
+	my $returnable = $self->sqlSelectAll("count(*),ts",
 			"accesslog", "1=1",
-			"GROUP BY H ORDER BY H ASC");
+			"GROUP BY ts ORDER BY ts ASC");
 
 	return $returnable;
 
