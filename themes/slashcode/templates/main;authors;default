@@ -28,7 +28,7 @@ have posted.</P>
 	<H2><B><A HREF="[% constants.rootdir %]/search.pl?author=[% uid.1 %]">[% authors.$name.nickname %]</A></B>
 	<A HREF="[% authors.$name.fakeemail %]">[% uid.1 %]</A></H2>
 	[% IF admin %]
-		<A HREF="[% constants.rootdir %]/admin.pl?op=authors&uid=[% authors.$name.uid %]">edit</A>
+		<A HREF="[% constants.rootdir %]/admin.pl?authoredit=1&authoruid=[% authors.$name.uid %]">edit</A>
 	[% END %]
 [% authors.$name.bio %]
 [% END %]

@@ -29,14 +29,6 @@ __template__
 	<INPUT TYPE="TEXT" NAME="desc" VALUE="[% FILTER strip_attribute %][% varsref.description %][% END %]" size="60"></TD>
 	</TR>
 	<TR>
-		<TD>Data type</TD>
-		<TD><INPUT TYPE="TEXT" NAME="datatype" VALUE="[% varsref.datatype %]" size="10"></TD>
-	</TR>
-	<TR>
-		<TD>Data Operation</TD>
-		<TD><INPUT TYPE="TEXT" NAME="dataop" VALUE="[% varsref.dataop %]" size="10"></TD>
-	</TR>
-	<TR>
 		<TD COLSPAN="2"><INPUT TYPE="SUBMIT" VALUE="varsave" NAME="op"></TD>
 	<TR>
 </TABLE>

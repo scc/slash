@@ -182,7 +182,7 @@ sub slashDisplay {
 	# it is cached the performance his it is generally light,
 	# and this is the only good way to get the actual name,
 	# page, section, we bite the bullet and do it
-	$tempdata = $slashdb->getTemplateByName($name, [qw[tpid page section]]);
+	$tempdata = $slashdb->getTemplateByName($name, [qw(tpid page section)]);
 
 	$tempname = "ID$tempdata->{tpid} , " .
 		"$name;$tempdata->{page};$tempdata->{section}";

@@ -13,3 +13,4 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','User 
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Variables','/admin.pl?op=vars',10000,14);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','[% USE Slash %][% Slash.db.getSubmissionCount(constants.articles_only) %] Submissions','/submit.pl?op=list',499,8);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('admin','Site Info','/admin.pl?siteinfo=1',100,16);
+
