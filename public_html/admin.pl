@@ -219,7 +219,7 @@ sub varEdit {
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
 	if($name) {
-		$varsref = $slashdb->getVarRef($name);
+		$varsref = $slashdb->getVar($name);
 	}
 
 	slashDisplay('admin-varEdit', { 
@@ -826,9 +826,9 @@ sub editStory {
 	if ($form->{title}) { 
 		$slashdb->setSessionByAid($user->{aid}, { lasttitle => $storyref->{title} });
 
-		($storyref->{writestatus}, $storyref->{displaystatus}, $storyref->{commentstatus}) =
-			$slashdb->getVars('defaultwritestatus','defaultdisplaystatus',
-			'defaultcommentstatus');
+		$storyref->{writestatus} = getVar('defaultwritestatus', 'value');
+		$storyref->{displaystatus} = getVar('defaultdisplaystatus', 'value');
+		$storyref->{commentstatus} = getVar('defaultcommentstatus', 'value');
 
 		$storyref->{aid} ||= $user->{aid};
 		$storyref->{section} = $form->{section};
