@@ -244,7 +244,7 @@ sub ssiHead {
 
 	slashDisplay('ssihead', {
 		dir	=> $dir,
-		section => $user->{currentSection} ? "$user->{currentSection}/" : "";
+		section => $user->{currentSection} ? "$user->{currentSection}/" : "",
 	});
 }
 
@@ -275,7 +275,7 @@ sub ssiFoot {
 
 	slashDisplay('ssifoot', {
 		dir	=> $dir,
-		section => $user->{currentSection} ? "$user->{currentSection}/" : "";
+		section => $user->{currentSection} ? "$user->{currentSection}/" : "",
 	});
 }
 

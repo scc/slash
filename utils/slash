@@ -20,7 +20,7 @@ PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:\
 
 # Slash home
 DATADIR=/usr/local/slash
-SLASHD="$DATADIR/sbin/slashd $SERVER_NAME"
+SLASHD="$DATADIR/sbin/slashd"
 SLASHSITE=$DATADIR/slash.sites
 
 # This is where you store the running PID of the slashd's you start
