@@ -770,6 +770,8 @@ sub setSectionExtra {
 sub createAccessLog {
 	my($self, $op, $dat) = @_;
 	my $constants = getCurrentStatic();
+	my $r = Apache->request;
+    my $hostip = $r->connection->remote_ip; 
 
 	my $uid;
 	if ($ENV{SLASH_USER}) {
@@ -778,11 +780,10 @@ sub createAccessLog {
 		$uid = $constants->{anonymous_coward_uid};
 	}
 
-	my $ipid = getCurrentUser('ipid') || md5_hex($ENV{REMOTE_ADDR});
-	my $tmp_subnetid = $ENV{REMOTE_ADDR};
-	$tmp_subnetid =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
-	$tmp_subnetid = md5_hex($tmp_subnetid);
-	my $subnetid = getCurrentUser('subnetid') || $tmp_subnetid;
+	my $ipid = getCurrentUser('ipid') || md5_hex($hostip);
+	$hostip =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$hostip = md5_hex($hostip);
+	my $subnetid = getCurrentUser('subnetid') || $hostip;
 
 	if ($dat =~ /.*(\d{2}\/\d{2}\/\d{2}\/\d{4,7}).*/) {
 		$dat = $1;
