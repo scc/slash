@@ -39,6 +39,7 @@ use vars qw($VERSION @EXPORT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
+	addDomainTags
 	balanceTags
 	changePassword
 	chopEntity
@@ -1160,6 +1161,108 @@ sub balanceTags {
 	# add on any unclosed tags still on stack
 	$html .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
 
+}
+
+#========================================================================
+
+=head2 addDomainTags(HTML)
+
+To be called only after C<balanceTags>, or results are not guaranteed.
+Munges HTML E<lt>/aE<gt> tags into E<lt>/a foo.comE<gt> tags, where
+"foo.com" is the domain name of the link found in the opening E<lt>aE<gt>
+tag.  Note that this is not proper HTML, and that C<dispComment> knows
+how properly to convert it back to proper HTML.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item HTML
+
+The HTML to tag with domains.
+
+=back
+
+=item Return value
+
+The tagged HTML.
+
+=item Dependencies
+
+Don't know, ask again later.
+
+=back
+
+=cut
+
+sub addDomainTags {
+	my($html) = @_;
+
+	# First step is to eliminate unclosed <A> tags.
+
+	my $in_a = 0;
+	$html =~ s
+	{
+		( < (/?) A \b[^>]* > )
+	}{
+		my $old_in_a = $in_a;
+		my $new_in_a = !$2;
+		$in_a = $new_in_a;
+		(($old_in_a && $new_in_a) ? "</A>" : "") . $1
+	}gixe;
+	$html .= "</A>" if $in_a;
+
+	# Now, since we know that every <A> has a </A>, this pattern will
+	# match and let the subroutine above do its magic properly.
+
+	$html =~ s
+	{
+		(<A[ ]HREF="
+			([^">]+)
+		">[\000-\377]+?)
+		</A\b[^>]*>
+	}{
+		$1 . _url_to_domain_tag($2)
+	}gixe;
+
+	return $html;
+}
+
+sub _url_to_domain_tag {
+	my($link) = @_;
+	my $uri = URI->new_abs($link, $constants->{absolutedir});
+	my $info = "";
+	if ($uri->can("host")) {
+		$info = lc $uri->host;
+		if ($info =~ m/^([\d.]+)\.in-addr\.arpa$/) {
+			$info = join(".", reverse split /\./, $1);
+		}
+		if ($info =~ m/^(\d{1,3}\.){3}\d{1,3}$/) {
+			# leave a numeric IP address alone
+		} elsif ($info =~ m/([\w-]+\.[a-z]{3,4})$/) {
+			# a.b.c.d.com -> d.com
+			$info = $1;
+		} elsif ($info =~ m/([\w-]+\.[a-z]{2,4}\.[a-z]{2})$/) {
+			# a.b.c.d.co.uk -> d.co.uk
+			$info = $1;
+		} else {
+			# any other a.b.c.d.e -> c.d.e
+			$info = join(".", (split /\./, $info)[-3..-1]);
+		}
+	} elsif ($uri->can("scheme")) {
+		# Most schemes, like ftp or http, have a host.  Some,
+		# most notably mailto, do not.  For those, at least give
+		# the user an idea of why not, by listing the scheme.
+		$info = lc $uri->scheme;
+	} else {
+		$info = "?";
+	}
+	if (length($info) >= 25) {
+		$info = substr($info, 0, 10) . "..." . substr($info, -10);
+	}
+	return "</a $info>";
 }
 
 #========================================================================

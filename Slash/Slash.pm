@@ -536,6 +536,7 @@ The 'dispComment' template block.
 
 sub dispComment {
 	my($comment) = @_;
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -547,6 +548,24 @@ sub dispComment {
 		$comment_shrunk = balanceTags(
 			chopEntity($comment->{comment}, $user->{maxcommentsize})
 		);
+		$comment_shrunk = addDomainTags($comment_shrunk);
+	}
+
+	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 1;	# default is 1
+	$udt =~ /^(\d+)$/; $udt = 1 if !length($1);	# make sure it's numeric, sigh
+	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
+	$want_tags = 0 if				# but, don't display them if...
+		$udt == 0				# the user has said they never want the tags
+		or (					# or
+			$udt == 1			# the user leaves it up to us
+			and $comment->{fakeemail}	# and we think the poster has earned tagless posting
+		);
+	if ($want_tags) {
+		$comment->{comment} =~ s{</A ([^>]+)>}{</A> [$1]}g;
+		$comment_shrunk =~ s{</A ([^>]+)>}{</A> [$1]}g if $comment_shrunk;
+	} else {
+		$comment->{comment} =~ s{</A[^>]+>}{</A>}g;
+		$comment_shrunk =~ s{</A[^>]+>}{</A>}g if $comment_shrunk;
 	}
 
 	for (0 .. @{$constants->{reasons}} - 1) {

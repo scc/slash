@@ -371,6 +371,8 @@ sub submitComment {
 
 	return if $error_message || !$form->{postercomment} || !$form->{postersubj};
 
+	$form->{postercomment} = addDomainTags($form->{postercomment});
+
 	# this has to be a template -- pudge
 	titlebar("95%", "Submitted Comment");
 
