@@ -47,6 +47,7 @@ __template__
 <B>[% item.0 %]</B> <A HREF="[% constants.rootdir %]/pollBooth.pl?qid=[% item.2 %]">[% item.1 %]</A><BR>
 [% END %]</P>
 
+[% IF topcomments.size > 0 %]
 <P>[% INCLUDE titlebar title => 'Top 10 Comments' %]
 [% FOREACH top = topcomments %]
 <B>[% top.score %]</B>
@@ -56,6 +57,7 @@ __template__
 	<FONT SIZE="2">attached to [% Slash.linkStory({ link => top.title, section => top.section, sid => top.sid }) %]
 	posted on [% top.sdate %] by [% top.anickname %]</FONT><BR><BR>
 [% END %]</P>
+[% END %]
 
 <P><FONT SIZE="2"><CENTER>generated on [% currtime %]</CENTER></FONT></P>
 __seclev__

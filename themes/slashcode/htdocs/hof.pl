@@ -17,15 +17,21 @@ sub main {
 
 	header(getData('head'), $section->{section});
 
-	my(@topcomments, $topcomments);
-	$topcomments = $slashdb->getCommentsTop($form->{sid});
-	for (@$topcomments) {
-		my $top = $topcomments[@topcomments] = {};
-		# leave as "aid" for now
-		@{$top}{qw(section sid anickname title pid subj cdate sdate uid cid score)} = @$_;
-		my $user_email = $slashdb->getUser($top->{uid}, ['fakeemail', 'nickname']);
-		@{$top}{'fakeemail', 'nickname'} = @{$user_email}{'fakeemail', 'nickname'};
-	}
+	my @topcomments = ( );
+# getCommentsTop() comes in two versions as of 2001/07/12.  The old
+# version takes impossibly long to do a 3-way join on 2.5 million
+# rows.  The new version isn't really written yet.  So I'm just
+# commenting this out until the new version is done.  See
+# Slash/DB/MySQL/MySQL.pm getCommentsTop(). - Jamie 2001/07/12
+#	my $topcomments;
+#	$topcomments = $slashdb->getCommentsTop($form->{sid});
+#	for (@$topcomments) {
+#		my $top = $topcomments[@topcomments] = {};
+#		# leave as "aid" for now
+#		@{$top}{qw(section sid anickname title pid subj cdate sdate uid cid score)} = @$_;
+#		my $user_email = $slashdb->getUser($top->{uid}, ['fakeemail', 'nickname']);
+#		@{$top}{'fakeemail', 'nickname'} = @{$user_email}{'fakeemail', 'nickname'};
+#	}
 
 	slashDisplay('main', {
 		width		=> '98%',

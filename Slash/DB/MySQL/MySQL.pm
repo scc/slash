@@ -2814,23 +2814,47 @@ sub getStoriesEssentials {
 
 ########################################################
 # This is going to blow chunks -Brian
+# To be precise it locks the DB every two hours when hof.pl is run
+# by slashd.  I've commented out the 3-way join and STARTED coding
+# up a replacement (it should select the comments first, then pull
+# from story_heap and users without doing a join).  I don't have
+# time to finish this right now so I've also commented out the code
+# that calls this method, see themes/slashcode/htdocs/hof.pl.
+# - Jamie 2001/07/12
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
-	my $where = "$story_table.sid=$comment_table.sid AND $story_table.uid=users.uid";
-	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, $story_table.sid, users.nickname, title,
-		pid, subject, date, time, $comment_table.uid, cid, points",
-		"$story_table, $comment_table, users",
-		$where,
-		" ORDER BY points DESC, date DESC LIMIT 10 ");
+	# First select the top scoring comments (which on Slashdot or
+	# any big site will just be the latest score:5 comments).
+	my $columns = "sid, pid, cid, uid, points, date, subject";
+	my $tables = $comment_table;
+	my $where = "1=1";
+	my $other = "ORDER BY points DESC, date DESC LIMIT 10";
+	my $top_comments = $self->sqlSelectAll($columns, $tables, $where, $other);
+	formatDate($top_comments, 5);
 
-	formatDate($stories, 6);
-	formatDate($stories, 7);
-	return $stories;
+	# Then we want to match the sids against story_heap.discussion
+	# and then the uids against users.nickname.  But I have not
+	# written that code yet because there are bigger bugs to kill.
+	# Meanwhile...
+	return $top_comments;
+
+#	my $where = "$comment_table.points >= 2 AND $story_table.discussion=$comment_table.sid AND $comment_table.uid=users.uid";
+#	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
+#	my $stories = $self->sqlSelectAll(
+#		"section, $story_table.sid, users.nickname, title, pid,
+#		subject, date, time, $comment_table.uid, cid, points",
+#		"$story_table, $comment_table, users",
+#		$where,
+#		" ORDER BY points DESC, date DESC LIMIT 10"
+#	);
+#
+#	formatDate($stories, 6);
+#	formatDate($stories, 7);
+#	return $stories;
 }
 
 ########################################################
