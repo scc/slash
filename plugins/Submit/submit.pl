@@ -31,7 +31,7 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -62,7 +62,7 @@ sub main {
 		submissionEd();
 
 	} elsif ($op eq 'Update' && $user->{submit_admin}) {
-		my @subids = $dbslash->deleteSubmission();
+		my @subids = $slashdb->deleteSubmission();
 		submissionEd(getData('updatehead', { subids => \@subids }));
 
 	} elsif ($op eq 'GenQuickies' && $user->{submit_admin}) {
@@ -70,7 +70,7 @@ sub main {
 		submissionEd(getData('quickieshead'));
 
 	} elsif ($op eq 'PreviewStory') {
-		$dbslash->insertFormkey('submissions', $id, 'submission');
+		$slashdb->insertFormkey('submissions', $id, 'submission');
 		displayForm($form->{from}, $form->{email}, $form->{section},
 			$id, getData('previewhead'));
 
@@ -92,13 +92,13 @@ sub main {
 
 #################################################################
 sub yourPendingSubmissions {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 
 	return if $user->{is_anon};
 
-	if (my $submissions = $dbslash->getSubmissionsPending()) {
-		my $count = $dbslash->getSubmissionCount();
+	if (my $submissions = $slashdb->getSubmissionsPending()) {
+		my $count = $slashdb->getSubmissionCount();
 		slashDisplay('submit-yourPendingSubmissions', {
 			submissions	=> $submissions,
 			title		=> "Your Recent Submissions (total:$count)",
@@ -111,12 +111,12 @@ sub yourPendingSubmissions {
 #################################################################
 sub previewForm {
 	my($aid, $subid) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $sub = $dbslash->getSubmission($subid,
+	my $sub = $slashdb->getSubmission($subid,
 		[qw(email name subj tid story time comment)]);
 	$sub->{story} =~ s/\n\n/\n<P>/gi;
 	$sub->{story} .= ' ';
@@ -130,7 +130,7 @@ sub previewForm {
 		$sub->{email} = "http://$sub->{email}";
 	}
 
-	$dbslash->setSessionByAid($user->{aid}, { lasttitle => $sub->{subj} });
+	$slashdb->setSessionByAid($user->{aid}, { lasttitle => $sub->{subj} });
 
 	slashDisplay('submit-previewForm', {
 		submission	=> $sub,
@@ -142,16 +142,16 @@ sub previewForm {
 
 #################################################################
 sub genQuickies {
-	my $dbslash = getCurrentDB();
-	my $submissions = $dbslash->getQuickies();
+	my $slashdb = getCurrentDB();
+	my $submissions = $slashdb->getQuickies();
 	my $stuff = slashDisplay('submit-genQuickies', { submissions => $submissions }, 1, 1);
-	$dbslash->setQuickies($stuff);
+	$slashdb->setQuickies($stuff);
 }
 
 #################################################################
 sub submissionEd {
 	my($title) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -165,7 +165,7 @@ sub submissionEd {
 	$def_note	= getData('defaultnote');
 	$cur_section	= $form->{section} || $def_section;
 	$cur_note	= $form->{note} || $def_note;
-	$sections = $dbslash->getSubmissionsSections();
+	$sections = $slashdb->getSubmissionsSections();
 
 	for (@$sections) {
 		my($section, $note, $cnt) = @$_;
@@ -207,7 +207,7 @@ sub submissionEd {
 	});
 
 	my(@submissions, $submissions, @selection);
-	$submissions = $dbslash->getSubmissionForUser(getDateOffset('time'));
+	$submissions = $slashdb->getSubmissionForUser(getDateOffset('time'));
 
 	for (@$submissions) {
 		my $sub = $submissions[@submissions] = {};
@@ -249,12 +249,12 @@ sub submissionEd {
 #################################################################
 sub displayForm {
 	my($username, $fakeemail, $section, $id, $title) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
-	if (!$dbslash->checkTimesPosted('submissions',
+	if (!$slashdb->checkTimesPosted('submissions',
 		$constants->{max_submissions_allowed}, $id, $formkey_earliest)
 	) {
 		errorMessage(getData('maxallowed'));
@@ -265,7 +265,7 @@ sub displayForm {
 		username	=> $form->{from} || $username,
 		fakeemail	=> $form->{email} || $fakeemail,
 		section		=> $form->{section} || $section || $constants->{defaultsection},
-		topic		=> $dbslash->getTopic($form->{tid}),
+		topic		=> $slashdb->getTopic($form->{tid}),
 		literalstory	=> stripByMode($form->{story}, 'literal', 1),
 		width		=> '100%',
 		title		=> $title,
@@ -275,7 +275,7 @@ sub displayForm {
 #################################################################
 sub saveSub {
 	my($id) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
@@ -289,14 +289,14 @@ sub saveSub {
 			return;
 		}
 
-		$dbslash->createSubmission();
+		$slashdb->createSubmission();
 
 		slashDisplay('submit-saveSub', {
 			title		=> 'Saving',
 			width		=> '100%',
 			missingemail	=> length($form->{email}) < 3,
 			anonsubmit	=> length($form->{from}) < 3,
-			submissioncount	=> $dbslash->getSubmissionCount(),
+			submissioncount	=> $slashdb->getSubmissionCount(),
 		});
 	}
 }

@@ -24,53 +24,52 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
-use Slash::DB;
 use Slash::Utility;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
-	getSlash();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 
 	# Set some defaults
-	$I{F}{query}		||= "";
-	$I{F}{section}		||= "";
-	$I{F}{op}		||= "";
-	$I{F}{min}		||= "0";
-	$I{F}{max}		||= "30";
-	$I{F}{threshold}	||= getCurrentUser('threshold');
-	$I{F}{'last'}		||= $I{F}{min} + $I{F}{max};
+	$form->{query}		||= "";
+	$form->{section}	||= "";
+	$form->{op}		||= "";
+	$form->{min}		||= "0";
+	$form->{max}		||= "30";
+	$form->{threshold}	||= getCurrentUser('threshold');
+	$form->{'last'}		||= $form->{min} + $form->{max};
 
 	# get rid of bad characters
-	$I{F}{query} =~ s/[^A-Z0-9'. ]//gi;
+	$form->{query} =~ s/[^A-Z0-9'. ]//gi;
 
-	header("$I{sitename}: Search $I{F}{query}", $I{F}{section});
-	titlebar("99%", "Searching $I{F}{query}");
+	header("$constants->{sitename}: Search $form->{query}", $form->{section});
+	titlebar("99%", "Searching $form->{query}");
 
 	searchForm();
 
-	if	($I{F}{op} eq 'comments')	{ commentSearch()	}
-	elsif	($I{F}{op} eq 'users')		{ userSearch()		}
-	elsif	($I{F}{op} eq 'stories')	{ storySearch()		}
+	if	($form->{op} eq 'comments')	{ commentSearch()	}
+	elsif	($form->{op} eq 'users')	{ userSearch()		}
+	elsif	($form->{op} eq 'stories')	{ storySearch()		}
 	else	{
 		print "Invalid operation!<BR>";
 	}
-	writeLog("search", $I{F}{query})
-		if $I{F}{op} =~ /^(?:comments|stories|users)$/;
+	writeLog("search", $form->{query})
+		if $form->{op} =~ /^(?:comments|stories|users)$/;
 	footer();	
 }
 
 #################################################################
 sub linkSearch {
+	my $form = getCurrentForm();
 	my $C = shift;
 	my $r;
 
 	foreach (qw[threshold query min author op sid topic section total hitcount]) {
 		my $x = "";
 		$x =  $C->{$_} if defined $C->{$_};
-		$x =  $I{F}{$_} if defined $I{F}{$_} && $x eq "";
+		$x =  $form->{$_} if defined $form->{$_} && $x eq "";
 		$x =~ s/ /+/g;
 		$r .= "$_=$x&" unless $x eq "";
 	}
@@ -82,14 +81,18 @@ sub linkSearch {
 
 #################################################################
 sub searchForm {
-	my $SECT = getSection($I{F}{section});
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 
-	my $t = lc $I{sitename};
-	$t = $I{F}{topic} if $I{F}{topic};
-	my $tref = $I{dbobject}->getTopic($t);
+	my $SECT = getSection($form->{section});
+
+	my $t = lc $constants->{sitename};
+	$t = $form->{topic} if $form->{topic};
+	my $tref = $slashdb->getTopic($t);
 	print <<EOT if $tref;
 
-<IMG SRC="$I{imagedir}/topics/$tref->{image}"
+<IMG SRC="$constants->{imagedir}/topics/$tref->{image}"
 	ALIGN="RIGHT" BORDER="0" ALT="$tref->{alttext}"
 	HSPACE="30" VSPACE="10" WIDTH="$tref->{width}"
 	HEIGHT="$tref->{height}">
@@ -98,13 +101,13 @@ EOT
 
 	print <<EOT;
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	<INPUT TYPE="TEXT" NAME="query" VALUE="$I{F}{query}">
+	<INPUT TYPE="TEXT" NAME="query" VALUE="$form->{query}">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
 EOT
 
-	$I{F}{op} ||= "stories";
+	$form->{op} ||= "stories";
 	my %ch;
-	$ch{$I{F}{op}} = $I{F}{op} ? ' CHECKED' : '';
+	$ch{$form->{op}} = $form->{op} ? ' CHECKED' : '';
 
 	print <<EOT;
 	<INPUT TYPE="RADIO" NAME="op" VALUE="stories"$ch{stories}> Stories
@@ -113,68 +116,72 @@ EOT
 
 EOT
 
-	if ($I{F}{op} eq "stories") {
-		my $authors = $I{dbobject}->getDescriptions('authors');
-		createSelect('author', $authors, $I{F}{author});
-	} elsif ($I{F}{op} eq "comments") {
+	if ($form->{op} eq "stories") {
+		my $authors = $slashdb->getDescriptions('authors');
+		createSelect('author', $authors, $form->{author});
+	} elsif ($form->{op} eq "comments") {
 		print <<EOT;
-	Threshold <INPUT TYPE="TEXT" SIZE="3" NAME="threshold" VALUE="$I{F}{threshold}">
-	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$I{F}{sid}">
+	Threshold <INPUT TYPE="TEXT" SIZE="3" NAME="threshold" VALUE="$form->{threshold}">
+	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$form->{sid}">
 EOT
 	}
 
-	selectSection("section", $I{F}{section}, $SECT)
-		unless $I{F}{op} eq "users";
+	selectSection("section", $form->{section}, $SECT)
+		unless $form->{op} eq "users";
 	print "\n<P></FORM>\n\n";
 }
 
 #################################################################
 sub commentSearch {
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
+
 	print <<EOT;
 <P>This search covers the name, email, subject and contents of
 each of the last 30,000 or so comments posted.  Older comments
 are removed and currently only visible as static HTML.<P>
 EOT
 	
-	my $prev = $I{F}{min} - $I{F}{max};
+	my $prev = $form->{min} - $form->{max};
 	print linkSearch({
-		'link'	=> "<B>$I{F}{min} previous matches...</B>",
+		'link'	=> "<B>$form->{min} previous matches...</B>",
 		min	=> $prev
 	}), "<P>" if $prev >= 0;
 	
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 
-	if ($I{F}{sid}) {
-		my $title = $I{dbobject}->getNewstoryTitle($I{F}{sid}) || "discussion";
+	if ($form->{sid}) {
+		my $title = $slashdb->getNewstoryTitle($form->{sid}) || "discussion";
 
 		printf "<B>Return to %s</B><P>", linkComment({
-			sid	=> $I{F}{sid},
+			sid	=> $form->{sid},
 			pid	=> 0,
 			subject	=> $title
 		});
 		print "</B><P>";
-		return unless $I{F}{query};
+		return unless $form->{query};
 	}
 
-	my $search = $I{dbobject}->getSearch();
-	my $x = $I{F}{min};
+	my $search = $slashdb->getSearch();
+	my $x = $form->{min};
 	for (@$search) {
 		my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,
 		$cdate, $uid, $cid, $match) = @$_;
-		last if $I{F}{query} && !$match;
+		last if $form->{query} && !$match;
 		$x++;
 
 		my $href = $ws == 10
-			? "$I{rootdir}/$section/$sid.shtml#$cid"
-			: "$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
+			? "$constants->{rootdir}/$section/$sid.shtml#$cid"
+			: "$constants->{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
 
-		my $user_email = $I{dbobject}->getUser($uid, ['fakeemail', 'nickname']);
+		my $user_email = $slashdb->getUser($uid, ['fakeemail', 'nickname']);
 		printf <<EOT, $match ? $match : $x;
 <BR><B>%s</B>
 	<A HREF="$href">$subj</A>
 	by <A HREF="mailto:$user_email->{fakeemail}">$user_email->{nickname}</A> on $cdate<BR>
-	<FONT SIZE="2">attached to <A HREF="$I{rootdir}/$section/$sid.shtml">$title</A> 
+	<FONT SIZE="2">attached to <A HREF="$constants->{rootdir}/$section/$sid.shtml">$title</A> 
 	posted on $sdate by $aid</FONT><BR>
 EOT
 	}
@@ -186,20 +193,24 @@ EOT
 	print "<P>", linkSearch({
 		'link'	=> "<B>More matches...</B>",
 		min	=> $x
-	}) unless !$x || $x < $I{F}{max};
+	}) unless !$x || $x < $form->{max};
 }
 
 #################################################################
 sub userSearch {
-	my $prev = int($I{F}{min}) - $I{F}{max};
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
+
+	my $prev = int($form->{min}) - $form->{max};
 	print linkSearch({
-		'link'	=> "<B>$I{F}{min} previous matches...</B>",
+		'link'	=> "<B>$form->{min} previous matches...</B>",
 		min	=> $prev
 	}), "<P>" if $prev >=0;
 
 	my($x, $cnt) = 0;
 
-	my $users = $I{dbobject}->getSearchUsers($I{F}, getCurrentStatic('anonymous_coward_uid'));
+	my $users = $slashdb->getSearchUsers($form->, getCurrentStatic('anonymous_coward_uid'));
 	for (@$users) {
 		my($fakeemail, $nickname, $uid) = @$_;
 		my $ln = $nickname;
@@ -209,7 +220,7 @@ sub userSearch {
 	email: <A HREF="mailto:$fakeemail">$fakeemail</A>
 EOT
 		print <<EOT;
-<A HREF="$I{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp;
+<A HREF="$constants->{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp;
 ($uid) $fake<BR>
 EOT
 
@@ -222,26 +233,28 @@ EOT
 	print "<P>";
 	print linkSearch({
 		'link'	=> "<B>More matches...</B>",
-		min	=> $I{F}{'last'},
-	}) unless !$x || $x < $I{F}{max};
+		min	=> $form->{'last'},
+	}) unless !$x || $x < $form->{max};
 }
 
 #################################################################
 sub storySearch {
-	my $prev = $I{F}{min} - $I{F}{max};
+	my $form = getCurrentForm();
+
+	my $prev = $form->{min} - $form->{max};
 	print linkSearch({
-		'link'	=> "<B>$I{F}{min} previous matches...</B>",
+		'link'	=> "<B>$form->{min} previous matches...</B>",
 		min	=> $prev
 	}), "<P>" if $prev >= 0;
 
 	my($x, $cnt) = 0;
 	print " ";
 
-	my $stories = $I{dbobject}->getSearchStory($I{F});
+	my $stories = $slashdb->getSearchStory($form->);
 	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
-		last unless $cnt || ! $I{F}{query};
-		print $cnt ? $cnt :  $x + $I{F}{min};
+		last unless $cnt || ! $form->{query};
+		print $cnt ? $cnt :  $x + $form->{min};
 		print " ";
 		print linkStory({
 			section	=> $section,
@@ -257,11 +270,11 @@ sub storySearch {
 	my $remaining = "";
 	print "<P>", linkSearch({
 		'link'	=> "<B>More Articles...</B>",
-		min	=> $I{F}{'last'}
-	}) unless !$x || $x < $I{F}{max};
+		min	=> $form->{'last'}
+	}) unless !$x || $x < $form->{max};
 }
 
-main;
-# Don't kick the baby
-#$I{dbh}->disconnect if $I{dbh};
+#################################################################
+main();
+
 1;

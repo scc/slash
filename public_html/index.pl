@@ -28,7 +28,7 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -55,9 +55,9 @@ sub main {
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section});
 
-	my $stories = $dbslash->getStories($section, $constants->{currentSection});
+	my $stories = $slashdb->getStories($section, $constants->{currentSection});
 	slashDisplay('index', {
-		is_moderator	=> scalar $dbslash->checkForModerator($user),
+		is_moderator	=> scalar $slashdb->checkForModerator($user),
 		stories		=> scalar displayStories($stories),
 		boxes		=> scalar displayStandardBlocks($section, $stories)
 	});
@@ -73,10 +73,10 @@ sub main {
 # places (modules, index, users); let's come back to it later.  -- pudge
 sub saveUserBoxes {
 	my(@a) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	$user->{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
-	$dbslash->setUser($user->{uid}, { exboxes => $user->{exboxes} })
+	$slashdb->setUser($user->{uid}, { exboxes => $user->{exboxes} })
 		unless $user->{is_anon};
 }
 
@@ -129,14 +129,14 @@ sub rmBid {
 #################################################################
 sub displayStandardBlocks {
 	my($section, $olderStuff) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
 	return if $user->{noboxes};
 
 	my(@boxes, $return);
-	my($boxBank, $sectionBoxes) = $dbslash->getPortalsCommon();
+	my($boxBank, $sectionBoxes) = $slashdb->getPortalsCommon();
 	my $getblocks = $section->{section} || 'index';
 
 	if ($user->{exboxes} && $getblocks eq 'index') {
@@ -179,7 +179,7 @@ sub displayStandardBlocks {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
-				$dbslash->getBlock($bid, 'block'),
+				$slashdb->getBlock($bid, 'block'),
 				$boxBank->{$bid}{bid},
 				$boxBank->{$bid}{url}
 			);

@@ -11,6 +11,9 @@ use base qw(Template::Plugin);
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 
+# BENDER: Forget your stupid theme park!  I'm gonna make my own!
+# With hookers!  And blackjack!  In fact, forget the theme park!
+
 my %subs;
 sub _populate {
 	return if %subs;

@@ -23,6 +23,9 @@ $VERSION = '0.01';
 
 bootstrap Slash::Apache::User $VERSION;
 
+# BENDER: Oh, so, just 'cause a robot wants to kill humans
+# that makes him a radical?
+
 sub SlashEnableENV ($$$) {
 	my($cfg, $params, $flag) = @_;
 	$cfg->{env} = $flag;
@@ -43,7 +46,7 @@ sub handler {
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $dbcfg->{constants};
-	my $dbslash = $dbcfg->{dbslash};
+	my $slashdb = $dbcfg->{slashdb};
 
 	# let pass unless / or .pl
 	unless ($cfg->{auth}){
@@ -53,7 +56,7 @@ sub handler {
 		}
 	}
 
-	$dbslash->sqlConnect;
+	$slashdb->sqlConnect;
 
 	# Don't remove this. This solves a known bug in Apache -- brian
 	$r->method('GET');
@@ -66,7 +69,7 @@ sub handler {
 	my $uid;
 	my $op = $form->{op} || '';
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
-		my $tmpuid = $dbslash->getUserUID($form->{unickname});
+		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 		if ($newpass) {
 			$r->err_header_out(Location =>
@@ -87,7 +90,7 @@ sub handler {
 	} elsif ($cookies->{user}) {
 		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
 		($uid, my($cookpasswd)) =
-			$dbslash->getUserAuthenticate($tmpuid, $password);
+			$slashdb->getUserAuthenticate($tmpuid, $password);
 
 		if ($uid) {
 			# password in cookie was not encrypted, so
@@ -142,7 +145,7 @@ sub userLogin {
 
 	$passwd = substr $passwd, 0, 20;
 	my($uid, $cookpasswd, $newpass) =
-		$cfg->{dbslash}->getUserAuthenticate($name, $passwd, 1);
+		$cfg->{slashdb}->getUserAuthenticate($name, $passwd, 1);
 
 	if (!isAnon($uid)) {
 		setCookie('user', bakeUserCookie($uid, $cookpasswd));
@@ -156,20 +159,20 @@ sub userLogin {
 # get all the user data, d00d
 sub getUser {
 	my($form, $cookies, $uid) = @_;
-	my($r, $cfg, $constants, $dbslash, $user);
+	my($r, $cfg, $constants, $slashdb, $user);
 
 	$r = Apache->request;
 	$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	$constants = $cfg->{constants};
-	$dbslash = $cfg->{dbslash};
+	$slashdb = $cfg->{slashdb};
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
-	if (!isAnon($uid) && ($user = $dbslash->getUserInstance($uid, $r->uri))) {
-		my $timezones = $dbslash->getCodes('tzcodes');
+	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {
+		my $timezones = $slashdb->getCodes('tzcodes');
 		$user->{offset} = $timezones->{ $user->{tzcode} };
 
-		my $dateformats = $dbslash->getCodes('dateformats');
+		my $dateformats = $slashdb->getCodes('dateformats');
 		$user->{'format'} = $dateformats->{ $user->{dfid} };
 
 		$user->{is_anon} = 0;
@@ -191,7 +194,7 @@ sub getUser {
 	if ($form->{op} eq 'adminlogin') {
 		my $sid;
 		($user->{aseclev}, $sid) =
-			$dbslash->setAdminInfo($form->{aaid}, $form->{apasswd});
+			$slashdb->setAdminInfo($form->{aaid}, $form->{apasswd});
 		if ($user->{aseclev}) {
 			$user->{aid} = $form->{aaid};
 			setCookie('session', $sid);
@@ -202,7 +205,7 @@ sub getUser {
 
 	} elsif ($cookies->{session} && length($cookies->{session}->value) > 3) {
 		(@{$user}{qw[aid aseclev asection url]}) =
-			$dbslash->getAdminInfo(
+			$slashdb->getAdminInfo(
 				$cookies->{session}->value,
 				$constants->{admin_timeout}
 			);

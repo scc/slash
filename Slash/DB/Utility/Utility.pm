@@ -3,8 +3,9 @@ package Slash::DB::Utility;
 use strict;
 use Slash::Utility;
 
-	
 ($Slash::DB::Utility::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+# BENDER: Oh no! Not the magnet! 
 
 #Class variable that stores the database handle
 

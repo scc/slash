@@ -14,24 +14,27 @@ $VERSION = '1.00';
 
 bootstrap Slash::Apache $VERSION;
 
+# BENDER: There's nothing wrong with murder, just as long
+# as you let Bender whet his beak.
+
 sub SlashVirtualUser ($$$) {
 	my($cfg, $params, $user) = @_;
 	$cfg->{VirtualUser} = $user;
-	$cfg->{dbslash} = Slash::DB->new($user);
-	$cfg->{constants} = $cfg->{dbslash}->getSlashConf();
+	$cfg->{slashdb} = Slash::DB->new($user);
+	$cfg->{constants} = $cfg->{slashdb}->getSlashConf();
 
 	# Backwards compatibility
-	$cfg->{constants}{dbh} = $cfg->{dbslash}{dbh};
-	my $anonymous_coward = $cfg->{dbslash}->getUserInstance(
+	$cfg->{constants}{dbh} = $cfg->{slashdb}{dbh};
+	my $anonymous_coward = $cfg->{slashdb}->getUserInstance(
 		$cfg->{constants}{anonymous_coward_uid}
 	);
-	my $actz = $cfg->{dbslash}->getACTz(
+	my $actz = $cfg->{slashdb}->getACTz(
 		$anonymous_coward->{tzcode}, $anonymous_coward->{dfid}
 	);
 	@{$anonymous_coward}{keys %$actz} = values %$actz;
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
-	$cfg->{menus} = $cfg->{dbslash}->getMenus();
+	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 }
 
 sub IndexHandler {

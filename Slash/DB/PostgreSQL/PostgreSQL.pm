@@ -1677,7 +1677,7 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
 	my($tuid) = sqlSelect('count(*)', 'users');
-	# what to do with %I here?
+	# what to do with I hash here?
 	return 1;  # OK to M2
 }
 
@@ -2455,7 +2455,8 @@ sub getSlashConf {
 		'Underrated'
 	];
 
-	$conf{badreasons} = 4; # number of "Bad" reasons in @$I{reasons}, skip 0 (which is neutral)
+	$conf{badreasons} = 4;	# number of "Bad" reasons in @{$constants->{reasons}},
+				# skip 0 (which is neutral)
 	return \%conf;
 }
 

@@ -7,6 +7,9 @@ use Apache::Constants qw(:common);
 
 $Slash::Apache::Log::VERSION = '0.01';
 
+# AMY: Leela's gonna kill me.
+# BENDER: Naw, she'll probably have me do it.
+
 sub handler {
 	my($r) = @_;
 	my $slashdb = getCurrentDB();

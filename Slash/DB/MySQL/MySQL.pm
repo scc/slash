@@ -7,6 +7,8 @@ use URI ();
 @Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
+# BENDER: I hate people who love me.  And they hate me.
+
 my $timeout = 30; #This should eventualy be a parameter that is configurable
 # The following two are for CommonPortals
 
@@ -568,6 +570,9 @@ sub getDescriptions {
 # Get user info from the users table.
 # If you don't pass in a $script, you get everything
 # which is handy for you if you need the entire user
+
+# why not just axe this entirely and always get all the data? -- pudge
+
 sub getUserInstance {
 	my($self, $uid, $script) = @_;
 
@@ -589,9 +594,9 @@ sub getUserInstance {
 	# what is this for?  it appears to want to do the same as the
 	# code above ... but this assigns a scalar to a scalar ...
 	# perhaps `@{$user}{ keys %foo } = values %foo` is wanted?  -- pudge
-	$user->{ keys %$user_extra } = values %$user_extra;
+#	$user->{ keys %$user_extra } = values %$user_extra;
 
-#	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/) {
+#	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/)
 	{
 		my $user_extra = $self->sqlSelectHashref('*', "users_comments", "uid=$uid");
 		while (my($key, $val) = each %$user_extra) {
@@ -600,7 +605,7 @@ sub getUserInstance {
 	}
 
 	# Do we want the index stuff?
-#	if (!$script || $script =~ /index/) {
+#	if (!$script || $script =~ /index/)
 	{
 		my $user_extra = $self->sqlSelectHashref('*', "users_index", "uid=$uid");
 		while (my($key, $val) = each %$user_extra) {
@@ -898,23 +903,28 @@ sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
 	my($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
-	my($count) = $self->sqlSelect("count(*)","sections","section = '$section'");
-	#This is a poor attempt at a transaction I might add. -Brian
-	#I need to do this diffently under Oracle
-	if ($count) {
-		$self->sqlDo("INSERT into sections (section) VALUES( '$section')"
-		);
+	my $section_dbh = $self->{dbh}->quote($section);
+	my($count) = $self->sqlSelect("count(*)","sections","section=$section_dbh");
+	my($ok1, $ok2);
+
+	# This is a poor attempt at a transaction I might add. -Brian
+	# I need to do this diffently under Oracle
+	unless ($count) {
+		$self->sqlDo("INSERT into sections (section) VALUES($section_dbh)");
+		$ok1++ unless $self->{dbh}->errstr;
 	}
-	$self->sqlUpdate("sections", {
+
+	$self->sqlUpdate('sections', {
 			qid   => $qid,
 			title   => $title,
 			issue   => $issue,
 			isolate   => $isolate,
 			artcount  => $artcount
-		}, "section=" . $self->{dbh}->quote($section)
+		}, "'section=$section_dbh"
 	);
+	$ok2++ unless $self->{dbh}->errstr;
 
-	return $count;
+	return($count, $ok1, $ok2);
 }
 
 ########################################################
@@ -1704,7 +1714,7 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
 	my($tuid) = $self->sqlSelect('count(*)', 'users');
-	# what to do with %I here?
+	# what to do with I hash here?
 	return 1;  # OK to M2
 }
 
@@ -1884,22 +1894,23 @@ sub saveVars {
 #this is almost copied verbatium. Needs to be cleaned up
 	my($self) = @_;
 	my $form = getCurrentForm();
+	my $name = $form->{thisname};
 	if ($form->{desc}) {
 		my($exists) = $self->sqlSelect('count(*)', 'vars',
-			"name='$form->{thisname}'"
+			"name=$name"
 		);
 		if ($exists == 0) {
 			$self->sqlInsert('vars', { name => $form->{thisname} });
 		}
 		$self->sqlUpdate("vars", {
-			value => $form->{value},
-			description => $form->{desc},
-			datatype => $form->{datatype},
-			dataop	=> $form->{dataop}
-			}, "name=" . $self->{dbh}->quote($form->{thisname})
+				value		=> $form->{value},
+				description	=> $form->{desc},
+				datatype	=> $form->{datatype},
+				dataop		=> $form->{dataop}
+			}, "name=$name"
 		);
 	} else {
-		$self->sqlDo("DELETE from vars WHERE name='$form->{thisname}'");
+		$self->sqlDo("DELETE from vars WHERE name=$name");
 	}
 }
 
@@ -2494,7 +2505,8 @@ sub getSlashConf {
 		'Underrated'
 	];
 
-	$conf{badreasons} = 4; # number of "Bad" reasons in @$I{reasons}, skip 0 (which is neutral)
+	$conf{badreasons} = 4;	# number of "Bad" reasons in @{$constants->{reasons}},
+				# skip 0 (which is neutral)
 	return \%conf;
 }
 

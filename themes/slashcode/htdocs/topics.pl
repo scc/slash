@@ -50,25 +50,25 @@ sub main {
 #################################################################
 sub topTopics {
 	my($section) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm(); 
 
 	$section->{issue} = 0;  # should this be local() ?  -- pudge
 
 	my(@topics, $topics);
-	$topics = $dbslash->getTopNewsstoryTopics($form->{all});
+	$topics = $slashdb->getTopNewsstoryTopics($form->{all});
 
 	for (@$topics) {
 		my $top = $topics[@topics] = {};
 		@{$top}{qw(tid alttext image width height cnt)} = @$_;
-		$top->{count} = $dbslash->countStory($top->{tid});
+		$top->{count} = $slashdb->countStory($top->{tid});
 
 		my $limit = $top->{cnt} > 10
 			? 10 : $top->{cnt} < 3 || $form->{all}
 			? 3 : $top->{cnt};
 
 		$top->{stories} = getOlderStories(
-			$dbslash->getStories($section, $limit, $top->{tid}),
+			$slashdb->getStories($section, $limit, $top->{tid}),
 			$section
 		);
 	}
@@ -85,13 +85,13 @@ sub topTopics {
 
 #################################################################
 sub listTopics {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
 	slashDisplay('topics-listTopics', {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('aseclev') > 500,
-		topics		=> $dbslash->getTopics()
+		topics		=> $slashdb->getTopics()
 	});
 
 }

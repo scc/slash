@@ -25,17 +25,14 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '$I';
 use Slash;
-use Slash::DB;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my($constants, $dbslash) = createEnvironment($virtual_user);
-$I = $constants;
+my($constants, $slashdb) = createEnvironment($virtual_user);
 
 sub moderatordLog {
 	local *LOG;
-	my $dir = "$I->{logdir}";
+	my $dir = "$constants->{logdir}";
 	open LOG, ">>$dir/moderatord.log"
 		or die "Can't append to $dir/moderatord.log: $!";
 	print LOG localtime() . "\t", join("\t", @_), "\n";
@@ -45,29 +42,29 @@ sub moderatordLog {
 
 sub comments2tokens {
 	my $comments = shift;
-	my $tokenpool = $comments * $I->{tokenspercomment};
+	my $tokenpool = $comments * $constants->{tokenspercomment};
 	moderatordLog("$comments becomes $tokenpool tokens.");
 
-	my $stirredpoints = dbslash->stirPool();
-	$tokenpool += $stirredpoints * $I->{tokensperpoint};
+	my $stirredpoints = $slashdb->stirPool();
+	$tokenpool += $stirredpoints * $constants->{tokensperpoint};
 	moderatordLog(
 		($stirredpoints ? "Stirred out $stirredpoints points, " : '')
 		. "So the total token Pool=$tokenpool");
 
-	my($totalusers) = $dbslash->getUserLast();
+	my($totalusers) = $slashdb->getUserLast();
 	my $eligibleusers = int($totalusers / 5) * 4;
 	moderatordLog("First $eligibleusers accounts available");
 
-	my $report = $dbslash->giveKarma($eligibleusers, $tokenpool);
+	my $report = $slashdb->giveKarma($eligibleusers, $tokenpool);
 	moderatordLog($report);
 }
 
-my($tc, $lc) = $dbslash->getVars("totalComments", "lastComments");
+my($tc, $lc) = $slashdb->getVars("totalComments", "lastComments");
 my $newcomments = $tc - $lc;
 #$newcomments+=1000;
 
 if ($newcomments > 0) {
-	$dbslash->setVar("lastComments", $tc);
+	$slashdb->setVar("lastComments", $tc);
 	comments2tokens($newcomments);
-	$dbslash->tokens2points();
+	$slashdb->tokens2points();
 }

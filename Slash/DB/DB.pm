@@ -4,6 +4,9 @@ use strict;
 use DBIx::Password;
 
 $Slash::DB::VERSION = '0.01';
+
+# BENDER: Bender's a genius!
+
 # Note to me (AKA Brian) GATEWAY_INTERFACE is not working. Need
 # to find something else to determine this.
 sub new {

@@ -24,20 +24,17 @@
 #  $Id$
 ###############################################################################
 use strict;
+use CGI ();
 use Image::Size;
 use Slash;
-use Slash::Utility;
-use Slash::DB;
 use Slash::Display;
-use CGI ();
+use Slash::Utility;
 
 sub main {
-	getSlash();
-
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 	getSection('admin');
 

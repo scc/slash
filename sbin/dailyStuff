@@ -29,7 +29,6 @@ use strict;
 use File::Basename;
 use File::Path;
 use Slash;
-use Slash::DB;
 use Slash::Utility;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';

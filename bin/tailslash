@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+die "needs to be ported to bender.\n";
+
+__END__
+
 use strict;
 use lib '../';
 use vars '%I';

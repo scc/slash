@@ -11,6 +11,10 @@ use Template::Provider;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 $DEBUG		= $Template::Provider::DEBUG || 0 unless defined $DEBUG;
 
+# BENDER: Oh, no room for Bender, huh?  Fine.  I'll go build my own lunar
+# lander.  With blackjack.  And hookers.  In fact, forget the lunar lander
+# and the blackjack!  Ah, screw the whole thing.
+
 use constant PREV => 0;
 use constant NAME => 1;
 use constant DATA => 2; 
@@ -58,14 +62,14 @@ sub fetch {
 
 sub _load {
 	my($self, $name, $text) = @_;
-	my($data, $error, $dbslash);
+	my($data, $error, $slashdb);
 	my $now = time;
 
 	if (defined $text) {
 		$text = $$text;
 	} else {
-		$dbslash = getCurrentDB();
-		$text = $dbslash->getBlock($name, 'block');
+		$slashdb = getCurrentDB();
+		$text = $slashdb->getBlock($name, 'block');
 	}
 
 	print STDERR "_load($name)\n" if $DEBUG;

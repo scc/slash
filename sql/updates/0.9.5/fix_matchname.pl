@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 # call from slash root as `sql/fix_matchname.pl`
 
+die "needs to be ported to bender.\n";
+
+__END__
+
 BEGIN { @ARGV = '' }
 
 use strict;

@@ -62,6 +62,11 @@ require Exporter;
 );
 $Slash::Utility::VERSION = '0.01';
 
+# LEELA: We're going to deliver this crate like professionals.
+# FRY: Aww, can't we just dump it in the sewer and say we delivered it?
+# BENDER: Too much work!  I say we burn it, then *say* we dumped it in the sewer!
+
+
 # These are package variables that are used when you need to use the
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
@@ -508,7 +513,7 @@ sub getCurrentDB {
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		$slashdb = $const_cfg->{'dbslash'};
+		$slashdb = $const_cfg->{slashdb};
 	} else {
 		$slashdb = $static_db;
 	}

@@ -230,7 +230,6 @@ sub mailPassword {
 	my($uid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 
 	my $user_email = $slashdb->getUser($uid, ['nickname','realemail']);
 
@@ -266,7 +265,6 @@ sub userInfo {
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
-	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
 	my $userbio = $slashdb->getUser($uid);
@@ -362,15 +360,7 @@ sub editUser {
 	my($uid) = @_;
 
 	my $slashdb = getCurrentDB();
-
-	my @values = qw(
-		realname realemail fakeemail homepage nickname
-		passwd sig seclev bio maillist
-	);
-
-	my $user_edit = $slashdb->getUser($uid, \@values);
-
-	$user_edit->{uid} = $uid;
+	my $user_edit = $slashdb->getUser($uid);
 	$user_edit->{homepage} ||= "http://";
 
 	return if isAnon($user_edit->{uid});
@@ -469,35 +459,26 @@ sub editHome {
 	my($uid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
+	return if isAnon(getCurrentUser('uid'));
 
-	my @values = qw(
-		realname realemail fakeemail homepage nickname
-		passwd sig seclev bio maillist dfid tzcode maxstories
-		extid exsect exaid exboxes mylinks
-	);
-
-	my $user_edit = $slashdb->getUser($uid, \@values);
-
-	return if isAnon($user->{uid});
-
+	my $user_edit = $slashdb->getUser($uid);
 	my $title = getTitle('editHome_title'); 
 
 	my $formats;
 	$formats = $slashdb->getDescriptions('dateformats');
-	my $tzformat_select = createSelect('tzformat', $formats, $user->{dfid}, 1);
+	my $tzformat_select = createSelect('tzformat', $formats, $user_edit->{dfid}, 1);
 
 	$formats = $slashdb->getDescriptions('tzcodes');
-	my $tzcode_select = createSelect('tzcode', $formats, $user->{tzcode}, 1);
+	my $tzcode_select = createSelect('tzcode', $formats, $user_edit->{tzcode}, 1);
 
-	my $l_check = $user->{light}	? ' CHECKED' : '';
-	my $b_check = $user->{noboxes}	? ' CHECKED' : '';
-	my $i_check = $user->{noicons}	? ' CHECKED' : '';
-	my $w_check = $user->{willing}	? ' CHECKED' : '';
+	my $l_check = $user_edit->{light}	? ' CHECKED' : '';
+	my $b_check = $user_edit->{noboxes}	? ' CHECKED' : '';
+	my $i_check = $user_edit->{noicons}	? ' CHECKED' : '';
+	my $w_check = $user_edit->{willing}	? ' CHECKED' : '';
 
 	my $tilde_ed = tildeEd(
-		$user->{extid}, $user->{exsect},
-		$user->{exaid}, $user->{exboxes}, $user->{mylinks}
+		$user_edit->{extid}, $user_edit->{exsect},
+		$user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks}
 	);
 
 	slashDisplay('users-editHome', {
@@ -518,13 +499,10 @@ sub editComm {
 	my($uid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my ($formats, $commentmodes_select, $commentsort_select, $uthreshold_select, $highlightthresh_select, $posttype_select);
+	my($formats, $commentmodes_select, $commentsort_select,
+		$uthreshold_select, $highlightthresh_select, $posttype_select);
 
-	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
-	my $user_edit = $slashdb->getUser($uid, \@values);
-
-	$user_edit->{uid} = $uid;
-
+	my $user_edit = $slashdb->getUser($uid);
 	my $title = getTitle('editComm_title');
 
 	$formats = $slashdb->getDescriptions('commentmodes');

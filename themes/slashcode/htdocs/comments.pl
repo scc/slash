@@ -349,7 +349,7 @@ EOT
 # Validate comment, looking for errors
 sub validateComment {
 	my($comm, $subj, $preview) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -451,7 +451,7 @@ EOT
 
 	}
 
-	my $dupRows = $dbslash->countComments($form->{sid}, '', '', $form->{postercomment});
+	my $dupRows = $slashdb->countComments($form->{sid}, '', '', $form->{postercomment});
 
 	if ($dupRows || !$form->{sid}) { 
 		editComment(), return unless $preview;
@@ -488,7 +488,7 @@ EOT
 	# minimum length (minimum length of that comment has to be to be tested), err_message 
 	# message displayed upon failure to post if regex matches contents.
 	# make sure that we don't select new filters without any regex data
-	my $filters = $dbslash->getContentFilters();
+	my $filters = $slashdb->getContentFilters();
 
 	for (@$filters) {
 		my($number_match, $regex);

@@ -48,24 +48,24 @@ sub main {
 	if ($op eq 'rmsub' && $seclev > 99) {  # huh?
 
 	} elsif ($form->{addsection}) {
-		titlebar("100%", "Add Section");
+		titlebar('100%', getData('addhead'));
 		editSection();
 
 	} elsif ($form->{deletesection} || $form->{deletesection_cancel} || $form->{deletesection_confirm}) {
 		delSection($form->{section});
 		listSections($user);
 
-	} elsif ($op eq "editsection" || $form->{editsection}) {
-		titlebar("100%", "Editing $form->{section} Section");
+	} elsif ($op eq 'editsection' || $form->{editsection}) {
+		titlebar('100%', getData('edithead'));
 		editSection($form->{section});
 
 	} elsif ($form->{savesection}) {
-		titlebar("100%", "Saving $form->{section}");
+		titlebar('100%', getData('savehead'));
 		saveSection($form->{section});
 		listSections($user);
 
 	} elsif ((! defined $op || $op eq 'list') && $seclev > 499) {
-		titlebar("100%", "Sections");
+		titlebar('100%', getData('listhead');
 		listSections($user);
 	}
 
@@ -75,7 +75,7 @@ sub main {
 #################################################################
 sub listSections {
 	my($user) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
 	if ($user->{asection}) {
 		editSection($user->{asection});
@@ -83,14 +83,14 @@ sub listSections {
 	}
 
 	slashDisplay('sections-listSections', {
-		sections => $dbslash->getSectionTitle()
+		sections => $slashdb->getSectionTitle()
 	});
 }
 
 #################################################################
 sub delSection {
 	my($section) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
 	if ($form->{deletesection}) {
@@ -107,14 +107,14 @@ sub delSection {
 			title	=> "Deleted $section Section",
 			width	=> '100%'
 		});
-		$dbslash->deleteSection($section);
+		$slashdb->deleteSection($section);
 	}
 }
 
 #################################################################
 sub editSection {
 	my($section) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
@@ -122,8 +122,8 @@ sub editSection {
 	if ($form->{addsection}) {
 		$this_section = {};
 	} else {
-		$this_section = $dbslash->getSection($section);
-		my $blocks = $dbslash->getSectionBlock($section);
+		$this_section = $slashdb->getSection($section);
+		my $blocks = $slashdb->getSectionBlock($section);
 
 		for (@$blocks) {
 			my $block = $blocks[@blocks] = {};
@@ -133,11 +133,11 @@ sub editSection {
 		}
 	}
 
-	my $qid = createSelect('qid', $dbslash->getPollQuestions(),
+	my $qid = createSelect('qid', $slashdb->getPollQuestions(),
 		$this_section->{qid}, 1);
-	my $isolate = createSelect('isolate', $dbslash->getDescriptions('isolatemodes'),
+	my $isolate = createSelect('isolate', $slashdb->getDescriptions('isolatemodes'),
 		$this_section->{isolate}, 1);
-	my $issue = createSelect('issue', $dbslash->getDescriptions('issuemodes'),
+	my $issue = createSelect('issue', $slashdb->getDescriptions('issuemodes'),
 		$this_section->{issue}, 1);
 
 	slashDisplay('sections-editSection', {
@@ -154,7 +154,7 @@ sub editSection {
 #################################################################
 sub saveSection {
 	my($section) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
 	# Non alphanumerics are not allowed in the section key.
@@ -162,16 +162,17 @@ sub saveSection {
 	# dashes should be allowed.
 	$section =~ s/[^A-Za-z0-9\-]//g;
 
-	my $status = $dbslash->setSection(
+	my($count, $ok1, $ok2) = $slashdb->setSection(
 		@{$form}{qw(section qid title issue isolate artcount)}
 	);
 
-	unless ($status) {
+	unless ($ok1) {
 		print getData('insert', { section => $section });
 	}
 
-	print getData('update', { section => $section })
-		unless $dbslash->{dbh}->errstr;  # ack!  no can do this! -- pudge
+	unless ($ok2) {
+		print getData('update', { section => $section });
+	}
 }
 
 #################################################################

@@ -49,6 +49,8 @@ use Template;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 @EXPORT		= qw(slashDisplay slashDisplaySection);
 
+# BENDER: Well I don't have anything else planned for today, let's get drunk!
+
 #========================================================================
 
 =item slashDisplay(NAME [, DATA, RETURN, NOCOMM])
@@ -164,10 +166,10 @@ Side effects
 
 sub slashDisplaySection {
 	my $name = shift;  # yes, shift
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
 
-	if (!ref $name && $thissect && $dbslash->getBlock($thissect . "_$name", 'block')) {
+	if (!ref $name && $thissect && $slashdb->getBlock($thissect . "_$name", 'block')) {
 		slashDisplay($thissect . "_$name", @_);
 	} else {
 		slashDisplay($name, @_);

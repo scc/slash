@@ -35,7 +35,6 @@ use URI::Escape;
 use XML::RSS;
 
 use Slash;
-use Slash::DB;
 use Slash::Utility;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';

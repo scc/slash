@@ -31,7 +31,7 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 
@@ -67,7 +67,7 @@ sub main {
 	} else {
 		my $vote = vote($form->{qid}, $form->{aid});
 		printComments($form->{qid})
-			if $vote && ! $dbslash->getVar('nocomment', 'value');
+			if $vote && ! $slashdb->getVar('nocomment', 'value');
 	}
 
 	writeLog('pollbooth', $form->{qid});

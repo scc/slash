@@ -30,7 +30,7 @@ use Slash::Utility;
 
 ##################################################################
 sub main {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -38,7 +38,7 @@ sub main {
 	header(getData('head'));
 
 	my @portals;
-	my $portals = $dbslash->getPortals();
+	my $portals = $slashdb->getPortals();
 
 	for (@$portals) {
 		my $portal = {};

@@ -38,7 +38,7 @@ use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 
-use vars qw($VERSION @ISA @EXPORT %I $CRLF);
+use vars qw($VERSION @ISA @EXPORT);
 
 # this is the worst damned warning ever, so SHUT UP ALREADY!
 $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
@@ -47,49 +47,18 @@ $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 $VERSION = '1.0.9';
 @ISA	 = 'Exporter';
 @EXPORT  = qw(
-	getSlash linkStory getSection currentAdminUsers
-	selectTopic selectSection horizmenu
-	getsid getsiddir getWidgetBlock
-	anonLog pollbooth header footer
-	prepEvalBlock prepBlock formLabel
-	titlebar fancybox portalbox printComments displayStory
-	sendEmail getOlderStories timeCalc
-	getEvalBlock dispStory lockTest getSlashConf
-	dispComment linkComment redirect
-	getFormkeyId checkSubmission errorMessage createSelect
-	createEnvironment createMenu displayThread
-	selectMode selectSortcode selectThreshold moderatorCommentLog
-);
-$CRLF = "\015\012";
+	checkSubmission createEnvironment createMenu createSelect
+	currentAdminUsers dispComment displayStory displayThread
+	dispStory errorMessage fancybox footer getFormkeyId
+	getOlderStories getSection getSectionBlock getsid getsiddir
+	header horizmenu linkComment linkStory lockTest
+	moderatorCommentLog pollbooth portalbox printComments
+	redirect selectMode selectSection selectSortcode
+	selectThreshold selectTopic sendEmail titlebar
+	anonLog timeCalc
+);  # anonLog, timeCalc?
 
-
-###############################################################################
-# Let's get this party Started
-# Entirely legacy at this point
-sub getSlashConf {
-	my $constants = getCurrentStatic();
-	# Yes this is ugly and should go away
-	# Just as soon as the last of %I is gone, this is gone
-	@I{ keys %$constants } = values %$constants;
-
-	return \%I;
-}
-
-
-###############################################################################
-# Entirely legacy at this point
-sub getSlash {
-	return unless $ENV{GATEWAY_INTERFACE};
-
-	# %I legacy
-	$I{dbobject} = getCurrentDB();
-	$I{F} = getCurrentForm();
-	$I{U} = getCurrentUser();
-
-	getSlashConf();  # remove when %I is gone
-
-	return 1;
-}
+# BENDER: Fry, of all the friends I've had ... you're the first.
 
 #========================================================================
 
@@ -170,9 +139,9 @@ Return value
 
 sub selectTopic {
 	my($label, $default, $return) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
-	my $topicbank = $dbslash->getTopics();
+	my $topicbank = $slashdb->getTopics();
 	my %topics = map {
 		($_, $topicbank->{$_}{alttext})
 	} keys %$topicbank;
@@ -215,7 +184,7 @@ Dependencies
 
 sub selectSection {
 	my($label, $default, $SECT, $return) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
 	$SECT ||= {};
 	if ($SECT->{isolate}) {
@@ -225,7 +194,7 @@ sub selectSection {
 	}
 
 	my $aseclev = getCurrentUser('aseclev');
-	my $sectionbank = $dbslash->getSections();
+	my $sectionbank = $slashdb->getSections();
 	my %sections = map {
 		($_, $sectionbank->{$_}{title})
 	} grep {
@@ -249,8 +218,8 @@ Return value
 =cut
 
 sub selectSortcode {
-	my $dbslash = getCurrentDB();
-	createSelect('commentsort', $dbslash->getCodes('sortcodes'),
+	my $slashdb = getCurrentDB();
+	createSelect('commentsort', $slashdb->getCodes('sortcodes'),
 		getCurrentUser('commentsort'), 1);
 }
 
@@ -268,9 +237,9 @@ Return value
 =cut
 
 sub selectMode {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
-	createSelect('mode', $dbslash->getCodes('commentmodes'),
+	createSelect('mode', $slashdb->getCodes('commentmodes'),
 		getCurrentUser('mode'), 1);
 }
 
@@ -312,59 +281,22 @@ sub selectThreshold  {
 	createSelect('threshold', \%data, getCurrentUser('threshold'), 1, 1);
 }
 
-
-########################################################
-# Prep for evaling (no \r allowed)
-sub prepEvalBlock {
-	my($b) = @_;
-	$b =~ s/\r//g;
-	return $b;
-}
-
-########################################################
-# Preps a block for evaling (escaping out " mostly)
-sub prepBlock {
-	my($b) = @_;
-	$b =~ s/\r//g;
-	$b =~ s/"/\\"/g;
-	$b = qq!"$b";!;
-	return $b;
-}
-
-########################################################
-# Gets a block, and ready's it for evaling
-sub getEvalBlock {
-	my($name) = @_;
-	my $block = getSectionBlock($name);
-	my $execme = prepEvalBlock($block);
-	return $execme;
-}
-
 ########################################################
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists
 sub getSectionBlock {
 	my($name) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
 	my $block;
 
 	if ($thissect) {
-		$block = $dbslash->getBlock("${thissect}_${name}", 'block');
+		$block = $slashdb->getBlock("${thissect}_${name}", 'block');
 	}
-	$block ||= $dbslash->getBlock($name, 'block');
+
+	$block ||= $slashdb->getBlock($name, 'block');
 	return $block;
 }
-
-########################################################
-# Get a Block based on mode, section & name, and prep it for evaling
-sub getWidgetBlock {
-	my($name) = @_;
-	my $block = getSectionBlock($name);
-	my $execme = prepBlock($block);
-	return $execme;
-}
-
 
 ###############################################################	
 #  What is it?  Where does it go?  The Random Leftover Shit
@@ -493,9 +425,8 @@ sub getSectionColors {
 		@colors = split m/,/, getSectionBlock('colors');
 	}
 
-	# %I included for backward compatability
-	$I{fg} = $constants->{fg} = [@colors[0..3]];
-	$I{bg} = $constants->{bg} = [@colors[4..7]];
+	$constants->{fg} = [@colors[0..3]];
+	$constants->{bg} = [@colors[4..7]];
 }
 
 
@@ -507,8 +438,8 @@ sub getSection {
 	my($section) = @_;
 	return { title => getCurrentStatic('slogan'), artcount => getCurrentUser('maxstories') || 30, issue => 3 }
 		unless $section;
-	my $dbslash = getCurrentDB();
-	return $dbslash->getSection($section);
+	my $slashdb = getCurrentDB();
+	return $slashdb->getSection($section);
 }
 
 
@@ -545,19 +476,19 @@ Dependencies
 
 sub pollbooth {
 	my($qid, $no_table, $center) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
-	$qid = $dbslash->getVar('currentqid', 'value') unless $qid;
+	$qid = $slashdb->getVar('currentqid', 'value') unless $qid;
 	my $sect = $constants->{currentSection};
-	my $polls = $dbslash->getPoll($qid);
+	my $polls = $slashdb->getPoll($qid);
 
 	my $pollbooth = slashDisplay('pollbooth', {
 		polls		=> $polls,
 		question	=> $polls->[0][0],
 		qid		=> stripByMode($qid, 'attribute'),
-		voters		=> $dbslash->getPollQuestion($qid, 'voters'),
-		comments	=> $dbslash->countComments($qid),
+		voters		=> $slashdb->getPollQuestion($qid, 'voters'),
+		comments	=> $slashdb->countComments($qid),
 		sect		=> $sect,
 	}, 1);
 
@@ -672,11 +603,11 @@ Dependencies
 
 sub currentAdminUsers {
 	my $html_to_display;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	my $aids = $dbslash->currentAdmin();
+	my $aids = $slashdb->currentAdmin();
 	for (@$aids) {
 		if ($_->[0] eq $user->{aid}) {
 		    $_->[1] = "-";
@@ -1039,7 +970,7 @@ sub portalbox {
 # Behold, the beast that is threaded comments
 sub selectComments {
 	my($sid, $cid) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -1047,7 +978,7 @@ sub selectComments {
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
 
-	my $thisComment = $dbslash->getCommentsForUser($sid, $cid);
+	my $thisComment = $slashdb->getCommentsForUser($sid, $cid);
 	for my $C (@$thisComment) {
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
@@ -1080,7 +1011,7 @@ sub selectComments {
 	my $count = @$thisComment;
 
 	getCommentTotals($comments);
-	$dbslash->updateCommentTotals($sid, $comments) if $form->{ssi};
+	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
 	reparentComments($comments);
 	return($comments,$count);
 }
@@ -1097,7 +1028,7 @@ sub getCommentTotals {
 ########################################################
 sub reparentComments {
 	my($comments) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
@@ -1108,7 +1039,7 @@ sub reparentComments {
 
 	# adjust depth for root pid or cid
 	if (my $cid = $form->{cid} || $form->{pid}) {
-		while ($cid && (my($pid) = $dbslash->getCommentPid($form->{sid}, $cid))) {
+		while ($cid && (my($pid) = $slashdb->getCommentPid($form->{sid}, $cid))) {
 			$depth++;
 			$cid = $pid;
 		}
@@ -1214,13 +1145,13 @@ sub printComments {
 
 	if ($user->{mode} ne 'archive') {
 		my($title, $section);
-		my $dbslash = getCurrentDB();
+		my $slashdb = getCurrentDB();
 
-		if ($dbslash->getStory($sid)) {
-			$title = $dbslash->getStory($sid, 'title');
-			$section = $dbslash->getStory($sid, 'section');
+		if ($slashdb->getStory($sid)) {
+			$title = $slashdb->getStory($sid, 'title');
+			$section = $slashdb->getStory($sid, 'section');
 		} else {
-			my $story = $dbslash->getNewStory($sid, ['title', 'section']);
+			my $story = $slashdb->getNewStory($sid, ['title', 'section']);
 			$title = $story->{title};
 			$section = $story->{section};
 		}
@@ -1671,10 +1602,10 @@ sub displayStory {
 	# caller is the pagename of the calling script
 	my($sid, $full, $caller) = @_;
 
-	my $dbslash = getCurrentDB();
-	my $story = $dbslash->getStory($sid);
-	my $author = $dbslash->getAuthor($story->{aid});
-	my $topic = $dbslash->getTopic($story->{tid});
+	my $slashdb = getCurrentDB();
+	my $story = $slashdb->getStory($sid);
+	my $author = $slashdb->getAuthor($story->{aid});
+	my $topic = $slashdb->getTopic($story->{tid});
 	
 	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
@@ -1683,7 +1614,7 @@ sub displayStory {
 
 	# get extra data from section table for this story
 	# (if exists)
-	$dbslash->setSectionExtra($full, $story);
+	$slashdb->setSectionExtra($full, $story);
 
 	my $return = dispStory($story, $author, $topic, $full);
 	return($return, $story, $author, $topic);
@@ -1774,12 +1705,12 @@ Dependencies
 sub getOlderStories {
 	my($stories, $section) = @_;
 	my($count, $newstories, $today, $stuff);
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories ||= $dbslash->getStories($section, $constants->{currentSection});
+	$stories ||= $slashdb->getStories($section, $constants->{currentSection});
 	for (@$stories) {
 		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
@@ -1807,7 +1738,7 @@ sub getOlderStories {
 	slashDisplay('getOlderStories', {
 		stories		=> $newstories,
 		section		=> $section,
-		yesterday	=> (($form->{issue} > 1 || $form->{issue}) ? $dbslash->getDay() : int($form->{issue})) - 1,
+		yesterday	=> (($form->{issue} > 1 || $form->{issue}) ? $slashdb->getDay() : int($form->{issue})) - 1,
 		min		=> $section->{artcount} + $form->{min},
 	}, 1);
 }
@@ -1849,11 +1780,11 @@ sub matchingStrings {
 sub lockTest {
 	my($subj) = @_;
 	return unless $subj;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
 	my $msg;
-	my $locks = $dbslash->getLock();
+	my $locks = $slashdb->getLock();
 	for (@$locks) {
 		my($subject, $aid) = @$_;
 		if ($aid ne getCurrentUser('aid') && (my $pct = matchingStrings($subject, $subj))) {
@@ -1945,10 +1876,10 @@ sub intervalString {
 ##################################################################
 sub submittedAlready {
 	my($formkey, $formname) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 
 	# find out if this form has been submitted already
-	my($submitted_already, $submit_ts) = $dbslash->checkForm($formkey, $formname)
+	my($submitted_already, $submit_ts) = $slashdb->checkForm($formkey, $formname)
 		or errorMessage(getData('noformkey')), return;
 
 		if ($submitted_already) {
@@ -1972,7 +1903,7 @@ sub errorMessage {
 # make sure they're not posting faster than the limit
 sub checkSubmission {
 	my($formname, $limit, $max, $id) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
@@ -1980,7 +1911,7 @@ sub checkSubmission {
 	# may be the cause
 	my $formkey = getCurrentForm('formkey');
 
-	my $last_submitted = $dbslash->getSubmissionLast($id, $formname);
+	my $last_submitted = $slashdb->getSubmissionLast($id, $formname);
 
 	my $interval = time() - $last_submitted;
 
@@ -1992,22 +1923,22 @@ sub checkSubmission {
 		return;
 
 	} else {
-		if ($dbslash->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
+		if ($slashdb->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
 			undef $formkey unless $formkey =~ /^\w{10}$/;
 
-			unless ($formkey && $dbslash->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
-				$dbslash->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
+				$slashdb->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				errorMessage(getData('invalidformkey'));
 				return;
 			}
 
 			if (submittedAlready($formkey, $formname)) {
-				$dbslash->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+				$slashdb->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				return;
 			}
 
 		} else {
-			$dbslash->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+			$slashdb->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 			errorMessage(getData('maxposts', {
 				max		=> $max,
 				timeframe	=> intervalString($constants->{formkey_timeframe})
@@ -2024,8 +1955,9 @@ sub checkSubmission {
 # to Apache do not choke.
 sub createEnvironment {
 	my($virtual_user) = @_;
-	my $slashdb = new Slash::DB($virtual_user);
+	my $slashdb = Slash::DB->new($virtual_user);
 	my $constants = $slashdb->getSlashConf();
+
 	# We assume that the user for scripts is the anonymous user
 	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
 	createCurrentDB($slashdb);
@@ -2061,7 +1993,7 @@ Dependencies
 
 sub createMenu {
 	my($menu) = @_;
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $menu_items = getCurrentMenu($menu);

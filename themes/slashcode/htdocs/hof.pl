@@ -30,27 +30,27 @@ use Slash::Utility;
 
 ##################################################################
 sub main {
-	my $dbslash = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $section = getSection($form->{section});
 
 	header(getData('head'), $section->{section});
 
 	my(@topcomments, $topcomments);
-	$topcomments = $dbslash->getCommentsTop($form->{sid});
+	$topcomments = $slashdb->getCommentsTop($form->{sid});
 	for (@$topcomments) {
 		my $top = $topcomments[@topcomments] = {};
 		@{$top}{qw(section sid aid title pid subj cdate sdate uid cid score)} = @$_;
-		my $user_email = $dbslash->getUser($top->{uid}, ['fakeemail', 'nickname']);
+		my $user_email = $slashdb->getUser($top->{uid}, ['fakeemail', 'nickname']);
 		@{$top}{'fakeemail', 'nickname'} = @{$user_email}{'fakeemail', 'nickname'};
 	}
 
 	slashDisplay('hof-main', {
 		width		=> '98%',
-		actives		=> $dbslash->countStories(),
-		visited		=> $dbslash->countStoriesStuff(),
-		activea		=> $dbslash->countStoriesAuthors(),
-		activep		=> $dbslash->countPollquestions(),
+		actives		=> $slashdb->countStories(),
+		visited		=> $slashdb->countStoriesStuff(),
+		activea		=> $slashdb->countStoriesAuthors(),
+		activep		=> $slashdb->countPollquestions(),
 		currtime	=> scalar localtime,
 		topcomments	=> \@topcomments,
 	});
