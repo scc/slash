@@ -5,4 +5,5 @@ use DBIx::Password;
 WriteMakefile(
     'NAME'	=> 'Slash::Journal',
     'VERSION_FROM' => 'Journal.pm', # finds $VERSION
+    'PM'	=> { 'Journal.pm' => '$(INST_LIBDIR)/Journal.pm' },
 );
