@@ -22,6 +22,55 @@ my $commonportals; # portals on the front page.
 my $boxes;
 my $sectionBoxes;
 
+# For the getDecriptionsk() method
+my %descriptions = (
+	'sortcodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'sortcodes') },
+	
+	'tzcodes'
+		=> sub { $_[0]->sqlSelectMany('tz,description', 'tzcodes') },
+	
+	'dateformats'
+		=> sub { $_[0]->sqlSelectMany('id,description', 'dateformats') },
+	
+	'commentmodes'
+		=> sub { $_[0]->sqlSelectMany('mode,name', 'commentmodes') },
+	
+	'threshcodes'
+		=> sub { $_[0]->sqlSelectMany('thresh,description', 'threshcodes') },
+	
+	'postmodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'postmodes') },
+	
+	'isolatemodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'isolatemodes') },
+	
+	'issuemodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'issuemodes') },
+	
+	'vars'
+		=> sub { $_[0]->sqlSelectMany('name,description', 'vars') },
+	
+	'topics'
+		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
+	
+	'maillist'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'maillist') },
+	
+	'displaycodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'displaycodes') },
+	
+	'commentcodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'commentcodes') },
+	
+	'sections'
+		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
+	
+	'sectionblocks'
+		=> sub { $_[0]->sqlSelectMany('bid,title', 'sections', 'portal=1') }
+	
+);
+
 
 ########################################################
 # Notes:
@@ -192,72 +241,14 @@ sub getDescriptions {
 # become a generic getDescription method
   my $self = shift; # Shit off to keep things clean
   my $codetype = shift; # Shit off to keep things clean
-	my $sth;
 	my $codeBank_hash_ref={};
-	if($codetype eq 'sortcodes') {
-		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
-	}
-	if($codetype eq 'tzcodes') {
-		$sth = $self->sqlSelectMany('tz,description', 'tzcodes');
-	}
-	if($codetype eq 'dateformats') {
-		$sth = $self->sqlSelectMany('id,description', 'dateformats');
-	}
-	if($codetype eq 'commentmodes') {
-		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
-	}
-	if($codetype eq 'threshcodes') {
-		$sth = $self->sqlSelectMany('thresh,description', 'threshcodes');
-	}
-	if($codetype eq 'postmodes') {
-		$sth = $self->sqlSelectMany('code,name', 'postmodes');
-	}
-	if($codetype eq 'isolatemodes') {
-		$sth = $self->sqlSelectMany('code,name', 'isolatemodes');
-	}
-	if($codetype eq 'issuemodes') {
-		$sth = $self->sqlSelectMany('code,name', 'issuemodes');
-	}
-	if($codetype eq 'vars') {
-		$sth = $self->sqlSelectMany('name,description', 'vars');
-	}
-	if($codetype eq 'topics') {
-		$sth = $self->sqlSelectMany('tid,alttext', 'topics');
-	}
-	if($codetype eq 'maillist') {
-		$sth = $self->sqlSelectMany('code,name', 'maillist');
-	}
-	if($codetype eq 'displaycodes') {
-		$sth = $self->sqlSelectMany('code,name', 'displaycodes');
-	}
-	if($codetype eq 'commentcodes') {
-		$sth = $self->sqlSelectMany('code,name', 'commentcodes');
-	}
-	if($codetype eq 'sections') {
-		$sth = $self->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title');
-	}
-	if($codetype eq 'sections') {
-		$sth = $self->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title');
-	}
-	if($codetype eq 'sectionblocks') {
-		$sth = $self->sqlSelectMany('bid,title', 'sections', 'portal=1');
-	}
+	my $sth = $descriptions{$codetype}($self);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 	$sth->finish;
 
 	return  $codeBank_hash_ref;
-}
-########################################################
-# We can't use getDescription() because of the extra
-# parameter at some point I may solve this
-sub getDescriptionSections {
-	my ($self) = @_;
-	my $sections = $self->sqlSelectAll('section,title', 'sections', 'isolate=0', 'order by title');
-
-	return $sections;
-
 }
 ########################################################
 # Get user info from the users table.
@@ -810,6 +801,14 @@ sub getColorBlock {
 	$sth->finish;
 
 	return  $block_hash_ref;
+}
+########################################################
+sub getSectionblocks {
+	my ($self) = @_;
+
+	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
+
+	retunr $blocks;
 }
 
 ########################################################

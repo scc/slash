@@ -487,7 +487,7 @@ EOT
 	<P><MULTICOL COLS="3">
 EOT
 
-	my $sections_description = $I{dbobject}->getDescriptionSections();
+	my $sections_description = $I{dbobject}->getSectionblocks();
 	for (@$sections_description) {
 		my($bid,$title,$o) = @$_;
 		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";

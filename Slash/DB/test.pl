@@ -145,3 +145,6 @@ for my $authordescriptions (@$authordescriptions) {
 	print "\tAuthorDescription :@$authordescriptions\n";
 }
 print "ok 16\n";
+print "Testing getDescription()\n";
+my $desc = $object->getDescriptions(commentmodes);
+print "ok 17\n";
