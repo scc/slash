@@ -47,7 +47,6 @@ $werder = new Silly::Werder;
 {
 	my $kmin = $constants->{minkarma} || -25;
 	my $kmax = $constants->{maxkarma};
-print "min $kmin max $kmax\n";
 
 	for (1..$opts{num_users}) {
 		$werder->set_syllables_num(2, 4);
