@@ -405,14 +405,17 @@ The 'linkStory' template block.
 sub linkStory {
 	my($story_link) = @_;
 	my $user = getCurrentUser();
-	my($mode, $threshold);
+	my($mode, $threshold, $dynamic);
 
 	if ($ENV{SCRIPT_NAME} || !$story_link->{section}) {
 		$mode = $story_link->{mode} || $user->{mode};
 		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
+		# all the logic for whether to do dynamic or static link
+		# goes right here
+		$dynamic = 1 if $story_link->{mode} || exists $story_link->{threshold} || $ENV{SCRIPT_NAME};
 	}
 
-	return _hard_linkComment($story_link, $mode, $threshold)
+	return _hard_linkComment($story_link, $mode, $threshold, $dynamic)
 		if getCurrentStatic('comments_hardcoded');
 
 	return slashDisplay('linkStory', {
@@ -421,7 +424,7 @@ sub linkStory {
 		sid		=> $story_link->{sid},
 		section		=> $story_link->{section},
 		text		=> $story_link->{'link'},
-		dynamic		=> 1,
+		dynamic		=> $dynamic,
 	}, { Return => 1, Nocomm => 1 });
 }
 
@@ -1004,17 +1007,16 @@ sub lockTest {
 ########################################################
 # this sucks, but it is here for now
 sub _hard_linkStory {
-	my($story_link, $mode, $threshold) = @_;
+	my($story_link, $mode, $threshold, $dynamic) = @_;
 	my $constants = getCurrentStatic();
-	if (getCurrentForm('ssi') && !$threshold) {
-	    return qq[<A HREF="$constants->{rootdir}/$story_link->{section}/$story_link->{sid}.shtml">$story_link->{link}</A>];
-
-        } else {
+	if ($dynamic) {
 	    my $link = qq[<A HREF="$constants->{rootdir}/article.pl?sid=$story_link->{sid}];
             $link .= "&amp;mode=$mode" if $mode;
             $link .= "&amp;threshold=$threshold" if $threshold;
 	    $link .= qq[">$story_link->{link}</A>];
             return $link;
+        } else {
+	    return qq[<A HREF="$constants->{rootdir}/$story_link->{section}/$story_link->{sid}.shtml">$story_link->{link}</A>];
         }
 }
 

@@ -18,11 +18,10 @@ en_US
 __name__
 linkStory
 __template__
-[% USE Slash %]
-[% IF form.ssi && !threshold %]
-<A HREF="[% constants.rootdir %]/[% section %]/[% sid %].shtml">[% text %]</A>
-[% ELSE %]
+[% IF dyanmic %]
 <A HREF="[% constants.rootdir %]/article.pl?sid=[% sid %][% IF mode %]&amp;mode=[% mode %][% END %][% IF threshold %]&amp;threshold=[% threshold %][% END %]">[% text %]</A>
+[% ELSE %]
+<A HREF="[% constants.rootdir %]/[% section %]/[% sid %].shtml">[% text %]</A>
 [% END %]
 __seclev__
 10000
