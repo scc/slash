@@ -10,6 +10,7 @@ use vars qw( %task );
 
 $task{$me}{timespec} = '*/30 * * * *';
 $task{$me}{code} = sub {
+	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $sections = getSectionInfo();
 
 	my $new_template = slashDisplay('sectionindex', {
