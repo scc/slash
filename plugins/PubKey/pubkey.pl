@@ -31,6 +31,7 @@ sub main {
 	my $content = $slashdb->getUser($uid, 'pubkey');
 
 	if($content) {
+		$content = strip_nohtml($content);
 		$r->print($content);
 	} else {
 		$r->print(getData('no_key'));
