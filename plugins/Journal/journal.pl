@@ -386,11 +386,11 @@ sub saveArticle {
 				$description = $article->{description};
 				$form->{tid} = $article->{tid};
 			}
-			my $did = $slashdb->createDiscussion(
-				$description,
-				"$rootdir/journal.pl?op=display&id=$form->{id}&uid=$user->{uid}",
-				$form->{tid}
-			);
+			my $did = $slashdb->createDiscussion( {
+				title => $description,
+				topic => $form->{tid},
+				url => "$rootdir/journal.pl?op=display&id=$form->{id}&uid=$user->{uid}",
+				});
 			$update{discussion}  = $did;
 
 		# update description if changed
@@ -418,11 +418,11 @@ sub saveArticle {
 
 		if ($constants->{journal_comments} && $form->{journal_discuss}) {
 			my $rootdir = $constants->{'rootdir'};
-			my $did = $slashdb->createDiscussion(
-				$description,
-				"$rootdir/journal.pl?op=display&id=$id&uid=$user->{uid}",
-				$form->{tid}
-			);
+			my $did = $slashdb->createDiscussion( {
+				title => $description,
+				topic => $form->{tid},
+				url => "$rootdir/journal.pl?op=display&id=$id&uid=$user->{uid}"
+				});
 			$journal->set($id, { discussion => $did });
 		}
 

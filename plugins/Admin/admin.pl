@@ -1012,23 +1012,6 @@ sub editStory {
 	$autonode_check = "on" if $form->{autonode};
 	$fastforward_check = "on" if $form->{fastforward};
 
-#	if (@{$extracolumns}) {
-#		$extracolumn_flag = 1;
-#
-#		for (@{$extracolumns}) {
-#			next if $_ eq 'sid';
-#			my($sect, $col) = split m/_/;
-#			$storyref->{$_} = $form->{$_} || $storyref->{$_};
-#
-#			$extracolref->{$_}{sect} = $sect;
-#			$extracolref->{$_}{col} = $col;
-#		}
-#	}
-
-# hmmmm
-#Import Image (don't even both trying this yet :)<BR>
-#	<INPUT TYPE="file" NAME="importme"><BR>
-
 	$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
 	my $ispell_comments = {
@@ -1303,10 +1286,14 @@ sub saveStory {
 
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {
-		my $id = $slashdb->createDiscussion(
-			$form->{title}, "$rootdir/article.pl?sid=$sid",
-			$form->{tid}, '', $sid, $form->{'time'},
-		);
+		my $id = $slashdb->createDiscussion( {
+																					title => $form->{title},
+																					section => $form->{section},
+																					topic => $form->{tid},
+																					url => "$rootdir/article.pl?sid=$sid",
+																					sid => $sid,
+																					ts => $form->{'time'}
+																					});
 		if ($id) {
 			$slashdb->setStory($sid, { discussion => $id });
 		} else {

@@ -121,28 +121,28 @@ sub main {
 	
 	# This is here to save a function call, even though the
 	# function can handle the situation itself
-	my $discussion;
+	my ($discussion, $section);
 	if ($form->{sid}) {
 		# SID compatibility
 		if ($form->{sid} !~ /^\d+$/) {
 			$discussion = $slashdb->getDiscussionBySid($form->{sid});
+			$section = $discussion->{section};
 		} else {
 			$discussion = $slashdb->getDiscussion($form->{sid});
+			$section = $discussion->{section};
 		}
 		if (!$user->{is_admin} and $discussion->{sid}) {
 			unless ($slashdb->checkStoryViewable($discussion->{sid})) {
 				$form->{sid} = '';
 				$discussion = '';
 				$op = 'default';
+				$section = '';
 			}
 		}
 	}
 
 	$form->{pid} ||= "0";
 
-	my $section = '';
-	$section = $slashdb->getStorySection($discussion->{sid})
-		if $discussion and $discussion->{sid};
 	header($discussion ? $discussion->{'title'} : 'Comments', $section);
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
@@ -261,12 +261,12 @@ sub commentIndex {
 
 	titlebar("90%", getData('active_discussions'));
 	if ($form->{all}) {
-		my $discussions = $slashdb->getDiscussions();
+		my $discussions = $slashdb->getDiscussions($form->{section});
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 		});
 	} else {
-		my $discussions = $slashdb->getStoryDiscussions();
+		my $discussions = $slashdb->getStoryDiscussions($form->{section});
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 		});
@@ -359,9 +359,14 @@ sub createDiscussion {
 				ratio	=> 'postersubj',
 			});
 		} else {
-			$id = $slashdb->createDiscussion(
-				$form->{title}, $form->{url}, $form->{topic}, "recycle"
-			);
+			# BTW we are not setting section since at this point we wouldn't
+			# trust users to set it correctly -Brian
+			my $id = $slashdb->createDiscussion( {
+				title => $form->{title},
+				topic => $form->{topic},
+				url => $form->{url},
+				type => "recycle"
+				});
 
 			# fix URL to point to discussion if no referer
 			if ($form->{url} eq "") {

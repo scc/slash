@@ -95,10 +95,10 @@ INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match,
 # Dumping data for table 'discussions'
 #
 
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1,2,1,'dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1,2,0,'dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty');
-INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags, section) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36',1,2,1,'dirty', 'articles');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags, section) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15',1,2,0,'dirty', 'articles');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags, section) VALUES (3, '','What flavor of ice cream?','//www.example.com/pollBooth.pl?section=&qid=1&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty', 'articles');
+INSERT INTO discussions (id, sid, title, url, ts, topic, uid, commentcount, flags, section) VALUES (4, '','Are you happy?','//www.example.com/pollBooth.pl?section=&qid=2&aid=-1','2000-01-25 17:36:15',1,2,0,'dirty', 'articles');
 
 #
 # Dumping data for table 'formkeys'

@@ -27,20 +27,6 @@ my $messages  = getObject('Slash::Messages');
 
 doLogInit('dailyStuff');
 
-# Do this first, it's pretty quick.
-sendAdminMail();
-
-# Now lets clean up the database
-dailyStuffLog('Daily Archiving/Deleting Begin');
-# Do this early.  It can take up to 5-10 minutes for Slashdot
-# or a Slashdot-sized site (depending on traffic) and if that
-# exceeds the delayed-insert queue length, the site will come
-# to a halt.  Best to have this happen at a predictable time.
-$slashdb->deleteDaily();
-# This should be pretty quick.
-$slashdb->archiveComments();
-dailyStuffLog('Daily Archiving/Deleting End');
-
 # On a site with a lot of users, this may take hours.
 dailyStuffLog('MailingList Begin');
 mailingList();
@@ -48,73 +34,6 @@ dailyStuffLog('MailingList End');
 
 
 doLogExit('dailyStuff');
-
-sub sendAdminMail {
-	dailyStuffLog('Send Admin Mail Begin');
-	my $count = $slashdb->countDaily();
-
-	# homepage hits are logged as either '' or 'shtml'
-	$count->{'index'}{'index'} += delete $count->{'index'}{''};
-	$count->{'index'}{'index'} += delete $count->{'index'}{'shtml'};
-	# these are 404s
-	delete $count->{'index.html'};
-
-	my $sdTotalHits = $slashdb->getVar('totalhits', 'value');
-
-	$sdTotalHits = $sdTotalHits + $count->{'total'};
-	$slashdb->setVar("totalhits", $sdTotalHits);
-
-	$slashdb->updateStamps();
-
-	# Grab moderator system statistics.
-	my $points = $slashdb->sqlSelect('sum(points)', 'users_comments');
-	my @time = localtime;
-	$time[3]--; $time[4]++; $time[5] += 1900;
-	my $yesterday = sprintf "%4d-%02d-%02d", @time[5,4,3];
-	my $used = $slashdb->sqlCount(
-		'moderatorlog', 
-		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'"
-	);
-
-	my $email = <<EOT;
-$constants->{sitename} Stats for yesterday
-
-mod points $points
-      used $used
-
-     total $count->{'total'}
-    unique $count->{'unique'}
-total hits $sdTotalHits
-  homepage $count->{'index'}{'index'}
-   indexes
-EOT
-
-	for (keys %{$count->{'index'}}) {
-		$email .= "\t   $_=$count->{'index'}{$_}\n"
-	}
-
-	$email .= "\n-----------------------\n";
-
-
-	for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
-		my $value = $count->{'articles'}{$key};
-
- 		my $story = $slashdb->getStory($key, ['title', 'uid']);
-
-		$email .= sprintf("%s\t%s %s by %s\n",
-			$value, $key, substr($story->{'title'}, 0, 30),
-			$slashdb->getUser($story->{uid}, 'nickname')
-		) if $story->{'title'} && $story->{uid} && $value > 100;
-	}
-
-	$email .= "\n-----------------------\n";
-	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
-	# Send a message to the site admin.
-	for (@{$constants->{stats_reports}}) {
-		sendEmail($_, "$constants->{sitename} Stats Report", $email, 'bulk');
-	}
-	dailyStuffLog('Send Admin Mail End');
-}
 
 sub generateDailyMail {
 	my $data = $slashdb->getDailyMail();

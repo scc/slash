@@ -621,9 +621,9 @@ sub createPollVoter {
 		uid	=> $ENV{SLASH_USER}
 	});
 
-	$self->sqlDo("update pollquestions set
-		voters=voters+1 where qid=$qid");
-	$self->sqlDo("update pollanswers set votes=votes+1 where
+	$self->sqlDo("UPDATE pollquestions SET
+		voters=voters+1 WHERE qid=$qid");
+	$self->sqlDo("UPDATE pollanswers SET votes=votes+1 WHERE
 		qid=$qid and aid=$aid");
 }
 
@@ -648,10 +648,14 @@ sub createSubmission {
 
 #################################################################
 sub getStoryDiscussions {
-	my($self) = @_;
+	my($self, $section) = @_;
+	my $where = "displaystatus != -1 AND discussions.sid=stories.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'";
+	$where .= "section = '$section'"
+		if $section;
+
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
 		"discussions, stories",
-		"displaystatus != -1 AND discussions.sid=stories.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'",
+		$where,
 		"ORDER BY time DESC LIMIT 50"
 	);
 
@@ -661,10 +665,14 @@ sub getStoryDiscussions {
 #################################################################
 # Less then 2, ince 2 would be a read only discussion
 sub getDiscussions {
-	my($self) = @_;
+	my($self, $section) = @_;
+	my $where = "type != 'archived' AND ts <= now()";
+	$where .= "section = '$section'"
+		if $section;
+
 	my $discussion = $self->sqlSelectAll("id, title, url",
 		"discussions",
-		"type != 'archived' AND ts <= now()",
+		$where,
 		"ORDER BY ts DESC LIMIT 50"
 	);
 
@@ -1037,6 +1045,22 @@ sub getCommentsByUID {
 sub getCommentsByNetOrSubnetID {
 	my($self, $id, $min) = @_;
 
+	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
+			. " FROM comments WHERE ipid='$id' "
+			. " ORDER BY date DESC LIMIT $min ";
+
+<<<<<<< MySQL.pm
+	my $sth = $self->{_dbh}->prepare($sqlquery);
+	$sth->execute;
+	my($comments) = $sth->fetchall_arrayref;
+	formatDate($comments, 4);
+	return $comments;
+}
+
+#################################################################
+sub getCommentsBySubnetID{
+	my($self, $subnetid, $min) = @_;
+
 	my $sqlquery = <<EOT;
 SELECT pid,sid,cid,subject,date,points,uid
 FROM comments
@@ -1255,19 +1279,6 @@ sub checkStoryViewable {
 }
 
 ########################################################
-sub getStorySection {
-	my($self, $sid) = @_;
-	return '' unless $sid;
-
-	my $return_val = $self->sqlSelect(
-		'section', 'stories', "sid='$sid'"
-	);
-	$return_val ||= '';
-
-	return $return_val;
-}
-
-########################################################
 sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian
@@ -1390,6 +1401,18 @@ sub deleteSession {
 	if (defined $uid) {
 		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 	}
+}
+
+########################################################
+sub deleteDiscussion {
+	my($self, $did) = @_;
+
+	$self->sqlDo("DELETE FROM discussions WHERE id=$did");
+	my $comment_ids = $self->sqlSelectAll('cid', 'comments', "sid=$did");
+	$self->sqlDo("DELETE FROM comments WHERE sid=$did");
+	$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
+		. join(",", map { $_->[0] } @$comment_ids)
+		. ")");
 }
 
 ########################################################
@@ -1661,6 +1684,8 @@ sub savePollQuestion {
 sub deletePoll {
 	my($self, $qid) = @_;
 
+	my $did = $self->sqlSelect('discussion', 'pollquestions', "qid=$qid");
+	$self->deleteDiscussion($did);
 	$self->sqlDo("DELETE from pollanswers WHERE qid=$qid");
 	$self->sqlDo("DELETE from pollquestions WHERE qid=$qid");
 	$self->sqlDo("DELETE from pollvoters WHERE qid=$qid");
@@ -3613,24 +3638,18 @@ sub getTrollUID {
 
 ########################################################
 sub createDiscussion {
-	my($self, $title, $url, $topic, $type, $sid, $time, $uid) = @_;
+	my($self, $discussion) = @_;
+	return unless $discussion->{title} && $discussion->{url} && $discussion->{topic};
 
 	#If no type is specified we assume the value is zero
-	$type ||= 'open';
-	$sid ||= '';
-	$time ||= $self->getTime();
-	$uid ||= getCurrentUser('uid');
+	$discussion->{section} ||= getCurrentStatic('defaultsection');
+	$discussion->{type} ||= 'open';
+	$discussion->{sid} ||= '';
+	$discussion->{ts} ||= $self->getTime();
+	$discussion->{uid} ||= getCurrentUser('uid');
+	# commentcount and flags set to defaults
 
-	$self->sqlInsert('discussions', {
-		sid	=> $sid,
-		title	=> $title,
-		ts	=> $time,
-		url	=> $url,
-		topic	=> $topic,
-		type	=> $type,
-		uid	=> $uid,
-		# commentcount and flags set to defaults
-	});
+	$self->sqlInsert('discussions', $discussion);
 
 	my $discussion_id = $self->getLastInsertId();
 
@@ -3671,12 +3690,6 @@ sub createStory {
 		$self->sqlUpdate('users_info', {
 			-karma => $newkarma },
 		"uid=$suid") if !isAnon($suid);
-
-# This is a bit repetitive...
-#		$self->sqlUpdate('users_info',
-#			{ -karma => 'karma + 3' },
-#			"uid=$suid"
-#		) if !isAnon($suid);
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
@@ -3726,8 +3739,10 @@ sub updateStory {
 	$self->sqlUpdate('discussions', {
 		sid	=> $form->{sid},
 		title	=> $form->{title},
+		section	=> $form->{section},
 		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
 		ts	=> $time,
+		topic	=> $form->{tid},
 	}, 'sid = ' . $self->sqlQuote($form->{sid}));
 
 

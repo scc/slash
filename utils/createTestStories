@@ -104,15 +104,15 @@ $constants = getCurrentStatic();
 
 		my $sid = $slashdb->createStory($story);
 		if ($sid) {
-			my $id = $slashdb->createDiscussion(
-				$story->{title},
-				"$rootdir/article.pl?sid=$sid",
-				$tid,
-				0,
-				$sid,
-				$time,
-				$author,
-			);
+			my $id = $slashdb->createDiscussion( {
+				title => $story->{title},
+				section => $section,
+				topic => $tid,
+				url => "$rootdir/article.pl?sid=$sid",
+				sid => $sid,
+				uid => $author,
+				ts => $time
+				});
 			if ($id) {
 				$slashdb->setStory($sid, { discussion => $id });
 			} else {
