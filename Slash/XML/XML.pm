@@ -44,19 +44,15 @@ sub create_rss {
 		encoding	=> $encoding,
 	);
 
-	if($param->{channel}) {
-		my $title = $param->{channel}{title} ? $param->{channel}{title} : $constants->{sitename};
-		my $description = $param->{channel}{description} ? $param->{channel}{description} : $constants->{sitename};
-		my $link = $param->{channel}{link} ? $param->{channel}{link} : $constants->{sitename};
+	my $title = $param->{channel}{title} ? $param->{channel}{title} : $constants->{sitename};
+	my $description = $param->{channel}{description} ? $param->{channel}{description} : $constants->{slogan};
+	my $link = $param->{channel}{link} ? $param->{channel}{link} : $constants->{rootdir};
 
-		$rss->channel(
-			title		=> xmlencode($title),
-			description	=> xmlencode($description),
-			'link'		=> xmlencode_plain($link),
-		);
-	} else {
-		return;
-	}
+	$rss->channel(
+		title		=> xmlencode($title),
+		description	=> xmlencode($description),
+		'link'		=> xmlencode_plain($link),
+	);
 
 	if($param->{image}) {
 		my $title = $param->{image}{title} ? $param->{image}{title} : $constants->{sitename};
