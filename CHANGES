@@ -1,3 +1,56 @@
+slash-1.1.5-bender, 2000.03.02
+------------------------------
+
+*	Bunches of changes for Makefiles, version numbers, textual
+	edits
+
+*	Removed CGI and CGI::Cookie for Apache modules and functions
+
+*	Added getCurrentCookie and createCurrentCookie to exported
+	functions from Slash::Utility
+
+*	Added gensym to exported functions from Slash
+
+*	Removed story/comment archiving, newcomments table
+
+*	Removed dispStoryTitle template, rolling into dispStory templates
+
+*	Fixed up error logging
+
+*	Added "X-Powered-By: Slash" HTTP header
+
+*	More fixes to PostgreSQL library
+
+*	Changed DB connect to use connect_cached
+
+*	Make some template options configurable in vars table
+	(template_* vars)
+
+*	Fix circular reference in Slash::Display calling
+	Slash::Display::Plugin unnecessarily
+
+*	Add option (default) to create new files as symlinks to the
+	originals, instead of copying each file, for
+	install-slashsite and install-plugin (and Slash::Install).
+
+*	Added .shtml and .inc to site .conf, for MIME type and
+	handling as server-parsed
+
+*	Updated slash.conf to not include Compress::Zlib
+
+*	Updated Bundle::Slash
+
+*	Various fixes to Admin and Search
+
+*	Added new vars and reworked when dailyStuff is run, using
+	daily_last, daily_attime, daily_tz
+
+*	Made poll on home page optionally display cached block,
+	or hit DB to get current data (poll_cache var)
+
+*	Fixed various bugs with templates
+
+
 slash-1.1.4-bender, 2000.02.16
 ------------------------------
 
