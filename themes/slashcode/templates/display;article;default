@@ -5,7 +5,7 @@ Template which describes the layout of the article display (and included comment
 
 * poll = pollbooth block
 * section = section hashref
-* section_block = section block
+* section_block = section block hashref
 * show_poll = boolean for showing poll or not
 * story = story data structure
 * next = data structure for next story
@@ -93,10 +93,10 @@ INCLUDE fancybox
 	title		= 'Related Links'
 	contents	= story.relatedtext;
 
-IF section_block;
+IF section_block.block;
 	INCLUDE fancybox
 		title		= section.title
-		contents	= section_block;
+		contents	= section_block.block;
 END %]
 </TD></TR><TR><TD>&nbsp;</TD><TD COLSPAN="3">
 
