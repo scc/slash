@@ -296,7 +296,7 @@ sub userInfo {
 
 	if ($userbio->{nickname} eq $nick) {
 		$nickmatch_flag = 1;
-		$points = $slashdb->getUser($uid, ['points']);
+		$points = $userbio->{points};
 
 		$title = getTitle('userInfo_main_title',{ nick => $nick, uid => $uid});
 
@@ -364,9 +364,9 @@ sub editKey {
 
 	my $slashdb = getCurrentDB();
 
-	my $key = $slashdb->getUser($uid, ['pubkey']);
+	my $user = $slashdb->getUser($uid, ['pubkey']);
 
-	$key = stripByMode($key, 'literal');
+	my $key = stripByMode($user->{key}, 'literal');
 	my $editkey = slashDisplay('users-editKey',{ key => $key }, 1);	
 	return $editkey;
 }
@@ -428,7 +428,7 @@ sub tildeEd {
 	my $n = 0;
 	for(@$aids) {
 		my ($aid) = @$_;
-		$aidref->{$aid} = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
+		$aidref->{$aid}{checked} = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
 	}
 
 	my $topics = $slashdb->getDescriptions('topics');
