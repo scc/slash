@@ -2833,8 +2833,9 @@ sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = getCurrentStatic('mysql_heap_table') ?
-		'comment_heap' : 'comments';
+#	my $comment_table = getCurrentStatic('mysql_heap_table') ?
+#		'comment_heap' : 'comments';
+	my $comment_table = 'comments';
 	my $user = getCurrentUser();
 	my $sql = <<EOT;
 SELECT	cid, date, subject, nickname, homepage, fakeemail,
