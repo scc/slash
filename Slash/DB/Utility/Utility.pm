@@ -50,8 +50,8 @@ sub sqlConnect {
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
 				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
 			} else {
-				my $time = $self->{_dbh}->selectcol_arrayref('SELECT now()');
-				#print STDERR "Rebuilt at $time->[0]\n";
+				my $time = $self->{_dbh}->selectrow_array('SELECT now()');
+				#print STDERR "Rebuilt at $time\n";
 			}
 		}
 	}
@@ -140,9 +140,10 @@ sub sqlCount {
 	$sql .= " WHERE $where" if  $where;
 	# we just need one stinkin value - count
 	$self->sqlConnect();
-	my $sth = $self->{_dbh}->selectcol_arrayref($sql);
-	return $sth->[0];  # count
+	my $count = $self->{_dbh}->selectrow_array($sql);
+	return $count;  # count
 }
+
 
 ########################################################
 sub sqlSelectHashref {
@@ -164,6 +165,28 @@ sub sqlSelectHashref {
 	my $H = $sth->fetchrow_hashref;
 	$sth->finish;
 	return $H;
+}
+
+########################################################
+sub sqlSelectColArrayref {
+	my($self, $select, $from, $where, $other) = @_;
+
+	my $sql = "SELECT $select ";
+	$sql .= "FROM $from " if $from;
+	$sql .= "WHERE $where " if $where;
+	$sql .= "$other" if $other;
+
+	$self->sqlConnect();
+	my $sth = $self->{_dbh}->prepare_cached($sql);
+	
+	my $array = $self->{_dbh}->selectcol_arrayref($sth);
+	if ($array = undef) {
+		errorLog($sql);
+		$self->sqlConnect;
+		return;
+	} 
+
+	return $array;
 }
 
 ########################################################

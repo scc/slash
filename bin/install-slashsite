@@ -148,32 +148,9 @@ $theme ||= '0';
 $theme = $themes{$theme}->{dir};
 #---------------------------------------------------
 print "\nPlease select which plugins you would like?\n";
-opendir(PLUGINDIR, "$prefix/plugins");
-my %plugins;
-$x = 0;
-while(my $dir = readdir(PLUGINDIR)) {
-	chomp($dir);
-	next if $dir =~ /^\.$/;
-	next if $dir =~ /^\.\.$/;
-	next if $dir =~ /^CVS$/;
-	open(PLUGIN,"<$prefix/plugins/$dir/PLUGIN") or next; 
-	$x++;
-	$plugins{$dir}->{'order'} = $x;
-	$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir/";
-	$plugins{$dir}->{'name'} = $dir;
-	my @info = <PLUGIN>;
-	chomp(@info);
-	for(@info) {
-		my ($key, $val) = split(/=/, $_, 2);
-		$key = lc($key);
-		if( $key eq 'htdoc' ) {
-			push (@{$plugins{$dir}->{$key}}, $val);
-		} elsif ( $key eq 'image' ){
-		} else {
-			$plugins{$dir}->{$key} = $val;
-		}
-	}
-	print "$plugins{$dir}->{'order'}.\t$dir $plugins{$dir}->{'description'}\n";
+my $plugins = $install->getPluginList($prefix);
+for (sort keys %$plugins) {
+	print "$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
 }
 my @answers;
 my $select = 'a';
@@ -186,8 +163,8 @@ while($select ne 'q'){
 		last;	
 	}
 	elsif($select eq 'a') {
-		for(keys %plugins) {
-			push @answers, $_;
+		for(keys %$plugins) {
+			push @answers, $plugins->{$_}{'order'};
 		}
 		last;
 	} elsif($select ne 'q') {
@@ -292,13 +269,14 @@ $install->create({ name => 'basedomain', value => $hostname});
 $install->create({ name => 'driver', value => $driver});
 $install->create({ name => 'base_install_directory', value => $prefix});
 $install->create({ name => 'site_install_directory', value => "$prefix_site/$sitename"});
+$install->create({ name => 'db_driver', value => "$driver"});
 my $time = localtime();
 $install->create({ name => 'installed', value => $time});
 for(@answers) {
 	$install->create({ name => 'plugin', value => $_});
 }
 
-install_plugin(\@answers, \%plugins);
+$install->installPlugin(\@answers);
 
 my $slashdb = Slash::DB->new($ARGV[0]);
 my $uid = $slashdb->createUser($username, $email, $username);
@@ -349,85 +327,6 @@ usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 	exit();
 }
 
-sub install {
-	my ($plugin) = @_;
-	print "Now installing $plugin->{'name'}\n";
-	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix_site/$sitename/htdocs\n";
-		copy "$plugin->{'dir'}/$_", "$prefix_site/$sitename/htdocs";
-		chmod(0755, "$prefix_site/$sitename/htdocs/$_");
-	}
-	my($sql, @sql, @create);
-
-	if ($plugin->{"${driver}_schema"}) {
-		if (my $schema_file = "$plugin->{dir}/" . $plugin->{"${driver}_schema"}) {
-			open(CREATE, "< $schema_file");
-			while (<CREATE>) {
-				chomp;
-				next if /^#/;
-				next if /^$/;
-				next if /^ $/;
-				push @create, $_;
-			}
-			close (CREATE);
-
-			$sql = join '', @create;
-			@sql = split /;/, $sql;
-		}
-	}
-
-	if ($plugin->{"${driver}_dump"}) {
-		if (my $dump_file = "$plugin->{dir}/" . $plugin->{"${driver}_dump"}) {
-			open(DUMP,"< $dump_file");
-			while(<DUMP>) {
-				next unless /^INSERT/;
-				chomp;
-				s/www\.example\.com/$hostname/g;
-				s/admin\@example\.com/$email/g;
-				push @sql, $_;
-			}
-			close(DUMP);
-		}
-	}
-
-	for (@sql) {
-		next unless $_;
-		unless ($dbh->do($_)) {
-			print "Failed on :$_:\n";
-		}
-	}
-
-	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix_site/$sitename/htdocs\n";
-		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
-	}
-
-	for(@{$plugin->{'image'}}) {
-		print "copying $_ to $prefix_site/$sitename/htdocs/images\n";
-		copy "$plugin->{'dir'}/$_", "$prefix_site/$sitename/htdocs/images";
-	}
-	if ($plugin->{note}) {
-		my $file = "$plugin->{dir}/$plugin->{note}";  
-		open(FILE, $file);
-		while(<FILE>) {
-			print;
-			}
-		}
-}
-
-
-sub install_plugin {
-	my ($answers, $plugins) = @_;
-	for(@$answers) {
-		my $answer = $_;
-		for(keys %$plugins) {
-			if($answer eq $plugins->{$_}{order}) {
-				print "installing plugin $_\n";
-				install($plugins->{$_});
-			}
-		}
-	}
-}
 sub apache_site_conf {
 	#Ok, I should fix this at somepoint to extract port
 

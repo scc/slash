@@ -2205,6 +2205,9 @@ sub getUrlFromTitle {
 ##################################################################
 # Should this really be in here?
 # this should probably return time() or something ... -- pudge
+# Well, the only problem with that is that we would then
+# be trusting all machines to be timed to the database box.
+# How safe is that? And I like our sysadmins :) -Brian
 sub getTime {
 	my($self) = @_;
 	my($now) = $self->sqlSelect('now()');

@@ -36,4 +36,18 @@ for my $row (keys %$value) {
 
 print "ok 4\n" if $value; 
 
+my $value = $object->getValue('plugin');
+print "VALUE:$value:\n";
+
+print "ok 5\n"; 
+
+my $plugins = $object->getPluginList("/usr/local/slash");
+for(keys %$plugins) {
+	print "$_:$_->{name} \n";
+}
+
+print "ok 6\n"; 
+
 $object->delete('plugin');
+
+print "ok 7\n"; 
