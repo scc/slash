@@ -1,27 +1,31 @@
 package Slash::DB::Utility;
 
 use strict;
+use Slash::Utility;
+
 	
 ($Slash::DB::Utility::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 #Class variable that stores the database handle
-my $dbh;
 
 ########################################################
 # Useful SQL Wrapper Functions
 ########################################################
 
+sub sanityCheck {
+	print STDERR "Sanity Check for Utility\n";
+}
 ########################################################
 sub sqlSelectMany {
-	my($select, $from, $where, $other) = @_;
+	my($self, $select, $from, $where, $other) = @_;
 
 	my $sql = "SELECT $select ";
 	$sql .= "   FROM $from " if $from;
 	$sql .= "  WHERE $where " if $where;
 	$sql .= "        $other" if $other;
 
-	sqlConnect();
-	my $sth = $dbh->prepare_cached($sql);
+	$self->sqlConnect();
+	my $sth = $self->{dbh}->prepare_cached($sql);
 	if ($sth->execute) {
 		return $sth;
 	} else {
@@ -34,14 +38,14 @@ sub sqlSelectMany {
 
 ########################################################
 sub sqlSelect {
-	my($select, $from, $where, $other) = @_;
+	my($self, $select, $from, $where, $other) = @_;
 	my $sql = "SELECT $select ";
 	$sql .= "FROM $from " if $from;
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 	
-	sqlConnect();
-	my $sth = $dbh->prepare_cached($sql) or die "Sql has gone away\n";
+	$self->sqlConnect();
+	my $sth = $self->{dbh}->prepare_cached($sql) or die "Sql has gone away\n";
 	if (!$sth->execute) {
 		apacheLog($sql);
 		# print "\n<P><B>SQL Error</B><BR>\n";
@@ -55,6 +59,7 @@ sub sqlSelect {
 
 ########################################################
 sub sqlSelectHash {
+	my $self = shift;
 	my $H = sqlSelectHashref(@_);
 	return map { $_ => $H->{$_} } keys %$H;
 }
@@ -66,25 +71,25 @@ sub sqlSelectHash {
 # Simple little function to get the count of a table
 ##########################################################
 sub selectCount  {
-	my ($table, $where) = @_;
+	my ($self, $table, $where) = @_;
 
 	my $sql = "SELECT count(*) AS count FROM $table $where";
 	# we just need one stinkin value - count
-	my $sth = $dbh->selectall_arrayref($sql);
+	my $sth = $self->{dbh}->selectall_arrayref($sql);
 	return $sth->[0][0];  # count
 }
 
 ########################################################
 sub sqlSelectHashref {
-	my($select, $from, $where, $other) = @_;
+	my($self, $select, $from, $where, $other) = @_;
 
 	my $sql = "SELECT $select ";
 	$sql .= "FROM $from " if $from;
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	sqlConnect();
-	my $sth = $dbh->prepare_cached($sql);
+	$self->sqlConnect();
+	my $sth = $self->{dbh}->prepare_cached($sql);
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
 	unless ($sth->execute) {
@@ -111,22 +116,22 @@ sub sqlSelectHashref {
 # returns: 
 # array ref of all records
 sub sqlSelectAll {
-	my($select, $from, $where, $other) = @_;
+	my($self, $select, $from, $where, $other) = @_;
 
 	my $sql = "SELECT $select ";
 	$sql .= "FROM $from " if $from;
 	$sql .= "WHERE $where " if $where;
 	$sql .= "$other" if $other;
 
-	sqlConnect();
-	my $H = $dbh->selectall_arrayref($sql);
+	$self->sqlConnect();
+	my $H = $self->{dbh}->selectall_arrayref($sql);
 	return $H;
 }
 
 ########################################################
 sub sqlUpdate
 {
-	my($table, $data, $where, $lp) = @_;
+	my($self, $table, $data, $where, $lp) = @_;
 	$lp = 'LOW_PRIORITY' if $lp;
 	$lp = '';
 	my $sql = "UPDATE $lp $table SET";
@@ -135,18 +140,18 @@ sub sqlUpdate
 			s/^-//;
 			$sql .= "\n  $_ = $data->{-$_},";
 		} else { 
-			# my $d=$dbh->quote($data->{$_}) || "''";
-			$sql .= "\n $_ = " . $dbh->quote($data->{$_}) . ',';
+			# my $d=$self->{dbh}->quote($data->{$_}) || "''";
+			$sql .= "\n $_ = " . $self->{dbh}->quote($data->{$_}) . ',';
 		}
 	}
 	chop $sql;
 	$sql .= "\nWHERE $where\n";
-	return $dbh->do($sql) or apacheLog($sql);
+	return $self->{dbh}->do($sql) or apacheLog($sql);
 }
 
 ########################################################
 sub sqlReplace {
-	my($table, $data) = @_;
+	my($self, $table, $data) = @_;
 	my($names, $values);
 
 	foreach (keys %$data) {
@@ -154,7 +159,7 @@ sub sqlReplace {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $dbh->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->{dbh}->quote($data->{$_}) . ',';
 		}
 		$names .= "$_,";
 	}
@@ -163,13 +168,13 @@ sub sqlReplace {
 	chop($values);
 
 	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
-	sqlConnect();
-	return $dbh->do($sql) or apacheLog($sql);
+	$self->sqlConnect();
+	return $self->{dbh}->do($sql) or apacheLog($sql);
 }
 
 ########################################################
 sub sqlInsert {
-	my($table, $data, $delay) = @_;
+	my($self, $table, $data, $delay) = @_;
 	my($names, $values);
 
 	foreach (keys %$data) {
@@ -177,7 +182,7 @@ sub sqlInsert {
 			$values .= "\n  $data->{$_},";
 			s/^-//;
 		} else {
-			$values .= "\n  " . $dbh->quote($data->{$_}) . ',';
+			$values .= "\n  " . $self->{dbh}->quote($data->{$_}) . ',';
 		}
 		$names .= "$_,";	
 	}
@@ -187,15 +192,16 @@ sub sqlInsert {
 
 	my $p = 'DELAYED' if $delay;
 	my $sql = "INSERT $p INTO $table ($names) VALUES($values)\n";
-	sqlConnect();
-	return $dbh->do($sql) or apacheLog($sql) && kill 9, $$;
+	$self->sqlConnect();
+	return $self->{dbh}->do($sql) or apacheLog($sql) && kill 9, $$;
 }
 
 ########################################################
 sub sqlTableExists {
+	my $self = shift;
 	my $table = shift or return;
 
-	my $sth = $dbh->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
+	my $sth = $self->{dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
 	$sth->execute;
 	my $te = $sth->rows;
 	$sth->finish;
@@ -204,9 +210,10 @@ sub sqlTableExists {
 
 ########################################################
 sub sqlSelectColumns {
+	my $self = shift;
 	my $table = shift or return;
 
-	my $sth = $dbh->prepare_cached("SHOW COLUMNS FROM $table");
+	my $sth = $self->{dbh}->prepare_cached("SHOW COLUMNS FROM $table");
 	$sth->execute;
 	my @ret;
 	while (my @d = $sth->fetchrow) {
@@ -215,6 +222,16 @@ sub sqlSelectColumns {
 	$sth->finish;
 	return @ret;
 }
+
+########################################################
+# Get a unique string for an admin session
+sub generatesession {
+  my $newsid = crypt(rand(99999), shift);
+	$newsid =~ s/[^A-Za-z0-9]//i;
+
+	return $newsid;
+}
+
 
 1;
 
