@@ -2370,6 +2370,27 @@ sub countCommentsBySid {
 }
 
 ##################################################################
+sub countCommentsByUID {
+	my($self, $uid) = @_;
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "uid=$uid");
+}
+
+##################################################################
+sub countCommentsBySubnetID {
+	my($self, $subnetid) = @_;
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "subnetid='$subnetid'");
+}
+
+##################################################################
+sub countCommentsByIPID {
+	my($self, $ipid) = @_;
+	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	return $self->sqlCount($comment_table, "ipid='$ipid'");
+}
+
+##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
@@ -2778,6 +2799,32 @@ sub getComments {
 		$comment_table,
 		"cid=$cid AND sid=$sid_quoted"
 	);
+}
+
+########################################################
+# Needs to be more generic long run. -Brian
+sub getStoriesBySubmitter {
+	my($self, $id, $limit) = @_;
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
+
+	$limit = 'LIMIT ' . $limit if $limit;
+	my $answer = $self->sqlSelectAllHashrefArray('sid,title,time', 
+																								$story_table, 
+																								"submitter='$id'",
+																								"ORDER by time DESC $limit");
+	return $answer;
+}
+
+########################################################
+sub countStoriesBySubmitter {
+	my($self, $id) = @_;
+
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
+	my $count = $self->sqlCount($story_table, "submitter='$id'");
+
+	return $count;
 }
 
 ########################################################
@@ -3430,6 +3477,7 @@ sub getTime {
 # dunno ... sigh, i am still not sure this is best
 # (see getStories()) -- pudge
 # As of now, getDay is only used in Slash.pm getOlderStories() - Jamie
+# And if a webserver had a date that is off... -Brian
 sub getDay {
 #	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
@@ -4350,6 +4398,7 @@ sub _genericGets {
 ########################################################
 # This is only called by Slash/DB/t/story.t and it doesn't even serve much purpose
 # there...I assume we can kill it?  - Jamie
+# Actually, we should keep it around since it is a generic method -Brian
 sub getStories {
 	my $answer = _genericGets('stories', 'sid', 'story_param', @_);
 	return $answer;

@@ -388,15 +388,14 @@ sub showInfo {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-	my $curuser = getCurrentUser();
+	my $user = getCurrentUser();
 
-	$form->{min} = 0 unless $form->{min};
-
-	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
+	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
 	my $title = '';
 	my $comments;
+	my $commentcount = 0;
 	my $commentstruct = [];
-	my $user = {};
+	my $requested_user = {};
 	my $admin_block = '';
 
 	my($points, $lastgranted, $nickmatch_flag, $uid, $nick);
@@ -404,60 +403,61 @@ sub showInfo {
 
 	if ($form->{userfield_flag} eq 'uid') {
 		$id ||= $form->{userfield};
-		$user = $slashdb->getUser($id);
-		$uid = $user->{uid};
-		$nick = $user->{nickname};
+		$requested_user = $slashdb->getUser($id);
+		$uid = $requested_user->{uid};
+		$nick = $requested_user->{nickname};
 		$admin_block = $admin_flag ? getUserAdmin($uid, 1, 1) : '';
-		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
-
 	} elsif ($form->{userfield_flag} eq 'nickname') { 
 		$id ||= $form->{userfield};
 		$uid = $slashdb->getUserUID($id);
-		$user = $slashdb->getUser($uid);
+		$requested_user = $slashdb->getUser($uid);
 		$admin_block = $admin_flag ? getUserAdmin($id, 1, 1) : '';
-		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
-
 	} elsif ($form->{userfield_flag} eq 'ip') {
 		$id ||= $form->{userfield};
-		$user->{ipid} = $id =~ /\d+\.\d+\.\d+\.?\d+?/ ?
+		$requested_user->{ipid} = $id =~ /\d+\.\d+\.\d+\.?\d+?/ ?
 		md5_hex($id) : $id;
 
-		$user->{nonuid} = 1;
-		$user->{fg} = $curuser->{fg};
-		$user->{bg} = $curuser->{bg};
+		$requested_user->{nonuid} = 1;
+		$requested_user->{fg} = $user->{fg};
+		$requested_user->{bg} = $user->{bg};
 
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
-		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
-		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
-
+		$title = getTitle('user_netID_user_title', { id => $id, md5id => $requested_user->{ipid}});
+		$admin_block = $admin_flag ? getUserAdmin($requested_user->{ipid}, 1, 0) : '';
+		$commentcount = $slashdb->countCommentsByIPID($requested_user->{ipid});
+		$comments = $slashdb->getCommentsByNetID($requested_user->{ipid}, $constants->{user_comment_display_default})
+			if $commentcount;
 	} elsif ($form->{userfield_flag} eq 'subnet') {
 		$id ||= $form->{userfield};
 		if ($id =~ /(\d+\.\d+\.\d+)\.?\d+?/) {
-			$user->{subnetid} = $1 . ".0";
-			$user->{subnetid} = md5_hex($user->{subnetid});
+			$requested_user->{subnetid} = $1 . ".0";
+			$requested_user->{subnetid} = md5_hex($requested_user->{subnetid});
 		} else {
-			$user->{subnetid} = $id;
+			$requested_user->{subnetid} = $id;
 		}
 
-		$user->{nonuid} = 1;
-		$user->{fg} = $curuser->{fg};
-		$user->{bg} = $curuser->{bg};
+		$requested_user->{nonuid} = 1;
+		$requested_user->{fg} = $user->{fg};
+		$requested_user->{bg} = $user->{bg};
 
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{subnetid}});
-		$admin_block = $admin_flag ? getUserAdmin($user->{subnetid}, 1, 0) : '';
-		$comments = $slashdb->getCommentsBySubnetID($user->{subnetid}, $form->{min});
-
+		$title = getTitle('user_netID_user_title', { id => $id, md5id => $requested_user->{subnetid}});
+		$admin_block = $admin_flag ? getUserAdmin($requested_user->{subnetid}, 1, 0) : '';
+		$commentcount = $slashdb->countCommentsBySubnetID($requested_user->{subnetid});
+		$comments = $slashdb->getCommentsBySubnetID($requested_user->{subnetid}, $constants->{user_comment_display_default})
+			if $commentcount;
 	} elsif ($form->{nick}) {
 		$uid = $slashdb->getUserUID($form->{nick});
-		$user = $slashdb->getUser($uid);
+		$requested_user = $slashdb->getUser($uid);
 		$admin_block = $admin_flag ? getUserAdmin($uid, 1, 1) : '';
-		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
-
 	} else {
-		$user = $id ? $slashdb->getUser($id) : $curuser;
-		$uid = $user->{uid};
-		$admin_block = $admin_flag ? getUserAdmin($user->{uid}, 1, 1) : '';
-		$comments = $slashdb->getCommentsByUID($user->{uid}, $form->{min});
+		$requested_user = $id ? $slashdb->getUser($id) : $user;
+		$uid = $requested_user->{uid};
+		$admin_block = $admin_flag ? getUserAdmin($requested_user->{uid}, 1, 1) : '';
+	}
+
+	unless($requested_user->{nonuid}) {
+		$commentcount = $slashdb->countCommentsByUID($requested_user->{uid});
+		$comments = $slashdb->getCommentsByUID($requested_user->{uid}, $constants->{user_comment_display_default})
+			if $commentcount;
 	}
 
 	for (@$comments) {
@@ -481,12 +481,16 @@ sub showInfo {
 			replies		=> $replies,
 		};
 	}
+	my $storycount = $slashdb->countStoriesBySubmitter($requested_user->{uid})
+		unless $requested_user->{nonuid};
+	my $stories = $slashdb->getStoriesBySubmitter($requested_user->{uid}, $constants->{user_submitter_display_default})
+		unless !$storycount || $requested_user->{nonuid};
 
-	if ($user->{nonuid}) {
+	if ($requested_user->{nonuid}) {
 		slashDisplay('netIDInfo', {
 			title			=> $title,
 			id			=> $id,
-			user			=> $user,
+			user			=> $requested_user,
 			commentstruct		=> $commentstruct || [],
 			admin_flag		=> $admin_flag,
 			admin_block		=> $admin_block,
@@ -499,12 +503,12 @@ sub showInfo {
 		}
 
 		$karma_flag = 1 if $admin_flag;
-		$nick = strip_literal($nick || $user->{nickname});
+		$nick = strip_literal($nick || $requested_user->{nickname});
 
-		if ($user->{uid} == $curuser->{uid}) {
+		if ($requested_user->{uid} == $user->{uid}) {
 			$karma_flag = 1;
 			$nickmatch_flag = 1;
-			$points = $user->{points};
+			$points = $requested_user->{points};
 
 			$mod_flag = 1 if $points > 0;
 
@@ -529,15 +533,18 @@ sub showInfo {
 		slashDisplay('userInfo', {
 			title			=> $title,
 			nick			=> $nick,
-			useredit		=> $user,
+			useredit		=> $requested_user,
 			points			=> $points,
 			lastgranted		=> $lastgranted,
 			commentstruct		=> $commentstruct || [],
+			commentcount		=> $commentcount,
 			nickmatch_flag		=> $nickmatch_flag,
 			mod_flag		=> $mod_flag,
 			karma_flag		=> $karma_flag,
 			admin_block		=> $admin_block,
 			admin_flag 		=> $admin_flag,
+			stories 		=> $stories,
+			storycount 		=> $storycount,
 		});
 	}
 }
