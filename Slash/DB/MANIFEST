@@ -2,3 +2,9 @@ Changes
 Makefile.PL
 MANIFEST
 DB.pm
+t/blocks.t
+t/getDescriptions.t
+t/sessions.t
+t/story.t
+t/template.t
+t/user.t
