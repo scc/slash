@@ -37,14 +37,14 @@ sub main {
 	my $op = $I{F}{op};
 print STDERR "OP $I{F}{op}\n";
 
-	if ($op eq "userlogin" and $I{U}{uid} != $I{anonymous_coward}) {
+	if ($op eq "userlogin" and $I{U}{uid} != $I{anonymous_coward_uid}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
 	}
 
 	header("$I{sitename} Users");
-	print <<EOT if $I{U}{uid} != $I{anonymous_coward} && $op ne "userclose";
+	print <<EOT if $I{U}{uid} != $I{anonymous_coward_uid} && $op ne "userclose";
  [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
 	<A HREF="$ENV{SCRIPT_NAME}?op=edituser">Edit User Info</A> |
@@ -61,7 +61,7 @@ EOT
 
 	} elsif ($op eq "edituser") {
 		# the users_prefs table
-		if ($I{U}{uid} != $I{anonymous_coward}) {
+		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
 			editUser($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -69,7 +69,7 @@ EOT
 
 	} elsif ($op eq "edithome" || $op eq "preferences") {
 		# also known as the user_index table
-		if ($I{U}{uid} != $I{anonymous_coward}) {
+		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
 			editHome($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -77,7 +77,7 @@ EOT
 
 	} elsif ($op eq "editcomm") {
 		# also known as the user_comments table
-		if ($I{U}{uid} != $I{anonymous_coward}) {
+		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
 			editComm($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -86,7 +86,7 @@ EOT
 	} elsif ($op eq "userinfo" || !$op) {
 		if ($I{F}{nick}) {
 			userInfo($I{F}{nick});
-		} elsif ($I{U}{uid} == $I{anonymous_coward}) {
+		} elsif ($I{U}{uid} == $I{anonymous_coward_uid}) {
 			displayForm();
 		} else {
 			userInfo($I{U}{nickname});
@@ -123,14 +123,14 @@ EOT
 		print "ok bubbye now.";
 		displayForm();
 
-	} elsif ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward}) {
+	} elsif ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward_uid}) {
 		# print $query->redirect("$I{rootdir}/index.pl");
 		userInfo($I{U}{nickname});
 
 	} elsif ($op eq "preview") {
 		previewSlashbox();
 
-	} elsif ($I{U}{uid} != $I{anonymous_coward}) {
+	} elsif ($I{U}{uid} != $I{anonymous_coward_uid}) {
 		userInfo($I{F}{nick});
 
 	} else {
@@ -353,7 +353,7 @@ sub editUser {
 	my($name) = @_;
 	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $user->{uid} == $I{anonymous_coward};
+	return if $user->{uid} == $I{anonymous_coward_uid};
 
 	titlebar("100%", "Editing $name ($user->{uid}) $user->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
@@ -530,7 +530,7 @@ sub editHome {
 
 	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $user->{uid} == $I{anonymous_coward};
+	return if $user->{uid} == $I{anonymous_coward_uid};
 
 	titlebar("100%", "Customize $I{sitename}'s Display");
 
@@ -691,10 +691,10 @@ sub saveUser {
 	my $user  = $I{dbobject}->getUserInfoByUID($uid);
 
 	$user->{nickname} = substr($user->{nickname}, 0, 20);
-	return if $uid == $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward_uid};
 
 	print "<P>Saving $user->{nickname}<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward} || !$user->{nickname};
+	print <<EOT if $uid == $I{anonymous_coward_uid} || !$user->{nickname};
 <P>Your browser didn't save a cookie properly.  This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -754,10 +754,10 @@ EOT
 	$I{dbobject}->setUsersKey($uid, $public_key);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H) if $uid != $I{anonymous_coward};
+	$I{dbobject}->setUsers($uid, $H) if $uid != $I{anonymous_coward_uid};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H2) if $uid != $I{anonymous_coward};
+	$I{dbobject}->setUsers($uid, $H2) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################
@@ -766,10 +766,10 @@ sub saveComm {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return if $uid == $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward_uid};
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward} || !$name;
+	print <<EOT if $uid == $I{anonymous_coward_uid} || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -798,7 +798,7 @@ EOT
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersComments($uid,$H) if $uid != $I{anonymous_coward};
+	$I{dbobject}->setUsersComments($uid,$H) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################
@@ -807,10 +807,10 @@ sub saveHome {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return if $uid == $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward_uid};
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward} || !$name;
+	print <<EOT if $uid == $I{anonymous_coward_uid} || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -872,7 +872,7 @@ EOT
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
-	if ($uid != $I{anonymous_coward}){
+	if ($uid != $I{anonymous_coward_uid}){
 		$I{dbobject}->setUsersComments($uid, $users_comments)
 			unless $I{F}{willing};
 	}
@@ -881,7 +881,7 @@ EOT
 	$I{dbobject}->setUsersIndex($uid, $H);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersPrefrences($uid, $H2) if $uid != $I{anonymous_coward};
+	$I{dbobject}->setUsersPrefrences($uid, $H2) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################

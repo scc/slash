@@ -98,24 +98,21 @@ sub handler{
 	} elsif ($cookies{'user'}) {
 		my($user, $password) = userCheckCookie($dbcfg, $cookies{'user'}->value);
 		print STDERR "COOKIE_AUTH: $user:$password\n";
-		if($password) {
-			$uid = $dbslash->getUserAuthenticate($user, $password);
-			unless ($uid) {
-				$uid = $dbcfg->{'anonymous_coward_uid'}; 
-				setCookie('user', '');
-			} else {
-				$uid = $user;
-			}
+		unless($uid = $dbslash->getUserAuthenticate($user, $password)) {
+			$uid = $dbcfg->{constants}->{'anonymous_coward_uid'}; 
+			setCookie('user', ' ');
 		}
 	} 
 
-	$uid = $dbcfg->{'anonymous_coward_uid'} unless $uid;
+	$uid = $dbcfg->{constants}->{'anonymous_coward_uid'} unless defined($uid);
 
 	#Ok, yes we could use %ENV here, but if we did and 
 	#if someone ever wrote a module in another language
 	#or just a cheesy CGI, they would never see it.
 	$r->subprocess_env('REMOTE_USER' => $uid);
 	$cfg->{'form'} = \%form;
+
+	print STDERR "UID: $uid\n";
 
 	return OK;
 }
@@ -137,7 +134,7 @@ sub userCheckCookie {
 	my($cfg, $cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
 	my($uid, $passwd) = split('::', $cookie);
-	return ($cfg->{'anonymous_coward_uid'}, '')  unless $uid && $passwd;
+	return ($cfg->{constants}->{'anonymous_coward_uid'}, '')  unless $uid && $passwd;
 	return ($uid, $passwd);
 }
 
@@ -150,13 +147,13 @@ sub userLogin {
 	$passwd = substr $passwd, 0, 20;
 	my $uid = $cfg->{'dbslash'}->getUserAuthenticate($name, $passwd);
 
-	if ($uid != $cfg->{anonymous_coward_uid}) {
+	if ($uid != $cfg->{constants}->{anonymous_coward_uid}) {
 		my $cookie = $uid . '::' . $passwd;
 		#$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
 		setCookie('user', $cookie);
 		return $uid ;
 	} else {
-		return $cfg->{'anonymous_coward_uid'};
+		return $cfg->{constants}->{'anonymous_coward_uid'};
 	}
 }
 

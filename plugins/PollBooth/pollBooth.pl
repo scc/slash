@@ -176,7 +176,7 @@ sub vote {
 	}
 
 	my $notes = "Displaying poll results";
-	if ($I{U}{uid} == $I{anonymous_coward} && ! $I{allow_anonymous}) {
+	if ($I{U}{uid} == $I{anonymous_coward_uid} && ! $I{allow_anonymous}) {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
 	} elsif ($aid > 0) {

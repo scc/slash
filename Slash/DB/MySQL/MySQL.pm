@@ -483,9 +483,22 @@ sub getDescriptions {
 
 ########################################################
 # Get user info from the users table.
+# If you don't pass in a $script, you get everything
+# which is handy for you if you need the entire user
 sub getUser {
 	my($self, $uid, $script) = @_;
-	my $user = $self->sqlSelectHashref('*', 'users',
+
+	my $user;
+	unless($script) {
+		$user = $self->sqlSelectHashref('*',
+			'users, users_index, users_comments, users_prefs',
+			"users.uid=$uid AND users_index.uid=$uid AND " .
+			"users_comments.uid=$uid AND users_prefs.uid=$uid"
+		);
+		return $user ? $user : undef;
+	}
+
+	$user = $self->sqlSelectHashref('*', 'users',
 		' uid = ' . $self->{dbh}->quote($uid)
 	);
 	return undef unless $user;
@@ -659,17 +672,6 @@ sub createUser {
 	return $uid;
 }
 
-########################################################
-sub getUserAll {
-	my($self, $uid) = @_;
-	my $ac_hash_ref;
-	$ac_hash_ref = $self->sqlSelectHashref('*',
-		'users, users_index, users_comments, users_prefs',
-		"users.uid=$uid AND users_index.uid=$uid AND " .
-		"users_comments.uid=$uid AND users_prefs.uid=$uid"
-	);
-	return $ac_hash_ref;
-}
 
 ########################################################
 sub getACTz {
@@ -708,6 +710,7 @@ sub setVar {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
 }
+
 ########################################################
 sub setAuthor {
 	my($self, $author, $value) = @_;
@@ -1582,15 +1585,6 @@ sub countPollquestions {
 	return $pollquestions;
 }
 ########################################################
-sub countUsersIndexExboxesByBid{
-	my ($self, $bid) = @_;
-	my ($count) = $self->sqlSelect("count(*)","users_index",
-			qq!exboxes like "%'$bid'%" !
-			);
-
-	return $count;
-}
-########################################################
 sub saveVars {
 #this is almost copied verbatium. Needs to be cleaned up
 	my ($self) = @_;
@@ -1663,11 +1657,13 @@ sub setCommentCleanup {
 }
 
 ########################################################
-sub countUsersIndexExboxesByBid {
-	my($self, $bid) = @_;
-	my($count) = $self->sqlSelect("count(*)","users_index",
-		qq!exboxes like "%'$bid'%" !
-	);
+sub countUsersIndexExboxesByBid{
+	my ($self, $bid) = @_;
+	my ($count) = $self->sqlSelect("count(*)","users_index",
+			qq!exboxes like "%'$bid'%" !
+			);
+
+	return $count;
 }
 ########################################################
 sub getCommentReply{	
@@ -1949,6 +1945,84 @@ sub saveStory{
 		displaystatus	=> $form->{displaystatus},
 		commentstatus	=> $form->{commentstatus}
 	});
+}
+
+########################################################
+# Now, the idea is to not cache here, since we actually
+# cache elsewhere (namely in %Slash::Apache::constants)
+# Getting populated with my info for the moment
+sub getSlashConf {
+	my ($self) = @_;
+	my %conf; # We are going to populate this and return a reference
+	my @keys = qw (
+		anonymous_coward_uid
+		adminmail
+		mailfrom
+		siteowner
+		datadir
+		basedomain
+		cookiedomain
+		siteadmin
+		siteadmin_name
+		smtp_server
+		sitename
+		slogan
+		breaking
+		shit
+		mainfontface
+		fontbase
+		updatemin
+		archive_delay
+		submiss_view
+		submiss_ts
+		articles_only
+		admin_timeout
+		allow_anonymous
+		use_dept
+		max_depth
+		defaultsection
+		http_proxy
+		story_expire
+		titlebar_width
+		send_mail
+		authors_unlimited
+		metamod_sum
+		maxtokens
+		tokensperpoint
+		maxpoints
+		stir
+		tokenspercomment
+		down_moderations
+		post_limit
+		max_posts_allowed
+		max_submissions_allowed
+		submission_speed_limit
+		formkey_timeframe
+		rootdir
+		absolutedir
+		basedir
+		imagedir
+		rdfimg
+		cookiepath
+		m2_mincheck
+		m2_maxbonus
+	);
+
+	for(@keys) {
+		my ($value, $desc) = $self->getVar($_);
+		$conf{$_} = $value;
+	}
+
+	$conf{submit_categories} = ['Back'];
+	$conf{fixhrefs} = []; 
+	$conf{approvedtags} = [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
+
+	# who to send daily stats reports to (email => subject)
+	$conf{stats_reports} = {
+		$conf{adminmail}	=> "$conf{sitename} Stats Report",
+	};
+
+	return \%conf;
 }
 
 1;

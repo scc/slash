@@ -64,7 +64,7 @@ sub main {
 	if ($I{F}{op} eq "Submit") {
 
 		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-			$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward};
+			$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
 			submitComment();
 		}
 
@@ -77,17 +77,17 @@ sub main {
 			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid});	
 		} else {
 			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey},
-				$I{anonymous_coward}, $I{U}{uid}, $I{query}->param('rlogin'), $I{F}{upasswd});
+				$I{anonymous_coward_uid}, $I{U}{uid}, $I{query}->param('rlogin'), $I{F}{upasswd});
 		}
 
 		# find out their Karma
-		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward};
+		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward_uid};
 		editComment($id);
 
 
 	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
 		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
-			if $I{U}{uid} != $I{anonymous_coward};
+			if $I{U}{uid} != $I{anonymous_coward_uid};
 		titlebar("99%", "Delete $I{F}{cid}");
 
 		my $delCount = deleteThread($I{F}{sid}, $I{F}{cid});
@@ -96,18 +96,18 @@ sub main {
 
 	} elsif ($I{F}{op} eq "moderate") {
 		($I{U}{karma}) = $I{dbobject}->getUserKarma($I{U}{uid})
-			if $I{U}{uid} != $I{anonymous_coward};
+			if $I{U}{uid} != $I{anonymous_coward_uid};
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();
 		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{op} eq "Change") {
-		if ($I{U}{uid} != $I{anonymous_coward} || defined $I{F}->{"savechanges"}) {
+		if ($I{U}{uid} != $I{anonymous_coward_uid} || defined $I{F}->{"savechanges"}) {
 			$I{dbobject}->setUsersComments($I{U}{uid}, {
 					threshold	=> $I{U}{threshold}, 
 					mode		=> $I{U}{mode},
 					commentsort	=> $I{U}{commentsort}
-			}) if $I{U}{uid} != $I{anonymous_coward};
+			}) if $I{U}{uid} != $I{anonymous_coward_uid};
 		}
 		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $commentstatus);
 
@@ -239,7 +239,7 @@ EOT
 		<A HREF="$I{rootdir}/users.pl">$I{U}{nickname}</A> [
 EOT
 
-	print $I{U}{uid} != $I{anonymous_coward} ? <<EOT1 : <<EOT2;
+	print $I{U}{uid} != $I{anonymous_coward_uid} ? <<EOT1 : <<EOT2;
 		<A HREF="$I{rootdir}/users.pl?op=userclose">Log Out</A> 
 EOT1
 		<A HREF="$I{rootdir}/users.pl">Create Account</A> 
@@ -289,12 +289,12 @@ EOT
 
 	my $checked = $I{F}{nobonus} ? ' CHECKED' : '';
 	print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="nobonus"> No Score +1 Bonus\n!
-		if $I{U}{karma} > $I{goodkarma} and $I{U}{uid} != $I{anonymous_coward};
+		if $I{U}{karma} > $I{goodkarma} and $I{U}{uid} != $I{anonymous_coward_uid};
 
         if ($I{allow_anonymous}) {
 	    $checked = $I{F}{postanon} ? ' CHECKED' : '';
 	    print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="postanon"> Post Anonymously<BR>\n!
-		if $I{U}{karma} > -1 and $I{U}{uid} != $I{anonymous_coward};
+		if $I{U}{karma} > -1 and $I{U}{uid} != $I{anonymous_coward_uid};
         }
 
 	print <<EOT;
@@ -613,7 +613,7 @@ sub submitComment {
 
 	my $pts = 0;
 
-	if ($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
+	if ($I{U}{uid} != $I{anonymous_coward_uid} && !$I{F}{postanon} ) {
 		$pts = $I{U}{defaultpoints};
 		$pts-- if $I{U}{karma} < $I{badkarma};
 		$pts++ if $I{U}{karma} > $I{goodkarma} and !$I{F}{nobonus};
@@ -623,7 +623,7 @@ sub submitComment {
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward});
+	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward_uid});
 	if ($maxCid == -1) {
 		print "<P>There was an unknown error in the submission.<BR>";
 	} elsif (!$maxCid) {
@@ -761,7 +761,7 @@ sub deleteThread {
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
 	my($sid) = @_;
-	return if $I{U}{uid} == $I{anonymous_coward} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
+	return if $I{U}{uid} == $I{anonymous_coward_uid} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
 	my $removed = $I{dbobject}->unsetModeratorlog($I{U}{uid}, $sid, $I{comment_maxscore},$I{comment_minscore});
 
 	for my $cid (@$removed) {
@@ -777,12 +777,12 @@ sub undoModeration {
 sub isTroll {
 	return if $I{U}{aseclev} > 99;
 	my($badIP, $badUID) = (0, 0);
-	return 0 if $I{U}{uid} != $I{anonymous_coward} && $I{U}{karma} > -1;
+	return 0 if $I{U}{uid} != $I{anonymous_coward_uid} && $I{U}{karma} > -1;
 	# Anonymous only checks HOST
 	$badIP = $I{dbobject}->getTrollAddress();
 	return 1 if $badIP < $I{down_moderations}; 
 
-	if ($I{U}{uid} != $I{anonymous_coward}) {
+	if ($I{U}{uid} != $I{anonymous_coward_uid}) {
 		$badUID = $I{dbobject}->getTrollUID();
 	}
 

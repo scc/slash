@@ -106,7 +106,7 @@ sub main {
 
 #################################################################
 sub yourPendingSubmissions {
-	return unless $I{U}{uid} != $I{anonymous_coward};
+	return unless $I{U}{uid} != $I{anonymous_coward_uid};
 	my $submissions = $I{dbobject}->getSubmissions($I{U}{uid});
 	if ($submissions) {
 		my $count = $I{dbobject}->getSubmissionCount();
@@ -385,7 +385,7 @@ USER
 		$name  =~ s/<(.*)>//g;
 		$email =~ s/<(.*)>//g;
 
-		$karma = $uid != $I{anonymous_coward} && defined $karma ? " ($karma)" : "";
+		$karma = $uid != $I{anonymous_coward_uid} && defined $karma ? " ($karma)" : "";
 
 		# @strs is for DISPLAY purposes, nothing more.
 		my @strs = (substr($subj, 0, 35), substr($name, 0, 20), substr($email, 0, 20));

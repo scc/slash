@@ -32,7 +32,7 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
+	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward_uid};
 	header("Meta Moderation");
 
 	my $id = isEligible();
@@ -296,7 +296,7 @@ EOT
 #################################################################
 sub isEligible {
 
-	if ($I{U}{uid} == $I{anonymous_coward}) {
+	if ($I{U}{uid} == $I{anonymous_coward_uid}) {
 		print "You are not logged in";
 		return 0;
 	}

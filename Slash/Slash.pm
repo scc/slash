@@ -74,18 +74,23 @@ getSlashConf();
 # Load in config for proper SERVER_NAME.  If you do not want to use SERVER_NAME,
 # adjust here and in slashdotrc.pl
 sub getSlashConf {
-	my $serv = exists $Slash::home{lc $ENV{SERVER_NAME}}
-		? lc $ENV{SERVER_NAME}
-		: 'DEFAULT';
+#	my $serv = exists $Slash::home{lc $ENV{SERVER_NAME}}
+#		? lc $ENV{SERVER_NAME}
+#		: 'DEFAULT';
+#
+#	require($Slash::home{$serv} ? catfile($Slash::home{$serv}, 'slashdotrc.pl')
+#		: 'slashdotrc.pl');
+#
+#	$serv = exists $Slash::conf{lc $ENV{SERVER_NAME}}
+#		? lc $ENV{SERVER_NAME}
+#		: 'DEFAULT';
 
-	require($Slash::home{$serv} ? catfile($Slash::home{$serv}, 'slashdotrc.pl')
-		: 'slashdotrc.pl');
-
-	$serv = exists $Slash::conf{lc $ENV{SERVER_NAME}}
-		? lc $ENV{SERVER_NAME}
-		: 'DEFAULT';
-
-	*I = $Slash::conf{$ENV{SERVER_NAME} ? $serv : $$};
+	my $constants = getCurrentStatic();
+	#*I = $Slash::conf{$constants->{basedomain}};
+	#Yes this is ugly and should go away
+	for(keys %$constants) {
+		$I{$_} = $constants->{$_};
+	}
 
 	$I{reasons} = [
 		'Normal',	# "Normal"
@@ -132,6 +137,7 @@ sub getSlash {
 	# %I legacy
 	$I{F} = $user_cfg->{'form'};
 	my $user = getUser($ENV{REMOTE_USER});
+	$I{currentMode} = $user->{mode};
 	# When we can move this method into Slash::Apache::User
 	# this can go away
 	$user_cfg->{'user'} = $user;
@@ -229,7 +235,7 @@ sub selectMode {
 sub getblock {
 	my($bid) = @_;
 	$I{dbobject}->getBlockBank(\%I);
-	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "$I{anonymous_coward}";
+	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "$I{anonymous_coward_uid}";
 }
 
 
@@ -303,112 +309,99 @@ sub getWidgetBlock {
 # Replace $_[0] with $_[1] || "0" in the User Hash
 # users by getUser to allow form parameters to override user parameters
 sub overRide {
-	my($p, $d) = @_;
+	my($user, $p, $d) = @_;
 	if (defined $I{query}->param($p)) {
-		$I{U}{$p} = $I{query}->param($p);
+		$user->{$p} = $I{query}->param($p);
 	} else {
-		$I{U}{$p} ||= $d || '0';
+		$user->{$p} ||= $d || '0';
 	}
 }
 
-########################################################
-# Add this hashref to $U
-sub addToUser {
-	my ($H) = @_;
-	@{$I{U}}{ keys %$H } = values %$H;
-}
 
 
 ########################################################
 # IF passed a valid uid & passwd, it logs in $U
-# else $U becomes Anonymous Coward (eg UID $I{anonymous_coward})
+# else $U becomes Anonymous Coward (eg UID $I{anonymous_coward_uid})
 sub getUser {
 	my($uid) = @_;
-	undef $I{U};
-	print STDERR "OP $I{F}{op}\n";
+	#Ok, lets build user
+	my $user;
 
-	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
+	if (($uid != $I{anonymous_coward_uid}) && ($user = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
+	# should the below just be done in the library call for getUser?
 
 		# Get the Timezone Stuff
 		my $timezones = $I{dbobject}->getCodes('tzcodes');
 
-		$I{U}{offset} = $timezones->{ $I{U}{tzcode} };
+		$user->{offset} = $timezones->{ $user->{tzcode} };
 
 		my $dateformats = $I{dbobject}->getCodes('dateformats');
 
-		$I{U}{'format'} = $dateformats->{ $I{U}{dfid} };
+		$user->{'format'} = $dateformats->{ $user->{dfid} };
 
 
 	} else {
-		getAnonCookie();
-		$I{SETCOOKIE} = setCookie('anon', $I{U}{anon_id}, 1);
-
-		unless ($I{AC}) {
-			# Get ourselves an AC if we don't already have one.
-			# (we have to get it /all/ remember!)
-			$I{AC} = $I{dbobject}->getUserAll($I{anonymous_coward});
-
-			# timezone stuff 
-		 	$I{ACTZ} =  $I{dbobject}->getACTz($I{AC}{tzcode}, $I{AC}{dfid});
-
-			@{$I{AC}}{ keys %{$I{ACTZ}} } = values %{$I{ACTZ}};
+		getAnonCookie($user);
+		my $coward = getCurrentAnonymousCoward();
+		$I{SETCOOKIE} = setCookie('anon', $coward->{uid}, 1);
+		#Now, we copy $coward into user
+		#Probably should improve on this
+		for(keys %$coward) {
+			$user->{$_} =  $coward->{$_};
 		}
-
-		addToUser($I{AC});
 
 	}
 
 	# Add On Admin Junk
 	if ($I{F}{op} eq 'adminlogin') {
 		my $sid;
-		($I{U}{aseclev}, $sid) = $I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
-		if ($I{U}{aseclev}) {
-			$I{U}{aid} = $I{F}{aaid};
+		($user->{aseclev}, $sid) = $I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
+		if ($user->{aseclev}) {
+			$user->{aid} = $I{F}{aaid};
 			$I{SETCOOKIE} = setCookie('session', $sid);
 		} else {
-			$I{U}{aid} = undef;
+			$user->{aid} = undef;
 		}
 
 	} elsif (length($I{query}->cookie('session')) > 3) {
-		(@{$I{U}}{qw[aid aseclev asection url]}) =
+		(@{$user}{qw[aid aseclev asection url]}) =
 			$I{dbobject}->getAdminInfo($I{query}->cookie('session'), $I{admin_timeout});
 
 	} else { 
-		$I{U}{aid} = '';
-		$I{U}{aseclev} = 0;
+		$user->{aid} = '';
+		$user->{aseclev} = 0;
 	}
 
 	# Set a few defaults
-	overRide('mode', 'thread');
-	overRide('savechanges');
-	overRide('commentsort');
-	overRide('threshold');
-	overRide('posttype');
-	overRide('noboxes');
-	overRide('light');
+	#passing in $user for the moment
+	overRide($user, 'mode', 'thread');
+	overRide($user, 'savechanges');
+	overRide($user, 'commentsort');
+	overRide($user, 'threshold');
+	overRide($user, 'posttype');
+	overRide($user, 'noboxes');
+	overRide($user, 'light');
 
 
-	$I{currentMode} = $I{U}{mode};
+	$user->{seclev} = $user->{aseclev} if $user->{aseclev} > $user->{seclev};
 
-	$I{U}{seclev} = $I{U}{aseclev} if $I{U}{aseclev} > $I{U}{seclev};
+	$user->{breaking}=0;
 
-	$I{U}{breaking}=0;
-
-	if ($I{U}{commentlimit} > $I{breaking} && $I{U}{mode} ne 'archive') {
-		$I{U}{commentlimit} = int($I{breaking} / 2);
-		$I{U}{breaking} = 1;
+	if ($user->{commentlimit} > $I{breaking} && $user->{mode} ne 'archive') {
+		$user->{commentlimit} = int($I{breaking} / 2);
+		$user->{breaking} = 1;
 	}
 
 	# All sorts of checks on user data
-	$I{U}{tzcode}	= uc($I{U}{tzcode});
-	$I{U}{clbig}	||= 0;
-	$I{U}{clsmall}	||= 0;
-	$I{U}{exaid}	= testExStr($I{U}{exaid}) if $I{U}{exaid};
-	$I{U}{exboxes}	= testExStr($I{U}{exboxes}) if $I{U}{exboxes};
-	$I{U}{extid}	= testExStr($I{U}{extid}) if $I{U}{extid};
-	$I{U}{points}	= 0 unless $I{U}{willing}; # No points if you dont want 'em
+	$user->{tzcode}	= uc($user->{tzcode});
+	$user->{clbig}	||= 0;
+	$user->{clsmall}	||= 0;
+	$user->{exaid}	= testExStr($user->{exaid}) if $user->{exaid};
+	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
+	$user->{extid}	= testExStr($user->{extid}) if $user->{extid};
+	$user->{points}	= 0 unless $user->{willing}; # No points if you dont want 'em
 
-	return $I{U};
+	return $user;
 }
 
 ###############################################################	
@@ -465,7 +458,7 @@ sub getsiddir {
 # typically called now as part of getAd()
 sub anonLog {
 	my($op, $data) = ('/', '');
-	$I{U}{uid} = $I{anonymous_coward};
+	$I{U}{uid} = $I{anonymous_coward_uid};
 
 	$_ = $ENV{REQUEST_URI};
 	s/(.*)\?/$1/;
@@ -506,7 +499,7 @@ sub sendEmail {
 ########################################################
 # The generic "Link a Story" function, used wherever stories need linking
 sub linkStory {
-	my $c = shift;
+	my ($c) = (@_);
 	my($l, $dynamic);
 
 	if ($I{currentMode} ne 'archive' && ($ENV{SCRIPT_NAME} || !$c->{section})) {
@@ -589,7 +582,7 @@ EOT
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
-		qq![ <A HREF="$I{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$I{anonymous_coward}"><B>Results</B></A> | !;
+		qq![ <A HREF="$I{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$I{anonymous_coward_uid}"><B>Results</B></A> | !;
 	$tablestuff .= qq!<A HREF="$I{rootdir}/pollBooth.pl?$sect"><B>Polls</B></A> !
 		unless $notable eq 'rh';
 	$tablestuff .= "Votes:<B>$voters</B>" if $notable eq 'rh';
@@ -932,7 +925,7 @@ EOT
 
 ########################################################
 sub redirect {
-	my $url = shift;
+	my ($url) = @_;
 
 	if ($I{rootdir}) {	# rootdir strongly recommended
 		$url = URI->new_abs($url, $I{rootdir})->canonical->as_string;
@@ -1131,7 +1124,7 @@ sub selectComments {
 	$sql .= "	    AND comments.cid >= $I{F}{pid} " if $I{F}{pid} && $I{shit}; # BAD
 	$sql .= "	    AND comments.cid >= $cid " if $cid && $I{shit}; # BAD
 	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$I{U}{uid} OR " if $I{U}{uid} != $I{anonymous_coward};
+	$sql .= "		comments.uid=$I{U}{uid} OR " if $I{U}{uid} != $I{anonymous_coward_uid};
 	$sql .= "		cid=$cid OR " if $cid;
 	$sql .= "		comments.points >= " . $I{dbh}->quote($I{U}{threshold}) . " OR " if $I{U}{hardthresh};
 	$sql .= "		  1=1 )   ";
@@ -1322,10 +1315,10 @@ sub printComments {
 
 		print ' | ';
 
-		if ($I{U}{uid} == $I{anonymous_coward}) {
+		if ($I{U}{uid} == $I{anonymous_coward_uid}) {
 			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
-		} elsif ($I{U}{uid} != $I{anonymous_coward}) {
+		} elsif ($I{U}{uid} != $I{anonymous_coward_uid}) {
 			print qq!<A HREF="$I{rootdir}/users.pl?op=edituser">!,
 				qq!<FONT COLOR="$I{fg}[3]">Preferences</FONT></A> !
 		}
@@ -1364,7 +1357,7 @@ EOT
 
 
 		print qq!\t\tSave:<INPUT TYPE="CHECKBOX" NAME="savechanges">!
-			if $I{U}{uid} != $I{anonymous_coward};
+			if $I{U}{uid} != $I{anonymous_coward_uid};
 
 		print <<EOT;
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
@@ -1583,7 +1576,7 @@ sub displayThread {
 		$I{F}{startat} = 0; # Once We Finish Skipping... STOP
 
 		if ($C->{points} < $I{U}{threshold}) {
-			if ($I{U}{uid} == $I{anonymous_coward} || $I{U}{uid} != $C->{uid})  {
+			if ($I{U}{uid} == $I{anonymous_coward_uid} || $I{U}{uid} != $C->{uid})  {
 				$hidden++;
 				next;
 			}
@@ -1692,7 +1685,7 @@ EOT
 			&& $C->{uid} ne $I{U}{uid}
 			&& $C->{lastmod} ne $I{U}{uid})
 		    || ($I{U}{aseclev} > 99 && $I{authors_unlimited}))
-		    	&& $I{U}{uid} != $I{anonymous_coward}) {
+		    	&& $I{U}{uid} != $I{anonymous_coward_uid}) {
 
 			my $o;
 			foreach (0 .. @{$I{reasons}} - 1) {
@@ -1933,7 +1926,7 @@ sub pollItem {
 
 ########################################################
 sub testExStr {
-	local $_ = shift;
+	local ($_) = @_;
 	$_ .= "'" unless m/'$/;
 	return $_;
 }

@@ -13,6 +13,9 @@ require Exporter;
 	getDateOffset
 	getCurrentUser
 	getCurrentForm
+	getCurrentStatic
+	getCurrentSlashDB
+	getCurrentAnonymousCoward
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -28,28 +31,6 @@ sub apacheLog {
 		$r->log_error("$ENV{SCRIPT_NAME}:@_");
 	} else {
 		$r->log_error("Error in library:@_");
-	}
-	return 0;
-}
-
-sub stackTrace {
-	my ($number) = @_;
-	$number |= 1;
-	if ($ENV{SCRIPT_NAME}) {
-		my $r = Apache->request;
-		print STDERR "\n";
-		for(1..$number) {
-			my @caller_values = caller($_);
-#			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:$subname:");
-			my $error_string = join ':', @caller_values;
-			print STDERR ("$error_string\n");
-		print STDERR "\n";
-		}
-	} else {
-		for(1..$number) {
-			my ($package, $filename, $line, $subname) = caller($_);
-			print("$package:$filename:$line:$subname:\n");
-		}
 	}
 	return 0;
 }
@@ -89,30 +70,55 @@ sub changePassword {
 
 #################################################################
 sub getCurrentUser {
+	my ($value) = @_;
 	my $r = Apache->request;
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 	my $user = $user_cfg->{'user'};
 
-	return $user;
+	if($value) {
+		return $user? ($value == undef) : $user->{$value};
+	} else {
+		return $user;
+	}
 }
 #################################################################
 sub getCurrentForm {
+	my ($value) = @_;
 	my $r = Apache->request;
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 	my $form = $user_cfg->{'form'};
 
-	return $form;
+	if($value) {
+		return $form? ($value == undef) : $form->{$value};
+	} else {
+		return $form;
+	}
 }
 
 #################################################################
-sub getCurrentStatic{
+sub getCurrentStatic {
 	my ($value) = @_;
 	my $r = Apache->request;
-	my $constants = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $constants = $const_cfg->{'constants'};
 
-	return $constants? ($value == undef) : $constants->{$value};
+	if($value) {
+		return $constants->{$value}
+			? $constants->{$value}
+			: undef;
+	} else {
+		return $constants;
+	}
 }
 
+#################################################################
+sub getCurrentAnonymousCoward{
+	my $r = Apache->request;
+	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $slashdb = $const_cfg->{'anonymous_coward'};
+
+	return $slashdb;
+}
 1;
 
 =head1 NAME
