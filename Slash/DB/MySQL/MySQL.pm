@@ -2012,6 +2012,7 @@ sub setUnexpired {
 ##################################################################
 sub checkExpired {
 	my($self, $uid) = @_;
+	return 0 if !$uid;
 
 	my $where = "uid = $uid AND readonly = 1 AND reason = 'expired'";
 
