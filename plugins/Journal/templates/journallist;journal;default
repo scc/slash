@@ -16,6 +16,8 @@ __template__
 [% INCLUDE journaloptions IF showopts %]
 
 [% INCLUDE titlebar title => "$nickname's Journal Entries", width => "90%" %]
+[% IF showopts %]<FORM METHOD="POST" ACTION="[% constants.rootdir %]/journal.pl">
+<INPUT TYPE="hidden" NAME="op" VALUE="remove">[% END %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH article = articles %]
   <TR>
@@ -23,11 +25,12 @@ __template__
     <TD VALIGN="TOP"><EM>[% Slash.timeCalc(article.1) %]</EM></TD>
 [%- IF showopts %]
     <TD><A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[edit]</A></TD>
-    <TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
+    <TD><INPUT TYPE="checkbox" NAME="del_[% article.0 %]" VALUE="1"></TD>
 [%- END %]
   </TR>
 [% END %]
 </TABLE>
+[% IF showopts %]<INPUT TYPE="submit" VALUE="Delete Articles"></FORM>[% END %]
 
 __seclev__
 100

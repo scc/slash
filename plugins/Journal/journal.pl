@@ -24,6 +24,10 @@ sub main {
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
 
+	# require POST and logged-in user for these ops
+	my $user_ok   = $user->{state}{post} && !$user->{is_anon};
+
+	# if top 10 are allowed
 	my $top_ok    = $constants->{journal_top} && (
 		$constants->{journal_top_posters} ||
 		$constants->{journal_top_friend}  ||
@@ -32,18 +36,24 @@ sub main {
 
 	# possible value of "op" parameter in form
 	my %ops = (
+		edit		=> [ !$user->{is_anon},	\&editArticle		],
+		removemeta	=> [ !$user->{is_anon},	\&articleMeta		],
+		addmeta		=> [ !$user->{is_anon},	\&friendMeta		],
+		deletemeta	=> [ !$user->{is_anon},	\&friendMeta		],
+
+		preview		=> [ $user_ok,		\&editArticle		],
+		save		=> [ $user_ok,		\&saveArticle		], # formkey
+		remove		=> [ $user_ok,		\&removeArticle		],
+		setprefs	=> [ $user_ok,		\&setPrefs		],
+		add		=> [ $user_ok,		\&addFriend		], # formkey?
+		'delete'	=> [ $user_ok,		\&deleteFriend		],
+
 		list		=> [ 1,			\&listArticle		],
 		display		=> [ 1,			\&displayArticle	],
-		preview		=> [ !$user->{is_anon},	\&editArticle		],
-		setprefs	=> [ !$user->{is_anon},	\&setPrefs		],		
-		edit		=> [ !$user->{is_anon},	\&editArticle		],
-		save		=> [ !$user->{is_anon},	\&saveArticle		],
-		remove		=> [ !$user->{is_anon},	\&removeArticle		],
-		'delete'	=> [ !$user->{is_anon},	\&deleteFriend		],
-		add		=> [ !$user->{is_anon},	\&addFriend		],
 		top		=> [ $top_ok,		\&displayTop		],
 		searchusers	=> [ 1,			\&searchUsers		],
 		friends		=> [ 1,			\&displayFriends	],
+
 		default		=> [ 1,			\&displayFriends	],
 	);
 
@@ -83,7 +93,7 @@ sub main {
 }
 
 sub displayTop {
-	my($journal, $constants, $user, $form) = @_;
+	my($journal, $constants, $user, $form, $slashdb) = @_;
 	my $journals;
 
 	if ($constants->{journal_top_posters}) {
@@ -176,7 +186,7 @@ sub displayRSS {
 }
 
 sub displayTopRSS {
-	my($journal, $constants, $user, $form) = @_;
+	my($journal, $constants, $user, $form, $slashdb) = @_;
 
 	my $journals;
 	if ($form->{type} eq 'count' && $constants->{journal_top_posters}) {
@@ -274,6 +284,7 @@ sub displayArticle {
 	slashDisplay($theme, {
 		articles	=> \@sorted_articles,
 		uid		=> $uid,
+		is_friend	=> $journal->is_friend($uid),
 		back		=> $back,
 		forward		=> $forward,
 	});
@@ -398,23 +409,52 @@ sub saveArticle {
 	listArticle(@_);
 }
 
+sub articleMeta {
+	my($journal, $constants, $user, $form, $slashdb) = @_;
+
+	if ($form->{id}) {
+		my $article = $journal->get($form->{id});
+		slashDisplay('meta', { article => $article });
+	} else {
+		listArticle(@_);
+	}
+}
+
 sub removeArticle {
-	my($journal, $constants, $user, $form) = @_;
-	$journal->remove($form->{id}) if $form->{id};
+	my($journal, $constants, $user, $form, $slashdb) = @_;
+
+	for my $id (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+		$journal->remove($id);
+	}
+
 	listArticle(@_);
 }
 
+sub friendMeta {
+	my($journal, $constants, $user, $form, $slashdb) = @_;
+
+	if ($form->{uid}) {
+		my $friend = $slashdb->getUser($form->{uid});
+		slashDisplay('meta', { friend => $friend });
+	} else {
+		displayFriends(@_);
+	}
+}
+
 sub addFriend {
-	my($journal, $constants, $user, $form) = @_;
+	my($journal, $constants, $user, $form, $slashdb) = @_;
 
 	$journal->add($form->{uid}) if $form->{uid};
 	displayFriends(@_);
 }
 
 sub deleteFriend {
-	my($journal, $constants, $user, $form) = @_;
+	my($journal, $constants, $user, $form, $slashdb) = @_;
 
-	$journal->delete($form->{uid}) if $form->{uid} ;
+	for my $uid (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+		$journal->delete($uid);
+	}
+
 	displayFriends(@_);
 }
 
@@ -454,6 +494,7 @@ sub editArticle {
 		slashDisplay($theme, {
 			articles	=> [{ day => $article->{date}, article => [ $disp_article ] }],
 			uid		=> $article->{uid},
+			is_friend	=> $journal->is_friend($article->{uid}),
 			back		=> -1,
 			forward		=> 0,
 		});

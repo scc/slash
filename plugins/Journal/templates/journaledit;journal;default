@@ -39,7 +39,7 @@ __template__
 		<TEXTAREA WRAP="virtual" NAME="article" COLS="60" ROWS="20">[% FILTER strip_literal; article.article; END %]</TEXTAREA>
 		<P>
 		<INPUT TYPE="submit" NAME="op" value="preview">
-	[% IF form.preview %]
+	[% IF form.preview || article.id %]
 		<INPUT TYPE="submit" NAME="op" VALUE="save">
 	[% END %]
 		[% format_select %]

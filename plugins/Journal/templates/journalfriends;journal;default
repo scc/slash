@@ -21,17 +21,19 @@ __template__
 	width => "90%"
 %]
 
+[% IF !user.is_anon && !search %]<FORM METHOD="POST" ACTION="[% constants.rootdir %]/journal.pl">
+<INPUT TYPE="hidden" NAME="op" VALUE="delete">[% END %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 [% FOREACH friend = friends %]
     <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER strip_attribute; friend.0; END %]">[% friend.0 %]</A></TD>
     <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% friend.1 %]"><B>[% friend.3 %]</B></A></TD>
     <TD VALIGN="TOP"><EM>[% Slash.timeCalc(friend.2) %]</EM></TD>
-[% IF !user.is_anon && !search %]     <TD><A HREF="[% constants.rootdir %]/journal.pl?op=delete&amp;uid=[% friend.1 %]">[delete]</A></TD>
+[% IF !user.is_anon && !search %]     <TD><INPUT TYPE="checkbox" NAME="del_[% friend.1 %]" VALUE="1"></TD>
 [% END %]
 </TR>
 [% END %]
 </TABLE>
-
+[% IF !user.is_anon && !search %]<INPUT TYPE="submit" VALUE="Remove Friends"></FORM>[% END %]
 <BR><BR>
 
 [% INCLUDE searchusers %]

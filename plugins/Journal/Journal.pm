@@ -171,10 +171,21 @@ sub add {
 	$self->sqlDo("INSERT INTO journal_friends (uid,friend) VALUES ($uid, $friend)");
 }
 
+sub is_friend {
+	my($self, $friend) = @_;
+	my $uid   = $ENV{SLASH_USER};
+	my $cols  = "jf.uid";
+	my $table = "journal_friends AS jf";
+	my $where = "jf.uid=$uid AND jf.friend=$friend";
+
+	my $is_friend = $self->sqlSelect($cols, $table, $where);
+	return $is_friend;
+}
+
 sub delete {
 	my($self, $friend) = @_;
 	my $uid = $ENV{SLASH_USER};
-	$self->sqlDo("DELETE FROM  journal_friends WHERE uid=$uid AND friend=$friend");
+	$self->sqlDo("DELETE FROM journal_friends WHERE uid=$uid AND friend=$friend");
 }
 
 sub top {

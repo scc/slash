@@ -1,0 +1,60 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+meta
+__template__
+[% SWITCH form.op;
+	CASE "addmeta";
+		title	= "Adding Friend";
+		op	= "add";
+		name	= "uid";
+		val	= friend.uid;
+		submit	= "Add Friend";
+		text	= BLOCK %]
+<P>To prevent abuse, we want to confirm that you actually want to make
+friends with [% FILTER strip_literal; friend.nickname; END %]
+([% friend.uid %]).  Please click "[% submit %]" to continue.</P>
+		[% END;
+	CASE "deletemeta";
+		title	= "Removing Friend";
+		op	= "delete";
+		name	= "del_$friend.uid";
+		val	= 1;
+		submit	= "Remove Friend";
+		text	= BLOCK %]
+<P>To prevent abuse, we want to confirm that you actually want to
+remove [% FILTER strip_literal; friend.nickname; END %]
+([% friend.uid %]) as a friend.  Please click "[% submit %]"
+to continue.</P>
+		[% END;
+	CASE "removemeta";
+		title	= "Deleting Article";
+		op	= "remove";
+		name	= "del_$article.id";
+		val	= 1;
+		submit	= "Delete Article";
+		text	= BLOCK %]
+<P>To prevent abuse, we want to confirm that you actually want to
+delete "[% FILTER strip_literal; article.description; END %]".
+Please click "[% submit %]" to continue.</P>
+		[% END;
+END %]
+
+[% INCLUDE titlebar width => "100%" %]
+<FORM ACTION="[% constants.rootdir %]/journal.pl" METHOD="POST">
+<INPUT TYPE="hidden" NAME="op" VALUE="[% op %]">
+<INPUT TYPE="hidden" NAME="[% name %]" VALUE="[% val %]">
+[% text %]
+<P><INPUT TYPE="submit" VALUE="[% submit %]"></P>
+</FORM>
+
+__seclev__
+500

@@ -25,16 +25,16 @@ __template__
 [
 [% IF user.uid == uid %]
 <A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Edit</A> |
-<A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% diatribe.id %]">Delete</A> |
-[% ELSIF 1 # need to check if already friend %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=add&amp;uid=[% uid %]">Add Friend</A> |
-[% ELSE %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=delete&amp;uid=[% uid %]">Remove Friend</A> |
+<A HREF="[% constants.rootdir %]/journal.pl?op=removemeta&amp;id=[% diatribe.id %]">Delete</A> |
+[% END; IF is_friend %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=deletemeta&amp;uid=[% uid %]">Remove Friend</A> |
+[% ELSIF user.uid != uid %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=addmeta&amp;uid=[% uid %]">Add Friend</A> |
 [% END %]
 [% IF diatribe.discussion %]
 <A HREF="[% constants.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Comments</A>
 [% ELSE %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=save&amp;id=[% diatribe.id %]&amp;comments_on=1&amp;journal_discuss=1">Enable Comments</A>
+<A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Enable Comments</A>
 [% END %]
 ]
 
@@ -69,12 +69,6 @@ __template__
 	<TR VALIGN="TOP"><TD ALIGN="RIGHT" COLSPAN="2"><FONT SIZE="1">
 		<A HREF="[% constants.rootdir %]/journal.pl?op=list&uid=[% uid %]">List all Journal entries</A>
 	</FONT></TD></TR>
-
-	[% IF !user.is_anon && uid && uid != user.uid %]
-		<TR VALIGN="TOP"><TD ALIGN="RIGHT" BGCOLOR="#E0E0E0">
-			<A HREF="[% constants.rootdir %]/journal.pl?op=add&uid=[% uid %]">Make a friend</A>
-		</TD></TR>
-	[% END %]
 </TABLE>
 
 __seclev__
