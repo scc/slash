@@ -2721,6 +2721,9 @@ sub getCommentsForUser {
 #		'comment_heap' : 'comments';
 	my $comment_table = 'comments';
 	my $user = getCurrentUser();
+
+	# this was a here-doc.  why was it changed back to slower,
+	# harder to read/edit variable assignments?  -- pudge
 	my $sql;
 	$sql .= " SELECT	cid, date, date as time, subject, nickname, homepage, fakeemail, ";
 	$sql .= "	users.uid as uid, sig, $comment_table.points as points, pid, sid, ";
@@ -2767,6 +2770,8 @@ sub getCommentsForUser {
 	# Now distribute those texts into the $comments hashref.
 
 	for my $comment (@$comments) {
+		# we need to check for *existence* of the hash key,
+		# not merely definedness; exists is faster, too -- pudge
 		if (!exists($comment_texts->{$comment->{cid}})) {
 			errorLog("no text for cid " . $comment->{cid});
 		} else {

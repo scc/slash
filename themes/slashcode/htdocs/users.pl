@@ -1367,9 +1367,9 @@ sub saveComm {
 	# and the options that can be displayed.
 	my $user = $slashdb->getUser($uid);
 	my $new_fakeemail = '';		# at emaildisplay 0, don't show any email address
-	if ($user->{emaildisplay}) {
-		$new_fakeemail = getArmoredEmail($uid)	if $user->{emaildisplay} == 1;
-		$new_fakeemail = $user->{realemail}	if $user->{emaildisplay} == 2;
+	if ($form->{emaildisplay}) {
+		$new_fakeemail = getArmoredEmail($uid)	if $form->{emaildisplay} == 1;
+		$new_fakeemail = $user->{realemail}	if $form->{emaildisplay} == 2;
 	}
 
 	my $name = $curuser->{seclev} && $form->{name} ?

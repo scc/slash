@@ -610,118 +610,27 @@ sub dispComment {
 			  ($user->{seclev} > 99 &&
 			   $constants->{authors_unlimited}) );
 
+	# brian, why did you comment this out?  this is *required* for
+	# templates.  it is not optional, hence, uncommented. -- pudge
 	# don't inherit these ...
-#	for (qw(sid cid pid date subject comment uid points lastmod
-#		reason nickname fakeemail homepage sig)) {
-#		$comment->{$_} = '' unless exists $comment->{$_};
-#	}
-
-	if($constants->{comments_hardcoded}) {
-		my($comment_to_display, $score_to_display, $user_to_display, 
-			$time_to_display, $comment_link_to_display, $userinfo_to_display);
-
-		if($comment_shrunk) {
-			my $link = linkComment({
-					sid	=> $comment->{sid},
-					cid	=> $comment->{cid},
-					pid	=> $comment->{cid},
-					subject	=> 'Read the rest of this comment...'
-				}, 1);
-			$comment_to_display = "$comment_shrunk<P><B>$link</B>";
-		} elsif ($user->{nosigs}) {
-			$comment_to_display  = "$comment->{comment}<BR>$comment->{sig}";
-		} else {
-			$comment_to_display = $comment->{comment};
-		}
-
-		$time_to_display = timeCalc($comment->{date});
-		unless($user->{noscores}) {
-			$score_to_display .= "(Score:$comment->{points}";
-
-			my $reason = $reasons{$comment->{'reason'}};
-			$score_to_display .= ", $reason"
-				if $constants->{reason};
-
-			$score_to_display .= ") $time_to_display";
-		}
-
-		$comment_link_to_display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}&cid=$comment->{cid}">#$comment->{cid}</A>|;
-		if(isAnon($comment->{uid})) {
-			$user_to_display = $user->{nickname};
-		} else {
-			$userinfo_to_display = qq|<BR>(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$user->{uid}">User #$user->{uid} Info</A>)|;
-
-			$userinfo_to_display .= qq| <A HREF="$comment->{homepage}">$comment->{homepage}</A>|
-				if length($comment->{homepage}) > 8;
-
-			$userinfo_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$user->{uid}"><SMALL>View User's Journal</SMALL></A>|
-				if $comment->{journal_last_entry_date};
-
-			# This is wrong, must be fixed before we ship -Brian
-			if($comment->{fakeemail}) {
-				$user_to_display = qq| <A HREF="mailto:$comment->{fakeemail}">$comment->{fakeemail}</A>($comment->{fakeemail})|;
-			} else {
-				$user_to_display = $user->{nickname};
-			}
-		}
-			
-
-		my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
-		my $return =  qq|
-			<TR><TD BGCOLOR="$user->{bg}[2]">
-				<FONT SIZE="3" COLOR="$user->{fg}[2]">
-				$title $score_to_display
-				</FONT>
-				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
-				$userinfo_to_display
-			</TD></TR>
-			<TR><TD>
-				$comment_to_display
-			</TD></TR>
-			|;
-
-		if( $user->{mode} ne 'archive' and $comment->{nickname} ne "-") {
-			my $reply = (linkComment({
-						sid => $comment->{sid},
-						pid => $comment->{cid},
-						op  => 'Reply',
-						subject => 'Reply to This',
-				}) . "|")
-					unless $user->{state}{comment_read_only};
-			my $parent = linkComment({
-				sid	=> $comment->{sid},
-				cid	=> $comment->{pid},
-				pid	=> $comment->{pid},
-				subject	=> 'Parent',
-				}, 1);
-			my $mod_select = "|" . createSelect("reason_$comment->{cid}", \%reasons, '', 1, 1)
-				if $can_mod and !$user->{state}{comment_read_only};
-
-			my $deletion = qq?| <INPUT TYPE="CHECKBOX" NAME="del_comment->{cid}">?
-					if $user->{is_admin} and !$user->{state}{comment_read_only};
-
-			$return .= qq|
-				<TR><TD>
-					<FONT SIZE="2">
-					[$reply$parent]$mod_select$deletion
-					</FONT>
-				</TD></TR>
-				|;
-		}
-
-		return $return;
-
-	} else {
-		return slashDisplay('dispComment', {
-			%$comment,
-			comment_shrunk	=> $comment_shrunk,
-			reasons		=> \%reasons,
-			can_mod		=> $can_mod,
-			is_anon		=> isAnon($comment->{uid}),
-		}, { Return => 1, Nocomm => 1 });
+	for (qw(sid cid pid date subject comment uid points lastmod
+		reason nickname fakeemail homepage sig)) {
+		$comment->{$_} = '' unless exists $comment->{$_};
 	}
-}
 
+	return _hard_dispComment(
+		$comment, $constants, $user, $form, $comment_shrunk,
+		$can_mod, \%reasons
+	) if $constants->{comments_hardcoded};
+
+	return slashDisplay('dispComment', {
+		%$comment,
+		comment_shrunk	=> $comment_shrunk,
+		reasons		=> \%reasons,
+		can_mod		=> $can_mod,
+		is_anon		=> isAnon($comment->{uid}),
+	}, { Return => 1, Nocomm => 1 });
+}
 
 #========================================================================
 
@@ -993,6 +902,106 @@ sub getData {
 	my %opts = ( Return => 1, Nocomm => 1 );
 	$opts{Page} = $page || 'NONE' if defined $page;
 	return slashDisplay('data', $hashref, \%opts);
+}
+
+########################################################
+# this sucks, but it is here for now
+sub _hard_dispComment {
+	my($comment, $constants, $user, $form, $comment_shrunk, $can_mod, $reasons) = @_;
+
+	my($comment_to_display, $score_to_display, $user_to_display, 
+		$time_to_display, $comment_link_to_display, $userinfo_to_display);
+
+	if ($comment_shrunk) {
+		my $link = linkComment({
+			sid	=> $comment->{sid},
+			cid	=> $comment->{cid},
+			pid	=> $comment->{cid},
+			subject	=> 'Read the rest of this comment...'
+		}, 1);
+		$comment_to_display = "$comment_shrunk<P><B>$link</B>";
+	} elsif ($user->{nosigs}) {
+		$comment_to_display  = "$comment->{comment}<BR>$comment->{sig}";
+	} else {
+		$comment_to_display = $comment->{comment};
+	}
+
+	$time_to_display = timeCalc($comment->{date});
+	unless ($user->{noscores}) {
+		$score_to_display .= "(Score:$comment->{points}";
+
+		my $reason = $reasons->{$comment->{'reason'}};
+		$score_to_display .= ", $reason" if $constants->{reason};
+
+		$score_to_display .= ")";
+	}
+
+	$comment_link_to_display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}&cid=$comment->{cid}">#$comment->{cid}</A>|;
+
+	if (isAnon($comment->{uid})) {
+		$user_to_display = $comment->{nickname};
+	} else {
+		$userinfo_to_display = qq|<BR>(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$comment->{uid}">User #$comment->{uid} Info</A>)|;
+
+		$userinfo_to_display .= qq| <A HREF="$comment->{homepage}">$comment->{homepage}</A>|
+			if length($comment->{homepage}) > 8;
+
+		$userinfo_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$comment->{uid}"><SMALL>View User's Journal</SMALL></A>|
+			if $comment->{journal_last_entry_date};
+
+		# This is wrong, must be fixed before we ship -Brian
+		# i think it is right now -- pudge
+		if ($comment->{fakeemail}) {
+			$user_to_display = qq| <A HREF="mailto:$comment->{fakeemail}">$comment->{nickname}</A> (<B><FONT SIZE="2">$comment->{fakeemail})</FONT></B>|;
+		} else {
+			$user_to_display = $comment->{nickname};
+		}
+	}
+			
+
+	my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
+	my $return = <<EOT;
+			<TR><TD BGCOLOR="$user->{bg}[2]">
+				<FONT SIZE="3" COLOR="$user->{fg}[2]">
+				$title $score_to_display
+				</FONT>
+				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
+				$userinfo_to_display
+			</TD></TR>
+			<TR><TD>
+				$comment_to_display
+			</TD></TR>
+EOT
+
+	if ($user->{mode} ne 'archive' and $comment->{nickname} ne "-") {
+		my $reply = (linkComment({
+			sid	=> $comment->{sid},
+			pid	=> $comment->{cid},
+			op	=> 'Reply',
+			subject	=> 'Reply to This',
+		}) . " | ") unless $user->{state}{comment_read_only};
+
+		my $parent = linkComment({
+			sid	=> $comment->{sid},
+			cid	=> $comment->{pid},
+			pid	=> $comment->{pid},
+			subject	=> 'Parent',
+		}, 1);
+		my $mod_select = " | " . createSelect("reason_$comment->{cid}", $reasons, '', 1, 1)
+			if $can_mod and !$user->{state}{comment_read_only};
+
+		my $deletion = qq? | <INPUT TYPE="CHECKBOX" NAME="del_comment->{cid}">?
+			if $user->{is_admin} and !$user->{state}{comment_read_only};
+
+		$return .= <<EOT;
+			<TR><TD>
+				<FONT SIZE="2">
+				[ $reply$parent$mod_select$deletion ]
+				</FONT>
+			</TD></TR>
+EOT
+	}
+	return $return;
 }
 
 1;
