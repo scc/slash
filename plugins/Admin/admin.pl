@@ -746,7 +746,7 @@ sub topicEdit {
 
 ##################################################################
 sub topicDelete {
-	my ($tid) = @_;
+	my($tid) = @_;
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 

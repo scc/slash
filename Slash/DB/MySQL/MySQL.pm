@@ -794,6 +794,7 @@ sub getUserEmail {
 
 	return $uid;
 }
+
 #################################################################
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;

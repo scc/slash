@@ -46,7 +46,7 @@ sub reconcileM2 {
 	for my $m2id ($slashdb->getMetamodIDs()) {
 		my $m2_list = $slashdb->getMetaModerations($_);
 		my %m2_votes;
-		my (@con, @dis);
+		my(@con, @dis);
 
 		map { $m2_votes{$_->{val}}++; } @{$m2_list};
 
@@ -55,17 +55,17 @@ sub reconcileM2 {
 		my @rank = sort { 
 			$m2_votes{$a} <=> $m2_votes{$b}
 		} keys %m2_votes;
-		my ($con, $dis) = @{%m2_votes}{@rank};
-		my ($con_avg, $dis_avg) = ($con/($con+$dis), $dis/($con+$dis));
+		my($con, $dis) = @{%m2_votes}{@rank};
+		my($con_avg, $dis_avg) = ($con/($con+$dis), $dis/($con+$dis));
 
 		# Now organize list of consenters/dissenters by UID.
-		map {
+		for (@{$m2_list}) {
 			# We only need a list of UIDs for consentors.
 			push @con, $_->{uid} if $_->{val} eq $rank[0];
 			# For each dissentor, we need UID and ID pairs.
 			push @dis, [$_->{uid}, $_->{id}]
 				if $_->{val} eq $rank[1];
-		} @{$m2_list};
+		}
 
 		# Try to penalize suspicious M2 behavior.
 		if ($dis_avg < $constants->{m2_minority_trigger}) {
@@ -129,9 +129,11 @@ sub reconcileM2 {
 			my $messages = getObject('Slash::Messages');
 			if ($messages) {
 				# Why is there no $slashdb->getComment($cid)?
+				# doesn't seem it is needed -- pudge
 				my $comment = $slashdb->getComments(
 					$modlog->{sid}, $modlog->{cid}
 				);
+				# not used? -- pudge
 				my $m_user = getUser($modlog->{uid});
 
 				# Unfortunately, the template must be aware
@@ -163,4 +165,3 @@ sub reconcileM2 {
 }
 
 1;
-

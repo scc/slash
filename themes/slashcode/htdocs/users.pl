@@ -213,8 +213,6 @@ sub mailPasswd {
 		}
 	}
 
-	
-
 	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
 
 	unless ($uid) {
@@ -1276,7 +1274,6 @@ sub displayForm {
 			: getTitle('displayForm_title');
 	} elsif ($op eq 'mailpasswdform') {
 		$title = getTitle('mailPasswdForm_title');
-
 	} elsif ($op eq 'newuserform') { 
 		$title = getTitle('newUserForm_title');
 	} else {
