@@ -425,7 +425,7 @@ sub apache_site_conf {
     ErrorDocument 404 /404.pl
 </VirtualHost>
 |;
-	my $file = "$prefix/httpd/$sitename.conf";  
+	my $file = "$prefix_site/$sitename/$sitename.conf";  
 	open(FILE, '>' . $file);
 	print FILE $text;
 	close(FILE);
@@ -443,7 +443,7 @@ install you should now have a slashsite.
 You will either need to edit your httpd.conf
 file unless you are have slash handle it. The 
 correct syntax can be found in:
-$prefix/httpd/$sitename.conf
+$prefix_site/$sitename/$sitename.conf
 You may want to take a look at it. If you are
 using virtual hosting by hostname you may
 also need to add a NameVirtualHost to your
