@@ -92,7 +92,7 @@ install: slash plugins
 	 	(cd $$a; \
 	 	if [ -f Makefile ]; then \
 			make install; \
-		elif [ -F Makefile.PL ]; then \
+		elif [ -f Makefile.PL ]; then \
 			if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; \
 			else \
