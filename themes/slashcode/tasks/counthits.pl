@@ -67,6 +67,7 @@ EOT
 	$sth->execute;
 	my $accesslog_count = 0;
 	while ($_ = $sth->fetchrow_arrayref) {
+		$_->[1] =~ s{^(\w+/)+(\d{2}/\d{2}/\d{2}/.+)$}{$2};
 		$count{$_->[1]}++ if $_->[0] eq 'article';
 		$accesslog_count++;
 	}

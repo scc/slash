@@ -20,6 +20,36 @@ use base 'Slash::DB::MySQL';
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
+
+# SQL STATUS FUNCTIONS.
+
+########################################################
+sub sqlShowMasterStatus {
+	my($self) = @_;
+
+	#$self->sqlConnect();
+	my $stat = $self->{_dbh}->prepare("SHOW MASTER STATUS");
+	$stat->execute;
+	my $statlist = [];
+	push @{$statlist}, $_ while $_ = $stat->fetchrow_hashref;
+
+	return $statlist;
+}
+
+
+########################################################
+sub sqlShowSlaveStatus {
+	my($self) = @_;
+
+	#$self->sqlConnect();
+	my $stat = $self->{_dbh}->prepare("SHOW SLAVE STATUS");
+	$stat->execute;
+	my $statlist = [];
+	push @{$statlist}, $_ while $_ = $stat->fetchrow_hashref;
+
+	return $statlist;
+}
+
 ########################################################
 # for slashd
 # This method is used in a pretty wasteful way
@@ -569,6 +599,14 @@ sub fetchEligibleModerators {
 			 GROUP BY users_info.uid
 			 HAVING c >= $constants->{m1_eligible_hitcount}
 			 ORDER BY c");
+	# Would it be better to NOT use the HAVING clause here and instead 
+	# iterate thru a statement handle and triggering on [c] as the old code
+	# did?
+	#
+	# Another idea:
+	#	ALTER TABLE accesslog ADD INDEX uid (uid);
+	#
+	# Then SELECT ON/GROUP BY accesslog.uid?
 
 	return $returnable;
 }

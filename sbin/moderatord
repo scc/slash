@@ -11,8 +11,10 @@
 
 use strict;
 use Slash;
+use Slash::DB;
 use Slash::Utility;
 
+my $read_db;
 my $virtual_user = $ARGV[0];
 createEnvironment($ARGV[0]);
 my $constants = getCurrentStatic();
@@ -23,15 +25,21 @@ sub moderatordLog {
 	doLog('moderatord', \@_);
 }
 
+sub fatalErrorToLog {
+	doLog('moderatord', \@_);
+	# Exit with error condition.
+	exit 1;
+}
+
 sub comments2tokens {
 	my $comments = shift;
 	my $tokenpool = $comments * $constants->{tokenspercomment};
-	my $stirredpoints = $slashdb->stirPool();
+	my $stirredpoints;# = $slashdb->stirPool();
 	$tokenpool += $stirredpoints * $constants->{tokensperpoint};
 
-	# We only want a list of UIDs, here.
+	# We only want a list of UIDs. [ACCESSLOG QUERY]
 	my(@eligibleMods) = map { $_ = $_->[0] }
-			    @{$slashdb->fetchEligibleModerators()};
+			    @{$read_db->fetchEligibleModerators()};
 	my $eligible = scalar @eligibleMods;
 	my($st, $fi) = (
 		int($eligible * $constants->{m1_pointgrant_start}),
@@ -45,27 +53,50 @@ sub comments2tokens {
 	for (my $x = 0; $x < $tokenpool; $x++) {
 		$updateUIDs{$eligibleMods[$st + rand ($fi - $st) - 1]}++;
 	}
-	# Note, there is a slight chance that this message will NOT be
-	# accurate in it's report of the number of accounts available,
-	# due to how the API is designed. We could pass the number of
-	# users to fetchEligibleModerators(), for example...
+
+	# Note that we use the separate read object here to try and stay as 
+	# much in sync as possible.
 	moderatordLog(getData('moderatord_tokenmsg', {
 		new_comments	=> $comments,
 		stirredpoints	=> $stirredpoints,
-		last_user	=> $slashdb->getLastUser(),
+		last_user	=> $read_db->getLastUser(),
 		tokenpool	=> $tokenpool,
 		eligible	=> $eligible,
 		st		=> $st,
 		fi		=> $fi,
 		num_updated	=> scalar keys %updateUIDs,
 	}));
-	$slashdb->updateTokens([keys %updateUIDs]);
+	#$slashdb->updateTokens([keys %updateUIDs]);
 }
 
 
 # MAIN CODE #
 doLogInit('moderatord');
 moderatordLog(getData('moderatord_log_header'));
+
+# HIGH LOAD SITES!
+# This is the object which we use to query the accesslog table. If it's not
+# defined, we use the site's DB object.
+$read_db = $slashdb;
+if ($constants->{moderatord_read_user}) {
+	# What happens if these return more than one row?
+	my $count = $constants->{moderatord_replication_waitcount} || 2;
+	while ($count--) {
+		$read_db = new Slash::DB($constants->{moderatord_read_user});
+		my $master_stat = ($slashdb->sqlShowMasterStatus())->[0];
+		my $slave_stat = ($read_db->sqlShowSlaveStatus())->[0];
+		fatalErrorLog('Replication requested but not active!')
+			if lc($slave_stat->{Slave_running}) eq 'no';
+		fatalErrorLog('Var$moderatord_lag_threshold not set!')
+			if !exists $constants->{moderatord_lag_threshold};
+		$read_db = undef
+			if $master_stat->{Position} - $slave_stat->{'pos'} <=
+			   $constants->{moderatord_lag_threshold};
+		sleep 5 if !$read_db;
+	}
+	fatalErrorLog('Aborting: Replication not sufficiently caught-up.') if !$read_db;
+}
+
 my $tc = $slashdb->getVar('totalComments', 'value');
 my $lc = $slashdb->getVar('lastComments', 'value');
 
@@ -85,9 +116,9 @@ my $lc = $slashdb->getVar('lastComments', 'value');
 my $newcomments = $tc - $lc;
 moderatordLog("NC: $newcomments");
 if ($newcomments > 0) {
-	$slashdb->setVar('lastComments', $tc);
+	#$slashdb->setVar('lastComments', $tc);
 	comments2tokens($newcomments);
-	my $log = $slashdb->tokens2points();
+	my $log; # = $slashdb->tokens2points();
 	for (@$log) {
 		moderatordLog($_);
 	}
