@@ -923,7 +923,7 @@ sub getRelated {
 
 ##################################################################
 sub otherLinks {
-	my($aid, $tid) = @_;
+	my($aid, $tid, $uid) = @_;
 
 	my $slashdb = getCurrentDB();
 
@@ -931,6 +931,7 @@ sub otherLinks {
 	my $topic = $slashdb->getTopic($tid);
 
 	return slashDisplay('otherLinks', {
+		uid		=> $uid,
 		aid		=> $aid,
 		tid		=> $tid,
 		topic		=> $topic,
@@ -999,7 +1000,7 @@ sub editStory {
 
 		$user->{currentSection} = $tmp;
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
-			. otherLinks($slashdb->getAuthor($storyref->{uid}, 'nickname'), $storyref->{tid});
+			. otherLinks($slashdb->getAuthor($storyref->{uid}, 'nickname'), $storyref->{tid}, $storyref->{uid});
 
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
 
@@ -1278,7 +1279,7 @@ sub updateStory {
 	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid')
 		unless $form->{aid};
 	$form->{relatedtext} = getRelated("$form->{title} $form->{bodytext} $form->{introtext}")
-		. otherLinks($slashdb->getAuthor($form->{uid}, 'nickname'), $form->{tid});
+		. otherLinks($slashdb->getAuthor($form->{uid}, 'nickname'), $form->{tid}, $form->{uid});
 
 	$slashdb->updateStory();
 	titlebar('100%', getTitle('updateStory-title'));
@@ -1299,7 +1300,7 @@ sub saveStory {
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
-	) . otherLinks($user->{nickname}, $form->{tid});
+	) . otherLinks($user->{nickname}, $form->{tid}, $user->{uid});
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	my $sid = $slashdb->createStory($form);
