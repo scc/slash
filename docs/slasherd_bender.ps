@@ -1,7 +1,7 @@
 %!PS-Adobe-2.0
 %%Title: slasherd_bender.ps
 %%Creator: fig2dev Version 3.2 Patchlevel 3c
-%%CreationDate: Fri Feb  2 13:32:05 2001
+%%CreationDate: Fri Feb 16 15:38:35 2001
 %%For: patg@vidya.osdn.com ()
 %%Orientation: Landscape
 %%Pages: 2
@@ -9,7 +9,7 @@
 %%BeginSetup
 %%IncludeFeature: *PageSize Letter
 %%EndSetup
-%%Magnification: 1.0000
+%%Magnification: 0.8700
 %%EndComments
 /$F2psDict 200 dict def
 $F2psDict begin
@@ -51,7 +51,7 @@ $F2psDict /mtrx matrix put
 end
 save
 newpath 0 792 moveto 0 0 lineto 612 0 lineto 612 792 lineto closepath clip newpath
-0.0 0.0 translate
+-22.5 55.5 translate
  90 rotate
 1 -1 scale
 
@@ -92,16 +92,13 @@ newpath 0 792 moveto 0 0 lineto 612 0 lineto 612 792 lineto closepath clip newpa
 $F2psBegin
 %%Page: 1 1
 10 setmiterlimit
- 0.06000 0.06000 sc
+ 0.05220 0.05220 sc
 %%Page: 1 1
 %
 % Fig objects follow
 %
 % Polyline
 7.500 slw
-n 10274 4350 m 11474 4350 l 11474 7125 l 10274 7125 l
- cp gs col0 s gr 
-% Polyline
 n 10275 5025 m 10125 4950 l
  10275 4875 l gs col0 s gr 
 % Polyline
@@ -179,9 +176,6 @@ n 9450 8400 m 10425 8400 l 10425 9225 l 9450 9225 l
 n 9375 2625 m 10275 2625 l 10275 3450 l 9375 3450 l
  cp gs col0 s gr 
 % Polyline
-n 525 6375 m 1275 6375 l 1275 7200 l 525 7200 l
- cp gs col0 s gr 
-% Polyline
 n 2775 2325 m 3825 2325 l 3825 3600 l 2775 3600 l
  cp gs col0 s gr 
 % Polyline
@@ -229,6 +223,12 @@ n 11850 7725 m 12675 7725 l 12675 9450 l 11850 9450 l
 % Polyline
 n 10575 7575 m 11476 7575 l 11476 8850 l 10575 8850 l
  cp gs col0 s gr 
+% Polyline
+n 525 6375 m 1275 6375 l 1275 7200 l 525 7200 l
+ cp gs col0 s gr 
+% Polyline
+n 10275 4350 m 11475 4350 l 11475 7125 l 10275 7125 l
+ cp gs col0 s gr 
 /Times-Bold ff 150.00 scf sf
 10350 4500 m
 gs 1 -1 sc (users_comments) col0 sh gr
@@ -247,9 +247,6 @@ gs 1 -1 sc (* highlightthresh) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 10350 5400 m
 gs 1 -1 sc (* maxcommentsize) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-10350 5550 m
-gs 1 -1 sc (* hardthresh) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 10350 5700 m
 gs 1 -1 sc (* clbig) col0 sh gr
@@ -274,9 +271,6 @@ gs 1 -1 sc (* commentsort) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 10350 6750 m
 gs 1 -1 sc (* noscores) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-10350 6900 m
-gs 1 -1 sc (* mode) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 10350 7050 m
 gs 1 -1 sc (* threshold) col0 sh gr
@@ -319,15 +313,6 @@ gs 1 -1 sc (* introtext) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 375 4650 m
 gs 1 -1 sc (* bodytext) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-375 6075 m
-gs 1 -1 sc (* uid) col0 sh gr
-/Times-Bold ff 150.00 scf sf
-600 6525 m
-gs 1 -1 sc (comment) col0 sh gr
-/Times-Bold ff 150.00 scf sf
-675 6675 m
-gs 1 -1 sc (codes) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 600 6825 m
 gs 1 -1 sc (# mode) col0 sh gr
@@ -607,18 +592,12 @@ gs 1 -1 sc (* answer) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 9450 3375 m
 gs 1 -1 sc (* votes) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-7125 6675 m
-gs 1 -1 sc (postmodes) col0 sh gr
 /Times-Bold ff 150.00 scf sf
 600 7950 m
 gs 1 -1 sc (sessions) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 600 8100 m
 gs 1 -1 sc (# session) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-600 8250 m
-gs 1 -1 sc (* uid) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 600 8400 m
 gs 1 -1 sc (* logintime) col0 sh gr
@@ -694,9 +673,6 @@ gs 1 -1 sc (* reason) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 2850 1725 m
 gs 1 -1 sc (* lastmod) col0 sh gr
-/Times-Roman ff 120.00 scf sf
-9450 8325 m
-gs 1 -1 sc (\(author,  bio, key) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 6450 9375 m
 gs 1 -1 sc (uid) col0 sh gr
@@ -1009,6 +985,30 @@ gs 1 -1 sc (o qid) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 9450 1800 m
 gs 1 -1 sc (# id) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+8550 8550 m
+gs 1 -1 sc (\(author,  bio, key) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+375 6075 m
+gs 1 -1 sc (o uid) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+600 8250 m
+gs 1 -1 sc (o uid) col0 sh gr
+/Times-Bold ff 150.00 scf sf
+600 6525 m
+gs 1 -1 sc (comment) col0 sh gr
+/Times-Bold ff 150.00 scf sf
+600 6675 m
+gs 1 -1 sc (codes) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+10350 5550 m
+gs 1 -1 sc (* mode) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+10350 6900 m
+gs 1 -1 sc (* hardthresh) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+7125 6525 m
+gs 1 -1 sc (postmodes) col0 sh gr
 % Polyline
  [60] 0 sd
 n 1425 3525 m 2250 3525 l 2250 450 l
@@ -1248,6 +1248,35 @@ n 10575 7950 m 10350 7950 l 10350 7350 l
 % Polyline
 n 10575 8025 m 10425 7950 l
  10575 7875 l gs col0 s gr 
+% Polyline
+ [60] 0 sd
+n 10575 8250 m 8025 8250 l 8025 9000 l 2325 9000 l 2325 6675 l 2100 6675 l
+
+ 2025 5400 l gs col0 s gr  [] 0 sd
+% Polyline
+n 10575 8325 m 10425 8250 l
+ 10575 8175 l gs col0 s gr 
+% Polyline
+ [60] 0 sd
+n 10350 6975 m
+ 7050 6975 l gs col0 s gr  [] 0 sd
+% Polyline
+ [60] 0 sd
+n 10275 6600 m 9900 6600 l 9450 6825 l
+ 6975 6825 l gs col0 s gr  [] 0 sd
+% Polyline
+ [60] 0 sd
+n 10275 5550 m 10050 5550 l 8775 6675 l
+ 6975 6675 l gs col0 s gr  [] 0 sd
+% Polyline
+n 10275 5625 m 10125 5550 l
+ 10275 5475 l gs col0 s gr 
+% Polyline
+n 10275 6675 m 10125 6600 l
+ 10275 6525 l gs col0 s gr 
+% Polyline
+n 10275 7050 m 10125 6975 l
+ 10275 6900 l gs col0 s gr 
 /Times-Roman ff 120.00 scf sf
 375 3450 m
 gs 1 -1 sc (\(newstories\)) col0 sh gr
@@ -1401,6 +1430,15 @@ gs 1 -1 sc (* session_login) col0 sh gr
 /Times-Roman ff 120.00 scf sf
 10650 8025 m
 gs 1 -1 sc (o exaid) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+7125 6675 m
+gs 1 -1 sc (commentmodss) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+7125 6825 m
+gs 1 -1 sc (sortcodes) col0 sh gr
+/Times-Roman ff 120.00 scf sf
+7125 6975 m
+gs 1 -1 sc (threshcodes) col0 sh gr
 $F2psEnd
 rs
 showpage

@@ -322,7 +322,7 @@ sub list_templates {
 	for my $template (keys %$templatelist) {
 
 		# stinking lousy control-Ms
-		$templatelist->{$template}{description} =~ s/\x0d//g if $templatelist->{$template}{description};
+		$templatelist->{$template}{description} =~ s/\015\012/\n/g if $templatelist->{$template}{description};
 
 		print <<EOT; 
 --------------------------------------------------------

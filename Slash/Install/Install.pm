@@ -115,6 +115,7 @@ sub writeTemplateFile {
 	for(keys %$template) {
 		next if ($_ eq 'tpid');
 		print FILE "__${_}__\n";
+		$template->{$_} =~ s/\015\012/\n/g;
 		print FILE "$template->{$_}\n";
 	}
 	close(FILE);
