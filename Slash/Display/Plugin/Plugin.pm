@@ -1,28 +1,50 @@
 package Slash::Display::Plugin;
 
 use strict;
-use vars qw($VERSION);
+use vars qw($REVISION $VERSION $AUTOLOAD);
+use Slash ();
+use Slash::Utility ();
+use Template::Plugin ();
 use base qw(Template::Plugin);
-use Slash::Display ();
-use Slash::Utility;
-use Template::Plugin;
 
-$VERSION = '0.01';
+# $Id$
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+
+my %subs;
+sub _populate {
+	return if %subs;
+	# mmmmmm, agic
+	no strict 'refs';
+	for my $pkg (qw(Slash Slash::Utility)) {
+		@subs{@{"${pkg}::EXPORT"}} =
+			map { *{"${pkg}::$_"}{CODE} } @{"${pkg}::EXPORT"};
+	}
+}
 
 sub new {
+	_populate();
 	my($class, $context, $name) = @_;
 	return bless {
 		_CONTEXT => $context,
 	}, $class;
 }
 
-sub display {
-	my($self, $name, $args) = @_;
-	my $context = $self->{_CONTEXT};
-	my $block = Slash::Display::getDisplayBlock($name);
-	my $ok = $context->process(\$block, $args);
-	apacheLog($context->error) unless defined $ok;
-	return $ok;
+sub db { Slash::Utility::getCurrentDB() }
+
+sub AUTOLOAD {
+	# pull off class name before sending to function;
+	# that's the whole reason we have AUTOLOAD here at all
+	shift;
+	(my $name = $AUTOLOAD) =~ s/^.*://;
+	return if $name eq 'DESTROY';
+
+	if (exists $subs{$name}) {
+		goto &{$subs{$name}};
+	} else {
+		warn "Can't find $name";
+		return;
+	}
 }
 
 1;
@@ -33,22 +55,24 @@ __END__
 
 Slash::Display::Plugin - Template Toolkit plugin for Slash
 
+
 =head1 SYNOPSIS
 
-DEPRECATED, PLACEHOLDER FOR FUTURE USE
-
 	[% USE Slash %]
-	[% Slash.display('some template') %]
+	[% Slash.someFunction('some data') %]
+	[% Slash.db.someMethod(var1, var2) %]
+
 
 =head1 DESCRIPTION
 
-Process and display a template by name from inside another
-template.  The USE directive should be unnecessary, as it is
-called automatically.
+Call functions in Slash and Slash::Utility.  Also call methods from Slash::DB
+with the C<db> method.  Invoke with C<[% USE Slash %]>.
+
 
 =head1 AUTHOR
 
 Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
+
 
 =head1 SEE ALSO
 

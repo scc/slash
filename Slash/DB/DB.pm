@@ -38,7 +38,7 @@ sub new {
 #			}
 		}
 	} else {
-		warn("We don't support the database ($dsn) specified. Using user ($user)"
+		warn("We don't support the database ($dsn) specified. Using user ($user) "
 			. DBIx::Password::getDriver($user));
 	}
 #	push(@Slash::DB::EXPORT, 'sqlConnect');

@@ -43,11 +43,17 @@ sub main {
 		undef $form->{aid};
 	}
 
-	header(getData('title'), $form->{section});
-
-	if ($user->{aseclev} > 99) { 
-		print getData('admin');
+	# add to admin menu before calling header()
+	if ($user->{is_admin}) {
+		my @menu = split /\|/, getData('admin');
+		addToMenu('admin', 'newpoll', {
+			value	=> $menu[0],
+			label	=> $menu[1],
+			seclev	=> $menu[2]
+		});
 	}
+
+	header(getData('title'), $form->{section});
 
 	if ($user->{aseclev} > 99 && $op eq 'edit') {
 		editpoll($form->{qid});
@@ -188,7 +194,7 @@ sub getData {
 	my($value, $hashref) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('pollBooth-data', $hashref, 1);
+	return slashDisplay('pollBooth-data', $hashref, 1, 1);
 }
 
 main();

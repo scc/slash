@@ -32,6 +32,7 @@ use CGI::Cookie;
 use DBI;
 use Data::Dumper;  # the debuggerer's best friend
 use Date::Manip;
+use Exporter ();
 use File::Spec::Functions;
 use HTML::Entities;
 use Mail::Sendmail;
@@ -41,29 +42,27 @@ use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 
-BEGIN {
-	# this is the worst damned warning ever, so SHUT UP ALREADY!
-	$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
+use vars qw($VERSION @ISA @EXPORT %I $CRLF);
 
-	require Exporter;
-	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS %I $CRLF);
-	$VERSION = '1.0.8';
-	@ISA	 = 'Exporter';
-	@EXPORT  = qw(
-		approveTag getSlash linkStory getSection
-		selectTopic selectSection fixHref
-		getsid getsiddir getWidgetBlock
-		anonLog pollbooth stripByMode header footer pollItem
-		prepEvalBlock prepBlock formLabel
-		titlebar fancybox portalbox printComments displayStory
-		sendEmail getOlderStories timeCalc
-		getEvalBlock dispStory lockTest getSlashConf
-		dispComment linkComment redirect fixurl fixparam chopEntity
-		getFormkeyId checkSubmission errorMessage createSelect
-		createEnvironment createMenu
-	);
-	$CRLF = "\015\012";
-}
+# this is the worst damned warning ever, so SHUT UP ALREADY!
+$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
+
+$VERSION = '1.0.8';
+@ISA	 = 'Exporter';
+@EXPORT  = qw(
+	approveTag getSlash linkStory getSection
+	selectTopic selectSection fixHref
+	getsid getsiddir getWidgetBlock
+	anonLog pollbooth stripByMode header footer pollItem
+	prepEvalBlock prepBlock formLabel
+	titlebar fancybox portalbox printComments displayStory
+	sendEmail getOlderStories timeCalc
+	getEvalBlock dispStory lockTest getSlashConf
+	dispComment linkComment redirect fixurl fixparam chopEntity
+	getFormkeyId checkSubmission errorMessage createSelect
+	createEnvironment createMenu
+);
+$CRLF = "\015\012";
 
 ###############################################################################
 # Let's get this party Started

@@ -1,30 +1,25 @@
 package Slash::Display;
 
 use strict;
-use vars qw($VERSION @EXPORT @ISA);
+use base 'Exporter';
+use vars qw($REVISION $VERSION @EXPORT);
 use Exporter ();
 use Slash::Display::Provider;
 use Slash::Utility;
 use Template;
 
-@ISA = 'Exporter';
-$VERSION = '0.01';
-@EXPORT = qw(slashDisplay getDisplayBlock);
+# $Id$
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+@EXPORT		= qw(slashDisplay getDisplayBlock);
 
 my $template = Template->new(
 	TRIM		=> 1,
 	PRE_CHOMP	=> 1,
 	POST_CHOMP	=> 1,
-	COMPILE_DIR	=> '/home/slash/display/',  # needs to be virtual user
-	LOAD_TEMPLATES	=> [
-		Slash::Display::Provider->new,
-	],
-#	PLUGINS		=> {
-#		Slash	=> 'Slash::Display::Plugin'
-#	}
+	LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
+	PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 );
-
-sub template { $template }
 
 sub slashDisplay {
 	my($name, $hashref, $return, $nocomm) = @_;
@@ -54,13 +49,15 @@ sub slashDisplay {
 	return $return ? $out : $ok;
 }
 
+# put universal data stuff into each template:
+# constants, user, form, env.  each can be overriden
+# by passing a hash key of the same name to slashDisplay()
 sub _populate {
 	my($hashref) = @_;
-	$hashref->{user} = getCurrentUser() unless exists $hashref->{user};
-	$hashref->{form} = getCurrentForm() unless exists $hashref->{form};
-	$hashref->{dbslash} = getCurrentDB() unless exists $hashref->{dbslash};
 	$hashref->{constants} = getCurrentStatic()
 		unless exists $hashref->{constants};
+	$hashref->{user} = getCurrentUser() unless exists $hashref->{user};
+	$hashref->{form} = getCurrentForm() unless exists $hashref->{form};
 	$hashref->{env} = { map { (lc $_, $ENV{$_}) } keys %ENV }
 		unless exists $hashref->{env}; 
 }
@@ -73,10 +70,12 @@ __END__
 
 Slash::Display - Display library for Slash
 
+
 =head1 SYNOPSIS
 
 	slashDisplay('some template', { key => $val });
 	my $data = slashDisplay('template', $hashref, 1);
+
 
 =head1 DESCRIPTION
 
@@ -86,21 +85,24 @@ of the user, form, and static objects, as well as the %ENV hash,
 are available.
 
 C<slashDisplay()> will print by default to STDOUT, but will
-instead return the data if the third parameter is true.
+instead return the data if the third parameter is true.  If the fourth
+parameter is true, HTML comments surrounding the template will NOT
+be printed or returned.  That is, if the fourth parameter is false,
+HTML comments noting the beginning and end of the template will be
+printed or returned along with the template.
 
 L<Template> for more information about templates.
 
-The C<Slash.display()> method can be called in a template to process
-and display another template.  L<Slash::Display::Plugin> for more
-information.
 
 =head1 EXPORT
 
 One function is exported: slashDisplay.
 
+
 =head1 AUTHOR
 
 Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
+
 
 =head1 SEE ALSO
 

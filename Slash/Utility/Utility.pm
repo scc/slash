@@ -7,6 +7,7 @@ require Exporter;
 
 @Slash::Utility::ISA = qw(Exporter);
 @Slash::Utility::EXPORT = qw(
+	addToMenu
 	apacheLog	
 	stackTrace
 	changePassword
@@ -103,18 +104,36 @@ sub changePassword {
 }
 
 #################################################################
-sub getCurrentMenu {
-	my($script) = @_;
+sub addToMenu {
+	my($menu, $name, $data) = @_;
+	my $user = getCurrentUser();
 
-	unless ($script) {
-		($script = $ENV{SCRIPT_NAME}) =~ s/\.pl$//;
+	return unless ref $data eq 'HASH';
+
+	my $menus = getCurrentMenu($menu);
+	$data->{menuorder} = @$menus;
+
+	$user->{menus}{$menu}{$name} = $data;
+}
+
+#################################################################
+sub getCurrentMenu {
+	my($menu) = @_;
+	my $user = getCurrentUser();
+
+	unless ($menu) {
+		($menu = $ENV{SCRIPT_NAME}) =~ s/\.pl$//;
 	}
 
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $menus = $cfg->{'menus'};
+	my @menus = @{$cfg->{menus}{$menu}};
 
-	return $menus->{$script};
+	if (my $user_menu = $user->{menus}{$menu}) {
+		push @menus, values %$user_menu;
+	}
+
+	return \@menus;
 }
 
 #################################################################

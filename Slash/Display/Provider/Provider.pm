@@ -1,15 +1,15 @@
 package Slash::Display::Provider;
 
 use strict;
-use vars qw($VERSION $DEBUG);
+use vars qw($REVISION $VERSION $DEBUG);
 use base qw(Template::Provider);
 use Slash::Utility;
 use Template::Provider;
 
-$VERSION = '0.01';
-
-$DEBUG = 0 unless defined $DEBUG;
-$Template::Provider::DEBUG = $DEBUG;
+# $Id$
+($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+$DEBUG		= $Template::Provider::DEBUG || 0 unless defined $DEBUG;
 
 use constant PREV => 0;
 use constant NAME => 1;
@@ -137,15 +137,26 @@ Slash::Display::Provider - Template Toolkit provider for Slash
 
 =head1 SYNOPSIS
 
+	use Slash::Display::Provider;
+	my $template = Template->new(
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ]
+	);
 
 
 =head1 DESCRIPTION
 
+This here module provides templates to a Template Toolkit processor
+by way of the Slash API (which basically means that it grabs templates
+from the blocks table in the database).  It caches them, too.  It also
+can process templates passed in as text, like the base Provider module,
+but this one will create a unique name for the "anonymous" template so
+it can be cached.
 
 
 =head1 AUTHOR
 
 Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
+
 
 =head1 SEE ALSO
 
