@@ -39,7 +39,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='threshcodes'") },
 
 	'postmodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'postmodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='postmodes'") },
 
 	'isolatemodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='isolatemodes'") },
