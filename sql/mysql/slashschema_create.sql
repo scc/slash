@@ -147,37 +147,11 @@ CREATE TABLE comments (
 	KEY byname (uid,points),
 	KEY ipid (ipid),
 	INDEX (uid),
+	INDEX (sid),
 	KEY subnetid (subnetid),
 	KEY theusual (sid,uid,points,cid),
 	KEY countreplies (sid,pid)
 ) TYPE = myisam;
-
-#
-# Table structure for table 'comment_heap'
-#
-
-DROP TABLE IF EXISTS comment_heap;
-CREATE TABLE comment_heap (
-	sid mediumint UNSIGNED NOT NULL,
-	cid mediumint UNSIGNED NOT NULL,
-	pid mediumint DEFAULT '0' NOT NULL,
-	date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	ipid char(32) DEFAULT '' NOT NULL,
-	subnetid char(32) DEFAULT '' NOT NULL,
-	subject varchar(50) NOT NULL,
-	uid mediumint UNSIGNED NOT NULL,
-	points tinyint DEFAULT '0' NOT NULL,
-	lastmod mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	reason tinyint UNSIGNED DEFAULT '0' NOT NULL,
-	signature char(32) DEFAULT '' NOT NULL,
-	PRIMARY KEY (cid),
-	KEY display (sid,points,uid),
-	KEY byname (uid,points),
-	KEY ipid (ipid),
-	KEY subnetid (subnetid),
-	KEY theusual (sid,uid,points,cid),
-	KEY countreplies (sid,pid)
-) TYPE = heap;
 
 #
 # Table structure for table 'comment_text'
@@ -240,6 +214,7 @@ CREATE TABLE discussions (
 	uid mediumint UNSIGNED NOT NULL,
 	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
 	flags enum("ok","delete","dirty") DEFAULT 'ok' NOT NULL,
+	section varchar(30) NOT NULL,
 	KEY (sid),
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
@@ -510,10 +485,9 @@ CREATE TABLE stories (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (tid) REFERENCES tid(topic),
 	FOREIGN KEY (section) REFERENCES sections(section),
-	INDEX frontpage (time, displaystatus,section,writestatus),
-	KEY time (time),
-	KEY submitter (submitter),
-	KEY searchform (displaystatus,time)
+	INDEX frontpage (time, displaystatus, writestatus),
+	INDEX time (time),
+	INDEX submitter (submitter),
 ) TYPE = myisam;
 
 #

@@ -2668,7 +2668,7 @@ sub getStoryByTime {
 	$where .= "   AND sid != '$story->{'sid'}'";
 
 	my $time = $story->{'time'};
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $returnable = $self->sqlSelectHashref(
 			'title, sid, section',
 			$story_table,
@@ -3124,8 +3124,7 @@ sub getStoriesEssentials {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my $story_table = $constants->{mysql_heap_table} ?
-		'story_heap' : 'stories';
+	my $story_table = 'stories';
 
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
