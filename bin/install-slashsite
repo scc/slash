@@ -198,18 +198,14 @@ if ($opts{'P'}) {
 	print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
 	while ($select ne 'q'){
 		chomp($select = <STDIN>);
-		if ($select =~ /^\d\,/) {
+		if ($select =~ /^[\d ,]+$/) {
+			$select =~ s/ +//g;
 			@default_plugins = ( );
-			@plugins = grep { $_ } map { $order_to_name{$_} } split(/\,/, $select);
+			@plugins = grep { $_ } map { $order_to_name{$_} } split /,/, $select;
 			last;
 		} elsif ($select eq 'a') {
-			for my $key (sort keys %$plugins) {
-				push @plugins, $plugins->{$key}{name};
-			}
+			@plugins = map { $plugins->{$_}{name} } sort keys %$plugins;
 			last;
-		} elsif ($select ne 'q') {
-			@default_plugins = ( );
-			push @plugins, $order_to_name{$select};
 		}
 	}
 	push @plugins, @default_plugins if @default_plugins;
@@ -446,7 +442,10 @@ sub apache_site_conf {
     # this directive will compile all the templates
     # in the database, if cache_enabled is true
     # and template_cache_size is 0.  Set to On/Off.
-    SlashCompileTemplates On
+    # Default is off since most sites don't need it
+    # much and startup performance, as well as
+    # memory usage, degrades when it is On.
+    SlashCompileTemplates Off
     
     PerlAccessHandler  Slash::Apache::User
     PerlCleanupHandler Slash::Apache::Log
