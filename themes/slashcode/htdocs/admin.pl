@@ -27,6 +27,7 @@ use strict;
 use vars '%I';
 use Image::Size;
 use Slash;
+use Slash::Utility;
 
 sub main {
 	*I = getSlashConf();
