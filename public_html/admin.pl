@@ -809,7 +809,7 @@ sub editStory {
 
 		$topic = $slashdb->getTopic($storyref->{tid});
 		$form->{aid} ||= $user->{uid};
-		$author= $slashdb->getAuthor($form->{uid});
+		$author= $slashdb->getAuthor($form->{aid});
 		$sid = $form->{sid};
 
 		if (!$form->{time} || $form->{fastforward}) {
@@ -939,6 +939,7 @@ sub editStory {
 			bodytext		=> $bodytext,
 			relatedtext		=> $relatedtext,
 			user			=> $user,
+			authoredit_flag			=> $authoredit_flag,
 			}
 	);
 }
@@ -1006,7 +1007,7 @@ sub listStories {
 			comments	=> $comments,
 			sid		=> $sid,
 			title		=> $title,
-			aid		=> $aid,
+			aid		=> $slashdb->getAuthor($aid, 'nickname'),
 			time		=> $time,
 			canedit		=> $canedit,
 			substrtid	=> $substrtid,
