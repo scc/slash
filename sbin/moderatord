@@ -86,7 +86,7 @@ if ($constants->{moderatord_read_user}) {
 	# The number of updates behind, the read database can be.
 	my $lag = $constants->{moderatord_lag_threshold};
 	# How long to wait between loops.
-	my $sleep = $constants->{moderatord_catchup_sleep}
+	my $sleep = $constants->{moderatord_catchup_sleep};
 	while ($count--) {
 		$read_db = new Slash::DB($rusr);
 		my $master_stat = ($slashdb->sqlShowMasterStatus())->[0];
