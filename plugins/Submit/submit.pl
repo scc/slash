@@ -28,6 +28,7 @@ use strict;
 use vars '%I';
 use Slash;
 use Slash::DB;
+use Slash::Utility;
 
 #################################################################
 sub main {
@@ -360,7 +361,7 @@ EOT
 
 	print "</TABLE>\n";
 
-	my $sql = "SELECT subid, subj, date_format(" . getDateOffset("time") .
+	my $sql = "SELECT subid, subj, date_format(" . getDateOffset("time", $I{U}) .
 		',"m/d  H:i"), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info';
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $I{F}{del}=del AND (";
 	$sql .= $I{F}{note} ? "note=" . $I{dbh}->quote($I{F}{note}) : "isnull(note)";

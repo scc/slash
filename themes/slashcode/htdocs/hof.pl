@@ -129,7 +129,7 @@ sub topComments {
 	print "<P>";
 	titlebar("100%","Top 10 Comments");
 	my $sqlquery = "SELECT section, stories.sid, aid, title, pid, subject," .
-		getDateFormat("date","d") . "," . getDateFormat("time","t") . 
+		getDateFormat("date","d", $I{U}) . "," . getDateFormat("time","t", $I{U}) . 
 		",uid, cid, points";
 	$sqlquery .= "	  FROM stories, comments
 			 WHERE stories.sid=comments.sid";

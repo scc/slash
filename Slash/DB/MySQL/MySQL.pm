@@ -1,4 +1,8 @@
 package Slash::DB::MySQL;
+# Big note on *User methods. They are in need of clean
+# up in a big way. If we had one normalized table
+# this would be quite clean. I will find a way around 
+# this.  -Brian
 
 use strict;
 use DBI;
@@ -238,12 +242,13 @@ sub getFormatDescriptions {
 }
 ########################################################
 # Get user info from the users table.
-sub getUserInfo{
+sub getUserInfoAuthenticate{
   my($self, $uid, $passwd, $script) = @_;
 	my $user = $self->sqlSelectHashref('*', 'users',
 		' uid = ' . $self->{dbh}->quote($uid) .
 		' AND passwd = ' . $self->{dbh}->quote($passwd)
 	);
+	return 0 unless ($user);
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
 	while(my ($key, $val) = each %$user_extra) {
 		$user->{$key} = $val;
@@ -285,6 +290,96 @@ sub getUserUID{
 	);
 
 }
+
+########################################################
+# Get user info from the users table.
+sub getUserPoints{
+  my($self, $uid) = @_;
+
+	my ($points) = $self->sqlSelect('points', 'users_comments',
+			"uid='$uid'");
+
+	return $points;
+
+}
+########################################################
+# Get user info from the users table.
+sub getUserPublicKey{
+  my($self, $uid) = @_;
+
+	my ($key) = $self->sqlSelect('pubkey', 'users_key',
+			"uid='$uid'");
+
+	return $key;
+
+}
+#################################################################
+sub getUserComments{
+  my($self, $uid, $min, $user) = @_;
+
+	my $sqlquery = "SELECT pid,sid,cid,subject,"
+			. getDateFormat("date","d")
+			. ",points FROM comments WHERE uid=$uid "
+			. " ORDER BY date DESC LIMIT $min,50 ";
+
+	my $sth = $self->{dbh}->prepare($sqlquery);
+	$sth->execute;
+	my ($comments) = $sth->fetchall_arrayref;
+
+	return $comments;
+
+}
+#################################################################
+sub userInfo {
+	my($self, $nick) = @_;
+}
+########################################################
+# Get user info from the users table.
+sub getUserByUID{
+  my($self, $uid, $param) = @_;
+
+
+}
+
+########################################################
+# Get user info from the users table.
+sub getUserInfoByNickname{
+  my($self, $name) = @_;
+
+	$self->sqlSelect('nickname,passwd,realemail', 'users',
+			'nickname=' . $self->{dbh}->quote($name)); 
+
+}
+#################################################################
+sub createUser {
+	my ($self, $matchname, $email, $newuser) = @_;
+	
+	my($cnt) = $self->sqlSelect(
+		"matchname","users",
+		"matchname=" . $self->{dbh}->quote($matchname)
+	) || $self->sqlSelect(
+		"realemail","users",
+		" realemail=" . $self->{dbh}->quote($email)
+	);
+	return 0 if ($cnt);
+
+	$self->sqlInsert("users", {
+		realemail	=> $email, 
+		nickname	=> $newuser,
+		matchname	=> $matchname,
+		passwd		=> changePassword()
+	});
+# This is most likely a transaction problem waiting to
+# bite us at some point. -Brian
+	my($uid) = $self->sqlSelect("LAST_INSERT_ID()");
+	$self->sqlInsert("users_info", { uid => $uid, lastaccess=>'now()' } );
+	$self->sqlInsert("users_prefs", { uid => $uid } );
+	$self->sqlInsert("users_comments", { uid => $uid } );
+	$self->sqlInsert("users_index", { uid => $uid } );
+
+	return $uid;
+}
+
 ########################################################
 sub getAC{
 	my ($self) = @_;
@@ -521,6 +616,7 @@ sub getPollQuestions {
 # I don't like this method at all (AKA how it is used).
 # There has to be a better way. Should be a way to 
 # combine its usage with the getPollQuestions()
+# All we are doing is making sure qid exists.
 sub getPollQuestionID {
 	my ($self, $qid) = @_;
 	my ($fetched_qid) = $self->sqlSelect('qid', 'pollquestions', "qid='${qid}'");
@@ -528,6 +624,28 @@ sub getPollQuestionID {
 	return $fetched_qid;
 }
 ########################################################
+# Simple method
+sub getPollQuestionBySID {
+	my ($self, $sid) = @_;
+	my ($question) = $self->sqlSelect("question", "pollquestions", "qid='$sid'");
+
+	return $question;
+}
+########################################################
+sub getUserBio {
+	my ($self, $nick) = @_;
+	my $sth = $self->{dbh}->prepare(
+			"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
+			FROM users, users_info
+			WHERE users.uid = users_info.uid AND nickname="
+			. $self->{dbh}->quote($nick) . " and users.uid > 0"
+		);
+	$sth->execute;
+	my $bio = $sth->fetchrow_arrayref;
+
+	return $bio;
+
+}
 sub getStoryBySid {
 	my ($self, $sid, $member) = @_;
 	

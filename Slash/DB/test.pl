@@ -28,7 +28,7 @@ $object->sanityCheck();
 print "ok 4\n";
 ########################################################################
 print "Lets grab some user data\n";
-my $user = $object->getUserInfo('2', 'change', 'index.pl');
+my $user = $object->getUserInfoAuthenticate('2', 'change', 'index.pl');
 print "Should dump the data for an user now\n";
 while(my ($key, $val) = each %$user) {
 	print "$key = $val \n";

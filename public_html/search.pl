@@ -162,8 +162,8 @@ EOT
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
-		getDateFormat("time","d") . ",".
-		getDateFormat("date","t") . ", 
+		getDateFormat("time","d", $I{U}) . ",".
+		getDateFormat("date","t", $I{U}) . ", 
 		uid, cid, ";
 
 	$sqlquery .= "	  " . keysearch($I{F}{query}, "subject", "comment") if $I{F}{query};
@@ -276,7 +276,7 @@ sub storySearch {
 	}), "<P>" if $prev >= 0;
 
 	my $sqlquery = "SELECT aid,title,sid," .
-			getDateFormat("time","t") .
+			getDateFormat("time", "t", $I{U}) .
 			", commentcount,section ";
 	$sqlquery .= "," . keysearch($I{F}{query}, "title", "introtext") . " "
 		if $I{F}{query};

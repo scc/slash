@@ -179,7 +179,7 @@ sub editComment {
 
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	my $reply = sqlSelectHashref(getDateFormat("date", "time") . ",
+	my $reply = sqlSelectHashref(getDateFormat("date", "time", $I{U}) . ",
 		subject,comments.points as points,comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
 		"comments,users,users_info,users_comments",

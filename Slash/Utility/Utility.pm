@@ -8,6 +8,9 @@ require Exporter;
 @Slash::Utility::EXPORT = qw(
 	apacheLog	
 	stackTrace
+	changePassword
+	getDateFormat
+	getDateOffset
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -46,6 +49,40 @@ sub stackTrace {
 	}
 	return 0;
 }
+
+################################################################################
+# SQL Timezone things
+sub getDateOffset {
+	my $col = shift || return;
+	my ($user) = @_;
+
+	return $col unless $user->{offset};
+	return " DATE_ADD($col, INTERVAL $user->{offset} SECOND) ";
+}
+
+sub getDateFormat {
+	my $col = shift || return;
+	my $as = shift || 'time';
+	my ($user) = @_;
+
+
+	$user->{'format'} ||= '%W %M %d, @%h:%i%p ';
+	unless ($user->{tzcode}) {
+		$user->{tzcode} = 'EDT';
+		$user->{offset} = '-14400';
+	}
+
+	$user->{offset} ||= '0';
+	return ' CONCAT(DATE_FORMAT(' . getDateOffset($col) .
+		qq!,"$user->{'format'}")," $user->{tzcode}") as $as !;
+}
+#################################################################
+# This may get moved
+sub changePassword {
+	my @chars = grep !/[0O1Iil]/, 0..9, 'A'..'Z', 'a'..'z';
+	return join '', map { $chars[rand @chars] } 0 .. 7;
+}
+
 1;
 
 =head1 NAME

@@ -26,6 +26,8 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
+use Slash::Utility;
 
 #################################################################
 sub main {
@@ -178,12 +180,7 @@ sub checkList {
 
 #################################################################
 sub previewSlashbox {
-	my ($title, $content, $url) = sqlSelect(
-		"title,block,url", "blocks, sectionblocks",
-		"blocks.bid = sectionblocks.bid AND blocks.bid = "
-		. $I{dbh}->quote($I{F}{bid})
-	);
-
+	my ($title, $content, $url) = $I{dbobject}->getSectionBlocksByBid($I{F}{bid});
 	my $cleantitle = $title;
 	$cleantitle =~ s/<(.*?)>//g;
 
@@ -231,65 +228,37 @@ sub newUser {
 
 	(my $matchname = lc $I{F}{newuser}) =~ s/[^a-zA-Z0-9]//g;
 
-	my($cnt) = sqlSelect(
-		"matchname","users",
-		"matchname=" . $I{dbh}->quote($matchname)
-	) || sqlSelect(
-		"realemail","users",
-		" realemail=" . $I{dbh}->quote($I{F}{email})
-	);
 
-	if ($matchname ne '' && $I{F}{newuser} ne '' && !$cnt && $I{F}{email} =~ /\@/) {
-		titlebar("100%", "User $I{F}{newuser} created.");
+	if ($matchname ne '' && $I{F}{newuser} ne '' && $I{F}{email} =~ /\@/) {
+		if(my $uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
+			titlebar("100%", "User $I{F}{newuser} created.");
 
-		$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
+			$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
+			print <<EOT;
 
-		sqlInsert("users", {
-			realemail	=> $I{F}{email}, 
-			nickname	=> $I{F}{newuser},
-			matchname	=> $matchname,
-			passwd		=> changePassword()
-		});
-
-		my($uid) = sqlSelect("LAST_INSERT_ID()");
-		sqlInsert("users_info", { uid => $uid, lastaccess=>'now()' } );
-		sqlInsert("users_prefs", { uid => $uid } );
-		sqlInsert("users_comments", { uid => $uid } );
-		sqlInsert("users_index", { uid => $uid } );
-		# sqlInsert("users_key", { uid => $uid } ); # Not necessary
-
-		print <<EOT;
-
-	<B>email</B>=$I{F}{email}<BR>
-	<B>user id</B>=$uid<BR>
-	<B>nick</B>=$I{F}{newuser}<BR>
-	<B>passwd</B>=mailed to $I{F}{email}<BR>
-	<P>Once you receive your password, you can log in and
-	<A HREF="$I{rootdir}/users.pl">set your account up</A>
+			<B>email</B>=$I{F}{email}<BR>
+			<B>user id</B>=$uid<BR>
+			<B>nick</B>=$I{F}{newuser}<BR>
+			<B>passwd</B>=mailed to $I{F}{email}<BR>
+			<P>Once you receive your password, you can log in and
+			<A HREF="$I{rootdir}/users.pl">set your account up</A>
 
 EOT
 
-		mailPassword($I{F}{newuser});
+			mailPassword($I{F}{newuser});
 
-	} else {
-		# Duplicate User
-		displayForm();
-	}
+			return;
+		}
+	} 
+	# Duplicate User
+	displayForm();
 }
 
-#################################################################
-sub changePassword {
-	my @chars = grep !/[0O1Iil]/, 0..9, 'A'..'Z', 'a'..'z';
-	return join '', map { $chars[rand @chars] } 0 .. 7;
-}
 
 #################################################################
 sub mailPassword {
 	my($name) = @_;
-	my($nickname, $passwd, $email) = sqlSelect(
-		"nickname,passwd,realemail", "users",
-		"nickname=" . $I{dbh}->quote($name)
-	);
+	my($nickname, $passwd, $email) = $I{dbobject}->getUserInfoByNickname($name);
 
 	my $msg = blockCache("newusermsg");
 	$msg = prepBlock($msg);
@@ -307,21 +276,12 @@ sub mailPassword {
 sub userInfo {
 	my($nick) = @_;
 
-	my $c = $I{dbh}->prepare(
-		"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
-		 FROM users, users_info
-		 WHERE users.uid = users_info.uid AND nickname="
-		. $I{dbh}->quote($nick) . " and users.uid > 0"
-	);
-	$c->execute;
+	my $bio = $I{dbobject}->getUserBio($nick);
 
-	if (my($home, $email, $uid, $bio, $useclev, $karma) = $c->fetchrow) {
+	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$bio) {
 		$bio = stripByMode($bio, "html");
 		if ($I{U}{nickname} eq $nick) {
-			my $sth = $I{dbh}->prepare("SELECT points FROM users_comments WHERE uid=$uid");
-			$sth->execute;
-			my $points = $sth->fetchrow_array;
-			$sth->finish;
+			my $points = $I{dbobject}->getUserPoints($uid);
 
 			titlebar("95%", "Welcome back $nick ($uid)");
 			print <<EOT;
@@ -351,25 +311,21 @@ EOT
 			if $I{U}{aseclev} || $I{U}{uid} == $uid;
 		print "<B>User Bio</B><BR>$bio<P>" if $bio;
 
-		my($k) = sqlSelect("pubkey", "users_key", "uid=$uid");
+		my($k) = $I{dbobject}->getUserPublicKey($uid);
 		$k = stripByMode($k, "html");
 		print "<B>Public Key</B><BR><PRE>\n$k</PRE><P>" if $k;
 
 		$I{F}{min} = 0 unless $I{F}{min};
 
-		my $sqlquery = "SELECT pid,sid,cid,subject,"
-			. getDateFormat("date","d")
-			. ",points FROM comments WHERE uid=$uid ";
-		$sqlquery .= " ORDER BY date DESC LIMIT $I{F}{min},50 ";
+		my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
 
-		my $comments = $I{dbh}->prepare($sqlquery);
-		$comments->execute;
-
-		print "<B>$nick has posted " . $comments->rows
+		my $rows = @$comments;
+		print "<B>$nick has posted $rows" 
 			. " comments</B> (this only counts the last few weeks)<BR><P>";
 
 		my $x;
-		while (my($pid, $sid, $cid, $subj, $cdate, $pts) = $comments->fetchrow) {
+		for (@$comments) {
+			my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 			$x++;
 			my($r) = sqlSelect("count(*)", "comments", "sid='$sid' and pid=$cid");
 			my $replies = " Replies:$r" if $r;
@@ -378,30 +334,27 @@ EOT
 <BR><B>$x</B> <A HREF="$I{rootdir}/comments.pl?sid=$sid&cid=$cid">$subj</A> posted on $cdate (Score:$pts$replies)
 <FONT SIZE="${\( $I{fontbase} + 2 )}">
 EOT
-			my $S = sqlSelectHashref("section, title, writestatus", "stories", "sid='$sid'");
+			# This is ok, since with all luck we will not be hitting the DB
+			my $story = $I{dbobject}->getStoryBySid($sid);
 
-			if ($S) {
-				my $href = $S->{writestatus} == 10
-					? "$I{rootdir}/$S->{section}/$sid.shtml"
+			if ($story) {
+				my $href = $story->{writestatus} == 10
+					? "$I{rootdir}/$story->{section}/$sid.shtml"
 					: "$I{rootdir}/article.pl?sid=$sid";
 
-				print qq!<BR>attached to <A HREF="$href">$S->{title}</A>!;
+				print qq!<BR>attached to <A HREF="$href">$story->{title}</A>!;
 # $S->{section}/$sid.shtml
 			} else {
-				my $P = sqlSelectHashref("question", "pollquestions", "qid='$sid'");
-				print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $P->{question}</A>!
-					if $P->{question};
+				my $question = $I{dbobject}->getPollQuestionBySID($sid);
+				print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $question</A>!
+					if $question;
 			}
 			print "</FONT>";
 		}
 
-		$comments->finish;
-
 	} else {
 		print "$nick not found.";
 	}
-
-	$c->finish;
 }
 
 #################################################################

@@ -56,7 +56,7 @@ BEGIN {
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
-		getDateFormat dispComment getDateOffset linkComment redirect
+		dispComment linkComment redirect
 		getFormkeyId checkSubmission errorMessage createSelect getFormkey
 	);
 	$CRLF = "\015\012";
@@ -402,8 +402,7 @@ sub getUser {
 	my($uid, $passwd) = @_;
 	undef $I{U};
 
-	if ($uid > 0) { # Authenticate
-		$I{U} = $I{dbobject}->getUserInfo($uid, $passwd, $ENV{SCRIPT_NAME});
+	if (($uid > 0) && ($I{U} = $I{dbobject}->getUserInfoAuthenticate($uid, $passwd, $ENV{SCRIPT_NAME}))) { 
 
 		# Get the Timezone Stuff
 		my $timezones = $I{dbobject}->getCodes('tzcodes');
@@ -625,30 +624,6 @@ sub getSection {
 	return $I{sectionBank}{$section};
 }
 
-
-################################################################################
-# SQL Timezone things
-sub getDateOffset {
-	my $col = shift || return;
-	return $col unless $I{U}{offset};
-	return " DATE_ADD($col, INTERVAL $I{U}{offset} SECOND) ";
-}
-
-########################################################
-sub getDateFormat {
-	my $col = shift || return;
-	my $as = shift || 'time';
-
-	$I{U}{'format'} ||= '%W %M %d, @%h:%i%p ';
-	unless ($I{U}{tzcode}) {
-		$I{U}{tzcode} = 'EDT';
-		$I{U}{offset} = '-14400';
-	}
-
-	$I{U}{offset} ||= '0';
-	return ' CONCAT(DATE_FORMAT(' . getDateOffset($col) .
-		qq!,"$I{U}{'format'}")," $I{U}{tzcode}") as $as !;
-}
 
 ###############################################################################
 # Dealing with Polls
@@ -1196,7 +1171,7 @@ sub portalbox {
 sub selectComments {
 	my($sid, $cid) = @_;
 	$I{shit} = 0 if $I{F}{ssi};
-	my $sql = "SELECT cid," . getDateFormat('date', 'time' ) . ",
+	my $sql = "SELECT cid," . getDateFormat('date', 'time', $I{U}) . ",
 				subject,comment,
 				nickname,homepage,fakeemail,
 				users.uid as uid,sig,
@@ -2010,8 +1985,8 @@ sub selectStories {
 	my($SECT, $limit, $tid) = @_;
 
 	my $s = "SELECT sid, section, title, date_format(" .
-		getDateOffset('time') . ',"%W %M %d %h %i %p"),
-			commentcount, to_days(' . getDateOffset('time') . "),
+		getDateOffset('time', $I{U}) . ',"%W %M %d %h %i %p"),
+			commentcount, to_days(' . getDateOffset('time', $I{U}) . "),
 			hitparade
 		   FROM newstories
 		  WHERE 1=1 "; # Mysql's Optimize gets this.
@@ -2020,7 +1995,7 @@ sub selectStories {
 	$s .= " AND time < now() "; # unless $I{U}{aseclev};
 	$s .= "	AND (displaystatus>=0 AND '$SECT->{section}'=section)" if $I{F}{section};
 	$I{F}{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
-	$s .= "   AND $I{F}{issue} >= to_days(" . getDateOffset("time") . ") "
+	$s .= "   AND $I{F}{issue} >= to_days(" . getDateOffset("time", $I{U}) . ") "
 		if $I{F}{issue};
 	$s .= "	AND tid='$tid'" if $tid;
 

@@ -84,7 +84,7 @@ sub geturl {
 sub getTop10Comments {
 	my $c=sqlSelectMany("stories.sid, title,
 		cid, subject,".
-		getDateFormat("date","d").",
+		getDateFormat("date", "d", $I{U}).",
 		nickname,comments.points",
 		"comments,stories,users",
 		"comments.points >= 4

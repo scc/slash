@@ -232,7 +232,15 @@ sub generatesession {
 	return $newsid;
 }
 
-
+#################################################################
+sub getSectionBlocksByBid {
+	my ($self, $bid) = @_;
+	$self->sqlSelect(
+		"title,block,url", "blocks, sectionblocks",
+		"blocks.bid = sectionblocks.bid AND blocks.bid = "
+		. $self->{dbh}->quote($bid)
+	);
+}
 1;
 
 =head1 NAME
