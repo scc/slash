@@ -7,13 +7,12 @@ use vars qw( %task );
 
 $task{$me}{timespec} = '0 * * * *';
 $task{$me}{code} = sub {
-
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	# shouldn't be necessary, since sectionHeaders() restores STDOUT before exiting
 	local *SO = *STDOUT;
 
-	sectionHeaders("");
+	sectionHeaders(@_, "");
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {
 		my($section) = $sections->{$_}{section};
@@ -27,6 +26,7 @@ $task{$me}{code} = sub {
 
 sub sectionHeaders {
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
+
 	my $form = getCurrentForm();
 	local(*FH, *STDOUT);
 
