@@ -24,10 +24,12 @@ this nice little page with a summary of the active [% sitename %]
 authors here, along with the number of articles that they
 have posted.</P>
 [% FOREACH uid = list %]
-	<H2><B><A HREF="[% constants.rootdir %]/search.pl?op=stories&amp;author=[% uid.1 %]">[% uid.0 %]</A></B>
-	<A HREF="[% uid.3 %]">[% uid.2 %]</A></H2>
-	[% IF admin %]
-		<A HREF="[% constants.rootdir %]/users.pl?op=authoredit&amp;authoruid=[% uid.1 %]">edit</A>
+	[% IF uid.3 > 0 %]
+		<H2><B><A HREF="[% constants.rootdir %]/search.pl?op=stories&amp;author=[% uid.1 %]">[% uid.0 %]</A></B>
+		<A HREF="[% uid.3 %]">[% uid.2 %]</A></H2>
+		[% IF admin %]
+			<A HREF="[% constants.rootdir %]/users.pl?op=authoredit&amp;authoruid=[% uid.1 %]">edit</A>
+		[% END %]
 	[% END %]
 [% uid.4 %]
 [% END %]
