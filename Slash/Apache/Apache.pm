@@ -71,6 +71,7 @@ sub CompileTemplates {
 	# temporarily turn off warnings and errors, see errorLog()
 	local $Slash::Utility::NO_ERROR_LOG = 1;
 	local $SIG{__WARN__} = 'IGNORE';
+	local $slashdb->{_dbh}{PrintError};
 
 	# this will call every template in turn, and it will
 	# then be compiled; now, we will get errors in

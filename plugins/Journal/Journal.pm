@@ -66,7 +66,7 @@ sub getsByUid {
 
 sub list {
 	my($self, $uid, $limit) = @_;
-
+	$uid ||= 0;	# no SQL syntax error
 	my $order = "ORDER BY date DESC";
 	$order .= " LIMIT $limit" if $limit;
 	my $answer = $self->sqlSelectAll('id, date, description', 'journals', "uid = $uid", $order);
