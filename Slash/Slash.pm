@@ -146,8 +146,7 @@ sub reparentComments {
 		}
 	}
 
-	for my $comment (@$comments) {
-		my $x = $comment->{cid};
+	for my $x (sort(keys(%$comments))) {
 
 		my $pid = $comments->{$x}{pid};
 		my $reparent;
