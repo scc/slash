@@ -1,0 +1,13 @@
+#!/usr/bin/perl -w
+# Quick script to convert the mysql data to postgresql.
+# -Brian
+
+open (FILE, $ARGV[0]) or die "Can not open original\n";
+
+while(<FILE>) {
+	next if /^#/;
+	next if /^ /;
+	next if /^INSERT INTO users/;
+	print $_;
+}
+print qq|INSERT INTO users (uid,nickname,realname,passwd,matchname) VALUES (1,'Anonymous Coward','Anonymous Coward','eb399bcaca686f8609137153307eecf1','anonymouscoward');|;
