@@ -437,7 +437,7 @@ sub createDiscussion {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($form, $slashdb, $user, $constants, $formkeyid, $error_message) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $discussion, $error_message) = @_;
 
 	print STDERR "ERROR MESSAGE $error_message OP $form->{op}\n";
 
@@ -477,7 +477,7 @@ sub editComment {
 		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$constants->{approvedtags}};
 
 	slashDisplay('edit_comment', {
-		error_message	=> $error_message,
+		error_message 	=> $error_message,
 		format_select	=> $format_select,
 		preview		=> $preview,
 		reply		=> $reply,

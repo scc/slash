@@ -177,6 +177,7 @@ sub varEdit {
 	my $varsref;
 
 	my $vars = $slashdb->getDescriptions('vars', '', 1);
+	$vars->{""} = "";
 	my $vars_select = createSelect('name', $vars, $name, 1);
 
 	if ($name) {
