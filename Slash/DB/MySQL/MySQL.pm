@@ -12,6 +12,7 @@ my ($dsn ,$dbuser, $dbpass, $dbh);
 my $timeout = 30; #This should eventualy be a parameter that is configurable
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
+my %topicBank; # This is here to save us a database call
 
 ########################################################
 sub sqlConnect {
@@ -361,7 +362,7 @@ sub getBlockBank {
 
 ########################################################
 sub getSectionBank {
-	my ($self, $sectionbank) = @_;
+	my ($self) = @_;
 	my $sectionbank = {};
 	my $sth = $self->sqlSelectMany('*', 'sections');
 	while (my $S = $sth->fetchrow_hashref) {
@@ -429,9 +430,9 @@ sub getStoryBySid {
 	
 	if($member) {
 		return $storyBank{$sid}->{$member} if $storyBank{$sid}->{$member};
+	} else {
+		return $storyBank{$sid} if $storyBank{$sid};
 	}
-
-#	return $storyBank{$sid} if defined($storyBank{$sid});
 	my $hashref = $self->sqlSelectHashref('title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid, tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
 		'stories', 'sid=' . $self->{dbh}->quote($sid)
 		);
@@ -620,6 +621,67 @@ getSubmissionCount{
 return;
 }
 
+##################################################################
+# Check to see if the form already exists
+sub checkForm {
+	my ($self, $formkey, $formname) = @_;
+	$self->sqlSelect(
+	    "value,submit_ts",
+			"formkeys", "formkey='$formkey' and formname = '$formname'"
+			);
+}
+
+##################################################################
+# Current admin users
+sub currentAdmin {
+my ($self) = @_;
+  my $sth = $self->sqlSelectMany('aid,now()-lasttime,lasttitle', 'sessions',
+			'aid=aid GROUP BY aid'
+			#   'aid!=' . $self->{dbh}->quote($I{U}{aid}) . ' GROUP BY aid'
+			);
+
+	my @aids;
+	while (my @row = $sth->fetchrow) {
+		push @aids, \@row;
+	}
+
+	return \@aids;
+}
+########################################################
+# getTopic() 
+# I'm torn, currently we just dump the entire database
+# into topicBank if we don't find out topic. I am 
+# wondering if it wouldn't be better to just grab them
+# as needed (when we need them).
+# Probably ought to spend some time to actually figure
+# this out. 
+# 
+# -Brian
+sub getTopic {
+  my ($self, $topic) = @_;
+
+	if($topic) {
+		return $topicBank{$topic} if $topicBank{$topic};
+	} else {
+		return \%topicBank if (keys %topicBank);
+	}
+	# Lets go knock on the door of the database
+	# and grab the Topic's since they are not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	my $sth = $self->sqlSelectMany('*', 'topics');
+	while (my $single_topic = $sth->fetchrow_hashref) {
+		$topicBank{ $single_topic->{tid} } = $single_topic;
+	}
+	$sth->finish;
+
+	if($topic) {
+		return $topicBank{$topic};
+	} else {
+		return \%topicBank;
+	}
+}
+
 1;
 
 =head1 NAME
@@ -632,7 +694,7 @@ Slash::DB::MySQL - MySQL Interface for Slashcode
 
 =head1 DESCRIPTION
 
-No documentation yet.
+No documentation yet. Sue me.
 
 =head1 AUTHOR
 

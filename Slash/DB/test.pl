@@ -67,9 +67,29 @@ if($story->{'nuts'} eq 'flavored') {
 } else {
 	print "ok 9\n";
 }
-print "Testing getSectionBank\n";
+print "Testing getSectionBank()\n";
 my $section  = $object->getSectionBank();
 for (keys %$section) {
 	print "\t$_ : $section->{$_}\n";
 }
-print "ok 10\n";
+print "ok 11\n";
+print "Testing currentAdmin()\n";
+my $section  = $object->currentAdmin();
+for (@$section) {
+	my($aid, $lastsecs, $lasttitle) = @$_;
+	print "\t$aid : $lastsecs \n";
+}
+print "ok 11\n";
+print "ok 12\n";
+print "Testing getTopic()\n";
+print "\tNow lets try to grab everything()\n";
+my $topics  = $object->getTopic();
+for (keys %$topics) {
+	print "\t\t$_ : $topics->{$_}\n";
+}
+print "\tNow lets try to grab the details on 'news'\n";
+my $topic  = $object->getTopic('news');
+for (keys %$topic) {
+	print "\t\t$_ : $topic->{$_}\n";
+}
+print "ok 12\n";

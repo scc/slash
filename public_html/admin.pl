@@ -1078,13 +1078,12 @@ sub getRelated {
 
 ##################################################################
 sub otherLinks {
-	my $aid = shift;
-	my $tid = shift;
+	my ($aid, $tid) = @_;
 
-	my $T = getTopic($tid);
+	my $topic = $I{dbobject}->getTopic($tid);
 
 	return <<EOT;
-<LI><A HREF="$I{rootdir}/search.pl?topic=$tid">More on $T->{alttext}</A></LI>
+<LI><A HREF="$I{rootdir}/search.pl?topic=$tid">More on $topic->{alttext}</A></LI>
 <LI><A HREF="$I{rootdir}/search.pl?author=$aid">Also by $aid</A></LI>
 EOT
 
@@ -1138,7 +1137,7 @@ EOT
 		$S->{introtext} = autoUrl($I{F}{section}, $S->{introtext});
 		$S->{bodytext} = autoUrl($I{F}{section}, $S->{bodytext});
 
-		$T = getTopic($S->{tid});
+		$T = $I{dbobject}->getTopic($S->{tid});
 		$I{F}{aid} ||= $I{U}{aid};
 		$A = getAuthor($I{F}{aid});
 		$sid = $I{F}{sid};

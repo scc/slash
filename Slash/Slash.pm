@@ -55,7 +55,7 @@ BEGIN {
 		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
-		getEvalBlock getTopic dispStory lockTest getSlashConf
+		getEvalBlock dispStory lockTest getSlashConf
 		getDateFormat dispComment getDateOffset linkComment redirect
 		getFormkeyId checkSubmission errorMessage createSelect getFormkey
 	);
@@ -210,16 +210,16 @@ sub createSelect {
 ########################################################
 sub selectTopic {
 	my($name, $tid) = @_;
-	getTopicBank();
 
-	my $o = qq!<SELECT NAME="$name">\n!;
-	foreach my $thistid (sort keys %{$I{topicBank}}) {
-		my $T = $I{topicBank}{$thistid};
-		my $selected = $T->{tid} eq $tid ? ' SELECTED' : '';
-		$o .= qq!\t<OPTION VALUE="$T->{tid}"$selected>$T->{alttext}</OPTION>\n!;
+	my $html_to_display = qq!<SELECT NAME="$name">\n!;
+	my $topicbank = $I{dbobject}->getTopic();
+	foreach my $thistid (sort keys %$topicbank) {
+		my $topic = $I{dbobject}->getTopic($thistid);
+		my $selected = $topic->{tid} eq $tid ? ' SELECTED' : '';
+		$html_to_display .= qq!\t<OPTION VALUE="$topic->{tid}"$selected>$topic->{alttext}</OPTION>\n!;
 	}
-	$o .= "</SELECT>\n";
-	print $o;
+	$html_to_display .= "</SELECT>\n";
+	print $html_to_display;
 }
 
 ########################################################
@@ -631,24 +631,6 @@ sub getSection {
 	return $I{sectionBank}{$section};
 }
 
-########################################################
-sub getTopicBank {
-	return if keys %{$I{topicBank}};
-	my $c = sqlSelectMany('*', 'topics');
-	while (my $T = $c->fetchrow_hashref) {
-		$I{topicBank}{ $T->{tid} } = $T;
-	}
-	$c->finish;
-}
-
-########################################################
-sub getTopic {
-	my $topic = shift;
-	return $I{topicBank}{$topic} if $I{topicBank}{$topic};
-	getTopicBank();
-	return $I{topicBank}{$topic};
-}
-
 
 ################################################################################
 # SQL Timezone things
@@ -999,18 +981,16 @@ sub formLabel {
 
 ########################################################
 sub currentAdminUsers {
-	my $o;
-	my $c = sqlSelectMany('aid,now()-lasttime,lasttitle', 'sessions',
-			      'aid=aid GROUP BY aid'
-#		'aid!=' . $I{dbh}->quote($I{U}{aid}) . ' GROUP BY aid'
-	);
+	my $html_to_display;
 
-	while (my($aid, $lastsecs, $lasttitle) = $c->fetchrow) {
-		$o .= qq!\t<TR><TD BGCOLOR="$I{bg}[3]">\n!;
-		$o .= qq!\t<A HREF="$I{rootdir}/admin.pl?op=authors&thisaid=$aid">!
+	my $aids = $I{dbobject}->currentAdmin();
+	for (@$aids) {
+		my($aid, $lastsecs, $lasttitle) = @$_;
+		$html_to_display .= qq!\t<TR><TD BGCOLOR="$I{bg}[3]">\n!;
+		$html_to_display .= qq!\t<A HREF="$I{rootdir}/admin.pl?op=authors&thisaid=$aid">!
 			if $I{U}{aseclev} > 10000;
-		$o .= qq!<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}"><B>$aid</B></FONT>!;
-		$o .= '</A> ' if $I{U}{aseclev} > 10000;
+		$html_to_display .= qq!<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}"><B>$aid</B></FONT>!;
+		$html_to_display .= '</A> ' if $I{U}{aseclev} > 10000;
 
 		if ($aid eq $I{U}{aid}) {
 		    $lastsecs = "-";
@@ -1024,15 +1004,14 @@ sub currentAdminUsers {
 
 		$lasttitle = "&nbsp;/&nbsp;$lasttitle" if $lasttitle && $lastsecs;
 
-		$o .= qq!</TD><TD BGCOLOR="$I{bg}[2]"><FONT COLOR="$I{fg}[1]" SIZE="${\( $I{fontbase} + 2 )}">! .
+		$html_to_display .= qq!</TD><TD BGCOLOR="$I{bg}[2]"><FONT COLOR="$I{fg}[1]" SIZE="${\( $I{fontbase} + 2 )}">! .
 		    "$lastsecs$lasttitle</FONT>&nbsp;</TD></TR>";
 	}
 
-	$c->finish;
-	$o = <<EOT;
-<TABLE HEIGHT="100%" BORDER="0" CELLPADDING="2" CELLSPACING="0">$o</TABLE>
+	$html_to_display = <<EOT;
+<TABLE HEIGHT="100%" BORDER="0" CELLPADDING="2" CELLSPACING="0">$html_to_display</TABLE>
 EOT
-	return $o;
+	return $html_to_display;
 }
 
 ########################################################
@@ -1945,9 +1924,11 @@ sub displayStory {
 		}
 	}
 
-	getTopic($S->{tid});
-	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $I{topicBank}{$S->{tid}}, $full);
-	return($S, $I{dbobject}->getAuthor($S->{aid}), $I{topicBank}{$S->{tid}});
+	# No, we do not need this variable, but for readability 
+	# I think it is justified (and it is just a reference....)
+	my $topic = $I{dbobject}->getTopic($S->{tid});
+	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $topic, $full);
+	return($S, $I{dbobject}->getAuthor($S->{aid}), $topic);
 }
 
 #######################################################################
@@ -2271,9 +2252,7 @@ form as required.</P>
 EOT
 
 	# find out if this form has been submitted already
-	my($submitted_already, $submit_ts) = sqlSelect(
-		"value,submit_ts",
-		"formkeys", "formkey='$formkey' and formname = '$formname'")
+	my($submitted_already, $submit_ts) = $I{dbobject}->checkForm($formkey, $formname)
 		or errorMessage($cant_find_formkey_err) and return(0);
 
 		if ($submitted_already) {

@@ -502,7 +502,7 @@ EOT
 	if ($I{F}{story}) {
 		print "<P>";
 		titlebar("100%", $I{F}{subj});
-		my $tref = getTopic($I{F}{tid});
+		my $tref = $I{dbobject}->getTopic($I{F}{tid});
 		print <<EOT;
 
 <IMG SRC="$I{imagedir}/topics/$tref->{image}" ALIGN="RIGHT" BORDER="0"

@@ -102,7 +102,7 @@ sub searchForm {
 
 	my $t = lc $I{sitename};
 	$t = $I{F}{topic} if $I{F}{topic};
-	my $tref = getTopic($t);
+	my $tref = $I{dbobject}->getTopic($t);
 	print <<EOT if $tref;
 
 <IMG SRC="$I{imagedir}/topics/$tref->{image}"
