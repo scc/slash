@@ -1,0 +1,18 @@
+__section__
+default
+__description__
+user's pending submissions title
+
+* count = total submissions pending
+__title__
+
+__page__
+submit
+__lang__
+en_US
+__name__
+pendingTitle
+__template__
+Your Recent Submissions (total:[% count %])
+__seclev__
+10000

@@ -32,6 +32,9 @@ __template__
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] Admin settings
 
+[% CASE 'bad_op' %]
+	Hey! The opcode '[% op %]' is not a valid op! Quit messing around!
+
 [% CASE 'saveuseradmin_notsaveduser' %]
 [% INCLUDE titlebar width="95%" title="Unable to save" %]
 	Unable to save [% field %] [% id %] User settings
@@ -41,7 +44,9 @@ __template__
 	Unable to save [% field %] [% id %] : a uid must be all numeric 
  
 [% CASE 'cookie_err' %]
+	[% IF titlebar %]
 [% INCLUDE titlebar width="95%" title="Cookie Error" %]
+	[% END %]
 	<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 	eliminates them, you are using a browser that doesn't support them, or you rejected it.
 
@@ -59,11 +64,15 @@ __template__
 	You selected too many options<BR>
 
 [% CASE 'saveuser_passnomatch_err' %]
+	[% IF titlebar %]
 [% INCLUDE titlebar width="95%" title="Password fields don't match" %]
+	[% END %]
 	Passwords don't match. Password not changed.<BR>
 
 [% CASE 'saveuser_passtooshort_err' %]
+	[% IF titlebar %]
 [% INCLUDE titlebar width="95%" title="Password too short" %]
+	[% END %]
 	Password is too short and was not changed.<BR>
 
 [% CASE 'anon_validation_attempt' %]

@@ -559,7 +559,7 @@ sub _validFormkey {
 	# this is a hack, think more on it, OK for now -- pudge
 	Slash::Utility::Anchor::getSectionColors();
 	for (qw(max_post_check interval_check formkey_check)) {
-		last if formkeyHandler($_, 0, 0, 0, \$error);
+		last if formkeyHandler($_, 'journals', 0, 0, \$error);
 	}
 
 	if ($error) {

@@ -236,6 +236,7 @@ sub formkeyHandler {
 	my $msg = '';
 
 	$formname	||= $user->{currentPage};
+	print STDERR "FORMNAME $formname\n";
 	$formkeyid	||= getFormkeyId($user->{uid});
 	$formkey	||= $form->{formkey};
 

@@ -220,6 +220,11 @@ sub main {
 		},
 	} ;
 	$ops->{default} = $ops->{displayform};
+	
+	if ($form->{op} && ! defined $ops->{$op}) {
+		$note .= getError('bad_op', { op => $form->{op}}, 0, 1);
+		$op = isAnon($user->{uid}) ? 'userlogin' : 'userinfo'; 
+	}
 
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {
@@ -240,7 +245,7 @@ sub main {
 		}
 
 		if (! $error_flag) {
-			$note .= savePasswd($form->{uid}) ;
+			$error_flag = savePasswd(\$note) ;
 		}
 		# change op to edituser and let fall through;
 		# we need to have savePasswd set the cookie before
@@ -249,7 +254,7 @@ sub main {
 			# why assign to an unused variable? -- pudge
 			$slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
 		}
-		$op = 'changepasswd';
+		$op = $error_flag ? 'changepasswd' : 'userinfo';
 		$form->{userfield} = $form->{uid};
 	}
 
@@ -851,7 +856,7 @@ sub changePasswd {
 		$id = $user_edit->{uid};
 	}
 
-	print getMessage('note', { note => $form->{note}}) if $form->{note};
+	# print getMessage('note', { note => $form->{note}}) if $form->{note};
 
 	$title = getTitle('changePasswd_title', { user_edit => $user_edit });
 
@@ -1148,51 +1153,54 @@ sub saveUserAdmin {
 
 #################################################################
 sub savePasswd {
+	my ($note) = @_;
+
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
-	my $uid;
+
 	my $error_flag = 0;
-	my($note, $author_flag, $user_edit_fakeemail, $formname);
 	my $user_edit = {};
-	my $user_editfield_flag;
+	my $uid;
 
 	my $user_edits_table = {};
-	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0;
 
 	if ($user->{is_admin}) {
 		$uid = $form->{uid} ? $form->{uid} : $user->{uid};
 	} else {
 		$uid = ($user->{uid} == $form->{uid}) ? $form->{uid} : $user->{uid};
 	}
+
 	$user_edit = $slashdb->getUser($uid);
 
 	if (!$user_edit->{nickname}) {
-		$note .= getError('cookie_err', 0, 1);
+		$$note .= getError('cookie_err', { titlebar => 0}, 0, 1);
 		$error_flag++;
 	}
 
-	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
-		$note .= getMessage('saveuser_passchanged_msg', { nick => $user_edit->{nickname}, uid => $user_edit->{uid}}, 0, 1);
+	if ($form->{pass1} ne $form->{pass2}) {
+		$$note .= getError('saveuser_passnomatch_err', { titlebar => 0},  0, 1);
+		$error_flag++;
+	}
 
+	if (length $form->{pass1} < 6 && $form->{pass1}) {
+		$$note .= getError('saveuser_passtooshort_err', { titlebar => 0} , 0, 1);
+		$error_flag++;
+	}
+
+	if (! $error_flag) {
 		$user_edits_table->{passwd} = $form->{pass1};
 		if ($form->{uid} eq $user->{uid}) {
 			setCookie('user', bakeUserCookie($uid, encryptPassword($user_edits_table->{passwd})));
 		}
 
-	} elsif ($form->{pass1} ne $form->{pass2}) {
-		$note .= getError('saveuser_passnomatch_err', 0, 1);
-		$error_flag++;
-
-	} elsif (length $form->{pass1} < 6 && $form->{pass1}) {
-		$note .= getError('saveuser_passtooshort_err', 0, 1);
-		$error_flag++;
+		$slashdb->setUser($uid, $user_edits_table) ;
+		$$note .= getMessage('saveuser_passchanged_msg', { nick => $user_edit->{nickname}, uid => $user_edit->{uid}}, 0, 1);
+		
 	}
 
-	$slashdb->setUser($uid, $user_edits_table) if ! $error_flag;
-
-	return $note;
+	return $error_flag;
 }
 
 #################################################################
