@@ -857,24 +857,52 @@ The 'linkComment' template block.
 sub linkComment {
 	my($comment, $printcomment, $date) = @_;
 	my $user = getCurrentUser();
-	my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
+	my $constants = getCurrentStatic();
 
-	# don't inherit these ...
-	for (qw(sid cid pid date subject comment uid points lastmod
-		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = '' unless exists $comment->{$_};
+	my $return = qq!<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}!;
+	$return .= "&op=$comment->{op}" if $comment->{op};
+	$return .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
+	$return .= "&commentsort=$user->{commentsort}";
+	$return .= "&mode=$user->{mode}";
+	$return .= "&startat=$comment->{startat}" if $comment->{startat};
+
+	if ($printcomment) {
+		$return .= "&cid=$comment->{cid}";
+	} else {
+		$return .= "&pid=" . ($comment->{realpid} || $comment->{pid});
+		$return .= "#$comment->{cid}" if $comment->{cid};
 	}
 
-	slashDisplay('linkComment', {
-		%$comment, # defaults
-		adminflag	=> $adminflag,
-		date		=> $date,
-		pid		=> $comment->{realpid} || $comment->{pid},
-		threshold	=> $comment->{threshold} || $user->{threshold},
-		commentsort	=> $user->{commentsort},
-		mode		=> $user->{mode},
-		comment		=> $printcomment,
-	}, { Return => 1, Nocomm => 1 });
+	my $s = $comment->{color}
+		? qq!<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>!
+		: $comment->{subject};
+
+	$return .= qq!">$s</A>!;
+	$return .= " by $comment->{nickname}" if $comment->{nickname};
+	$return .= qq! <FONT SIZE="-1">(Score:$comment->{points})</FONT> !
+			if !$user->{noscores} && $comment->{points};
+	$return .= qq! <FONT SIZE="-1"> $comment->{'time'} </FONT>! if $date;
+	$return .= "\n";
+	return $return;
+
+#	my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
+#
+#	# don't inherit these ...
+#	for (qw(sid cid pid date subject comment uid points lastmod
+#		reason nickname fakeemail homepage sig)) {
+#		$comment->{$_} = '' unless exists $comment->{$_};
+#	}
+#
+#	slashDisplay('linkComment', {
+#		%$comment, # defaults
+#		adminflag	=> $adminflag,
+#		date		=> $date,
+#		pid		=> $comment->{realpid} || $comment->{pid},
+#		threshold	=> $comment->{threshold} || $user->{threshold},
+#		commentsort	=> $user->{commentsort},
+#		mode		=> $user->{mode},
+#		comment		=> $printcomment,
+#	}, { Return => 1, Nocomm => 1 });
 }
 
 #========================================================================
