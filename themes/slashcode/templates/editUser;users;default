@@ -3,7 +3,7 @@ default
 __description__
 Edit user info
 
-* user_edit = hashref of user info
+* useredit = hashref of user info
 * author_flag = user is author
 * author_select = popup of authors
 * title = passed to titlebar
@@ -26,7 +26,7 @@ __template__
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]"><TR><TD>
 
 You can automatically login by clicking
-<A HREF="[% constants.rootdir %]/index.pl?op=userlogin&upasswd=[% FILTER fixparam; user_edit.passwd; END %]&unickname=[% FILTER fixparam; user_edit.nickname; END %]">This Link</A>
+<A HREF="[% constants.rootdir %]/index.pl?op=userlogin&upasswd=[% FILTER fixparam; useredit.passwd; END %]&unickname=[% FILTER fixparam; useredit.nickname; END %]">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 <BR>
 
@@ -37,16 +37,16 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 <BR>
 	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; user_edit.realname; END %]" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; useredit.realname; END %]" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="formname" VALUE="edituser">
-		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% user_edit.uid %]">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; user_edit.nickname; END %]"><BR>
+		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% useredit.uid %]">
+		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; useredit.nickname; END %]"><BR>
 <BR>
 	<B>Your Email Address</B><BR>
 	<SMALL>(required but never displayed publicly. This is where your passwd is mailed. 
 	If you change this address, a notification will be sent, and you will need follow the
 	enclosed instructions to re-register)</SMALL><BR>
-	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; user_edit.realemail; END %]" SIZE="40"><BR>
+	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; useredit.realemail; END %]" SIZE="40"><BR>
 <BR>
 [% emaildisplay.${user.emaildisplay} = 'CHECKED' -%]
 	<B>Email Display</B><BR>
@@ -62,7 +62,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 <BR>
 	
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% FILTER strip_attribute; user_edit.homepage; END %]" SIZE="60"><BR>
+		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% FILTER strip_attribute; useredit.homepage; END %]" SIZE="60"><BR>
 
 	<P><B>Headline Mailing List</B>
 	[% maillist %]
@@ -71,11 +71,11 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	[% session %]
 
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
-		<TEXTAREA NAME="sig" ROWS="2" COLS="60">[% FILTER strip_literal; user_edit.sig; END %]</TEXTAREA>
+		<TEXTAREA NAME="sig" ROWS="2" COLS="60">[% FILTER strip_literal; useredit.sig; END %]</TEXTAREA>
 
 	<P><B>Bio</B> (this information is publicly displayed on your
 		user page.  255 chars)<BR>
-		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">[% FILTER strip_literal; user_edit.bio; END %]</TEXTAREA>
+		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">[% FILTER strip_literal; useredit.bio; END %]</TEXTAREA>
 
 	[% editkey %]
 

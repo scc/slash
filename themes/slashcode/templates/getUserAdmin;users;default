@@ -3,7 +3,7 @@ default
 __description__
 Template for editing user
 
-* edituser = hashref for user being edited
+* user = hashref for user being edited
 * seclev_field = boolean to display seclev editing field
 * uid_checked = whether or not uid is checked
 * nickname_checked = whether or not nickname is checked
@@ -20,7 +20,8 @@ __name__
 getUserAdmin
 __template__
 
-[% IF checked.ip || checked.subnet %]
+[% IF userinfo_flag %]
+	[% IF checked.ip || checked.subnet %]
 <BR>
 <TABLE BORDER="0">
 	<TR>
@@ -35,9 +36,9 @@ __template__
 	</TR>
 	[% END %]
 </TABLE>
-[% END %]
+	[% END %]
 
-[% IF checked.uid|| checked.nickname%]
+	[% IF checked.uid|| checked.nickname %]
 <BR>
 <TABLE BORDER="0">
 	<TR>
@@ -52,10 +53,10 @@ __template__
 	</TR>
 	[% END %]
 </TABLE>
-[% END %]
+	[% END %]
 
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
-[% IF authoredit_flag %]
+	[% IF authoredit_flag %]
 	<TR>
 		<FORM ACTION="[% env.script_name %]">
 		<TD><B>Authors</B></TD>
@@ -64,7 +65,12 @@ __template__
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="authoredit"></TD>
 		</FORM>
 	</TR>
+
+	[% END %]
+
 [% END %]
+
+<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 	<TR>
 		<FORM ACTION="[% env.script_name %]">
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="admin">
@@ -98,20 +104,23 @@ __template__
 			</TR>
 		</TABLE>
 		</TD>			
-		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; edituser.id; END %]"></TD>
+		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; userfield; END %]"></TD>
 		<TD VALIGN="MIDDLE">
 		<INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info">
 		<INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User">
 		</TD>
 	</TR>
+
+[% IF userinfo_flag %]
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10>&nbsp;</TD>
 	</TR>
 
-[% IF authoredit_flag && seclev_field && ! edituser.nonuid  %]
+
+	[% IF authoredit_flag && seclev_field && ! useredit.nonuid  %]
 	<TR>
 		<TD><B>Seclev</B></TD>
-		<TD COLSPAN="4"><INPUT TYPE="TEXT" NAME="seclev" value="[% edituser.seclev %]"></TD>
+		<TD COLSPAN="4"><INPUT TYPE="TEXT" NAME="seclev" value="[% useredit.seclev %]"></TD>
 		<TD>&nbsp;</TD>
 	</TR>
 	<TR>
@@ -122,7 +131,7 @@ __template__
 		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
 		<TD>&nbsp;</TD>
 	</TR>
-[% END %]
+	[% END %]
 
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10></TD>
@@ -145,6 +154,7 @@ __template__
 		Save Admin: <INPUT TYPE="SUBMIT" NAME="saveuseradmin" VALUE="Save Admin">
 		</TD>
 	</TR>
+[% END %]
 	</FORM>
 </TABLE>
 __seclev__

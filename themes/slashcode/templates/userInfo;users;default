@@ -5,7 +5,7 @@ Display user's info
 
 * title = passed to titlebar
 * nick = nickname
-* userbio = hashref of user's info
+* user	= hashref of user's info
 * points = available moderation points
 * commentstruct = arrayref of comments
 * nickmatch_flag = current user is same as viewed user
@@ -24,8 +24,8 @@ en_US
 __name__
 userInfo
 __template__
-[% USE Slash %]
 [% INCLUDE titlebar width="95%" %]
+[% USE Slash %]
 
 [% IF nickmatch_flag %]
 
@@ -39,7 +39,7 @@ customize [% constants.sitename %], change your password, or just click pretty w
 <A HREF="[% constants.rootdir %]/moderation.shtml">Moderator Guidelines</A>
 before you do any moderation.<BR><P>
 [% END %]
-[% IF ! user.registered %]
+[% IF ! useredit.registered %]
 <P>This account is currently expired. Please <A HREF="[% constants.rootdir %]/users.pl?op=validateuser">re-register</A> at your earliest opportunity.<BR><P>
 [% END %]
 
@@ -48,29 +48,29 @@ before you do any moderation.<BR><P>
 [% END %]
 
 <P>
-[% IF userbio.homepage %]
-<A HREF="[% userbio.homepage %]">[% userbio.homepage %]</A><BR>
-[% END; IF userbio.fakeemail %]
-<A HREF="mailto:[% userbio.fakeemail %]">[% userbio.fakeemail %]</A><BR>
-[% END; IF userbio.journal_last_entry_date %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% userbio.uid %]">
-Last Journal Entry was [% Slash.timeCalc(userbio.journal_last_entry_date) %]</A>
-[ <A HREF="[% constants.rootdir %]/journal.pl?op=list&uid=[% userbio.uid %]">List</A> ]
+[% IF useredit.homepage %]
+<A HREF="[% useredit.homepage %]">[% useredit.homepage %]</A><BR>
+[% END; IF useredit.fakeemail %]
+<A HREF="mailto:[% useredit.fakeemail %]">[% useredit.fakeemail %]</A><BR>
+[% END; IF useredit.journal_last_entry_date %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% useredit.uid %]">
+Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A>
+[ <A HREF="[% constants.rootdir %]/journal.pl?op=list&uid=[% useredit.uid %]">List</A> ]
 <BR>
 [% END %]
 </P>
 
 [% IF karma_flag && nickmatch_flag %]
-        <B>Karma</B> [% userbio.karma %] (mostly the sum of moderation done to users comments)<BR>
+        <B>Karma</B> [% useredit.karma %] (mostly the sum of moderation done to users comments)<BR>
 [% END %]
 
-[% IF userbio.bio %]
- <B>User Bio</B><BR>[% FILTER strip_html ; userbio.bio ; END %]<P>
+[% IF useredit.bio %]
+ <B>User Bio</B><BR>[% FILTER strip_html ; useredit.bio ; END %]<P>
 [% END %]
 
-[% IF userbio.pubkey %]
+[% IF useredit.pubkey %]
    <B>Public Key</B><BR><PRE>
-  [% FILTER strip_literal; userbio.pubkey; END %]
+  [% FILTER strip_literal; useredit.pubkey; END %]
  </PRE><P>
 [% END %]
 

@@ -840,6 +840,7 @@ The 'linkComment' template block.
 sub linkComment {
 	my($comment, $printcomment, $date) = @_;
 	my $user = getCurrentUser();
+	my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;
 
 	# don't inherit these ...
 	for (qw(sid cid pid date subject comment uid points lastmod
@@ -849,6 +850,7 @@ sub linkComment {
 
 	slashDisplay('linkComment', {
 		%$comment, # defaults
+		adminflag	=> $adminflag,
 		date		=> $date,
 		pid		=> $comment->{realpid} || $comment->{pid},
 		threshold	=> $comment->{threshold} || $user->{threshold},
