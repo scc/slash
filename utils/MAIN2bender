@@ -13,7 +13,7 @@ use File::Basename;
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('PsdoupUPH?hv', \%opts);
+usage('Options used incorrectly') unless getopts('P:s:d:o:u:p:U:S:H:?XThv', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 
@@ -24,7 +24,7 @@ use vars qw(%my_conf);
 # Handle possibility of unexpected interruption.
 $SIG{INT} = sub { die "Interrupted.\n"; };
 
-my(%aidCache);
+my(%aidCache) = ( '' => 0 );
 # Show usage under the necessary conditions.
 usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
 			($opts{s} && ($opts{U} || $opts{H}));
@@ -35,8 +35,8 @@ usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
 	do {
 		($a, $b) = (shift @options, shift @options);
 
-		if (	(exists $opts{$a} && !exists $opts{$b}) ||
-				(!exists $opts{$a} && exists $opts{$b}))
+		if 	((exists $opts{$a} && !exists $opts{$b}) ||
+			 (!exists $opts{$a} && exists $opts{$b})) 
 		{
 			print "Improper use of $a/$b! Both must be specified.\n\n";
 			usage();
@@ -55,14 +55,15 @@ map {
 		if $opts{$_}; 
 } @fileopts;
 
-my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd, $t_user, $t_pwd) =
-	@opts{qw[P d s o u p U P]};
+my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd, $t_user, $t_pwd, $dbhost) =
+	@opts{qw[S d s o u p U P H]};
 $prefix 	||= '/usr/local/slash';
 $dumpfile	||= './site.dump';
 $rcfile 	||= './slashdotrc.pl';
 $outfile	||= './bender.dump';
+$dbhost		||= 'localhost';
 
-if ($rcfile) {
+if (!$t_user) {
 	die "FATAL ERROR: Can't read $rcfile: $!\n" if ! -r $rcfile;
 	$rcfile =~ s!^(.+)/!!;
 	unshift(@INC, $1 || '.');
@@ -74,9 +75,8 @@ if ($rcfile) {
 	$g_user	||= $my_conf{dbuser};
 	$g_pwd 	||= $my_conf{dbpass};
 	$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
-	$opts{H} = $1 || 'localhost';
+	$dbhost = $1;
 }
-my ($dbhost) = $opts{H};
 
 die "FATAL ERROR: Can't read input dump file: $!\n"
 	if ! -r $dumpfile;
@@ -126,13 +126,19 @@ die "\n\nCan't connect to temporary conversion database!\n" if ! $dbh;
 # Perform selective import of given dump.
 importDump();
 
-# Perform schema updates on loaded tables.
+# Perform schema updates on loaded tables (this should probably be a sub).
+my $cmd;
 for (@updateFile) {
-	$dbh->do($_) or
-		printf STDERR "Error executing '$_': %s\n", $dbh->errstr;
+	$cmd = "${cmd}${_}";
+	if ($cmd =~ /;(\s)*$/) {
+		$dbh->do($cmd) or
+			printf STDERR "Error executing '$_': %s\n", $dbh->errstr;
+		$cmd = '';
+	}
 }
 
 # Perform version specific conversion process.
+#ditchAC();
 authors2Users();
 aid2uid();
 # Don't do codes, leave that to the new dump --Brian
@@ -141,9 +147,11 @@ md5Users();
 userskey2Param();
 
 # Drop obsolete tables.
-for (@otables) {
-	print "-- Dropping obsolete table '$_'\n";
-	$dbh->do("DROP TABLE $_");
+unless ($opts{T}) {
+	for (@otables) {
+		print "-- Dropping obsolete table '$_'\n";
+		$dbh->do("DROP TABLE $_");
+	}
 }
 
 # Make dump of temporary database.
@@ -154,12 +162,14 @@ print "DONE!\n";
 
 END {
 	# Destroy temporary database.
-	if ($g_dbh) {
+	if ($g_dbh && !$opts{'X'}) {
 		# Destroy the one we've create.
 		$g_dbh->do("DROP DATABASE $tempDBname") or
 			print "\n\nDatabase drop should be performed manually!\n";
 		$g_dbh->disconnect;
 	}
+	print STDERR "(Not deleting temporary database, '$tempDBname', upon request)\n"
+		if $opts{X};
 };
 
 
@@ -219,14 +229,14 @@ sub importDump {
 			print STDERR 	"Error executing statement on import: " . 
 							$dbh->errstr . "\n";
 			printf STDERR	"(%d) '$cmd'", length($cmd)
-				if (my $a = $dbh->errstr) =~ /SQL syntax/,
+				if (my $a = $dbh->errstr || '') =~ /SQL syntax/,
 	}
 	print "-- Closing $dumpfile\n";
 }
 
 
 sub authors2Users {
-	my $sth = $dbh->prepare('SELECT * FROM authors');
+	my $sth = $dbh->prepare('SELECT * FROM authors WHERE aid != ""');
 	if (! $sth->execute) {
 		err("Can't execute on statement handle: ".$dbh->errstr);
 		return;
@@ -245,7 +255,7 @@ sub authors2Users {
 		my $user = $l_sth->fetchrow_hashref;
 		$l_sth->finish;
 		
-		my ($uid, $user_info) = (0, 0);
+		my ($uid, $user_info);
 		my $qn = $dbh->quote(($user) ? $user->{nickname} : $_->{aid});
 		if (! $user) {
 			# Insert author as a new user into the database.
@@ -255,7 +265,7 @@ INSERT INTO users (uid, nickname) VALUES (null, $qn)
 EOQ
 
 			# Get full user record back from database.
-			#$l_sth = $dbh->prepare("SELECT * FROM users WHERE nickname=$qn");
+		 	$l_sth = $dbh->prepare("SELECT uid FROM users WHERE nickname=$qn");
 			if (! $l_sth->execute) {
 				err("Can't exacute on USER statement handle: $dbh->errstr\n");
 				next;
@@ -277,14 +287,14 @@ INSERT INTO users_prefs (uid) VALUES ($uid)
 EOQ
 		} else {
 			print STDERR "-- Promoting user $qn.\n";
+			$uid = $user->{uid};
 		}
 		
 		# Retrieve necessary user information to use as defaults.
-		$uid = $user->{uid};
 		$aidCache{$_->{aid}} = $uid;	# Used in aid2Uid().
 		$l_sth = $dbh->prepare("SELECT bio FROM users_info WHERE uid=$uid");
 		if ($l_sth && $l_sth->execute) {
-			$user_info = $l_sth->fetchrow_hashref;
+			$user_info = $l_sth->fetchrow_hashref();
 			$l_sth->finish;
 		}
 
@@ -292,7 +302,7 @@ EOQ
 		$user->{seclev} = $_->{seclev};
 
 		# Add in author information for anything that isn't currently set.
-		$user_info->{bio}	||= $_->{copy};
+		$user_info->{bio}	||= $_->{copy} if $user_info;
 		$user->{realname}	||= $_->{name};
 		$user->{realemail}	||= $_->{email};
 		$user->{homepage}	||= $_->{url};
@@ -306,7 +316,7 @@ UPDATE users SET
 	realemail	= @{[$dbh->quote($user->{realemail})]},
 	homepage	= @{[$dbh->quote($user->{homepage})]},
 	sig			= @{[$dbh->quote($user->{sig})]}
-WHERE uid = $user->{uid}
+WHERE uid = $uid
 EOQ
 
 		$dbh->do(<<EOQ);
@@ -315,13 +325,19 @@ EOQ
 
 		# There should be no defaults for these.
 		$dbh->do(<<EOQ) if $_->{section};
-INSERT INTO users_params (param_id, uid, name, value)
+INSERT INTO users_param (param_id, uid, name, value)
 	VALUES (null, $uid, 'section', @{[$dbh->quote($_->{section})]})
 EOQ
 
 		$dbh->do(<<EOQ) if $_->{deletedsubmissions};
-INSERT INTO users_params (param_id, uid, name, value)
+INSERT INTO users_param (param_id, uid, name, value)
 	VALUES (null, $uid, 'deletedsubmissions', $_->{deletedsubmissions})
+EOQ
+
+		# And this flag must be set.
+		$dbh->do(<<EOQ);
+INSERT INTO users_param (param_id, uid, name, value)
+	VALUES (null, $uid, 'author', 1);
 EOQ
 	}
 }
@@ -333,6 +349,8 @@ sub aid2uid {
 	for (@tables) {
 		my $sth = $dbh->prepare("SELECT distinct aid FROM $_");
 		my @authorList;
+		$sth->execute or
+			die "Can't execute MASTER SELECT on AID from table '$_'\n";
 		for (@{$sth->fetchall_arrayref}) {
 			push @authorList, $_->[0];
 		}
@@ -340,7 +358,7 @@ sub aid2uid {
 		$dbh->do("ALTER TABLE $_ ADD uid int");
 
 		for (@authorList) {
-			my $qn = $dbh->quote($_);
+			my $qn = $dbh->quote($_) || '';
 			$dbh->do("UPDATE $_ SET uid=$aidCache{$_} WHERE aid=$qn");
 		}
 
@@ -357,8 +375,9 @@ sub codes2CodeParam {
 		print STDERR "-- Processing table $_ into CODE_PARAM\n";
 
 		my $sth = $dbh->prepare("SELECT * FROM $_");
+		$sth->execute or
+			die "Can't execute MASTER SELECT from '$_'\n";
 		my $table = $dbh->quote($_);
-		
 		for (@{$sth->fetchall_arrayref({})}) {
 			my $code = $dbh->quote($_->{code});
 			my $name = $dbh->quote($_->{name});
@@ -375,8 +394,10 @@ EOQ
 sub md5Users {
 	my $sth = $dbh->prepare("SELECT uid, passwd FROM users");
 	my $i_sth = $dbh->prepare('UPDATE users SET passwd=? WHERE uid=?');
+	$sth->execute or
+		die "Can't execute MASTER SELECT on 'uid,passwd' on table users!\n";
 	print STDERR "-- Converting user passwords from plaintext to MD5...";
-	for (@{sth->fetchall_arrayref}) {
+	for (@{$sth->fetchall_arrayref({})}) {
 		$i_sth->execute(md5_hex($_->{passwd}), $_->{uid})
 	}
 	$i_sth->finish;
@@ -386,13 +407,18 @@ sub md5Users {
 
 sub userskey2Param {
 	my $sth = $dbh->prepare("SELECT * FROM users_key");
+	$sth->execute or
+		die "Can't execute MASTER SELECT on table users_key!\n";
 	print STDERR "-- Processing table USERS_KEY into table USERS_PARAM\n";
 	for (@{$sth->fetchall_arrayref({})}) {
-		my $pubkey = $dbh->quote($_->{key});
+		next if !$_->{pubkey};
+		my $pubkey = $dbh->quote($_->{pubkey});
+
+		printf STDERR "-- Found key size %d on uid #$_->{uid}\n", length($pubkey);
 
 		$dbh->do(<<EOQ);
 INSERT INTO users_param (param_id, uid, name, value)
-	VALUES (null, $_->[0], 'key', $pubkey)
+	VALUES (null, $_->{uid}, 'key', $pubkey)
 EOQ
 	}
 }
@@ -411,12 +437,14 @@ sub usage {
 
 usage: $PROGNAME {-PsdoupUPH?hv}
 
-	-P Prefix for Slash install 		[default: /usr/local/slash]
+	-S Prefix for Slash install 		[default: /usr/local/slash]
 	-d Location of source MySQL dump	[default: ./site.dump]
 	-o Location of output dump 		[default: ./bendersite.dump]
 
 	-u [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
 	-p Password for user given by -u
+	-X Do NOT delete temporary database after performing conversion.
+	-T Do NOT delete obsolete tables after performing conversion.
 
 	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
 
