@@ -99,7 +99,7 @@ install: slash plugins
 		ln -s -f ../init.d/slash $(INIT)/rc3.d/S99slash; \
 		ln -s -f ../init.d/slash $(INIT)/rc6.d/K99slash; \
 	elif [ -d /etc/rc.d/init.d/ ]; then \
-		install utils/slash /etc/rc.d/init.d/ \
+		install utils/slash /etc/rc.d/init.d/; \
 		ln -s -f ../init.d/slash /etc/rc.d/rc3.d/S99slash; \
 		ln -s -f ../init.d/slash /etc/rc.d/rc6.d/K99slash; \
 	else \
