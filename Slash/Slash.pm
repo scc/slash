@@ -38,7 +38,9 @@ use Mail::Sendmail;
 use URI;
 
 use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
+
 BEGIN {
 	# this is the worst damned warning ever, so SHUT UP ALREADY!
 	$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
@@ -58,7 +60,7 @@ BEGIN {
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect
-		createEnvironment 
+		createEnvironment
 	);
 	$CRLF = "\015\012";
 }
@@ -323,7 +325,8 @@ sub linkStory {
 # Sets the appropriate @fg and @bg color pallete's based
 # on what section you're in.  Used during initialization
 sub getSectionColors {
-	my $color_block = shift;
+	my($color_block) = @_;
+	my $constants = getCurrentStatic();
 	my @colors;
 	my $colorblock = getCurrentForm('colorblock');
 
@@ -334,8 +337,9 @@ sub getSectionColors {
 		@colors = split m/,/, getSectionBlock('colors');
 	}
 
-	$I{fg} = [@colors[0..3]];
-	$I{bg} = [@colors[4..7]];
+	# %I included for backward compatability
+	$I{fg} = $constants->{fg} = [@colors[0..3]];
+	$I{bg} = $constants->{bg} = [@colors[4..7]];
 }
 
 
@@ -344,7 +348,7 @@ sub getSectionColors {
 # if defined tries to use cache.
 # Look at this for a rewrite
 sub getSection {
-	my ($section) = @_;
+	my($section) = @_;
 	return { title => getCurrentStatic('slogan'), artcount => getCurrentUser('maxstories') || 30, issue => 3 }
 		unless $section;
 	my $dbslash = getCurrentDB();
@@ -359,47 +363,26 @@ sub getSection {
 
 ########################################################
 sub pollbooth {
-	my($qid, $notable) = @_;
-
+	my($qid, $no_table, $center) = @_;
+	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
 
-	my $dbslash = getCurrentDB();
 	$qid = $dbslash->getVar('currentqid', 'value') unless $qid;
-	my $qid_htm = stripByMode($qid, 'attribute');
-
+	my $sect = "section=$constants->{currentSection}&"
+		if $constants->{currentSection};
 	my $polls = $dbslash->getPoll($qid);
-	my($x, $tablestuff) = (0);
-	for (@$polls) {
-		my($question, $answer, $aid) = @$_;
-		if ($x == 0) {
-			$tablestuff = <<EOT;
-<FORM ACTION="$constants->{rootdir}/pollBooth.pl">
-\t<INPUT TYPE="hidden" NAME="qid" VALUE="$qid_htm">
-<B>$question</B>
-EOT
-			$tablestuff .= <<EOT if $constants->{currentSection};
-\t<INPUT TYPE="hidden" NAME="section" VALUE="$constants->{currentSection}">
-EOT
-			$x++;
-		}
-		$tablestuff .= qq!<BR><INPUT TYPE="radio" NAME="aid" VALUE="$aid">$answer\n!;
-	}
 
-	my $voters = $dbslash->getPollQuestion($qid, 'voters');
-	my $comments = $dbslash->countComments($qid);
-	my $sect = "section=$constants->{currentSection}&" if $constants->{currentSection};
+	my $pollbooth = slashDisplay('pollbooth', {
+		polls		=> $polls,
+		question	=> $polls->[0][0],
+		qid		=> stripByMode($qid, 'attribute'),
+		voters		=> $dbslash->getPollQuestion($qid, 'voters'),
+		comments	=> $dbslash->countComments($qid),
+		sect		=> $sect,
+	}, 1);
 
-	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
-		qq![ <A HREF="$constants->{rootdir}/pollBooth.pl?${sect}qid=$qid_htm&aid=$constants->{anonymous_coward_uid}"><B>Results</B></A> | !;
-	$tablestuff .= qq!<A HREF="$constants->{rootdir}/pollBooth.pl?$sect"><B>Polls</B></A> !
-		unless $notable eq 'rh';
-	$tablestuff .= "Votes:<B>$voters</B>" if $notable eq 'rh';
-	$tablestuff .= " ] <BR>\n";
-	$tablestuff .= "Comments:<B>$comments</B> | Votes:<B>$voters</B>\n" if $notable ne 'rh';
-	$tablestuff .="</FORM>\n";
-
-	return $tablestuff if $notable;
-	fancybox($constants->{fancyboxwidth}, 'Poll', $tablestuff, 'c');
+	return $pollbooth if $no_table;
+	fancybox($constants->{fancyboxwidth}, 'Poll', $pollbooth, $center);
 }
 
 
@@ -555,10 +538,9 @@ sub fixHref {
 
 ########################################################
 sub approveTag {
-	my $tag = shift;
+	my($tag) = @_;
 
 	$tag =~ s/^\s*?(.*)\s*?$/$1/; # trim leading and trailing spaces
-
 	$tag =~ s/\bstyle\s*=(.*)$//i; # go away please
 
 	# Take care of URL:foo and other HREFs
@@ -571,8 +553,9 @@ sub approveTag {
 	}
 
 	# Validate all other tags
+	my $approvedtags = getCurrentStatic('approvedtags');
 	$tag =~ s|^(/?\w+)|\U$1|;
-	foreach my $goodtag (@{$I{approvedtags}}) {
+	foreach my $goodtag (@$approvedtags) {
 		return "<$tag>" if $tag =~ /^$goodtag$/ || $tag =~ m|^/$goodtag$|;
 	}
 }
@@ -619,60 +602,63 @@ sub chopEntity {
 
 ########################################################
 sub ssiHead {
-	(my $dir = $I{rootdir}) =~ s|^http://[^/]+||;
+	my $constants = getCurrentStatic();
+	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
 	print "<!--#include virtual=\"$dir/";
-	print "$I{currentSection}/" if $I{currentSection};
-	print "slashhead$I{userMode}",".inc\"-->\n";
+	print "$constants->{currentSection}/" if $constants->{currentSection};
+	print "slashhead$constants->{userMode}",".inc\"-->\n";
 }
 
 ########################################################
 sub ssiFoot {
-	(my $dir = $I{rootdir}) =~ s|^http://[^/]+||;
+	my $constants = getCurrentStatic();
+	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
 	print "<!--#include virtual=\"$dir/";
-	print "$I{currentSection}/" if $I{currentSection};
-	print "slashfoot$I{userMode}",".inc\"-->\n";
+	print "$constants->{currentSection}/" if $constants->{currentSection};
+	print "slashfoot$constants->{userMode}",".inc\"-->\n";
 }
 
 ########################################################
 sub adminMenu {
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $seclev = $user->{aseclev};
 	return unless $seclev;
 	print <<EOT;
 
-<TABLE BGCOLOR="$I{bg}[2]" BORDER="0" WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
-	<TR><TD><FONT SIZE="${\( $I{fontbase} + 2 )}">
+<TABLE BGCOLOR="$constants->{bg}[2]" BORDER="0" WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
+	<TR><TD><FONT SIZE="${\( $constants->{fontbase} + 2 )}">
 EOT
 
 	print <<EOT if $seclev > 0;
-	[ <A HREF="$I{rootdir}/admin.pl?op=adminclose">Logout $user->{aid}</A>
-	| <A HREF="$I{rootdir}/">Home</A>
-	| <A HREF="$I{rootdir}/getting_started.shtml">Help</A>
-	| <A HREF="$I{rootdir}/admin.pl">Stories</A>
-	| <A HREF="$I{rootdir}/topics.pl?op=listtopics">Topics</A>
+	[ <A HREF="$constants->{rootdir}/admin.pl?op=adminclose">Logout $user->{aid}</A>
+	| <A HREF="$constants->{rootdir}/">Home</A>
+	| <A HREF="$constants->{rootdir}/getting_started.shtml">Help</A>
+	| <A HREF="$constants->{rootdir}/admin.pl">Stories</A>
+	| <A HREF="$constants->{rootdir}/topics.pl?op=listtopics">Topics</A>
 EOT
 
 	print <<EOT if $seclev > 10;
-	| <A HREF="$I{rootdir}/admin.pl?op=edit">New</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=edit">New</A>
 EOT
 
-	my $dbslash = getCurrentDB();
-	my $cnt = $dbslash->getSubmissionCount($I{articles_only});
+	my $cnt = $dbslash->getSubmissionCount($constants->{articles_only});
 
 	print <<EOT if $seclev > 499;
-	| <A HREF="$I{rootdir}/submit.pl?op=list">$cnt Submissions</A>
-	| <A HREF="$I{rootdir}/admin.pl?op=blocked">Blocks</A>
-	| <A HREF="$I{rootdir}/admin.pl?op=colored">Site Colors</A>
+	| <A HREF="$constants->{rootdir}/submit.pl?op=list">$cnt Submissions</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=blocked">Blocks</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=colored">Site Colors</A>
 EOT
 
 	print <<EOT if $seclev > 999 || ($user->{asection} && $seclev > 499);
-	| <A HREF="$I{rootdir}/sections.pl?op=list">Sections</A>
-	| <A HREF="$I{rootdir}/admin.pl?op=listfilters">Comment Filters</A>
+	| <A HREF="$constants->{rootdir}/sections.pl?op=list">Sections</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=listfilters">Comment Filters</A>
 EOT
 
 	print <<EOT if $seclev >= 10000;
-	| <A HREF="$I{rootdir}/admin.pl?op=authors">Authors</A>
-	| <A HREF="$I{rootdir}/admin.pl?op=vars">Variables</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=authors">Authors</A>
+	| <A HREF="$constants->{rootdir}/admin.pl?op=vars">Variables</A>
 EOT
 
 	print "] </FONT></TD></TR></TABLE>\n";
@@ -680,23 +666,25 @@ EOT
 
 ########################################################
 sub formLabel {
-	return qq!<P><FONT COLOR="$I{bg}[3]"><B>!, shift, "</B></FONT>\n",
+	my $constants = getCurrentStatic();
+	return qq!<P><FONT COLOR="$constants->{bg}[3]"><B>!, shift, "</B></FONT>\n",
 		(@_ ? ('(', @_, ')') : ''), "<BR>\n";
 }
 
 ########################################################
 sub currentAdminUsers {
 	my $html_to_display;
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	my $dbslash = getCurrentDB();
 	my $aids = $dbslash->currentAdmin();
 	for (@$aids) {
 		my($aid, $lastsecs, $lasttitle) = @$_;
-		$html_to_display .= qq!\t<TR><TD BGCOLOR="$I{bg}[3]">\n!;
-		$html_to_display .= qq!\t<A HREF="$I{rootdir}/admin.pl?op=authors&thisaid=$aid">!
+		$html_to_display .= qq!\t<TR><TD BGCOLOR="$constants->{bg}[3]">\n!;
+		$html_to_display .= qq!\t<A HREF="$constants->{rootdir}/admin.pl?op=authors&thisaid=$aid">!
 			if $user->{aseclev} > 10000;
-		$html_to_display .= qq!<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}"><B>$aid</B></FONT>!;
+		$html_to_display .= qq!<FONT COLOR="$constants->{fg}[3]" SIZE="${\( $constants->{fontbase} + 2 )}"><B>$aid</B></FONT>!;
 		$html_to_display .= '</A> ' if $user->{aseclev} > 10000;
 
 		if ($aid eq $user->{aid}) {
@@ -711,7 +699,7 @@ sub currentAdminUsers {
 
 		$lasttitle = "&nbsp;/&nbsp;$lasttitle" if $lasttitle && $lastsecs;
 
-		$html_to_display .= qq!</TD><TD BGCOLOR="$I{bg}[2]"><FONT COLOR="$I{fg}[1]" SIZE="${\( $I{fontbase} + 2 )}">! .
+		$html_to_display .= qq!</TD><TD BGCOLOR="$constants->{bg}[2]"><FONT COLOR="$constants->{fg}[1]" SIZE="${\( $constants->{fontbase} + 2 )}">! .
 		    "$lastsecs$lasttitle</FONT>&nbsp;</TD></TR>";
 	}
 
@@ -735,11 +723,12 @@ sub getAd {
 ########################################################
 sub redirect {
 	my($url) = @_;
+	my $constants = getCurrentStatic();
 
-	if ($I{rootdir}) {	# rootdir strongly recommended
-		$url = URI->new_abs($url, $I{rootdir})->canonical->as_string;
+	if ($constants->{rootdir}) {	# rootdir strongly recommended
+		$url = URI->new_abs($url, $constants->{rootdir})->canonical->as_string;
 	} elsif ($url !~ m|^https?://|i) {	# but not required
-		$url =~ s|^/*|$I{rootdir}/|;
+		$url =~ s|^/*|$constants->{rootdir}/|;
 	}
 
 	my %params = (
@@ -759,12 +748,15 @@ EOT
 ########################################################
 sub header {
 	my($title, $section, $status) = @_;
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
 	my $adhtml = '';
 	$title ||= '';
-	my $ssi = getCurrentForm('ssi');
 
-	unless ($ssi) {
+	unless ($form->{ssi}) {
 		my %params = (
 			-cache_control => 'private',
 			-type => 'text/html'
@@ -776,8 +768,7 @@ sub header {
 		print CGI::header(%params);
 	}
 
-	my $constants = getCurrentStatic();
-	$constants->{userMode} = getCurrentUser('currentMode') eq 'flat' ? '_F' : '';
+	$constants->{userMode} = $user->{currentMode} eq 'flat' ? '_F' : '';
 	$constants->{currentSection} = $section || '';
 	getSectionColors();
 
@@ -789,7 +780,7 @@ sub header {
 EOT
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
-	if ($ssi eq 'yes') {
+	if ($form->{ssi} eq 'yes') {
 		ssiHead($section);
 		return;
 	}
@@ -798,7 +789,6 @@ EOT
 		$adhtml = getAd(1);
 	}
 
-	my $dbslash = getCurrentDB();
 	my $topics;
 	unless ($user->{noicons} || $user->{light}) {
 		$topics = $dbslash->getBlock('topics', 'block');
@@ -847,7 +837,9 @@ sub getSectionMenu {
 ########################################################
 sub footer {
 	my $dbslash = getCurrentDB();
-	if (getCurrentForm('ssi')) {
+	my $form = getCurrentForm();
+
+	if ($form->{ssi}) {
 		ssiFoot();
 		return;
 	}
@@ -877,17 +869,19 @@ sub footer {
 ########################################################
 sub titlebar {
 	my($width, $title) = @_;
-	my $execme = getWidgetBlock('titlebar');
-	print eval $execme;
-	print "\nError:$@\n" if $@;
+	slashDisplay('titlebar', {
+		width	=> $width,
+		title	=> $title
+	});
 }
 
 ########################################################
 sub fancybox {
-	my($width, $title, $contents) = @_;
+	my($width, $title, $contents, $center) = @_;
 	return unless $title && $contents;
 
 	my $tmpwidth = $width;
+	# allow width in percent or raw pixels
 	my $pct = 1 if $tmpwidth =~ s/%$//;
 	# used in some blocks
 	my $mainwidth = $tmpwidth-4;
@@ -898,18 +892,22 @@ sub fancybox {
 		}
 	}
 
-	my $execme = getWidgetBlock('fancybox');
-	print eval $execme;
-	print "\nError:$@\n" if $@;
+	slashDisplay('fancybox', {
+		width		=> $width,
+		contents	=> $contents,
+		title		=> $title,
+		center		=> 1
+	});
 }
 
 ########################################################
 sub portalbox {
 	my($width, $title, $contents, $bid, $url) = @_;
 	return unless $title && $contents;
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	$title = qq!<FONT COLOR="$I{fg}[3]">$title</FONT>!
+	$title = qq!<FONT COLOR="$constants->{fg}[3]">$title</FONT>!
 		if $url && !$user->{light};
 	$title = qq!<A HREF="$url">$title</A>! if $url;
 
@@ -932,10 +930,12 @@ sub portalbox {
 		}
 	}
 
-	$execme = getWidgetBlock('fancybox');
-	my $e = eval $execme;
-	print "\nError:$@\n" if $@;
-	return $e;
+	slashDisplay('fancybox', {
+		width		=> $width,
+		contents	=> $contents,
+		title		=> $title,
+		center		=> 0
+	}, 1);
 }
 
 ########################################################
@@ -943,7 +943,9 @@ sub portalbox {
 sub selectComments {
 	my($sid, $cid) = @_;
 	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
@@ -953,16 +955,16 @@ sub selectComments {
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
 		$C->{points}++ if length($C->{comment}) > $user->{clbig}
-			&& $C->{points} < $I{comment_maxscore} && $user->{clbig} != 0;
+			&& $C->{points} < $constants->{comment_maxscore} && $user->{clbig} != 0;
 
 		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
-			&& $C->{points} > $I{comment_minscore} && $user->{clsmall};
+			&& $C->{points} > $constants->{comment_minscore} && $user->{clsmall};
 
 		# fix points in case they are out of bounds
-		$C->{points} = $I{comment_minscore}
-			if $C->{points} < $I{comment_minscore};
-		$C->{points} = $I{comment_maxscore}
-			if $C->{points} > $I{comment_maxscore};
+		$C->{points} = $constants->{comment_minscore}
+			if $C->{points} < $constants->{comment_minscore};
+		$C->{points} = $constants->{comment_maxscore}
+			if $C->{points} > $constants->{comment_maxscore};
 
 		my $tmpkids = $comments->[$C->{cid}]{kids};
 		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
@@ -971,7 +973,7 @@ sub selectComments {
 		$comments->[$C->{cid}]{visiblekids} = $tmpvkids;
 
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
-		$comments->[0]{totals}[$C->{points} - $I{comment_minscore}]++;  # invert minscore
+		$comments->[0]{totals}[$C->{points} - $constants->{comment_minscore}]++;  # invert minscore
 		$comments->[$C->{pid}]{visiblekids}++
 			if $C->{points} >= $user->{threshold};
 
@@ -981,14 +983,14 @@ sub selectComments {
 	my $count = @$thisComment;
 
 	getCommentTotals($comments);
-	$dbslash->updateCommentTotals($sid, $comments) if getCurrentForm('ssi');
+	$dbslash->updateCommentTotals($sid, $comments) if $form->{ssi};
 	reparentComments($comments);
 	return($comments,$count);
 }
 
 ########################################################
 sub getCommentTotals {
-	my ($comments) = @_;
+	my($comments) = @_;
 	for my $x (0..5) {
 		$comments->[0]{totals}[5-$x] += $comments->[0]{totals}[5-$x+1];
 	}
@@ -997,16 +999,19 @@ sub getCommentTotals {
 
 ########################################################
 sub reparentComments {
-	my ($comments) = @_;
-	my $depth = $I{max_depth} || 7;
-
+	my($comments) = @_;
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	return unless $depth || $user->{reparent};
 	my $form = getCurrentForm();
+
+	my $depth = $constants->{max_depth} || 7;
+
+	return unless $depth || $user->{reparent};
 
 	# adjust depth for root pid or cid
 	if (my $cid = $form->{cid} || $form->{pid}) {
-		while ($cid && (my($pid) = getCommentPid($form->{sid}, $cid))) {
+		while ($cid && (my($pid) = $dbslash->getCommentPid($form->{sid}, $cid))) {
 			$depth++;
 			$cid = $pid;
 		}
@@ -1063,8 +1068,8 @@ sub reparentComments {
 ########################################################
 sub selectThreshold  {
 	my($counts) = @_;
-
 	my $constants = getCurrentStatic();
+
 	my $s = qq!<SELECT NAME="threshold">\n!;
 	foreach my $x ($constants->{comment_minscore}..$constants->{comment_maxscore}) {
 		my $select = ' SELECTED' if $x == getCurrentUser('threshold');
@@ -1077,11 +1082,10 @@ EOT
 
 ########################################################
 sub printComments {
-	# return;
 	my($sid, $pid, $cid, $commentstatus) = @_;
-	my $form = getCurrentForm();
-
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	$pid ||= '0';
 	my $lvl = 0;
@@ -1102,8 +1106,8 @@ sub printComments {
 	print qq!<TABLE WIDTH="100%" BORDER="0" CELLSPACING="1" CELLPADDING="2">\n!;
 
 	if ($user->{mode} ne 'archive') {
-		print qq!\t<TR><TD BGCOLOR="$I{bg}[3]" ALIGN="CENTER">!,
-			qq!<FONT SIZE="${\( $I{fontbase} + 2 )}" COLOR="$I{fg}[3]">!;
+		print qq!\t<TR><TD BGCOLOR="$constants->{bg}[3]" ALIGN="CENTER">!,
+			qq!<FONT SIZE="${\( $constants->{fontbase} + 2 )}" COLOR="$constants->{fg}[3]">!;
 
 		my($title, $section);
 		# Print Story Name if Applicable
@@ -1119,34 +1123,34 @@ sub printComments {
 
 		if ($title) {
 			printf "'%s'", linkStory({
-				'link'	=> qq!<FONT COLOR="$I{fg}[3]">$title</FONT>!,
+				'link'	=> qq!<FONT COLOR="$constants->{fg}[3]">$title</FONT>!,
 				sid	=> $sid,
 				section	=> $section
 			});
 		} else {
 			print linkComment({
 				sid => $sid, pid => 0, op => '',
-				color => $I{fg}[3], subject => 'Top'
+				color => $constants->{fg}[3], subject => 'Top'
 			});
 		}
 
 		print ' | ';
 
 		if ($user->{is_anon}) {
-			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
+			print qq!<A HREF="$constants->{rootdir}/users.pl"><FONT COLOR="$constants->{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
 		} else {
-			print qq!<A HREF="$I{rootdir}/users.pl?op=edituser">!,
-				qq!<FONT COLOR="$I{fg}[3]">Preferences</FONT></A> !
+			print qq!<A HREF="$constants->{rootdir}/users.pl?op=edituser">!,
+				qq!<FONT COLOR="$constants->{fg}[3]">Preferences</FONT></A> !
 		}
 
 		print ' | ' . linkComment({
 			sid => $sid, pid => 0, op => '',
-			color=> $I{fg}[3], subject => 'Top'
+			color=> $constants->{fg}[3], subject => 'Top'
 		}) if $pid;
 
 		print " | <B>$user->{points}</B> ",
-			qq!<A HREF="$I{rootdir}/moderation.shtml"><FONT COLOR="$I{fg}[3]">!,
+			qq!<A HREF="$constants->{rootdir}/moderation.shtml"><FONT COLOR="$constants->{fg}[3]">!,
 			"moderator</FONT></A> points " if $user->{points};
 
 		print " | <B>$count</B> comments " if $count;
@@ -1157,12 +1161,12 @@ sub printComments {
 		print " | Starting at #$form->{startat}" if $form->{startat};
 
 		print <<EOT;
- | <A HREF="$I{rootdir}/search.pl?op=comments&sid=$sid">
-<FONT COLOR="$I{fg}[3]">Search Discussion</FONT></A></FONT>
+ | <A HREF="$constants->{rootdir}/search.pl?op=comments&sid=$sid">
+<FONT COLOR="$constants->{fg}[3]">Search Discussion</FONT></A></FONT>
 	</TD></TR>
 
-	<TR><TD BGCOLOR="$I{bg}[2]" ALIGN="CENTER"><FONT SIZE="${\( $I{fontbase} + 2 )}">
-		<FORM ACTION="$I{rootdir}/comments.pl">
+	<TR><TD BGCOLOR="$constants->{bg}[2]" ALIGN="CENTER"><FONT SIZE="${\( $constants->{fontbase} + 2 )}">
+		<FORM ACTION="$constants->{rootdir}/comments.pl">
 		<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$sid">
 		<INPUT TYPE="HIDDEN" NAME="cid" VALUE="$cid">
 		<INPUT TYPE="HIDDEN" NAME="pid" VALUE="$pid">
@@ -1180,8 +1184,8 @@ EOT
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
 		<INPUT TYPE="submit" NAME="op" VALUE="Reply">
 	</TD></TR>
-	<TR><TD BGCOLOR="$I{bg}[3]" ALIGN="CENTER">
-		<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}">
+	<TR><TD BGCOLOR="$constants->{bg}[3]" ALIGN="CENTER">
+		<FONT COLOR="$constants->{fg}[3]" SIZE="${\( $constants->{fontbase} + 2 )}">
 EOT
 
 		print $dbslash->getBlock('commentswarning', 'block'), "</FONT></FORM></TD></TR>";
@@ -1192,7 +1196,7 @@ EOT
 		}
 	} else {
 		print <<EOT;
-	<TR><TD BGCOLOR="$I{bg}[3]"><FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}">
+	<TR><TD BGCOLOR="$constants->{bg}[3]"><FONT COLOR="$constants->{fg}[3]" SIZE="${\( $constants->{fontbase} + 2 )}">
 			This discussion has been archived.
 			No new comments can be posted.
 	</TD></TR>
@@ -1200,7 +1204,7 @@ EOT
 	}
 
 	print <<EOT if $user->{aseclev} || $user->{points};
-	<FORM ACTION="$I{rootdir}/comments.pl" METHOD="POST">
+	<FORM ACTION="$constants->{rootdir}/comments.pl" METHOD="POST">
 	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$sid">
 	<INPUT TYPE="HIDDEN" NAME="cid" VALUE="$cid">
 	<INPUT TYPE="HIDDEN" NAME="pid" VALUE="$pid">
@@ -1218,7 +1222,7 @@ EOT
 					if $sibs->[$x] == $cid;
 			}
 		}
-		print qq!\t</TD></TR>\n\t<TR><TD BGCOLOR="$I{bg}[2]" ALIGN="CENTER">\n!;
+		print qq!\t</TD></TR>\n\t<TR><TD BGCOLOR="$constants->{bg}[2]" ALIGN="CENTER">\n!;
 		print "\t\t&lt;&lt;", linkComment($comments->[$p], 1) if $p;
 		print ' | ', linkComment($comments->[$pid], 1) if $C->{pid};
 		print ' | ', linkComment($comments->[$n], 1), "&gt;&gt;\n" if $n;
@@ -1234,14 +1238,14 @@ EOT
 	print "\n\t</TD></TR>\n" if $lvl; # || ($user->{mode} eq "nested" and $lvl);
 	print $lcp;
 
-	my $delete_text = ($user->{aseclev} > 99 && $I{authors_unlimited})
+	my $delete_text = ($user->{aseclev} > 99 && $constants->{authors_unlimited})
 		? "<BR><B>NOTE: Checked comments will be deleted.</B>"
 		: "";
 
 	print <<EOT if ($user->{aseclev} || $user->{points}) && $user->{uid} > 0;
 	<TR><TD>
 		<P>Have you read the
-		<A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A>
+		<A HREF="$constants->{rootdir}/moderation.shtml">Moderator Guidelines</A>
 		yet? (<B>Updated 9.9</B>)
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="moderate">
 		$delete_text
@@ -1255,16 +1259,19 @@ EOT
 sub moderatorCommentLog {
 	my($sid, $cid) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
 	my $aseclev = getCurrentUser('aseclev');
 	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
+
 	if (@$comments) {
 		print <<EOT if $aseclev > 1000;
-<TABLE BGCOLOR="$I{bg}[2]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
-	<TR BGCOLOR="$I{bg}[3]">
-		<TH><FONT COLOR="$I{fg}[3]"> val </FONT></TH>
-		<TH><FONT COLOR="$I{fg}[3]"> reason </FONT></TH>
-		<TH><FONT COLOR="$I{fg}[3]"> moderator </FONT></TH>
+<TABLE BGCOLOR="$constants->{bg}[2]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR BGCOLOR="$constants->{bg}[3]">
+		<TH><FONT COLOR="$constants->{fg}[3]"> val </FONT></TH>
+		<TH><FONT COLOR="$constants->{fg}[3]"> reason </FONT></TH>
+		<TH><FONT COLOR="$constants->{fg}[3]"> moderator </FONT></TH>
 	</TR>
 EOT
 
@@ -1272,7 +1279,7 @@ EOT
 			print <<EOT if $aseclev > 1000;
 	<TR>
 		<TD> <B>$C->{val}</B> </TD>
-		<TD> $I{reasons}[$C->{reason}] </TD>
+		<TD> $constants->{reasons}[$C->{reason}] </TD>
 		<TD> $C->{nickname} ($C->{uid}) </TD>
 	</TR>
 EOT
@@ -1286,9 +1293,9 @@ EOT
 
 	return unless $reasonTotal;
 
-	print qq!<FONT COLOR="$I{bg}[3]"><B>Moderation Totals</B></FONT>:!;
+	print qq!<FONT COLOR="$constants->{bg}[3]"><B>Moderation Totals</B></FONT>:!;
 	foreach (0 .. @reasonHist) {
-		print "$I{reasons}->[$_]=$reasonHist[$_], " if $reasonHist[$_];
+		print "$constants->{reasons}[$_]=$reasonHist[$_], " if $reasonHist[$_];
 	}
 	print "<B>Total=$reasonTotal</B>.";
 }
@@ -1297,9 +1304,11 @@ EOT
 sub linkCommentPages {
 	my($sid, $pid, $cid, $total) = @_;
 	my($links, $page);
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	return if $total < $user->{commentlimit} || $user->{commentlimit} < 1;
 	my $form = getCurrentForm();
+
+	return if $total < $user->{commentlimit} || $user->{commentlimit} < 1;
 
 	for (my $x = 0; $x < $total; $x += $user->{commentlimit}) {
 		$links .= ' | ' if $page++ > 0;
@@ -1311,11 +1320,11 @@ sub linkCommentPages {
 		$links .= ")</B>" if $form->{startat} && $x == $form->{startat};
 	}
 	if ($user->{breaking}) {
-		$links .= " ($I{sitename} Overload: CommentLimit $user->{commentlimit})";
+		$links .= " ($constants->{sitename} Overload: CommentLimit $user->{commentlimit})";
 	}
 
 	return <<EOT;
-	<TR><TD BGCOLOR="$I{bg}[2]" ALIGN="CENTER"><FONT SIZE="${\( $I{fontbase} + 2 )}">
+	<TR><TD BGCOLOR="$constants->{bg}[2]" ALIGN="CENTER"><FONT SIZE="${\( $constants->{fontbase} + 2 )}">
 		$links
 	</FONT></TD></TR>
 EOT
@@ -1324,8 +1333,10 @@ EOT
 ########################################################
 sub linkComment {
 	my($C, $comment, $date) = @_;
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	my $x = qq!<A HREF="$I{rootdir}/comments.pl?sid=$C->{sid}!;
+
+	my $x = qq!<A HREF="$constants->{rootdir}/comments.pl?sid=$C->{sid}!;
 	$x .= "&op=$C->{op}" if $C->{op};
 	$x .= "&threshold=" . ($C->{threshold} || $user->{threshold});
 	$x .= "&commentsort=$user->{commentsort}";
@@ -1355,7 +1366,9 @@ sub linkComment {
 ########################################################
 sub displayThread {
 	my($sid, $pid, $lvl, $comments, $cid) = @_;
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	my $displayed = 0;
 	my $skipped = 0;
@@ -1373,15 +1386,14 @@ sub displayThread {
 	}
 
 
-	my $startat = getCurrentForm('startat');
 	foreach my $cid (@{$comments->[$pid]{kids}}) {
 		my $C = $comments->[$cid];
 
 		$skipped++;
-		$startat ||= 0;
-		next if $skipped < $startat;
+		$form->{startat} ||= 0;
+		next if $skipped < $form->{startat};
 
-		$startat = 0; # Once We Finish Skipping... STOP
+		$form->{startat} = 0; # Once We Finish Skipping... STOP
 
 		if ($C->{points} < $user->{threshold}) {
 			if ($user->{is_anon} || $user->{uid} != $C->{uid})  {
@@ -1420,11 +1432,13 @@ sub displayThread {
 	}
 
 	if ($hidden && !$user->{hardthresh} && $user->{mode} ne 'archive') {
-		print qq!\n<TR><TD BGCOLOR="$I{bg}[2]">\n! if $cagedkids;
-		print qq!<LI><FONT SIZE="${\( $I{fontbase} + 2 )}"><B> !,
+		print qq!\n<TR><TD BGCOLOR="$constants->{bg}[2]">\n! if $cagedkids;
+		print qq!<LI><FONT SIZE="${\( $constants->{fontbase} + 2 )}"><B> !,
 			linkComment({
-				sid => $sid, threshold => $I{comment_minscore}, pid => $pid,
-				subject => "$hidden repl" . ($hidden > 1 ? 'ies' : 'y')
+				sid		=> $sid,
+				threshold	=> $constants->{comment_minscore},
+				pid		=> $pid,
+				subject		=> "$hidden repl" . ($hidden > 1 ? 'ies' : 'y')
 			}) . ' beneath your current threshold.</B></FONT>';
 		print "\n\t</TD></TR>\n" if $cagedkids;
 	}
@@ -1434,20 +1448,22 @@ sub displayThread {
 ########################################################
 sub dispComment  {
 	my($C) = @_;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
 	my $subj = $C->{subject};
 	my $time = $C->{'time'};
 	my $username;
 
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
 	$username = $C->{fakeemail} ? <<EOT : $C->{nickname};
 <A HREF="mailto:$C->{fakeemail}">$C->{nickname}</A>
-<B><FONT SIZE="${\( $I{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
+<B><FONT SIZE="${\( $constants->{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
 EOT
 
 	my $nickname = fixparam($C->{nickname});
 	my $userinfo = <<EOT unless $C->{nickname} eq getCurrentAnonymousCoward('nickname');
-(<A HREF="$I{rootdir}/users.pl?op=userinfo&nick=$nickname">User #$C->{uid} Info</A>)
+(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&nick=$nickname">User #$C->{uid} Info</A>)
 EOT
 
 	my $userurl = qq!<A HREF="$C->{homepage}">$C->{homepage}</A><BR>!
@@ -1456,7 +1472,7 @@ EOT
 	my $score = '';
 	unless ($user->{noscores}) {
 		$score  = " (Score:$C->{points}";
-		$score .= ", $I{reasons}[$C->{reason}]" if $C->{reason};
+		$score .= ", $constants->{reasons}[$C->{reason}]" if $C->{reason};
 		$score .= ")";
 	}
 
@@ -1494,12 +1510,12 @@ EOT
 			&& $user->{points} > 0
 			&& $C->{uid} ne $user->{uid}
 			&& $C->{lastmod} ne $user->{uid})
-		    || ($user->{aseclev} > 99 && $I{authors_unlimited}))
+		    || ($user->{aseclev} > 99 && $constants->{authors_unlimited}))
 		    	&& !$user->{is_anon}) {
 
 			my $o;
-			foreach (0 .. @{$I{reasons}} - 1) {
-				$o .= qq!\t<OPTION VALUE="$_">$I{reasons}[$_]</OPTION>\n!;
+			foreach (0 .. @{$constants->{reasons}} - 1) {
+				$o .= qq!\t<OPTION VALUE="$_">$constants->{reasons}[$_]</OPTION>\n!;
 			}
 
 			$m.= qq! | <SELECT NAME="reason_$C->{cid}">\n$o</SELECT> !;
@@ -1507,7 +1523,7 @@ EOT
 
 		$m .= qq! | <INPUT TYPE="CHECKBOX" NAME="del_$C->{cid}"> !
 			if $user->{aseclev} > 99;
-		print qq!\n\t<TR><TD><FONT SIZE="${\( $I{fontbase} + 2 )}">\n! .
+		print qq!\n\t<TR><TD><FONT SIZE="${\( $constants->{fontbase} + 2 )}">\n! .
 			qq![ $m ]\n\t</FONT></TD></TR>\n<TR><TD>!;
 	}
 }
@@ -1518,11 +1534,15 @@ EOT
 ########################################################
 sub dispStory {
 	my($section, $authors, $topic, $full) = @_;
-	my $title = $section->{title};
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	my $title = $section->{title};
+
 	if (!$full && index($section->{title}, ':') == -1
-		&& $section->{section} ne $I{defaultsection}
-		&& $section->{section} ne getCurrentForm('section')) {
+		&& $section->{section} ne $constants->{defaultsection}
+		&& $section->{section} ne $form->{section}) {
 
 		# Need Header
 		my $SECT = getSection($section->{section});
@@ -1534,26 +1554,26 @@ sub dispStory {
 		# even uglier hack...but would solve the immediate
 		# problem.
 		$title = $user->{light} ? <<LIGHT : <<NORMAL;
-\t\t\t<A HREF="$I{rootdir}/$section->{section}/">$SECT->{title}</A>: $section->{title}
+\t\t\t<A HREF="$constants->{rootdir}/$section->{section}/">$SECT->{title}</A>: $section->{title}
 LIGHT
-\t\t\t<A HREF="$I{rootdir}/$section->{section}/"><FONT COLOR="$I{fg}[3]">$SECT->{title}</FONT></A>: $section->{title}
+\t\t\t<A HREF="$constants->{rootdir}/$section->{section}/"><FONT COLOR="$constants->{fg}[3]">$SECT->{title}</FONT></A>: $section->{title}
 NORMAL
 	}
 
-	titlebar($I{titlebar_width}, $title);
+	titlebar($constants->{titlebar_width}, $title);
 
 	my $bt = $full ? "<P>$section->{bodytext}</P>" : '<BR>';
 	my $author = qq!<A HREF="$authors->{url}">$section->{aid}</A>!;
 
 	my $topicicon = '';
 	$topicicon .= ' [ ' if $user->{noicons};
-	$topicicon .= qq!<A HREF="$I{rootdir}/search.pl?topic=$topic->{tid}">!;
+	$topicicon .= qq!<A HREF="$constants->{rootdir}/search.pl?topic=$topic->{tid}">!;
 
 	if ($user->{noicons}) {
 		$topicicon .= "<B>$topic->{alttext}</B>";
 	} else {
 		$topicicon .= <<EOT;
-<IMG SRC="$I{imagedir}/topics/$topic->{image}" WIDTH="$topic->{width}" HEIGHT="$topic->{height}"
+<IMG SRC="$constants->{imagedir}/topics/$topic->{image}" WIDTH="$topic->{width}" HEIGHT="$topic->{height}"
 	BORDER="0" ALIGN="RIGHT" HSPACE="20" VSPACE="10" ALT="$topic->{alttext}">
 EOT
 	}
@@ -1606,12 +1626,10 @@ sub displayStory {
 #######################################################################
 sub timeCalc {
 	# raw mysql date of story
-	my ($date) = @_;
-
-	# lexical
+	my($date) = @_;
+	my $user = getCurrentUser();
 	my(@dateformats, $err);
 
-	my $user = getCurrentUser();
 	# I put this here because
 	# when they select "6 ish" it
 	# looks really stupid for it to
@@ -1630,7 +1648,7 @@ sub timeCalc {
 	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
 
 	# convert the raw date to pretty formatted date
-	$date = UnixDate($date, $user->{format});
+	$date = UnixDate($date, $user->{'format'});
 
 	# return the new pretty date
 	return $date;
@@ -1649,11 +1667,12 @@ sub pollItem {
 sub getOlderStories {
 	my($array_ref, $SECT) = @_;
 	my($today, $stuff);
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $dbslash = getCurrentDB();
 
-	$array_ref ||= $dbslash->getStories($SECT, $I{currentSection});
+	$array_ref ||= $dbslash->getStories($SECT, $constants->{currentSection});
 
 	for (@{$array_ref}) {
 		my($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
@@ -1662,9 +1681,9 @@ sub getOlderStories {
 			$today  = $w;
 			$stuff .= '<P><B>';
 			$stuff .= <<EOT if $SECT->{issue} > 1;
-<A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&issue=$day&mode=$user->{'currentMode'}">
+<A HREF="$constants->{rootdir}/index.pl?section=$SECT->{section}&issue=$day&mode=$user->{'currentMode'}">
 EOT
-			$stuff .= qq!<FONT SIZE="${\( $I{fontbase} + 4 )}">$w</FONT>!;
+			$stuff .= qq!<FONT SIZE="${\( $constants->{fontbase} + 4 )}">$w</FONT>!;
 			$stuff .= '</A>' if $SECT->{issue} > 1;
 			$stuff .= " $m $d</B></P>\n";
 		}
@@ -1686,11 +1705,11 @@ EOT
 
 		$stuff .= qq!<P ALIGN="RIGHT">! if $SECT->{issue};
 		$stuff .= <<EOT if $SECT->{issue} == 1 || $SECT->{issue} == 3;
-<BR><A HREF="$I{rootdir}/search.pl?section=$SECT->{section}&min=$min">
+<BR><A HREF="$constants->{rootdir}/search.pl?section=$SECT->{section}&min=$min">
 <B>Older Articles</B></A>
 EOT
 		$stuff .= <<EOT if $SECT->{issue} == 2 || $SECT->{issue} == 3;
-<BR><A HREF="$I{rootdir}/index.pl?section=$SECT->{section}&mode=$user->{'currentMode'}&issue=$yesterday">
+<BR><A HREF="$constants->{rootdir}/index.pl?section=$SECT->{section}&mode=$user->{'currentMode'}&issue=$yesterday">
 <B>Yesterday's Edition</B></A>
 EOT
 	}
@@ -1735,13 +1754,15 @@ sub lockTest {
 	my ($subj) = @_;
 	return unless $subj;
 	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $msg;
+
 	my $locks = $dbslash->getLock();
 	for (@$locks) {
 		my ($thissubj, $aid) = @$_;
 		if ($aid ne getCurrentUser('aid') && (my $x = matchingStrings($thissubj, $subj))) {
 			$msg .= <<EOT
-<B>$x%</B> matching with <FONT COLOR="$I{fg}[1]">$thissubj</FONT> by <B>$aid</B><BR>
+<B>$x%</B> matching with <FONT COLOR="$constants->{fg}[1]">$thissubj</FONT> by <B>$aid</B><BR>
 EOT
 
 		}
@@ -1767,6 +1788,7 @@ sub getAnonCookie {
 sub getFormkeyId {
 	my ($uid) = @_;
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	# this id is the key for the commentkey table, either UID or
 	# unique hash key generated by IP address
@@ -1774,7 +1796,7 @@ sub getFormkeyId {
 
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
-	if ($user->{uid} > 0 && getCurrentForm('rlogin') && length(getCurrentForm('upasswd')) > 1) {
+	if ($user->{uid} > 0 && $form->{rlogin} && length($form->{upasswd}) > 1) {
 		getAnonCookie($user);
 		$id = $user->{anon_id};
 	} elsif ($uid > 0) {
@@ -1805,21 +1827,23 @@ sub intervalString {
 			}
 			$minutes = int(($interval % 3600) / 60);
 
-			} else {
-				$minutes = int($interval / 60);
-			}
-			if ($minutes > 0) {
-				$interval_string .= ", " if $hours;
-				if ($minutes > 1) {
-					$interval_string .= " $minutes minutes ";
-				} else {
-					$interval_string .= " $minutes minute ";
-				}
-			}
 		} else {
-			$interval_string = "$interval seconds ";
+			$minutes = int($interval / 60);
 		}
-		return($interval_string);
+
+		if ($minutes > 0) {
+			$interval_string .= ", " if $hours;
+			if ($minutes > 1) {
+				$interval_string .= " $minutes minutes ";
+			} else {
+				$interval_string .= " $minutes minute ";
+			}
+		}
+	} else {
+		$interval_string = "$interval seconds ";
+	}
+
+	return($interval_string);
 }
 
 ##################################################################
@@ -1867,9 +1891,10 @@ sub errorMessage {
 # make sure they're not posting faster than the limit
 sub checkSubmission {
 	my($formname, $limit, $max, $id) = @_;
-	my $constants = getCurrentStatic();
-	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	# If formkey starts to act up, me doing the below
 	# may be the cause
 	my $formkey = getCurrentForm('formkey');
@@ -1920,16 +1945,6 @@ EOT
 	return 1;
 }
 
-# ########################################################
-# sub writeLog {
-# 	my $op = shift;
-# 	my $dat = join("\t", @_);
-# 
-# 	my $r = Apache->request;
-# 
-# 	$r->notes('SLASH_LOG_OPERATION', $op);
-# 	$r->notes('SLASH_LOG_DATA', $dat);
-# }
 ########################################################
 # Ok, in a CGI we need to set up enough of an
 # environment so that methods that are accustom
