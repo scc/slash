@@ -1611,19 +1611,6 @@ sub countComments {
 }
 
 ##################################################################
-sub method {
-	my($self, $sid) = @_;
-	my $count = $self->countComments($sid);
-	$self->sqlUpdate(
-		"stories",
-		{ commentcount => $count },
-		"sid=" . $self->{_dbh}->quote($sid)
-	);
-
-	return $count;
-}
-
-##################################################################
 # counts the number of stories
 sub countStory {
 	my($self, $tid) = @_;
@@ -2004,9 +1991,6 @@ sub getStories {
 
 	# Order
 	my $other = "ORDER BY time DESC ";
-
-	if ($limit) {
-		$other .= "LIMIT $limit ";
 
 	# We need to check up on this late for performance -Brian
 	my(@stories, $count);
