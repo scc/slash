@@ -157,7 +157,7 @@ install: slash plugins
 		fi;								\
 		case "$$a" in							\
 	 	'utils/slash')							\
-			 if [ -d $(INIT) ]; then				\
+			 if [ -d $(INIT) && "$(INIT)" != "/etc" ]; then			\
 			 	init=$(INIT);					\
 			 elif [ -d /etc/init.d ]; then 				\
 	 			init=/etc;					\
@@ -171,7 +171,7 @@ install: slash plugins
 			 else 							\
 				echo "*** Makefile can't determine where your init scripts live."; \
 				if [ $$init ]; then				\
-					echo "***   ('$$init' does not exist)";	\
+					echo "***   ('$(INIT)' does not exist)";	\
 				fi;						\
 				echo "*** You will need to look at how to install utils/slashd"; \
 				echo "*** on your own.";			\
