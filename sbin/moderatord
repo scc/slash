@@ -34,7 +34,7 @@ sub fatalErrorToLog {
 sub comments2tokens {
 	my $comments = shift;
 	my $tokenpool = $comments * $constants->{tokenspercomment};
-	my $stirredpoints;# = $slashdb->stirPool();
+	my $stirredpoints = $slashdb->stirPool();
 	$tokenpool += $stirredpoints * $constants->{tokensperpoint};
 
 	# We only want a list of UIDs. [ACCESSLOG QUERY]
@@ -66,7 +66,7 @@ sub comments2tokens {
 		fi		=> $fi,
 		num_updated	=> scalar keys %updateUIDs,
 	}));
-	#$slashdb->updateTokens([keys %updateUIDs]);
+	$slashdb->updateTokens([keys %updateUIDs]);
 }
 
 
@@ -89,6 +89,8 @@ if ($constants->{moderatord_read_user}) {
 	my $sleep = $constants->{moderatord_catchup_sleep};
 	while ($count--) {
 		$read_db = new Slash::DB($rusr);
+		fatalErrorLog("Can't open read database using '$rusr'")
+			if ! $read_db;
 		my $master_stat = ($slashdb->sqlShowMasterStatus())->[0];
 		my $slave_stat = ($read_db->sqlShowSlaveStatus())->[0];
 		fatalErrorLog('Replication requested but not active!')
@@ -124,9 +126,9 @@ my $lc = $slashdb->getVar('lastComments', 'value');
 my $newcomments = $tc - $lc;
 moderatordLog("NC: $newcomments");
 if ($newcomments > 0) {
-	#$slashdb->setVar('lastComments', $tc);
+	$slashdb->setVar('lastComments', $tc);
 	comments2tokens($newcomments);
-	my $log; # = $slashdb->tokens2points();
+	my $log = $slashdb->tokens2points();
 	for (@$log) {
 		moderatordLog($_);
 	}
