@@ -34,7 +34,7 @@ $task{$me}{code} = sub {
 		my($discussion_id) = @$id_ary;
 		# Don't do too many at once.
 		if (time > $start_time+30) {
-			push @aborted, "discussions (on $i/$#$discussions)";
+			push @aborted, "discussions on $i/$#$discussions";
 			last;
 		}
 		my($comments, $count) = Slash::selectComments($discussion_id, 0);
@@ -50,6 +50,7 @@ $task{$me}{code} = sub {
 	}
 
 	# Mark stories with new data as needing to be freshened.
+	my @story_order = ( );
 	my $stories = getStoriesWithFlag($slashdb, "data_dirty");
 	for my $info_ary (@$stories) {
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
@@ -60,6 +61,7 @@ $task{$me}{code} = sub {
 		# because if it turns out we're deleting it (below),
 		# there's no need.
 		$updates{story}{$sid} = [@$info_ary];
+		push @story_order, $sid;
 	}
 
 	# Delete stories marked as needing such
@@ -68,8 +70,8 @@ $task{$me}{code} = sub {
 		my $info_ary = $stories->[$i];
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
 		# Don't do too many at once.
-		if (time > $start_time+40) {
-			push @aborted, "delete_stories (on $i/$#$stories)";
+		if (time > $start_time+45) {
+			push @aborted, "delete_stories on $i/$#$stories";
 			last;
 		}
 		$slashdb->finalDeleteStory($sid);
@@ -83,12 +85,14 @@ $task{$me}{code} = sub {
 
 	# Freshen changed stories (that haven't been deleted)
 	my @freshened_stories = ( );
-	my @need_updates = sort keys %{$updates{story}};
-	for my $i (0..$#need_updates) {
-		my($sid, $discussion_id, $title, $section) = @{$updates{story}{$need_updates[$i]}};
+	for my $i (0..$#story_order) {
+		my $sid = $story_order[$i];
+		next unless exists $updates{story}{sid};
+		my($discussion_id, $title, $section);
+		($sid, $discussion_id, $title, $section) = @{$updates{story}{$sid}};
 		# Don't do too many at once.
-		if (time > $start_time+50) {
-			push @aborted, "update_stories (on $i/$#need_updates)";
+		if (time > $start_time+60) {
+			push @aborted, "update_stories on $i/$#story_order";
 			last;
 		}
 		if ($section) {
@@ -123,7 +127,7 @@ $task{$me}{code} = sub {
 	}
 
 	my $aborted_string = "";
-	$aborted_string = "(aborted: " . join(",", @aborted) . ")" if @aborted;
+	$aborted_string = " (aborted: " . join(",", @aborted) . ")" if @aborted;
 	slashdLog("$me total_freshens $total_freshens$aborted_string")
 		if $total_freshens != $start_total_freshens;
 
@@ -148,7 +152,7 @@ sub getDiscussionsWithFlag {
 		"discussions",
 		"FIND_IN_SET($flag_quoted, discussions.flags)",
 		# update the stuff at the top of the page first
-		"ORDER BY id DESC LIMIT 100",
+		"ORDER BY id DESC LIMIT 200",
 	);
 }
 
@@ -161,7 +165,7 @@ sub getStoriesWithFlag {
 		$story_table,
 		"FIND_IN_SET($flag_quoted, flags)",
 		# update the stuff at the top of the page first
-		"ORDER BY time DESC LIMIT 100",
+		"ORDER BY time DESC LIMIT 200",
 	);
 }
 
