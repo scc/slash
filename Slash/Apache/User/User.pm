@@ -39,6 +39,8 @@ sub SlashAuthAll ($$$) {
 sub handler {
 	my($r) = @_;
 
+	return DECLINED unless ($r->is_main);
+
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
 

@@ -22,6 +22,8 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{VirtualUser} = $user;
 	$cfg->{slashdb} = Slash::DB->new($user);
 	$cfg->{constants} = $cfg->{slashdb}->getSlashConf($user);
+	$cfg->{user} = '';
+	$cfg->{form} = '';
 
 	# Backwards compatibility
 	my $anonymous_coward = $cfg->{slashdb}->getUser(
@@ -50,17 +52,6 @@ sub IndexHandler {
 		}
 	}
 	
-	return DECLINED;
-}
-
-sub InitHandler {
-	my($r) = @_;
-	my $cfg = Apache::ModuleConfig->get($r);
-	
-	unless($cfg->{slashdb}) {
-		$cfg->{slashdb}->sqlConnect();
-	}
-
 	return DECLINED;
 }
 

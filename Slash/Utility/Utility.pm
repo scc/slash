@@ -335,7 +335,8 @@ sub getCurrentUser {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$user = $r->pnotes('user');
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$user = $cfg->{'user'};
 	} else {
 		$user = $static_user;
 	}
@@ -377,7 +378,8 @@ sub setCurrentUser {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$user = $r->pnotes('user');
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$user = $cfg->{'user'};
 	} else {
 		$user = $static_user;
 	}
@@ -412,7 +414,8 @@ sub setCurrentForm {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$form = $r->pnotes('form');
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$form = $cfg->{'form'};
 	} else {
 		$form = $static_form;
 	}
@@ -442,7 +445,8 @@ sub createCurrentUser {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$r->pnotes('user', $user);
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$cfg->{'user'} = $user;
 	} else {
 		$static_user = $user;
 	}
@@ -473,7 +477,8 @@ sub getCurrentForm {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$form = $r->pnotes('form');
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$form = $cfg->{'form'};
 	} else {
 		$form = $static_form;
 	}
@@ -509,7 +514,8 @@ sub createCurrentForm {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
-		$r->pnotes('form', $form);
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$cfg->{'form'} = $form;
 	} else {
 		$static_form = $form;
 	}
