@@ -65,7 +65,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev => 99') },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 99') },
 
 	'users'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users') },
