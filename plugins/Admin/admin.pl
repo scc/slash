@@ -631,7 +631,7 @@ sub colorEdit {
 
 	if ($form->{colorpreview}) {
 		$colorblock_clean = $colorblock =
-			join ',', @{$form}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
+			join ',', @{$form}{qw[fg0 fg1 fg2 fg3 fg4 bg0 bg1 bg2 bg3 bg4]};
 
 		# the #s will break the url 
 		$colorblock_clean =~ s/#//g;
@@ -664,7 +664,7 @@ sub colorSave {
 	my $form = getCurrentForm();
 
 	return if getCurrentUser('seclev') < 500;
-	my $colorblock = join ',', @{$form}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
+	my $colorblock = join ',', @{$form}{qw[fg0 fg1 fg2 fg3 fg4 bg0 bg1 bg2 bg3 bg4]};
 
 	$slashdb->saveColorBlock($colorblock);
 }
