@@ -14,12 +14,10 @@ eng
 __name__
 users
 __template__
-[
-[% FOR i = items %]
+[ [% FOR i = items %]
 	<A HREF="[% i.value %]">[% i.label %]</A>
 	[% " | " UNLESS loop.last %]
-[% END %]
-]
+[% END %] ]
 
 __seclev__
 10000

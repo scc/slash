@@ -38,7 +38,7 @@ __template__
 		</NOBR>
 
 		<P><INPUT TYPE="CHECKBOX" NAME="light"[% l_check %]>
-		<B>Light</B> (reduce the complexity of[% constants.sitename %]'s HTML for
+		<B>Light</B> (reduce the complexity of [% constants.sitename %]'s HTML for
 		AvantGo, Lynx, or slow connections)
 
 		<P><INPUT TYPE="CHECKBOX" NAME="noboxes"[% b_check %]>
