@@ -10,7 +10,9 @@ $task{$me}{timespec} = '3 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	$slashdb->sqlDo("delete from formkeys where ts < (now() - ".$constants->{formkey_timeframe}.")");
+	my $nowtime = time();
+
+	$slashdb->sqlDo("delete from formkeys where ts < ($nowtime - ".$constants->{formkey_timeframe}.")");
 
 };
 
