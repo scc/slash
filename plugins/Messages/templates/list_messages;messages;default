@@ -40,7 +40,18 @@ have been read or not.  After [% constants.message_web_expire || 31 %] days, the
     <TD VALIGN="TOP" ALIGN="CENTER"><INPUT TYPE="checkbox" NAME="del_[% message.id %]" VALUE="1"></TD>
   </TR>
 [% END %]
-  <TR><TD COLSPAN="3">&nbsp;</TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="Delete Messages"></TD></TR>
+  <TR><TD COLSPAN="2">&nbsp;</TD><TD ALIGN="RIGHT"><NOSCRIPT>&nbsp;</NOSCRIPT><SCRIPT TYPE="text/javascript" LANGUAGE="Javascript" CHARSET="iso-8859-1">
+<!--
+[%# this JavaScript should not actually be a problem for anyone, but %]
+[%# if it is, it is easy to strip out ... %]
+function selectall (myform) {
+	for (var i = 0; i < myform.elements.length; i++)
+		myform.elements[i].checked = true;
+}
+document.write('<INPUT TYPE="button" VALUE="Select All" ONCLICK="selectall(this.form)"> ');
+//-->
+</SCRIPT></TD><TD ALIGN="CENTER">
+<INPUT TYPE="submit" VALUE="Delete Messages"></TD></TR>
 </TABLE>
 
 <INPUT TYPE="hidden" NAME="op" VALUE="deletemsgs">
