@@ -11,7 +11,8 @@ en_US
 __name__
 pagination
 __template__
-	[% IF (back > -1) || forward %]
+	[% back = back || 0;
+	   IF (back > -1) || forward %]
 		</TD></TR>
 		<TR VALIGN="TOP" BGCOLOR="#FFFFFF">
 			<TD ALIGN="RIGHT" BGCOLOR="#FFFFFF">

@@ -300,6 +300,8 @@ sub editArticle {
 		slashDisplay($theme, {
 			articles	=> [{ day => $article->{date}, article => [ $disp_article ] }],
 			uid		=> $article->{uid},
+			back		=> -1,
+			forward		=> 0,
 		});
 	}
 
@@ -322,6 +324,8 @@ sub getArticle {
 	slashDisplay($theme, {
 		articles	=> [{ day => $article->{date}, article => [ $article ] }],
 		uid		=> $article->{uid},
+		back		=> -1,
+		forward		=> 0,
 	});
 }
 
