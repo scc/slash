@@ -906,11 +906,12 @@ sub otherLinks {
 sub editStory {
 	my($form, $slashdb, $user, $constants) = @_;
 
-	my($sid);
+	my($sid, $authorbox);
 
 	if ($form->{op} eq 'edit') {
 		$sid = $form->{sid};
 	}
+
 
 	my($authoredit_flag, $extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
@@ -1000,6 +1001,20 @@ sub editStory {
 		$storyref->{$key} = $form->{$key} || $storyref->{$key};
 	}
 
+	
+	my $newestthree = $slashdb->getBlock('newestthree','block'); 
+	my $nextthree = $slashdb->getNextThree($storyref->{time});
+	my $nextstories = {};
+
+	for(@$nextthree) {
+		my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
+		my $author = $slashdb->getUser($tmpstory->{uid},'nickname');
+		$nextstories->{$_->[0]}{title} = $tmpstory->{title};
+	}
+
+	my $nextblock = slashDisplay('three', { stories => $nextstories}, { Return => 1, Page => 'misc', Section => 'default'});
+	$authorbox = $newestthree . $nextblock;
+
 	$sections = $slashdb->getDescriptions('sections');
 
 	$topic_select = selectTopic('tid', $storyref->{tid}, $storyref->{section}, 1);
@@ -1041,6 +1056,7 @@ sub editStory {
 		storycontent		=> $storycontent,
 		storybox		=> $storybox,
 		sid			=> $sid,
+		authorbox 		=> $authorbox,
 		newarticle		=> $newarticle,
 		topic_select		=> $topic_select,
 		section_select		=> $section_select,
@@ -1328,10 +1344,8 @@ sub saveStory {
 	my $newestthree = $slashdb->getNewestThree();
 	my $newstories = {};
 	for (@$newestthree) {
-		my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
-		$newstories->{$_->[0]}{author} = $slashdb->getUser($tmpstory->{uid}, 'nickname');
+		my $tmpstory = $slashdb->getStory($_->[0], ['title' ]);
 		$newstories->{$_->[0]}{title} = $tmpstory->{title};
-		$newstories->{$_->[0]}{time} = $tmpstory->{time};
 	}
 	my $newblock = slashDisplay('three', { stories => $newstories },
 		{ Return => 1, Page => 'misc', Section => 'default' }

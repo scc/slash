@@ -32,6 +32,11 @@ __template__
 		<TD WIDTH="210" VALIGN="TOP">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
+		[% PROCESS fancybox 
+			title 		= 'Story admin'
+			contents 	= authorbox
+			center		= 1;
+		%]
 		</TD>
 	</TR>
 </TABLE>
@@ -46,6 +51,11 @@ __template__
 		<TD WIDTH="220" VALIGN="TOP">
 		[% storybox %]
 		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
+		[% PROCESS fancybox 
+			title 		= 'Story admin'
+			contents 	= authorbox
+			center		= 1;
+		%]
 		</TD>
 	</TR>
 </TABLE>

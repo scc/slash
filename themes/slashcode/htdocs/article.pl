@@ -54,7 +54,7 @@ sub main {
 		my $pollbooth = pollbooth($story->{sid}, 1);
 		slashDisplay('display', {
 			poll			=> $pollbooth,
-			authorbox 		=> $user->{seclev} >=  100 ? $authorbox : '',
+			authorbox 		=> $user->{is_admin} ? $authorbox : '',
 			section			=> $SECT,
 			section_block		=> $slashdb->getBlock($SECT->{section}),
 			show_poll		=> $pollbooth ? 1 : 0,
