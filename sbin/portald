@@ -1,10 +1,11 @@
 #!/usr/bin/perl -w
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
 
 ###############################################################################
 # portald  - this is the "daemon" responsible for retrieving portal and site 
 # block content
-#
-#  $Id$
 ###############################################################################
 
 =head1 Welcome to Portald

@@ -35,13 +35,40 @@ document, because we know you want to get right into the installation.
 
 =head1 INSTALLATION
 
-B<Note>: For slashd (see F<utils/slashd>, which starts slashd),
+=head2 Installation Notes
+
+=over 4
+
+=item *
+
+For slashd (see F<utils/slashd>, which starts slashd),
 mod_perl (see F<httpd/httpd.conf>), and MySQL, we set all processes
 to run in GMT.  Then it is easy to convert dates to whatever the
 user's local time is.  If you have date offset problems, check that all of
 these are properly set to run in GMT.
 
-B<Note>: All of the installation steps below should be executed as root.
+=item *
+
+You cannot have different versions of the Slash modules installed for
+different sites on the same Apache server.  Well, if you want to, you
+can try the Apache::PerlVINC module, but this is B<not> recommended for
+performance reasons. Slash is designed to have one shared core of code
+for all Slash sites on a system.  (This is made easier than it was in
+1.0.x, where to customize a site, you needed to change the module code;
+this should no longer be necessary.)
+
+=item *
+
+All of the installation steps below should be executed as root.
+
+=back
+
+
+=head2 Installation Procedure
+
+There are six steps to installation.  Skip the parts you already
+have installed (making sure you have the correct versions).  Make sure
+to read the special note about Apache / mod_perl installation.
 
 =over 4
 

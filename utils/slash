@@ -1,4 +1,8 @@
-#! /bin/sh
+#!/bin/sh
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 # /etc/init.d/slashd
 #
 # written by Yazz Atlas for the Slashteam... 

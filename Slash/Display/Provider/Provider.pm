@@ -1,4 +1,32 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Display::Provider;
+
+=head1 NAME
+
+Slash::Display::Provider - Template Toolkit provider for Slash
+
+=head1 SYNOPSIS
+
+	use Slash::Display::Provider;
+	my $template = Template->new(
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ]
+	);
+
+
+=head1 DESCRIPTION
+
+This here module provides templates to a Template Toolkit processor
+by way of the Slash API (which basically means that it grabs templates
+from the blocks table in the database).  It caches them, too.  It also
+can process templates passed in as text, like the base Provider module,
+but this one will create a unique name for the "anonymous" template so
+it can be cached.  Overriden methods include C<fetch>, C<_load>,
+and C<_refresh>.
+
+=cut
 
 use strict;
 use vars qw($REVISION $VERSION $DEBUG);
@@ -6,7 +34,6 @@ use base qw(Template::Provider);
 use Slash::Utility;
 use Template::Provider;
 
-# $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 $DEBUG		= $Template::Provider::DEBUG || 0 unless defined $DEBUG;
@@ -150,28 +177,6 @@ sub _refresh {
 1;
 
 __END__
-
-=head1 NAME
-
-Slash::Display::Provider - Template Toolkit provider for Slash
-
-=head1 SYNOPSIS
-
-	use Slash::Display::Provider;
-	my $template = Template->new(
-		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ]
-	);
-
-
-=head1 DESCRIPTION
-
-This here module provides templates to a Template Toolkit processor
-by way of the Slash API (which basically means that it grabs templates
-from the blocks table in the database).  It caches them, too.  It also
-can process templates passed in as text, like the base Provider module,
-but this one will create a unique name for the "anonymous" template so
-it can be cached.  Overriden methods include C<fetch>, C<_load>,
-and C<_refresh>.
 
 
 =head1 BUGS

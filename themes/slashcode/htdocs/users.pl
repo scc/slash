@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
 
-#  $Id$
 use strict;
 use Slash;
 use Slash::Display;
@@ -312,7 +314,7 @@ sub userInfo {
 		bio			=> $userbio->{bio},
 		points			=> $points,
 		public_key		=> $public_key,
-		commentstruct		=> $commentstruct,
+		commentstruct		=> $commentstruct || [],
 		nickmatch_flag		=> $nickmatch_flag,
 		mod_flag		=> $mod_flag,
 		karma_flag		=> $karma_flag,

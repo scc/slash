@@ -1,4 +1,8 @@
 #!/usr/bin/perl -w 
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 use strict;
 use File::Copy;
 use File::Find;
@@ -438,19 +442,20 @@ sub install_message {
 	my $text = qq|
 
 
-Unless any errors reported themself during the
-install you should now have a slashsite.
-You will either need to edit your httpd.conf
-file unless you are have slash handle it. The 
-correct syntax can be found in:
-$prefix_site/$sitename/$sitename.conf
-You may want to take a look at it. If you are
-using virtual hosting by hostname you may
-also need to add a NameVirtualHost to your
-httpd.conf.
-To restart apache do a: 
-apachectl stop
-apachectl start
+Unless any errors reported themself during the install you should now
+have a slashsite. You will either need to edit your httpd.conf file
+unless you are have slash handle it. The correct syntax can be found in:
+
+	$prefix_site/$sitename/$sitename.conf
+
+You may want to take a look at it. If you are using virtual hosting by
+hostname you may also need to add a NameVirtualHost to your httpd.conf.
+
+To restart apache do:
+
+	apachectl stop
+	apachectl start
+
 Have fun with your new site.
 
 

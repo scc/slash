@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Display;
 
 =head1 NAME
@@ -43,7 +47,6 @@ use Slash::Display::Provider;
 use Slash::Utility;
 use Template;
 
-# $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 @EXPORT		= qw(slashDisplay);

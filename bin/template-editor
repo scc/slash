@@ -1,0 +1,187 @@
+#!/usr/bin/perl -w 
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
+# First version by Brian, brian@tangent.org
+
+# I hope someone takes this over. A TK frontend
+# would be nice. This was Cliff's idea and kudos
+# should go to him. -Brian
+use strict;
+use Slash::DB;
+use Getopt::Std;
+
+my %opts;
+usage() unless getopts('u:d:p:n:f:escl?', \%opts);
+usage() if $opts{'?'};
+
+$opts{'u'} = 'slash' unless $opts{'u'};  
+
+list_template() if($opts{'l'});
+
+if($opts{'c'}) {
+	system("mkdir $opts{'d'}");
+}
+
+if($opts{'d'}) {
+	unless (-d $opts{'d'}) {
+		print "Invalid directory $opts{'d'} \n";
+		exit(0);
+	}
+}
+
+usage() unless($ARGV[0] || $opts{'d'});
+$opts{'d'} = '' unless $opts{'d'};
+
+my $slash = Slash::DB->new($opts{'u'});
+
+if($opts{'e'}) {
+	for (@ARGV) {
+		my $template = $slash->getTemplate($_);
+		my ($values, $names);
+		for(keys %$template) {
+			$values .= $slash->{_dbh}->quote($template->{$_}) . ",";
+			$names .= "$_,";
+		}
+		chop($values);
+		chop($names);
+		my $sql = "INSERT INTO templates ($names) VALUES ($values)";
+		print "$sql\n";
+	}
+} elsif ($opts{'s'}) {
+	my @files;
+	if($opts{'d'} && ! $ARGV[0]) {
+		opendir(DIR, $opts{'d'});
+		while(my $dir = readdir(DIR)) {
+			next if $dir =~ /\./;
+			print ":$dir:\n";
+			push @files, $dir;
+		}
+	} elsif( $opts{'f'} && $ARGV[0]) {
+		push @files, $opts{'f'};
+
+	} else {
+		for(@ARGV) {
+			push @files, $_;
+		}
+	}
+
+	for my $file (@files) {
+		print "$file\n";
+		if($opts{'d'}) {
+			open(FILE, "<$opts{'d'}/$file");
+		} else {
+			open(FILE, "<$file");
+		}
+		my $data;
+		while(<FILE>){
+			$data .= $_;
+		}
+		close(FILE);
+
+		$file = $ARGV[0] if $opts{'f'};
+
+		$slash->setTemplate($file, {template => $data});
+	}
+} elsif ($opts{'n'}) {
+		if ($ARGV[0]) {
+			my $file = $opts{n};
+			my $name = $ARGV[0];
+			my $page = $ARGV[1];
+			my $seclev = $ARGV[2];
+			$seclev ||= 100;
+			my $template;
+
+			print "creating template $name using the file $file\n";
+			print "seclev $seclev\n";
+			print "page $page\n" if $page;
+			open(FILE,"<$file") or die "unable to open $file $!\n";
+			while(<FILE>) {
+				$template .= $_;
+			}
+			close(FILE);
+
+			$slash->createTemplate({
+					tpid 		=> '',
+					name 		=> $name,
+					page 		=> $page,
+					template	=> $template,
+					seclev		=> $seclev
+			});
+		}
+
+} else {
+	unless($ARGV[0]) {
+		my $templates = $slash->getDescriptions('templates');
+
+		for my $key (keys %$templates) {
+			if($opts{'p'}) {
+				next unless $key =~ /$opts{'p'}/;
+			}
+			my $template = $slash->getTemplate($key);
+			print "$template->{'tpid'}\n";
+			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			print FILE $template->{'template'};
+			close(FILE);
+		}
+	} else {
+		for(@ARGV) {
+			my $template = $slash->getTemplate($_);
+			unless($template) {
+				print "The following template does not exist: $_\n";
+				next;
+			}
+			print "$template->{'tpid'}\n";
+			if($opts{'d'}) {
+				open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			} else {
+				open(FILE, ">$template->{'tpid'}");
+			}
+			print FILE $template->{'template'};
+			close(FILE);
+		}
+	}
+}
+
+sub usage {
+	print "Usage:template-editor  [OPTIONS] template template....\n";
+	print "\t-c create the directory if a dump is being done\n";
+	print "\t-d directory to dump all templates in\n";
+	print "\t-e prints template out in a manner suitable for a sql dump file\n";
+	print "\t-l list templates and their descriptions\n";
+	print "\t-n <templatefilename> <templatename> <page> <seclev> to create a template\n";
+	print "\t-p only perform list and get actions if the template matches this pattern\n";
+	print "\t-s Save template\n";
+	print "\t-s -f <templatefilename> <templatename> to update a template\n";
+	print "\t-u Virtual user to use(default is slash)\n";
+	print "\t-? This message\n";
+	print "\n\tIf no template name is given a directory has to be specified\n\n";
+	exit();
+}
+
+sub list_template {
+	my $slash = Slash::DB->new($opts{'u'});
+	my $list = $slash->getDescriptions('templates');
+	my $pattern = $opts{'p'};
+	if(my $pattern = $opts{'p'}) {
+		for(keys %$list) {
+			my $true;
+			$true = 1 if $_ =~/$pattern/;
+			if($list->{$_}) {
+				$true = 1 if $list->{$_} =~/$pattern/;
+			}
+			if ($true) {
+				print "Template: $_\n";
+				print "Descirpiont:\n$list->{$_}\n\n" if $list->{$_};
+			}
+		}
+	} else {
+		for(keys %$list) {
+			print "Template: $_\n";
+			print "Descirpiont:\n$list->{$_}\n\n" if $list->{$_};
+		}
+	}
+
+	exit(1);
+}

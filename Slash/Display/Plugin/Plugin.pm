@@ -1,4 +1,28 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Display::Plugin;
+
+=head1 NAME
+
+Slash::Display::Plugin - Template Toolkit plugin for Slash
+
+
+=head1 SYNOPSIS
+
+	[% USE Slash %]
+	[% Slash.someFunction('some data') %]
+	[% Slash.db.someMethod(var1, var2) %]
+
+
+=head1 DESCRIPTION
+
+Call available exported functions from Slash and Slash::Utility
+from within your template.  Also call methods from Slash::DB
+with the C<db> method.  Invoke with C<[% USE Slash %]>.
+
+=cut
 
 use strict;
 use vars qw($REVISION $VERSION $AUTOLOAD);
@@ -7,7 +31,6 @@ use Slash::Utility ();
 use Template::Plugin ();
 use base qw(Template::Plugin);
 
-# $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 
@@ -54,25 +77,6 @@ sub AUTOLOAD {
 1;
 
 __END__
-
-=head1 NAME
-
-Slash::Display::Plugin - Template Toolkit plugin for Slash
-
-
-=head1 SYNOPSIS
-
-	[% USE Slash %]
-	[% Slash.someFunction('some data') %]
-	[% Slash.db.someMethod(var1, var2) %]
-
-
-=head1 DESCRIPTION
-
-Call available exported functions from Slash and Slash::Utility
-from within your template.  Also call methods from Slash::DB
-with the C<db> method.  Invoke with C<[% USE Slash %]>.
-
 
 =head1 SEE ALSO
 

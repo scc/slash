@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Utility;
 
 =head1 NAME
@@ -31,7 +35,6 @@ use URI;
 require Exporter;
 use vars qw($REVISION $VERSION @ISA @EXPORT);
 
-# $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 ($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
 
@@ -51,6 +54,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	eatUserCookie
 	encryptPassword
 	errorLog
+	filter_params
 	fixHref
 	fixparam
 	fixurl
@@ -65,6 +69,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	getCurrentUser
 	getFormkey
 	isAnon
+	prepareUser
 	root2abs
 	setCookie
 	setCurrentForm
@@ -95,7 +100,7 @@ use constant HTML	=> 2;
 use constant EXTRANS	=> 3;
 use constant CODE	=> 4;
 
-# These are package variables that are used when you need to use the
+# These are file-scoped variables that are used when you need to use the
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward);
@@ -1202,8 +1207,8 @@ No value is returned.
 # the cookie for admin users. -- brian
 # well, it should be an option, of course ... -- pudge
 sub setCookie {
-	# for some reason, we need to pass in $r, because Apache->request
-	# was returning undef!  ack! -- pudge
+	return unless $ENV{GATEWAY_INTERFACE};
+
 	my($name, $val, $session) = @_;
 	return unless $name;
 
@@ -1955,6 +1960,186 @@ sub balanceTags {
 
 }
 
+
+########################################################
+# get all the user data, d00d
+sub prepareUser {
+	# we must get form data and cookies, because we are preparing it here
+	my($uid, $form, $uri, $cookies) = @_;
+	my($slashdb, $constants, $user);
+
+	$cookies ||= {};
+	$slashdb = getCurrentDB();
+	$constants = getCurrentStatic();
+
+	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
+
+	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $uri))) {}
+		my $timezones = $slashdb->getDescriptions('tzcodes');
+		$user->{off_set} = $timezones->{ $user->{tzcode} };
+
+		my $dateformats = $slashdb->getDescriptions('datecodes');
+		$user->{'format'} = $dateformats->{ $user->{dfid} };
+
+		$user->{is_anon} = 0;
+
+	} else {
+		if ($ENV{GATEWAY_INTERFACE}) {
+			$user = getCurrentAnonymousCoward();
+		} else {
+			$user = $slashdb->getUser($constants->{anonymous_coward_uid});
+		}
+		$user->{is_anon} = 1;
+
+		if ($cookies->{anon} && $cookies->{anon}->value) {
+			$user->{anon_id} = $cookies->{anon}->value;
+			$user->{anon_cookie} = 1;
+		} else {
+			$user->{anon_id} = getAnonId();
+		}
+
+		setCookie('anon', $user->{anon_id}, 1);
+	}
+
+
+	my @defaults = (
+		['mode', 'thread'], qw[
+		savechanges commentsort threshold
+		posttype noboxes light
+	]);
+
+	for my $param (@defaults) {
+		my $default;
+		if (ref($param) eq 'ARRAY') {
+			($param, $default) = @$param;
+		}
+
+		if (defined $form->{$param} && $form->{$param} ne '') {
+			$user->{$param} = $form->{$param};
+		} else {
+			$user->{$param} ||= $default || 0;
+		}
+	}
+
+	if ($user->{commentlimit} > $constants->{breaking}
+		&& $user->{mode} ne 'archive') {
+		$user->{commentlimit} = int($constants->{breaking} / 2);
+		$user->{breaking} = 1;
+	} else {
+		$user->{breaking} = 0;
+	}
+
+	# All sorts of checks on user data
+	#$user->{tzcode}		= uc($user->{tzcode});
+	$user->{exaid}		= _testExStr($user->{exaid}) if $user->{exaid};
+	$user->{exboxes}	= _testExStr($user->{exboxes}) if $user->{exboxes};
+	$user->{extid}		= _testExStr($user->{extid}) if $user->{extid};
+	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
+
+	# This is here so when user selects "6 ish" it
+	# "posted by xxx around 6 ish" instead of "on 6 ish"
+	if ($user->{'format'} eq '%i ish') {
+		$user->{aton} = 'around'; # getData('atonish');
+	} else {
+		$user->{aton} = 'on'; # getData('aton');
+	}
+
+	if ($uri =~ m[^/$]) {
+		$user->{currentPage} = 'index';
+	} elsif ($uri =~ m{/([^/]+)\.pl$}) {
+		$user->{currentPage} = $1;
+	} else {
+		$user->{currentPage} = 'misc';
+	}
+
+	if ($user->{seclev} >= 99) {
+		$user->{is_admin} = 1;
+		#$user->{aid} = $user->{nickname}; # Just here for the moment
+		my $sid;
+		if ($cookies->{session}) {
+			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
+		} else {
+			$sid = $slashdb->getSessionInstance($uid);
+		}
+		setCookie('session', $sid) if $sid;
+	}
+
+	return $user;
+}
+
+
+########################################################
+# Ok, we are going to go on and process the form pieces
+# now since we need them. Below are all of the filters
+# for the form data. IMHO we should just pass in a
+# reference from %params to some method in a library
+# that cleans up the data  -Brian
+
+sub filter_params {
+	my %params = @_;
+	my %form;
+
+	# fields that are numeric only
+	my %nums = map {($_ => 1)} qw(
+		last next artcount bseclev cid clbig clsmall
+		commentlimit commentsort commentspill commentstatus
+		del displaystatus filter_id height
+		highlightthresh isolate issue maillist max
+		maxcommentsize maximum_length maxstories min minimum_length
+		minimum_match ordernum pid
+		retrieve seclev startat uid uthreshold voters width
+		writestatus ratio posttype
+	);
+
+	# regexes to match dynamically generated numeric fields
+	my @regints = (qr/^reason_.+$/, qr/^votes.+$/);
+
+	# special few
+	my %special = (
+		sid => sub { $_[0] =~ s|[^A-Za-z0-9/.]||g },
+	);
+
+	for (keys %params) {
+		$form{$_} = $params{$_};
+
+		# Paranoia - Clean out any embedded NULs. -- cbwood
+		# hm.  NULs in a param() value mean multiple values
+		# for that item.  do we use that anywhere? -- pudge
+		$form{$_} =~ s/\0//g;
+
+		# clean up numbers
+		if (exists $nums{$_}) {
+			$form{$_} = _fixint($form{$_});
+		} elsif (exists $special{$_}) {
+			$special{$_}->($form{$_});
+		} else {
+			for my $ri (@regints) {
+				$form{$_} = _fixint($form{$_}) if /$ri/;
+			}
+		}
+	}
+
+	return \%form;
+}
+
+
+########################################################
+# fix parameter input that should be integers
+sub _fixint {
+	my($int) = @_;
+	$int =~ s/^\+//;
+	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
+	return $int;
+}
+
+########################################################
+sub _testExStr {
+	local($_) = @_;
+	$_ .= "'" unless m/'$/;
+	return $_;
+}
+
+
 #========================================================================
 
 =head2 writeLog(OP, DATA)
@@ -2035,15 +2220,18 @@ sub createEnvironment {
 		}
 		$virtual_user = $form{'virtual_user'};
 	}
-	createCurrentForm(\%form);
+	createCurrentForm(filter_params(%form));
 
 	my $slashdb = Slash::DB->new($virtual_user);
 	my $constants = $slashdb->getSlashConf();
+	my $form = getCurrentForm();
 
 	# We assume that the user for scripts is the anonymous user
-	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
 	createCurrentDB($slashdb);
 	createCurrentStatic($constants);
+
+#	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
+	my $user = prepareUser($constants->{anonymous_coward_uid}, getCurrentForm(), $0);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 }

@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 ##
 ##  Makefile -- Current one for slashcode
 ##
@@ -72,13 +76,13 @@ install: slash plugins
 	chown -R $(USER):$(GROUP) $(PREFIX)/bin
 	chown -R $(USER):$(GROUP) $(PREFIX)/sql
 	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
-	# Add a @ to suppress output of the echo's
+
 	@echo "+--------------------------------------------------------+"; \
 	echo "| All done.                                              |"; \
 	echo "| If you want to let slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
-	echo "| Include $(PREFIX)/httpd/slash.conf                     |"; \
+	echo "| Include $(PREFIX)/httpd/slash.conf              |"; \
 	echo "|                                                        |"; \
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \

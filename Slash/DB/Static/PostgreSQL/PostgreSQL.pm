@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::DB::Static::PostgreSQL;
 use strict;
 use Slash::DB::Utility;

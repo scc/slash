@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash;
 
 =head1 NAME
@@ -40,7 +44,6 @@ use vars qw($VERSION @ISA @EXPORT);
 # this is the worst damned warning ever, so SHUT UP ALREADY!
 $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
-#  $Id$
 $VERSION = '1.0.9';
 @ISA	 = 'Exporter';
 @EXPORT  = qw(

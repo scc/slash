@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Apache::User;
 
 # EXPORT functions!
@@ -16,7 +20,6 @@ use Slash::Utility;
 use URI ();
 use vars qw($REVISION $VERSION @ISA);
 
-# $Id$
 ($REVISION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 $VERSION = '0.01';
 @ISA = qw(DynaLoader);
@@ -51,7 +54,12 @@ sub handler {
 	my $slashdb = $dbcfg->{slashdb};
 
 	# let pass unless / or .pl
-	my $uri = fixuri($r->uri, $constants->{rootdir});
+	my $uri = $r->uri;
+	if ($constants->{rootdir}) {
+		my $path = URI->new($constants->{rootdir})->path;
+		$uri =~ s/^\Q$path//;
+	}
+
 	unless ($cfg->{auth}) {
 		unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
@@ -130,7 +138,7 @@ sub handler {
 
 	return DECLINED if $cfg->{auth} && isAnon($uid);
 
-	createCurrentUser(getUser($form, $cookies, $uid));
+	createCurrentUser(prepareUser($uid, $form, $uri, $cookies));
 	createCurrentForm($form);
 	createEnv($r) if $cfg->{env};
 
@@ -175,189 +183,7 @@ sub userLogin {
 }
 
 ########################################################
-# get all the user data, d00d
-sub getUser {
-	my($form, $cookies, $uid) = @_;
-	my($r, $cfg, $constants, $slashdb, $user);
-
-	$r = Apache->request;
-	$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	$constants = $cfg->{constants};
-	$slashdb = $cfg->{slashdb};
-
-	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
-
-	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {}
-		my $timezones = $slashdb->getDescriptions('tzcodes');
-		$user->{off_set} = $timezones->{ $user->{tzcode} };
-
-		my $dateformats = $slashdb->getDescriptions('datecodes');
-		$user->{'format'} = $dateformats->{ $user->{dfid} };
-
-		$user->{is_anon} = 0;
-
-	} else {
-		$user = getCurrentAnonymousCoward();
-		$user->{is_anon} = 1;
-
-		if ($cookies->{anon} && $cookies->{anon}->value) {
-			$user->{anon_id} = $cookies->{anon}->value;
-			$user->{anon_cookie} = 1;
-		} else {
-			$user->{anon_id} = getAnonId();
-		}
-
-		setCookie('anon', $user->{anon_id}, 1);
-	}
-
-
-	my @defaults = (
-		['mode', 'thread'], qw[
-		savechanges commentsort threshold
-		posttype noboxes light
-	]);
-
-	for my $param (@defaults) {
-		my $default;
-		if (ref($param) eq 'ARRAY') {
-			($param, $default) = @$param;
-		}
-
-		if (defined $form->{$param} && $form->{$param} ne '') {
-			$user->{$param} = $form->{$param};
-		} else {
-			$user->{$param} ||= $default || 0;
-		}
-	}
-
-	if ($user->{commentlimit} > $constants->{breaking}
-		&& $user->{mode} ne 'archive') {
-		$user->{commentlimit} = int($constants->{breaking} / 2);
-		$user->{breaking} = 1;
-	} else {
-		$user->{breaking} = 0;
-	}
-
-	# All sorts of checks on user data
-	#$user->{tzcode}		= uc($user->{tzcode});
-	$user->{exaid}		= testExStr($user->{exaid}) if $user->{exaid};
-	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
-	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
-	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
-
-	# This is here so when user selects "6 ish" it
-	# "posted by xxx around 6 ish" instead of "on 6 ish"
-	if ($user->{'format'} eq '%i ish') {
-		$user->{aton} = 'around'; # getData('atonish');
-	} else {
-		$user->{aton} = 'on'; # getData('aton');
-	}
-
-	my $uri = fixuri($r->uri, $constants->{rootdir});
-	if ($uri =~ m[^/$]) {
-		$user->{currentPage} = 'index';
-	} elsif ($uri =~ m[^/(.*)\.pl$]) {
-		$user->{currentPage} = $1;
-	} else {
-		$user->{currentPage} = 'misc';
-	}
-
-	if ($user->{seclev} >= 99) {
-		$user->{is_admin} = 1;
-		#$user->{aid} = $user->{nickname}; # Just here for the moment
-		my $sid;
-		if ($cookies->{session}) {
-			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
-		} else {
-			$sid = $slashdb->getSessionInstance($uid);
-		}
-		setCookie('session', $sid) if $sid;
-	}
-
-	return $user;
-}
-
-########################################################
-# Ok, we are going to go on and process the form pieces
-# now since we need them. Below are all of the filters
-# for the form data. IMHO we should just pass in a
-# reference from %params to some method in a library
-# that cleans up the data  -Brian
-
-sub filter_params {
-	my %params = @_;
-	my %form;
-
-	# fields that are numeric only
-	my %nums = map {($_ => 1)} qw(
-		last next artcount bseclev cid clbig clsmall
-		commentlimit commentsort commentspill commentstatus
-		del displaystatus filter_id height
-		highlightthresh isolate issue maillist max
-		maxcommentsize maximum_length maxstories min minimum_length
-		minimum_match ordernum pid
-		retrieve seclev startat uid uthreshold voters width
-		writestatus ratio posttype
-	);
-
-	# regexes to match dynamically generated numeric fields
-	my @regints = (qr/^reason_.+$/, qr/^votes.+$/);
-
-	# special few
-	my %special = (
-		sid => sub { $_[0] =~ s|[^A-Za-z0-9/.]||g },
-	);
-
-	for (keys %params) {
-		$form{$_} = $params{$_};
-
-		# Paranoia - Clean out any embedded NULs. -- cbwood
-		# hm.  NULs in a param() value mean multiple values
-		# for that item.  do we use that anywhere? -- pudge
-		$form{$_} =~ s/\0//g;
-
-		# clean up numbers
-		if (exists $nums{$_}) {
-			$form{$_} = fixint($form{$_});
-		} elsif (exists $special{$_}) {
-			$special{$_}->($form{$_});
-		} else {
-			for my $ri (@regints) {
-				$form{$_} = fixint($form{$_}) if /$ri/;
-			}
-		}
-	}
-
-	return \%form;
-}
-
-########################################################
-# fix parameter input that should be integers
-sub fixint {
-	my($int) = @_;
-	$int =~ s/^\+//;
-	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
-	return $int;
-}
-
-########################################################
-sub testExStr {
-	local($_) = @_;
-	$_ .= "'" unless m/'$/;
-	return $_;
-}
-
-########################################################
-# adjust path for non-rooted slash sites
-sub fixuri {
-	my($uri, $rootdir) = @_;
-	if ($rootdir) {
-		my $path = URI->new($rootdir)->path;
-		$uri =~ s/^\Q$path//;
-	}
-	return $uri;
-}
-
+#
 sub DESTROY { }
 
 1;
