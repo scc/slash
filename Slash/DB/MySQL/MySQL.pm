@@ -2834,7 +2834,6 @@ sub _getCommentText {
 	$self->{_comment_text} ||= { };
 	if (scalar(keys %{$self->{_comment_text}}) > 5_000) {
 		# Cache too big. Big cache bad. Kill cache. Kludge.
-print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " purged\n";
 		undef $self->{_comment_text};
 		$self->{_comment_text} = { };
 	}
@@ -2876,7 +2875,6 @@ print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(key
 				$self->{_comment_text}{$comment_hr->[0]} = $comment_hr->[1];
 			}
 		}
-print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " hits $num_cache_hits misses $num_cache_misses\n";
 		# Now, all the comment texts we need are in cache, return them.
 		return $self->{_comment_text};
 
@@ -2892,7 +2890,6 @@ print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(key
 		} else {
 			$num_cache_hits = 1;
 		}
-print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " hits $num_cache_hits misses $num_cache_misses\n";
 		# Now it's in cache.  Return it.
 		return $self->{_comment_text}{$cid};
 	}
