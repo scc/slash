@@ -23,7 +23,7 @@ Unless otherwise noted, they are publically available functions.
 =cut
 
 use strict;
-use Apache;
+#use Apache;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
@@ -1838,16 +1838,17 @@ The 'approvedtags' and 'lonetags' entries in the vars table.
 sub balanceTags {
 	my($html, $hard) = @_;
 	my(%tags, @stack, $match, %lone, $tag, $close, $whole);
+	my $constants = getCurrentStatic();
 
 	# set up / get preferences
-	if ($c->{lonetags}) {
-		$match = join '|', @{$c->{approvedtags}};
+	if ($constants->{lonetags}) {
+		$match = join '|', @{$constants->{approvedtags}};
 	} else {
-		$c->{lonetags} = [qw(P LI BR)];
+		$constants->{lonetags} = [qw(P LI BR)];
 		$match = join '|', grep !/^(?:P|LI|BR)$/,
-			@{$c->{approvedtags}};
+			@{$constants->{approvedtags}};
 	}
-	%lone = map { ($_, 1) } @{$c->{lonetags}};
+	%lone = map { ($_, 1) } @{$constants->{lonetags}};
 
 	# If the quoted slash in the next line bothers you, then feel free to
 	# remove it. It's just there to prevent broken syntactical highlighting

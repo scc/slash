@@ -319,7 +319,7 @@ sub newrss {	# RSS 1.0
 
 	$rss->add_module(
 		prefix	=> 'slash',
-		uri	=> 'http://purl.org/rss/modules/slash/',
+		uri	=> 'http://purl.org/rss/1.0/modules/slash/',
 	);
 
 	my $SECT = getSection($section);
