@@ -3489,6 +3489,10 @@ sub getTime {
 # (see getStories()) -- pudge
 # As of now, getDay is only used in Slash.pm getOlderStories() - Jamie
 # And if a webserver had a date that is off... -Brian
+# ...it wouldn't matter; "today's date" is a timezone dependent concept.
+# If you live halfway around the world from whatever timezone we pick,
+# this will be consistently off by hours, so we shouldn't spend an SQL
+# query to worry about minutes or seconds - Jamie
 sub getDay {
 #	my($now) = $self->sqlSelect('to_days(now())');
 	my($self, $days_back) = @_;

@@ -851,8 +851,14 @@ sub getOlderStories {
 		};
 	}
 
-	my $yesterday = $slashdb->getDay(1) unless $form->{issue};
-	$yesterday ||= int($form->{issue}) - 1;
+	my $yesterday;
+	if ($form->{issue}) {
+		# Wrong - but this is how slash 1.0 did it :)
+		# This should go from 20010901 to 20010831, not 20010900
+		$yesterday = int($form->{issue}) - 1;
+	} else {
+		$yesterday = $slashdb->getDay(1);
+	}
 
 	$form->{start} ||= 0;
 
