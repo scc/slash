@@ -43,7 +43,7 @@ __template__
 	<TR>
 		<TD VALIGN=MIDDLE>
 		[% UNLESS user_edit.emaildisplay.defined;
-			$user_edit.emaildisplay = 0; END %]
+			user_edit.emaildisplay = 0; END %]
 		[% emaildisplay.${user_edit.emaildisplay} = 'CHECKED' %]
         	<P><B>Email Display</B><BR>
                 &nbsp;&nbsp;&nbsp;
