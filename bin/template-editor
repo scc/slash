@@ -9,9 +9,11 @@ use Slash::DB;
 use Getopt::Std;
 
 my %opts;
-usage() unless getopts('u:d:sc', \%opts);
+usage() unless getopts('u:d:p:scl', \%opts);
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
+
+list_template() if($opts{'l'});
 
 if($opts{'c'}) {
 	system("mkdir $opts{'d'}");
@@ -94,4 +96,30 @@ sub usage {
 	print "\t-s Save template\n";
 	print "\n\tIf no template name is given a directory has to be specified\n\n";
 	exit();
+}
+
+sub list_template {
+	my $slash = Slash::DB->new($opts{'u'});
+	my $list = $slash->getDescriptions('templates');
+	my $pattern = $opts{'p'};
+	if(my $pattern = $opts{'p'}) {
+		for(keys %$list) {
+			my $true;
+			$true = 1 if $_ =~/$pattern/;
+			if($list->{$_}) {
+				$true = 1 if $list->{$_} =~/$pattern/;
+			}
+			if ($true) {
+				print "Template: $_\n";
+				print "Descirpiont:\n$list->{$_}\n\n" if $list->{$_};
+			}
+		}
+	} else {
+		for(keys %$list) {
+			print "Template: $_\n";
+			print "Descirpiont:\n$list->{$_}\n\n" if $list->{$_};
+		}
+	}
+
+	exit(1);
 }
