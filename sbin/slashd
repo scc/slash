@@ -240,25 +240,38 @@ sub main {
 sub prog2file {
 	my($command, $arguments, $f) = @_;
 	return 0 unless -e $command and -r _ and -x _;
+	my $success = 0;
+	my $err_str = "";
 
 	my $exec = "$command virtual_user=$virtual_user $arguments";
 	my $data = `$exec`;
+	my $bytes = length $data;
+
+	my $dir = dirname($f);
+	my @created = mkpath($dir, 0, 0755) unless -e $dir;
+	if (!-e $dir or !-d _ or !-w _) {
+		$err_str .= " mkpath($dir) failed '"
+			. (-e _) . (-d _) . (-w _)
+			. " '@created'";
+	} elsif ($bytes == 0) {
+		$err_str .= " no data";
+	} else {
+		local *F;
+		if (!open F, ">$f") {
+			$err_str .= " could not write to '$f': '$!'";
+		} else {
+			print F $data;
+			close F;
+			$success = 1;
+		}
+	}
 
 	my($command_base) = $command =~ m{([^/]+)$};
 	$command_base ||= $command;
-	my $exec_base = "$command_base virtual_user=$virtual_user $arguments";
-	slashdLog($exec_base);
+	my $success_str = $success ? "" : " FAILED:$err_str";
+	$success_str =~ s/\s+/ /g; chomp $success_str;
+	slashdLog("$command_base virtual_user=$virtual_user $arguments bytes=$bytes$success_str");
 
-	my $dir = dirname($f);
-	mkpath($dir, 0, 0755) unless -e $dir;
-	if (length($data) > 0) {
-		local *F;
-		open F, ">$f" or die "Can't open $f: $!";
-		print F $data;
-		close F;
-		return 1;
-	} else {
-		return 0;
-	}
+	return $success;
 }
 

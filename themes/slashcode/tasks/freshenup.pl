@@ -9,9 +9,18 @@ use vars qw( %task );
 
 my $total_freshens = 0;
 
-$task{$me}{timespec} = '1-30/3 * * * *';
+$task{$me}{timespec} = '1-59/3 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
+
+	if ($virtual_user eq 'banjo'
+		and `/bin/hostname` =~ /cpu25/) {
+		my $min = (localtime)[1];
+		if ($min >= 30) {
+			slashdLog("skipping $me while DB import in progress");
+			return;
+		}
+	}
 
 	my $bd = $constants->{basedir}; # convenience
 	my $start_total_freshens = $total_freshens;
@@ -26,7 +35,7 @@ $task{$me}{code} = sub {
 	my $start_time = time;
 
 	# Mark discussions with new comment data as needing to be freshened.
-	my $discussions = $slashdb->getDiscussionsWithFlag($slashdb, "hitparade_dirty");
+	my $discussions = $slashdb->getDiscussionsWithFlag("hitparade_dirty");
 	for my $i (0..$#$discussions) {
 		my $id_ary = $discussions->[$i];
 		# @$discussions is an array of arrays, annoyingly.
@@ -52,7 +61,7 @@ $task{$me}{code} = sub {
 
 	# Mark stories with new data as needing to be freshened.
 	my @story_order = ( );
-	my $stories = $slashdb->getStoriesWithFlag($slashdb, "data_dirty");
+	my $stories = $slashdb->getStoriesWithFlag("data_dirty");
 	for my $info_ary (@$stories) {
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
 		next unless $sid;	# XXX for now, skip poll/journal discussions since we don't know how to write their hitparades in yet
@@ -66,7 +75,7 @@ $task{$me}{code} = sub {
 	}
 
 	# Delete stories marked as needing such
-	$stories = $slashdb->getStoriesWithFlag($slashdb, "delete_me");
+	$stories = $slashdb->getStoriesWithFlag("delete_me");
 	for my $i (0..$#$stories) {
 		my $info_ary = $stories->[$i];
 		my($sid, $discussion_id, $title, $section) = @$info_ary;

@@ -15,7 +15,7 @@ use base 'Slash::DB::Utility';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: I hate people who love me.  And they hate me.
+# Fry: How can I live my life if I can't tell good from evil?
 
 # For the getDecriptions() method
 my %descriptions = (
@@ -3042,6 +3042,11 @@ EOT
 	for my $story (@stories) {
 		$story->{discussion} = $sid_to_disc_data{$story->{sid}}[0];
 		$story->{commentcount} = $sid_to_disc_data{$story->{sid}}[1];
+		# Judgement call whether to have this next line.  It makes
+		# index.pl always have the total ("-1") number of comments
+		# accurate, though the reader's threshold will fall behind.
+		# I think that's a good thing. - Jamie
+		$count{$story->{discussion}}{$min} = $story->{commentcount};
 		$story->{hitparade} = join (",",
 			map { $count{$story->{discussion}}{$_} || 0 }
 				($min .. $max)

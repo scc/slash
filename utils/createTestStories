@@ -76,7 +76,7 @@ $constants = getCurrentStatic();
 		$dept =~ s/\s+/-/g;
 		$dept =~ s/\W+$// if rand(1) < 0.9;
 	        my $author = getRandomAuthorID();
-	        my $submitter = getRandomUserID($constants, $max_uid);
+	        my $submitter = getRandomUserID($max_uid);
 		my $time = UnixDate(ParseDateString(
 			"epoch ".get_time($opts{t})),
 			"%Y-%m-%d %H-%M-%S");
@@ -169,7 +169,7 @@ sub getRandomSection {
 }
 
 sub getRandomUserID {
-	my ($constants, $max_uid) = @_;
+	my ($max_uid) = @_;
 	my $n_tries = 100;
 	my $rand_uid = 1;
 	my $ok = 0;

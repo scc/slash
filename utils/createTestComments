@@ -21,6 +21,8 @@ use Slash;
 use Slash::Utility;
 use Benchmark;
 
+use vars qw( $slashdb $werder $constants );
+
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
@@ -30,93 +32,103 @@ my (%opts, %family_tree);
 usage('Options used incorrectly') unless getopts('hI:RTu:U:v', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
-usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
-usage('No user specified') unless $opts{U};
-usage('Can\'t use both -U and -R!') if exists $opts{U} && exists $opts{R};
-usage('No story ID specified') unless $opts{I};
+if ($opts{R}) {
+	if ($opts{I} or $opts{U}) {
+		usage("Can't specify -U or -I when using -R");
+	}
+} else {
+	if (!$opts{I} or !$opts{U}) {
+		usage("Must specify either -R, or both -U and -I");
+	}
+	usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
+}
 $opts{'u'} ||= 'slash';
-$opts{num_comments} = $ARGV[0];
+$opts{num_comments} = $ARGV[0] || 10;
 usage('Invalid number of comments') 
 	if $opts{num_comments} !~ /^\d+$/ || $opts{num_comments} < 0;
-					
+
+my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+
+createEnvironment($opts{u});
+$slashdb = getCurrentDB();
+$constants = getCurrentStatic();
+$werder = new Silly::Werder;
+
 # main program logic (in braces to offset nicely)
 {
-	my $story_id = $opts{I};
-	my $werder = new Silly::Werder;
-
-	createEnvironment($opts{u});
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
- 
-	# Check to see if story is valid.
-	if ($story_id !~ /^\d+$/) {
-	   	my $discussion = $slashdb->getDiscussionBySid($story_id);
-		$story_id = $discussion->{id};
-	}
-
-	my $story = $slashdb->getDiscussion($story_id);
-	die "Story ID '$opts{I}' is invalid!" unless $story;
- 
 	# Determine user list size (for -R)
-	my $max_uid = $slashdb->sqlSelect('count(*)', 'users');
- 
-	# Initiaize the werder.
-	$werder->set_werds_num(5,20);
- 
-	# Initialize the user.
-	my $user;
-	if (!$opts{R}) {
-        	$user = $slashdb->getUser($opts{U});
-	        die "Invalid user! ($opts{u})\n" if ! $user;
-	}
- 
-	# Before we start creating comments, we should take a look at the thread
-	# structure (if we care about threading...)
-	my (@werds);
-	if (!$opts{T}) {
-	        my $comments = $slashdb->sqlSelectAllHashref(
-        	        'cid',
-	                'cid, pid',
-	                'comments',
-	                "sid=$story_id"
-	        );
- 
- 		print "R: ", ref $comments;
-	        map {
-			$family_tree{$comments->{$_}{cid}}=$comments->{$_}{pid}
-		} keys %{$comments};
-	}
- 
+	my $max_uid = $slashdb->sqlSelect('MAX(uid)', 'users');
+
+	my $story_id = $opts{I};
+
 	my $t0 = new Benchmark;
 	my $count = $opts{num_comments};
 	while ($count) {
-	        my $werds = 20 + rand 80;
-	        my $cur_werds = 0;
-	        my $comment;
+		my $sid = getRandomSid();
+		my $discussion_id = $slashdb->sqlSelect("discussion",
+			$story_table, "sid=".$slashdb->sqlQuote($sid));
+		my $discussion = $slashdb->getDiscussion($discussion_id);
+	 
+		%family_tree = ( );
+
+		# Initialize the user.
+		my $uid;
+		if ($opts{R}) {
+			$uid = getRandomUserID($max_uid, 1);
+		} elsif ($opts{U}) {
+			$uid = $opts{U};
+		} else {
+			$uid = 1;
+		}
+		my $user = $slashdb->getUser($uid);
+	 
+		# Before we start creating comments, we should take a look at
+		# the thread structure (if we care about threading...)
+		my (@werds);
+		if (!$opts{T}) {
+			my $comments = $slashdb->sqlSelectAllHashref(
+				'cid',
+				'cid, pid',
+				'comment_heap',
+				"sid=$discussion_id",
+			);
+	 
+			print "R: ", ref $comments;
+			map {
+				$family_tree{$comments->{$_}{cid}}
+					= $comments->{$_}{pid}
+			} keys %{$comments};
+		}
  
-	        while ($cur_werds < $werds) {
-        	        $comment .= ' ' . $werder->sentence;
- 
-	                @werds = ($comment =~ /(\w+)\b/g);
-	                $cur_werds = scalar @werds;
-	        }
-	        $comment =~ s/^\s*(.+)\s*$/$1/;
- 
-	        $user = $slashdb->getUser(getRandomUserID($constants, $max_uid))
-			if $opts{R};
+		my $comment = make_werds(rand(20)*rand(20)+rand(10) + 1);
+
+		my $score = rand(1);
+		   if ($score < 0.03 )	{ $score = -1 }
+		elsif ($score < 0.08 )	{ $score =  0 }
+		elsif ($score < 0.90 )	{ $score =  1 }
+		else			{ $score =  2 }
+		$score = 0 if $uid == $constants->{anonymous_coward_uid};
+
+		my $subj = make_werds(1 + rand 5);
+		$subj =~ s/\W+$// if rand(1) < 0.1;
+                $subj =~ s/<[^>]+>//g;
+                $subj =~ s/\b(\w)/\U$1/g if rand(1) < 0.2;
+		if (rand(1) < 0.9) {
+			$subj =~ s/\W*$/ +((qw( . ! ? ))[rand 3]) x (2+rand 5) /e;
+		}
 	        my $pid = getRandomParent();
 	        my $cid = $slashdb->createComment(
 			{
 	                        postercomment   => $comment,
-        	                sid             => $story_id,
+        	                sid             => $discussion_id,
                 	        pid             => $pid,
-	                        postersubj      => $werder->sentence,
+	                        postersubj      => $subj,
         	                postanon        => 0,
                 	},
-	                $user, 1
+	                $user, $score
         	);
 	        $family_tree{$cid} = $pid if ! $opts{T};
-	        print "($count) Comment created ($cur_werds words)\n";
+	        print "($count) Comment created (user $uid discussion $discussion_id cid $cid pid $pid)\n";
  
         	$count--;
 	}
@@ -127,28 +139,96 @@ usage('Invalid number of comments')
 
 # subroutines
 
+sub getRandomSid {
+	my $sids = $slashdb->sqlSelectAll("sid",
+		$story_table,
+		"discussion > 0");
+	my @sids = map { $_->[0] } @$sids;
+	my $rand_sid = @sids[ rand @sids ];
+	return $rand_sid;
+}
+
 sub getRandomParent {
         return 0 if $opts{T};
  
-        my (@a) = keys %family_tree;
-        # The extra "60" slots is our fudge for TRUE PID 0 which means
-        # "the top of the discussion".
-        my $random_index = rand ($#a + 60);
-        return (exists $a[$random_index] && $a[$random_index]) ?
-                $a[$random_index] : 0;
+        my @a = keys %family_tree;
+	# If not very many posts, return 0 for the root.
+	return 0 if rand(@a) < 5;
+	# Otherwise pick one.
+	my $pid = $a[ rand @a ];
+	# But, always a change of returning 0.
+	$pid = 0 if rand(1) > 0.75;
+	return $pid;
 }
  
  
 sub getRandomUserID {
-	my ($constants, $max_uid) = @_;
-
-        my $rand_uid = 1 + rand ($max_uid - 1);
- 
-        return getRandomUserID($constants, $max_uid)
-                if $rand_uid == $constants->{anonymous_coward_uid};
+        my ($max_uid, $ac_ok) = @_;
+        my $n_tries = 100;
+        my $rand_uid = 1;
+        my $ok = 0;
+        while (!$ok) {
+                die "can't get random user! $max_uid" if --$n_tries<0;
+                $rand_uid = 1 + int(rand($max_uid));
+                $ok = 1;
+                $ok = 0 if !$ac_ok and $rand_uid == $constants->{anonymous_coward_uid};
+                $ok = 0 if !$slashdb->sqlSelect("COUNT(*)",
+                        "users", "uid=$rand_uid");
+        }
         return $rand_uid;
 }
 
+sub make_werds {
+        my ($werds) = @_;
+        $werds = int($werds);
+        if ($werds > 40) {
+                $werder->set_werds_num(5,20);
+        } elsif ($werds > 20) {
+                $werder->set_werds_num(3,10);
+        } else {
+                $werder->set_werds_num($werds, $werds);
+        }
+        my $comment;
+        my $cur_werds = 0;
+        my $tag = "";
+        my $quote = q{};
+	my $last_p_werd_num = 0;
+        while ($cur_werds < $werds) {
+                my $new_werds = '';
+                if (int(rand(6))==0 or $werds < $cur_werds * 1.1) {
+                        if (int(rand(2))) {
+                                $new_werds = $werder->question;
+                        } else {
+                                $new_werds = $werder->exclaimation; # Dave, you spelled this word wrong
+                        }
+                } else {
+                        $new_werds = $werder->sentence;
+                }
+                if ($cur_werds and !$tag and rand > 0.9) {
+                        if (rand(1) < 0.95) { $tag = "i" }
+                        else { $tag = "b" }
+                        if (rand(1) < 0.50) { $quote = int(rand(3)) ? q{'} : q{"} };
+                        $new_werds = "<$tag>$quote$new_werds";
+                }
+                if ($tag and rand(1) < 0.5) {
+                        $new_werds = "$new_werds$quote</$tag>";
+                        $tag = ""; $quote = q{};
+                }
+                $comment .= " $new_werds";
+                $comment =~ s{\s+}{ }g;
+                $cur_werds = $comment =~ tr/ / /;
+		if (rand($werds) > 30
+			and rand($cur_werds - $last_p_werd_num) > 20) {
+			$comment .= "<P>";
+			$last_p_werd_num = $cur_werds;
+		}
+        }
+        $comment .= "</$tag>" if $tag;
+        $comment =~ s{</(\w+)>\s+<\1>}{ }g;
+        $comment =~ s/^\s*(.+)\s*$/$1/;
+        $comment =~ s/^\s+//; $comment =~ s/\s+$//;
+        $comment;
+}
 
 sub usage {
 	print "*** $_[0]\n" if $_[0];
