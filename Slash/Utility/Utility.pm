@@ -2250,17 +2250,7 @@ sub prepareUser {
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
-	unless (isAnon($uid)) { 
-		$user  = $slashdb->getUser($uid); # getUserInstance($uid, $uri) {}
-		my $timezones = $slashdb->getDescriptions('tzcodes');
-		$user->{off_set} = $timezones->{ $user->{tzcode} };
-
-		my $dateformats = $slashdb->getDescriptions('datecodes');
-		$user->{'format'} = $dateformats->{ $user->{dfid} };
-
-		$user->{is_anon} = 0;
-
-	} else {
+	if (isAnon($uid)) {
 		if ($ENV{GATEWAY_INTERFACE}) {
 			$user = getCurrentAnonymousCoward();
 		} else {
@@ -2276,8 +2266,18 @@ sub prepareUser {
 		}
 
 		setCookie('anon', $user->{anon_id}, 1);
+	} else {
+		$user  = $slashdb->getUser($uid); # getUserInstance($uid, $uri) {}
+		$user->{is_anon} = 0;
 	}
 
+	unless ($user->{is_anon} && $ENV{GATEWAY_INTERFACE}) {
+		my $timezones = $slashdb->getDescriptions('tzcodes');
+		$user->{off_set} = $timezones->{ $user->{tzcode} };
+
+		my $dateformats = $slashdb->getDescriptions('datecodes');
+		$user->{'format'} = $dateformats->{ $user->{dfid} };
+	}
 
 	my @defaults = (
 		['mode', 'thread'], qw[
@@ -2307,7 +2307,6 @@ sub prepareUser {
 	}
 
 	# All sorts of checks on user data
-	#$user->{tzcode}		= uc($user->{tzcode});
 	$user->{exaid}		= _testExStr($user->{exaid}) if $user->{exaid};
 	$user->{exboxes}	= _testExStr($user->{exboxes}) if $user->{exboxes};
 	$user->{extid}		= _testExStr($user->{extid}) if $user->{extid};
@@ -2537,12 +2536,6 @@ sub createEnvironment {
 
 	$ENV{SLASH_USER} = $constants->{anonymous_coward_uid};
 	my $user = prepareUser($constants->{anonymous_coward_uid}, $form, $0);
-
-	my $timezones = $slashdb->getDescriptions('tzcodes');
-	$user->{off_set} = $timezones->{ $user->{tzcode} };
-	my $dateformats = $slashdb->getDescriptions('datecodes');
-	$user->{'format'} = $dateformats->{ $user->{dfid} };
-
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 }
