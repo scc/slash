@@ -106,7 +106,7 @@ sub readTemplateFile {
 		$val{$latch} .= $_ if $latch;
 	}
 	$val{'tpid'} = undef if $val{'tpid'};
-	for (qw| name page section lang seclev description title |) {
+	for (qw| name page section lang seclev description title template |) {
 		chomp($val{$_}) if $val{$_};
 	}
 

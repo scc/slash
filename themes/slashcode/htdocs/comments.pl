@@ -156,10 +156,6 @@ sub commentIndex {
 			discussions	=> $discussions,
 		});
 	}
-
-	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-		slashDisplay('discussioncreate');
-	}
 }
 
 ##################################################################

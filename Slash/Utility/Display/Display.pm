@@ -188,7 +188,14 @@ sub selectTopic {
 	} keys %$topicbank;
 	delete $topics{''} unless $all;
 
-	createSelect($label, \%topics, $default, $return);
+	my $ordered = [
+		map  { $_->[0] }
+		sort { $a->[1] cmp $b->[1] }
+		map  { [$_, lc $topics{$_}] }
+		keys %topics
+	];
+
+	createSelect($label, \%topics, $default, $return, 0, $ordered);
 }
 
 #========================================================================

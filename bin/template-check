@@ -32,7 +32,7 @@ my $less = q{less};
 	my $slashdb   = Slash::DB->new($opts{'u'});
 	my $basedir   = $slashdb->getVar('slashdir', 'value');
 	my $siteinfo  = $slashdb->getDescriptions('site_info');
-	my $theme     = catdir($siteinfo->{theme}, 'templates');
+	my $theme     = catdir($basedir, 'themes', $siteinfo->{theme}, 'templates');
 	my $plugindir = catdir($basedir, 'plugins');
 
 	local *D;

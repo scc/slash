@@ -23,6 +23,11 @@ __template__
 [% END %]
 </MULTICOL>
 
+<P>
+
+[% IF user.seclev >= constants.discussion_create_seclev;
+    INCLUDE discussioncreate;
+END %]
 
 __seclev__
 100

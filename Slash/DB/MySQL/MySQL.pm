@@ -595,6 +595,9 @@ sub getDescriptions {
 	my($self, $codetype, $optional, $flag, $altdescs) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
+	$optional ||= '';
+	$altdescs ||= '';
+
 	# I am extending this, without the extension the cache was
 	# not always returning the right data -Brian
 	my $cache = '_getDescriptions_' . $codetype . $optional . $altdescs;

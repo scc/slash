@@ -107,6 +107,7 @@ template=templates/fancybox;misc;light
 template=templates/footer;misc;admin
 template=templates/footer;misc;default
 template=templates/footer;misc;light
+template=templates/formbox;misc;default
 template=templates/formLabel;misc;default
 template=templates/genQuickies;submit;default
 template=templates/getOlderStories;misc;default
