@@ -74,11 +74,20 @@ sub editpoll {
 	}
 	my $slashdb = getCurrentDB();
 
-	my($currentqid) = $slashdb->getVar('currentqid', 'value');
-	my $question = $slashdb->getPollQuestion($qid, ['question', 'voters']);
-	$question->{voters} ||= 0;
+	my $currentqid = $slashdb->getVar('currentqid', 'value')
+		if $qid;
+	my $question = $slashdb->getPollQuestion($qid, ['question', 'voters', 'sid'])
+		if $qid;
 
-	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']) if $qid;
+	my $answers;
+	if($question) {
+		$question->{voters} ||= 0;
+		$answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']) if $qid;
+	} else {
+		$question->{voters} ||= 0;
+		$question->{question} = $form->{question}; 
+		$question->{sid} = $form->{sid}; 
+	}
 
 	slashDisplay('editpoll', {
 		title		=> getData('edit_poll_title', { qid=>$qid }),
@@ -109,7 +118,7 @@ sub savepoll {
 		);
 		$slashdb->setPollQuestion($qid, { discussion => $discussion });
 	}
-	$slashdb->setStory($form->{sid}, { poll => $qid }) if $form->{sid};
+	$slashdb->setStory($form->{sid}, { qid => $qid }) if $form->{sid};
 }
 
 #################################################################

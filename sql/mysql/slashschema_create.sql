@@ -713,6 +713,7 @@ CREATE TABLE users_index (
 DROP TABLE IF EXISTS users_info;
 CREATE TABLE users_info (
 	uid mediumint UNSIGNED NOT NULL,
+	hits int DEFAULT '0' NOT NULL,
 	totalmods mediumint DEFAULT '0' NOT NULL,
 	realname varchar(50),
 	bio text,

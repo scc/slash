@@ -420,6 +420,7 @@ sub apache_site_conf {
 
     PerlAccessHandler Slash::Apache::User
     PerlLogHandler Slash::Apache::Log
+    PerlLogHandler Slash::Apache::Log::UserLog
 
     # this directive will redirect non-logged-in users to
     # index.shtml if they request the home page; turn it

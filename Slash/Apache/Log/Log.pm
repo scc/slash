@@ -41,6 +41,24 @@ sub handler {
 	return OK;
 }
 
+# Rob asked for this, keeping this at the end means
+# we can turn it off easily enough (and it won't happen
+# during page stuff
+sub UserLog {
+	my($r) = @_;
+
+	my $user = getCurrentUser();
+	return if $user->{is_anon};
+	my $slashdb = getCurrentDB();
+
+	$slashdb->setUser($user->{uid}, {
+			-hits => 'hits +1'
+	});
+
+	
+	return OK;
+}
+
 sub DESTROY { }
 
 1;

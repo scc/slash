@@ -253,7 +253,7 @@ INSERT INTO pollanswers (qid, aid, answer, votes) VALUES (2,5,'manic depressive'
 #
 
 INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (1,'What flavor of ice cream?',5,'2000-01-16 19:11:10', 3, 2);
-INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES (2,'Are you happy?',7,'2000-01-19 16:23:00', 4, 2);
+INSERT INTO pollquestions (qid, sid, question, voters, date, discussion, uid) VALUES (2, '00/01/25/1430236', 'Are you happy?',7,'2000-01-19 16:23:00', 4, 2);
 
 #
 # Dumping data for table 'pollvoters'
@@ -330,6 +330,7 @@ INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES ('00/01/25
 #
 # Dumping data for table 'story_param'
 #
+INSERT INTO story_param (sid, name, value) VALUES ('00/01/25/1430236', 'qid', '2');
 
 
 #
