@@ -722,15 +722,21 @@ sub deleteStoryAll {
 	my($self, $sid) = @_;
 	my $db_sid = $self->sqlQuote($sid);
 
-	$self->sqlDo("DELETE from stories where sid=$db_sid");
-	$self->sqlDo("DELETE from story_text where sid=$db_sid");
+	$self->sqlDo("DELETE FROM stories WHERE sid=$db_sid");
+	$self->sqlDo("DELETE FROM story_text WHERE sid=$db_sid");
 	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlDo("DELETE from story_heap where sid=$db_sid");
+		$self->sqlDo("DELETE FROM story_heap WHERE sid=$db_sid");
 	}
-	my $discussions = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
-	$self->sqlDo("DELETE from comment_heap where sid=$db_sid");
-	$self->sqlDo("DELETE from comments where sid=$db_sid");
-	$self->sqlDo("DELETE from comment_text where sid=$db_sid");
+	my $discussion_id = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
+	if ($discussion_id) {
+		# In comments/comment_heap, "sid" is a numeric discussion id.
+		my $comment_ids = $self->sqlSelectAll('cid', 'comment_heap', "sid=$discussion_id");
+		$self->sqlDo("DELETE FROM comment_heap WHERE sid=$discussion_id");
+		$self->sqlDo("DELETE FROM comments WHERE sid=$discussion_id");
+		$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
+			. join(",", map { $_->[0] } @$comment_ids)
+			. ")");
+	}
 }
 
 1;
