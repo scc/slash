@@ -24,12 +24,6 @@ sub main {
 	my($tbtitle);
 
 	my $ops = {
-		authors		=> { 	# authorsave,authordelete,
-					# authornew,authoredit,
-
-			function 	=> \&authorEdit,
-			seclev 		=> 10000,
-		},
 		edit_keyword	=> {
 			function	=> \&editKeyword,
 			seclev		=> 10000,
@@ -213,56 +207,6 @@ sub varSave {
 }
 
 ##################################################################
-# Author Editor
-sub authorEdit {
-	my($form, $slashdb, $user, $constants) = @_;
-
-	my($aid);
-
-	if ($form->{authordelete}) {
-		authorDelete($form->{myuid});
-		return();
-	}
-
-	if ($form->{authoredit}) {
-		$aid = $form->{myuid};
-
-	} elsif ($form->{authordelete_confirm} || $form->{authordelete_cancel}) {
-		authorDelete($form->{thisaid});
-
-	} elsif ($form->{authorsave}) {
-		authorSave();
-		$aid = $form->{myuid};
-	}
-
-	my($section_select, $author_select);
-	my $deletebutton_flag = 0;
-
-	$aid ||= $user->{uid};
-	$aid = '' if $form->{authornew};
-
-	# force it to get from the db and not cache
-	my $authors = $slashdb->getDescriptions('authors','',1);
-	my $author = $slashdb->getAuthor($aid) if $aid;
-
-	$author_select = createSelect('myuid', $authors, $aid, 1);
-	$section_select = selectSection('section', $author->{section}, {}, 1, 1);
-	$deletebutton_flag = 1 if !$form->{authornew} && $aid ne $user->{uid};
-
-	for ($author->{email}, $author->{copy}) {
-		$_ = strip_literal($_);
-	}
-
-	slashDisplay('authorEdit', {
-		author 			=> $author,
-		author_select		=> $author_select,
-		section_select		=> $section_select,
-		deletebutton_flag 	=> $deletebutton_flag,
-		aid			=> $aid,
-	});
-}
-
-##################################################################
 sub siteInfo {
 	my($form, $slashdb, $user, $constants) = @_;
 
@@ -276,56 +220,6 @@ sub siteInfo {
 
 }
 
-##################################################################
-sub authorSave {
-	my($form, $slashdb, $user, $constants) = @_;
-
-	if ($form->{thisaid}) {
-		# And just why do we take two calls to do
-		# a new user?
-		if ($slashdb->createAuthor($form->{thisaid})) {
-			print getData('authorInsert-message');
-		}
-		if ($form->{thisaid}) {
-			print getData('authorSave-message');
-			my %author = (
-				name	=> $form->{name},
-				pwd	=> $form->{pwd},
-				email	=> $form->{email},
-				url	=> $form->{url},
-				seclev	=> $form->{seclev},
-				copy	=> $form->{copy},
-				quote	=> $form->{quote},
-				section => $form->{section}
-			);
-			$slashdb->setAuthor($form->{thisaid}, \%author);
-		} else {
-			print getData('authorDelete-message');
-			$slashdb->deleteAuthor($form->{thisaid});
-		}
-	}
-}
-
-##################################################################
-sub authorDelete {
-	my $aid = shift;
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-
-	return if getCurrentUser('seclev') < 500;
-
-	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
-	print getData('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
-
-	if ($form->{authordelete_confirm}) {
-		$slashdb->deleteAuthor($aid);
-		print getData('authorDelete-deleted-msg', { aid => $aid })
-			unless $DBI::errstr;
-	} elsif ($form->{authordelete_cancel}) {
-		print getData('authorDelete-canceled-msg', { aid => $aid});
-	}
-}
 
 ##################################################################
 sub pageEdit {
