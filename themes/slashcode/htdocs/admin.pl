@@ -348,7 +348,7 @@ sub templateEdit {
 	my($seclev, $tpid, $page) = @_;
 
 	return if $seclev < 100;	
-	$page ||= 'Slash';
+	$page ||= 'misc';
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -366,19 +366,11 @@ sub templateEdit {
 	if($form->{templatedelete}) {
 		$templatedelete_flag = 1;
 	} else {
-		my $templates = $slashdb->getDescriptions('templates', $seclev);
-		for(keys %$templates) {
-			if(/^(\w+)\-.+$/) {
-				$pagehashref->{$1} = $1;
-				if($page) {
-					$template_ref->{$_} = $_ if $1 eq $page;
-				}
-			} else {
-				$template_ref->{$_} = $_ if $page eq 'Slash';
-			}
-		}
-		$page_select = createSelect('page', $pagehashref, $page, 1);
-		$template_select = createSelect('tpid', $template_ref, $tpid, 1);
+		my $templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
+		my $pages = $slashdb->getDescriptions('templatepages', '', 1);
+
+		$page_select = createSelect('page', $pages, $page, 1);
+		$template_select = createSelect('tpid', $templates, $tpid, 1);
 	}
 
 
@@ -419,9 +411,7 @@ sub templateSave {
 
 	my $saved = $slashdb->getTemplate($tpid);
 
-	print "seclev $form->{seclev}<br>\n";
-
-	if (getCurrentForm('save_new')) {
+	if ($form->{save_new}) {
 		if($saved->{tpid}) {
 			print getMessage('templateSave-exists-message', { tpid => $tpid } );
 			return;
@@ -433,9 +423,9 @@ sub templateSave {
 				title		=> $form->{title},
 				description	=> $form->{description},
 				seclev          => $form->{seclev},
+				page		=> $form->{page}
 			});
 
-	
 			print getMessage('blockSave-inserted-message', { bid => $tpid });
 		} 
 	} else {
@@ -1289,6 +1279,9 @@ sub getTitle {
 	$hashref->{value} = $value;
 	return slashDisplay('admin-titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
+}
+##################################################################
+sub getLinks {
 }
 
 
