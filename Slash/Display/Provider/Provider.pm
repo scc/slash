@@ -108,14 +108,16 @@ sub _refresh {
 
 	# compare load time with current _modtime from API to see if
 	# its modified and we need to reload it
-	if ($slot->[ DATA ]->{modtime} && $slot->[ DATA ]->{modtime}
-		< $slashdb->getTemplate($slot->[ NAME ], '_modtime')) {
-		print STDERR "refreshing cache file ", $slot->[ NAME ], "\n"
-			if $DEBUG;
+	if ($slot->[ DATA ]{modtime}) {
+		my $temp = $slashdb->getTemplateByID($slot->[ NAME ], ['tpid']);
+		if ($slot->[ DATA ]{modtime} < $temp->{_modtime}) {
+			print STDERR "refreshing cache file ", $slot->[ NAME ], "\n"
+				if $DEBUG;
 
-		($data, $error) = $self->_load($slot->[ NAME ]);
-		($data, $error) = $self->_compile($data) unless $error;
-		$slot->[ DATA ] = $data->{ data } unless $error;
+			($data, $error) = $self->_load($slot->[ NAME ]);
+			($data, $error) = $self->_compile($data) unless $error;
+			$slot->[ DATA ] = $data->{ data } unless $error;
+		}
 	}
 
 	# i know it is not a huge amount of cycles, but i wish
@@ -124,13 +126,13 @@ sub _refresh {
 
 	# remove existing slot from usage chain...
 	if ($slot->[ PREV ]) {
-		$slot->[ PREV ]->[ NEXT ] = $slot->[ NEXT ];
+		$slot->[ PREV ][ NEXT ] = $slot->[ NEXT ];
 	} else {
 		$self->{ HEAD } = $slot->[ NEXT ];
 	}
 
 	if ($slot->[ NEXT ]) {
-		$slot->[ NEXT ]->[ PREV ] = $slot->[ PREV ];
+		$slot->[ NEXT ][ PREV ] = $slot->[ PREV ];
 	} else {
 		$self->{ TAIL } = $slot->[ PREV ];
 	}

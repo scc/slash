@@ -2148,110 +2148,14 @@ sub updateStory {
 ########################################################
 # Now, the idea is to not cache here, since we actually
 # cache elsewhere (namely in %Slash::Apache::constants)
-# Getting populated with my info for the moment
-
-# We should really make this dynamic, because getCurrentStatic()
-# fails if it is missing from this array ... -- pudge
-
 sub getSlashConf {
 	my($self) = @_;
-	my %conf; # We are going to populate this and return a reference
-	my @keys = qw(
-		absolutedir
-		adminmail
-		admin_timeout
-		allow_anonymous
-		anonymous_coward_uid
-		approvedtags
-		archive_delay
-		articles_only
-		authors_unlimited
-		badkarma
-		basedir
-		basedomain
-		block_expire
-		breaking
-		cache_enabled
-		commentsPerPoint
-		commentstatus
-		comment_maxscore
-		comment_minscore
-		cookiedomain
-		cookiepath
-		currentqid
-		datadir
-		defaultcommentstatus
-		defaultdisplaystatus
-		defaultsection
-		defaultwritestatus
-		down_moderations
-		fancyboxwidth
-		fontbase
-		formkey_timeframe
-		goodkarma
-		http_proxy
-		imagedir
-		lastComments
-		lastsrandsec
-		logdir
-		m2_bonus
-		m2_comments
-		m2_maxbonus
-		m2_maxunfair
-		m2_mincheck
-		m2_penalty
-		m2_toomanyunfair
-		m2_userpercentage
-		mailfrom
-		mainfontface
-		maxkarma
-		maxpoints
-		maxtokens
-		max_depth
-		max_posts_allowed
-		max_submissions_allowed
-		metamod_sum
-		post_limit
-		rdfencoding
-		rdfimg
-		rdflanguage
-		rootdir
-		run_ads
-		sbindir
-		send_mail
-		siteadmin
-		siteadmin_name
-		siteid
-		sitename
-		siteowner
-		slashdir
-		slogan
-		smtp_server
-		stats_reports
-		stir
-		story_expire
-		submission_bonus
-		submission_speed_limit
-		submiss_ts
-		submiss_view
-		submit_categories
-		titlebar_width
-		today
-		tokenspercomment
-		tokensperpoint
-		totalComments
-		totalhits
-		updatemin
-		use_dept
-		writestatus
-	);
+	# get all the data, yo
+	my %conf = map { $_->[0], $_->[1] }
+		@{ $self->sqlSelectAll('name, value', 'vars') };
 
-	# This should be optimized.
-	for (@keys) {
-		my $value = $self->getVar($_, 'value');
-		$conf{$_} = $value;
-	}
-
+	# the rest of this function is where is where we fix up
+	# any bad or missing data in the vars table
 	$conf{rootdir}		||= "http://$conf{basedomain}";
 	$conf{absolutedir}	||= $conf{rootdir};
 	$conf{basedir}		||= $conf{datadir} . "/public_html";
@@ -2279,33 +2183,44 @@ sub getSlashConf {
 		$conf{m2_maxbonus} = int $conf{goodkarma} / 2;
 	}
 
-	# <metallica>eval BAD!</metallica>
-	$conf{fixhrefs} = [];  # fix later
-	$conf{stats_reports} = eval $conf{stats_reports}
-		|| { $conf{adminmail} => "$conf{sitename} Stats Report" };
+	my $fixup = sub {
+		return [
+			map {(
+				s/^\s+//,
+				s/\s+$//,
+				$_
+			)[-1]}
+			split /\|/, $_[0]
+		]
+	};
 
-	$conf{submit_categories} = eval $conf{submit_categories}
+	$conf{fixhrefs} = [];  # fix later
+	$conf{stats_reports} = $fixup->($conf{stats_reports})
+		|| [$conf{adminmail}];
+
+	$conf{submit_categories} = $fixup->($conf{submit_categories})
 		|| [];
 
-	$conf{approvedtags} = eval $conf{approvedtags}
+	$conf{approvedtags} = $fixup->($conf{approvedtags})
 		|| [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
-	$conf{reasons} = [
-		'Normal',	# "Normal"
-		'Offtopic',	# Bad Responses
-		'Flamebait',
-		'Troll',
-		'Redundant',
-		'Insightful',	# Good Responses
-		'Interesting',
-		'Informative',
-		'Funny',
-		'Overrated',	# The last 2 are "Special"
-		'Underrated'
-	];
+	$conf{reasons} = $fixup->($conf{reasons})
+		|| [
+			'Normal',	# "Normal"
+			'Offtopic',	# Bad Responses
+			'Flamebait',
+			'Troll',
+			'Redundant',
+			'Insightful',	# Good Responses
+			'Interesting',
+			'Informative',
+			'Funny',
+			'Overrated',	# The last 2 are "Special"
+			'Underrated'
+		];
 
-	$conf{badreasons} = 4;	# number of "Bad" reasons in @{$constants->{reasons}},
-				# skip 0 (which is neutral)
+	$conf{badreasons} = 4 unless defined $conf{badreasons};
+
 	return \%conf;
 }
 
@@ -2678,7 +2593,8 @@ sub setUser {
 		$hashref->{passwd} = encryptPassword($hashref->{passwd});
 	}
 
-	# hm, come back to exboxes later -- pudge
+	# hm, come back to exboxes later; it works for now
+	# as is, since external scripts handle it -- pudge
 	# a VARARRAY would make a lot more sense for this, no need to
 	# pack either -Brian
 	if (0 && exists $hashref->{exboxes}) {

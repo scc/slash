@@ -77,7 +77,7 @@ sub main {
 		} else {
 			editUser($form->{userfield});
 		}
-	
+
 	} elsif ($op eq 'edituser') {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
@@ -832,28 +832,28 @@ sub getUserAdmin {
 
 	my $slashdb 	= getCurrentDB();
 	my $form    	= getCurrentForm();	
-	my $currentuser = getCurrentUser();
+	my $user	= getCurrentUser();
 
-	my $user = $slashdb->getUser($uid);
+	my $edituser = $slashdb->getUser($uid);
 
-	my($uid_checked,$nickname_checked);
+	my($uid_checked, $nickname_checked);
 
 	if ($form->{userfield_flag} eq 'userid') {
-		$uid_checked = 'CHECKED';
+		$uid_checked = ' CHECKED';
 	} else {
-		$nickname_checked = 'CHECKED';
+		$nickname_checked = ' CHECKED';
 	}		
 
 	my $author_select;
-	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0; 
-	my $authoredit_flag = ($currentuser->{seclev} >= 10000) ? 1 : 0; 
+	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0; 
+	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0; 
 
 	my $authors = $slashdb->getDescriptions('authors');
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
 	$author_select =~ s/\s{2,}//g;
 
 	return slashDisplay('admin', { 
-		user			=> $user,
+		edituser		=> $edituser,
 		seclev_field		=> $display_seclev,
 		uid_checked 		=> $uid_checked,
 		nickname_checked 	=> $nickname_checked,

@@ -163,8 +163,8 @@ sub prog2file {
 
 # Send a message to the site admin.
 if ($constants->{send_mail} == 1) {
-	for (keys %{$constants->{stats_reports}}) {
-		sendEmail($_, $constants->{stats_reports}{$_}, $email);
+	for (@{$constants->{stats_reports}}) {
+		sendEmail($_, "$constants->{sitename} Stats Report", $email);
 	}
 	mailingList();
 }
