@@ -201,12 +201,12 @@ sub varSave {
 		}
 
 		if ($form->{desc}) {
-			print getMessage('varSave-message');
+			print getData('varSave-message');
 		} else {
 # please don't delete this by just removing comment,
 # since we don't even warn the admin this will happen.
 #			$slashdb->deleteVar($form->{thisname});
-#			print getMessage('varDelete-message');
+#			print getData('varDelete-message');
 		}
 	}
 }
@@ -282,10 +282,10 @@ sub authorSave {
 		# And just why do we take two calls to do
 		# a new user?
 		if ($slashdb->createAuthor($form->{thisaid})) {
-			print getMessage('authorInsert-message');
+			print getData('authorInsert-message');
 		}
 		if ($form->{thisaid}) {
-			print getMessage('authorSave-message');
+			print getData('authorSave-message');
 			my %author = (
 				name	=> $form->{name},
 				pwd	=> $form->{pwd},
@@ -298,7 +298,7 @@ sub authorSave {
 			);
 			$slashdb->setAuthor($form->{thisaid}, \%author);
 		} else {
-			print getMessage('authorDelete-message');
+			print getData('authorDelete-message');
 			$slashdb->deleteAuthor($form->{thisaid});
 		}
 	}
@@ -314,14 +314,14 @@ sub authorDelete {
 	return if getCurrentUser('seclev') < 500;
 
 	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
-	print getMessage('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
+	print getData('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
 
 	if ($form->{authordelete_confirm}) {
 		$slashdb->deleteAuthor($aid);
-		print getMessage('authorDelete-deleted-msg', { aid => $aid })
+		print getData('authorDelete-deleted-msg', { aid => $aid })
 			unless $DBI::errstr;
 	} elsif ($form->{authordelete_cancel}) {
-		print getMessage('authorDelete-canceled-msg', { aid => $aid});
+		print getData('authorDelete-canceled-msg', { aid => $aid});
 	}
 }
 
@@ -372,7 +372,7 @@ sub templateEdit {
 
 	} elsif ($form->{templatedelete_confirm}) {
 		templateDelete($form->{deletename}, $form->{deletetpid});
-		print getMessage('templateDelete-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
+		print getData('templateDelete-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
 
 	} else {
 		$tpid = $form->{tpid};
@@ -468,7 +468,7 @@ sub templateSave {
 
 	if ($form->{save_new}) {
 		if ($id->{tpid} || $exists) {
-			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $name });
+			print getData('templateSave-exists-message', { tpid => $tpid, name => $name });
 			return;
 		} else {
 			print "trying to insert $name<br>\n";
@@ -482,7 +482,7 @@ sub templateSave {
 				section		=> $section
 			});
 
-			print getMessage('templateSave-inserted-message', { tpid => $tpid , name => $name});
+			print getData('templateSave-inserted-message', { tpid => $tpid , name => $name});
 		}
 	} else {
 
@@ -495,7 +495,7 @@ sub templateSave {
 				page		=> $page,
 				section		=> $section
 		});
-		print getMessage('templateSave-saved-message', { tpid => $tpid, name => $name });
+		print getData('templateSave-saved-message', { tpid => $tpid, name => $name });
 	}
 }
 
@@ -518,7 +518,7 @@ sub blockEdit {
 	if ($form->{blocksave} || $form->{blocksavedef}) {
 		blockSave($form->{thisbid});
 		$bid = $form->{thisbid};
-		print getMessage('blockSave-saved-message', { bid => $bid });
+		print getData('blockSave-saved-message', { bid => $bid });
 
 	} elsif ($form->{blockrevert}) {
 		$slashdb->revertBlock($form->{thisbid});
@@ -535,7 +535,7 @@ sub blockEdit {
 
 	} elsif ($form->{blockdelete_confirm}) {
 		blockDelete($form->{deletebid});
-		print getMessage('blockDelete-message', { bid => $form->{deletebid} });
+		print getData('blockDelete-message', { bid => $form->{deletebid} });
 	}
 
 	my($blockref, $saveflag, $block_select, $retrieve_checked,
@@ -600,12 +600,12 @@ sub blockSave {
 	my $saved = $slashdb->saveBlock($bid);
 
 	if (getCurrentForm('save_new') && $saved > 0) {
-		print getMessage('blockSave-exists-message', { bid => $bid });
+		print getData('blockSave-exists-message', { bid => $bid });
 		return;
 	}
 
 	if ($saved == 0) {
-		print getMessage('blockSave-inserted-message', { bid => $bid });
+		print getData('blockSave-inserted-message', { bid => $bid });
 	}
 }
 
@@ -741,11 +741,11 @@ sub topicEdit {
 
 	if ($form->{topicdelete}) {
 		topicDelete($form->{tid});
-		print getMessage('topicDelete-message', { tid => $form->{tid} });
+		print getData('topicDelete-message', { tid => $form->{tid} });
 
 	} elsif ($form->{topicsave}) {
 		topicSave(@_);
-		print getMessage('topicSave-message');
+		print getData('topicSave-message');
 	}
 
 	my($imageseen_flag, $images_flag) = (0, 0);
@@ -1292,7 +1292,7 @@ sub editFilter {
 
 	} elsif ($form->{updatefilter}) {
 		if (!$form->{regex}) {
-			print getMessage('updateFilter-message');
+			print getData('updateFilter-message');
 
 		} else {
 			$slashdb->setContentFilter($form->{formname});
@@ -1385,16 +1385,6 @@ sub saveStory {
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories(@_);
-}
-
-#################################################################
-# This should go away and getData() should be used -Brian
-sub getMessage {
-	my($value, $hashref, $nocomm) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('messages', $hashref,
-		{ Return => 1, Nocomm => $nocomm });
 }
 
 ##################################################################

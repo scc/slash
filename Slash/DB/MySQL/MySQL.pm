@@ -426,7 +426,7 @@ sub deleteRelatedLink {
 sub createSectionTopic {
 	my($self, $section, $tid) = @_;
 
-	$self->sqlDo("INSERT INTO section_topics VALUES (section, tid) ('$section',$tid)");
+	$self->sqlDo("INSERT INTO section_topics (section, tid) VALUES ('$section',$tid)");
 }
 
 ########################################################
@@ -1378,6 +1378,7 @@ sub deleteContentFilter {
 sub saveTopic {
 	my($self, $topic) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'topics', "tid=$topic->{tid}");
+
 	if ($rows == 0) {
 		my $image = $topic->{image2} ? $topic->{image2} : $topic->{image};
 		$self->sqlInsert('topics', {
