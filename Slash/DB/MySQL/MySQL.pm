@@ -771,7 +771,7 @@ sub createAccessLog {
 	my($self, $op, $dat) = @_;
 	my $constants = getCurrentStatic();
 	my $r = Apache->request;
-    my $hostip = $r->connection->remote_ip; 
+	my $hostip = $r->connection->remote_ip; 
 
 	my $uid;
 	if ($ENV{SLASH_USER}) {
@@ -781,7 +781,7 @@ sub createAccessLog {
 	}
 
 	my $ipid = getCurrentUser('ipid') || md5_hex($hostip);
-	$hostip =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$hostip =~ s/^(\d+\.\d+\.\d+)\.\d+$/$1.0/;
 	$hostip = md5_hex($hostip);
 	my $subnetid = getCurrentUser('subnetid') || $hostip;
 
