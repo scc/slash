@@ -2317,7 +2317,7 @@ EOT
 		return(0);
 
 	} else {
-		if ($I{dbobject}->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{F}{formkey}, $I{U})) {
+		if ($I{dbobject}->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{U})) {
 			undef $I{F}{formkey} unless $I{F}{formkey} =~ /^\w{10}$/;
 
 			unless ($I{F}{formkey} && $I{dbobject}->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey}, $I{U})) {

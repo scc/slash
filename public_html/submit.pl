@@ -440,7 +440,7 @@ sub displayForm {
 	my($user, $fakeemail, $section, $id) = @_;
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	if (!$I{dbobject}->checkTimesPosted("submissions", $I{max_submissions_allowed}, $id, $formkey_earliest)) {
+	if (!$I{dbobject}->checkTimesPosted("submissions", $I{max_submissions_allowed}, $id, $formkey_earliest, $I{U})) {
 		my $max_posts_warn = <<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day : $I{max_submissions_allowed}</B></P>
 EOT

@@ -76,9 +76,8 @@ sub main {
 			$I{F}{formkey} = getFormkey();
 			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid});	
 		} else {
-			if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
-				$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey}, $I{anonymous_coward}, $I{U}{uid});
-			}
+			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey},
+				$I{anonymous_coward}, $I{U}{uid}, $I{query}->param('rlogin'), $I{F}{upasswd});
 		}
 
 		# find out their Karma
@@ -183,7 +182,7 @@ EOT
 		print "\n</TABLE><P>\n\n";
 	}
 
-	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest)) {
+	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest, $I{U})) {
 		my $max_posts_warn =<<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day :
 $I{max_submissions_allowed}</B></P>
@@ -430,7 +429,7 @@ EOT
 		}
 	}
 
-	my $dupRows = $I{dbobject}->countComment($I{F}{sid}, $I{F}{postercomment});
+	my $dupRows = $I{dbobject}->countComments($I{F}{sid}, '', '', $I{F}{postercomment});
 
 	if ($dupRows || !$I{F}{sid}) { 
 		# $I{r}->log_error($ENV{SCRIPT_NAME} . " " . $insline);
@@ -625,7 +624,7 @@ sub submitComment {
 
 	my $pts = 0;
 
-	if($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
+	if ($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
 		$pts = $I{U}{defaultpoints};
 		$pts-- if $I{U}{karma} < $I{badkarma};
 		$pts++ if $I{U}{karma} > $I{goodkarma} and !$I{F}{nobonus};
@@ -635,21 +634,18 @@ sub submitComment {
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid;
-	if($maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward})) {
-		if($maxCid == -1) {
-			print "<P>There was an unknown error in the submission.<BR>";
-		}else {
-			print "Don't you have anything better to do with your life?";	
-		}
+	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward});
+	if ($maxCid == -1) {
+		print "<P>There was an unknown error in the submission.<BR>";
+	} elsif (!$maxCid) {
+		print "Don't you have anything better to do with your life? $maxCid";	
 	} else {
 		print "Comment Submitted. There will be a delay before the comment becomes part
-				of the static page.  What you submitted appears below.  If there is a
-				mistake, well, you should have used the Preview button!<P>";
+			of the static page.  What you submitted appears below.  If there is a
+			mistake, well, you should have used the Preview button!<P>";
 		undoModeration($I{F}{sid});
 		printComments($I{F}{sid}, $maxCid, $maxCid);
 	}
-
 }
 
 ##################################################################

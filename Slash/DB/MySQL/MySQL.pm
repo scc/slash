@@ -131,11 +131,11 @@ sub sqlConnect {
 	my $self = shift;
 	($user) = @_;
 
-	if(defined($self->{dbh})) {
+	if (defined($self->{dbh})) {
 		unless (eval {$self->{dbh}->ping}) {
-			print STDERR ("Undefining and calling to reconnect \n");
+			print STDERR ("Undefining and calling to reconnect: $@\n");
 			undef $self->{dbh};
-			sqlConnect();
+			$self->sqlConnect;
 		}
 	} else {
 # Ok, new connection, lets create it
@@ -150,7 +150,7 @@ sub sqlConnect {
 			if ($@) {
 				#In the future we should have a backupdatabase 
 				#connection in here. For now, we die
-				print STDERR "unable to connect to MySQL $DBI::errstr\n";
+				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
 				kill 9, $$ unless $self->{dbh};	 # The Suicide Die
 			}
 		}
@@ -162,7 +162,7 @@ sub sqlConnect {
 
 ########################################################
 sub setComment{
-	my ($self, $form, $user, $pts, $default_user) = @_;
+	my($self, $form, $user, $pts, $default_user) = @_;
 
 	$dbh->do("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
@@ -193,14 +193,14 @@ sub setComment{
 		);
 
 		unless ($dtitle) {
-			sqlUpdate(
+			$self->sqlUpdate(
 				"discussions",
 				{ title => $form->{postersubj} },
 				"sid=" . $dbh->quote($form->{sid})
 			) if $form->{sid};
 		}
 
-		my($ws) = sqlSelect(
+		my($ws) = $self->sqlSelect(
 			"writestatus", "stories", "sid=" . $dbh->quote($form->{sid})
 		);
 
@@ -212,14 +212,14 @@ sub setComment{
 			);
 		}
 
-		sqlUpdate(
+		$self->sqlUpdate(
 			"users_info",
 			{ -totalcomments => 'totalcomments+1' },
 			"uid=" . $dbh->quote($user->{uid}), 1
 		);
 
 		# successful submission		
-		$self->formSuccess($form->{formkey},$maxCid,length($form->{postercomment}));
+		$self->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
 
 		my($tc, $mp, $cpp) = $self->getVars(
 			"totalComments",
@@ -229,6 +229,8 @@ sub setComment{
 
 		$self->setVar("totalComments", ++$tc);
 
+		return $maxCid;
+
 	} else {
 		$dbh->do("UNLOCK TABLES");
 		apacheLog("$DBI::errstr $insline");
@@ -237,7 +239,7 @@ sub setComment{
 }
 ########################################################
 sub setModeratorLog {
-	my ($self, $cid, $sid, $uid, $val, $reason) = @_;
+	my($self, $cid, $sid, $uid, $val, $reason) = @_;
 	$self->sqlInsert("moderatorlog", {
 			uid => $uid,
 			val => $val,
@@ -249,7 +251,7 @@ sub setModeratorLog {
 }
 ########################################################
 sub getModeratorLogID {
-	my ($self, $cid, $sid, $uid) = @_;
+	my($self, $cid, $sid, $uid) = @_;
 	my($mid) = sqlSelect(
 	    "id", "moderatorlog",
 			"uid=$uid and cid=$cid and sid='$sid'"
@@ -259,13 +261,13 @@ sub getModeratorLogID {
 }
 ########################################################
 sub unsetModeratorlog{
-	my ($self, $uid, $sid, $max, $min) = @_;
+	my($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
 			"uid=$uid and sid=" . $dbh->quote($sid)
 	);
 	my @removed;
 
-	while(my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
+	while (my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
 		$dbh->do("delete from moderatorlog where
@@ -1076,12 +1078,15 @@ sub getLock {
 
 ########################################################
 sub updateFormkeyId {
-	my($self, $formname, $formkey, $anon, $uid) = @_;
-	sqlUpdate("formkeys", {
-		id	=> $uid,
-		uid	=> $uid,
-	}, "formname='$formname' AND uid = $anon AND formkey=" .
-		$self->{dbh}->quote($formkey));
+	my($self, $formname, $formkey, $anon, $uid, $rlogin, $upasswd) = @_;
+
+	if ($uid != $anon && $rlogin && length($upasswd) > 1) {
+		sqlUpdate("formkeys", {
+			id	=> $uid,
+			uid	=> $uid,
+		}, "formname='$formname' AND uid = $anon AND formkey=" .
+			$self->{dbh}->quote($formkey));
+	}
 }
 
 ########################################################
@@ -1327,8 +1332,8 @@ sub getPortals {
 ##################################################################
 # Get standard portals
 sub getPortalsCommon {
-	my ($self) = @_;
-	return ($boxes, $sectionBoxes) if (keys %$boxes);
+	my($self) = @_;
+	return($boxes, $sectionBoxes) if keys %$boxes;
 	$boxes = {};
 	$sectionBoxes = {};
 	my $sth = $self->sqlSelectMany(
@@ -1346,19 +1351,19 @@ sub getPortalsCommon {
 	$sectionBoxes = \%tmp;
 	$sth->finish;
 
-	return ($boxes, $sectionBoxes);
+	return($boxes, $sectionBoxes);
 }
 ##################################################################
 # counts the number of comments for a user
 # This is pretty questionable -Brian
 sub countComments {
-	my ($self, $sid, $cid, $comment, $uid) = @_;
+	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
-	if($uid) {
+	if ($uid) {
 		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
-	} elsif($cid) {
+	} elsif ($cid) {
 		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
-	} elsif($comment) {
+	} elsif ($comment) {
 		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . ' AND comment=' . $dbh->quote($comment));
 	} else {
 		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid));
@@ -1368,7 +1373,7 @@ sub countComments {
 }
 ##################################################################
 sub method {
-	my ($self, $sid) = @_;
+	my($self, $sid) = @_;
 	my $count = $self->countComments($sid);
 	$self->sqlUpdate(
 			"stories",
@@ -1381,8 +1386,8 @@ sub method {
 ##################################################################
 # counts the number of stories
 sub countStory {
-	my ($self, $tid) = @_;
-	my ($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{dbh}->quote($tid));
+	my($self, $tid) = @_;
+	my($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{dbh}->quote($tid));
 
 	return $value;
 }

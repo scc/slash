@@ -1606,9 +1606,9 @@ sub updateStory {
 	sqlUpdate('discussions',{
 			sid	=> $I{F}{sid},
 			title	=> $I{F}{title},
-			url	=> "$I{rootdir}/article.pl?sid=$I{F}{sid}"
+			url	=> "$I{rootdir}/article.pl?sid=$I{F}{sid}",
+			-ts	=> $I{F}{'time'},
 		},
-		-ts	=> $I{F}{'time'},
 		'sid = ' . $I{dbh}->quote($I{F}{sid})
 	);
 
