@@ -2851,10 +2851,10 @@ sub getStoryList {
 
 	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $sql = q[SELECT hits, commentcount, sid, title, uid, time, tid, section,
+	my $sql = qq[SELECT hits, commentcount, sid, title, uid, time, alttext, section,
 			displaystatus,writestatus
-			FROM $table
-			WHERE 1=1];
+			FROM $table,topics
+			WHERE $table.tid=topics.tid];
 	$sql .= "	AND section='$user->{section}'" if $user->{section};
 	$sql .= "	AND section='$form->{section}'" if $form->{section} && !$user->{section};
 	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";

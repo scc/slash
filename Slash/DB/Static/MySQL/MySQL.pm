@@ -35,7 +35,7 @@ sub getBackendStories {
 		   WHERE stories.sid=story_text.sid
 		     AND stories.tid=topics.tid
 		     AND ((displaystatus = 0 and \"$section\"=\"\")
-		      OR (stories.section=\"$section\" and displaystatus > -1))
+			      OR (stories.section=\"$section\" and displaystatus > -1))
 		     AND time < now()
 		     AND writestatus > -1
 		ORDER BY time DESC

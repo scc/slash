@@ -54,7 +54,7 @@ END %]
 		[% story.title %]&nbsp;</A>
 		</TD>
 		<TD><FONT SIZE="2"><B>[% story.aid %]</B></FONT></TD>
-		<TD><FONT SIZE="2">[% story.substrtid %]</FONT></TD>
+		<TD><FONT SIZE="2">[% story.substrtopic %]</FONT></TD>
 
 [% IF sectionflag %]
 		<TD>
