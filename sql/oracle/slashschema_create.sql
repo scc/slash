@@ -681,7 +681,7 @@ CREATE TABLE users (
   user_id          number(12),
   nickname         varchar2(20)   DEFAULT '' NOT NULL,
   realemail        varchar2(50)   DEFAULT '' NOT NULL,
-  fakeemail        varchar2(50),
+  fakeemail        varchar2(75),
   homepage         varchar2(100),
   passwd           varchar2(32)   DEFAULT '' NOT NULL,
   sig              varchar2(160),

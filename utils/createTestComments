@@ -58,6 +58,7 @@ $werder = new Silly::Werder;
 {
 	# Determine user list size (for -R)
 	my $max_uid = $slashdb->getLastUser();
+	my $min_uid = $slashdb->sqlSelect("MIN(uid)", "users");
 
 	my $story_id = $opts{I};
 
@@ -74,11 +75,15 @@ $werder = new Silly::Werder;
 		# Initialize the user.
 		my $uid;
 		if ($opts{R}) {
-			$uid = getRandomUserID($max_uid, 1);
+			if (rand(1) < 0.5) {
+				$uid = getRandomUserID($min_uid, $max_uid);
+			} else {
+				$uid = $constants->{anonymous_coward_uid};
+			}
 		} elsif ($opts{U}) {
 			$uid = $opts{U};
 		} else {
-			$uid = 1;
+			$uid = $min_uid;
 		}
 		my $user = $slashdb->getUser($uid);
 	 
@@ -100,20 +105,30 @@ $werder = new Silly::Werder;
 			} keys %{$comments};
 		}
  
-		my $comment = make_werds(rand(20)*rand(20)+rand(10) + 1);
+		my $comment = make_werds(rand(20)*rand(20)+rand(10) + 1, 0.1);
+		$comment = balanceTags($comment, 1);
+		$comment = addDomainTags($comment);
 
-		my $score = rand(1);
-		   if ($score < 0.03 )	{ $score = -1 }
-		elsif ($score < 0.08 )	{ $score =  0 }
-		elsif ($score < 0.90 )	{ $score =  1 }
-		else			{ $score =  2 }
-		$score = 0 if $uid == $constants->{anonymous_coward_uid};
+		my $score = 1;
+		if ($uid == $constants->{anonymous_coward_uid}) {
+			$score = 0;
+		} elsif ($user->{karma} > $constants->{goodkarma}) {
+			++$score;
+		} elsif ($user->{karma} < $constants->{badkarma}) {
+			--$score;
+		}
+		my $score_rand = rand(1);
+		   if ($score < 0.05 )	{ $score -= 1	}
+		elsif ($score < 0.75 )	{		}
+		elsif ($score < 0.90 )	{ $score += 1	}
+		elsif ($score < 0.97 )	{ $score += 2	}
+		else			{ $score += 3	}
 
 		my $subj = make_werds(1 + rand 5);
 		$subj =~ s/\W+$// if rand(1) < 0.1;
                 $subj =~ s/<[^>]+>//g;
                 $subj =~ s/\b(\w)/\U$1/g if rand(1) < 0.2;
-		if (rand(1) < 0.9) {
+		if (rand(1) < 0.2) {
 			$subj =~ s/\W*$/ +((qw( . ! ? ))[rand 3]) x (2+rand 5) /e;
 		}
 	        my $pid = getRandomParent();
@@ -161,17 +176,15 @@ sub getRandomParent {
 	return $pid;
 }
  
- 
 sub getRandomUserID {
-        my ($max_uid, $ac_ok) = @_;
+        my($min_uid, $max_uid) = @_;
         my $n_tries = 100;
         my $rand_uid = 1;
         my $ok = 0;
         while (!$ok) {
                 die "can't get random user! $max_uid" if --$n_tries<0;
-                $rand_uid = 1 + int(rand($max_uid));
+                $rand_uid = $min_uid + int(rand($max_uid-$min_uid+1));
                 $ok = 1;
-                $ok = 0 if !$ac_ok and $rand_uid == $constants->{anonymous_coward_uid};
                 $ok = 0 if !$slashdb->sqlSelect("COUNT(*)",
                         "users", "uid=$rand_uid");
         }
@@ -179,8 +192,9 @@ sub getRandomUserID {
 }
 
 sub make_werds {
-        my ($werds) = @_;
+        my($werds, $link_prob) = @_;
         $werds = int($werds);
+	$link_prob ||= 0;
         if ($werds > 40) {
                 $werder->set_werds_num(5,20);
         } elsif ($werds > 20) {
@@ -188,8 +202,34 @@ sub make_werds {
         } else {
                 $werder->set_werds_num($werds, $werds);
         }
-        my $comment;
-        my $cur_werds = 0;
+	my $min_syl = int(rand(3)+1);
+	$werder->set_syllables_num($min_syl, $min_syl + int(rand(4)+1));
+	my @links = qw(
+		http://slashdot.org/            http://www.brunching.com/
+		http://www.newsforge.com        http://osdn.com
+		http://whitehouse.gov           http://www.whitehouse.gov/
+		http://us.imdb.com/             http://www.kernel.org
+		http://ic.ac.uk                 http://cr.yp.to/
+		http://www.verizonreallyreallyreallysucks.com/
+		ftp://ftp.kernel.org/           ftp://ftp.gnu.org/gnu/Licenses/COPYING-2.0
+		news:news.admin.net-abuse.email gopher://ccat.sas.upenn.edu:3333/11/Fiction/
+		http://List-Etiquette.com/about/
+		http://slashdot.org/features/99/03/31/0137221.shtml
+		http://www.nap.edu/readingroom/books/newpath/chap2.html
+		http://www.forthnet.gr/forthnet/isoc/short.history.of.internet
+		http://www.freenix.fr/unix/linux/HOWTO/French-HOWTO.html
+		http://www.linux.org.mx/        http://www.linux.net.mx/linux.php
+		http://www.linux.org.uk/diary/  http://hepwww.ph.qmw.ac.uk/HEPpc/
+		http://www.w3.org               http://peipa.essex.ac.uk/tp-linux/
+		http://www.crosswinds.net/~tvquotes/futurama/2.html
+		http://www.google.com/search?q=cache:h58W7o4qU-w:www.space.com/sciencefiction/tv/futurama_gore_000516_wg.html+Futurama+Fry&hl=en
+		http://dmoz.org/Regional/Europe/United_Kingdom/Wales/Isle_of_Anglesey/Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch/
+		www.google.com                  bad_link b.a.d l.i.n.k . .. ... ....
+		mailto:jamie@slashdot.org       mailto:pater@slashdot.org
+	);
+	push @links, 'http://directory.google.com/Top/Arts/Literature/Authors/C/Carroll,_Lewis/Works/Hunting_of_the_Snark,_The/';
+	my $comment;
+	my $cur_werds = 0;
         my $tag = "";
         my $quote = q{};
 	my $last_p_werd_num = 0;
@@ -204,15 +244,30 @@ sub make_werds {
                 } else {
                         $new_werds = $werder->sentence;
                 }
-                if ($cur_werds and !$tag and rand > 0.9) {
-                        if (rand(1) < 0.95) { $tag = "i" }
-                        else { $tag = "b" }
-                        if (rand(1) < 0.50) { $quote = int(rand(3)) ? q{'} : q{"} };
-                        $new_werds = "<$tag>$quote$new_werds";
-                }
-                if ($tag and rand(1) < 0.5) {
-                        $new_werds = "$new_werds$quote</$tag>";
-                        $tag = ""; $quote = q{};
+		if ($link_prob and rand(1) < $link_prob) {
+			my @new_werds = split / /, $new_werds;
+			my $a_href = q{<a href="} . $links[rand @links] . q{">} . (rand(1)<0.1?" ":"");
+			my $close_a = (rand(1)<0.1?" ":"") . "</a>";
+			my $insert_start = int(rand(@new_werds-2));
+			my $insert_end = $insert_start + int(rand(4))+1;
+			$insert_end = scalar @new_werds if $insert_end > scalar @new_werds;
+			$new_werds = join(" ",
+				@new_werds[0..$insert_start-1],
+				$a_href . $new_werds[$insert_start],
+				@new_werds[$insert_start+1..$insert_end-1],
+				$new_werds[$insert_end] . $close_a,
+				@new_werds[$insert_end+1..$#new_werds]
+			);
+		}
+		if ($cur_werds and !$tag and rand > 0.9) {
+			if (rand(1) < 0.95) { $tag = "i" }
+			else { $tag = "b" }
+			if (rand(1) < 0.50) { $quote = int(rand(3)) ? q{'} : q{"} };
+			$new_werds = "<$tag>$quote$new_werds";
+		}
+		if ($tag and rand(1) < 0.5) {
+			$new_werds = "$new_werds$quote</$tag>";
+			$tag = ""; $quote = q{};
                 }
                 $comment .= " $new_werds";
                 $comment =~ s{\s+}{ }g;

@@ -1,0 +1,124 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
+BEGIN {
+	{
+		require Silly::Werder;
+		Silly::Werder->import;
+	}
+	die "Installation of Silly::Werder is required for this util, sorry!\n"
+		if $@;
+}
+
+use strict;
+use File::Basename;
+use FindBin '$Bin';
+use Getopt::Std;
+use Slash;
+use Slash::Utility;
+use Benchmark;
+
+use vars qw( $slashdb $werder $constants );
+
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
+my %opts;
+srand(time() ^ ($$+($$<<15)));
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hu:v', \%opts);
+usage() if $opts{'h'};
+version() if $opts{'v'};
+$opts{'u'} ||= 'slash';
+$opts{num_users} = $ARGV[0] || 10;
+usage('Invalid number of users') 
+	if $opts{num_users} !~ /^\d+$/ || $opts{num_users} < 0;
+
+createEnvironment($opts{u});
+$slashdb = getCurrentDB();
+$constants = getCurrentStatic();
+$werder = new Silly::Werder;
+
+# main program logic (in braces to offset nicely)
+{
+	my $kmin = $constants->{minkarma} || -25;
+	my $kmax = $constants->{maxkarma};
+print "min $kmin max $kmax\n";
+
+	for (1..$opts{num_users}) {
+		$werder->set_syllables_num(2, 4);
+		$werder->set_werds_num(1, 3);
+		my $username = $werder->sentence;
+		$username =~ s{\W+$}{};
+		$username =~ s{\b(\w)}{\U$1}g if rand(1) < 0.5;
+		$username =~ s{\b(\w)}{\L$1}g if rand(1) < 0.2;
+		(my $matchname = lc $username) =~ s/[^a-zA-Z0-9]//g;
+		$werder->set_syllables_num(1, 2);
+		$werder->set_werds_num(3, 5);
+		my $email = $werder->sentence;
+		$email =~ s{\W+$}{};
+		$email =~ s{\s+}{\@};
+		$email =~ s{\s+}{.}g;
+		my $uid = $slashdb->createUser($matchname, $email, $username);
+		next unless $uid;
+
+		my $karma = int(rand(1+$kmax-$kmin)+$kmin);
+		my $hr = { karma => $karma };
+		my $emaildisplay = int(rand(3));
+		$hr->{emaildisplay} = $emaildisplay if $emaildisplay != 0 or rand(1) < 0.3;
+		if ($emaildisplay == 0) {
+			$hr->{fakeemail} = '';
+		} elsif ($emaildisplay == 1) {
+			$hr->{fakeemail} = getArmoredEmail($uid);
+		} else {
+			$hr->{fakeemail} = $email;
+		}
+		my $domaintags = int(rand(3));
+		$hr->{domaintags} = $domaintags if $domaintags != 2 or rand(1) < 0.3;
+		$slashdb->setUser($uid, $hr);
+
+		print "New user: $username (User #$uid) ($email)\n";
+	}
+}
+
+# subroutines
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] [#comments]
+
+This utility creates test comments for a given Slash site. This program is for
+testing purposes, only, particularly for those ambitious Slash users out there
+who want to try their hand at modifying the comment or moderation systems.
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+
+EOT
+	exit;
+}
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__

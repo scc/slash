@@ -948,7 +948,7 @@ sub createUser {
 	#	- Cliff
 	# Initialize the expiry variables...
 	# ...users start out as registered...
-	# ...the default email view is to SHOW email address...
+	# ...the default email view is to SHOW email address... (not anymore - Jamie)
 	my $constants = getCurrentStatic();
 	$self->setUser($uid, {
 		'registered'		=> 1,
@@ -956,7 +956,7 @@ sub createUser {
 		'expiry_days'		=> $constants->{min_expiry_days},
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
-		'emaildisplay'		=> 2,
+#		'emaildisplay'		=> 2, # editComm;users;default knows that the default emaildisplay is 0, as it should be
 		'created_on'		=> scalar localtime(),
 	});
 
@@ -3916,7 +3916,7 @@ sub getTemplate {
 ########################################################
 # This is a bit different
 sub getTemplateByName {
-	my($self, $name, $values, $cache_flag, $page, $section) = @_;
+	my($self, $name, $values, $cache_flag, $page, $section, $ignore_errors) = @_;
 	return if ref $name;	# no scalar refs, only text names
 	my $constants = getCurrentStatic();
 	_genericCacheRefresh($self, 'templates', $constants->{'block_expire'});
@@ -3948,9 +3948,20 @@ sub getTemplateByName {
 	$id  ||= $self->{$table_cache_id}{$name, 'misc', $section };
 	$id  ||= $self->{$table_cache_id}{$name, 'misc', 'default'};
 	if (!$id) {
-		my @caller = caller;
-		warn "Failed template lookup on '$name;$page;$section'"
-			. ", called from $caller[0] line $caller[2]";
+		if (!$ignore_errors) {
+			# Not finding a template is reasonably serious.  Let's make the
+			# error log entry pretty descriptive.
+			my @caller_info = ( );
+			for (my $lvl = 1; $lvl < 99; ++$lvl) {
+				my @c = caller($lvl);
+				last unless @c;
+				next if $c[0] =~ /^Template/;
+				push @caller_info, "$c[0] line $c[2]";
+				last if scalar(@caller_info) >= 3;
+			}
+			errorLog("Failed template lookup on '$name;$page\[misc\];$section\[default\]'"
+				. ", callers: " . join(", ", @caller_info));
+		}
 		return ;
 	}
 

@@ -566,7 +566,7 @@ sub dispComment {
 		$comment_shrunk = addDomainTags($comment_shrunk);
 	}
 
-	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 1;	# default is 1
+	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 2;	# default is 2 # XXX Jamie I think should be 1
 	$udt =~ /^(\d+)$/; $udt = 1 if !length($1);	# make sure it's numeric, sigh
 	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
 	$want_tags = 0 if				# but, don't display them if...

@@ -255,6 +255,8 @@ sub main {
 		}
 	}
 
+	errorLog("users.pl error_flag '$error_flag'") if $error_flag;
+
 	# call the method
 	$ops->{$op}{function}->() if ! $error_flag;
 

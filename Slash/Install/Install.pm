@@ -304,7 +304,10 @@ sub _install {
 		my $fh = gensym;
 		if (open($fh, "< $dump_file\0")) {
 			while (<$fh>) {
-				next unless (/^INSERT/ or /^DELETE/i);
+				# A theme's datadump.sql may wish to override
+				# sql/*/defaults.sql, so we should allow
+				# REPLACE here. - Jamie
+				next unless /^(INSERT|DELETE|REPLACE)/i;
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;

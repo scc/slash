@@ -397,7 +397,7 @@ CREATE TABLE users (
 	uid SERIAL,
 	nickname varchar(20) DEFAULT '' NOT NULL,
 	realemail varchar(50) DEFAULT '' NOT NULL,
-	fakeemail varchar(50),
+	fakeemail varchar(75),
 	homepage varchar(100),
 	passwd varchar(32) DEFAULT '' NOT NULL,
 	seclev int4 DEFAULT '0' NOT NULL,

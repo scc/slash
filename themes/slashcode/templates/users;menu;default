@@ -18,8 +18,8 @@ __template__
 	<TR>
 		<TD>
 [ [% FOR i = items %]
-		<A HREF="[% i.value %]">[% i.label %]</A>
-	[% " | " UNLESS loop.last %]
+	[% IF i.value %]<A HREF="[% i.value %]">[% END %][% i.label %][% IF i.value %]</A>[% END %]
+	[% " | " IF !loop.last AND i.value %]
 [% END %] ]
 		</TD>
 	</TR>

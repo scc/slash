@@ -51,6 +51,7 @@ $constants = getCurrentStatic();
  
 	# Determine user list size (for -R)
 	my $max_uid = $slashdb->getLastUser();
+	my $min_uid = $slashdb->sqlSelect("MIN(uid)", "users");
 
 	my $rootdir = getCurrentStatic("rootdir");
  
@@ -62,11 +63,11 @@ $constants = getCurrentStatic();
 		$title =~ s/\W+$// if rand(1) < 0.9;
 		$title =~ s/<[^>]+>//g;
 		$title =~ s/\b(\w)/\U$1/g if rand(1) < 0.4;
-	        my $introtext = make_werds(20 + rand 40 + rand 50);
+	        my $introtext = make_werds(20 + rand 40 + rand 50, 0.3);
 		$introtext .= typical_remark() if rand(1) < 0.05;
 	        my $bodytext = '';
 		if (rand(1) < 0.1) {
-			$bodytext = make_werds(20 + (rand 30) * (rand 50));
+			$bodytext = make_werds(20 + (rand 30) * (rand 50), 0.1);
 			$bodytext =~ s{([.?!] )}{
 				$1 . ((rand(1) < 0.2) ? "<P>" : "")
 			}xge;
@@ -76,7 +77,7 @@ $constants = getCurrentStatic();
 		$dept =~ s/\s+/-/g;
 		$dept =~ s/\W+$// if rand(1) < 0.9;
 	        my $author = getRandomAuthorID();
-	        my $submitter = getRandomUserID($max_uid);
+	        my $submitter = getRandomUserID($min_uid, $max_uid);
 		my $time = UnixDate(ParseDateString(
 			"epoch ".get_time($opts{t})),
 			"%Y-%m-%d %H-%M-%S");
@@ -108,7 +109,8 @@ $constants = getCurrentStatic();
 				$tid,
 				0,
 				$sid,
-				$story->{'time'},
+				$time,
+				$author,
 			);
 			if ($id) {
 				$slashdb->setStory($sid, { discussion => $id });
@@ -120,7 +122,7 @@ $constants = getCurrentStatic();
 			warn "($count) Story could not be created";
 		}
         	$count--;
-		sleep rand(5)+2 if $count; # otherwise sids will collide!
+		sleep rand(2)+2 if $count; # otherwise sids will collide!
 	}
 	my $t1 = new Benchmark;
 	print "$opts{num_stories} stories created in: ",
@@ -148,9 +150,17 @@ sub get_time {
 
 sub getRandomAuthorID {
 	# Yes, inefficient.  I do not care.
+	my $rand_uid = 1;
+	my $n_tries = 100;
 	my $uids = $slashdb->sqlSelectAll("uid", "users", "seclev > 0");
 	my @uids = map { $_->[0] } @$uids;
-        my $rand_uid = @uids[ rand @uids ];
+	my $ok = 0;
+	while (!$ok) {
+		die "can't get random author! '@uids'" if --$n_tries<0;
+		$rand_uid = $uids[ rand @uids ];
+		$ok = 1;
+		$ok = 0 if $rand_uid == $constants->{anonymous_coward_uid};
+	}
         return $rand_uid;
 }
 
@@ -171,13 +181,13 @@ sub getRandomSection {
 }
 
 sub getRandomUserID {
-	my ($max_uid) = @_;
+	my($min_uid, $max_uid) = @_;
 	my $n_tries = 100;
 	my $rand_uid = 1;
 	my $ok = 0;
 	while (!$ok) {
 		die "can't get random user! $max_uid" if --$n_tries<0;
-		$rand_uid = 1 + int(rand($max_uid));
+		$rand_uid = $min_uid + int(rand($max_uid-$min_uid+1));
 		$ok = 1;
 		$ok = 0 if $rand_uid == $constants->{anonymous_coward_uid};
 		$ok = 0 if !$slashdb->sqlSelect("COUNT(*)",
@@ -187,8 +197,9 @@ sub getRandomUserID {
 }
 
 sub make_werds {
-	my ($werds) = @_;
+	my($werds, $link_prob) = @_;
 	$werds = int($werds);
+	$link_prob ||= 0;
 	if ($werds > 40) {
 		$werder->set_werds_num(5,20);
 	} elsif ($werds > 20) {
@@ -196,6 +207,30 @@ sub make_werds {
 	} else {
 		$werder->set_werds_num($werds, $werds);
 	}
+	my @links = qw(
+		http://slashdot.org/		http://www.brunching.com/
+		http://www.newsforge.com	http://osdn.com
+		http://whitehouse.gov		http://www.whitehouse.gov/
+		http://us.imdb.com/		http://www.kernel.org
+		http://ic.ac.uk			http://cr.yp.to/
+		http://www.verizonreallyreallyreallysucks.com/
+		ftp://ftp.kernel.org/		ftp://ftp.gnu.org/gnu/Licenses/COPYING-2.0
+		news:news.admin.net-abuse.email gopher://ccat.sas.upenn.edu:3333/11/Fiction/
+		http://List-Etiquette.com/about/
+		http://slashdot.org/features/99/03/31/0137221.shtml
+		http://www.nap.edu/readingroom/books/newpath/chap2.html
+		http://www.forthnet.gr/forthnet/isoc/short.history.of.internet
+		http://www.freenix.fr/unix/linux/HOWTO/French-HOWTO.html
+		http://www.linux.org.mx/	http://www.linux.net.mx/linux.php
+		http://www.linux.org.uk/diary/	http://hepwww.ph.qmw.ac.uk/HEPpc/
+		http://www.w3.org		http://peipa.essex.ac.uk/tp-linux/
+		http://www.crosswinds.net/~tvquotes/futurama/2.html
+		http://www.google.com/search?q=cache:h58W7o4qU-w:www.space.com/sciencefiction/tv/futurama_gore_000516_wg.html+Futurama+Fry&hl=en
+		http://dmoz.org/Regional/Europe/United_Kingdom/Wales/Isle_of_Anglesey/Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch/
+		www.google.com			bad_link b.a.d l.i.n.k . .. ... ....
+		mailto:jamie@slashdot.org	mailto:pater@slashdot.org
+	);
+	push @links, 'http://directory.google.com/Top/Arts/Literature/Authors/C/Carroll,_Lewis/Works/Hunting_of_the_Snark,_The/';
 	my $comment;
 	my $cur_werds = 0;
 	my $tag = "";
@@ -210,6 +245,21 @@ sub make_werds {
 			}
 		} else {
 			$new_werds = $werder->sentence;
+		}
+		if ($link_prob and rand(1) < $link_prob) {
+			my @new_werds = split / /, $new_werds;
+			my $a_href = q{<a href="} . $links[rand @links] . q{">} . (rand(1)<0.1?" ":"");
+			my $close_a = (rand(1)<0.1?" ":"") . "</a>";
+			my $insert_start = int(rand(@new_werds-2));
+			my $insert_end = $insert_start + int(rand(4))+1;
+			$insert_end = scalar @new_werds if $insert_end > scalar @new_werds;
+			$new_werds = join(" ",
+				@new_werds[0..$insert_start-1],
+				$a_href . $new_werds[$insert_start],
+				@new_werds[$insert_start+1..$insert_end-1],
+				$new_werds[$insert_end] . $close_a,
+				@new_werds[$insert_end+1..$#new_werds]
+			);
 		}
 		if ($cur_werds and !$tag and rand > $cur_werds/$werds+0.3) {
 			if (rand(1) < 0.95) { $tag = "i" }

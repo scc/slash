@@ -33,10 +33,11 @@ __template__
 
 [% IF nickmatch_flag %]
 
-<P>This is <B>your</B> User Info page.  There are thousands more, but this one is yours.
-You most likely are not so interested in you, and probably would be most interested in
-clicking the "Edit User Info" and "Customize..." links you see up top there so you can
-customize [% constants.sitename %], change your password, or just click pretty widgets to kill time.
+<P>This is <B>your</B> User Info page.  There are thousands more, but
+this one is yours.  You most likely are not so interested in yourself,
+and probably would be more interested in the Preferences links you see
+up top there, where you can customize [% constants.sitename %],
+change your password, or just click pretty widgets to kill time.
 
 [% IF mod_flag %]
 <P>You're a moderator with [% points %] points[% IF points && lastgranted %] (expire after [% lastgranted %])[% END %]. Please read the

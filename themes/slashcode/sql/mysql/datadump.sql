@@ -147,14 +147,15 @@ INSERT INTO discussion_hitparade (hpid, discussion, threshold, count) VALUES (NU
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Change Password','[% constants.rootdir %]/users.pl?op=changepasswd',1,1);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','User Info','[% constants.rootdir %]/users.pl?op=userinfo',1,2);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','New User','[% constants.rootdir %]/users.pl?op=newuseradmin',10000,3);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Homepage','[% constants.rootdir %]/users.pl?op=edithome',1,4);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Edit User Info','[% constants.rootdir %]/users.pl?op=edituser',1,5);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Comments','[% constants.rootdir %]/users.pl?op=editcomm',1,6);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Logout','[% constants.rootdir %]/users.pl?op=userclose',1,7);
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Recent Topics','[% constants.rootdir %]/topics.pl?op=toptopics',0,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','New User','[% constants.rootdir %]/users.pl?op=newuseradmin',10000,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Your Info','[% constants.rootdir %]/users.pl?op=userinfo',1,10);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Logout','[% constants.rootdir %]/users.pl?op=userclose',1,20);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','<b>Preferences:</b>','',1,30);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Homepage','[% constants.rootdir %]/users.pl?op=edithome',1,40);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Comments','[% constants.rootdir %]/users.pl?op=editcomm',1,50);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','You','[% constants.rootdir %]/users.pl?op=edituser',1,60);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Password','[% constants.rootdir %]/users.pl?op=changepasswd',1,70);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Recent Topics','[% constants.rootdir %]/topics.pl?op=toptopics',0,80);
 
 #
 # Dumping data for table 'metamodlog'
