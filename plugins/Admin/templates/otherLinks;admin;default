@@ -12,6 +12,6 @@ __name__
 otherLinks
 __template__
 <LI><A HREF="[% constants.rootdir %]/search.pl?topic=[% FILTER fixparam; tid; END %]">More on [% topic.alttext %]</A></LI>
-<LI><A HREF="[% constants.rootdir %]/search.pl?query=&op=stories&author="[% uid %]"&section=author=[% FILTER fixparam; aid; END %]">Also by [% aid %]</A></LI>
+<LI><A HREF="[% constants.rootdir %]/search.pl?op=stories&author=[% FILTER fixparam; uid; END %]">Also by [% aid %]</A></LI>
 __seclev__
 500
