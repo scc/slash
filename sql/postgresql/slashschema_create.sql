@@ -151,20 +151,6 @@ CREATE INDEX idx_submit_ts ON formkeys(submit_ts);
 
 
 
-
-CREATE TABLE hitters (
-	id SERIAL,
-	host_addr varchar(15) DEFAULT '' NOT NULL,
-	hits int4 DEFAULT '0' NOT NULL,
-	PRIMARY KEY (id),
-	UNIQUE (host_addr),
-	UNIQUE (hits)
-);
-CREATE INDEX idx_host_addr ON hitters(host_addr);
-CREATE INDEX idx_hits ON hitters(hits);
-
-
-
 CREATE TABLE menus (
 	id SERIAL,
 	menu varchar(20) DEFAULT '' NOT NULL,

@@ -296,26 +296,6 @@ CREATE INDEX idx_submit_ts ON formkeys(submit_ts);
 *  indexes do not need to be explicity created.
 ************************************************/
 
-prompt drop table hitters
-drop table hitters;
-
-prompt create table hitters
-CREATE TABLE hitters (
-  id         number(12),
-  host_addr  varchar2(15) DEFAULT '' NOT NULL,
-  hits       number(12)   DEFAULT '0' NOT NULL,
-  constraint hitters_pk PRIMARY KEY (id),
-  constraint hitters_host_unq UNIQUE (host_addr),
-  constraint hitter_hits_unq UNIQUE (hits)
-);
-
-prompt drop sequence hitters_seq
-drop sequence hitters_seq;
-
-prompt create sequence hitters_seq
-create sequence hitters_seq 
-       start with 1;
-
 
 
 prompt drop table menus

@@ -191,20 +191,6 @@ CREATE TABLE formkeys (
   KEY submit_ts (submit_ts)
 );
 
-#
-# Table structure for table 'hitters'
-#
-
-DROP TABLE IF EXISTS hitters;
-CREATE TABLE hitters (
-  id int(5) NOT NULL auto_increment,
-  host_addr varchar(15) DEFAULT '' NOT NULL,
-  hits int(6) DEFAULT '0' NOT NULL,
-  PRIMARY KEY (id),
-  KEY host_addr (host_addr),
-  KEY hits (hits)
-);
-
 DROP TABLE IF EXISTS site_info;
 CREATE TABLE site_info (
   param_id int(11) NOT NULL auto_increment,
