@@ -636,7 +636,7 @@ sub dispComment {
 
 		unless($user->{noscores}) {
 			$score_to_display .= "(Score:$comment->{points}";
-			my $reasons = $constants->{reasons}{$comment->{reason}};
+			my $reasons = $constants->{reasons}[$comment->{reason}];
 			$score_to_display .= ", $reasons"
 				if $constants->{reason};
 			$score_to_display .= ")";
