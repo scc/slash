@@ -62,6 +62,12 @@ __template__
 [% CASE 'displayForm_title' %]
 	Login
 
+[% CASE 'mailPasswdForm_title' %]
+	Mail password
+
+[% CASE 'newUserForm_title' %]
+	Create Account
+	
 [% CASE 'displayForm_err_title' %]
 	Error Logging In
 

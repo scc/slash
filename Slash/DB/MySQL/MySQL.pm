@@ -782,6 +782,18 @@ sub getUserUID {
 	return $uid;
 }
 
+########################################################
+# Get user info from the users table with email address.
+# May be worth it to cache this at some point
+sub getUserEmail {
+	my($self, $email) = @_;
+
+	my($uid) = $self->sqlSelect('uid', 'users',
+		'realemail=' . $self->{_dbh}->quote($email)
+	);
+
+	return $uid;
+}
 #################################################################
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;

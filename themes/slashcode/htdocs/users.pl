@@ -63,6 +63,9 @@ sub main {
 		mailpasswd	=> \&mailPasswd,
 		validateuser	=> \&validateUser,
 		userclose	=> \&displayForm,
+		newuserform	=> \&displayForm,
+		mailpasswdform 	=> \&displayForm,
+		displayform	=> \&displayForm,
 		default		=> \&displayForm,
 	);
 
@@ -70,6 +73,9 @@ sub main {
 		userinfo	=> 1,
 		changepasswd	=> 1,
 		userlogin 	=> 1,
+		newuserform	=> 1,
+		mailpasswdform	=> 1,
+		displayform	=> 1,
 		savehome	=> 1,
 		saveuser	=> 1,
 		savecomm	=> 1,
@@ -153,7 +159,10 @@ sub previewSlashbox {
 
 #################################################################
 sub newUserForm {
-	slashDisplay('newUserForm')
+	my $curuser = getCurrentUser();
+	my $suadmin_flag = $curuser->{seclev} >= 10000;
+	my $title = getTitle('newUserForm_title');
+	slashDisplay('newUserForm', { title => $title, suadmin_flag => $suadmin_flag})
 }
 
 #################################################################
@@ -193,8 +202,18 @@ sub mailPasswd {
 	my $form = getCurrentForm();
 
 	if (! $uid) {
-		$uid = $slashdb->getUserUID($form->{unickname});
+		if ($form->{unickname} =~ /\@/) {
+			$uid = $slashdb->getUserEmail($form->{unickname});
+
+		} elsif ($form->{unickname} =~ /^\d+$/) {
+			$uid = $form->{unickname};
+
+		} else {
+			$uid = $slashdb->getUserUID($form->{unickname});
+		}
 	}
+
+	
 
 	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
 
@@ -1233,17 +1252,37 @@ sub displayForm {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
+	my $op = $form->{op};
+	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0;
+
+	$op ||= 'displayform';
+
+	my $ops = {
+		displayform 	=> 'loginForm',
+		mailpasswdform 	=> 'sendPasswdForm',
+		newuserform	=> 'newUserForm',
+		userclose	=> 'loginForm',
+		userlogin	=> 'loginForm'
+	};
+
 	my($title, $title2, $msg1, $msg2) = ('', '', '', '');
 
 	if ($form->{op} eq 'userclose') {
 		$title = getMessage('userclose');
 
-	} else {
+	} elsif ($op eq 'displayForm') {
 		$title = $form->{unickname}
 			? getTitle('displayForm_err_title')
 			: getTitle('displayForm_title');
-	}
+	} elsif ($op eq 'mailpasswdform') {
+		$title = getTitle('mailPasswdForm_title');
 
+	} elsif ($op eq 'newuserform') { 
+		$title = getTitle('newUserForm_title');
+	} else {
+		$title = getTitle('displayForm_title');
+	}
+	
 	$form->{unickname} ||= $form->{newusernick};
 
 	if ($form->{newusernick}) {
@@ -1253,12 +1292,18 @@ sub displayForm {
 	}
 
 	$msg1 = getMessage('dispform_new_msg_1');
-	$msg2 = getMessage('dispform_new_msg_2') if ! $form->{newusernick};
+	if (! $form->{newusernick} && $op eq 'newuserform') {
+		$msg2 = getMessage('dispform_new_msg_2') 
+	} elsif ($op eq 'displayform' || $op eq 'userlogin') { 
+		$msg2 = getMessage('newuserform_msg') 
+	}
 
-	slashDisplay('displayForm', {
+	slashDisplay($ops->{$op}, {
 		newnick		=> fixNickname($form->{newusernick}),
+		suadmin_flag 	=> $suadmin_flag,
 		title 		=> $title,
 		title2 		=> $title2,
+		logged_in	=> isAnon($curuser->{uid}) ? 0 : 1,
 		msg1 		=> $msg1,
 		msg2 		=> $msg2
 	});
