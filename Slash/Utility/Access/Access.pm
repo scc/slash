@@ -446,6 +446,8 @@ sub filterOk {
 			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
 		}
 		$report .= " nm=$number_match uid=$user->{uid} ipid=$user->{ipid} karma=$user->{karma}";
+		$report .= " content=$content";
+		$report =~ s/\s+/ /gs;
 
 		$regex = $raw_regex . $number_match;
 		my $tmp_regex = $regex;
