@@ -94,12 +94,6 @@ in this block -->
 
 <P>
 
-<!-- begin sectionindex block -->
-
-[% INCLUDE sectionindexd %]
-
-<!-- end sectionindex block -->
-
 <!-- begin organisation block -->
 
 [% INCLUDE organisation %]

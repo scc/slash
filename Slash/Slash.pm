@@ -250,7 +250,8 @@ sub printComments {
 		$header = $discussion->{id};
 	}
 
-print STDERR "==========\nDEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n";
+print STDERR "==========\nDEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n"
+	if getCurrentStatic('debug');
 
 	$pid ||= 0;
 	$cid ||= 0;

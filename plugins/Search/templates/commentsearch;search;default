@@ -17,7 +17,11 @@ __template__
 	[% x = start ? start : 1 %]
 	[% FOREACH comment=comments %]
 		[% user_email = Slash.db.getUser(comment.9, ['fakeemail', 'nickname']) %]
-		<BR><B>[% x %]</B>
+		[% IF comment.11 %]
+			<BR><B>[% comment.11 %]</B>
+		[% ELSE %]
+			<BR><B>[% x %]</B>
+		[% END %] 
 
 			<A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.1 %]&cid=[% comment.10 %]">[% comment.5 %]</A>
 

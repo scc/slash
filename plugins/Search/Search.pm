@@ -64,31 +64,42 @@ sub findComments {
 	my($self, $form, $start, $limit) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
-	my $sql;
+	my $query = $self->sqlQuote($form->{query});
+	my $columns = "section, stories.sid, stories.uid as author, discussions.title as title, pid, subject, stories.flags as flags, time, date, comments.uid as uid, comments.cid as cid ";
+	$columns .= ", TRUNCATE((((MATCH (comments.subject) AGAINST($query) + (MATCH (comment_text.comment) AGAINST($query)))) / 2), 1) as score "
+		if $form->{query};
+
+	my $tables = "stories, comments, comment_text, discussions";
+
+	my $key = " (MATCH (comments.subject) AGAINST ($query) or MATCH (comment_text.comment) AGAINST ($query)) ";
+
+
 	$limit = " LIMIT $start, $limit" if $limit;
 
-	my $key = $self->_keysearch($form->{query}, ['subject', 'comment']);
-
 	# Welcome to the join from hell -Brian
-	$sql = "SELECT section, stories.sid,";
-	$sql .= " stories.uid as author, discussions.title as title, pid, subject, stories.flags as flags, time, date, comments.uid as uid, comments.cid as cid ";
-
-	$sql .= "	  FROM stories, comments, comment_text, discussions WHERE ";
-
-	$sql .= " stories.sid = discussions.sid ";
-	$sql .= " AND comments.sid = discussions.id ";
-	$sql .= " AND comments.cid = comment_text.cid ";
-	$sql .= "	  AND $key "
+	my $where;
+	$where .= " comments.cid = comment_text.cid ";
+	$where .= " AND comments.sid = discussions.id ";
+	$where .= " AND discussions.sid = stories.sid ";
+	$where .= "	  AND $key "
 			if $form->{query};
 
-	$sql .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
+	$where .= "     AND stories.sid=" . $self->sqlQuote($form->{sid})
 			if $form->{sid};
-	$sql .= "     AND points >= $form->{threshold} "
+	$where .= "     AND points >= $form->{threshold} "
 			if $form->{threshold};
-	$sql .= "     AND section=" . $self->sqlQuote($form->{section})
+	$where .= "     AND section=" . $self->sqlQuote($form->{section})
 			if $form->{section};
-	$sql .= " ORDER BY date DESC, time DESC $limit ";
 
+	my $other;
+	if($form->{query}) {
+		$other = " ORDER BY score DESC, time DESC ";
+	} else {
+		$other = " ORDER BY date DESC, time DESC ";
+	}
+
+
+	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
 
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
@@ -138,15 +149,22 @@ sub findStory {
 	my($self, $form, $start, $limit) = @_;
 	$start ||= 0;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $columns = "nickname, $story_table.title, $story_table.sid as sid, time, commentcount, section";
-	my $tables = "$story_table, story_text, users, discussions";
-	my $other = " ORDER BY time DESC";
+	my $query = $self->sqlQuote($form->{query});
+	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
+	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
+		if $form->{query};
+	my $tables = "stories, story_text, users, discussions";
+	my $other;
+	if($form->{query}) {
+		$other = " ORDER BY score DESC";
+	} else {
+		$other = " ORDER BY time DESC";
+	}
 	$other .= " LIMIT $start, $limit" if $limit;
 
 	# The big old searching WHERE clause, fear it
-	my $key = $self->_keysearch($form->{query}, ["$story_table.title", 'introtext']);
-	my $where = "$story_table.sid = story_text.sid AND $story_table.sid=discussions.sid AND $story_table.uid = users.uid ";
+	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";
+	my $where = "stories.sid = story_text.sid AND stories.sid=discussions.sid AND stories.uid = users.uid ";
 	$where .= " AND $key" if $form->{query};
 	if ($form->{section}) { 
 		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";
@@ -154,8 +172,8 @@ sub findStory {
 	} else {
 		$where .= " AND displaystatus >= 0";
 	}
-	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', $story_table.flags) ";
-	$where .= " AND $story_table.uid=" . $self->sqlQuote($form->{author})
+	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', stories.flags) ";
+	$where .= " AND stories.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
 	$where .= " AND section=" . $self->sqlQuote($form->{section})
 		if $form->{section};
