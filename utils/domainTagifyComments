@@ -8,10 +8,11 @@ use strict;
 use URI;
 use Getopt::Std;
 use File::Basename;
+use Digest::MD5 'md5_hex';
+use Benchmark;
 use Slash;
 use Slash::Utility;
 use Slash::DB;
-use Benchmark;
 
 use vars qw( $slashdb $constants $vars $comment_table );
 
@@ -30,8 +31,8 @@ $constants = getCurrentStatic();
 my $vars = $slashdb->sqlSelectAllHashref("name", "name, value", "vars");
 $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 my($min_cid, $max_cid) = (0, 0);
-if ($opts{'f'}) {
-	# do the last week by default
+if ($opts{'f'} or $opts{'l'}) {
+	# if "-f" specified, do the last day by default
 	$opts{'f'} ||= time-(86400*7);
 	$opts{'l'} ||= time;
 	$min_cid = $slashdb->sqlSelect(
@@ -45,9 +46,9 @@ if ($opts{'f'}) {
 		"UNIX_TIMESTAMP(date) < " . $slashdb->sqlQuote($opts{'l'})
 	);
 } else {
-	# do the last 1000 comments by default
+	# do the last 100 comments by default
 	$max_cid = $opts{'L'} || $slashdb->sqlSelect("MAX(cid)", $comment_table);
-	$min_cid = $opts{'F'} || $max_cid-1000;
+	$min_cid = $opts{'F'} || $max_cid-100;
 	$min_cid = 0 if $min_cid < 0;
 }
 
@@ -66,10 +67,14 @@ if ($opts{'f'}) {
 			"comment_text",
 			"cid=$cid"
 		);
-		next unless $text and length($text) > 5;
+		next unless $text and length($text) > 15;
 		my $new_text = myAddDomainTags($text);
 		next unless $new_text ne $text;
+		my $new_signature = md5_hex($new_text);
 		$slashdb->sqlUpdate("comment_text", { comment => $new_text }, "cid=$cid");
+		$slashdb->sqlUpdate($comment_table, { signature => $new_signature }, "cid=$cid");
+		$slashdb->sqlUpdate("comments", { signature => $new_signature }, "cid=$cid")
+			if $comment_table ne "comments";
 		++$count_changed;
 		printf "%5d. cid %7d: %5d -> %5d bytes\n",
 			$count_changed, $cid, length($text), length($new_text);
@@ -77,8 +82,9 @@ if ($opts{'f'}) {
 	}
 
 	my $t1 = new Benchmark;
-	print "$count_changed comments domaintagified in: ",
-        	timestr(timediff($t1, $t0), 'noc'),"\n";
+	print "$count_changed comments (of " . ($max_cid-$min_cid) . ")" .
+		" domaintagified in: " .
+        	timestr(timediff($t1, $t0), 'noc') . "\n";
 }
 
 exit 0;
