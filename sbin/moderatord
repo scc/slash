@@ -1,0 +1,73 @@
+#!/usr/bin/perl -w
+
+###############################################################################
+# moderatord - the moderation "daemon". Calculates moderation information and
+# assigns results to users 
+#
+# Copyright (C) 1997 Rob "CmdrTaco" Malda
+# malda@slashdot.org
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+#
+#  $Id$
+###############################################################################
+use strict;
+use vars '$I';
+use Slash;
+use Slash::DB;
+
+my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+my($constants, $dbslash) = createEnvironment($virtual_user);
+$I = $constants;
+
+sub moderatordLog {
+	local *LOG;
+	my $dir = "$I->{logdir}";
+	open LOG, ">>$dir/moderatord.log"
+		or die "Can't append to $dir/moderatord.log: $!";
+	print LOG localtime() . "\t", join("\t", @_), "\n";
+	close LOG;
+}
+
+
+sub comments2tokens {
+	my $comments = shift;
+	my $tokenpool = $comments * $I->{tokenspercomment};
+	moderatordLog("$comments becomes $tokenpool tokens.");
+
+	my $stirredpoints = dbslash->stirPool();
+	$tokenpool += $stirredpoints * $I->{tokensperpoint};
+	moderatordLog(
+		($stirredpoints ? "Stirred out $stirredpoints points, " : '')
+		. "So the total token Pool=$tokenpool");
+
+	my($totalusers) = $dbslash->getUserLast();
+	my $eligibleusers = int($totalusers / 5) * 4;
+	moderatordLog("First $eligibleusers accounts available");
+
+	my $report = $dbslash->giveKarma($eligibleusers, $tokenpool);
+	moderatordLog($report);
+}
+
+my($tc, $lc) = $dbslash->getVars("totalComments", "lastComments");
+my $newcomments = $tc - $lc;
+#$newcomments+=1000;
+
+if ($newcomments > 0) {
+	$dbslash->setVar("lastComments", $tc);
+	comments2tokens($newcomments);
+	$dbslash->tokens2points();
+}
