@@ -285,6 +285,7 @@ sub prog2file {
 		# are for. (it would be nice if we could use the 5.6-ism, below)
 		#no warnings 'once';
 		$^W = 0; my $pid = open3(*IN, *OUT, *ERR, $exec); $^W = 1;
+		waitpid $pid, 0;
 		{
 			undef $/;
 			$data = <OUT>;
