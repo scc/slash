@@ -17,25 +17,45 @@ C<perl -MCPAN -e 'install "Bundle::Slash"'>
 
 =head1 CONTENTS
 
-Bundle::CPAN		- File::Spec,Digest::MD5,Compress::Zlib,libnet,Archive::Tar,Data::Dumper
+Net::Cmd                - libnet
+
+Digest::MD5             - Instead of Bundle::CPAN
+
+MD5
+
+Compress::Zlib          - ditto
+
+Archive::Tar            - ditto
+
+File::Spec              - ditto
+
+Storable
+
+MIME::Base64            - why after URI if URI needs it?
 
 Bundle::LWP		- URI,HTML::Parser,MIME::Base64
-
-Getopt::Long
-
-DBI
-
-DBI::FAQ
-
-Bundle::DBD::mysql	- Data::ShowTable
-
-Date::Parse		- TimeDate
 
 XML::Parser
 
 XML::RSS
 
-Date::Manip
+DBI
+
+DBI::FAQ
+
+Data::ShowTable
+
+J/JW/JWIED/Msql-Mysql-modules-1.2216.tar.gz    - instead of Bundle::DBD::mysql (Data::ShowTable)
+
+DBIx::Password
+
+Apache::DBI
+
+Apache::Cookie
+
+AppConfig		- Should be installed with TT, but sometimes not?
+
+Template		- Template Toolkit
 
 Mail::Sendmail
 
@@ -43,19 +63,15 @@ Mail::Address
 
 Email::Valid
 
-Apache::DBI
-
-Apache::Cookie
+Getopt::Long
 
 Image::Size
 
-Storable
+Date::Manip             - Still needed, but not for long
 
-AppConfig		- Should be installed with TT, but sometimes not?
+Date::Parse		- TimeDate
 
-Template		- Template Toolkit
-
-DBIx::Password
+Time::ParseDate         - Time-modules
 
 Time::HiRes
 
@@ -67,17 +83,7 @@ Schedule::Cron
 mod_perl must be installed by hand, because of the special configuration
 required for it.
 
-If CPAN starts downloading "perl-5.6.0" or somesuch, ctrl-C it, exit
-the CPAN shell, and start it again.  The latest CPAN.pm version does not
-have this problem, but older ones do, and you may have an older one
-installed.
-
-Note that if you are not using MySQL, then you'll have some problems
-with this.  Just let it fail and install your DB library manually.
-Also note that Compress::Zlib and XML::Parser need extra libraries
-(see INSTALL for Slash, or the docs for the modules).
-
-We don't use Bundle::DBI because we don't need the Proxy stuff.  If you
-want the Proxy stuff, then install Bundle::DBI yourself.
+You might want to do C<force install Net::Cmd> to start the process,
+until libnet tests are fixed.
 
 =cut
