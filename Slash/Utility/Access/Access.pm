@@ -408,6 +408,19 @@ sub filterOk {
 
 	my $filters = $slashdb->getContentFilters($formname, $field);
 
+#	my $text_to_test = decode_entities(strip_nohtml($content));
+	my $text_to_test = $content;
+	my $report_prefix = "filterOk_report len1=" . length($text_to_test);
+	$text_to_test = strip_nohtml($text_to_test);
+	$report_prefix .= " len2=" . length($text_to_test);
+	$text_to_test = decode_entities($text_to_test);
+	$report_prefix .= " len3=" . length($text_to_test);
+
+	$text_to_test =~ s/[\xA0]/ /g;
+#	$text_to_test =~ s/<br>/\n/gi;
+	$report_prefix .= " len4=" . length($text_to_test);
+	study $text_to_test;
+
 	# hash ref from db containing regex, modifier (gi,g,..),field to be
 	# tested, ratio of field (this makes up the {x,} in the regex, minimum
 	# match (hard minimum), minimum length (minimum length of that comment
@@ -415,8 +428,8 @@ sub filterOk {
 	# to post if regex matches contents. make sure that we don't select new
 	# filters without any regex data.
 	for my $f (@$filters) {
-		my($number_match, $regex);
-		my $raw_regex		= $f->[2];
+		my $number_match	= '';
+		my $regex		= $f->[2];
 		my $modifier		= 'g' if $f->[3] =~ /g/;
 		my $case		= 'i' if $f->[3] =~ /i/;
 		my $field		= $f->[4];
@@ -426,48 +439,57 @@ sub filterOk {
 		my $err_message		= $f->[8];
 		my $isTrollish		= 0;
 
-#		my $text_to_test = decode_entities(strip_nohtml($content));
-		my $text_to_test = $content;
-		my $report = "filterOk_report f=$f->[0] len1=" . length($text_to_test);
-		$text_to_test = strip_nohtml($text_to_test);
-		$report .= " len2=" . length($text_to_test);
-		$text_to_test = decode_entities($text_to_test);
-		$report .= " len3=" . length($text_to_test);
-
-		$text_to_test		=~ s/\xA0/ /g;
-		$text_to_test		=~ s/\<br\>/\n/gi;
-		$report .= " len4=" . length($text_to_test);
-
-		next if ($minimum_length && length($text_to_test) < $minimum_length);
+		next if $minimum_length and length($text_to_test) < $minimum_length;
 
 		if ($minimum_match) {
 			$number_match = "{$minimum_match,}";
 		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
+			$number_match = "{" . int(length($text_to_test)*$ratio + 1) . ",}";
+		} else {
+			$number_match = "";
 		}
-		$report .= " nm=$number_match uid=$user->{uid} ipid=$user->{ipid} karma=$user->{karma}";
-		$report .= " content=".substr($content,0,200);
+		my $report .= "$report_prefix f=$f->[0]";
+		$report .= " nm=$number_match uid=$user->{uid} ipid=$user->{ipid}";
+		$report .= " karma=$user->{karma}" unless $user->{is_anon};
+		$report .= " content=" . substr($content,0,200);
 		$report =~ s/\s+/ /gs;
 
-		$regex = $raw_regex . $number_match;
-		my $tmp_regex = $regex;
+		# If the regex wants the number_match in a specific place or
+		# places, put it there, otherwise just append it.
+		if ($regex =~ s/__NM__/$number_match/g) {
+			# OK, it's where it was wanted, nothing more required.
+		} else {
+			# If no __NM__ in the text, it gets appended.
+			$regex .= $number_match;
+		}
 
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
-		if ($modifier eq 'g') {
-			if ($text_to_test =~ /$regex/g) {
-				$$error_message = $err_message;
-				$slashdb->createAbuse("content filter", $formname, $text_to_test);
-print STDERR "$report\n";
-				return 0;
+		# Some of our regexes may have nested quantifiers, which can chew
+		# CPU time exponentially.  To prevent a denial of service by posting
+		# a comment with text designed to run away with the CPU, we limit
+		# the amount of time we'll spend on any one filter for any one
+		# comment.  Note that, in my testing, the only comments that sucked
+		# CPU time were all ascii art... but to err on the side of caution,
+		# text that gets interrupted is allowed to pass.
+		my $matched = 0;
+		eval {
+			local $SIG{ALRM} = sub { die "timeout" };
+			alarm 1;
+			if ($modifier eq 'g') {
+				$matched = 1 if $text_to_test =~ /$regex/g;
+			} else {
+				$matched = 1 if $text_to_test =~ /$regex/;
 			}
-		} else {
-			if ($text_to_test =~ /$regex/) {
-				$$error_message = $err_message;
-				$slashdb->createAbuse("content filter", $formname, $text_to_test);
-print STDERR "$report\n";
-				return 0;
-			}
+			alarm 0;
+		};
+		if ($@ and $@ =~ /timeout/) {
+			print STDERR "$report TIMEOUT\n";
+		} elsif ($matched) {
+			$$error_message = $err_message;
+			$slashdb->createAbuse("content filter", $formname, $text_to_test);
+			print STDERR "$report\n";
+			return 0;
 		}
 	}
 	return 1;
@@ -491,16 +513,22 @@ sub compressOk {
 		$uid = $user->{uid};
 	}
 
-	# These could be tweaked.  $slice_size could be roughly 300-3000;
+	# These could be tweaked.  $slice_size could be roughly 300-2000;
 	# the $x_space vars could go up or down by a factor of roughly 2.
-	my $slice_size = 1000;
+	my $slice_size = 600;
 	my $nbsp_space = " " x 12;
 	my $breaktag_space = " " x 4;
+	my $spacerun_min = 5;
+	my $spacerun_exp = 1.4;
 
 	my $orig_length = length($content);
 	my $slice_remainder = $orig_length % $slice_size;
-	my $n_slices = int($orig_length/$slice_size);
-	$slice_size += int($slice_remainder/$n_slices+1) if $n_slices > 0;
+	my $n_slices = int($orig_length/$slice_size + 1/3); # round slightly up
+	if ($n_slices == 0) {
+		$slice_size = $orig_length;
+	} else {
+		$slice_size = int($orig_length/$n_slices) + 1;
+	}
 
 	my $limits = {
 		0.8  => [ 10, 19],		# was 1.3
@@ -521,13 +549,18 @@ sub compressOk {
 		my $length = length($content_slice);
 		next if $length < 10;
 
-		# Whitespace tags get converted to easily-compressible whitespace
-		# for purposes of the compression check.
+		# Runs of whitespace get increased in size for purposes of the
+		# compression check, since they are commonly used in ascii art
+		# (runs of anything will be compressed more).
+		$content_slice =~ s{(\s{$spacerun_min,})}
+			{" " x (length($1) ** $spacerun_exp)}ge;
+		# Whitespace _tags_ also get converted to runs of spaces.
 		$content_slice =~ s/<\/?(BR|P)>/$breaktag_space/gi;
-		# Whitespace entities get similar special treatment
+		# Whitespace entities get similar special treatment.
 		$content_slice =~ s/\&(nbsp|#160|#xa0);/$nbsp_space/gi;
-		# Other entities just get plain old decoded before the compress check
+		# Other entities just get decoded before the compress check.
 		$content_slice = decode_entities($content_slice);
+
 		# The length we compare against for ratios is the length of the
 		# modified slice of the text.
 		$length = length($content_slice);
@@ -545,7 +578,9 @@ sub compressOk {
 				my $report = "compressOk_report ss=$slice_size leno=$orig_length len1=$length";
 				$report .= " comlen=$comlen field=$field";
 				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
-				$report .= " uid=$user->{uid} karma=$user->{karma} ipid=$user->{ipid}";
+				$report .= " uid=$user->{uid}";
+				$report .= " karma=$user->{karma}" if !$user->{is_anon};
+				$report .= " ipid=$user->{ipid}";
 				$report .= " content=".substr($content, 0, 200);
 				$report =~ s/\s+/ /gs;
 				print STDERR "$report\n";
