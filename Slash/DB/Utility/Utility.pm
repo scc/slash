@@ -7,6 +7,7 @@ use Slash::Utility;
 
 # BENDER: Oh no! Not the magnet! 
 
+my $timeout = 30; #This should eventualy be a parameter that is configurable
 #Class variable that stores the database handle
 
 ########################################################

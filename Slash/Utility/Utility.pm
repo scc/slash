@@ -52,6 +52,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	createCurrentAnonymousCoward
 	createEnvironment
 	setCurrentUser
+	setCurrentForm
 	isAnon
 	getAnonId
 	getFormkey
@@ -298,6 +299,41 @@ sub setCurrentUser {
 	}
 
 	$user->{$key} = $value;
+}
+
+#========================================================================
+
+=item setCurrentForm(MEMBER, VALUE)
+
+Sets a value for the current user (it will not be permanently stored)
+
+Parameters
+
+	MEMBER
+	The member to store VALUE in.
+
+	VALUE
+	VALUE to be stored in the current user hash. 
+
+Return value
+
+	A hash reference with the user information is returned unless VALUE is passed. If 
+	MEMBER is passed in then only its value will be returned.
+
+=cut
+
+sub setCurrentForm {
+	my($key, $value) = @_;
+	my $form;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$form = $r->pnotes('form');
+	} else {
+		$form = $static_form;
+	}
+
+	$form->{$key} = $value;
 }
 
 #========================================================================

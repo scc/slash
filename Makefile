@@ -11,6 +11,7 @@ SHELL = /bin/sh
 PERL = perl
 NOOP = $(SHELL) -c true
 RM_RF = rm -rf
+RM = rm -f
 SUFFIX = .gz
 COMPRESS = gzip --best
 TAR  = tar
@@ -85,3 +86,7 @@ distdir :
 	$(RM_RF) $(DISTVNAME)
 	$(PERL) -MExtUtils::Manifest=manicopy,maniread \
 	-e "manicopy(maniread(),'$(DISTVNAME)', '$(DIST_CP)');"
+
+manifest :
+	(cd Slash; make distclean)
+	$(PERL) -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest'

@@ -169,7 +169,7 @@ sub slashDisplaySection {
 	my $slashdb = getCurrentDB();
 	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
 
-	if (!ref $name && $thissect && $slashdb->getBlock($thissect . "_$name", 'block')) {
+	if (!ref $name && $thissect && $slashdb->getTemplate($thissect . "_$name", 'template')) {
 		slashDisplay($thissect . "_$name", @_);
 	} else {
 		slashDisplay($name, @_);

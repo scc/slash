@@ -114,8 +114,10 @@ sub prog2file {
 	my($command, $arguments, $f) = @_;
 	my $exec = "$command virtual_user=$virtual_user $arguments";
 	my $d = `$exec`;
+	print "$d";
 	print "$exec\n";
 	my $dir = dirname($f);
+	print "DIR $dir:$f";
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {
 		local *F;
@@ -197,28 +199,28 @@ sub sectionHeaders {
 	my $form = getCurrentForm();
 	local(*FH, *STDOUT);
 
-	$form->{ssi} = 1;
+	setCurrentForm('ssi', 1);
 	open FH, ">$constants->{basedir}/$section/slashhead.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "thread");
 	close FH;
 
-	$form->{ssi} = 0;
+	setCurrentForm('ssi', 0);
 	open FH, ">$constants->{basedir}/$section/slashfoot.inc"
 		or die "Can't open $constants->{basedir}/$section/slashfoot.inc: $!";
 	*STDOUT = *FH;
 	footer();
 	close FH;
 
-	$form->{ssi} = 1;
+	setCurrentForm('ssi', 1);
 	open FH, ">$constants->{basedir}/$section/slashhead_F.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead_F.inc: $!";
 	*STDOUT = *FH;
 	header("", $section, "flat");
 	close FH;
 
-	$form->{ssi} = 0;
+	setCurrentForm('ssi', 0);
 	open FH, ">$constants->{basedir}/$section/slashfoot_F.inc"
 		or die "Can't open $constants->{basedir}/$section/slashfoot_F.inc: $!";
 	*STDOUT = *FH;

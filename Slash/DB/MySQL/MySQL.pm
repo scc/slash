@@ -9,7 +9,6 @@ use URI ();
 
 # BENDER: I hate people who love me.  And they hate me.
 
-my $timeout = 30; #This should eventualy be a parameter that is configurable
 # The following two are for CommonPortals
 
 # For the getDecriptionsk() method
@@ -60,7 +59,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
 
 	'templates'
-		=> sub { $_[0]->sqlSelectMany('bid,title', 'authors') },
+		=> sub { $_[0]->sqlSelectMany('tpid,title', 'templates') },
 
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
@@ -852,7 +851,7 @@ sub setAuthor {
 
 ########################################################
 sub setTemplate {
-	_genericSet('blocks', 'bid', @_);
+	_genericSet('templates', 'tpid', @_);
 }
 
 ########################################################
@@ -2582,17 +2581,6 @@ sub saveExtras {
 	}
 }
 
-##################################################################
-# This should be rewritten so that at no point do we
-# pass along an array -Brian
-sub getKeys {
-	my($self, $table) = @_;
-	my @keys = $self->sqlSelectColumns($table)
-		if $self->sqlTableExists($table);
-
-	return \@keys;
-}
-
 ########################################################
 sub getStory {
 	my($self) = @_;
@@ -3075,12 +3063,15 @@ sub sqlReplace {
 	return $self->{_dbh}->do($sql) or errorLog($sql);
 }
 
-########################################################
+##################################################################
+# This should be rewritten so that at no point do we
+# pass along an array -Brian
 sub getKeys {
 	my($self, $table) = @_;
-	$self->sqlSelectColumns($table)
+	my @keys = $self->sqlSelectColumns($table)
 		if $self->sqlTableExists($table);
 
+	return \@keys;
 }
 
 ########################################################

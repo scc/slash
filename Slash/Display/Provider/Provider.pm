@@ -69,7 +69,7 @@ sub _load {
 		$text = $$text;
 	} else {
 		$slashdb = getCurrentDB();
-		$text = $slashdb->getBlock($name, 'block');
+		$text = $slashdb->getTemplate($name, 'template');
 	}
 
 	print STDERR "_load($name)\n" if $DEBUG;
