@@ -157,8 +157,10 @@ install: slash plugins
 		fi;								\
 		case "$$a" in							\
 	 	'utils/slash')							\
-			 if [ -d $(INIT) && "$(INIT)" != "/etc" ]; then			\
-			 	init=$(INIT);					\
+			 if [ "$(INIT)" != "/etc" ]; then			\
+			 	if [ -d $(INIT) ]; then 		\
+			 		init=$(INIT);				\
+				fi;								\
 			 elif [ -d /etc/init.d ]; then 				\
 	 			init=/etc;					\
 			 elif [ -d /etc/rc.d/init.d ]; then 			\
