@@ -133,11 +133,19 @@ my (%conversions) = (
 	'journals'		=> sub {
 		my($data) = @_;
 		
-		# Why this schema change was made, I do NOT know.
+		$data->{description} ||= '';
 		$data->{discussion} = $data->{comment_header};
 		delete $data->{comment_header};
+
+		return $data;
 	},
-	'journals_text'		=> undef,
+	'journals_text'		=> sub {
+		my($data) = @_;
+
+		$data->{article} ||= '';
+
+		return $data;
+	},
 	'journal_friends'	=> undef,
 	'journal_themes'	=> undef,
 
