@@ -19,9 +19,10 @@ my $PROGNAME = basename($0);
 my %opts;
 # Remember to doublecheck these match usage()!
 usage('Options used incorrectly') unless getopts('hvu:', \%opts);
-usage() if ($opts{'h'} || !keys %opts);
+usage() if $opts{'h'};
 version() if $opts{'v'};
 usage('Need virtual user') unless $opts{'u'};
+push @ARGV, './slashdotrc.pl' if !@ARGV;
 usage("Need slashdotrc.pl file") unless my $rcfile = $ARGV[0];
 
 ####################################
@@ -67,15 +68,15 @@ my @user_tables = qw(
 
 ####################################
 # Questions: fix AC UID, heaps.
-my($ac_data, $ac_uid, $del_uid2, $do_heaps);
+my(%ac_uid, $del_uid2, $do_heaps);
 {
-	$ac_uid = ask(<<'EOT');
+	$ac_uid{-1} = ask(<<'EOT');
 Please select a UID for the anonymous user of the site.  It is probably
 best if it is the lowest positive integer that is unused on the old
 Slash 1.0 site.  Enter the integer here (enter "1" to do no change):
 EOT
 
-	die "[$ac_uid] is not an integer.\n" unless $ac_uid =~ /^\d+$/;
+	die "[$ac_uid{-1}] is not an integer.\n" unless $ac_uid{-1} =~ /^\d+$/;
 
 	$del_uid2 = ask(<<'EOT') =~ /^y/i;
 Should we delete uid 2, the new admin user created by the installation?
@@ -84,23 +85,15 @@ and you can use those.  If you choose not to do this, make sure uid 2
 is not a conflict from your other site.  [yes/No]
 EOT
 
-	if ($ac_uid != 1) {
-		for (@user_tables) {
-			$ac_data->{$_} = $dbh_new->selectall_hashref(<<EOT);
-SELECT * FROM $_ WHERE uid=1
-EOT
-
-		}
-					
-		$dbh_new->do(<<EOT);
-UPDATE vars SET value=$ac_uid WHERE name='anonymous_coward_uid'
-EOT
-
+	if ($ac_uid{-1} != 1) {
 		for (@user_tables) {
 			$dbh_new->do("DELETE FROM $_ WHERE uid=1");
-			# This is now done in the cleanup phase.
-			#$dbh_new->do("UPDATE $_ SET uid=$ac_uid WHERE uid=1");
 		}
+
+		$dbh_new->do(<<EOT);
+UPDATE vars SET value=$ac_uid{-1} WHERE name='anonymous_coward_uid'
+EOT
+
 	}
 
 	if ($del_uid2) {
@@ -114,7 +107,6 @@ Should we populate the heap tables during this conversion?
 (Recommended: Only answer NO to this question if you know what you are doing)
 [yes/No]
 EOT
-
 	
 }
 
@@ -122,9 +114,13 @@ EOT
 # main body
 my(%topics, %discussions, %polls, %storystuff, %comments);
 {
-
-if (0) {
 	# Ignoring: abusers
+
+	# First, we determine if we need to do some creative user renumbering
+	# when dealing with the AC user.
+	fix_ac();
+
+	# Sections: This probably will NOT stay a straight copy for long.
 	duplicate('sections', 1);
 
 	# offset -> off_set
@@ -145,14 +141,22 @@ if (0) {
 	# Replace topics dropping the character based tid for the new sequence.
 	duplicate('topics', 1, sub {
 		my($data) = @_;
+		$data->{name} = $data->{tid};
 		delete $data->{tid};
 		return $data;
 	});
 	reload_keys('topics', \%topics, 'tid', 'alttext');
-
+	
 	# Convert descriptions using a sequence.
 	duplicate('discussions', 1, sub {
 		my($data) = @_;
+		if (! $data->{url}) {
+			printf <<EOT, ($data->{sid}) ? "($data->{sid})":'';
+      Discussion "$data->{title}" %s had null URL; skipping...
+EOT
+
+		 	return;
+		}
 		# Program should accept a default topic for discussions.
 		$data->{'topic'} = -1;
 		# Admins must disable stories via their own criterion.
@@ -165,14 +169,15 @@ if (0) {
 		return $data
 	});
 	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
-}
 
-	# no more uid == -1, but we do now copy the AC UID. The AC issues
-	# will be resolved at cleanup.
+	# Note, we don't copy UID -1 since the AC user is created
+	# at install time.
 	my $usersub = sub {
 		my($data) = @_;
-		return if $data->{uid} == -1 ||
-			  (!$del_uid2 && $data->{uid} == 2);
+
+		# Resolve UID collisions (anonymous user)
+		$data->{uid} = $ac_uid{$data->{uid}}
+			if exists $ac_uid{$data->{uid}};
 
 		$data->{seclev} = 1
 			if exists $data->{seclev} && $data->{seclev} == 0;
@@ -216,7 +221,6 @@ if (0) {
 	# put keys into users_param
 	users_keys();
 
-if (0) {
 	# update aid's etc.
 	my $story_authors = fix_authors();
 
@@ -230,9 +234,9 @@ if (0) {
 		die "NULL UID DETECTED FOR AUTHOR '$data->{aid}'\n"
 			if !$data->{uid};
 		delete $data->{aid};
-		$data->{tid} = $topics{$data->{tid}};
+		$data->{tid} = $topics{$data->{tid}} || $topics{''};
 		$data->{discussion} = $discussions{$data->{sid}};
-		$data->{hits} = $storystuff{$data->{sid}};
+		$data->{hits} = $storystuff{$data->{sid}} || 0;
 		# Use to properly assign topics to story-based discussions.
 		#$story_topics{$data->{sid}} = $data->{tid};
 		my %newfields;
@@ -274,69 +278,97 @@ EOT
 		delete $data->{qid};
 		return $data;
 	});
-	reload_keys('pollquestions', \%polls, 'qid', 'question');
+	reload_keys('pollquestions', \%polls, 'qid', 'date');
 
+	my %skipped_polls;
 	duplicate('pollanswers', 1, sub {
 		my($data) = @_;
+		return if exists $skipped_polls{$data->{qid}};
 		# Note AID here does means "ANSWER ID", not "author id".
-		$data->{qid} = $polls{$data->{qid}};
+		my $oldpoll = $data->{qid};
+		$data->{qid} = $polls{$oldpoll};
+		if (! $data->{qid}) {
+			print "Skipping answers for deleted poll '$oldpoll'\n";
+			$skipped_polls{$oldpoll}++;
+			return;
+		}
 		return $data;
 	});
+	# Done with %skipped_polls.
+	%skipped_polls = ();
 
 	duplicate('pollvoters', 1, sub {
 		my($data) = @_;
+		# Fix UID.
+		$data->{uid} = $ac_uid{$data->{uid}} 
+			if exists $ac_uid{$data->{uid}};
 		$data->{qid} = $polls{$data->{qid}};
-		$data->{uid} = $ac_uid if $data->{uid} == -1;
 		return $data;
 	});
+	# Done with polls by this point.
+	%polls = ();
 
 	copy_comments();
-
-	# Submissions: Fix uid, tid
-	duplicate('submissions', 1, sub {
-		my($data) = @_;
-		$data->{uid} = $ac_uid if $data->{uid} == -1;
-		$data->{tid} = $topics{$data->{tid}};
-		$data->{ALLOWED_FIELDS} = [qw(
-			subid email name time subj story tid note section
-			comment uid del
-		)];
-		return $data;
-	});
-
-	# copy straight, but fix uid == -1
-	my $fixac_sub = sub {
-		my($data) = @_;
-		$data->{uid} = $ac_uid if $data->{uid} == -1;
-		return $data;
-	};
-	# Ignoring formkeys.
-	# Accesslog: Fix uid. (Metamodlog doesn't need it, but we copy anyways)
-	for (qw(accesslog metamodlog)) {
-		duplicate($_, 1, $fixac_sub);
-	}
 
 	# Moderatorlog: Fix sid, cid.
 	duplicate('moderatorlog', 1, sub {
 		my($data) = @_;
 		my $sid = $data->{sid};
 		$data->{sid} = $discussions{$data->{sid}};
-		$data->{cid} = $comments{$sid}->{$data->{cid}};
+		# We do not import records for comments without a discussion.
+		return if !$data->{sid};
+		my $oldcid = $data->{cid};
+		$data->{cid} = $comments{$sid}->{$oldcid};
+		(print <<EOT and return) if !$data->{cid};
+Warning: NULL CID found for '$sid' #$oldcid - record not imported.
+EOT
 		return $data;
 	});
-		
+	# Desperately needed, if you have a site the size of Slashdot, you're 
+	# probably running out of memory right about now.
+	%discussions = ();
+	%comments = ();
+
+	# Submissions: Fix uid, tid
+	duplicate('submissions', 1, sub {
+		my($data) = @_;
+		# Fix UID.
+		$data->{uid} = $ac_uid{$data->{uid}} 
+			if exists $ac_uid{$data->{uid}};
+
+		$data->{tid} = $topics{$data->{tid} || ''};
+		$data->{ALLOWED_FIELDS} = [qw(
+			subid email name time subj story tid note section
+			comment uid del
+		)];
+		return $data;
+	});
+	%topics = ();
+
 	# do all the blocks stuff
 	copy_blocks();
 	fix_sectionblocks();
 
 	fix_vars();
 
+	# Ignoring: formkeys, accesslog 
+	# (Move accesslog by hand if necessary, remember to fix the AC uid!)
+
+	# copy straight, but fix uid when handling anonymous user (or user
+	# which may be moved around as result of AC UID).
+	my $fixac_sub = sub {
+		my($data) = @_;
+		$data->{uid} = $ac_uid{$data->{uid}} 
+			if exists $ac_uid{$data->{uid}};
+		return $data;
+	};
+	# Metamodlog: This should go fine as a direct copy fixing the AC uid.
+	for (qw(metamodlog)) {
+		duplicate($_, 1, $fixac_sub);
+	}
+		
 	# populate heap tables.
 	fill_heaps() if $do_heaps;
-}
-
-	# Cleanup phase. Create AC user at appropriate UID position.
-	insert_ac() if $ac_uid != 1;
 }
 
 
@@ -352,66 +384,33 @@ sub ask {
 	return $answer;
 }
 
-sub insert_ac {
-	# Define helper sub ref.
-	my $insert_sub = sub {
-		my($table, $rec, $uid)= @_;
-		$rec->{uid} = $uid if $uid;
-		my $sql = sprintf "INSERT INTO $table (%s) VALUES (%s)", 
-				join(', ', keys %{$rec}), 
-				join(', ', map { $dbh_new->quote($_) }
-					values %{$rec});
-		my $err;
-		$dbh_new->do($sql);
-		$err = $dbh_new->errstr;
-		print "$table TRAP->'$err'\n" if $err;
-		if ($err && ($err =~ /^Duplicate entry/)) {
-			print "** Caught a duplicate, updating instead!\n";
-			#print "SQL: $sql\n";
-			delete $rec->{uid};
-			$sql = "UPDATE $table SET ";
-			my @keys = keys %{$rec};
-			for (@keys) {
-				$sql .= sprintf "\n\t$_ = %s%s",
-						$dbh_new->quote($rec->{$_}),
-						($_ ne $keys[-1]) ? ',' : '';
-			}
-			$sql .= "\nWHERE uid=$uid";
-			$dbh_new->do($sql);
-			(print "SQL: $sql\n" and die "\n") if $DBI::errstr;
-		}
-	};
+sub fix_ac {
+	print "Checking user database...\n";
 
 	# First, check to see if the desired UID is occupied...
-	my $sth_d = $dbh_new->prepare("SELECT uid FROM users WHERE uid=$ac_uid");
-	$sth_d->execute;
-	my ($uid) = $sth_d->fetchrow_array;
-	$sth_d->finish;
-
-	if ($uid) {
-		# Copy our dear user, so that it's belongings may be moved
-		# elsewhere.
-		print "-- Copying user at AC UID #$ac_uid\n";
-		my %user_data;
-		for (@user_tables) {
-			$user_data{$_} = $dbh_new->selectall_hashref(<<EOT);
-SELECT * FROM $_ WHERE uid=$ac_uid
+	my $sth_s = $dbh_old->prepare(<<EOT);
+SELECT uid FROM users WHERE uid=$ac_uid{-1}
 EOT
 
-			$dbh_new->do("DELETE FROM $_ WHERE uid=$ac_uid");
-		}
-		
+	$sth_s->execute;
+	my ($uid) = $sth_s->fetchrow_array;
+	$sth_s->finish;
+
+	# If so, we must find the first free UID.
+	if ($uid) {
 		# Now do a user count.
-		$sth_d = $dbh_new->prepare("SELECT max(uid) FROM users");
-		$sth_d->execute;
-		my($maxuid) = $sth_d->fetchrow_array;
-		$sth_d->finish;
-		
-		# If so, we must find the first free UID.
-		$sth_d = $dbh_new->prepare("SELECT uid FROM users ORDER BY uid");
-		$sth_d->execute;
+		$sth_s = $dbh_old->prepare("SELECT max(uid) FROM users");
+		$sth_s->execute;
+		my($maxuid) = $sth_s->fetchrow_array;
+		$sth_s->finish;
+		# Find the first gap.
+		$sth_s = $dbh_old->prepare(<<EOT);
+SELECT uid FROM users WHERE uid >= 1 ORDER BY uid
+EOT
+
+		$sth_s->execute;
 		my $lastuid;
-		while (my $c = $sth_d->fetchrow_arrayref) {
+		while (my $c = $sth_s->fetchrow_arrayref) {
 			if (! $lastuid) {
 				$lastuid = $c->[0];
 				next;
@@ -419,29 +418,14 @@ EOT
 			last if $c->[0] != $lastuid + 1;
 			$lastuid = $c->[0];
 		}
-		$lastuid = undef if $lastuid == $maxuid;
-		$lastuid++ if $lastuid;
-		printf "Preserved user now %s\n", 
-			($lastuid) ?	"moved to UID #$lastuid" : 
-					"apppended to the user database";
+		$lastuid++;
+		printf <<EOT;
+Existing user found at UID #$ac_uid{-1} will be moved to UID #$lastuid
+EOT
 
-		# Now we move our preserved user into the gap (or to the end).
-		for my $table (@user_tables) {
-			for (@{$user_data{$table}}) {
-				$insert_sub->($table, $_, $lastuid);
-			}
-		}
+		$ac_uid{$ac_uid{-1}} = $lastuid;
 	}
-
-    # Move  AC data into it's proper place.
-    for my $table (@user_tables) {
-    	for (@{$ac_data->{$table}}) {
-    		$insert_sub->($table, $_, $ac_uid);
-    	}
-    }
-    print "AC User now known as UID #$ac_uid\n";
 }
-    	
 
 ####################################
 sub fill_heaps {
@@ -567,15 +551,21 @@ WHERE  name != 'All Authors'
 EOT
 
 	my(@not_found);
+	
 	for my $author (@$authors) {
 		(my $matchname = lc $author->[0]) =~ s/[^a-zA-Z0-9]//g;
+		# Take the FIRST OCCURANCE, only.
+		next if $story_authors{$matchname};
+
+		# Note that we order by UID since there CAN be MORE than one.
 		my $uid = $dbh_old->selectrow_array(<<EOT);
-SELECT uid
-FROM   users
-WHERE  matchname='$matchname'
+SELECT   uid
+FROM     users
+WHERE    matchname='$matchname'
+ORDER BY uid
 EOT
 		if ($uid) {
-			$story_authors{$author->[0]} = $uid;
+			$story_authors{$matchname} = $uid;
 			my @data = map { $dbh_new->quote($_) } @$author;
 			$dbh_new->do("UPDATE users SET seclev=$data[1] WHERE uid=$uid");
 			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'author', '1')");
@@ -586,16 +576,32 @@ EOT
 			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'deletedsubmissions', $data[4])")
 				if $data[4];
 		} else {
-			push @not_found, $author;
+			push @not_found, $matchname;
 		}
 	}
+
+	# Grab orphaned authors that might be in stories and nowhere else.
+	{
+		my $story_authors =
+			$dbh_old->selectall_arrayref(<<EOT);
+SELECT DISTINCT aid FROM stories
+EOT
+
+		for (@{$story_authors}) {
+			my $s_auth = lc($_->[0]);
+			local $" = '|';
+			my $regexp = "^(@{[keys %story_authors, @not_found]})\$";
+			push @not_found, $s_auth if $s_auth !~ /$regexp/;
+		}
+	}
+
 
 	my %other_authors;
 	print "\n== RESOLVING MISSING AUTHORS ==\n";
 	for my $nf (@not_found) {
 		print <<EOT;
 
-== No corresponding user found for Author '$nf->[0]'
+== No corresponding user found for Author '$nf'
 
 Please select UID:
 EOT
@@ -616,9 +622,10 @@ EOT
 
 		my $uid;
 		while (!$uid || $uid !~ /^\d+$/) {
-			$uid = ask("UID for AUTHOR '$nf->[0]': ");
+			$uid = ask("UID for AUTHOR '$nf': ");
+			chomp($uid);
 		}
-		$other_authors{$nf->[0]} = $uid;
+		$other_authors{$nf} = $uid;
 	}
 	map { $story_authors{lc($_)} = $other_authors{$_} } keys %other_authors;
 
@@ -637,14 +644,22 @@ sub load_storystuff {
 }
 
 sub copy_comments {
+	my %dead_discussions;
 	print "Copying comment data and texts...\n";
 	my $sth_s = $dbh_old->prepare('SELECT * FROM comments');
 	$sth_s->execute;
 	while (my $data = $sth_s->fetchrow_hashref) {
+		next if exists $dead_discussions{$data->{sid}};
 		# Fix UID.
-		$data->{uid} = $ac_uid if $data->{uid} == -1;
+		$data->{uid} = $ac_uid{$data->{uid}} 
+			if exists $ac_uid{$data->{uid}};
 		# Fix SID.
 		my $sid = $dbh_new->quote($discussions{$data->{sid}});
+		if (!$discussions{$data->{sid}}) {
+			$dead_discussions{$data->{sid}}++;
+			print "Skipping deleted discussion '$data->{sid}'\n";
+			next;
+		}
 		my $insert_q = sprintf
 			qq[
 INSERT INTO comments
@@ -656,6 +671,7 @@ VALUES ($sid, %s)
 				qw [pid date subject uid points lastmod reason]
 			);
 		$dbh_new->do($insert_q);
+		print "SQL: $insert_q\n" if $dbh_new->errstr;
 		my $sth_d = $dbh_new->prepare('SELECT LAST_INSERT_ID()');
 		$sth_d->execute;
 		$comments{$data->{sid}}->{$data->{cid}} = 
@@ -671,21 +687,24 @@ EOT
 	$sth_s->finish;
 
 	# Now update PIDs.
-	print "Updating comment parent ids.\n";
+	print "Updating comment heirarchy.\n";
 	$sth_s = $dbh_old->prepare('SELECT DISTINCT sid,pid FROM comments');
 	$sth_s->execute;
 	while (my $data = $sth_s->fetchrow_hashref) {
-		next if ! $data->{pid};
+		next if !$data->{pid} || exists $dead_discussions{$data->{sid}};
 
 			my $SQL = <<EOT;
 UPDATE comments SET
-	pid = $comments{$data->{sid}}->{$data->{pid}}
-WHERE 	sid = $discussions{$data->{sid}} AND
-	pid = $data->{pid}
+	pid=$comments{$data->{sid}}->{$data->{pid}}
+WHERE 	sid=$discussions{$data->{sid}} AND
+	pid=$data->{pid}
 EOT
 
-		#print STDERR "SQL: $SQL\n";
 		$dbh_new->do($SQL);
+		print STDERR <<EOT if $dbh_new->errstr;
+($data->{sid}|$data->{pid}) SQL: $SQL
+EOT
+
 	}
 }
 
@@ -758,7 +777,7 @@ EOT
 
 		$dbh_new->do($insert);
 		my $err = $dbh_new->errstr;
-		die $err if $err;
+		die "$table: $err" if $err;
 	}
 }
 

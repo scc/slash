@@ -1,0 +1,127 @@
+#!/usr/bin/perl
+
+use Slash;
+use Slash::Utility;
+use Slash::DB;
+use Getopt::Std;
+use Benchmark;
+
+{
+	require Silly::Werder;
+	Silly::Werder->import;
+}
+die "Installation of Silly::Werder is required for this util. Sorry.\n"
+	if $@;
+
+# Parameters
+#
+# Virtual User			-u
+# User to post as		-U
+# Use a random user		-R
+# StoryID			-I
+# Do not post as threads	-T
+# Number of comments		(num_comments)
+
+my %opts;
+getopts('u:U:I:R', \%opts);
+my $story_id = $opts{I};
+my ($num_comments) = @ARGV;
+my $werder = new Silly::Werder;
+
+createEnvironment($opts{u});
+$slashdb = getCurrentDB();
+$constants = getCurrentStatic();
+
+# Check to see if story is valid.
+if ($story_id !~ /^\d+$/) {
+	my $discussion = $slashdb->getDiscussionBySid($story_id);
+	$story_id = $discussion->{id};
+}
+my $story = $slashdb->getDiscussion($story_id); 
+die "Story ID '$opts{I}' is invalid!" unless $story;
+
+# Determine user list size (for -R)
+my $max_uid = $slashdb->sqlSelect('count(*)', 'users'); 
+
+# Initialize the werder.
+$werder->set_werds_num(5,20);
+
+# Initialize the user.
+my $user;
+if (!$opts{R}) {
+	$user = $slashdb->getUser($opts{U});
+	die "Invalid user! ($opts{u})\n" if ! $user;
+}
+
+
+# Before we start creating comments, we should take a look at the thread
+# structure (if we care about threading...)
+my %family_tree;
+if (!$opts{T}) {
+	my $comments = $slashdb->sqlSelectAllHashref(
+		'cid',
+		'cid, pid',
+		'comments',
+		"sid=$story_id"
+	);
+
+	map { $family_tree{$_->{cid}} = $_->{pid} } @{$comments};
+}
+
+my $t0 = new Benchmark;
+my $count = $num_comments;
+while ($count) {
+	my $werds = 20 + rand 80;
+	my $cur_werds = 0;
+	my $comment;
+
+	while ($cur_werds < $werds) {
+		$comment .= ' ' . $werder->sentence;
+
+		@werds = ($comment =~ /(\w+)\b/g);
+		$cur_werds = scalar @werds;
+	}
+	$comment =~ s/^\s*(.+)\s*$/$1/;
+
+	$user = $slashdb->getUser(getRandomUserID()) if $opts{R};
+	my $pid = getRandomParent();
+	my $cid = $slashdb->createComment(
+		{
+			postercomment 	=> $comment,
+			sid	 	=> $story_id,
+			pid		=> $pid,
+			postersubj	=> $werder->sentence,
+			postanon	=> 0,
+		},
+		$user,
+		1
+	);
+	$family_tree{$cid} = $pid if ! $opts{T};
+	print "($count) Comment created ($cur_werds words)\n";
+
+	$count--;
+}
+my $t1 = new Benchmark;
+print "$num_comments comments created in: ",
+	timestr(timediff($t1, $t0), 'noc'),"\n";
+
+
+sub getRandomParent {
+	return 0 if $opts{T};
+
+	my @a = keys %family_tree;
+	# The extra "60" slots is our fudge for TRUE PID 0 which means
+	# "the top of the thread".
+	my $random_index = rand ($#a + 60)
+	return (exists $a[$random_index] && $a[$random_index]) ? 
+		$a[$random_index] : 0;
+}
+
+
+sub getRandomUserID {
+	my $rand_uid = 1 + rand ($max_uid - 1);
+
+	return getRandomUserID()
+		if $rand_uid == $constants->{anonymous_coward_uid};
+	return $rand_uid;
+}
