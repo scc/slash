@@ -89,7 +89,7 @@ sub findComments {
 	if ($form->{query}) {
 		$other = " ORDER BY score DESC ";
 	} else {
-		$other = " ORDER BY id DESC ";
+		$other = " ORDER BY cid DESC ";
 	}
 
 
