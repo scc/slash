@@ -564,6 +564,19 @@ sub checkUserExpiry {
 }
 
 
+sub getRandomSpamArmor {
+    my ($self) = @_;
+
+    # Basically, this involves getting an array of all IDs in the system
+    # into an array and then picking a random element...easy!
+    my $ret = $self->sqlSelectAllHashref('*', 'spamarmor', 'active=1');
+
+	my $pick = int(rand (scalar @{$ret} - 1));
+
+	return $ret->[$pick];
+}
+
+
 1;
 
 __END__

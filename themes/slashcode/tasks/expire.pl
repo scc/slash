@@ -15,13 +15,11 @@ use Slash::Utility;
 use Getopt::Std;
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-my $PROGNAME = basename($0);
+#my $PROGNAME = basename($0);
+my $PROGNAME = 'expire.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-# Remember that timespec goes by the database's time, which should be
-# GMT if you installed everything correctly.  So 6 AM GMT is a good
-# sort of midnightish time for the Western Hemisphere.  Adjust for
-# your audience and admins.
+# This is just a default. See the 'timespec' file in your slash site directory.
 $task{$PROGNAME}{timespec} = '0 6 * * *';
 
 # Handles mail and administrivia necessary for RECENTLY expired users.
