@@ -248,14 +248,14 @@ CREATE TABLE maillist (
 DROP TABLE IF EXISTS menus;
 CREATE TABLE menus (
   id int(5) DEFAULT '0' NOT NULL auto_increment,
-  page varchar(20) DEFAULT '' NOT NULL,
-  label varchar(32) DEFAULT '' NOT NULL,
+  menu varchar(20) DEFAULT '' NOT NULL,
+  label varchar(200) DEFAULT '' NOT NULL,
   value text,
   seclev int(1),
   menuorder int(5),
   type varchar(20) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
-  KEY page_labels (page,label)
+  KEY page_labels (menu,label)
 );
 
 #

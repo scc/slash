@@ -2969,7 +2969,7 @@ sub getMenuItems {
 sub getMenus {
 	my ($self) = @_;
 
-	my $sql = "select distinct page from menus order by page";
+	my $sql = "select distinct menu from menus order by menu";
 	my $sth =	$self->{dbh}->prepare($sql);
 	$sth->execute;
 	my $menu_names = $sth->fetchall_arrayref;
@@ -2978,7 +2978,7 @@ sub getMenus {
 	my $menus;
 	for(@$menu_names) {
 		my $script = $_->[0];
-		$sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
+		$sql = "SELECT * from menus WHERE menu=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
 		$sth =	$self->{dbh}->prepare($sql);
 		$sth->execute();
 		my @menu;

@@ -419,11 +419,24 @@ INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus VALUES (1,'users.pl','User Info','$ENV{SCRIPT_NAME}',0,1,'eval');
-INSERT INTO menus VALUES (2,'users.pl','Customize Homepage','$ENV{SCRIPT_NAME}?op=edithome',0,3,'eval');
-INSERT INTO menus VALUES (3,'users.pl','Edit User Info','$ENV{SCRIPT_NAME}?op=edituser',0,2,'eval');
-INSERT INTO menus VALUES (4,'users.pl','Customize Comments','$ENV{SCRIPT_NAME}?op=editcomm',0,4,'eval');
-INSERT INTO menus VALUES (5,'users.pl','Logout','$ENV{SCRIPT_NAME}?op=userclose',0,5,'eval');
+INSERT INTO menus VALUES (1,'user','User Info','$ENV{SCRIPT_NAME}',0,1,'eval');
+INSERT INTO menus VALUES (2,'user','Customize Homepage','$ENV{SCRIPT_NAME}?op=edithome',0,3,'eval');
+INSERT INTO menus VALUES (3,'user','Edit User Info','$ENV{SCRIPT_NAME}?op=edituser',0,2,'eval');
+INSERT INTO menus VALUES (4,'user','Customize Comments','$ENV{SCRIPT_NAME}?op=editcomm',0,4,'eval');
+INSERT INTO menus VALUES (5,'user','Logout','$ENV{SCRIPT_NAME}?op=userclose',0,5,'eval');
+INSERT INTO menus VALUES (6,'admin','Logout $user->{nickname}','/admin.pl?op=adminclose',1,1,'eval');
+INSERT INTO menus VALUES (7,'admin','Home','/',1,2,'text');
+INSERT INTO menus VALUES (8,'admin','Help','/getting_started.shtml',1,3,'text');
+INSERT INTO menus VALUES (9,'admin','Stories','/admin.pl',1,4,'text');
+INSERT INTO menus VALUES (10,'admin','Topics','/topics.pl?op=listtopics',1,5,'text');
+INSERT INTO menus VALUES (11,'admin','New','/admin.pl?op=edit',10,6,'text');
+INSERT INTO menus VALUES (12,'admin','my $cnt = $dbslash->getSubmissionCount($constants->{articles_only}); "$cnt Submissions"','/submit.pl?op=edit',499,7,'eval');
+INSERT INTO menus VALUES (13,'admin','Blocks','/admin.pl?op=blocked',499,8,'text');
+INSERT INTO menus VALUES (14,'admin','Site Colors','/admin.pl?op=colored',499,9,'text');
+INSERT INTO menus VALUES (15,'admin','Sections','/sections.pl?op=list',999,10,'text');
+INSERT INTO menus VALUES (16,'admin','Comment Filters','/admin.pl?op=listfilters',999,11,'text');
+INSERT INTO menus VALUES (17,'admin','Authors','/admin.pl?op=authors',10000,12,'text');
+INSERT INTO menus VALUES (18,'admin','Variables','/admin.pl?op=vars',10000,13,'text');
 
 
 #

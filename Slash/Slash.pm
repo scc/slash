@@ -809,7 +809,9 @@ EOT
 
 	print eval $execme;
 	print "\nError:$@\n" if $@;
-	adminMenu();
+	my $adminmenu  = getCurrentMenu('admin');
+	createMenu($adminmenu);
+	#adminMenu();
 }
 
 ########################################################
@@ -1966,8 +1968,10 @@ sub createEnvironment {
 ########################################################
 sub createMenu {
 	my ($menu) = @_;
-	my $seclev = getCurrentUser('seclev');
-	print '[';
+	my $user = getCurrentUser();
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
+	print '<br>[';
 	for my $item (@$menu) {
 		my ($value, $label); 
 		if($item->{type} eq 'eval') {
@@ -1978,9 +1982,9 @@ sub createMenu {
 			$label = $item->{label}; 
 		}
 		print "<A HREF=\"$value\">$label</A>|" 
-			if $seclev >= $item->{seclev};
+			if $user->{seclev} >= $item->{seclev};
 	}
-	print ']';
+	print ']</br>';
 }
 
 1;

@@ -109,11 +109,6 @@ sub changePassword {
 sub getCurrentMenu {
 	my($script) = @_;
 
-	unless ($script) {
-		$script = $ENV{'SCRIPT_NAME'} unless $script;
-		$script =~ /.*\/(.*\.pl)$/;
-		$script = $1;
-	}
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $menus = $cfg->{'menus'};

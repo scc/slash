@@ -185,10 +185,10 @@ sub main {
 		listStories();
 	}
 
-	writeLog('admin', $I{U}{aid}, $op, $I{F}{sid});
 
 	# Display who is logged in right now.
 	footer();
+	writeLog('admin', $I{U}{aid}, $op, $I{F}{sid});
 }
 
 ##################################################################
