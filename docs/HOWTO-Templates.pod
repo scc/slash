@@ -1,38 +1,58 @@
 =head1 NAME
 
-How to write templates
+HOWTO-Templates - How to write Slash templates
 
-=head1 What is a Template?
+=head1 What is a template?
 
-First, check the man page on Slash::Display after you
-have installed slash. You may also want to look
-that the man page on Template.
+A template is a bit of text that is parsed by Perl, using the Template
+Toolkit.  Template Toolkit has support for variables, control structures,
+and more.  It is more easily understood and edited by non-programmers
+than is Perl, and it is much safer than executing raw Perl code.
+
+Templates are compiled into Perl functions and the resulting compiled
+code is cached.  Templates are fast and convenient and easy.
+
+For more information on how templates are written, see the man pages
+for Slash::Display and Template, and the Template Toolkit web page
+at E<lt>URL:http://www.template-toolkit.org/E<gt>.
 
 =head1 How do I get my template into a running site?
 
-Use the template-tool. You can find out information
-on it by calling it with a -? flag.
+Use the Template Editor via the admin menu on the site, or use
+template-tool on the command line. You can find out information
+on it by calling it with the "-h" option.
 
 =head1 How do I get my template installed with a plugin/theme?
 
-For a plugin it has to be added to the PLUGIN file. For a
-theme it just needs to be in the templates directory for
-the theme. See the HOWTO's for plugins and templates
-for more information.
+For a plugin it has to be added to the PLUGIN file (see
+F<HOWTO-Plugins>). For a theme it just needs to be in the templates
+directory for the theme (see F<HOWTO-Themes>).
 
 =head1 What language encoding are the templates using?
 
-# pudge?
+There is a language field for templates, which is, by
+default, "en_US".  However, it is not currently used by the
+code.  We have not entirely decided how to handle languages yet.
+
+Currently, the language is based on the same method used to determine
+locales on Unix: two-letter, lowercase, ISO 639 codes for language;
+two-letter, uppercase, ISO 3166 codes for country; joined with an
+underscore.  e.g., en_US, en_CA, de_DE, zh_CN, ja_JP.
+
 
 =head1 How do I generate a blank template?
 
-template-tool -g filename
+Use template-tool:
 
-=head1 I have a cool template for a theme/plugin, how do I get it added to the distribution?
+	template-tool -g filename
 
-We don't have any rules concerning this at the moment, so it will be
+=head1 I have a really cool template for a theme/plugin, and I would like
+to see it added to the Slash distribution. Will you distribute mine?
+
+Maybe. We don't have any rules concerning this at the moment, so it will be
 on a case by case basis. At some point in the future we will come up
-with a much better answer. If the theme is owned by an individual
-you should contact them first.
+with a much better answer. If the theme or plugin is one not included with
+the Slash distribution, you should contact the theme's or plugin's creator
+directly.
 
 =cut

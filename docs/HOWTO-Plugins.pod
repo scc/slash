@@ -1,6 +1,6 @@
 =head1 NAME
 
-HOWTO-Plugin - How to write and use Slash plugins
+HOWTO-Plugins - How to write and use Slash plugins
 
 =head1 What is a plugin?
 
@@ -21,16 +21,18 @@ F</usr/local/slash/plugins/>. The second option is to copy it in
 there yourself and make sure that your library files (perl modules)
 are installed. If you decide to go the first route you
 may want to consider adding your libraries to the list
-that get installed from the Makefile (this is the Makefile that
-comes with the distribution).
+of plugins that get installed, in the main Slash Makefile.
 
 =head1 What does my plugin need to make it work with the install?
 
 If you look at the plugins that come with Slash you will find a 
 file called PLUGIN. This handles how the plugin installer will
-see your plugin. The syntax is that each keyword must
-appear on a line by itself with a '=' seperating it
-and the directive. The following are the keywords it knows:
+see your plugin.  In the file, each keyword appears on a line
+by itself with a '=' seperating it and the directive.  For example:
+
+	htdoc=search.pl
+
+The following are the keywords it knows:
 
 =over 4
 
@@ -77,10 +79,10 @@ needed, or other dependencies.
 
 =head1 How do I install a plugin once my site is installed?
 
-Use the install-plugin tool. If you call it with a -? it
-will give you its basic syntax. If run it will list
-what plugins it knows about and you can then select
-which plugins you want (just like the install).
+Use the install-plugin tool. If run with the C<-h> option,
+it will describe the tool's usage.  If can list available
+plugins and you can then select which plugins you want to
+install (just like with install-slashsite).
 
 =head1 Do install-plugin and install-slashsite use the same logic?
 
