@@ -89,7 +89,7 @@ sub main {
 		titlebar("99%", "Delete $form->{cid}");
 
 		my $delCount = deleteThread($form->{sid}, $form->{cid}, $user, $dbslash);
-		$dbslash->setCommentCount($delCount);
+		$dbslash->createCommentCount($delCount);
 
 	} elsif ($form->{op} eq "moderate") {
 		titlebar("99%", "Moderating $form->{sid}");
@@ -112,7 +112,7 @@ sub main {
 	} elsif ($form->{sid}) {
 		printComments($form->{sid}, $form->{pid});
 	} else {
-		commentIndex($dbslash, $constants);
+		commentIndex($dbslash);
 	}
 
 	writeLog('comments', $form->{sid}) unless $form->{ssi};
@@ -125,10 +125,10 @@ sub main {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
-	my ($db, $c) = @_;
+	my ($dbslash) = @_;
 
 	titlebar("90%", "Several Active Discussions");
-	my $discussions = $db->getDiscussions();
+	my $discussions = $dbslash->getDiscussions();
 	slashDisplay('discussion_list', {
 		discussions => $discussions,
 	});
@@ -139,53 +139,53 @@ sub commentIndex {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($id, $f, $u, $db, $c, $error_message) = @_;
+	my($id, $form, $user, $dbslash, $constants, $error_message) = @_;
 
-	my $formkey_earliest = time() - $c->{formkey_timeframe};
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	# Get the comment we may be responding to. Remember to turn off 
 	# moderation elements for this instance of the comment. 
-	my $reply = $db->getCommentReply($f->{sid}, $f->{pid});
+	my $reply = $dbslash->getCommentReply($form->{sid}, $form->{pid});
 	$reply->{no_moderation} = 1;
 
-	if (!$c->{allow_anonymous} && $u->{is_anon}) {
+	if (!$constants->{allow_anonymous} && $user->{is_anon}) {
 		slashDisplay('errors', {
 			type	=> 'no anonymous posting',
 		});
 	    return;
 	}
 
-	my $mp = $c->{max_posts_allowed};
+	my $mp = $constants->{max_posts_allowed};
 	my $previewForm;
 	# Don't munge the current error_message if there already is one.
-	if (! $db->checkTimesPosted('comments',$mp,$id,$formkey_earliest)) {
+	if (! $dbslash->checkTimesPosted('comments',$mp,$id,$formkey_earliest)) {
 		$error_message ||= slashDisplay('errors', {
 			type		=> 'max posts',
 			max_posts 	=> $mp,
 		}, 1);
 	} else {
-		$previewForm = previewForm($f, $u) if ($f->{postercomment});
+		$previewForm = previewForm($form, $user) if ($form->{postercomment});
 		if ($previewForm =~ s/^ERROR: //) {
 			$error_message ||= $previewForm;
 			$previewForm = '';
 		}
 	}
 
-	if ($f->{pid} && !$f->{postersubj}) { 
-		$f->{postersubj} = $reply->{subject};
-		$f->{postersubj} =~ s/^Re://i;
-		$f->{postersubj} =~ s/\s\s/ /g;
-		$f->{postersubj} = "Re:$f->{postersubj}";
+	if ($form->{pid} && !$form->{postersubj}) { 
+		$form->{postersubj} = $reply->{subject};
+		$form->{postersubj} =~ s/^Re://i;
+		$form->{postersubj} =~ s/\s\s/ /g;
+		$form->{postersubj} = "Re:$form->{postersubj}";
 	} 
 
-	my $formats = $db->getDescriptions('postmodes');
+	my $formats = $dbslash->getDescriptions('postmodes');
 
-	my $formatSelect = ($f->{posttype}) ?
-		createSelect('posttype', $formats, $f->{posttype}, 1) :
-		createSelect('posttype', $formats, $u->{posttype}, 1);
+	my $formatSelect = ($form->{posttype}) ?
+		createSelect('posttype', $formats, $form->{posttype}, 1) :
+		createSelect('posttype', $formats, $user->{posttype}, 1);
 
 	my $approvedtags =
-		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$c->{approvedtags}};
+		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$constants->{approvedtags}};
 
 	slashDisplay('edit_comment', {
 		approved_tags => $approvedtags,
@@ -200,21 +200,21 @@ sub editComment {
 ##################################################################
 # Validate comment, looking for errors
 sub validateComment {
-	my($f, $u, $preview, $comm, $subj) = @_;
-	$comm ||= $f->{postercomment};
-	$subj ||= $f->{postersubj};
+	my($form, $user, $preview, $comm, $subj) = @_;
+	$comm ||= $form->{postercomment};
+	$subj ||= $form->{postersubj};
 
-	my $db = getCurrentDB();
-	my $c = getCurrentStatic();
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 
-	if (isTroll($u, $c, $db)) {
+	if (isTroll($user, $constants, $dbslash)) {
 		my $err_msg = slashDisplay('errors', {
 			type 		=> 'troll message',
 		}, 1);
 		return(undef, undef, $err_msg);
 	}
 
-	if (!$c->{allow_anonymous} && ($u->{uid} < 1 || $f->{postanon})) { 
+	if (!$constants->{allow_anonymous} && ($user->{uid} < 1 || $form->{postanon})) { 
 		my $err_msg = slashDisplay('errors', {
 			type	=> 'anonymous disallowed', 
 		}, 1);
@@ -228,30 +228,30 @@ sub validateComment {
 		return(undef, undef, $err_msg);
 	}
 
-	$$subj =~ s/\(Score(.*)//i;
-	$$subj =~ s/Score:(.*)//i;
+	$subj =~ s/\(Score(.*)//i;
+	$subj =~ s/Score:(.*)//i;
 
 	unless (defined($$comm = balanceTags($$comm, 1))) {
 		my $err_msg = slashDisplay('errors', {
 			type =>	'nesting_toodeep',
 		}, 1);
-		editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+		editComment('', $form, $user, $dbslash, $constants, $err_msg), return unless $preview;
 		return(undef, undef, $err_msg);
 	}
 
-	my $dupRows = $db->countComments($f->{sid}, '', $f->{postercomment});
+	my $dupRows = $dbslash->countComments($form->{sid}, '', $form->{postercomment});
 
-	if ($dupRows || !$f->{sid}) { 
+	if ($dupRows || !$form->{sid}) { 
 		my $err_msg = slashDisplay('errors', {
 			type	=> 'validation error',
 			dups	=> $dupRows,
 		});
-		editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+		editComment('', $form, $user, $dbslash, $constants, $err_msg), return unless $preview;
 		return (undef, undef, $err_msg);
 	}
 
-	if (length($f->{postercomment}) > 100) {
-		local $_ = $f->{postercomment};
+	if (length($form->{postercomment}) > 100) {
+		local $_ = $form->{postercomment};
 		my($w, $br); # Words & BRs
 		$w++ while m/\w/g;
 		$br++ while m/<BR>/gi;
@@ -263,7 +263,7 @@ sub validateComment {
 				type	=> 'low words-per-line',
 				ratio 	=> $w / ($br + 1),
 			}, 1);
-			editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+			editComment('', $form, $user, $dbslash, $constants, $err_msg), return unless $preview;
 			return (undef, undef, $err_msg);
 		}
 	}
@@ -275,7 +275,7 @@ sub validateComment {
 	# has to be to be tested), err_message message displayed upon failure
 	# to post if regex matches contents. make sure that we don't select new
 	# filters without any regex data.
-	my $filters = $db->getContentFilters();
+	my $filters = $dbslash->getContentFilters();
 	my @filterMatch = (0, '');
 	for (@$filters) {
 		my($number_match, $regex);
@@ -289,7 +289,7 @@ sub validateComment {
 		my $err_message		= $_->[7];
 		my $maximum_length	= $_->[8];
 		my $isTrollish		= 0;
-		my $text_to_test	= decode_entities($f->{$field});
+		my $text_to_test	= decode_entities($form->{$field});
 		$text_to_test		=~ s/\xA0/ /g;
 		$text_to_test		=~ s/\<br\>/\n/gi;
 
@@ -325,7 +325,7 @@ sub validateComment {
 					err_message => $err_message,
 				}, 1);
 
-				editComment('', $f, $u, $db, $c, $err_msg), return
+				editComment('', $form, $user, $dbslash, $constants, $err_msg), return
 					unless $preview;
 				@filterMatch = (1, $err_msg);
 				last;
@@ -337,7 +337,7 @@ sub validateComment {
 				err_message => $err_message,
 			}, 1);
 
-			editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+			editComment('', $form, $user, $dbslash, $constants, $err_msg), return unless $preview;
 			@filterMatch = (1, $err_msg);
 			last;
 		}
@@ -361,25 +361,25 @@ sub validateComment {
 		};
 
 		# Ok, one list ditch effort to skew out the trolls!
-		if (length($f->{postercomment}) >= 10) {
+		if (length($form->{postercomment}) >= 10) {
 			for (keys %$limits) {
 				# DEBUG
 				# print "ratio $_ lower $limits->{$_}->[0] upper $limits->{$_}->[1]<br>\n";
 				# if it's within lower to upper
-				if (length($f->{postercomment}) >= $limits->{$_}->[0] &&
-					length($f->{postercomment}) <= $limits->{$_}->[1]) {
+				if (length($form->{postercomment}) >= $limits->{$_}->[0] &&
+					length($form->{postercomment}) <= $limits->{$_}->[1]) {
 
 					# if is >= the ratio, then it's most likely a
 					# troll comment
-					if ((length(compress($f->{postercomment})) /
-					     length($f->{postercomment})) <= $_) {
+					if ((length(compress($form->{postercomment})) /
+					     length($form->{postercomment})) <= $_) {
 	
 						# blammo luser
 						my $err_msg = slashDisplay('errors', {
 							type	=> 'compress filter',
 							ratio	=> $_,
 						}, 1);
-						editComment('', $f, $u, $db, $c, $err_msg), return
+						editComment('', $form, $user, $dbslash, $constants, $err_msg), return
 							unless $preview;
 						@filterMatch = (1, $err_msg);
 					}
@@ -440,33 +440,34 @@ sub previewForm {
 ##################################################################
 # Saves the Comment
 sub submitComment {
-	my ($f, $u, $db, $c) = @_;
+	my ($form, $user, $dbslash, $constants) = @_;
 	my $error_message;
 
-	$f->{postersubj} = strip_nohtml($f->{postersubj});
-	$f->{postercomment} = strip_mode($f->{postercomment}, $f->{posttype});
+	$form->{postersubj} = strip_nohtml($form->{postersubj});
+	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
-	($f->{postercomment}, $f->{postersubj}, $error_message) =
-		validateComment($f, $u);
+	($form->{postercomment}, $form->{postersubj}, $error_message) =
+		validateComment($form, $user);
 
-	return if $error_message || (!$f->{postercomment} && !$f->{postersubj});
+	return if $error_message || (!$form->{postercomment} && !$form->{postersubj});
 
 	titlebar("95%", "Submitted Comment");
 
 	my $pts = 0;
 
-	if (!$u->{is_anon} && !$f->{postanon} ) {
-		$pts = $u->{defaultpoints};
-		$pts-- if $u->{karma} < $c->{badkarma};
-		$pts++ if $u->{karma} > $c->{goodkarma} && !$f->{nobonus};
+	if (!$user->{is_anon} && !$form->{postanon} ) {
+		$pts = $user->{defaultpoints};
+		$pts-- if $user->{karma} < $constants->{badkarma};
+		$pts++ if $user->{karma} > $constants->{goodkarma} && !$form->{nobonus};
 		# Enforce proper ranges on comment points.
-		my ($minScore,$maxScore)=($c->{comment_minscore},$c->{comment_maxscore});
+		my ($minScore,$maxScore)=($constants->{comment_minscore},$constants->{comment_maxscore});
 		$pts = $minScore if $pts < $minScore;
 		$pts = $maxScore if $pts > $maxScore;
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid = $db->setComment($f, $u, $pts, $c->{anonymous_coward_uid});
+	my $maxCid = $dbslash->createComment($form, $user, $pts, $constants->{anonymous_coward_uid});
+
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
 		slashDisplay('errors', {
@@ -475,40 +476,59 @@ sub submitComment {
 	} elsif (!$maxCid) {
 		# What vars should be accessible here?
 		#	- $maxCid?
+		# What are the odds on this happening? Hmmm if it is we should
+		# increase the size of int we used for cid.
 		slashDisplay('errors', {
 			type	=> 'maxcid exceeded',
 		});
 	} else {
 		slashDisplay('comment_submitted');
-		undoModeration($f->{sid}, $u, $db, $c);
-		printComments($f->{sid}, $maxCid, $maxCid);
+		undoModeration($form->{sid}, $user, $dbslash, $constants);
+		printComments($form->{sid}, $maxCid, $maxCid);
+
+		unless ($dbslash->getDiscussion($form->{sid}, 'title')) {
+			$dbslash->setDiscussion($form->{sid}, { title => $form->{postersubj}}) if $form->{sid};
+		}
+
+		my $tc = $dbslash->getVar('totalComments');
+		$dbslash->setVar('totalComments', ++$tc);
+
+		if ($dbslash->getStory($form->{sid},'writestatus') == 0) {
+			$dbslash->setStory($form->{sid}, { writestatus => 1 });
+		}
+
+		$dbslash->setUser($user->{uid}, { -totalcomments => 'totalcomments+1' });
+
+		$dbslash->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
 	}
 }
+
+
 
 
 ##################################################################
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my ($f, $u, $db, $c) = @_;
+	my ($form, $user, $dbslash, $constants) = @_;
 	my $totalDel = 0;
 	my $hasPosted;
 
-	unless($u->{seclev} > 99 && $c->{authors_unlimited}) {
-		$hasPosted = $db->countComments($f->{sid}, '','', $u->{uid});
+	unless($user->{seclev} > 99 && $constants->{authors_unlimited}) {
+		$hasPosted = $dbslash->countComments($form->{sid}, '','', $user->{uid});
 	}
 
 	slashDisplay('moderation_header');
 
 	# Handle Deletions, Points & Reparenting
-	for (sort keys %{$f}) {
+	for (sort keys %{$form}) {
 		if (/^del_(\d+)$/) { # && $user->{points}) {
-			my $delCount = deleteThread($f->{sid}, $1, $u, $db);
+			my $delCount = deleteThread($form->{sid}, $1, $user, $dbslash);
 			$totalDel += $delCount;
-			$db->setStoriesCount($f->{sid}, $delCount);
+			$dbslash->setStoriesCount($form->{sid}, $delCount);
 
 		} elsif (!$hasPosted && /^reason_(\d+)$/) {
-			moderateCid($f->{sid}, $1, $f->{"reason_$1"}, $u, $db, $c);
+			moderateCid($form->{sid}, $1, $form->{"reason_$1"}, $user, $dbslash, $constants);
 		}
 	}
 
@@ -518,8 +538,8 @@ sub moderate {
 		slashDisplay('errors', {
 			type	=> 'already posted',
 		});
-	} elsif ($u->{seclev} && $totalDel) {
-		my $count = $db->countComments($f->{sid});
+	} elsif ($user->{seclev} && $totalDel) {
+		my $count = $dbslash->countComments($form->{sid});
 		slashDisplay('deleted_message', {
 			total_deleted => $totalDel,
 			comment_count => $count,
@@ -532,14 +552,14 @@ sub moderate {
 # Handles moderation
 # Moderates a specific comment
 sub moderateCid {
-	my($sid, $cid, $reason, $u, $db, $c) = @_;
-	# Check if $uid has seclev and Credits
+	my($sid, $cid, $reason, $user, $dbslash, $constants) = @_;
+	# Check if $userid has seclev and Credits
 	return unless $reason;
 
-	my $superAuthor = $c->{authors_unlimited};
+	my $superAuthor = $constants->{authors_unlimited};
 	
-	if ($u->{points} < 1) {
-		unless ($u->{seclev} > 99 && $superAuthor) {
+	if ($user->{points} < 1) {
+		unless ($user->{seclev} > 99 && $superAuthor) {
 			slashDisplay('errors', {
 				type	=> 'no points',
 			});
@@ -548,18 +568,18 @@ sub moderateCid {
 	}
 
 	my($cuid, $ppid, $subj, $points, $oldreason) = 
-		$db->getComments($sid, $cid);
+		$dbslash->getComments($sid, $cid);
 
 	my $dispArgs = {
 		cid	=> $cid,
 		sid	=> $sid,
 		subject => $subj,
-		reason	=> $c->{reasons}[$reason],
-		points	=> $u->{points},
+		reason	=> $constants->{reasons}[$reason],
+		points	=> $user->{points},
 	};
 	
-	unless ($u->{seclev} > 99 && $superAuthor) {
-		my $mid = $db->getModeratorLogID($cid, $sid, $u->{uid});
+	unless ($user->{seclev} > 99 && $superAuthor) {
+		my $mid = $dbslash->getModeratorLogID($cid, $sid, $user->{uid});
 		if ($mid) {
 			$dispArgs->{type} = 'already moderated';
 			slashDisplay('moderation', $dispArgs);
@@ -577,7 +597,7 @@ sub moderateCid {
 		$val = "+1";
 		$val = "+0" if $points > 1;
 		$reason = $oldreason;
-	} elsif ($reason > $c->{badreasons}) {
+	} elsif ($reason > $constants->{badreasons}) {
 		$val = "+1";
 	}
 	# Add moderation value to display arguments.
@@ -586,20 +606,20 @@ sub moderateCid {
 	my $scorecheck = $points + $val;
 	# If the resulting score is out of comment score range, no further
 	# actions need be performed.
-	if ($scorecheck < $c->{comment_minscore} || 
-	    $scorecheck > $c->{comment_maxscore})
+	if ($scorecheck < $constants->{comment_minscore} || 
+	    $scorecheck > $constants->{comment_maxscore})
 	{
 		# We should still log the attempt for M2, but marked as
 		# 'inactive' so we don't mistakenly undo it.
-		$db->setModeratorLog($cid, $sid, $u->{uid}, $val, $modreason);
+		$dbslash->setModeratorLog($cid, $sid, $user->{uid}, $val, $modreason);
 		$dispArgs->{type} = 'score limit';
 		slashDisplay('moderation', $dispArgs);
 		return;
 	}
 
-	if ($db->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
+	if ($dbslash->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
 		# Update points for display due to possible change in above line.
-		$dispArgs->{points} = $u->{points};
+		$dispArgs->{points} = $user->{points};
 		$dispArgs->{type} = 'moderated';
 		slashDisplay('moderation', $dispArgs);
 	}
@@ -609,26 +629,26 @@ sub moderateCid {
 ##################################################################
 # Given an SID & A CID this will delete a comment, and all its replies
 sub deleteThread {
-	my($sid, $cid, $u, $db, $level, $deleted) = @_;
+	my($sid, $cid, $user, $dbslash, $level, $deleted) = @_;
 	$level ||= 0;
 
 	my $delCount = 1;
 	my @delList if !$level;
 	$deleted = \@delList if !$level;
 
-	return unless $u->{seclev} > 100;
+	return unless $user->{seclev} > 100;
 
-	my $delkids = $db->getCommentCid($sid, $cid);
+	my $delkids = $dbslash->getCommentCid($sid, $cid);
 
 	# Delete children of $cid.
 	push @{$deleted}, $cid;
 	for (@{$delkids}) {
 		my ($cid) = @{$_};
 		push @{$deleted}, $cid;
-		$delCount += deleteThread($sid, $cid, $u, $db, $level + 1, $deleted);
+		$delCount += deleteThread($sid, $cid, $user, $dbslash, $level + 1, $deleted);
 	}
 	# And now delete $cid.
-	$db->deleteComment($sid, $cid);
+	$dbslash->deleteComment($sid, $cid);
 
 	if (!$level) {
 		slashDisplay('deleted_cids', {
@@ -644,11 +664,11 @@ sub deleteThread {
 ##################################################################
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
-	my($sid, $u, $db, $c) = @_;
-	return if !$u->{is_anon} || ($u->{seclev} > 99 && $c->{authors_unlimited});
+	my($sid, $user, $dbslash, $constants) = @_;
+	return if !$user->{is_anon} || ($user->{seclev} > 99 && $constants->{authors_unlimited});
 
-	my $removed = $db->unsetModeratorlog($u->{uid}, $sid,
-		$c->{comment_maxscore}, $c->{comment_minscore});
+	my $removed = $dbslash->unsetModeratorlog($user->{uid}, $sid,
+		$constants->{comment_maxscore}, $constants->{comment_minscore});
 
 	slashDisplay('undo_moderation', {
 		removed => $removed,
@@ -662,7 +682,7 @@ sub undoModeration {
 # 1=Troll 0=Good Little Goober
 # This maybe should go into DB package -Brian
 sub isTroll {
-	my ($user, $constants, $db) = @_;
+	my ($user, $constants, $dbslash) = @_;
 	return if $user->{seclev} > 99;
 
 	my($badIP, $badUID) = (0, 0);
@@ -670,11 +690,11 @@ sub isTroll {
 
 	# Anonymous only checks HOST
 	my $downMods = $constants->{down_moderations};
-	$badIP = $db->getTrollAddress();
+	$badIP = $dbslash->getTrollAddress();
 	return 1 if $badIP < $downMods;
 
 	unless ($user->{is_anon}) {
-		$badUID = $db->getTrollUID();
+		$badUID = $dbslash->getTrollUID();
 	}
 
 	return 1 if $badUID < $downMods;

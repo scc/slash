@@ -145,7 +145,7 @@ sub findStory {
 #################################################################
 sub DESTROY {
 	my ($self) = @_;
-	$self->{_dbh}->disconnect;
+	$self->{_dbh}->disconnect unless $ENV{GATEWAY_INTERFACE};
 }
 
 1;

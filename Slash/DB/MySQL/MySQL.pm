@@ -141,7 +141,8 @@ sub init {
 }
 
 ########################################################
-sub setComment {
+# Bad need of rewriting, which I have done :)
+sub createComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
 	my $sid_db = $self->{_dbh}->quote($form->{sid});
 
@@ -150,72 +151,30 @@ sub setComment {
 		"max(cid)", "comments", "sid=$sid_db"
 	);
 
-	$maxCid++; # This is gonna cause troubles
+	$maxCid++; # This is gonna cause troubles, fixed in altcomments
 	my $insline = "INSERT into comments values ($sid_db,$maxCid," .
 		$self->{_dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
 		$self->{_dbh}->quote($form->{postersubj}) . "," .
 		$self->{_dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
 
+	$self->sqlDo("UNLOCK TABLES");
 	# don't allow pid to be passed in the form.
 	# This will keep a pid from being replace by
 	# with other comment's pid
 	if ($form->{pid} >= $maxCid || $form->{pid} < 0) {
-		$self->sqlDo("UNLOCK TABLES");
 		return;
 	}
 
 	if ($self->sqlDo($insline)) {
-		$self->sqlDo("UNLOCK TABLES");
 		my $copyline = "insert into newcomments select * from comments where cid = $maxCid";
 		$copyline .= " AND sid = $sid_db";
 
 		$self->sqlDo($copyline);
 
-		# Update discussion
-		my($dtitle) = $self->sqlSelect(
-			'title', 'discussions', "sid=$sid_db"
-		);
-
-		unless ($dtitle) {
-			$self->sqlUpdate(
-				"discussions",
-				{ title => $form->{postersubj} },
-				"sid=$sid_db"
-			) if $form->{sid};
-		}
-
-		my($ws) = $self->sqlSelect(
-			"writestatus", "stories", "sid=$sid_db"
-		);
-
-		if ($ws == 0) {
-			$self->sqlUpdate(
-				"stories",
-				{ writestatus => 1 },
-				"sid=$sid_db"
-			);
-		}
-
-		$self->sqlUpdate(
-			"users_info",
-			{ -totalcomments => 'totalcomments+1' },
-			"uid=" . $self->{_dbh}->quote($user->{uid}), 1
-		);
-
-		# successful submission
-		$self->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
-
-		my $tc = $self->getVar('totalComments');
-		my $mp = $self->getVar('maxPoints');
-		my $cpp = $self->getVar('commentsPerPoint');
-
-		$self->setVar("totalComments", ++$tc);
-
 		return $maxCid;
 
 	} else {
-		$self->sqlDo("UNLOCK TABLES");
 		errorLog("$DBI::errstr $insline");
 		return -1;
 	}
@@ -271,6 +230,7 @@ sub getModeratorCommentLog {
 
 # why was this removed?  -- pudge
 #				"moderatorlog.active=1
+# Probably by accident. -Brian
 
 	my($self, $sid, $cid) = @_;
 	my $comments = $self->sqlSelectMany(  "newcomments.sid as sid,
@@ -530,6 +490,9 @@ sub getDescriptions {
 # which is handy for you if you need the entire user
 
 # why not just axe this entirely and always get all the data? -- pudge
+# Worry about access times. Realize that when MySQL has row level
+# locking that we can combine all of the user table (except param)
+# into one table again.
 
 sub getUserInstance {
 	my($self, $uid, $script) = @_;
@@ -756,18 +719,6 @@ sub createUser {
 	return $uid;
 }
 
-#########################################################
-## This method should be questioned long term
-#sub getACTz {
-#	my($self, $tzcode, $dfid) = @_;
-#	my $ac_hash_ref;
-#	$ac_hash_ref = $self->sqlSelectHashref('*',
-#		'tzcodes,dateformats',
-#		"tzcodes.tz='$tzcode' AND dateformats.id=$dfid"
-#	);
-#	return $ac_hash_ref;
-#}
-
 
 ########################################################
 sub setVar {
@@ -789,20 +740,13 @@ sub setBlock {
 }
 
 ########################################################
-sub setTemplate {
-	_genericSet('templates', 'tpid', '', @_);
+sub setDiscussion {
+	_genericSet('discussions', 'sid', '', @_);
 }
 
 ########################################################
-sub updateCommentTotals {
-	my($self, $sid, $comments) = @_;
-	my $hp = join ',', @{$comments->[0]{totals}};
-	$self->sqlUpdate("stories", {
-			hitparade	=> $hp,
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $self->{_dbh}->quote($sid)
-	);
+sub setTemplate {
+	_genericSet('templates', 'tpid', '', @_);
 }
 
 ########################################################
@@ -1240,7 +1184,7 @@ sub deleteStoryAll {
 
 ########################################################
 sub setStory {
-	_genericSet('stories', 'bid', 'story_param', @_);
+	_genericSet('stories', 'sid', 'story_param', @_);
 }
 
 ########################################################
@@ -1387,8 +1331,7 @@ sub currentAdmin {
 }
 
 ########################################################
-# Need to change this method at some point... I hate
-# useing a push
+# 
 sub getTopNewsstoryTopics {
 	my($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
@@ -1515,7 +1458,7 @@ sub countComments {
 	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
 	if ($uid) {
-		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid = ". $self->{_dbh}->quote($uid));
+		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid=$uid");
 	} elsif ($cid) {
 		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($cid));
 	} elsif ($comment) {
@@ -1989,18 +1932,6 @@ sub getSubmissionForUser {
 	return $submission;
 }
 
-
-########################################################
-sub getNewstoryTitle {
-	my($self, $storyid, $sid) = @_;
-	my($title) = $self->sqlSelect("title", "newstories",
-	      "sid=" . $self->{_dbh}->quote($sid)
-	);
-
-	return $title;
-}
-
-
 ########################################################
 sub getTrollAddress {
 	my($self) = @_;
@@ -2026,14 +1957,6 @@ sub getTrollUID {
 	return $badUID;
 }
 
-########################################################
-sub setCommentCount {
-	my($self, $delCount) = @_;
-	my $form =  getCurrentForm();
-	$self->sqlDo("UPDATE stories SET commentcount=commentcount-$delCount,
-	      writestatus=1 WHERE sid=" . $self->{_dbh}->quote($form->{sid})
-	);
-}
 
 ########################################################
 sub createDiscussion {
@@ -2195,20 +2118,20 @@ sub getSlashConf {
 	};
 
 	$conf{fixhrefs} = [];  # fix later
-	$conf{stats_reports} = $fixup->($conf{stats_reports}) ||
-		[$conf{adminmail}];
+	$conf{stats_reports} = $fixup->($conf{stats_reports})
+		|| [$conf{adminmail}];
 
-	$conf{submit_categories} = $fixup->($conf{submit_categories}) ||
-		[];
+	$conf{submit_categories} = $fixup->($conf{submit_categories}) 
+		|| [];
 
-	$conf{approvedtags} = $fixup->($conf{approvedtags}) ||
-		[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
+	$conf{approvedtags} = $fixup->($conf{approvedtags})
+		|| [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
-	$conf{lonetags} = $fixup->($conf{lonetags}) ||
-		undef;
+	$conf{lonetags} = $fixup->($conf{lonetags}) 
+		|| undef;
 
-	$conf{reasons} = $fixup->($conf{reasons}) ||
-		[
+	$conf{reasons} = $fixup->($conf{reasons})
+		|| [
 			'Normal',	# "Normal"
 			'Offtopic',	# Bad Responses
 			'Flamebait',
@@ -2428,6 +2351,12 @@ sub getAuthors {
 ########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', '', @_);
+	return $answer;
+}
+
+########################################################
+sub getDiscussion {
+	my $answer = _genericGet('discussions', 'sid', '', @_);
 	return $answer;
 }
 

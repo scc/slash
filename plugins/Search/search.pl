@@ -38,6 +38,7 @@ sub main {
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
 
 	# Set some defaults
 	$form->{query}		||= '';
@@ -53,6 +54,12 @@ sub main {
 	header("$constants->{sitename}: Search $form->{query}", $form->{section});
 	titlebar("99%", "Searching $form->{query}");
 
+	slashDisplay('searchform', {
+		section => getSection($form->{section}),
+		tref =>$slashdb->getTopic($form->{topic}),
+		op => $form->{op} ? $form->{op} : 'stories',
+		authors => ($form->{op} eq 'stories') ? _authors() : '',
+	});
 	searchForm($form);
 
 	if($ops{$form->{op}}) {
@@ -64,25 +71,16 @@ sub main {
 	footer();	
 }
 
+
 #################################################################
-sub linkSearch {
-	my $form = getCurrentForm();
-	my $C = shift;
-	my $r;
+# Ugly isn't it?
+sub _authors {
+	my $slashdb = getCurrentDB();
+	my $authors = $slashdb->getDescriptions('authors');
+	$authors->{''} = 'All Authors';
 
-	foreach (qw[threshold query min author op sid topic section total hitcount]) {
-		my $x = "";
-		$x =  $C->{$_} if defined $C->{$_};
-		$x =  $form->{$_} if defined $form->{$_} && $x eq "";
-		$x =~ s/ /+/g;
-		$r .= "$_=$x&" unless $x eq "";
-	}
-	$r =~ s/&$//;
-
-	$r = qq!<A HREF="$ENV{SCRIPT_NAME}?$r">$C->{'link'}</A>!;
+	return $authors;
 }
-
-
 #################################################################
 sub searchForm {
 	my ($form) = @_;
@@ -140,6 +138,25 @@ EOT
 }
 
 #################################################################
+sub linkSearch {
+	my $form = getCurrentForm();
+	my $C = shift;
+	my $r;
+
+	foreach (qw[threshold query min author op sid topic section total hitcount]) {
+		my $x = "";
+		$x =  $C->{$_} if defined $C->{$_};
+		$x =  $form->{$_} if defined $form->{$_} && $x eq "";
+		$x =~ s/ /+/g;
+		$r .= "$_=$x&" unless $x eq "";
+	}
+	$r =~ s/&$//;
+
+	$r = qq!<A HREF="$ENV{SCRIPT_NAME}?$r">$C->{'link'}</A>!;
+}
+
+
+#################################################################
 sub commentSearch {
 	my ($form) = @_;
 	my $slashdb = getCurrentDB();
@@ -162,7 +179,7 @@ EOT
 	# and SID, article title, type and a link to the article
 
 	if ($form->{sid}) {
-		my $title = $slashdb->getNewstoryTitle($form->{sid}) || "discussion";
+		my $title = $slashdb->getNewstory($form->{sid}, 'title') || "discussion";
 
 		printf "<B>Return to %s</B><P>", linkComment({
 			sid	=> $form->{sid},

@@ -1164,7 +1164,18 @@ sub selectComments {
 	my $count = @$thisComment;
 
 	getCommentTotals($comments);
+	
 	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
+
+	my $hp = join ',', @{$comments->[0]{totals}};
+
+	$slashdb->setStory($sid, {
+			hitparade	=> $hp,
+			writestatus	=> 0,
+			commentcount	=> $comments->[0]{totals}[0]
+		}
+	);
+
 	reparentComments($comments);
 	return($comments,$count);
 }
