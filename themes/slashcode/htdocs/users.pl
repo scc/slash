@@ -63,7 +63,7 @@ EOT
 	} elsif ($op eq "edituser") {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
-			editUser($I{U}{nickname});
+			editUser($I{U}{uid});
 		} else {
 			displayForm(); 
 		}
@@ -71,7 +71,7 @@ EOT
 	} elsif ($op eq "edithome" || $op eq "preferences") {
 		# also known as the user_index table
 		if (!$user->{is_anon}) {
-			editHome($I{U}{nickname});
+			editHome($I{U}{uid});
 		} else {
 			displayForm(); 
 		}
@@ -79,7 +79,7 @@ EOT
 	} elsif ($op eq "editcomm") {
 		# also known as the user_comments table
 		if (!$user->{is_anon}) {
-			editComm($I{U}{nickname});
+			editComm($I{U}{uid});
 		} else {
 			displayForm(); 
 		}
@@ -112,7 +112,7 @@ EOT
 		mailPassword($I{dbobject}->getUserUID($I{F}{unickname}));
 
 	} elsif ($op eq "suedituser" && $I{U}{aseclev} > 100) {
-		editUser($I{F}{name});
+		editUser($I{dbobject}->getUserUID($I{F}{name}));
 
 	} elsif ($op eq "susaveuser" && $I{U}{aseclev} > 100) {
 		saveUser($I{F}{uid}); 
@@ -125,7 +125,6 @@ EOT
 		displayForm();
 
 	} elsif ($op eq "userlogin" && !$user->{is_anon}) {
-		# print $query->redirect("$I{rootdir}/index.pl");
 		userInfo($I{U}{nickname});
 
 	} elsif ($op eq "preview") {
@@ -248,14 +247,14 @@ sub mailPassword {
 		print "Nickname was not found. No Password was mailed.<BR>\n"; 
 		return;
 	}
-	my $user = $I{dbobject}->getUserInfoByUID($uid);
+	my $user_email = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
 
 	my $msg = $I{dbobject}->getBlock("newusermsg");
 	$msg = prepBlock($msg);
 	$msg = eval $msg;
 
-	sendEmail($user->{realemail}, "$I{sitename} user password for $user->{nickname}", $msg) if $user->{nickname};
-	print "Passwd for $user->{nickname} was just emailed.<BR>\n";
+	sendEmail($user_email->{realemail}, "$I{sitename} user password for $user_email->{nickname}", $msg) if $user_email->{nickname};
+	print "Passwd for $user_email->{nickname} was just emailed.<BR>\n";
 }
 
 #################################################################
@@ -267,7 +266,7 @@ sub userInfo {
 	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$userbio) {
 		$bio = stripByMode($bio, "html");
 		if ($I{U}{nickname} eq $nick) {
-			my $points = $I{dbobject}->getUserPoints($uid);
+			my $points = $I{dbobject}->getUser($uid, 'points');
 
 			titlebar("95%", "Welcome back $nick ($uid)");
 			print <<EOT;
@@ -298,7 +297,7 @@ EOT
 			if $I{U}{aseclev} || $I{U}{uid} == $uid;
 		print "<B>User Bio</B><BR>$bio<P>" if $bio;
 
-		my($k) = $I{dbobject}->getUserPublicKey($uid);
+		my($k) = $I{dbobject}->getUser($uid, 'pubkey');
 		$k = stripByMode($k, "html");
 		print "<B>Public Key</B><BR><PRE>\n$k</PRE><P>" if $k;
 
@@ -346,19 +345,24 @@ EOT
 
 #################################################################
 sub editKey {
-	my $k = $I{dbobject}->getUserPublicKey($_[0]);
+	my($uid) = @_;
+
+	my $k = $I{dbobject}->getUser($uid, 'pubkey');
 	printf qq!<P><B>Public Key</B><BR><TEXTAREA NAME="pubkey" ROWS="4" COLS="60">%s</TEXTAREA>!,
 		stripByMode($k, 'literal');
 }
 
 #################################################################
 sub editUser {
-	my($name) = @_;
-	my $user_edit = $I{dbobject}->getUserEditInfo($name);
+	my($uid) = @_;
+
+	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
+	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	$user_edit->{uid} = $uid;
 
 	return if $user_edit->{uid} == $I{anonymous_coward_uid};
 
-	titlebar("100%", "Editing $name ($user_edit->{uid}) $user_edit->{realemail}");
+	titlebar("100%", "Editing $user_edit->{nickname} ($user_edit->{uid}) $user_edit->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
 
 	$user_edit->{homepage} ||= "http://";
@@ -529,11 +533,13 @@ EOT
 
 #################################################################
 sub editHome {
-	my($name) = @_;
+	my($uid) = @_;
 
-	my $user = $I{dbobject}->getUserEditInfo($name);
+	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
+	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	$user_edit->{uid} = $uid;
 
-	return if $user->{uid} == $I{anonymous_coward_uid};
+	return if $user_edit->{uid} == $I{anonymous_coward_uid};
 
 	titlebar("100%", "Customize $I{sitename}'s Display");
 
@@ -546,17 +552,17 @@ EOT
 
 	my $formats;
 	$formats = $I{dbobject}->getDescriptions('dateformats');
-	createSelect('tzformat', $formats, $user->{dfid});
+	createSelect('tzformat', $formats, $user_edit->{dfid});
 
 	$formats = $I{dbobject}->getDescriptions('tzcodes');
-	createSelect('tzcode', $formats, $user->{tzcode});
+	createSelect('tzcode', $formats, $user_edit->{tzcode});
 
 	print "</NOBR>";
 
-	my $l_check = $user->{light}	? " CHECKED" : "";
-	my $b_check = $user->{noboxes}	? " CHECKED" : "";
-	my $i_check = $user->{noicons}	? " CHECKED" : "";
-	my $w_check = $user->{willing}	? " CHECKED" : "";
+	my $l_check = $user_edit->{light}	? " CHECKED" : "";
+	my $b_check = $user_edit->{noboxes}	? " CHECKED" : "";
+	my $i_check = $user_edit->{noicons}	? " CHECKED" : "";
+	my $w_check = $user_edit->{willing}	? " CHECKED" : "";
 
 	print <<EOT;
 
@@ -573,7 +579,7 @@ EOT
 	<P><B>Maximum Stories</B> The default is 30.  The main
 	column displays 1/3rd of these at minimum, and all of
 	today's stories at maximum.<BR>
-	<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="$user->{maxstories}">
+	<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="$user_edit->{maxstories}">
 
 	<P><INPUT TYPE="CHECKBOX" NAME="willing"$w_check>
 	<B>Willing to Moderate</B> By default all users are willing to
@@ -583,7 +589,7 @@ EOT
 	</TD></TR></TABLE><P>
 EOT
 
-	tildeEd($user->{extid}, $user->{exsect}, $user->{exaid}, $user->{exboxes}, $user->{mylinks});
+	tildeEd($user_edit->{extid}, $user_edit->{exsect}, $user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks});
 
 	print qq!\t<INPUT TYPE="SUBMIT" NAME="op" VALUE="savehome">\n!;
 	print "\t</FORM>\n\n";
@@ -591,9 +597,11 @@ EOT
 
 #################################################################
 sub editComm {
-	my($name) = @_;
+	my($uid) = @_;
 
-	my $user = $I{dbobject}->getUserEditInfo($name);
+	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
+	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	$user_edit->{uid} = $uid;
 
 	titlebar("100%", "Comment Options");
 
@@ -606,15 +614,15 @@ EOT
 
 	print "<B>Display Mode</B>";
 	$formats = $I{dbobject}->getDescriptions('commentmodes');
-	createSelect('umode', $formats, $user->{mode});
+	createSelect('umode', $formats, $user_edit->{mode});
 
 	print "<P><B>Sort Order</B> (self explanatory?	I hope?)\n";
 	$formats = $I{dbobject}->getDescriptions('sortcodes');
-	createSelect('commentsort', $formats, $user->{commentsort});
+	createSelect('commentsort', $formats, $user_edit->{commentsort});
 
 	print "<P><B>Threshold</B>";
 	$formats = $I{dbobject}->getDescriptions('threshcodes');
-	createSelect('uthreshold', $formats, $user->{threshold});
+	createSelect('uthreshold', $formats, $user_edit->{threshold});
 
 	print <<EOT;
 	<BR>(comments scored less than this setting will be ignored.
@@ -625,14 +633,14 @@ EOT
 
 	print "<P><B>Highlight Threshold</B>";
 	$formats = $I{dbobject}->getDescriptions('threshcodes');
-	createSelect('highlightthresh', $formats, $user->{highlightthresh});
+	createSelect('highlightthresh', $formats, $user_edit->{highlightthresh});
 
 	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
 
-	my $h_check = $user->{hardthresh}	? " CHECKED" : "";
-	my $r_check = $user->{reparent}		? " CHECKED" : "";
-	my $n_check = $user->{noscores}		? " CHECKED" : "";
-	my $s_check = $user->{nosigs}		? " CHECKED" : "";
+	my $h_check = $user_edit->{hardthresh}	? " CHECKED" : "";
+	my $r_check = $user_edit->{reparent}		? " CHECKED" : "";
+	my $n_check = $user_edit->{noscores}		? " CHECKED" : "";
+	my $s_check = $user_edit->{nosigs}		? " CHECKED" : "";
 
 	print <<EOT;
 	<P><B>Hard Thresholds</B> (Hides 'X Replies Below
@@ -650,23 +658,23 @@ EOT
 
 	<P><B>Limit</B> only display this many comments.
 	For best results, set this to a low number and sort by score.<BR>
-	<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="$user->{commentlimit}">
+	<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="$user_edit->{commentlimit}">
 
 	<P><B>Index Spill</B> (When an article has this many comments,
 	it switches to indexed mode)<BR>
-	<INPUT TYPE="TEXT" NAME="commentspill" VALUE="$user->{commentspill}" SIZE="3">
+	<INPUT TYPE="TEXT" NAME="commentspill" VALUE="$user_edit->{commentspill}" SIZE="3">
 
 	<P><B>Small Comment Penalty</B> (Assign -1 to comments smaller
 	than this many characters.  This might cause some comments
 	to be rated -2 and hence rendered invisible!)<BR>
-	<INPUT TYPE="TEXT" NAME="clsmall" VALUE="$user->{clsmall}" SIZE="6">
+	<INPUT TYPE="TEXT" NAME="clsmall" VALUE="$user_edit->{clsmall}" SIZE="6">
 
 	<P><B>Long Comment Bonus </B> (Assign +1 to lengthy comments)<BR>
-	<INPUT TYPE="TEXT" NAME="clbig" VALUE="$user->{clbig}" SIZE="6">
+	<INPUT TYPE="TEXT" NAME="clbig" VALUE="$user_edit->{clbig}" SIZE="6">
 
 	<P><B>Max Comment Size</B> (Truncates long comments, and 
 	adds a \"Read More\" link.  Set really big to disable)<BR>
-	<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="$user->{maxcommentsize}">
+	<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="$user_edit->{maxcommentsize}">
 
 	<P><B>Disable Sigs</B> (strip sig quotes from comments)
 	<INPUT TYPE="CHECKBOX" NAME="nosigs"$s_check>
@@ -675,7 +683,7 @@ EOT
 EOT
 
 	$formats = $I{dbobject}->getDescriptions('postmodes');
-	createSelect('posttype', $formats, $user->{posttype});
+	createSelect('posttype', $formats, $user_edit->{posttype});
 
 	print <<EOT;
 
@@ -691,13 +699,13 @@ EOT
 #################################################################
 sub saveUser {
 	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $user  = $I{dbobject}->getUserInfoByUID($uid);
+	my $user_email  = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
 
-	$user->{nickname} = substr($user->{nickname}, 0, 20);
+	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if $uid == $I{anonymous_coward_uid};
 
-	print "<P>Saving $user->{nickname}<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward_uid} || !$user->{nickname};
+	print "<P>Saving $user_email->{nickname}<BR><P>";
+	print <<EOT if $uid == $I{anonymous_coward_uid} || !$user_email->{nickname};
 <P>Your browser didn't save a cookie properly.  This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -723,12 +731,12 @@ EOT
 	};
 
 
-	if ($user->{realemail} ne $I{F}{realemail}) {
+	if ($user_email->{realemail} ne $I{F}{realemail}) {
 		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
-		print "\nNotifying $user->{realemail} of the change to their account.<BR>\n";
+		print "\nNotifying $user_email->{realemail} of the change to their account.<BR>\n";
 
-		sendEmail($user->{realemail}, "$I{sitename} user email change for $user->{nickname}", <<EOT);
-The user account $user->{nickname} on $I{sitename} had this email
+		sendEmail($user_email->{realemail}, "$I{sitename} user email change for $user_email->{nickname}", <<EOT);
+The user account $user_email->{nickname} on $I{sitename} had this email
 associated with it.  A web user from $ENV{REMOTE_ADDR} has
 just changed it to $I{F}{realemail}.
 
@@ -819,7 +827,7 @@ eliminates them, you are using a browser that doesn't support them, or you rejec
 EOT
 
 	my($extid, $exaid, $exsect) = "";
-	my $exboxes = $I{dbobject}->getUserIndexExboxes($uid);
+	my $exboxes = $I{dbobject}->getUser($uid, 'exboxes');
 
 	$exboxes =~ s/'//g;
 	my @b = split m/,/, $exboxes;

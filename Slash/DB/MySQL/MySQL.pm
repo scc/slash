@@ -158,8 +158,6 @@ sub sqlConnect {
 			}
 		}
 	}
-	#This is only here for backwards compatibility
-	$Slash::I{dbh} = $self->{dbh};
 }
 
 ########################################################
@@ -387,14 +385,6 @@ sub getDiscussions {
 	);
 
 	return $discussion;
-}
-
-########################################################
-sub getUserKarma {
-	my($self, $uid) = @_;
-	my($karma) = $self->sqlSelect("karma", "users_info", "uid=$uid");
-
-	return $karma;
 }
 
 ########################################################
@@ -631,30 +621,6 @@ sub getUserUID {
 	return $uid;
 }
 
-########################################################
-# Get user info from the users table.
-sub getUserPoints {
-	my($self, $uid) = @_;
-
-	my($points) = $self->sqlSelect('points', 'users_comments',
-		"uid='$uid'"
-	);
-
-	return $points;
-}
-
-########################################################
-# Get user info from the users table.
-sub getUserPublicKey {
-	my($self, $uid) = @_;
-
-	my($key) = $self->sqlSelect('pubkey', 'users_key',
-		"uid='$uid'"
-	);
-
-	return $key;
-}
-
 #################################################################
 sub getUserComments {
 	my($self, $uid, $min) = @_;
@@ -669,43 +635,6 @@ sub getUserComments {
 	my($comments) = $sth->fetchall_arrayref;
 
 	return $comments;
-}
-
-#################################################################
-sub getUserIndexExboxes {
-	my($self, $uid) = @_;
-	my($exboxes) = $self->sqlSelect("exboxes", "users_index", "uid=$uid");
-	return $exboxes;
-}
-
-########################################################
-# Get user info from the users table.
-sub getUserInfoByUID {
-	my($self, $uid) = @_;
-
-	my $user = $self->sqlSelectHashref('nickname,realemail', 'users',
-			'nickname=' . $self->{dbh}->quote($uid));
-	return $user;
-}
-
-########################################################
-# Get user info from the users table.
-sub getUserFakeEmail {
-	my($self, $uid) = @_;
-
-	my $user = $self->sqlSelectHashref('nickname,fakeemail', 'users',
-			'nickname=' . $self->{dbh}->quote($uid));
-	return $user;
-}
-
-########################################################
-# Get user info from the users table.
-sub getUserInfoByNickname {
-	my($self, $name) = @_;
-
-	my $user = $self->sqlSelectArrayRef('passwd,realemail', 'users',
-			'nickname=' . $self->{dbh}->quote($name));
-	return $user;
 }
 
 #################################################################
@@ -1349,29 +1278,13 @@ sub getPollQuestionBySID {
 	return $question;
 }
 
-########################################################
-sub getUserEditInfo {
-	my($self, $name) = @_;
-	my $bio = $self->sqlSelectHashref("users.uid, realname, realemail, fakeemail, homepage, nickname, passwd, sig, seclev, bio, maillist", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
-
-	return $bio;
-}
-
-########################################################
-sub getUserEditHome {
-	my($self, $name) = @_;
-	my $bio = $self->sqlSelectHashref("users.uid, willing, dfid, tzcode, noicons, light, mylinks, users_index.extid, users_index.exaid, users_index.exsect, users_index.exboxes, users_index.maxstories, users_index.noboxes", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
-
-	return $bio;
-}
-
-########################################################
-sub getUserEditComment  {
-	my($self, $name) = @_;
-	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
-
-	return $bio;
-}
+#########################################################
+#sub getUserEditComment  {
+#	my($self, $name) = @_;
+#	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
+#
+#	return $bio;
+#}
 
 ########################################################
 sub getUserBio {
@@ -2874,19 +2787,34 @@ sub getUser {
 	my $members = @val;
 	my $answer;
 	if ($members == 1) {
-		my $table = $self->{_user_tables}->{$val[0]};
-		($answer) = $self->sqlSelect($val[0], $table, "$uid=" . $self->{dbh}->quote($uid));
+		my $table = $self->{_all_user_keys}->{$val[0]};
+		($answer) = $self->sqlSelect($val[0], $table, 'uid=' .$self->{dbh}->quote($uid));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
 		my %tables;
+		my $where;
+		my $uid_db = $self->{dbh}->quote($uid);
 		for(@val) {
-			$tables{$self->{_user_tables}->{$_}} = 1;
+			$tables{$self->{_all_user_keys}->{$_}} = 1;
 		}
+		for(keys %tables) {
+			$where .= "$_.uid=$uid_db AND ";
+		}
+		# Probably less resource intensive way to do this (like just
+		# chopping off the end of the array based on size). But
+		# it is late, and I am tired. -Brian
+		chop($where); chop($where); chop($where); chop($where); chop($where);
 		my $table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, "uid=" . $self->{dbh}->quote($uid));
+		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} else {
+		my $where;
+		my $uid_db = $self->{dbh}->quote($uid);
+		for(keys %{$self->{_all_user_keys}}) {
+			$where .= "$_.uid=$uid_db AND ";
+		}
+		chop($where); chop($where); chop($where); chop($where); chop($where);
 		my $table = join ',', @$self->{_user_tables};
-		$answer = $self->sqlSelectHashref('*', $table, "uid=" . $self->{dbh}->quote($uid));
+		$answer = $self->sqlSelectHashref('*', $table, $where);
 	} 
 
 	return $answer;

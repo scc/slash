@@ -27,6 +27,7 @@ use strict;
 use vars '%I';
 use Slash;
 use Slash::Utility;
+use Slash::DB;
 
 #################################################################
 sub main {
@@ -168,11 +169,11 @@ EOT
 			? "$I{rootdir}/$section/$sid.shtml#$cid"
 			: "$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
 
-		my $user = $I{dbobject}->getUserFakeEmail($uid);
+		my $user_email = $I{dbobject}->getUser($uid, 'fakeemail', 'nickname');
 		printf <<EOT, $match ? $match : $x;
 <BR><B>%s</B>
 	<A HREF="$href">$subj</A>
-	by <A HREF="mailto:$user->{fakeemail}">$user->{nickname}</A> on $cdate<BR>
+	by <A HREF="mailto:$user_email->{fakeemail}">$user_email->{nickname}</A> on $cdate<BR>
 	<FONT SIZE="2">attached to <A HREF="$I{rootdir}/$section/$sid.shtml">$title</A> 
 	posted on $sdate by $aid</FONT><BR>
 EOT

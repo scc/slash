@@ -117,12 +117,12 @@ sub topComments {
 	for(@$story_comments) {
 		my($section, $sid, $aid, $title, $pid, $subj, $cdate, $sdate,
 				$uid, $cid, $score) = @$_;
-		my $user = $I{dbobject}->getUserFakeEmail($uid);
+		my $user_email = $I{dbobject}->getUser($uid, 'fakeemail', 'nickname');
 	
 		print <<EOT;
 <BR><B>$score</B>
 	<A HREF="$I{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid">$subj</A>
-	by <A HREF="mailto:$user->{fakeemail}">$user->{nickname}</A> on $cdate<BR>
+	by <A HREF="mailto:$user_email->{fakeemail}">$user_email->{nickname}</A> on $cdate<BR>
 
 	<FONT SIZE="2">attached to <A HREF="$I{rootdir}/$section/$sid.shtml">$title</A>
 	posted on $sdate by $aid</FONT><BR>

@@ -60,8 +60,8 @@ sub main {
 		$I{F}{op} = "Preview";
 	}
 
-	$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
-		if $I{U}{uid} != $I{anonymous_coward_uid};
+	$I{U}{karma} = $I{dbobject}->getUser($I{U}{uid}, 'karma')
+		unless $I{U}{is_anon};
 	$I{dbobject}->createDiscussions($I{F}{sid}) unless ($I{F}{sid});
 
 	if ($I{F}{op} eq "Submit") {

@@ -18,6 +18,8 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{VirtualUser} = $user;
 	$cfg->{dbslash} = Slash::DB->new($user);
 	$cfg->{constants} = $cfg->{dbslash}->getSlashConf();
+	# Backwards compatibility
+	$cfg->{constants}->{dbh} = $cfg->{dbslash}->{'dbh'};
 	my $anonymous_coward = $cfg->{dbslash}->getUserInstance(
 		$cfg->{constants}{anonymous_coward_uid}
 	);

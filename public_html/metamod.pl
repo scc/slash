@@ -32,8 +32,8 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
-		if $I{U}{uid} != $I{anonymous_coward_uid};
+	$I{U}{karma} = $I{dbobject}->getUser($I{U}{uid}, 'karma')
+		unless $I{U}{is_anon};
 	header("Meta Moderation");
 
 	my $id = isEligible();
