@@ -14,6 +14,7 @@ my $total_freshens = 0;
 
 $task{$me}{timespec} = '7 7 * * *';
 $task{$me}{timespec_panic_2} = '';
+$task{$me}{standalone} = 1;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
