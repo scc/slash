@@ -2467,45 +2467,40 @@ sub getPortalsCommon {
 }
 
 ##################################################################
+# Heap are not optimized for count
 sub countCommentsBySid {
 	my($self, $sid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "sid=$sid");
+	return $self->sqlCount('comments', "sid=$sid");
 }
 
 ##################################################################
 sub countCommentsByUID {
 	my($self, $uid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "uid=$uid");
+	return $self->sqlCount('comments', "uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySubnetID {
 	my($self, $subnetid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "subnetid='$subnetid'");
+	return $self->sqlCount('comments', "subnetid='$subnetid'");
 }
 
 ##################################################################
 sub countCommentsByIPID {
 	my($self, $ipid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "ipid='$ipid'");
+	return $self->sqlCount('comments', "ipid='$ipid'");
 }
 
 ##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "sid=$sid AND uid=$uid");
+	return $self->sqlCount('comments', "sid=$sid AND uid=$uid");
 }
 
 ##################################################################
 sub countCommentsBySidPid {
 	my($self, $sid, $pid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "sid=$sid AND pid=$pid");
+	return $self->sqlCount('comments', "sid=$sid AND pid=$pid");
 }
 
 ##################################################################
@@ -2516,8 +2511,7 @@ sub findCommentsDuplicate {
 	my($self, $sid, $comment) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $signature_quoted = $self->sqlQuote(md5_hex($comment));
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	return $self->sqlCount($comment_table, "sid=$sid_quoted AND signature=$signature_quoted");
+	return $self->sqlCount('comments', "sid=$sid_quoted AND signature=$signature_quoted");
 }
 
 ##################################################################
@@ -2986,9 +2980,7 @@ sub getStoriesBySubmitter {
 sub countStoriesBySubmitter {
 	my($self, $id) = @_;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
-	my $count = $self->sqlCount($story_table, "submitter='$id'");
+	my $count = $self->sqlCount('stories', "submitter='$id'");
 
 	return $count;
 }
