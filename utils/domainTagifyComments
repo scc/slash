@@ -29,7 +29,7 @@ createEnvironment($opts{u});
 $slashdb = getCurrentDB();
 $constants = getCurrentStatic();
 my $vars = $slashdb->sqlSelectAllHashref("name", "name, value", "vars");
-$comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+$comment_table = 'comments';
 my($min_cid, $max_cid) = (0, 0);
 if ($opts{'f'} or $opts{'l'}) {
 	# if "-f" specified, do the last day by default

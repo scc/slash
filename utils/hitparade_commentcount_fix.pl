@@ -28,9 +28,6 @@ $task{$PROGNAME}{code} = sub {
 	my $counts = $slashdb->sqlSelectAll('sid,commentcount', 'discussions', " sid != ''");
 	for(@$counts) {
 		$slashdb->sqlDo(" UPDATE stories SET commentcount='$_->[1]' WHERE sid='$_->[0]'");
-		if($constants->{mysql_heap_table}) {
-			$slashdb->sqlDo(" UPDATE story_heap SET commentcount='$_->[1]' WHERE sid='$_->[0]'");
-		}
 	}
 
 	my $hits = $slashdb->sqlSelectAll('discussions.id,threshold,count,sid', 'discussion_hitparade, discussions', " discussions.id=discussion_hitparade.discussion AND  sid != '' AND type ='open' ");
@@ -55,9 +52,6 @@ $task{$PROGNAME}{code} = sub {
 		$slashdb->sqlDo(" UPDATE discussions SET hitparade ='$string' WHERE sid='$_'");
 		$slashdb->sqlDo(" UPDATE stories SET hitparade ='$string' WHERE sid='$sid'")
 				if $sid;
-		if($constants->{mysql_heap_table}) {
-			$slashdb->sqlDo(" UPDATE story_heap SET hitparade ='$string' WHERE sid='$sid'");
-		}
 	}
 };
 

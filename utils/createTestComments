@@ -46,7 +46,7 @@ $opts{num_comments} = $ARGV[0] || 10;
 usage('Invalid number of comments') 
 	if $opts{num_comments} !~ /^\d+$/ || $opts{num_comments} < 0;
 
-my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+my $story_table = 'stories';
 
 createEnvironment($opts{u});
 $slashdb = getCurrentDB();
@@ -103,7 +103,7 @@ $werder = new Silly::Werder;
 			my $comments = $slashdb->sqlSelectAllHashref(
 				'cid',
 				'cid, pid',
-				'comments', #'comment_heap',
+				'comments',
 				"sid=$discussion_id",
 			);
 	 
