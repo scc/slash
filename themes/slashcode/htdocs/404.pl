@@ -16,7 +16,7 @@ sub main {
 	my $url = strip_literal(substr($ENV{REQUEST_URI}, 1));
 	my $admin = $constants->{adminmail};
 
-	header('404 File Not Found', '', '404 File Not Found');
+	header('404 File Not Found');
 
 	my($new_url, $errnum) = fixHref($url, 1);
 
