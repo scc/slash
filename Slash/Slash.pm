@@ -47,7 +47,7 @@ use vars qw($VERSION @ISA @EXPORT);
 # this is the worst damned warning ever, so SHUT UP ALREADY!
 $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
-$VERSION = '1.001015';	# v1.1.15
+$VERSION = '1.001016';	# v1.1.16
 @ISA	 = 'Exporter';
 @EXPORT  = qw(
 	checkSubmission createMenu createSelect
