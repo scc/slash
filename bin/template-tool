@@ -10,6 +10,8 @@
 # I hope someone takes this over. A TK frontend
 # would be nice. This was Cliff's idea and kudos
 # should go to him. -Brian
+#
+# Cliff++; -CaptTofu
 use strict;
 use Slash;
 use Slash::Utility;
@@ -273,12 +275,12 @@ sub save_template {
 			$tpage = $page if $page ne '';
 			$tsection = $section if $section ne '';
 		}
-		elsif ($tmpfile =~ /(\w+)\-(\w+)\-(.*)$/i) {
+		elsif ($tmpfile =~ /(\w+)\;(\w+)\;(.*)$/i) {
 			$filename_flag = 1;
-			($psection,$ppage,$pname) = ($1,$2,$3);
-			$tname = $name eq '' ? $3 : $name ;
+			($pname,$ppage,$psection) = ($1,$2,$3);
+			$tname = $name eq '' ? $1 : $name ;
 			$tpage = $page eq '' ? $2 : $page ;
-			$tsection = $section eq '' ? $1 : $section ;
+			$tsection = $section eq '' ? $3 : $section ;
 		}
 		elsif ($name ne '') {
 			$tname = $name;
@@ -353,9 +355,9 @@ sub dump_templates {
 
 	for my $template (keys %$templatelist) {
 		if (! $file || -d $file) {
-			$filename = $templatelist->{$template}{'section'} . "-" .  
-				$templatelist->{$template}{'page'} . "-" .  
-				$templatelist->{$template}{'name'};
+			$filename = $templatelist->{$template}{'name'} . ';' .  
+				$templatelist->{$template}{'page'} . ';' .  
+				$templatelist->{$template}{'section'};
 
 			$filename = $file . "/" . $filename if -d $file;
 		} else {
@@ -390,7 +392,7 @@ sub list_templates {
 		print <<EOT; 
 --------------------------------------------------------
 Tpid: $templatelist->{$template}{tpid} Name: $templatelist->{$template}{name}
-Section: $templatelist->{$template}{section} Page: $templatelist->{$template}{page}
+Page: $templatelist->{$template}{section} Section: $templatelist->{$template}{page}
 
 EOT
 
