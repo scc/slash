@@ -228,7 +228,20 @@ sub main {
 	}
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {
-		my $refer = $form->{returnto} || $constants->{rootdir};
+		my $refer = URI->new_abs($form->{returnto} || $constants->{rootdir},
+			$constants->{absolutedir});
+		# Tolerate redirection with or without a "www.", this is a little
+		# sloppy but it may help avoid a subtle misbehavior someday.
+		my $site_domain = $constants->{basedomain}; $site_domain =~ s/^www\.//;
+		my $refer_host = $refer->host(); $refer_host =~ s/^www\.//;
+		if ($site_domain eq $refer_host) {
+			# Cool, it goes to our site.  Send the user there.
+			$refer = $refer->as_string;
+		} else {
+			# Bogus, it goes to another site.  op=userlogin is not a
+			# URL redirection service, sorry.
+			$refer = $constants->{rootdir};
+		}
 		redirect($refer);
 		return;
 
