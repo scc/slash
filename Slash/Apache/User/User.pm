@@ -252,10 +252,14 @@ sub userdir_handler {
 	# what's going on here?  matching ~ seems like the
 	# wrong thing to do, since you are going to match
 	# it again in the next if ... ?  if this is correct,
-	# please comment as to why --pudge
+	# please comment as to why --pudge	
+	# Two different uses. ~/ goes to your personal 
+	# pages while ~username/ takes you to other people's
+	# pages. -Brian
 	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
+		my $match = $1;
 		if ($r->header_in('Cookie') =~ $USER_MATCH) {
-			my($toss,$op) = split /\//, $1, 3;
+			my($toss,$op) = split /\//, $match, 3;
 			# Its past five, and the below makes it go -Brian
 			$op ||= $toss;
 			if ($op eq 'journal') {
