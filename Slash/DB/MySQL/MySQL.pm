@@ -3607,7 +3607,7 @@ print STDERR "gIT $time gb $good_behavior dbi $days_back_ip dbu $days_back_user\
 		AND moderatorlog.active=1
 		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_ip"
 	);
-print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " ip downmods $downmods trollpoint $trollpoint ipid '$user->{subnetid}'\n";
+print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " ip downmods $downmods trollpoint $trollpoint ipid '$user->{ipid}'\n";
 	return 1 if $downmods <= $trollpoint;
 
 	# Check for downmods by subnet.
