@@ -148,16 +148,17 @@ sub userLogin {
 	my($name, $passwd) = @_;
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $slashdb = getCurrentDB();
 
 	$passwd = substr $passwd, 0, 20;
 	my($uid, $cookpasswd, $newpass) =
-		$cfg->{slashdb}->getUserAuthenticate($name, $passwd, 1);
+		$slashdb->getUserAuthenticate($name, $passwd, 1);
 
 	if (!isAnon($uid)) {
 		setCookie('user', bakeUserCookie($uid, $cookpasswd));
 		return($uid, $newpass);
 	} else {
-		return $cfg->{constants}{anonymous_coward_uid};
+		return getCurrentStatic('anonymous_coward_uid');
 	}
 }
 

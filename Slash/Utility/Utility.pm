@@ -450,6 +450,7 @@ sub getCurrentMenu {
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 
+	return unless $cfg->{menus}{$menu};
 	@menus = @{$cfg->{menus}{$menu}};
 	# why is this here?  i'd think we could take care of
 	# this in the caller instead, as we do already in Slash.pm

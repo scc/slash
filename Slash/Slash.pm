@@ -2230,6 +2230,7 @@ sub createMenu {
 	my $menu_items = getCurrentMenu($menu);
 	my $items = [];
 
+	return unless $menu_items;
 	for my $item (sort { $a->{menuorder} <=> $b->{menuorder} } @$menu_items) {
 		next unless $user->{seclev} >= $item->{seclev};
 		push @$items, {
