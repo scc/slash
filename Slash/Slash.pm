@@ -26,7 +26,7 @@ package Slash;
 ###############################################################################
 use strict;  # ha ha ha ha ha!
 use Apache::SIG ();
-use CGI ();
+use CGI (); #Shoudl we really import this entire thing in? -Brian
 use DBI;
 use Date::Manip;
 use File::Spec::Functions;
@@ -49,7 +49,7 @@ BEGIN {
 		sqlSelectMany sqlSelect sqlSelectHash sqlSelectAll approveTag
 		sqlSelectHashref sqlUpdate sqlInsert sqlReplace sqlConnect
 		sqlTableExists sqlSelectColumns getSlash linkStory getSection
-		selectForm selectGeneric selectTopic selectSection fixHref
+		selectTopic selectSection fixHref
 		getblock getsid getsiddir getWidgetBlock
 		anonLog pollbooth stripByMode header footer pollItem
 		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
@@ -58,8 +58,8 @@ BEGIN {
 		getEvalBlock getTopic dispStory lockTest getSlashConf
 		getDateFormat dispComment getDateOffset linkComment redirect
 		insertFormkey getFormkeyId checkSubmission checkTimesPosted
-		formSuccess formAbuse formFailure errorMessage intervalString
-		getFormkey checkFormkey createSelect
+		formSuccess formAbuse formFailure errorMessage 
+		createSelect
 	);
 	$CRLF = "\015\012";
 }
@@ -190,36 +190,13 @@ sub getSlash {
 }
 
 ########################################################
-# Quick Form Creation Functions
-
-# Generic way to convert a table into a drop down list
-sub selectGeneric {
-	my($table, $label, $code, $name, $default, $where, $order, $limit) = @_;
-	$default = '' unless defined $default;
-	$code 	 = '' unless defined $code;
-
-	print qq!\n<SELECT name="$label">\n!;
-
-	my $sql	=  " SELECT $code,$name FROM $table ";
-	$sql	.= "    WHERE $where" if $where;
-	$sql	.= "	ORDER BY $name" unless $order;
-	$sql	.= " ORDER BY $order" if $order;
-	$sql	.= "    LIMIT $limit" if $limit;
-
-	my $c	= $I{dbh}->prepare_cached($sql);
-	$c->execute;
-
-	while (my($code, $name) = $c->fetchrow) {
-		my $selected = $default eq $code ? ' SELECTED' : '';
-		print qq!\t<OPTION value="$code"$selected>$name</OPTION>\n!;
-	}
-
-	$c->finish;
-	print "</SELECT>\n";
-}
-
-# This method will take an array of arrays as input and then print 
-# out a select html object.
+# createSelect()
+# Pass it a hashref and a default value and it generates
+# a select menu. I am really questioning in my head
+# the existance of this method. We could probably get
+# rid of it and use something from CGI.pm (we already
+# use it, so we might as well make full use of it)
+# -Brian
 sub createSelect {
 	my ($label, $hashref, $default) = @_;
 	print qq!\n<SELECT name="$label">\n!;
@@ -231,12 +208,6 @@ sub createSelect {
 	print "</SELECT>\n";
 }
 
-########################################################
-# This really is an obsolete function for quick form generation
-sub selectForm {
-	my($table, $label, $default, $where) = @_;
-	selectGeneric($table, $label, 'code', 'name', $default, $where, 'name');
-}
 
 ########################################################
 sub selectTopic {
@@ -1506,8 +1477,6 @@ EOT
 		print "Threshold: ", selectThreshold($comments->[0]{totals}),
 			selectMode(), selectSortcode();
 
-		#selectGeneric("commentmodes","mode","mode","name",$I{U}{mode});
-		#selectForm("sortcodes","commentsort",$I{U}{commentsort});
 
 		print qq!\t\tSave:<INPUT TYPE="CHECKBOX" NAME="savechanges">!
 			if $I{U}{uid} > 0;

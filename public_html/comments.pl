@@ -330,10 +330,11 @@ EOT
 
 EOT
 
+	my $formats = $I{dbobject}->getFormatDescriptions('postmodes');
 	if ($I{F}{posttype}) {
-		selectGeneric("postmodes", "posttype", "code", "name", $I{F}{posttype});
+		createSelect('posttype', $formats, $I{F}{posttype});
 	} else {
-		selectGeneric("postmodes", "posttype", "code", "name", $I{U}{posttype});
+		createSelect('posttype', $formats, $I{U}{posttype});
 	}
 
 	printf <<EOT, join "\n", map { "\t\t\t&lt;$_&gt;" } @{$I{approvedtags}};

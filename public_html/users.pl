@@ -459,7 +459,9 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	<P><B>Headline Mailing List</B>
 EOT
 
-	selectForm("maillist", "maillist", $maillist);
+	my $description = $I{dbobject}->getFormatDescriptions('maillist');
+	createSelect('maillist', $description, $maillist);
+
 	print <<EOT;
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
 		<TEXTAREA NAME="sig" rows=2 cols=60>$sig</TEXTAREA>

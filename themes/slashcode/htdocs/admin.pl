@@ -208,7 +208,9 @@ sub adminLoginForm {
 sub varEdit {
 	my($name) = @_;
 	print qq[\n<!-- begin variables editor form -->\n<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">\n];
-	selectGeneric('vars', 'name', 'name', 'name', $name);
+	my $vars = $I{dbobject}->getFormatDescriptions('vars');
+	createSelect('name', $vars, $name);
+
 	my($value, $desc) = sqlSelect('value,description',
 		'vars', "name='$name'");
 	print "Next<BR>\n",
@@ -258,7 +260,9 @@ sub authorEdit {
 	my ($name,$url,$email,$quote,$copy,$pwd,$seclev,$section); 
 
 	print qq!<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">!;
-	selectGeneric('authors', 'myaid', 'aid', 'aid', $aid);
+	my $authors = $I{dbobject}->getAuthorNameByAid();
+	createSelect('myaid', $authors, $aid);
+
 	
 	if($aid) {	
 		($name,$url,$email,$quote,$copy,$pwd,$seclev,$section) = 
@@ -402,12 +406,15 @@ EOT
 EOT
 
 		# get the static blocks
-		selectGeneric('blocks', 'bid1', 'bid', 'bid', $bid, "$seclev >= seclev and type != 'portald'");
+		my $block = $I{dbobject}->getStaticBlock($seclev);
+		createSelect('bid1', $block, $bid);
+
 		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked1"></TD>
 		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete1"></TD>\n\t</TR>\n];
 		# get the portald blocks
 		print qq[\t<TR><TD><B>Portald Blocks</B></TD><TD>];
-		selectGeneric('blocks', 'bid2', 'bid', 'bid', $bid, "$seclev >= seclev and type = 'portald'");
+		$block = $I{dbobject}->getPortaldBlock($seclev);
+		createSelect('bid2', $block, $bid);
 		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked2"></TD>
 		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete2"></TD>\n\t</TR>\n</TABLE>\n];
 	}
@@ -679,7 +686,8 @@ you will need to restart the webserver for the change(s) to show up.</P>
 <P>Note: make sure you use a valid color value, or the color will not work properly.</P>
 Select the color block to edit: 
 EOT
-	selectGeneric('blocks', 'color_block', 'bid', 'bid', $I{F}{color_block}, "type = 'color'");
+	my $block = $I{dbobject}->getColorBlock();
+	createSelect('color_block', $block, $I{F}{color_block});
 
 print <<EOT;
 	<INPUT TYPE="submit" name="colored" value="Edit Colors">
@@ -794,7 +802,8 @@ sub topicEd {
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 EOT
 
-	selectGeneric('topics', 'nexttid', 'tid', 'tid', $I{F}{nexttid});
+	my $topics = $I{dbobject}->getFormatDescriptions('vars');
+	createSelect('nexttid', $topics, $I{F}{nexttid});
 
 	print '<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>';
 	print '<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic"><BR>';
@@ -1198,7 +1207,8 @@ EOT
 	print qq!\n<INPUT TYPE="HIDDEN" NAME="writestatus" VALUE="$S->{writestatus}">!;
 
 	if ($I{U}{aseclev} > 100 and $S->{aid}) {
-		selectGeneric('authors', 'aid', 'aid', 'name', $S->{aid});
+		my $authors = $I{dbobject}->getAuthorNameByAid();
+		createSelect('aid', $authors, $S->{aid});
 	} elsif ($S->{aid}) {
 		print qq!\n<INPUT TYPE="HIDDEN" NAME="aid" VALUE="$S->{aid}">!;
 	}
@@ -1225,11 +1235,12 @@ EOT
 		qq!<TD BGCOLOR="$I{bg}[2]"><FONT COLOR="$I{fg}[2]">!,
 		lockTest($S->{title});
 
-	# selectForm("statuscodes","writestatus",$S->{writestatus});
 	unless ($I{U}{asection}) {
-		selectForm('displaycodes', 'displaystatus', $S->{displaystatus});
+		my $description = $I{dbobject}->getFormatDescriptions('displaycodes');
+		createSelect('displaystatus', $description, $S->{displaystatus});
 	}
-	selectForm('commentcodes', 'commentstatus', $S->{commentstatus});
+	my $description = $I{dbobject}->getFormatDescriptions('commentcodes');
+	createSelect('commentstatus', $description, $S->{commentstatus});
 
 	print qq!<INPUT TYPE="TEXT" NAME="time" VALUE="$S->{sqltime}" size="16"> <BR>!;
 

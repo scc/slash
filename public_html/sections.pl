@@ -159,12 +159,18 @@ sub editSection {
 
 EOT
 
+	my $formats;
 	print qq|<BR><BR><B>Polls for this section:</B><br>\n|;
-	selectGeneric("pollquestions", "qid", "qid", "question", $qid, "", "date DESC", 25);
+	$formats = $I{dbobject}->getPollQuestions();
+	createSelect('qui', $formats, $qid);
+
 	print qq|<BR><BR><B>Isolate mode:</B><br>\n|;
-	selectGeneric("isolatemodes", "isolate", "code", "name", $isolate);
+	$formats = $I{dbobject}->getFormatDescriptions('isolatemodes');
+	createSelect('isolate', $formats, $isolate);
+
 	print qq|<BR><BR><B>Issue mode:</B><br>\n|;
-	selectGeneric("issuemodes", "issue", "code", "name", $issue);
+	$formats = $I{dbobject}->getFormatDescriptions('issuemodes');
+	createSelect('issue', $formats, $issue);
 	
 
 	unless ($I{F}{addsection}) {

@@ -161,8 +161,10 @@ sub getFormatDescriptions {
 # Creating three different methods for this seems a bit
 # silly. Really I should change these over to just 
 # grabbing hashref's.
-#
-  my ($self, $codetype) = @_;
+# This is getting way to long... probably should
+# become a generic getDescription method
+  my $self = shift; # Shit off to keep things clean
+  my $codetype = shift; # Shit off to keep things clean
 	my $sth;
 	my $codeBank_hash_ref={};
 	if($codetype eq 'sortcodes') {
@@ -182,6 +184,27 @@ sub getFormatDescriptions {
 	}
 	if($codetype eq 'postmodes') {
 		$sth = $self->sqlSelectMany('code,name', 'postmodes');
+	}
+	if($codetype eq 'isolatemodes') {
+		$sth = $self->sqlSelectMany('code,name', 'isolatemodes');
+	}
+	if($codetype eq 'issuemodes') {
+		$sth = $self->sqlSelectMany('code,name', 'issuemodes');
+	}
+	if($codetype eq 'vars') {
+		$sth = $self->sqlSelectMany('name,description', 'vars');
+	}
+	if($codetype eq 'topics') {
+		$sth = $self->sqlSelectMany('tid,alttext', 'topics');
+	}
+	if($codetype eq 'maillist') {
+		$sth = $self->sqlSelectMany('code,name', 'maillist');
+	}
+	if($codetype eq 'displaycodes') {
+		$sth = $self->sqlSelectMany('code,name', 'displaycodes');
+	}
+	if($codetype eq 'commentcodes') {
+		$sth = $self->sqlSelectMany('code,name', 'commentcodes');
 	}
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
@@ -363,6 +386,44 @@ sub getAuthor {
 }
 
 ########################################################
+sub getAuthorNameByAid {
+# Ok, this is really similair to the code get methods 
+# for the moment it will stay seperate just becuase
+# those tables will change. My be a good idea to 
+# cache this at some point.
+# We should be smart at some point and actually see if
+# we can just grab data from the author bank hash
+  my ($self) = @_;
+
+	my $author_hash_ref={};
+	my $sth = $self->sqlSelectMany('aid,name', 'authors');
+	while (my($id, $desc) = $sth->fetchrow) {
+		$author_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $author_hash_ref;
+}
+
+########################################################
+sub getPollQuestions {
+# This may go away. Haven't finished poll stuff yet
+# 
+  my ($self) = @_;
+
+	my $poll_hash_ref={};
+	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC LIMIT 25"; 
+	my $sth = $self->{dbh}->prepare_cached($sql);
+	$sth->execute;
+	while (my($id, $desc) = $sth->fetchrow) {
+		$poll_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $poll_hash_ref;
+}
+
+########################################################
 sub getStoryBySid {
 	my ($self, $sid, $member) = @_;
 	
@@ -384,7 +445,6 @@ sub getStoryBySid {
 ########################################################
 sub clearStory {
 	my ($self, $sid) = @_;
-	print "clearStory() was called\n";
 	if($sid) {
 		undef $storyBank{$sid};
 	} else {
@@ -401,6 +461,53 @@ sub setStoryBySid {
 }
 
 
+########################################################
+# Below are the block methods. These will be cleaned
+# up a bit (so names and methods may change)
+########################################################
+sub getStaticBlock {
+  my ($self, $seclev) = @_;
+
+	my $block_hash_ref={};
+	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev AND type != 'portald'"; 
+	my $sth = $self->{dbh}->prepare_cached($sql);
+	$sth->execute;
+	while (my($id, $desc) = $sth->fetchrow) {
+		$block_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $block_hash_ref;
+}
+
+sub getPortaldBlock {
+  my ($self, $seclev) = @_;
+
+	my $block_hash_ref={};
+	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev and type = 'portald'"; 
+	my $sth = $self->{dbh}->prepare_cached($sql);
+	$sth->execute;
+	while (my($id, $desc) = $sth->fetchrow) {
+		$block_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $block_hash_ref;
+}
+sub getColorBlock {
+  my ($self) = @_;
+
+	my $block_hash_ref={};
+	my $sql = "SELECT bid,bid FROM blocks WHERE type = 'color'"; 
+	my $sth = $self->{dbh}->prepare_cached($sql);
+	$sth->execute;
+	while (my($id, $desc) = $sth->fetchrow) {
+		$block_hash_ref->{$id} = $desc;
+	}
+	$sth->finish;
+
+	return  $block_hash_ref;
+}
 1;
 
 =head1 NAME

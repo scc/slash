@@ -130,9 +130,8 @@ EOT
 EOT
 
 	if ($I{F}{op} eq "stories") {
-		selectTopic("topic", $I{F}{topic});
-		selectGeneric("authors", "author", "aid", "name", $I{F}{author});
-
+	my $authors = $I{dbobject}->getAuthorNameByAid();
+		createSelect('author', $authors, $I{F}{author});
 	} elsif ($I{F}{op} eq "comments") {
 		print <<EOT;
 	Threshold <INPUT TYPE="TEXT" SIZE="3" NAME="threshold" VALUE="$I{U}{threshold}">
