@@ -216,8 +216,8 @@ sub main {
 		} else {
 			$discussion = $slashdb->getDiscussion($form->{sid});
 		}
-		if(!$user->{is_admin} && $discussion->{sid}) {
-			if ($slashdb->checkStoryViewable($discussion->{sid})) {
+		if (!$user->{is_admin} and $discussion->{sid}) {
+			unless ($slashdb->checkStoryViewable($discussion->{sid})) {
 				$form->{sid} = '';
 				$discussion = '';
 				$op = 'default';

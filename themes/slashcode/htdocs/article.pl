@@ -16,14 +16,13 @@ sub main {
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
 
-	# Let's make ONE call to getStory() and fetch all we need.
-	# - Cliff
-	my $story = $slashdb->getStory($form->{sid});
-	$story = '' 
-		if (($story->{displaystatus} == -1) and !($user->{author} or $user->{is_admin}));
-	#Yeah, I am being lazy -Brian
-	$story = ''
-		unless $slashdb->checkStoryViewable($discussion->{sid});
+	my $story;
+	#Yeah, I am being lazy and paranoid  -Brian
+	if(!($user->{author} or $user->{is_admin}) and !($slashdb->checkStoryViewable($form->{sid}))) {
+		$story = ''
+	} else {
+		$story = $slashdb->getStory($form->{sid});
+	}
 
 	if ($story) {
 		my $SECT = $slashdb->getSection($story->{section});
