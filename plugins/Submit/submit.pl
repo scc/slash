@@ -79,7 +79,7 @@ sub yourPendingSubmissions {
 
 	if (my $submissions = $slashdb->getSubmissionsPending()) {
 		my $count = $slashdb->getSubmissionCount();
-		slashDisplay('yourPendingSubmissions', {
+		slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
 			title		=> "Your Recent Submissions (total:$count)",
 			width		=> '100%',
@@ -165,7 +165,7 @@ sub submissionEd {
 			map  { [$_, ($_ eq $def_note ? '' : $_)] }
 			keys %all_notes;
 
-	slashDisplay('submissionEdTable', {
+	slashDisplay('subEdTable', {
 		cur_section	=> $cur_section,
 		cur_note	=> $cur_note,
 		def_section	=> $def_section,
@@ -211,7 +211,7 @@ sub submissionEd {
 	);
 
 	my $template = $user->{submit_admin} ? 'Admin' : 'User';
-	slashDisplay('submissionEd' . $template, {
+	slashDisplay('subEd' . $template, {
 		submissions	=> \@submissions,
 		selection	=> \%selection,
 	});

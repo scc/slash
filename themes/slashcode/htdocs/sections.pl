@@ -78,11 +78,11 @@ sub delSection {
 			section	=> $section
 		});
 	} elsif ($form->{deletesection_cancel}) {
-		slashDisplay('delSectionCancel', {
+		slashDisplay('delSectCancel', {
 			section	=> $section
 		});
 	} elsif ($form->{deletesection_confirm}) {
-		slashDisplay('delSectionConfirm', {
+		slashDisplay('delSectConfirm', {
 			section	=> $section,
 			title	=> "Deleted $section Section",
 			width	=> '100%'

@@ -319,7 +319,7 @@ The created list.
 
 =item Dependencies
 
-The 'selectThresholdLabel' template block.
+The 'selectThreshLabel' template block.
 
 =back
 
@@ -332,7 +332,7 @@ sub selectThreshold  {
 
 	my %data;
 	foreach my $c ($constants->{comment_minscore} .. $constants->{comment_maxscore}) {
-		$data{$c} = slashDisplay('selectThresholdLabel', {
+		$data{$c} = slashDisplay('selectThreshLabel', {
 			points	=> $c,
 			count	=> $counts->[$c - $constants->{comment_minscore}],
 		}, { Return => 1, Nocomm => 1 });
@@ -1303,8 +1303,8 @@ None.
 
 =item Dependencies
 
-The 'printCommentsMain', 'printCommentsNoArchive',
-and 'printCommentsComments' template blocks.
+The 'printCommentsMain', 'printCommNoArchive',
+and 'printCommComments' template blocks.
 
 =back
 
@@ -1359,7 +1359,7 @@ sub printComments {
 		return if $user->{mode} eq 'nocomment';
 
 	} else {
-		slashDisplay('printCommentsNoArchive');
+		slashDisplay('printCommNoArchive');
 	}
 
 
@@ -1377,7 +1377,7 @@ sub printComments {
 		$previous = $comments->[$previous] if $previous;
 	}
 
-	slashDisplay('printCommentsComments', {
+	slashDisplay('printCommComments', {
 		can_moderate	=> (($user->{seclev} || $user->{points}) && !$user->{is_anon}),
 		comment		=> $comment,
 		comments	=> $comments,
@@ -1421,7 +1421,7 @@ The HTML.
 
 =item Dependencies
 
-The 'moderatorCommentLog' template block.
+The 'modCommentLog' template block.
 
 =back
 
@@ -1440,7 +1440,7 @@ sub moderatorCommentLog {
 		$reasonTotal++;
 	}
 
-	slashDisplay('moderatorCommentLog', {
+	slashDisplay('modCommentLog', {
 		mod_admin	=> getCurrentUser('seclev') > 1000,
 		comments	=> $comments,
 		reasonTotal	=> $reasonTotal,

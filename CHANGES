@@ -31,22 +31,33 @@ slash-1.1.3-bender, 2000.02.xx
 	in slashd and portald; added xmlencode() and xmldecode()
 	to Slash::Utility
 
-*	install-plugin change?
+*	Added insertion of plugin's description to site_info table
+	on install
 
-*	install-slashsite changes?
+*	Added the insertion of plugin description to the site_info
+	table
 
-*	Makefile defaults INIT to /etc instead of /etc/rc.d now
+*	Makefile now defaults INIT to /etc instead of /etc/rc.d
 
 *	Addition to template-tool to save compiled form of
-	template; what else?
+	template
 
-*	admin.pl changes?
+*	Page and Section pulldowns for templates in admin.pl now
+	work correctly
+
+*	Added editing of site info to admin.pl
+
+*	User admin changes include checkbox for denoting author, and
+	function to create a new user
+
+*	Added two additional colors, one foreground and one background,
+	to color editor in admin.pl
 
 *	Fixes for submit.pl brokenness with email/homepage data
 
-*	users.pl changes?
+*	Remove excess portald blocks, put into separate plugin
 
-*	Remove excess portald blocks?
+*	Added Ladybug problem tracking system
 
 *	Miscellaneous code and template bugfixes
 

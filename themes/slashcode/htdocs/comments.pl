@@ -109,7 +109,7 @@ sub commentIndex {
 	my $slashdb = getCurrentDB();
 	titlebar("90%", "Several Active Discussions");
 	my $discussions = $slashdb->getDiscussions();
-	slashDisplay('discussion_list', {
+	slashDisplay('discuss_list', {
 		discussions	=> $discussions,
 	});
 }
@@ -413,7 +413,7 @@ sub previewForm {
 	$user->{mode} = 'archive';
 	my $previewForm;
 	if ($tempSubject && $tempComment) {
-		$previewForm = slashDisplay('preview_comment', {
+		$previewForm = slashDisplay('preview_comm', {
 			preview => $preview,
 		}, 1);
 	}
@@ -472,7 +472,7 @@ sub submitComment {
 			type	=> 'maxcid exceeded',
 		});
 	} else {
-		slashDisplay('comment_submitted');
+		slashDisplay('comment_submit');
 		undoModeration($form->{sid});
 		printComments($form->{sid}, $maxCid, $maxCid);
 
@@ -509,7 +509,7 @@ sub moderate {
 		$hasPosted = $slashdb->countComments($form->{sid}, '', '', $user->{uid});
 	}
 
-	slashDisplay('moderation_header');
+	slashDisplay('mod_header');
 
 	# Handle Deletions, Points & Reparenting
 	for (sort keys %{$form}) {
@@ -523,14 +523,14 @@ sub moderate {
 		}
 	}
 
-	slashDisplay('moderation_footer');
+	slashDisplay('mod_footer');
 
 	if ($hasPosted && !$total_deleted) {
 		slashDisplay('errors', {
 			type	=> 'already posted',
 		});
 	} elsif ($user->{seclev} && $total_deleted) {
-		slashDisplay('deleted_message', {
+		slashDisplay('del_message', {
 			total_deleted	=> $total_deleted,
 			comment_count	=> $slashdb->countComments($form->{sid}),
 		});
@@ -671,7 +671,7 @@ sub undoModeration {
 	my $removed = $slashdb->unsetModeratorlog($user->{uid}, $sid,
 		$constants->{comment_maxscore}, $constants->{comment_minscore});
 
-	slashDisplay('undo_moderation', {
+	slashDisplay('undo_mod', {
 		removed	=> $removed,
 	});
 }

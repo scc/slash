@@ -141,7 +141,7 @@ sub displayTheComments {
 	my $comments = $slashdb->getMetamodComments($id, $user->{uid},
 		$constants->{m2_comments});
 
-	slashDisplay('displayTheComments', {
+	slashDisplay('dispTheComments', {
 		comments 	=> $comments,
 	});
 }
