@@ -421,8 +421,8 @@ sub delete_templates {
 ###############################################
 sub compile_template {
 	# Reproduce Slash::Display environment while adding our own options.
-	require Slash::Display;
-	require Slash::Display::Provider;			# could just duplicate the filters, here.
+	require Slash::Display;				# could just duplicate $filters.
+	require Slash::Display::Provider;			
 
 	my $template_provider = Slash::Display::Provider->new({
 		TRIM 		=> 1,
@@ -476,7 +476,7 @@ sub compile_template {
 		die "Requested template '${_}' (${section}|$page) is empty!\n"
 			if !$template;
 
-		# Load us a custom %data for compilation.
+		# Load us a custom \%data for compilation.
 		$data = {
 			text	=> $template,
 			name	=> $_,
