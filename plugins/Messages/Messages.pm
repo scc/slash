@@ -81,6 +81,11 @@ key.  Pass the name of the template in as the "template_name"
 key.  If "subject" is a template, then pass it as a hashref,
 with "template_name" as one of the keys.
 
+B<NOTE>: You cannot re-use the same MESSAGE reference for
+multiple messages.  The data is manipulated.  You must pass in
+a new data structure each time through.  This should be fixed
+in future versions.
+
 =item FROM_ID
 
 Either the UID of the user sending the message, or 0 to denote

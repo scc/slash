@@ -431,20 +431,20 @@ sub saveArticle {
 		my $messages = getObject('Slash::Messages');
 		if ($messages) {
 			my $friends   = $journal->message_friends;
-			my $data = {
-				template_name	=> 'messagenew',
-				subject		=> { template_name => 'messagenew_subj' },
-				journal		=> {
-					description	=> $description,
-					article		=> $form->{article},
-					posttype	=> $form->{posttype},
-					id		=> $id,
-					uid		=> $user->{uid},
-					nickname	=> $user->{nickname},
-				}
-			};
 
 			for (@$friends) {
+				my $data = {
+					template_name	=> 'messagenew',
+					subject		=> { template_name => 'messagenew_subj' },
+					journal		=> {
+						description	=> $description,
+						article		=> $form->{article},
+						posttype	=> $form->{posttype},
+						id		=> $id,
+						uid		=> $user->{uid},
+						nickname	=> $user->{nickname},
+					}
+				};
 				$messages->create($_, MSG_CODE_JOURNAL_FRIEND, $data);
 			}
 		}
