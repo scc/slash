@@ -2774,9 +2774,9 @@ sub getModeratorLogRandom {
 
 ########################################################
 sub countUsers {
-      my($self) = @_;
-      my($users) = $self->sqlSelect("count(*)", "users_count");
-      return $users;
+	my($self) = @_;
+	my($users) = $self->sqlSelect("count(*)", "users_count");
+	return $users;
 }
 
 ########################################################

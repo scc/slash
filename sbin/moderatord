@@ -11,7 +11,6 @@
 
 use strict;
 use Slash;
-use Slash::DB;
 use Slash::Utility;
 
 my $read_db;
@@ -39,7 +38,7 @@ sub comments2tokens {
 
 	# We only want a list of UIDs. [ACCESSLOG QUERY]
 	my(@eligibleMods) = map { $_ = $_->[0] }
-			    @{$read_db->fetchEligibleModerators()};
+		@{$read_db->fetchEligibleModerators()};
 	my $eligible = scalar @eligibleMods;
 	my($st, $fi) = (
 		int($eligible * $constants->{m1_pointgrant_start}),

@@ -152,17 +152,17 @@ sub findStory {
 	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
+
 	my $tables = "stories,users";
-	$tables .= ",story_text"
-		if $form->{query};
+	$tables .= ",story_text" if $form->{query};
+
 	my $other;
 	if ($form->{query}) {
 		$other = " ORDER BY score DESC";
 	} else {
 		$other = " ORDER BY time DESC";
 	}
-	$other .= " LIMIT $start, $limit" 
-		if $limit;
+	$other .= " LIMIT $start, $limit" if $limit;
 
 	# The big old searching WHERE clause, fear it
 	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";

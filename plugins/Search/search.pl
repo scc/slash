@@ -27,13 +27,13 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
-	my ($slashdb, $searchDB);
+	my($slashdb, $searchDB);
 
-	if($constants->{search_db_user}) {
-		$slashdb   = getObject('Slash::DB', $constants->{search_db_user});
-		$searchDB   = getObject('Slash::Search', $constants->{search_db_user});
+	if ($constants->{search_db_user}) {
+		$slashdb  = getObject('Slash::DB', $constants->{search_db_user});
+		$searchDB = getObject('Slash::Search', $constants->{search_db_user});
 	} else {
-		$slashdb   = getCurrentDB();
+		$slashdb  = getCurrentDB();
 		$searchDB = Slash::Search->new(getCurrentVirtualUser());
 	}
 
@@ -45,10 +45,10 @@ sub main {
 
 	# get rid of bad characters
 	$form->{query} =~ s/[^A-Z0-9'. ]/ /gi;
-	
+
 	# truncate query length
 	if (length($form->{query}) > 40) {
-		$form->{query} = substr($form->{query},0,40);
+		$form->{query} = substr($form->{query}, 0, 40);
 	}
 
 	# The default search operation is to search stories.
@@ -373,7 +373,7 @@ sub findRetrieveSite {
 	}
 
 	slashDisplay('retrievedsites', {
-		feeds	=> $feeds,
+		feeds		=> $feeds,
 		back		=> $back,
 		forward		=> $forward,
 		start		=> $start,

@@ -176,6 +176,7 @@ sub _deleteThread {
 
 	return $count;
 }
+
 ########################################################
 # For dailystuff
 # This just updates the counts for the day before
