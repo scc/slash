@@ -256,6 +256,30 @@ sub setModeratorLog {
 }
 
 ########################################################
+sub getModeratorCommentLog {
+	my ($self, $sid, $cid) = @_;
+	my $comments = sqlSelectMany(  "comments.sid as sid,
+				 comments.cid as cid,
+				 comments.points as score,
+				 subject, moderatorlog.uid as uid,
+				 users.nickname as nickname,
+				 moderatorlog.val as val,
+				 moderatorlog.reason as reason",
+				"moderatorlog, users, comments",
+				"moderatorlog.active=1
+				 AND moderatorlog.sid='$sid'
+			     AND moderatorlog.cid=$cid
+			     AND moderatorlog.uid=users.uid
+			     AND comments.sid=moderatorlog.sid
+			     AND comments.cid=moderatorlog.cid"
+	);
+	my @comments;
+	push @comments, $_ while ($comments->fetchrow_hashref);
+
+	return \@comments;
+}
+
+########################################################
 sub getModeratorLogID {
 	my($self, $cid, $sid, $uid) = @_;
 	my($mid) = sqlSelect(
@@ -1970,6 +1994,39 @@ sub getCommentReply {
 	return $reply;
 }
 
+
+########################################################
+sub getCommentsForUser {
+	my ($self, $sid, $cid) = @_;
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $sql = "SELECT cid," . getDateFormat('date', 'time') . ",
+				subject,comment,
+				nickname,homepage,fakeemail,
+				users.uid as uid,sig,
+				comments.points as points,pid,sid,
+				lastmod, reason
+			   FROM comments,users
+			  WHERE sid=" . $self->{dbh}->quote($sid) . "
+			    AND comments.uid=users.uid";
+	$sql .= "	    AND (";
+	$sql .= "		comments.uid=$user->{uid} OR " unless $user->{is_anon};
+	$sql .= "		cid=$cid OR " if $cid;
+	$sql .= "		comments.points >= " . $self->{dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
+	$sql .= "		  1=1 )   ";
+	$sql .= "	  ORDER BY ";
+	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
+	$sql .= " cid ";
+	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
+
+
+	my $thisComment = $self->{dbh}->prepare_cached($sql) or apacheLog($sql);
+	$thisComment->execute or apacheLog($sql);
+	my @comments;
+	push @comments, $_ while($thisComment->fetchrow_hashref);
+	return \@comments;
+}
+
 ########################################################
 sub getComments {
 	my($self, $sid, $cid) = @_;
@@ -1987,9 +2044,9 @@ sub getStories {
 
 	my $tables = "newstories";
 	my $columns = "sid, section, title, date_format(" .  
-		getDateOffset('time', $user) . 
+		getDateOffset('time') . 
 		',"%W %M %d %h %i %p"), commentcount, to_days(' .  
-		getDateOffset('time', $user) . "), hitparade";
+		getDateOffset('time') . "), hitparade";
 
 	my $where = "1=1 "; # Mysql's Optimize gets this.";
 
@@ -2000,7 +2057,7 @@ sub getStories {
 
 	$form->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
 
-	$where .= "AND $form->{issue} >= to_days(" . getDateOffset("time", $user) . ") " if $form->{issue};
+	$where .= "AND $form->{issue} >= to_days(" . getDateOffset("time") . ") " if $form->{issue};
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
@@ -2032,7 +2089,7 @@ sub getCommentsTop {
 	my $where = "stories.sid=comments.sid";
 	$where .= " AND stories.sid=" . $self->{dbh}->quote($sid) if $sid;
 	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject,"
-		. getDateFormat("date","d", $user) . "," . getDateFormat("time","t", $user)
+		. getDateFormat("date","d") . "," . getDateFormat("time","t")
 		. ",uid, cid, points"
 		, "stories, comments"
 		, $where
@@ -2101,14 +2158,14 @@ sub getSubmissionForUser {
 
 ########################################################
 sub getSearch {
-	my($self, $form, $user) = @_;
+	my($self) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
-	$form = getCurrentForm() unless $form;
-	$user = getCurrentUser() unless $user;
+	my $form = getCurrentForm();
+	my $threshold = getCurrentUser('threshold');
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
-		getDateFormat("time","d", $user) . ",".
-		getDateFormat("date","t", $user) . ", 
+		getDateFormat("time","d") . ",".
+		getDateFormat("date","t") . ", 
 		uid, cid, ";
 
 	$sqlquery .= "	  " . $keysearch->($self, $form->{query}, "subject", "comment") if $form->{query};
@@ -2116,7 +2173,7 @@ sub getSearch {
 	$sqlquery .= "	  FROM newstories, comments
 			 WHERE newstories.sid=comments.sid ";
 	$sqlquery .= "     AND newstories.sid=" . $self->{dbh}->quote($form->{sid}) if $form->{sid};
-	$sqlquery .= "     AND points >= $user->{threshold} ";
+	$sqlquery .= "     AND points >= $threshold ";
 	$sqlquery .= "     AND section=" . $self->{dbh}->quote($form->{section}) if $form->{section};
 	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
 
@@ -2361,7 +2418,6 @@ sub getSlashConf {
 		rootdir
 		run_ads	
 		send_mail
-		shit
 		siteadmin
 		siteadmin_name
 		sitename

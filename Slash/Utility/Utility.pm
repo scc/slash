@@ -16,11 +16,12 @@ require Exporter;
 	getCurrentStatic
 	getCurrentDB
 	getCurrentAnonymousCoward
+	createCurrentUser
+	createCurrentForm
+	createCurrentStatic
+	createCurrentDB
+	createCurrentAnonymousCoward
 	setCurrentUser
-	setCurrentForm
-	setCurrentStatic
-	setCurrentDB
-	setCurrentAnonymousCoward
 	isAnon
 	getAnonId
 	getFormkey
@@ -68,17 +69,17 @@ sub apacheLog {
 ################################################################################
 # SQL Timezone things
 sub getDateOffset {
-	my $col = shift || return;
-	my ($user) = @_;
+	my ($col) = @_;
 
-	return $col unless $user->{offset};
-	return " DATE_ADD($col, INTERVAL $user->{offset} SECOND) ";
+	my $offset = getCurrentUser('offset');
+	return $col unless $offset;
+	return " DATE_ADD($col, INTERVAL $offset SECOND) ";
 }
 
 sub getDateFormat {
-	my $col = shift || return;
-	my $as = shift || 'time';
-	my ($user) = @_;
+	my ($col, $as) = @_;
+	$as = 'time' unless $as;
+	my $user = getCurrentUser();
 
 
 	$user->{'format'} ||= '%W %M %d, @%h:%i%p ';
@@ -124,6 +125,22 @@ sub getCurrentUser {
 
 #################################################################
 sub setCurrentUser {
+	my($key, $value) = @_;
+	my $user;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+		$user = $user_cfg->{'user'};
+	} else {
+		$user = $static_user;
+	}
+
+	$user->{$key} = $value;
+}
+
+#################################################################
+sub createCurrentUser {
 	($static_user) = @_;
 }
 
@@ -150,7 +167,7 @@ sub getCurrentForm {
 }
 
 #################################################################
-sub setCurrentForm {
+sub createCurrentForm {
 	($static_form) = @_;
 }
 
@@ -177,7 +194,7 @@ sub getCurrentStatic {
 }
 
 #################################################################
-sub setCurrentStatic {
+sub createCurrentStatic {
 	($static_constants) = @_;
 }
 
@@ -197,7 +214,7 @@ sub getCurrentAnonymousCoward {
 }
 
 #################################################################
-sub setCurrentAnonymousCoward {
+sub createCurrentAnonymousCoward {
 	($static_anonymous_coward) = @_;
 }
 
@@ -217,7 +234,7 @@ sub getCurrentDB {
 }
 
 #################################################################
-sub setCurrentDB {
+sub createCurrentDB {
 	($static_db) = @_;
 }
 

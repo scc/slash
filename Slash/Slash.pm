@@ -48,15 +48,13 @@ BEGIN {
 	$VERSION = '1.0.8';
 	@ISA	 = 'Exporter';
 	@EXPORT  = qw(
-		sqlSelectMany sqlSelect sqlSelectHash sqlSelectAll approveTag
-		sqlSelectHashref sqlUpdate sqlInsert sqlReplace sqlConnect
-		sqlTableExists sqlSelectColumns getSlash linkStory getSection
+		approveTag getSlash linkStory getSection
 		selectTopic selectSection fixHref
 		getsid getsiddir getWidgetBlock
 		anonLog pollbooth stripByMode header footer pollItem
 		prepEvalBlock prepBlock formLabel
 		titlebar fancybox portalbox printComments displayStory
-		sendEmail getOlderStories selectStories timeCalc
+		sendEmail getOlderStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect
@@ -64,10 +62,6 @@ BEGIN {
 	);
 	$CRLF = "\015\012";
 }
-
-# Not needed I believe....
-#getSlashConf();
-
 
 ###############################################################################
 # Let's get this party Started
@@ -944,37 +938,13 @@ sub portalbox {
 # Behold, the beast that is threaded comments
 sub selectComments {
 	my($sid, $cid) = @_;
-	$I{shit} = 0 if $I{F}{ssi};
-	my $sql = "SELECT cid," . getDateFormat('date', 'time', $I{U}) . ",
-				subject,comment,
-				nickname,homepage,fakeemail,
-				users.uid as uid,sig,
-				comments.points as points,pid,sid,
-				lastmod, reason
-			   FROM comments,users
-			  WHERE sid=" . $I{dbh}->quote($sid) . "
-			    AND comments.uid=users.uid";
-	$sql .= "	    AND comments.cid >= $I{F}{pid} " if $I{F}{pid} && $I{shit}; # BAD
-	$sql .= "	    AND comments.cid >= $cid " if $cid && $I{shit}; # BAD
-	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$I{U}{uid} OR " unless $I{U}{is_anon};
-	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		comments.points >= " . $I{dbh}->quote($I{U}{threshold}) . " OR " if $I{U}{hardthresh};
-	$sql .= "		  1=1 )   ";
-	$sql .= "	  ORDER BY ";
-	$sql .= "comments.points DESC, " if $I{U}{commentsort} eq '3';
-	$sql .= " cid ";
-	$sql .= ($I{U}{commentsort} == 1 || $I{U}{commentsort} == 5) ? 'DESC' : 'ASC';
-
-	$sql .= "		LIMIT $I{shit}" if ! ($I{F}{pid} || $cid) && $I{shit} > 0;
-
-	my $thisComment = $I{dbh}->prepare_cached($sql) or apacheLog($sql);
-	$thisComment->execute or apacheLog($sql);
+	my $dbslash = getCurrentDB();
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
 
-	while (my $C = $thisComment->fetchrow_hashref) {
+	my $thisComment = $dbslash->getCommentsForUser($sid, $cid);
+	for my $C (@$thisComment) {
 		$C->{pid} = 0 if $I{U}{commentsort} > 3; # Ignore Threads
 
 		$C->{points}++ if length($C->{comment}) > $I{U}{clbig}
@@ -1003,11 +973,9 @@ sub selectComments {
 		$I{U}{points} = 0 if $C->{uid} == $I{U}{uid}; # Mod/Post Rule
 	}
 
-	my $count = $thisComment->rows;
-	$thisComment->finish;
+	my $count = @$thisComment;
 
 	getCommentTotals($comments);
-	my $dbslash = getCurrentDB();
 	$dbslash->updateCommentTotals($sid, $comments) if $I{F}{ssi};
 	reparentComments($comments);
 	return($comments,$count);
@@ -1275,24 +1243,10 @@ EOT
 ########################################################
 sub moderatorCommentLog {
 	my($sid, $cid) = @_;
-	my $c = sqlSelectMany(  "comments.sid as sid,
-				 comments.cid as cid,
-				 comments.points as score,
-				 subject, moderatorlog.uid as uid,
-				 users.nickname as nickname,
-				 moderatorlog.val as val,
-				 moderatorlog.reason as reason",
-				"moderatorlog, users, comments",
-				"moderatorlog.active=1
-				 AND moderatorlog.sid='$sid'
-			     AND moderatorlog.cid=$cid
-			     AND moderatorlog.uid=users.uid
-			     AND comments.sid=moderatorlog.sid
-			     AND comments.cid=moderatorlog.cid"
-	);
-
+	my $slashdb = getCurrentDB();
+	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
-	if ($c->rows > 0) {
+	if (@$comments) {
 		print <<EOT if $I{U}{aseclev} > 1000;
 <TABLE BGCOLOR="$I{bg}[2]" ALIGN="CENTER" BORDER="0" CELLPADDING="2" CELLSPACING="0">
 	<TR BGCOLOR="$I{bg}[3]">
@@ -1302,7 +1256,7 @@ sub moderatorCommentLog {
 	</TR>
 EOT
 
-		while (my $C = $c->fetchrow_hashref) {
+		for my $C (@$comments) {
 			print <<EOT if $I{U}{aseclev} > 1000;
 	<TR>
 		<TD> <B>$C->{val}</B> </TD>
@@ -1318,7 +1272,6 @@ EOT
 		print "</TABLE>\n" if $I{U}{aseclev} > 1000;
 	}
 
-	$c->finish;
 	return unless $reasonTotal;
 
 	print qq!<FONT COLOR="$I{bg}[3]"><B>Moderation Totals</B></FONT>:!;
@@ -1657,17 +1610,17 @@ sub displayStory {
 	my $S = $dbslash->getStory($sid);
 	
 
-	# convert the time of the story (this is mysql format) 
+	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
 	# based on their preferences 
-	$I{U}{storytime} = timeCalc($S->{'time'});
+	setCurrentUser('storytime', timeCalc($S->{'time'}));
 
-	if ($full && sqlTableExists($S->{section}) && $S->{section}) {
-		my $E = sqlSelectHashref('*', $S->{section}, "sid='$S->{sid}'");
-		foreach (keys %$E) {
-			$S->{$_} = $E->{$_};
-		}
-	}
+#	if ($full && sqlTableExists($S->{section}) && $S->{section}) {
+#		my $E = sqlSelectHashref('*', $S->{section}, "sid='$S->{sid}'");
+#		foreach (keys %$E) {
+#			$S->{$_} = $E->{$_};
+#		}
+#	}
 
 	# No, we do not need this variable, but for readability 
 	# I think it is justified (and it is just a reference....)
@@ -1678,7 +1631,7 @@ sub displayStory {
 
 #######################################################################
 # timeCalc 051199 PMG
-# inputs: raw date from mysql
+# inputs: raw date from database
 # returns: formatted date string from dateformats in mysql, converted to
 # time strings that Date::Manip can format
 #######################################################################
@@ -1763,46 +1716,6 @@ sub pollItem {
 	print "\nError:$@\n" if $@;
 }
 
-########################################################
-sub selectStories {
-	my($SECT, $limit, $tid) = @_;
-
-	my $s = "SELECT sid, section, title, date_format(" .
-		getDateOffset('time', $I{U}) . ',"%W %M %d %h %i %p"),
-			commentcount, to_days(' . getDateOffset('time', $I{U}) . "),
-			hitparade
-		   FROM newstories
-		  WHERE 1=1 "; # Mysql's Optimize gets this.
-
-	$s .= " AND displaystatus=0 " unless $I{F}{section};
-	$s .= " AND time < now() "; # unless $I{U}{aseclev};
-	$s .= "	AND (displaystatus>=0 AND '$SECT->{section}'=section)" if $I{F}{section};
-	$I{F}{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
-	$s .= "   AND $I{F}{issue} >= to_days(" . getDateOffset("time", $I{U}) . ") "
-		if $I{F}{issue};
-	$s .= "	AND tid='$tid'" if $tid;
-
-	# User Config Vars
-	$s .= "	AND tid not in ($I{U}{extid})"		if $I{U}{extid};
-	$s .= "	AND aid not in ($I{U}{exaid})"		if $I{U}{exaid};
-	$s .= "	AND section not in ($I{U}{exsect})"	if $I{U}{exsect};
-
-	# Order
-	$s .= "	ORDER BY time DESC ";
-
-	if ($limit) {
-		$s .= "	LIMIT $limit";
-	} elsif ($I{currentSection} eq 'index') {
-		$s .= "	LIMIT $I{U}{maxstories}";
-	} else {
-		$s .= "	LIMIT $SECT->{artcount}";
-	}
-#	print "\n\n\n\n\n<-- stories select $s -->\n\n\n\n\n";
-
-	my $cursor = $I{dbh}->prepare($s) or apacheLog($s);
-	$cursor->execute or apacheLog($s);
-	return $cursor;
-}
 
 ########################################################
 sub getOlderStories {
@@ -2088,58 +2001,10 @@ sub createEnvironment{
 	my $constants = $slashdb->getSlashConf();
 	#We assume that the user for scripts is the anonymous user
 	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
-	setCurrentDB($slashdb);
-	setCurrentStatic($constants);
-	setCurrentUser($user);
-	setCurrentAnonymousCoward($user);
+	createCurrentDB($slashdb);
+	createCurrentStatic($constants);
+	createCurrentUser($user);
+	createCurrentAnonymousCoward($user);
 
 	return ($constants, $slashdb);
-}
-
-########################################################
-#sub CLOSE { $I{dbh}->disconnect if $I{dbh} }
-########################################################
-sub handler { 1 }
-########################################################
-
-########################################################
-# All of these methods are just for backwards
-# compatibility. They will all go away.
-
-sub sqlConnect {
-	$I{dbobject}->sqlConnect();
-}
-sub sqlSelectMany {
-	$I{dbobject}->sqlSelectMany(@_);
-}
-sub sqlSelect {
-	$I{dbobject}->sqlSelect(@_);
-}
-sub sqlSelectHash {
-	$I{dbobject}->sqlSelect(@_);
-}
-sub selectCount  {
-#Nothing seems to even call this method
-	$I{dbobject}->selectCount(@_);
-}
-sub sqlSelectHashref {
-	$I{dbobject}->sqlSelectHashref(@_);
-}
-sub sqlSelectAll {
-	$I{dbobject}->sqlSelectAll(@_);
-}
-sub sqlUpdate {
-	$I{dbobject}->sqlUpdate(@_);
-}
-sub sqlReplace {
-	$I{dbobject}->sqlReplace(@_);
-}
-sub sqlInsert {
-	$I{dbobject}->sqlInsert(@_);
-}
-sub sqlTableExists {
-	$I{dbobject}->sqlTableExists(@_);
-}
-sub sqlSelectColumns {
-	$I{dbobject}->sqlSelectColumns(@_);
 }
