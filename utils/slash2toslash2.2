@@ -16,6 +16,10 @@ my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my(%opts, %forced_plugins);
+my($del_users);
+my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
+my(%vars, %story_authors);
+
 # Remember to doublecheck these match usage()!
 usage('Options used incorrectly') unless getopts('Ihvu:U:P:', \%opts);
 usage() if $opts{'h'};
@@ -71,9 +75,14 @@ my %plugins = (
 	},
 );
 
-my($del_users);
-my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
-my(%vars, %story_authors);
+my(%plugin_fixup) = (
+	Journal => sub {
+		$dbh_new->do(<<EOT);
+UPDATE journals SET tid=$vars{journal_default_topic} WHERE tid=0
+EOT
+
+	},
+);
 
 my $usersub;
 my (%conversions) = (
@@ -498,6 +507,13 @@ EOT
 			for (@{$plugins{$_}{tables}}) {
 				duplicate($_, 1);
 			}
+		}
+
+		if (exists $plugin_fixup{$_} && 
+		    (ref $plugin_fixup{$_} eq 'CODE')) 
+		{
+			print "Plugin Cleanup.\n";
+			&{$plugin_fixup{$_}}();
 		}
 	}
 }
