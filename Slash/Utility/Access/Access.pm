@@ -429,7 +429,6 @@ sub filterOk {
 #		my $text_to_test = decode_entities(strip_nohtml($content));
 		my $text_to_test = $content;
 		my $report = "filterOk_report f=$f->[0] len1=" . length($text_to_test);
-		$report .= " uid=$user->{uid} ipid=$user->{ipid}";
 		$text_to_test = strip_nohtml($text_to_test);
 		$report .= " len2=" . length($text_to_test);
 		$text_to_test = decode_entities($text_to_test);
@@ -526,6 +525,8 @@ sub compressOk {
 				$report .= " comlen=$comlen field=$field";
 				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
 				$report .= " uid=$user->{uid} karma=$user->{karma} ipid=$user->{ipid}";
+				$report .= " content=$content";
+				$report =~ s/\s+/ /gs;
 print STDERR "$report\n";
 				return 0;
 			}
