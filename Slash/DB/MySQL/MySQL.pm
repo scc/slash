@@ -2248,8 +2248,17 @@ sub getUIDList {
 ##################################################################
 sub getNetIDList {
 	my($self, $id) = @_;
-	my $where = "WHERE uid = '$id'";
-	$self->sqlSelectAll("DISTINCT ipid", "comments $where");
+	my $vislength = getCurrentStatic('id_md5_vislength');
+	my $column4 = "ipid";
+	$column4 = "SUBSTRING(ipid, 1, $vislength)" if $vislength;
+	$self->sqlSelectAll(
+		"ipid,
+		MIN(SUBSTRING(date, 1, 10)) AS dmin, MAX(SUBSTRING(date, 1, 10)) AS dmax,
+		COUNT(*) AS c, $column4",
+		"comments",
+		"uid = '$id' AND ipid != ''",
+		"GROUP BY ipid ORDER BY dmax DESC, dmin DESC, c DESC, ipid ASC LIMIT 100"
+	);
 }
 
 ##################################################################

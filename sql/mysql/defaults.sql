@@ -383,6 +383,7 @@ INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What 
 INSERT INTO vars (name, value, description) VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey');
 INSERT INTO vars (name, value, description) VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value');
 INSERT INTO vars (name, value, description) VALUES ('http_proxy','','http://proxy.www.example.com');
+INSERT INTO vars (name, value, description) VALUES ('id_md5_vislength','5','Num chars to display for ipid/subnetid (0 for all)');
 INSERT INTO vars (name, value, description) VALUES ('imagedir','//www.example.com/images','Absolute URL for image directory');
 INSERT INTO vars (name, value, description) VALUES ('istroll_ipid_hours','72','Hours back that getTrollAddress checks for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('istroll_uid_hours','72','Hours back that getTrollUID checks for comment mods');

@@ -1025,12 +1025,19 @@ sub _hard_dispComment {
 		}
 	}
 
-	my $ipidinfo_to_display;
-	$ipidinfo_to_display = <<EOT if $user->{seclev} >= 100 && $comment->{ipid} && $comment->{subnetid};
+	my $ipidinfo_to_display = '';
+	if ($user->{seclev} >= 100 and $comment->{ipid} and $comment->{subnetid}) {
+		my $vislength = $constants->{id_md5_vislength};
+		my $short_ipid = $comment->{ipid};
+		$short_ipid = substr($short_ipid, 0, $vislength) if $vislength;
+		my $short_subnetid = $comment->{subnetid};
+		$short_subnetid = substr($short_subnetid, 0, $vislength) if $vislength;
+		$ipidinfo_to_display = <<EOT;
 <BR><FONT FACE="$constants->{mainfontface}" SIZE=1>IPID:
-<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}">$comment->{ipid}</A>&nbsp;&nbsp;SubnetID: 
-<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}">$comment->{subnetid}</A></FONT>
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}">$short_ipid</A>&nbsp;&nbsp;SubnetID: 
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}">$short_subnetid</A></FONT>
 EOT
+	}
 
 	my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
 	my $return = <<EOT;

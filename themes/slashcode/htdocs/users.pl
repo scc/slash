@@ -1763,7 +1763,9 @@ sub getUserAdmin {
 		$thresh_select = createSelect('defaultpoints', $threshcodes, $user_edit->{defaultpoints}, 1);
 	}
 
-	undef $iplist if ref $iplist && @$iplist < 1;
+	if (!ref $iplist or scalar(@$iplist) < 1) {
+		undef $iplist;
+	}
 
 	return slashDisplay('getUserAdmin', {
 		field			=> $field,
