@@ -1,3 +1,4 @@
 description="Admin Interface"
 mysql_dump=dump
+pg_dump=dump
 htdoc=admin.pl
