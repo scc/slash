@@ -596,24 +596,28 @@ sub validateUser {
 		return;
 	}
 
-	# Since we are here, if the minimum values for the comment trigger and the
-	# day trigger are -1, then they should be reset to 1.
-	$constants->{min_expiry_comm} = $constants->{min_expiry_days} = 1;
+	# Since we are here, if the minimum values for the comment trigger and
+	# the day trigger are -1, then they should be reset to 1.
+	$constants->{min_expiry_comm} = $constants->{min_expiry_days} = 1
+		if $constants->{min_expiry_comm} <= 0 ||
+		   $constants->{min_expiry_days} <= 0;
 
-	if ($user->{is_anon} || !length($user->{reg_id})) {
+	if ($user->{is_anon} || $user->{registered}) {
 		if ($user->{is_anon}) {
 			print getError('anon_validation_attempt');
 			displayForm();
-
+			return;
 		} else {
-			print getMessage('no_registration_needed') if !$user->{reg_id};
+			print getMessage('no_registration_needed')
+				if !$user->{reg_id};
 			showInfo($user->{uid});
+			return;
 		}
 	# Maybe this should be taken care of in a more centralized location?
 	} elsif ($user->{reg_id} eq $form->{id}) {
 		# We have a user and the registration IDs match. We are happy!
-		my($maxComm, $maxDays) =
-			($constants->{max_expiry_comm}, $constants->{max_expiry_days});
+		my($maxComm, $maxDays) = ($constants->{max_expiry_comm},
+					  $constants->{max_expiry_days});
 		my($userComm, $userDays) =
 			($user->{user_expiry_comm}, $user->{user_expiry_days});
 
@@ -702,18 +706,21 @@ sub tildeEd {
 	my $aids = $slashdb->getAuthorNames();
 	my $n = 0;
 	for my $aid (@$aids) {
-		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ? ' CHECKED' : '';
+		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ?
+			' CHECKED' : '';
 	}
 
 	my $topics = $slashdb->getDescriptions('topics');
 	while (my($tid, $alttext) = each %$topics) {
-		$tidref->{$tid}{checked} = ($extid =~ /'\Q$tid\E'/) ? ' CHECKED' : '';
+		$tidref->{$tid}{checked} = ($extid =~ /'\Q$tid\E'/) ?
+			' CHECKED' : '';
 		$tidref->{$tid}{alttext} = $alttext;
 	}
 
 	my $sections = $slashdb->getDescriptions('sections');
 	while (my($section, $title) = each %$sections) {
-		$sectionref->{$section}{checked} = ($exsect =~ /'\Q$section\E'/) ? ' CHECKED' : '';
+		$sectionref->{$section}{checked} =
+			($exsect =~ /'\Q$section\E'/) ? ' CHECKED' : '';
 		$sectionref->{$section}{title} = $title;
 	}
 
@@ -724,12 +731,14 @@ sub tildeEd {
 
 	my $sections_description = $slashdb->getSectionBlocks();
 
-	$customize_title = getTitle('tildeEd_customize_title');  # repeated from above?
+  	# repeated from above?
+	$customize_title = getTitle('tildeEd_customize_title');
 
 	for (@$sections_description) {
 		my($bid, $title, $boldflag) = @$_;
 
-		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ? ' CHECKED' : '';
+		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ?
+			' CHECKED' : '';
 		$section_descref->{$bid}{boldflag} = $boldflag > 0;
 		$title =~ s/<(.*?)>//g;
 		$section_descref->{$bid}{title} = $title;
@@ -873,7 +882,8 @@ sub editHome {
 	$tzformat_select = createSelect('tzformat', $formats, $user->{dfid}, 1);
 
 	$formats = $slashdb->getDescriptions('tzcodes');
-	$tzcode_select = createSelect('tzcode', [ keys %$formats ], $user->{tzcode}, 1);
+	$tzcode_select =
+		createSelect('tzcode', [ keys %$formats ], $user->{tzcode}, 1);
 
 	my $l_check = $user->{light}	? ' CHECKED' : '';
 	my $b_check = $user->{noboxes}	? ' CHECKED' : '';
@@ -960,9 +970,6 @@ sub editComm {
 	$posttype_select = createSelect(
 		'posttype', $formats, $user->{posttype}, 1
 	);
-
-	print STDERR "CHECK: [emaildisplay=$user->{emaildisplay}]\n";
-	print STDERR "CHECK: [domaintags=$user->{domaintags}]\n";
 
 	slashDisplay('editComm', {
 		title			=> $title,

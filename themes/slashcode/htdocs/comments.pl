@@ -365,9 +365,31 @@ sub createDiscussion {
 				$form->{title}, $form->{url}, $form->{topic}, 1
 			);
 		}
-		slashDisplay('newdiscussion', { error => $error, id => $id });
+
+		my $formats = $slashdb->getDescriptions('postmodes');
+		my $postvar = $form->{posttype} ? $form : $user;
+		my $format_select = createSelect(
+			'posttype', $formats, $postvar->{posttype}, 1
+		);
+
+		# Update form with the new SID for comment creation and other
+		# variables necessary. See "edit_comment;misc;default".
+		$newform = {
+			sid	=> $id,
+			pid	=> 0, 
+			formkey => $form->{formkey},
+		};
+		# We COULD drop ID from the call below, but not right now.
+		slashDisplay('newdiscussion', { 
+			error 		=> $error, 
+			form		=> $newform,
+			format_select	=> $format_select,
+			id 		=> $id,
+		});
 	} else {
-		slashDisplay('newdiscussion', { error => getError('seclevtoolow') });
+		slashDisplay('newdiscussion', {
+			error => getError('seclevtoolow'),
+		});
 	}
 
 	commentIndex(@_);
@@ -381,6 +403,8 @@ sub editComment {
 
 	print STDERR "ERROR MESSAGE $error_message OP $form->{op}\n";
 
+	# Why is this here? It's not referred to again in this scope.
+	# - Cliff 7/26/01
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $preview;
 	my $error_flag = 0;
