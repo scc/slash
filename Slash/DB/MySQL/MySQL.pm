@@ -2958,7 +2958,7 @@ sub createBlock {
 ########################################################
 sub createTemplate {
 	my($self, $hash) = @_;
-	$self->sqlInsert('blocks', $hash);
+	$self->sqlInsert('templates', $hash);
 }
 
 ########################################################
