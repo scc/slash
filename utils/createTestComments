@@ -21,7 +21,7 @@ use Slash;
 use Slash::Utility;
 use Benchmark;
 
-use vars qw( $slashdb $werder $constants );
+use vars qw( $slashdb $werder $constants $junk );
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
@@ -29,7 +29,7 @@ my $PROGNAME = basename($0);
 
 my (%opts, %family_tree);
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hI:RTu:U:v', \%opts);
+usage('Options used incorrectly') unless getopts('hI:RTJu:U:v', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 if ($opts{R}) {
@@ -42,6 +42,7 @@ if ($opts{R}) {
 	}
 	usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
 }
+$junk = $opts{'J'} ? 1 : 0;
 $opts{'u'} ||= 'slash';
 $opts{num_comments} = $ARGV[0] || 10;
 usage('Invalid number of comments') 
@@ -106,6 +107,7 @@ $werder = new Silly::Werder;
 		}
  
 		my $comment = make_werds(rand(20)*rand(20)+rand(10) + 1, 0.1);
+		$comment = strip_mode($comment, 2); # HTML mode
 		$comment = balanceTags($comment, 1);
 		$comment = addDomainTags($comment);
 
@@ -143,6 +145,7 @@ $werder = new Silly::Werder;
                 	},
 	                $user, $score
         	);
+		$slashdb->setStory($sid, { writestatus => 'dirty' });
 	        $family_tree{$cid} = $pid if ! $opts{T};
 	        print "($count) Comment created (user $uid discussion $discussion_id cid $cid pid $pid)\n";
  
@@ -283,6 +286,53 @@ sub make_werds {
         $comment =~ s{</(\w+)>\s+<\1>}{ }g;
         $comment =~ s/^\s*(.+)\s*$/$1/;
         $comment =~ s/^\s+//; $comment =~ s/\s+$//;
+	if ($link_prob and $junk) {
+		my @fragments = (
+			"<a", "href=", 'href="', '"', "'", ">", '>">', " > >",
+			"<", " < ", " <<", ">>", " < < <", "< < ", "<? ", "&lt;<",
+			".", "..", "../", "/..", "/../../..", " ", "  ", " \r ",
+			" \n ", "\n ", "\n\n", "\r\n\r", "\n\r\n", "\t \t", "\t",
+			"<i>", "</ i >", "<i >", "< /i >", "< i>", "< / i>",
+			"<i", "</i", "i>", "/i>", "/i/", "i/i", " // ", " / ",
+			"%2e", "%2f", "%3c", "%3e", "&lt;", "&gt;", "&amp;", "&",
+			"&amp", "&amp ", "&&", "&gt ;", "&#000;", "&#127;", "&#amp;",
+			"&#120;", "&#040;", "&#x30;", "&12345;", "&#2345;", "&999 ",
+			"&lt;<%3c", "&gt;>%3e", "%3e&lt; ", "><", "<>", "<><>",
+			"%25%", "%25", "&#046;", "&#26;", "& &", "<&> <", ">&<",
+			'<a hReF="/', '<A href = "//', '<A HREF=http://',
+			'<a href=""http://', '<a HREF="news:', '<a href="ftp:',
+			"<a\thref=\"/", '<a href="///', "<a\rhref=\"http:",
+			"<A\nHREF=\"http:", "<A\nHREF=http:", "<A\nHREF=\"http",
+			'<a href="ftp://ab:xz@', '<a href="ww~w\@foo.com/',
+			'<a href="@bar.com/', '<a href="http://@bar.com/',
+			'<a href="news:a:b@', '<a href="news:a:b:c:d@foo.com',
+			'<a href="ftp://aaa@foo.com', '<a href="http://bbb@bar',
+			'<a href="http://ab:xz@', '<a href="http://www@',
+			'<a href="ftp://www@www/', '<a href="news:new@new/',
+			'<a href="http://@', '<a href="http://:bar@', '%5c',
+			'<a href=http://foo:bar@', '<a href=http://@', '%7f',
+			'<a href="http://foo.com%20%20%20%20%20%20%20@',
+			"<A\nhref=\"HTTP://", "<!-- script ", "<script ",
+			'< a href="', '" <script="', "<script>", "<script",
+			"script>", "/script>", "href=", ' href="', ' HREF="',
+			'<img src="', "<img ", "</img>", "</hr>", "<!-- ",
+			"<!- - ", "<!--", "<! ", "<!", "!>", "-->", " -->",
+			"<a href=\"\r\n", "foo.com", "bar.com", "test.cx",
+			"&#".int(rand(256)).";", "&#".int(rand(256)).";",
+			"&#".int(rand(256)).";", "&#".int(rand(256)).";",
+			"&#".int(rand(256)).";", "&#".int(rand(256)).";",
+			"&#".int(rand(256)).";", "&#".int(rand(256)).";",
+		);
+		for (1..$werds) {
+			my $offset = int(rand(length($comment))+1);
+			my $done = 0;
+			while (!$done) {
+				my $fragment = $fragments[rand @fragments];
+				substr($comment, $offset, 0) = $fragment;
+				$done = 1 if rand(1) < 0.8;
+			}
+		}
+	}
         $comment;
 }
 
@@ -309,6 +359,7 @@ Identity options (specify one):
 
 Posting options:
 	-T	Do NOT post with threads.
+	-J	Post junk links (random text to stress canonicalization)
 
 EOT
 	exit;
