@@ -20,6 +20,18 @@ my $sectionBoxes;
 
 
 ########################################################
+# Notes:
+#  formAbuse, use defaults as ENV, be able to override
+#  	(pudge idea).
+#  description method cleanup.
+#  fetchall_rowref vs fetch the hashses and push'ing
+#  	them into an array (good arguments for both)
+#	 break up these methods into multiple classes and
+#   use the dB classes to override methods (this 
+#   could end up being very slow though since the march
+#   is kinda slow...).
+########################################################
+########################################################
 sub sqlConnect {
 # What we are going for here, is the ability to reuse
 # the database connection.
@@ -381,6 +393,27 @@ sub getSectionBank {
 	$sth->finish;
 	return $sectionbank;
 }
+########################################################
+sub getSection {
+	my ($self, $section) = @_;
+	print STDERR "Section $section \n";
+	$self->sqlSelect(
+			"artcount,title,qid,isolate,issue",
+			"sections","section=". $self->{dbh}->quote($section));
+}
+########################################################
+sub getSectionBlock {
+	my ($self, $section) = @_;
+	my $sth = $self->sqlSelectMany("section,bid,ordernum,title,portal,url,rdf,retrieve",
+			"sectionblocks", "section=" . $self->{dbh}->quote($section), 
+			"ORDER by ordernum");
+	if ($sth->rows == 0) {
+		return 0;
+	}
+	my $block = $sth->fetchall_arrayref;
+
+	return $block;
+}
 
 ########################################################
 sub getAuthor {
@@ -446,6 +479,16 @@ sub getPollQuestions {
 	return  $poll_hash_ref;
 }
 
+########################################################
+# I don't like this method at all (AKA how it is used).
+# There has to be a better way. Should be a way to 
+# combine its usage with the getPollQuestions()
+sub getPollQuestionID {
+	my ($self, $qid) = @_;
+	my ($fetched_qid) = $self->sqlSelect('qid', 'pollquestions', "qid='${qid}'");
+
+	return $fetched_qid;
+}
 ########################################################
 sub getStoryBySid {
 	my ($self, $sid, $member) = @_;
@@ -842,6 +885,38 @@ sub setUserBoxes {
 	$self->sqlUpdate('users_index', { exboxes => $exboxes },
 			"uid=$uid", 1)
 }
+
+##################################################################
+sub refreshStories {
+	my ($self, $sid) = @_;
+	$self->sqlUpdate('stories',
+			{ writestatus => 1 },
+			'sid=' . $self->{dbh}->quote($sid) . ' and writestatus=0'
+	);
+}
+##################################################################
+sub getStoryByTime {
+	my ($self, $sign, $sqltime, $isolate, $section, $extid, $exaid, $exsect) = @_;
+	my ($where, $order);
+	$order = $sign eq '<' ? 'DESC' : 'ASC';
+	if ($isolate) {
+		$where = 'AND section=' . $self->{dbh}->quote($section)
+			if $isolate == 1;
+	} else {
+		$where = 'AND displaystatus=0';
+	}
+
+	$where .= "   AND tid not in ($extid)" if $extid;
+	$where .= "   AND aid not in ($exaid)" if $exaid;
+	$where .= "   AND section not in ($exsect)" if $exsect;
+
+	$self->sqlSelect(
+			'title, sid, section', 'newstories',
+			"time $sign '$sqltime' AND writestatus >= 0 AND time < now() $where",
+			"ORDER BY time $order LIMIT 1"
+	);
+}
+
 
 1;
 

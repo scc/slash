@@ -137,9 +137,8 @@ EOT
 sub editSection {
 	my($seclev, $section) = @_;
 
-	my($artcount, $title, $qid, $isolate, $issue) = sqlSelect(
-		"artcount,title,qid,isolate,issue",
-		"sections","section='$section'") unless $I{F}{addsection};
+	my($artcount, $title, $qid, $isolate, $issue) = $I{dbobject}->getSection($section)
+		unless $I{F}{addsection};
 
 	print <<EOT;
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
@@ -174,21 +173,21 @@ EOT
 	
 
 	unless ($I{F}{addsection}) {
-		my $c = sqlSelectMany("*", "sectionblocks",
-		"section=" . $I{dbh}->quote($section), "ORDER by ordernum"); 
+		my $blocks =  $I{dbobject}->getSectionBlock($section);
 		
-		if($c) {
+		if($blocks) {
 			print <<EOT;
 <BR><BR><B>edit section slashboxes (blocks)</B><BR><BR>
 <TABLE BORDER="1">
 EOT
-			while(my $B = $c->fetchrow_hashref) {
-				$B->{title} =~ s/<(.*?)>//g;
-				printf <<EOT, $$B{ordernum} > 0 ? '(default)' : '';
+			for(@$blocks) {
+				my ($section, $bid, $ordernum, $title, $portal, $url) = @$_;	
+				$title =~ s/<(.*?)>//g;
+				printf <<EOT, $ordernum > 0 ? '(default)' : '';
 			<TR>
 				<TD>
-				<B><A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$B->{bid}">$B->{title}</A></B>
-			<A HREF="$B->{url}">$B->{url}</A> %s 
+				<B><A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$bid">$title</A></B>
+			<A HREF="$url">$url</A> %s 
 				</TD>
 			</TR>
 EOT
@@ -197,7 +196,6 @@ EOT
 			print "</TABLE>\n";
 		}
 
-		$c->finish;
 	}
 
 	print <<EOT;

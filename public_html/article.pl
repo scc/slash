@@ -33,10 +33,7 @@ sub main {
 	getSlash();
 
 	if ($I{F}{refresh}) {
-		sqlUpdate('stories',
-			{ writestatus => 1 },
-			'sid=' . $I{dbh}->quote($I{F}{sid}) . ' and writestatus=0'
-		);
+		$I{dbobject}->refreshStories($I{F}{sid});
 		# won't work now because HTTP headers not printed until header() below
 		# print qq[<FONT COLOR="white" SIZE="${\( $I{fontbase} + 5 )}">How Refreshing! ($I{F}{sid}) </FONT>\n];
 	}
@@ -70,7 +67,7 @@ sub main {
 	yourArticle($S);
 
 	# Poll Booth
-	pollbooth($I{F}{sid}) if sqlSelect('qid', 'pollquestions', "qid='$S->{sid}'");
+	pollbooth($I{F}{sid}) if $I{dbobject}->getPollQuestionID($S->{sid});
 
 	# Related Links
 	fancybox(200, 'Related Links', $S->{relatedtext});
@@ -95,50 +92,6 @@ sub main {
 	$I{StoryCount} = 0;
 }
 
-##################################################################
-sub moderatorLog {
-	my $S=shift;
-	my $c=sqlSelectMany(   "comments.sid as sid,
-				comments.cid as cid,
-				comments.points as score,
-				subject, moderatorlog.uid as uid,
-				users.nickname as nickname,
-				moderatorlog.val as val, 
-				moderatorlog.reason as reason",
-			       "moderatorlog, users, comments",
-			       "moderatorlog.sid='$S->{sid}'
-				AND moderatorlog.uid=users.uid
-				AND comments.sid=moderatorlog.sid
-				AND comments.cid=moderatorlog.cid
-			       ");
-
-	if ($c->rows > 0) {
-		print <<EOT;
-<TABLE BGCOLOR="$I{bg}[2]" WIDTH="95%" ALIGN="CENTER">
-	<TR BGCOLOR="$I{bg}[3]">
-		<TH><FONT COLOR="$I{fg}[3]"> val / score </FONT></TH>
-		<TH><FONT COLOR="$I{fg}[3]"> reason </FONT></TH>
-		<TH><FONT COLOR="$I{fg}[3]"> moderator </FONT></TH>
-		<TH><FONT COLOR="$I{fg}[3]"> comment </FONT></TH>
-	</TR>
-
-EOT
-
-		while (my $C = $c->fetchrow_hashref) {
-			print <<EOT;
-	<TR>
-		<TD> <B>$C->{val}</B> / $C->{score} </TD>
-		<TD> $I{reasons}[$C->{reason}] </TD>
-		<TD> $C->{nickname} ($C->{uid}) </TD>
-		<TD><A HREF="$I{rootdir}/comments.pl?sid=$S->{sid}&cid=$C->{cid}">$C->{subject}</A></TD>
-	</TR>
-
-EOT
-		}
-		print "</TABLE>\n\n";
-	}
-	$c->finish;
-}
 
 ##################################################################
 sub pleaseLogin {
@@ -238,11 +191,7 @@ sub nextStory {
 		my $section = $I{dbobject}->getStoryBySid($I{sid_array}[$array_place], 'section');
 		return linkStory({ 'link' => $title, sid => $psid, section => $section });
 
-	} elsif (my($title, $psid, $section) = sqlSelect(
-		'title, sid, section', 'newstories',
-		 "time $sign '$story->{sqltime}' AND writestatus >= 0 AND time < now() $where",
-		"ORDER BY time $order LIMIT 1")
-	) {
+	} elsif (my($title, $psid, $section) = $I{dbobject}->getStoryByTime($sign, $story->{sqltime}, $SECT->{isolate}, $story->{section}, $I{U}{extid}, $I{U}{exaid}, $I{U}{exsect} )) {
 		return linkStory({ 'link' => $title, sid => $psid, section => $section });
 	}
 	'';
