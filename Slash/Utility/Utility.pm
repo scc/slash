@@ -16,6 +16,7 @@ require Exporter;
 	getCurrentForm
 	getCurrentStatic
 	getCurrentDB
+	getCurrentMenu
 	getCurrentAnonymousCoward
 	createCurrentUser
 	createCurrentForm
@@ -104,6 +105,21 @@ sub changePassword {
 	return join '', map { $chars[rand @chars] } 0 .. 7;
 }
 
+#################################################################
+sub getCurrentMenu {
+	my($script) = @_;
+
+	unless ($script) {
+		$script = $ENV{'SCRIPT_NAME'} unless $script;
+		$script =~ /.*\/(.*\.pl)$/;
+		$script = $1;
+	}
+	my $r = Apache->request;
+	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $menus = $cfg->{'menus'};
+
+	return $menus->{$script};
+}
 #################################################################
 sub getCurrentUser {
 	my($value) = @_;

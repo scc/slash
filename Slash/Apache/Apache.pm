@@ -30,6 +30,7 @@ sub SlashVirtualUser ($$$) {
 	@{$anonymous_coward}{keys %$actz} = values %$actz;
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
+	$cfg->{menus} = $cfg->{dbslash}->getMenus();
 }
 
 1;

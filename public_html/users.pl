@@ -60,7 +60,8 @@ print STDERR "OP $I{F}{op}\n";
 	if (!$user->{is_anon} && $op ne "userclose") {
 		# my $block = eval prepBlock $I{dbobject}->getBlock('users_menu','block');
 		# print $block;
-		my $menu = $I{dbobject}->getMenuItems('users.pl');
+		#my $menu = $I{dbobject}->getMenuItems('users.pl');
+		my $menu = getCurrentMenu();
 		createMenu($menu);
 	}
 	# and now the carnage begins
@@ -254,7 +255,7 @@ sub userInfo {
 	}
 
 	my @values = qw(homepage fakeemail bio seclev karma nickname);
-	my $userbio = $I{dbobject}->getUser($uid, @values);
+	my $userbio = $I{dbobject}->getUser($uid, \@values);
 
 	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
 	if ($I{U}{nickname} eq $nick) {
@@ -364,7 +365,7 @@ sub editUser {
 		realname realemail fakeemail homepage nickname
 		passwd sig seclev bio maillist
 	);
-	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	my $user_edit = $I{dbobject}->getUser($uid, \@values);
 	$user_edit->{uid} = $uid;
 
 	return if isAnon($user_edit->{uid});
@@ -540,7 +541,7 @@ sub editComm {
 	my($uid) = @_;
 
 	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
-	my $user_edit = $I{dbobject}->getUser($uid, @values);
+	my $user_edit = $I{dbobject}->getUser($uid, \@values);
 	$user_edit->{uid} = $uid;
 
 	my $editcomm_title= $I{dbobject}->getBlock('users_editcomm_title','block');

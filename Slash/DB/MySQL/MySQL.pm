@@ -2951,6 +2951,7 @@ sub _genericGetsCache {
 	return $self->{$table_cache};
 }
 
+########################################################
 sub getMenuItems {
 	my ($self, $script) = @_;
 	my $sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
@@ -2962,6 +2963,32 @@ sub getMenuItems {
 	$sth->finish;
 
 	return \@menu;
+}
+
+########################################################
+sub getMenus {
+	my ($self) = @_;
+
+	my $sql = "select distinct page from menus order by page";
+	my $sth =	$self->{dbh}->prepare($sql);
+	$sth->execute;
+	my $menu_names = $sth->fetchall_arrayref;
+	$sth->finish;
+
+	my $menus;
+	for(@$menu_names) {
+		my $script = $_->[0];
+		$sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
+		$sth =	$self->{dbh}->prepare($sql);
+		$sth->execute();
+		my @menu;
+		my $row;
+		push (@menu, $row) while ($row = $sth->fetchrow_hashref);
+		$sth->finish;
+		$menus->{$script} = \@menu;
+	}
+
+	return $menus;
 }
 
 1;
