@@ -25,6 +25,7 @@ sub new {
 	bless ($self,$class);
 	$self->{virtual_user} = $user;
 	$self->sqlConnect;
+	$self->{slashdb} = Slash::DB->new($user);
 
 	return $self;
 }
@@ -207,10 +208,9 @@ sub _install {
 	}
 
 	if($plugin->{'template'}) {
-		my $slash = Slash::DB->new($self->{virtual_user});
 		for(@{$plugin->{'template'}}) {
 			my $template = $self->readTemplateFile("$plugin->{'dir'}/$_");
-			$slash->createTemplate($template) if $template;
+			$self->{slashdb}->createTemplate($template) if $template;
 		}
 	}
 	if ($plugin->{note}) {
