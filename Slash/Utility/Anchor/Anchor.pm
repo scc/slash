@@ -109,13 +109,18 @@ sub header {
 
 		$r->content_type('text/html');
 
-		# Caching has been reverted to how it worked before.
-		# Leave it like this until we get complaints about
-		# it -- pudge
-		$r->header_out('Cache-Control', 'private');
+		# Caching used to be Cache-Control: private but that doesn't
+		# seem to be correct; let's hope switching to no-cache
+		# causes few complaints.
+		$r->header_out('Cache-Control', 'no-cache');
+		# And while Pragma: no-cache is not really correct (it's
+		# to be used for requests and the RFC doesn't define it to
+		# mean anything for responses) it probably doesn't hurt
+		# anything and allegedly has stopped users from complaining.
 		$r->header_out('Pragma', 'no-cache')
-			# why use caching only for authors/admins?
-			# is that backwards?
+			# This is here for historical reasons, my best guess
+			# is that it's silly and unnecessary but I'm not
+			# going to take it out and break stuff.
 			unless $ENV{SCRIPT_NAME} =~ /comments/ || $user->{seclev} > 1;
 
 # 		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
