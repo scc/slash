@@ -496,8 +496,10 @@ sub validateComment {
 	$$subj =~ s/\(Score(.*)//i;
 	$$subj =~ s/Score:(.*)//i;
 
-	unless (defined($$comm = balanceTags($$comm, 1))) {
-		$$error_message = getError('nesting_toodeep');
+	unless (defined($$comm = balanceTags($$comm, $constants->{nesting_maxdepth}))) {
+		# This error message never gets seen because one or more later
+		# errors overwrite it.
+		$$error_message = getError('nesting too deep');
 		# editComment('', $$error_message), return unless $preview;
 		return unless $preview;
 	}

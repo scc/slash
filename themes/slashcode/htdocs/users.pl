@@ -1335,9 +1335,9 @@ sub saveUser {
 	# use shorter domain names and don't save their change.
 	my $sig = chopEntity($form->{sig}, 120);
 	$sig = strip_html($sig);
-	$sig = balanceTags($sig);
-	$sig = addDomainTags($sig);
-	if (length($sig) > 160) {
+	$sig = balanceTags($sig, 1); # only 1 nesting tag (UL, OL, BLOCKQUOTE) allowed
+	$sig = addDomainTags($sig) if $sig;
+	if (defined($sig) and length($sig) > 160) {
 		print getError('sig_too_long_err');
 		$sig = undef;
 	}

@@ -1169,7 +1169,7 @@ The 'approvedtags' and 'lonetags' entries in the vars table.
 =cut
 
 sub balanceTags {
-	my($html, $hard) = @_;
+	my($html, $max_nest_depth) = @_;
 	my(%tags, @stack, $match, %lone, $tag, $close, $whole);
 	my $constants = getCurrentStatic();
 
@@ -1219,9 +1219,8 @@ sub balanceTags {
 			$tags{$tag}++;
 			push @stack, $tag;
 
-			if ($hard && ($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-				return;
-			}
+			return undef if $max_nest_depth and
+				$tags{UL} + $tags{OL} + $tags{BLOCKQUOTE} > $max_nest_depth;
 		}
 
 	}

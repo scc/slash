@@ -427,6 +427,7 @@ INSERT INTO vars (name, value, description) VALUES ('moderatord_debug_info', '1'
 INSERT INTO vars (name, value, description) VALUES ('mod_same_subnet_forbid','1','Forbid users from moderating any comments posted by someone in their subnet?');
 INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','0','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('newsletter_body','0','Print bodytext, not merely introtext, in newsletter.');
+INSERT INTO vars (name, value, description) VALUES ('nesting_maxdepth','4','Maximum depth to which <BLOCKQUOTE>-type tags can be nested');
 INSERT INTO vars (name, value, description) VALUES ('num_users_approx','2','Approximate number of users, updated daily');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');

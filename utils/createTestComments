@@ -119,7 +119,7 @@ $werder = new Silly::Werder;
 		$num_werds += 300 if rand(1) < 0.1;
 		my $comment = make_werds($num_werds, 0.1);
 		$comment = strip_mode($comment, 2); # HTML mode
-		$comment = balanceTags($comment, 1);
+		$comment = balanceTags($comment, $constants->{nesting_maxdepth});
 		$comment = addDomainTags($comment);
 
 		my $score = 1;
