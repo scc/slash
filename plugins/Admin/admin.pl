@@ -1150,7 +1150,7 @@ sub editStory {
 		user			=> $user,
 		authoredit_flag		=> $authoredit_flag,
 		ispell_comments		=> $ispell_comments,
-		extras		=> $extracolumns,
+		extras			=> $extracolumns,
 	});
 }
 

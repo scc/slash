@@ -3555,10 +3555,10 @@ sub _saveExtras {
 	for (@$extras) {
 		my $key = $_->[1];
 		$self->sqlReplace('story_param', { 
-				sid => $story->{sid}, 
-				name => $key,
-				value => $story->{$key},
-				}) if($story->{$key});
+			sid	=> $story->{sid}, 
+			name	=> $key,
+			value	=> $story->{$key},
+		}) if $story->{$key};
 	}
 }
 
