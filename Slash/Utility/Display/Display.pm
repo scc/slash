@@ -93,8 +93,10 @@ Sort numerically, not alphabetically.
 
 =item ORDERED
 
-An already-sorted array reference of keys.  If passed, then
-the NSORT parameter is ignored.
+If an arrayref is passed, an already-sorted array reference of keys.
+If non-ref, then an arrayref of hash keys is created sorting the
+hash values, alphabetically and case-insensitively.
+If ORDERED is passed in either form, then the NSORT parameter is ignored.
 
 =back
 
@@ -123,7 +125,7 @@ sub createSelect {
 
 	return unless (ref $hashref eq 'HASH' && keys %$hashref);
 
-	if ($ordered && !ref ($ordered)) {
+	if ($ordered && !ref $ordered) {
 		$ordered = [
 			map  { $_->[0] }
 			sort { $a->[1] cmp $b->[1] }

@@ -4,14 +4,12 @@ __description__
 Message body that is sent back to a user whenever a moderation from
 this user is metamoderated.
 
-Parameters:
-
-	m2 = List of hashrefs containing the following keys:
-		title	- Title of the discussion in which the moderated comment
-			  appears.
-		url	- URL of the discussion in question
-		subj	- subject of moderated comment
-		vote	- moderation vote on that comment
+* m2 = List of hashrefs containing the following keys:
+	title	- Title of the discussion in which the moderated comment
+		  appears.
+	url	- URL of the discussion in question
+	subj	- subject of moderated comment
+	vote	- moderation vote on that comment
 
 __title__
 Metamoderation Message Body

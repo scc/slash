@@ -227,7 +227,7 @@ sub main {
 			}
 		}
 	
-		if ( ! $error_flag) {
+		if (! $error_flag) {
 			$note .= savePasswd($form->{uid}) ;
 		}
 		# change op to edituser and let fall through;
@@ -245,9 +245,9 @@ sub main {
 	print createMenu($formname) if ! $curuser->{is_anon};
 
 			
-	if ( isAnon($curuser->{uid}) && $ops->{$op}{seclev} > 0) {
+	if ($curuser->{is_anon} && $ops->{$op}{seclev} > 0) {
 		$op = 'default';
-	} elsif ( $curuser->{seclev} < $ops->{$op}{seclev} ) {
+	} elsif ($curuser->{seclev} < $ops->{$op}{seclev}) {
 		$op = 'userinfo';
 	}
 	print STDERR "3 OP $op\n";
@@ -419,7 +419,7 @@ sub showInfo {
 	my $user = getCurrentUser();
 
 	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
-	my ($title, $admin_block, $fieldkey) = ('','','');
+	my($title, $admin_block, $fieldkey) = ('','','');
 	my $comments;
 	my $commentcount = 0;
 	my $commentstruct = [];
@@ -534,9 +534,9 @@ sub showInfo {
 	if ($requested_user->{nonuid}) {
 		slashDisplay('netIDInfo', {
 			title			=> $title,
-			id				=> $id,
+			id			=> $id,
 			user			=> $requested_user,
-			commentstruct	=> $commentstruct || [],
+			commentstruct		=> $commentstruct || [],
 			admin_flag		=> $admin_flag,
 			admin_block		=> $admin_block,
 		});
@@ -792,7 +792,7 @@ sub changePasswd {
 
 	print getMessage('note', { note => $form->{note}}) if $form->{note};
 
-	$title = getTitle('changePasswd_title', { user_edit => $user});
+	$title = getTitle('changePasswd_title', { user_edit => $user });
 
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user->{session_login}, 1);
@@ -1575,13 +1575,12 @@ sub getTitle {
 sub getUserAdmin {
 	my($id, $field, $form_flag, $seclev_field) = @_;
 
-
 	my $slashdb	= getCurrentDB();
 	my $curuser	= getCurrentUser();
 	my $form	= getCurrentForm();
 	my $constants	= getCurrentStatic();
 
-	my($checked, $uidstruct, $readonly, $readonly_reasons) ;
+	my($checked, $uidstruct, $readonly, $readonly_reasons);
 	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select);
 	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 

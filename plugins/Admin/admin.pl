@@ -122,7 +122,7 @@ sub main {
 		return;
 	}
 	# non suadmin users can't perform suadmin ops
-	unless($ops->{$op}) {
+	unless ($ops->{$op}) {
 		$op = 'default';
 	}
 	$op = 'list' if $user->{seclev} < $ops->{$op}{seclev};
@@ -673,14 +673,14 @@ sub colorSave {
 ##################################################################
 # Keyword Editor
 sub editKeyword {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
-	if($form->{keywordnew}) {
+	if ($form->{keywordnew}) {
 		$form->{id} = '';
 		saveKeyword(@_);
 	}
-	deleteKeyword(@_) if($form->{keyworddelete});
-	saveKeyword(@_) if($form->{keywordsave});
+	deleteKeyword(@_) if $form->{keyworddelete};
+	saveKeyword(@_) if $form->{keywordsave};
 
 	my($keywords_menu, $keywords_select);
 
@@ -692,13 +692,13 @@ sub editKeyword {
 
 	slashDisplay('keywordEdit', {
 		keywords_select		=> $keywords_select,
-		keyword		=> $keyword,
+		keyword			=> $keyword,
 	});
 }
 
 ##################################################################
 sub deleteKeyword {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 
 	print getData('keywordDelete-message');
 	$slashdb->deleteRelatedLink($form->{id});
@@ -707,15 +707,23 @@ sub deleteKeyword {
 
 ##################################################################
 sub saveKeyword {
-	my ($form, $slashdb, $user, $constants) = @_;
+	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{'basedir'};
 
 	return if getCurrentUser('seclev') < 500;
 
 	if ($form->{id}) {
-		$slashdb->setRelatedLink($form->{id},{ keyword =>$form->{keyword}, name =>$form->{name}, link =>$form->{link} } );
+		$slashdb->setRelatedLink($form->{id}, {
+			keyword	=> $form->{keyword},
+			name	=> $form->{name},
+			'link'	=> $form->{'link'}
+		});
 	} else {
-		$form->{id} = $slashdb->createRelatedLink({ keyword =>$form->{keyword}, name =>$form->{name}, link =>$form->{link} });
+		$form->{id} = $slashdb->createRelatedLink({
+			keyword	=> $form->{keyword},
+			name	=> $form->{name},
+			'link'	=> $form->{'link'}
+		});
 	}
 
 	print getData('keywordSave-message');
