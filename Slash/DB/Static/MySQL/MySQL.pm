@@ -524,14 +524,14 @@ sub stirPool {
 
 	my $revoked = 0;
 
-	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");
+	$self->sqlTransactionStart("LOCK TABLES users_info,users_comments WRITE");
 
 	while (my($p, $u) = $cursor->fetchrow) {
 		$revoked += $p;
-		$self->sqlUpdate("users_comments", { 
+		$self->setUser($u, {
 			points 		=> '0',
 			-lastgranted 	=> 'now()',
-		}, "uid=$u");
+		});
 	}
 
 	$self->sqlTransactionFinish();
