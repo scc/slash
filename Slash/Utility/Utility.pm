@@ -760,6 +760,7 @@ sub getCurrentStatic {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
+		return unless $r;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$constants = $const_cfg->{'constants'};
 	} else {

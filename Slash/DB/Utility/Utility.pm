@@ -29,7 +29,7 @@ sub sqlConnect {
 		}
 	} else {
 # Ok, new connection, lets create it
-		print STDERR "Having to rebuild the database handle\n";
+	#	print STDERR "Having to rebuild the database handle\n";
 		{
 			local @_;
 			eval {
@@ -47,7 +47,7 @@ sub sqlConnect {
 				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
 			} else {
 				my $time = $self->{_dbh}->selectcol_arrayref('SELECT now()');
-				print STDERR "Rebuilt at $time->[0]\n";
+				#print STDERR "Rebuilt at $time->[0]\n";
 			}
 		}
 	}
