@@ -28,6 +28,7 @@ use strict;
 use Apache;
 use Slash::Display;
 use Slash::Utility::Display;
+use Slash::Utility::Data;
 use Slash::Utility::Environment;
 
 use base 'Exporter';

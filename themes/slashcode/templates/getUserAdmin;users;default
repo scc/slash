@@ -50,6 +50,15 @@ __template__
 		<TD><B>Author flag (user is an author)</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
 	</TR>
+	<TR>
+		<TD><B>Read-only</B></TD><TD COLSPAN="3">&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>Comments</TD><TD><INPUT TYPE="checkbox" NAME="readonly_comments" [% readonly_comments %]>&nbsp;</TD><TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="comments_ro_reason" VALUE="[% comments_ro_reason %]"></TD><TD>&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>Submissions</TD><TD><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly_submit%]>&nbsp;</TD><TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% submit_ro_reason %]"></TD><TD>&nbsp;</TD>
+	</TR>
 [% END %]
 
 </TABLE>

@@ -552,6 +552,16 @@ sub saveUser {
 		$note .= getMessage('cookiemsg', 0, 1);
 	}
 
+	for my $formname ( 'comments', 'submit') {
+		my $keyname = "readonly_" . $formname;
+		my $reason_keyname = $formname . "_ro_reason";
+		$form->{$keyname} = $form->{$keyname} eq 'on' ? 1 : 0 ;
+
+		my $stuff = $slashdb->checkReadOnly($formname, $uid);
+
+		$slashdb->setReadOnly($formname, $uid, $form->{keyname}, $form->{$reason_keyname} );
+	}
+
 	# strip_mode _after_ fitting sig into schema, 120 chars
 	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
 	$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
@@ -807,7 +817,8 @@ sub getUserAdmin {
 
 	my $edituser = $slashdb->getUser($uid);
 
-	my($uid_checked, $nickname_checked) = ('','');
+	my($uid_checked, $nickname_checked, $readonly_comments, $readonly_submit,
+		$comments_ro_reason, $submit_ro_reason) = ('','','','','','');
 
 	if ($form->{userfield_flag} eq 'userid') {
 		$uid_checked = ' CHECKED';
@@ -818,6 +829,14 @@ sub getUserAdmin {
 	my $author_select;
 	my $author_flag = ($edituser->{author} == 1) ? ' CHECKED' : ''; 
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0; 
+
+	$readonly_comments = $slashdb->checkReadOnly('comments',$uid) ? ' CHECKED' : '';
+
+	$comments_ro_reason = $slashdb->getReadOnlyReason('comments',$uid);
+
+	$readonly_submit = $slashdb->checkReadOnly('submit', $uid) ? ' CHECKED' : '';
+
+	$submit_ro_reason = $slashdb->getReadOnlyReason('comments',$uid);
 
 	my $authors = $slashdb->getDescriptions('authors');
 
@@ -832,6 +851,10 @@ sub getUserAdmin {
 		author_select		=> $author_select,
 		author_flag 		=> $author_flag, 
 		form_flag		=> $form_flag,
+		readonly_comments	=> $readonly_comments,
+		readonly_submit		=> $readonly_submit,
+		comments_ro_reason	=> $comments_ro_reason,
+		submit_ro_reason	=> $submit_ro_reason,
 		authoredit_flag 	=> $authoredit_flag }, 
 		{ Return 		=> 1 }
 	);

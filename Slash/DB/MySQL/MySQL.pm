@@ -724,6 +724,36 @@ sub getCommentsByUID {
 }
 
 #################################################################
+sub getCommentsByIPID {
+	my($self, $ipid, $min) = @_;
+
+	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
+			. " FROM comments WHERE ipid=$ipid "
+			. " ORDER BY date DESC LIMIT $min,50 ";
+
+	my $sth = $self->{_dbh}->prepare($sqlquery);
+	$sth->execute;
+	my($comments) = $sth->fetchall_arrayref;
+	formatDate($comments, 4);
+	return $comments;
+}
+
+#################################################################
+sub getCommentsBySubnetID{
+	my($self, $subnetid, $min) = @_;
+
+	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
+			. " FROM comments WHERE subnetid=$subnetid"
+			. " ORDER BY date DESC LIMIT $min,50 ";
+
+	my $sth = $self->{_dbh}->prepare($sqlquery);
+	$sth->execute;
+	my($comments) = $sth->fetchall_arrayref;
+	formatDate($comments, 4);
+	return $comments;
+}
+
+#################################################################
 # Just create an empty content_filter
 sub createContentFilter {
 	my($self, $formname) = @_;
@@ -1404,24 +1434,165 @@ sub createAbuse {
 }
 
 ##################################################################
+sub checkExpired {
+	my($self, $uid) = @_;
+
+	my $where = "uid = '$uid' AND readonly = 1 AND reason = 'expired'"; 
+
+	$self->sqlSelect(
+		"readonly",
+		"accesslist", $where
+	);
+}
+##################################################################
 sub checkReadOnly {
-	my($self, $formname) = @_;
+	my($self, $formname, $id) = @_;
+
+	my $constants = getCurrentStatic();
+	my ($ref,$user);
+	my $where = '';
+
+	if ($id) {
+		$user = $self->getUser($id);
+		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
+			$where = "uid = $user->{uid}";
+		} else {
+			$where = "(ipid = '$id' OR subnetid = '$id')"; 
+		}
+	} else {
+		$user = $self->getCurrentUser();
+		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
+	}
+
+	$where .= " AND readonly = 1 AND formname = '$formname'"; 
+
+
+	$self->sqlSelect(
+	 	"readonly",
+	 	"accesslist", $where
+	);
+}
+
+##################################################################
+sub getReadOnlyReason {
+	my($self, $formname, $id) = @_;
+
+	my $constants = getCurrentStatic();
+	my ($ref,$user);
+	my ($reason,$where) = ('','');
+
+	if ($id) {
+		$user = $self->getUser($id);
+		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
+			$where = "WHERE uid = $user->{uid}";
+		} else {
+			$where = "WHERE (ipid = '$id' OR subnetid = '$id')"; 
+		}
+	} else {
+		$user = $self->getCurrentUser();
+		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
+	}
+
+	$where .= " AND readonly = 1 AND formname = '$formname'"; 
+
+	$ref = $self->sqlSelectAll("reason", "accesslist $where");
+
+	for ( @$ref ) {
+		if ($reason eq '') {
+			$reason = $_->[0];
+		} 
+		elsif($reason ne $_->[0]) {
+			$reason = 'multiple';
+			return($reason);
+		}
+	}
+	
+	return($reason);
+}
+
+##################################################################
+sub setReadOnly {
+	my($self, $formname, $id, $flag, $reason) = @_;
+
+ 	my $user = $self->getUser($id);
+	
+	my $constants = getCurrentStatic();
+
+	my $where = '';
+	if($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
+		$where = "uid = $user->{uid}";
+	} else {
+		$where = "(ipid = '$id' OR subnetid = '$id')"; 
+	}
+
+	$where .= " AND formname = '$formname'"; 
+
+	if ($self->checkReadOnly($formname,$id) && $flag == 0) {
+		if ($reason) {
+			$self->sqlUpdate("accesslist", {
+					-readonly => $flag,
+					reason => $reason,
+					}, $where
+			);
+		} else {
+			$self->sqlUpdate("accesslist", {
+					-readonly => $flag,
+					}, $where
+			);
+		}
+	} 
+	elsif ($flag == 1) {
+		$user->{ipid} = '' if ! $user->{ipid};
+		$user->{subnetid} = '' if ! $user->{subnetid};
+
+		if ($self->_checkAccessList($formname,$id)) {
+			if ($reason) {
+				$self->sqlUpdate("accesslist", {
+						-readonly => $flag,
+						reason => $reason,
+				}, $where );
+			} else {
+				$self->sqlUpdate("accesslist", {
+					-readonly => $flag,
+				}, $where );
+			}
+		} else {
+			$self->sqlInsert("accesslist", {
+				-uid => $user->{uid},
+				ipid => $user->{ipid},
+				subnetid => $user->{subnetid}, 
+				formname => $formname,
+				-ts   => "now()",
+				-readonly => $flag,
+				reason => $reason, });
+		}
+	}
+}
+
+##################################################################
+sub _checkAccessList {
+	my ($self, $formname, $id) = @_;
+
+	my $constants = getCurrentStatic();
+ 	my $user = $self->getUser($id);
 
 	my $where = '';
 
- 	my $user = getCurrentUser();
-	my $constants = getCurrentStatic();
-
-	unless (isAnon($user->{uid})) {
-		$where = "uid = $user->{uid} or ";
+	if ($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
+		$where = "uid = $user->{uid}";
+	} else {
+		$where = "(ipid = '$id' OR subnetid = '$id')"; 
 	}
 
-	$where .= "($where ipid = '$user->{ipid}' or subnetid = '$user->{subnetid}') "
-		. "and readonly = 1 and formname = '$formname'"; 
+	$where .= " AND formname = '$formname'"; 
 
-	$self->sqlSelect("readonly", "accesslist", $where);
+	my ($rows) = $self->sqlSelect(
+	 	"count(*)",
+	 	"accesslist", $where
+	);
+
+	return($rows);
 }
-
 ##################################################################
 # Check to see if the form already exists
 sub checkForm {
