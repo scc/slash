@@ -17,7 +17,6 @@ sub new {
 	my $dsn = DBIx::Password::getDriver($user);
 	if ($dsn) {
 		if ($dsn =~ /mysql/) {
-#			print STDERR "Picking MySQL \n";
 			require Slash::DB::MySQL;
 			@Slash::DB::ISA = @Slash::DB::ISAMySQL;
 			unless ($ENV{GATEWAY_INTERFACE}) {
@@ -26,7 +25,6 @@ sub new {
 				push(@Slash::DB::ISAMySQL, 'Slash::DB::Static::MySQL');
 			}
 #		} elsif ($dsn =~ /oracle/) {
-#			print STDERR "Picking Oracle \n";
 #			require Slash::DB::Oracle;
 #			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
 #			require Slash::DB::MySQL;
@@ -40,7 +38,6 @@ sub new {
 ##				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
 #			}
 		} elsif ($dsn =~ /Pg/) {
-			print STDERR "Picking PostgreSQL \n";
 			require Slash::DB::PostgreSQL;
 			require Slash::DB::MySQL;
 			@Slash::DB::ISA = @Slash::DB::ISAPg;
