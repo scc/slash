@@ -939,9 +939,9 @@ sub _hard_dispComment {
 		}, 1);
 		$comment_to_display = "$comment_shrunk<P><B>$link</B>";
 	} elsif ($user->{nosigs}) {
-		$comment_to_display  = "$comment->{comment}<BR>$comment->{sig}";
-	} else {
 		$comment_to_display = $comment->{comment};
+	} else {
+		$comment_to_display  = "$comment->{comment}<BR>$comment->{sig}";
 	}
 
 	$time_to_display = timeCalc($comment->{date});
