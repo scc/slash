@@ -934,7 +934,7 @@ sub checkEmail {
 	my($self, $email) = @_;
 
 	# Returns count of users matching $email.
-	return ($self->sqlSelect('count(uid)', 'users',
+	return ($self->sqlSelect('uid', 'users',
 		'realemail=' . $self->sqlQuote($email)))[0];
 }
 
@@ -945,7 +945,7 @@ sub createUser {
 	return unless $matchname && $email && $newuser;
 
 	return if ($self->sqlSelect(
-		"count(uid)", "users",
+		"uid", "users",
 		"matchname=" . $self->sqlQuote($matchname)
 	))[0] || $self->checkEmail($email);
 
