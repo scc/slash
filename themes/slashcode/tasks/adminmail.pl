@@ -40,7 +40,10 @@ $task{$me}{code} = sub {
 
 	$backupdb->updateStamps();
 
-	my $points = $slashdb->sqlSelect('sum(points)', 'users_comments');
+	my $accesslog_rows = $slashdb->sqlCount('accesslog');
+	my $formkeys_rows = $slashdb->sqlCount('formkeys');
+
+	my $mod_points = $slashdb->sqlSelect('SUM(points)', 'users_comments');
 	my @time = localtime;
 	my $yesterday = sprintf "%4d-%02d-%02d", 
 		$time[5] + 1900, $time[4] + 1, $time[3] - 1;
@@ -48,19 +51,34 @@ $task{$me}{code} = sub {
 		'moderatorlog', 
 		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'"
 	);
+	my $modlog_hr = $slashdb->sqlSelectAllHashref(
+		"val",
+		"val, COUNT(*) AS count",
+		"moderatorlog",
+		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'",
+		"GROUP BY val"
+	);
+	my $modlog_total = $modlog_hr->{1}{count} + $modlog_hr->{-1}{count};
+	my $modlog_text = sprintf(<<"EOT", $mod_points, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $modlog_total);
+mod points: %6d in system
+used total: %6d yesterday
+   used -1: %6d
+   used +1: %6d
+EOT
 
 	my $email = <<EOT;
 $constants->{sitename} Stats for yesterday
 
-mod points $points
-      used $used
+$modlog_text
+ accesslog: $accesslog_rows rows total
+  formkeys: $formkeys_rows rows total
 
-     total $count->{'total'}
-    unique $count->{'unique'}
-     users $count->{'unique_users'}
-total hits $sdTotalHits
-  homepage $count->{'index'}{'index'}
-  journals $count->{'journals'}
+     total: $count->{'total'}
+    unique: $count->{'unique'}
+     users: $count->{'unique_users'}
+total hits: $sdTotalHits
+  homepage: $count->{'index'}{'index'}
+  journals: $count->{'journals'}
    indexes
 EOT
 
