@@ -12,6 +12,7 @@
 # should go to him. -Brian
 #
 # Cliff++; -CaptTofu
+
 use strict;
 use File::Basename;
 use FindBin '$Bin';
@@ -27,16 +28,11 @@ use Cwd;
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-chomp(my $COPYRIGHT = <<'EOT');
-This code is a part of Slash, and is released under the GPL.
-Copyright 1997-2001 by Open Source Development Network. See README
-and COPYING for more information, or see http://slashcode.com/.
-EOT
-
 my %opts;
-usage('options used incorrectly') unless getopts('cdilrsvg:D:O:P:S:p:f:u:?', \%opts);
-usage('no options supplied to program') unless keys %opts;
-usage() if $opts{'h'};
+# Remember to doublecheck these match usage()!
+usage() unless getopts('cdilrsvg:D:O:P:S:p:f:u:h', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
 boiler() if $opts{'B'};
 
 # if deleting, then there should be no other operation or file flags
@@ -45,7 +41,8 @@ usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l
 # can't have multiple IDs on a save
 usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
-$opts{'u'} = 'slash' unless $opts{'u'};  
+$opts{'u'} ||= 'slash';  
+
 createEnvironment($opts{'u'});
 my $slashdb = getCurrentDB();
 my $install = Slash::Install->new($opts{'u'});
@@ -54,13 +51,6 @@ my $install = Slash::Install->new($opts{'u'});
 my $templates = $slashdb->getTemplates();
 
 my($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0, 0, 0, 0);
-
-##################################
-# version
-if ($opts{'v'}) {
-	print "$PROGNAME, version $VERSION\n$COPYRIGHT\n";
-	exit();
-}
 
 ##################################
 # compile to perl code
@@ -328,65 +318,75 @@ sub usage {
 
 Usage: $PROGNAME [OPTIONS] <template templateN>
 
-OPTIONS
-
-	-B generates a blank template (specify the name of the file after the option)
-
-	-u virtual user to use (default is "slash")
-
-	-d dump templates
-	-i use tpid (template id) instead of template name
-
-	-l list template(s) and their descriptions
-	-m only perform list and get actions if the template matches this pattern
-	-f <templatefilename> filename of template being dumped or created (single template)
-	
-	-s create/save/update template 
-
-	-0 directory where templates are saved or created
-	-P <page> template page
-	-S <section> template section
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+	-B	generates a blank template (specify the name of the file
+		after the option)
+	-d	dump templates
+	-i	use tpid (template id) instead of template name
+	-l	list template(s) and their descriptions
+	-m	only perform list and get actions if the template matches
+		this pattern
+	-f	<templatefilename> filename of template being dumped or
+		created (single template)
+	-s	create/save/update template 
+	-O	directory where templates are saved or created
+	-P	<page> template page
+	-S	<section> template section
+	-r	deletes template(s) (don't shoot yourself in the foot!)
 
 	Save Notes:
-	* With no args except filename, uses template name to derive section, 
-	page and template name from.
-	* -s <filenames> allows you to save specific 
-	templates from the given files. This needs to be a template in a
-	template file format. Use -b to generate blank ones.
-	* If you don't supply a template name, or leave the section and page 
-	unset, the name will try to be derived from the filename.
-	* If you supply a section and/or page and your reading files out of a 
-	directory, those templates will be saved with those sections. If you 
-	want to read from a directory and not have your section or page changed,
-	don't provide these arguments.
+	*	With no args except filename, uses template name to derive
+		section, page and template name from.
+	*	-s <filenames> allows you to save specific templates from
+		the given files. This needs to be a template in a template
+		file format. Use -b to generate blank ones.
+	*	If you don't supply a template name, or leave the section
+		and page unset, the name will try to be derived from the
+		filename.
+	*	If you supply a section and/or page and your reading files
+		out of a directory, those templates will be saved with those
+		sections. If you want to read from a directory and not have
+		your section or page changed, don't provide these arguments.
 
-	-r deletes template(s) (don't shoot yourself in the foot!)
-	-? this message
-
-Section, page, and template args logic:
-
-	for listing and dumping functions:
-
-	-S <section> all templates in a section
-	-S <section> <template templateN> all templates in a section having the name(s)
-	-P <page> all templates for a page
-	-P <page> <template templateN> all templates for a page having the name(s)
-	-S <section> -P <page> all templates for a page and section
-	-S <section> -P <page> <template templateN> templates for a page and 
-	section with the name(s) <template templateN> all templates having the 
-	name(s) all other template fields should be modified via web interface
+Section, page, and template args logic for listing and dumping functions:
+	-S	<section> all templates in a section
+	-S	<section> <template templateN> all templates in a section
+		having the name(s)
+	-P	<page> all templates for a page
+	-P	<page> <template templateN> all templates for a page having
+		the name(s)
+	-S	<section> -P <page> all templates for a page and section
+	-S	<section> -P <page> <template templateN> templates for a page
+		and section with the name(s) <template templateN> all
+		templates having the name(s) all other template fields should
+		be modified via web interface
 
 Debugging options:
+	-c	Compiles named template into Perl code for testing
+	-O	<directory> Destination directory of compiled templates
+		(default is ".")
 
-	-c Compiles named template into Perl code for testing.
-	-O <directory> Destination directory of compiled templates (default=.)
+	Compiled templates are saved as <template-name>.ttc in the
+	destination directory.
 
-	Compiled templates are saved as <template-name>.ttc in the destination
-	directory.
-
-	-v Version of this program
 EOT
 	exit();
+}
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
 }
 
 sub boiler {
