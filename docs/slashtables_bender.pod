@@ -187,9 +187,7 @@ How comments appear.
  +-----------+-------------+-------------+
 
 
-=head2
-
-B<comments/newcomments>
+=head2 comments/newcomments
 
 These are the actual comments of posters on Slash.
 These are unique by a sid and cid combination, sid

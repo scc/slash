@@ -119,7 +119,7 @@ F<docs/slasherd_bender.pdf>
 
 F<docs/slasherd_bender.ps>
 
-F<docs/slashtables_bender.txt>
+F<docs/slashtables_bender.pod>
 
 
 =item Other

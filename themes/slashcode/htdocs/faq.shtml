@@ -36,7 +36,8 @@ Before asking any questions, please read the relevant documentation.
 	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.pod">POD</A>
 	]</LI>
 	<LI>Database schema description [
-	    <A HREF="http://slashcode.com/docs/slashtables_bender.txt">ASCII</A>
+	    <A HREF="http://slashcode.com/docs/slashtables_bender.html">HTML</A>
+	    <A HREF="http://slashcode.com/docs/slashtables_bender.pod">POD</A>
 	]</LI>
 	<LI>ERD of database schema [
 	    <A HREF="http://slashcode.com/docs/slasherd_bender.fig">Fig</A> |

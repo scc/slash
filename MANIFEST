@@ -103,14 +103,13 @@ docs/INSTALL.html
 docs/INSTALL.pod
 docs/README.html
 docs/README.pod
-docs/dopods.plx
 docs/slasherd_bender.fig
 docs/slasherd_bender.pdf
 docs/slasherd_bender.ps
 docs/slasherd_main.fig
 docs/slasherd_main.pdf
 docs/slasherd_main.ps
-docs/slashtables_bender.txt
+docs/slashtables_bender.pod
 docs/slashtables_main.txt
 httpd/slash.conf
 plugins/Admin/PLUGIN

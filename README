@@ -96,7 +96,7 @@ DOCUMENTATION
 
         docs/slasherd_bender.ps
 
-        docs/slashtables_bender.txt
+        docs/slashtables_bender.pod
 
     Other
         We need to upgrade the Getting Started document.
