@@ -172,17 +172,15 @@ sub importDump {
 		} until ($cmd =~ /\;\s*$/) || ($cmd =~ /^\#/) || eof DUMPFILE;
 		#print "CMD: '$cmd'\n";
 		next if $cmd =~ /^(#.+|[\n\s]+|)$/s;
-		$cmd =~ s/\;\s*//;
+		$cmd =~ s/\;\s*$//;
 
 		# We only deal with CREATE TABLE and INSERT statements for now.
 		my ($op, $tablename);
-		if ($cmd=~/^(?:(CREATE) TABLE (\w+)\b|(INSERT) INTO (\w+)\b)/i) {
-			$op = $1;
-			$tablename = $2;
-			my $valid;
-			$valid = $tablename =~ /$regexp/;
+		if ($cmd=~/^(CREATE|INSERT) (?:TABLE|INTO) (\w+)\b/i) {
+			($op, $tablename) = ($1, $2);
+			my $valid = $tablename =~ /$regexp/;
 			if (! $valid) {
-				print "---- ($op|$tablename) Skipping command '$cmd'\n";
+				#print "---- ($op|$tablename) Skipping command '$cmd'\n";
 				next;
 			}
 		}
@@ -192,7 +190,7 @@ sub importDump {
 			print STDERR 	"Error executing statement on import: " . 
 							$dbh->errstr . "\n";
 			printf STDERR	"(%d) '$cmd'", length($cmd)
-				if ($a = $dbh->errstr) =~ /empty/,
+				if ($a = $dbh->errstr) =~ /SQL syntax/,
 	}
 	print "-- Closing $dumpfile\n";
 }
@@ -275,21 +273,21 @@ EOQ
 		$dbh->do(<<EOQ);
 UPDATE users SET	
 	seclev 		= $user->{seclev},
-	realname 	= @{\($dbh->quote($user->{realname}))},
-	realemail	= @{\($dbh->quote($user->{realemail}))},
-	homepage	= @{\($dbh->quote($user->{homepage}))},
-	sig			= @{\($dbh->quote($user->{sig}))}
+	realname 	= @{[$dbh->quote($user->{realname})]},
+	realemail	= @{[$dbh->quote($user->{realemail})]},
+	homepage	= @{[$dbh->quote($user->{homepage})]},
+	sig			= @{[$dbh->quote($user->{sig})]}
 WHERE uid = $user->{uid}
 EOQ
 
 		$dbh->do(<<EOQ);
-UPDATE users_info SET bio = @{\($dbh->quote($user_info->{bio}))}
+UPDATE users_info SET bio = @{[$dbh->quote($user_info->{bio})]}
 EOQ
 
 		# There should be no defaults for these.
 		$dbh->do(<<EOQ) if $_->{section};
 INSERT INTO users_params (param_id, uid, name, value)
-	VALUES (null, $uid, 'section', @{\($dbh->quote($_->{section}))})
+	VALUES (null, $uid, 'section', @{[$dbh->quote($_->{section})]})
 EOQ
 
 		$dbh->do(<<EOQ) if $_->{deletedsubmissions};
