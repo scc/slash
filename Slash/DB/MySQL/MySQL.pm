@@ -84,10 +84,13 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users') },
 
 	'templates'
-		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates') },
+		=> sub { $_[0]->sqlSelectMany('tpid,name', 'templates') },
 
 	'templatesbypage'
-		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates', "page = '$_[2]'") },
+		=> sub { $_[0]->sqlSelectMany('tpid,name', 'templates', "page = '$_[2]'") },
+
+	'templatesbysection'
+		=> sub { $_[0]->sqlSelectMany('tpid,name', 'templates', "section = '$_[2]'") },
 
 	'templatepages'
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },

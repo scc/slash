@@ -130,28 +130,28 @@ sub main {
 		blockEdit($user->{seclev});
 
 	} elsif ($form->{templatedelete_cancel}) {
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatenew}) {
 		templateEdit($user->{seclev});
 	
 	} elsif ($form->{templatepage}) {
-		templateEdit($user->{seclev}, '', $form->{page});
+		templateEdit($user->{seclev}, '', $form->{page}, $form->{section});
 
 	} elsif ($form->{templateed}) {
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
 		templateSave($form->{thistpid});
-		templateEdit($user->{seclev}, $form->{thistpid}, $form->{page});
+		templateEdit($user->{seclev}, $form->{thistpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templaterevert}) {
 		my $slashdb = getCurrentDB();
 		$slashdb->revertBlock($form->{thistpid}) if $user->{seclev} < 500;
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatedelete}) {
-		templateEdit($user->{seclev},$form->{tpid}, $form->{page});
+		templateEdit($user->{seclev},$form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatedelete_confirm}) {
 		templateDelete($form->{deletebid});
@@ -353,20 +353,22 @@ sub authorDelete {
 # OK, here's the template editor
 # @my_names = grep /^$foo-/, @all_names;
 sub templateEdit {
-	my($seclev, $tpid, $page) = @_;
+	my($seclev, $tpid, $page, $section) = @_;
 
 	return if $seclev < 100;	
 	$page ||= 'misc';
+	$section ||= 'default';
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $pagehashref = {};
 
-	my ($title, $templateref,$template_select,$page_select,$description_ta,$template_ta);
-	my ($templatedelete_flag,$templateedit_flag,$templateform_flag, $template_ref) = (0,0,0);
+	my ($title, $templateref,$template_select,$page_select);
+	my ($section_select,$description_ta,$template_ta, $template_ref);
+	my ($templatedelete_flag,$templateedit_flag,$templateform_flag) = (0,0,0);
 
 	if($tpid) {
-		$templateref = $slashdb->getTemplate($tpid, '', 1);
+		$templateref = $slashdb->getTemplateByID($tpid, '', 1);
 	}
 
 	$title = getTitle('templateEdit-title',{},1);
@@ -376,11 +378,12 @@ sub templateEdit {
 	} else {
 		my $templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
 		my $pages = $slashdb->getDescriptions('templatepages', '', 1);
+		my $sections = $slashdb->getDescriptions('sections','', 1);
 
 		$page_select = createSelect('page', $pages, $page, 1);
 		$template_select = createSelect('tpid', $templates, $tpid, 1);
+		$section_select = createSelect('section', $sections, $section, 1);
 	}
-
 
 	if (!$form->{templatenew} && $tpid && $templateref->{tpid}) {
 		$templateedit_flag = 1;
@@ -402,6 +405,7 @@ sub templateEdit {
 		template_select		=> $template_select,
 		templateform_flag	=> $templateform_flag,
 		page_select		=> $page_select,
+		section_select		=> $section_select,
 	});	
 }
 
@@ -417,7 +421,7 @@ sub templateSave {
 
 	$form->{seclev} ||= 500;
 
-	my $saved = $slashdb->getTemplate($tpid);
+	my $saved = $slashdb->getTemplateByID($tpid);
 
 	if ($form->{save_new}) {
 		if($saved->{tpid}) {
