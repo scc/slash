@@ -3687,8 +3687,10 @@ sub getSubmissionForUser {
 sub calcModval {
 	my($self, $where_clause, $hoursback_halflife) = @_;
 	my $hr;
-my $start_time = Time::HiRes::time();
-	if (getCurrentStatic('portable_calcmodval')) {
+#my $start_time = Time::HiRes::time();
+	my $be_portable = getCurrentStatic('portable_calcmodval');
+	$be_portable = 1 if !defined($be_portable); # default: yes
+	if ($be_portable) {
 		$hr = $self->sqlSelectAllHashref(
 			"hoursback",
 			"CEILING((UNIX_TIMESTAMP(NOW())-UNIX_TIMESTAMP(ts))/3600) AS hoursback,
@@ -3717,7 +3719,7 @@ my $start_time = Time::HiRes::time();
 			$hr->{$hoursback}{valsum} += $val;
 		}
 	}
-{ use Data::Dumper; printf STDERR "cM %d %.3f %s", (getCurrentStatic('portable_calcmodval')?1:0), Time::HiRes::time()-$start_time, Dumper($hr); }
+#printf STDERR "cM %d %.3f", $be_portable, Time::HiRes::time()-$start_time;
 	my $modval = 0;
 	for my $hoursback (keys %$hr) {
 		my $val = $hr->{$hoursback}{valsum};
@@ -3742,21 +3744,21 @@ sub getIsTroll {
 	my $ipid_hoursback = $constants->{istroll_ipid_hours} || 72;
 	my $uid_hoursback = $constants->{istroll_uid_hours} || 72;
 	my($modval, $trollpoint);
-my $time = time;
+#my $time = time;
 
 	# Check for modval by IPID.
 	$trollpoint = -abs($constants->{istroll_downmods_ip}) - $good_behavior;
 	$modval = $self->calcModval("ipid = '$user->{ipid}'", $ipid_hoursback);
-my $uidipid = "";
-$uidipid  = " uid $user->{uid}" if !$user->{is_anon};
-$uidipid .= " ipid '$user->{ipid}'";
-printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+#my $uidipid = "";
+#$uidipid  = " uid $user->{uid}" if !$user->{is_anon};
+#$uidipid .= " ipid '$user->{ipid}'";
+#printf STDERR "gIT %d %d ip modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
 	return 1 if $modval <= $trollpoint;
 
 	# Check for modval by subnet.
 	$trollpoint = -abs($constants->{istroll_downmods_subnet}) - $good_behavior;
 	$modval = $self->calcModval("subnetid = '$user->{subnetid}'", $ipid_hoursback);
-printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d subnetid '%s'%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $user->{subnetid}, $uidipid;
+#printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d subnetid '%s'%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $user->{subnetid}, $uidipid;
 	return 1 if $modval <= $trollpoint;
 
 	# At this point, if the user is not logged in, then we don't need
@@ -3766,7 +3768,7 @@ printf STDERR "gIT %d %d subnet modval %.3f trollpoint %d subnetid '%s'%s\n", $t
 	# Check for modval by user ID.
 	$trollpoint = -abs($constants->{istroll_downmods_user}) - $good_behavior;
 	$modval = $self->calcModval("comments.uid = $user->{uid}", $uid_hoursback);
-printf STDERR "gIT %d %d user modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
+#printf STDERR "gIT %d %d user modval %.3f trollpoint %d%s\n", $time, ($modval <= $trollpoint?1:0), $modval, $trollpoint, $uidipid;
 	return 1 if $modval <= $trollpoint;
 
 	# All tests passed, user is not a troll.

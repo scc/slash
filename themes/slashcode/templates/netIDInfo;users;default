@@ -59,7 +59,7 @@ on [% comment.cdate %] (Score:[% comment.pts %][% replies %])
 [% IF admin_flag %]
 
 [% IF commentcount > n %]
-<P><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;min_comment=[% n %]"
+<P><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield=[% form.userfield | strip_literal %]&amp;fieldname=[% form.fieldname | strip_literal %]&amp;min_comment=[% n %]"
 >More Comments...</A><P>
 [% END %]
 

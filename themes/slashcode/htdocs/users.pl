@@ -641,8 +641,6 @@ sub showInfo {
 		) if $commentcount;
 	}
 
-{ use Data::Dumper; print STDERR Dumper($comments); }
-
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts, $uid) = @$_;
 		$uid ||= 0;
@@ -1661,7 +1659,6 @@ sub editMiscOpts {
 		my $opt_name = "opt_" . $opt->{name};
 		$opt->{checked} = $edit_user->{$opt_name} ? 1 : 0;
 	}
-#{ use Data::Dumper; my $form = getCurrentForm(); print STDERR "editMiscOpts " . Dumper({ form=>$form, user=>$user, edit_user=>$edit_user, opts=>$opts }); }
 
 	slashDisplay('editMiscOpts', {
 #		useredit	=> $user_edit,
@@ -1692,7 +1689,6 @@ sub saveMiscOpts {
 		next unless $opts_ok_hash{$opt};
 		$update->{$opt} = $form->{$opt} ? 1 : 0;
 	}
-#{ use Data::Dumper; print STDERR "saveMiscOpts " . Dumper({ opts => $opts, ok => \%opts_ok_hash, update=>$update, form=>$form, user=>$user, edit_user=>$edit_user }); }
 
 	# Make the changes.
 	$slashdb->setUser($edit_user->{uid}, $update);
