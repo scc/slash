@@ -537,13 +537,9 @@ sub deleteSection{
 ########################################################
 sub getSectionBlock {
 	my ($self, $section) = @_;
-	my $sth = $self->sqlSelectMany("section,bid,ordernum,title,portal,url,rdf,retrieve",
+	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
 			"sectionblocks", "section=" . $self->{dbh}->quote($section), 
 			"ORDER by ordernum");
-	if ($sth->rows == 0) {
-		return 0;
-	}
-	my $block = $sth->fetchall_arrayref;
 
 	return $block;
 }
@@ -564,12 +560,11 @@ sub getAuthor {
 ########################################################
 sub getAuthorDescription {
   my ($self) = @_;
-	my $sth = $self->sqlSelectMany("count(*) as c, stories.aid as aid, url, copy",
+	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid as aid, url, copy",
 		"stories, authors",
 		"authors.aid=stories.aid", "
 		GROUP BY aid ORDER BY c DESC"
 		);
-	my $authors = $sth->fetchall_arrayref;
 
 	return $authors;
 }
@@ -632,6 +627,22 @@ sub getPollQuestionBySID {
 	return $question;
 }
 ########################################################
+sub getUserEditInfo {
+	my ($self, $name) = @_;
+	my $bio = $self->sqlSelectHashref("users.uid, realname, realemail, fakeemail, homepage, nickname, passwd, sig, seclev, bio, maillist", "users, users_info", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
+
+	return $bio;
+
+}
+########################################################
+sub getUserEditComment  {
+	my ($self, $name) = @_;
+	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
+
+	return $bio;
+
+}
+########################################################
 sub getUserBio {
 	my ($self, $nick) = @_;
 	my $sth = $self->{dbh}->prepare(
@@ -646,6 +657,7 @@ sub getUserBio {
 	return $bio;
 
 }
+########################################################
 sub getStoryBySid {
 	my ($self, $sid, $member) = @_;
 	
@@ -744,9 +756,7 @@ sub getColorBlock {
 ########################################################
 sub getLock {
 	my ($self) = @_;
-	my $sth = $self->sqlSelectMany('lasttitle,aid', 'sessions');
-	my $locks = $sth->fetchall_arrayref;
-	$sth->finish;
+	my $locks = $self->sqlSelectAll('lasttitle,aid', 'sessions');
 
 	return $locks;
 }
@@ -855,13 +865,10 @@ sub checkForm {
 # Current admin users
 sub currentAdmin {
 my ($self) = @_;
-  my $sth = $self->sqlSelectMany('aid,now()-lasttime,lasttitle', 'sessions',
+  my $aids = $self->sqlSelectAll('aid,now()-lasttime,lasttitle', 'sessions',
 			'aid=aid GROUP BY aid'
 			#   'aid!=' . $self->{dbh}->quote($I{U}{aid}) . ' GROUP BY aid'
 			);
-
-	my $aids = $sth->fetchall_arrayref;
-	$sth->finish;
 
 	return $aids;
 }
@@ -907,13 +914,12 @@ sub getTopNewsstoryTopics {
   my ($self, $all) = @_;
 	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
 	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $sth=$self->sqlSelectMany("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
+	my $topics=$self->sqlSelectAll("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
 			"topics.tid=newstories.tid
 			$when
 			GROUP BY topics.tid
 			$order"
 			);
-	my $topics = $sth->fetchall_arrayref;
 
 	return $topics;
 }
@@ -1017,6 +1023,14 @@ sub getPortalsCommon {
 	return ($boxes, $sectionBoxes);
 }
 ##################################################################
+# counts the number of comments for a user
+sub countComments {
+	my ($self, $sid, $cid) = @_;
+	my ($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+
+	return $value;
+}
+##################################################################
 # counts the number of stories
 sub countStory {
 	my ($self, $tid) = @_;
@@ -1042,6 +1056,13 @@ sub setUserBoxes {
 			"uid=$uid", 1)
 }
 
+##################################################################
+sub getAids {
+	my ($self) = @_;
+	my $aids = sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
+
+	return $aids;
+}
 ##################################################################
 sub refreshStories {
 	my ($self, $sid) = @_;

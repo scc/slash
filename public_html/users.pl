@@ -327,7 +327,7 @@ EOT
 		for (@$comments) {
 			my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 			$x++;
-			my($r) = sqlSelect("count(*)", "comments", "sid='$sid' and pid=$cid");
+			my $r = $I{dbobject}->countComments($sid, $cid);
 			my $replies = " Replies:$r" if $r;
 
 			print <<EOT;
@@ -359,73 +359,68 @@ EOT
 
 #################################################################
 sub editKey {
-	my($k) = sqlSelect("pubkey", "users_key", "uid=$_[0]");
+	my $k = $I{dbobject}->getUserPublicKey($_[0]);
 	print qq!<P><B>Public Key</B><BR><TEXTAREA NAME="pubkey" ROWS="4" COLS="60">$k</TEXTAREA>!;
 }
 
 #################################################################
 sub editUser {
 	my($name) = @_;
-	my($uid, $realname, $realemail, $fakeemail, $homepage, $nickname,
-		$passwd, $sig, $useclev, $bio, $maillist) = sqlSelect(
-		"users.uid, realname, realemail, fakeemail, homepage, nickname, " .
-		"passwd, sig, seclev, bio, maillist", "users, users_info",
-		"users.uid=users_info.uid AND nickname=" . $I{dbh}->quote($name)
-	); 
+	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $uid < 1;
+	return if $user->{uid} < 1;
 
-	titlebar("100%", "Editing $name ($uid) $realemail");
+	titlebar("100%", "Editing $name ($user->{uid}) $user->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
 
-	$homepage ||= "http://";
+	$user->{homepage} ||= "http://";
  
-	my $tempnick = $nickname;
+	my $tempnick = $user->{nickname};
 	$tempnick =~ s/ /+/g;
  
 	print <<EOT;
 You can automatically login by clicking
-<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$passwd&unickname=$tempnick">This Link</A>
+<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$user->{passwd}&unickname=$tempnick">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 
 	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="$realname" SIZE="40"><BR>
-		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$uid">
-		<INPUT TYPE="HIDDEN" NAME="passwd" VALUE="$passwd">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$nickname">
+		<INPUT TYPE="TEXT" NAME="realname" VALUE="$user->{realname}" SIZE="40"><BR>
+		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$user->{uid}">
+		<INPUT TYPE="HIDDEN" NAME="passwd" VALUE="$user->{passwd}">
+		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$user->{nickname}">
 
 	<B>Real Email</B> (required but never displayed publicly. 
 		This is where your passwd is mailed.  If you change your
 		email, notification will be sent)<BR>
-		<INPUT TYPE="TEXT" NAME="realemail" VALUE="$realemail" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="realemail" VALUE="$user->{realemail}" SIZE="40"><BR>
 
 	<B>Fake Email</B> (optional:This email publicly displayed by
 		your comments, you may spam proof it, leave it blank, 
 		or just type in your address)<BR>
-		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="$fakeemail" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="$user->{fakeemail}" SIZE="40"><BR>
 
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="$homepage" SIZE="60"><BR>
+		<INPUT TYPE="TEXT" NAME="homepage" VALUE="$user->{homepage}" SIZE="60"><BR>
 
 	<P><B>Headline Mailing List</B>
 EOT
 
 	my $description = $I{dbobject}->getFormatDescriptions('maillist');
-	createSelect('maillist', $description, $maillist);
+	createSelect('maillist', $description, $user->{maillist});
 
 	print <<EOT;
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
-		<TEXTAREA NAME="sig" rows=2 cols=60>$sig</TEXTAREA>
+		<TEXTAREA NAME="sig" rows=2 cols=60>$user->{sig}</TEXTAREA>
 
 	<P><B>Bio</B> (this information is publicly displayed on your
 		user page.  255 chars)<BR>
-		<TEXTAREA NAME="bio" rows=5 cols=60 wrap=virtual>$bio</TEXTAREA>
+		<TEXTAREA NAME="bio" rows=5 cols=60 wrap=virtual>$user->{bio}</TEXTAREA>
 
 EOT
 
-	editKey($uid);
+	editKey($user->{uid});
 
   	print <<EOT;
 	<P><B>Password</B> Enter new passwd twice to change it.
@@ -619,17 +614,7 @@ EOT
 sub editComm {
 	my($name) = @_;
 
-	my($uid, $points, $posttype, $defaultpoints, $maxcommentsize,
-		$clsmall, $clbig, $reparent, $noscores, $highlightthresh,
-		$commentlimit, $nosigs, $commentspill, $commentsort, $mode,
-		$threshold, $hardthresh)
-		= sqlSelect("users.uid, points, posttype, defaultpoints, "
-		. "maxcommentsize, clsmall, clbig, reparent, noscores, "
-		. "highlightthresh, commentlimit, nosigs, commentspill, "
-		. "commentsort, mode, threshold, hardthresh",
-		"users, users_comments","users.uid=users_comments.uid AND nickname="
-		. $I{dbh}->quote($name)
-	);
+	my $user = $I{dbobject}->getUserEditInfo($name);
 
 	titlebar("100%", "Comment Options");
 
@@ -642,15 +627,15 @@ EOT
 
 	print "<B>Display Mode</B>";
 	$formats = $I{dbobject}->getFormatDescriptions('commentmodes');
-	createSelect('umode', $formats, $mode);
+	createSelect('umode', $formats, $user->{mode});
 
 	print "<P><B>Sort Order</B> (self explanatory?	I hope?)\n";
 	$formats = $I{dbobject}->getFormatDescriptions('sortcodes');
-	createSelect('commentsort', $formats, $commentsort);
+	createSelect('commentsort', $formats, $user->{commentsort});
 
 	print "<P><B>Threshold</B>";
 	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
-	createSelect('uthreshold', $formats, $threshold);
+	createSelect('uthreshold', $formats, $user->{threshold});
 
 	print <<EOT;
 	<BR>(comments scored less than this setting will be ignored.
@@ -661,14 +646,14 @@ EOT
 
 	print "<P><B>Highlight Threshold</B>";
 	$formats = $I{dbobject}->getFormatDescriptions('threshcodes');
-	createSelect('highlightthresh', $formats, $highlightthresh);
+	createSelect('highlightthresh', $formats, $user->{highlightthresh});
 
 	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
 
-	my $h_check = $hardthresh	? " CHECKED" : "";
-	my $r_check = $reparent		? " CHECKED" : "";
-	my $n_check = $noscores		? " CHECKED" : "";
-	my $s_check = $nosigs		? " CHECKED" : "";
+	my $h_check = $user->{hardthresh}	? " CHECKED" : "";
+	my $r_check = $user->{reparent}		? " CHECKED" : "";
+	my $n_check = $user->{noscores}		? " CHECKED" : "";
+	my $s_check = $user->{nosigs}		? " CHECKED" : "";
 
 	print <<EOT;
 	<P><B>Hard Thresholds</B> (Hides 'X Replies Below
@@ -686,23 +671,23 @@ EOT
 
 	<P><B>Limit</B> only display this many comments.
 	For best results, set this to a low number and sort by score.<BR>
-	<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="$commentlimit">
+	<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="$user->{commentlimit}">
 
 	<P><B>Index Spill</B> (When an article has this many comments,
 	it switches to indexed mode)<BR>
-	<INPUT TYPE="TEXT" NAME="commentspill" VALUE="$commentspill" SIZE="3">
+	<INPUT TYPE="TEXT" NAME="commentspill" VALUE="$user->{commentspill}" SIZE="3">
 
 	<P><B>Small Comment Penalty</B> (Assign -1 to comments smaller
 	than this many characters.  This might cause some comments
 	to be rated -2 and hence rendered invisible!)<BR>
-	<INPUT TYPE="TEXT" NAME="clsmall" VALUE="$clsmall" SIZE="6">
+	<INPUT TYPE="TEXT" NAME="clsmall" VALUE="$user->{clsmall}" SIZE="6">
 
 	<P><B>Long Comment Bonus </B> (Assign +1 to lengthy comments)<BR>
-	<INPUT TYPE="TEXT" NAME="clbig" VALUE="$clbig" SIZE="6">
+	<INPUT TYPE="TEXT" NAME="clbig" VALUE="$user->{clbig}" SIZE="6">
 
 	<P><B>Max Comment Size</B> (Truncates long comments, and 
 	adds a \"Read More\" link.  Set really big to disable)<BR>
-	<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="$maxcommentsize">
+	<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="$user->{maxcommentsize}">
 
 	<P><B>Disable Sigs</B> (strip sig quotes from comments)
 	<INPUT TYPE="CHECKBOX" NAME="nosigs"$s_check>
@@ -711,7 +696,7 @@ EOT
 EOT
 
 	$formats = $I{dbobject}->getFormatDescriptions('postmodes');
-	createSelect('posttype', $formats, $posttype);
+	createSelect('posttype', $formats, $user->{posttype});
 
 	print <<EOT;
 
@@ -989,5 +974,6 @@ EOT
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+# No kick the baby
+#$I{dbh}->disconnect if $I{dbh};
 1;
