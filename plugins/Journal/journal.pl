@@ -283,14 +283,9 @@ sub setPrefs {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 
 	my %prefs;
-	sub _populate_prefs {
-		my($name) = @_;
+	for my $name (qw(journal_discuss journal_theme)) {
 		$prefs{$name} = $user->{$name} = $form->{$name}
 			if defined $form->{$_};
-	}
-
-	for (qw(journal_discuss journal_theme)) {
-		_populate_prefs($_);
 	}
 
 	$slashdb->setUser($user->{uid}, \%prefs);
