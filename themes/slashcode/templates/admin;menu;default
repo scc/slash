@@ -16,7 +16,10 @@ admin
 __template__
 <TABLE BGCOLOR="[% user.bg.2 %]" BORDER="0"  WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
 	<TR>
-		<TD>[ [% FOR i = items %]
+		<TD>[%
+IF constants.panic %]
+	<P ALIGN="CENTER"><B>**&nbsp;PANIC&nbsp;LEVEL&nbsp;[% constants.panic %]&nbsp;**</B></P>[% END
+%][ [% FOR i = items %]
 		<FONT SIZE="2"><A HREF="[% i.value %]">[% i.label %]</A>
 	[% " | " UNLESS loop.last %]
 [% END %] ]	<FONT></TD>

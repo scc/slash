@@ -9,6 +9,7 @@ use vars qw( %task $me );
 # sort of midnightish time for the Western Hemisphere.  Adjust for
 # your audience and admins.
 $task{$me}{timespec} = '7 6 * * *';
+$task{$me}{timespec_panic_2} = ''; # if major panic, dailyStuff can wait
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

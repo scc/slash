@@ -9,6 +9,8 @@ use vars qw( %task $me );
 my $total_freshens = 0;
 
 $task{$me}{timespec} = '1-59/3 * * * *';
+$task{$me}{timespec_panic_1} = '1-59/10 * * * *';
+$task{$me}{timespec_panic_2} = '';
 $task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;

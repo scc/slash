@@ -51,28 +51,38 @@ sub main {
 		$form->{query} = substr($form->{query},0,40);
 	}
 
+	# The default search operation is to search stories.
+	$form->{op} ||= 'stories';
+
 	if ($form->{content_type} eq 'rss') {
-		if ($ops_rss{$form->{op}}) {
-			$ops_rss{$form->{op}}->($form, $constants);
-		} else {
-			$ops_rss{'stories'}->($form, $constants);
-		}
+		# Here, panic mode is handled within the individual funcs.
+		# We want to return valid (though empty) RSS data even
+		# when search is down.
+		$form->{op} = 'stories' if !exists($ops_rss{$form->{op}});
+		$ops_rss{$form->{op}}->($form, $constants, $slashdb, $searchDB);
 	} else {
 		header("$constants->{sitename}: Search $form->{query}", $form->{section});
 		titlebar("99%", "Searching $form->{query}");
+		$form->{op} = 'stories' if !exists($ops{$form->{op}});
 
-		$form->{op} ||= 'stories';
-		slashDisplay('searchform', {
-			sections	=> _sections(),
-			topics		=> _topics(),
-			tref		=> $slashdb->getTopic($form->{topic}),
-			op		=> $form->{op},
-			authors		=> _authors(),
-		});
-
-		if ($ops{$form->{op}}) {
-			$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB);
+		# Here, panic mode is handled without needing to call the
+		# individual search subroutines;  we're going to tell the
+		# user the same thing in each case anyway.
+		if ($constants->{panic} >= 1) {
+			slashDisplay('nosearch');
+		} else {
+			slashDisplay('searchform', {
+				sections	=> _sections(),
+				topics		=> _topics(),
+				tref		=> $slashdb->getTopic($form->{topic}),
+				op		=> $form->{op},
+				authors		=> _authors(),
+			});
+			if ($ops{$form->{op}}) {
+				$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB);
+			}
 		}
+
 		footer();
 	}
 
@@ -242,7 +252,12 @@ sub commentSearchRSS {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $comments = $searchDB->findComments($form, $start, 15);
+	my $comments;
+	if ($constants->{panic} >= 1) {
+		$comments = [ ];
+	} else {
+		$comments = $searchDB->findComments($form, $start, 15);
+	}
 
 	my @items;
 	for my $entry (@$comments) {
@@ -269,7 +284,12 @@ sub userSearchRSS {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $users = $searchDB->findUsers($form, $start, 15);
+	my $users;
+	if ($constants->{panic} >= 1) {
+		$users = [ ];
+	} else {
+		$users = $searchDB->findUsers($form, $start, 15);
+	}
 
 	my @items;
 	for my $entry (@$users) {
@@ -296,7 +316,12 @@ sub storySearchRSS {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $stories = $searchDB->findStory($form, $start, 15);
+	my $stories;
+	if ($constants->{panic} >= 1) {
+		$stories = [ ];
+	} else {
+		$stories = $searchDB->findStory($form, $start, 15);
+	}
 
 	my @items;
 	for my $entry (@$stories) {

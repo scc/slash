@@ -14,6 +14,7 @@ use Slash::Display;
 use vars qw( %task $me );
 
 $task{$me}{timespec} = '0-59/10 * * * *';
+$task{$me}{timespec_panic_1} = ''; # not that important
 $task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;

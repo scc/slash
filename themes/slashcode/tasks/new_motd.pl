@@ -5,6 +5,7 @@ use strict;
 use vars qw( %task $me );
 
 $task{$me}{timespec} = '12 * * * *';
+$task{$me}{timespec_panic_1} = ''; # not important
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

@@ -14,6 +14,7 @@ use Slash::Utility;
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = '2 6 * * *';
+$task{$me}{timespec_panic_2} = ''; # if major panic, this can wait
 
 # Handles mail and administrivia necessary for RECENTLY expired users.
 $task{$me}{code} = sub {

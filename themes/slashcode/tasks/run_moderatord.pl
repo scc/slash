@@ -12,6 +12,8 @@ use constant MSG_CODE_M2 => 2;
 use vars qw( %task $me );
 
 $task{$me}{timespec} = '18 0-23/2 * * *';
+$task{$me}{timespec_panic_1} = '18 0-10/2 * * *';	# night only
+$task{$me}{timespec_panic_2} = '';			# don't run
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

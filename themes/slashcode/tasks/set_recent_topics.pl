@@ -5,6 +5,7 @@ use strict;
 use vars qw( %task $me );
 
 $task{$me}{timespec} = '1-59/15 * * * *';
+$task{$me}{timespec_panic_1} = ''; # not important
 $task{$me}{on_startup} = 1;
 $task{$me}{code} = sub {
 

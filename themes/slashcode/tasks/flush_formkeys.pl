@@ -7,6 +7,7 @@ my $me = 'flush_formkeys.pl';
 use vars qw( %task );
 
 $task{$me}{timespec} = '3 * * * *';
+$task{$me}{timespec_panic_1} = ''; # this can wait, hopefully not wait too long
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

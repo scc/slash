@@ -15,6 +15,7 @@ use Slash::Utility;
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 $task{$me}{timespec} = '30 0 * * *';
+$task{$me}{timespec_panic_1} = ''; # not that important
 
 # Handles rotation of fakeemail address of all users.
 $task{$me}{code} = sub {
