@@ -240,6 +240,13 @@ EOT
 			slashdLog("'$fullname' did not set code properly");
 			$ok = 0;
 		}
+		# This may be rethought later, but for those useful tasks we 
+		# MAY OR MAY NOT want to run on an automated AND/OR a manual
+		# type basis: this allows the user to decide.
+		if ($task{$file}{standalone}) {
+			slashdLog("'$fullname' available via runtask, only!");
+			$ok = 0;
+		}
 		if ($ok) {
 			$success{$file} = 1;
 		} else {

@@ -155,7 +155,7 @@ EOT
 		sort
 		grep { -e $_ and -f _ and -r _ }
 		glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
- 	{ local $"=' '; print STDERR "F: @files\n"; }
+ 	# { local $"=' '; print STDERR "F: @files\n"; }
 	for my $fullname (@files) {
 		if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
 			and (stat $fullname)[2] & 002) {
@@ -228,7 +228,7 @@ sub parse_slash_sites {
 
 sub main {
 	# Remember to doublecheck these match usage()!
-	usage('Options used incorrectly') unless getopts('hu:v', \%opts);
+	usage('Options used incorrectly') unless getopts('ho:u:v', \%opts);
 	usage() if $opts{'h'};
 	version() if $opts{'v'};
 	$opts{'u'} ||= 'slash';
@@ -245,6 +245,15 @@ sub main {
 	$dir = "$constants->{datadir}/tasks";
 	slashdLogInit();
 	$ENV{TZ} = 'GMT' if $ENV{TZ} ne 'GMT';
+
+	# Process task specific options, if any.
+	if ($opts{'o'}) {
+		my($hash);
+		for (split /,/, $opts{o}) {
+			my($key, $val) = split /=/; $hash->{$key}=$val;
+		}
+		$constants->{task_options} = $hash;
+	}
 
 	my $subref = get_task_subref();
 	slashdLog("$task_name begin") if verbosity() >= 2;
