@@ -56,28 +56,24 @@ sub sqlShowSlaveStatus {
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $cursor = $self->{_dbh}->prepare("SELECT
-		stories.sid, stories.title, time, dept, stories.uid,
-		alttext,
-		image, stories.commentcount, stories.section as section,
-		story_text.introtext, story_text.bodytext,
-		topics.tid as tid
-		    FROM stories, story_text, topics, discussions
-		   WHERE stories.sid = story_text.sid
-		     AND stories.discussion = discussions.id
-		     AND stories.tid=topics.tid
-		     AND ((displaystatus = 0 and \"$section\"=\"\")
-			      OR (stories.section=\"$section\" and displaystatus > -1))
-		     AND time < NOW()
-		     AND stories.writestatus != 'delete'
-		ORDER BY time DESC
-		   LIMIT 10");
+	my $select;
+	$select .= "stories.sid, stories.title, time, dept, stories.uid,";
+	$select .= "alttext, image, stories.commentcount, stories.section as section,";
+	$select .= "story_text.introtext, story_text.bodytext,topics.tid as tid";
+	my $from = "stories, story_text, topics";
+	my $where;
+	$where .= "stories.sid = story_text.sid";
+	$where .= " AND stories.tid=topics.tid";
+	$where .= " AND time < NOW()";
+	$where .= " AND stories.writestatus != 'delete'";
+	if($section) {
+		$where .= " AND stories.section=\"$section\" and displaystatus > -1";
+	} else {
+		$where .= " AND displaystatus = 0";
+	}
+	my $other = "ORDER BY time DESC LIMIT 10";
 
-	$cursor->execute;
-	my $returnable = [];
-	my $row;
-	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
-	$cursor->finish;
+	my $returnable = $self->sqlSelectAllHashrefArray($select, $from, $where, $other);
 
 	return $returnable;
 }
