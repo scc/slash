@@ -21,12 +21,22 @@ __template__
 			</TR>
 
 			[% FOREACH diatribe = article.article %]
-			<TR VALIGN="TOP">
-				<TD ALIGN="LEFT"> [% Slash.timeCalc(diatribe.date, "%I:%M %p") %] [% diatribe.description %]<BR></TD>
-			</TR>
-			<TR VALIGN="TOP">
-				<TD> [% diatribe.article %] </TD>
-			</TR>
+				<TR VALIGN="TOP">
+					<TD ALIGN="LEFT"> [% Slash.timeCalc(diatribe.date, "%I:%M %p") %] [% diatribe.description %]<BR></TD>
+				</TR>
+				<TR VALIGN="TOP">
+					<TD> [% diatribe.article %]
+						<A HREF="[% constants.rootdir %]/search.pl?topic=[% diatribe.topic.tid %]"
+							><IMG SRC="[% constants.imagedir %]/topics/[% diatribe.topic.image %]" WIDTH="[% diatribe.topic.width %]"
+								HEIGHT="[% diatribe.topic.height %]" BORDER="0" ALIGN="RIGHT"
+								HSPACE="20" VSPACE="10" ALT="[% diatribe.topic.alttext %]"></A>
+					</TD>
+				</TR>
+				[% IF diatribe.discussion %]
+					<TR><TD VALIGN="RIGHT">
+						<A HREF="[% constants.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</A>
+					</TD></TR>
+				[% END %]
 			[% END %]
 		</TABLE>
 		[% END %]

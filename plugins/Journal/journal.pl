@@ -292,6 +292,10 @@ sub displayArticle {
 	my $articles = $journal->getsByUid($uid, $start,
 		$constants->{journal_default_display} + 1, $form->{id}
 	);
+	unless(@$articles) {
+		print getData('noentries_found');
+		return;
+	}
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -318,7 +322,9 @@ sub displayArticle {
 			push @{$collection->{article}}, {
 				article		=> strip_mode($article->[1], $article->[4]),
 				date		=> $article->[0],
-				description	=> $article->[2]
+				description	=> $article->[2],
+				topic => $slashdb->getTopic($article->[5]),
+				discussion => $article->[6],
 			};
 		} else {
 			push @sorted_articles, $collection if ($date and (keys %$collection));
@@ -328,7 +334,9 @@ sub displayArticle {
 			push @{$collection->{article}}, {
 				article		=> strip_mode($article->[1], $article->[4]),
 				date		=> $article->[0],
-				description	=> $article->[2]
+				description	=> $article->[2],
+				topic => $slashdb->getTopic($article->[5]),
+				discussion => $article->[6],
 			};
 		}
 	}
@@ -381,17 +389,23 @@ sub saveArticle {
 		$journal->set($form->{id}, {
 			description	=> $description,
 			article		=> $form->{article},
+			tid		=> $form->{tid},
 			posttype	=> $form->{posttype},
 		});
 	} else {
 		my $id = $journal->create($description,
-			$form->{article}, $form->{posttype});
+			$form->{article}, $form->{posttype}, $form->{tid});
+		unless ($id) {
+			print getData('create_failed');
+			listArticle(@_);
+		}
 		if ($constants->{journal_comments}) {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
-			$slashdb->createDiscussion('', $description, $slashdb->getTime(), 
-				"$rootdir/journal.pl?sid=$id", $constants->{journal_default_topic}
+			my $did = $slashdb->createDiscussion('', $description, $slashdb->getTime(), 
+				"$rootdir/journal.pl?op=display&id=$id", $form->{tid}
 			);
+			$journal->set($id, { discussion => $did});
 		}
 
 		# create messages
@@ -453,6 +467,7 @@ sub editArticle {
 		$article->{article}	= $form->{article};
 		$article->{description}	= $form->{description};
 		$article->{id}		= $form->{id};
+		$article->{tid}		= $form->{tid};
 		$posttype		= $form->{posttype};
 	} else {
 		$article  = $journal->get($form->{id}) if $form->{id};
@@ -462,6 +477,7 @@ sub editArticle {
 	$posttype ||= getCurrentUser('posttype');
 
 	if ($article->{article}) {
+		my $slashdb = getCurrentDB();
 		my $strip_art = strip_mode($article->{article}, $posttype);
 		my $strip_desc = strip_nohtml($article->{description});
 		my $disp_article = {
@@ -469,6 +485,7 @@ sub editArticle {
 			article		=> $strip_art,
 			description	=> $strip_desc,
 			id		=> $article->{id},
+			topic	=> $slashdb->getTopic($article->{tid})
 		};
 
 		my $theme = getCurrentUser('journal-theme');

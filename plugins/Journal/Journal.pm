@@ -58,7 +58,7 @@ sub getsByUid {
 	$where .= " AND journals.id = $id" if $id;
 
 	my $answer = $self->sqlSelectAll(
-		'date, article, description, journals.id, posttype',
+		'date, article, description, journals.id, posttype, tid, discussion',
 		'journals, journals_text', $where, $order
 	);
 	return $answer;
@@ -75,18 +75,24 @@ sub list {
 }
 
 sub create {
-	my($self, $description, $article, $posttype) = @_;
+	my($self, $description, $article, $posttype, $tid) = @_;
+
 	return unless $description;
 	return unless $article;
+	return unless $tid;
+
 	my $uid = $ENV{SLASH_USER};
 	$self->sqlInsert("journals", {
 		uid		=> $uid,
 		description	=> $description,
+		tid	=> $tid,
 		-date		=> 'now()',
 		posttype	=> $posttype,
 	});
 
 	my($id) = $self->getLastInsertId('journals','id');
+	return unless $id;
+
 	$self->sqlInsert("journals_text", {
 		id		=> $id,
 		article 	=> $article,

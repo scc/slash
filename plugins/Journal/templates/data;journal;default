@@ -21,7 +21,13 @@ __template__
 	You have not created any journal entries.
 
 [% CASE 'nofriends' %]
-	You have not made any friends.
+	You have not made any friends (or all of your friends are loosers who have not created entries in their journals).
+
+[% CASE 'create_failed' %]
+	An unknown error occured when you tried to create a journal entry
+
+[% CASE 'noentries_found' %]
+	Sorry, there are no journal entries here
 
 [% END %]
 
