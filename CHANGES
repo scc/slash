@@ -1,3 +1,16 @@
+slash-2.2.1, 2001.12.14
+-----------------------
+
+*	Re-enable returnto field in users.pl logins
+
+*	Fix block editing seclev down to 500
+
+*	Make -B option work in template-tool, other fixes (chromatic)
+
+*	Fix up selection of default templates in install-slashsite
+
+*	Reverse order of breakHtml and entity encoding for CODE/EXTRANS
+
 slash-2.2.0, 2001.11.07
 -----------------------
 

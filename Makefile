@@ -8,7 +8,7 @@
 ##
 
 #   the used tools
-VERSION = 2.2.0
+VERSION = 2.2.1
 DISTNAME = slash
 DISTVNAME = $(DISTNAME)-$(VERSION)
 
