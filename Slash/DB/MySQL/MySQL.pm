@@ -1120,7 +1120,7 @@ sub setUserBoxes {
 }
 
 ##################################################################
-sub getAids {
+sub getAuthorAids {
 # getAids.... get aids... huhu,huhu...
 	my ($self) = @_;
 	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");

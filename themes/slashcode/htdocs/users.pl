@@ -438,7 +438,7 @@ sub tildeEd {
 EOT
 
 	# Customizable Authors Thingee
-	my $aids = $I{dbobject}->getAids();
+	my $aids = $I{dbobject}->getAuthorAids();
 	for(@$aids) {
 	# Ok, this is probably dumb
 		my ($aid) = @$_;
