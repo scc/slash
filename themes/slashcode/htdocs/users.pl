@@ -705,6 +705,10 @@ sub validateUser {
 		return;
 	}
 
+	# Since we are here, if the minimum values for the comment trigger and the
+	# day trigger are -1, then they should be reset to 1.
+	$constants->{min_expiry_comm} = $constants->{min_expiry_days} = 1;
+
 	if ($user->{is_anon} || !length($user->{reg_id})) {
 		if ($user->{is_anon}) {
 			print getMessage('anon_validation_attempt');
@@ -717,18 +721,22 @@ sub validateUser {
 	# Maybe this should be taken care of in a more centralized location?
 	} elsif ($user->{reg_id} eq $form->{id}) {
 		# We have a user and the registration IDs match. We are happy!
-		my($maxComm, $maxDays) = ($constants->{max_expiry_comm},
-			$constants->{max_expiry_days} );
-
-		my($userComm, $userDays) = ($user->{user_expiry_comm},
-			$user->{user_expiry_days});		
-
+		my($maxComm, $maxDays) =
+			($constants->{max_expiry_comm}, $constants->{max_expiry_days});
+		my($userComm, $userDays) =
+			($user->{user_expiry_comm}, $user->{user_expiry_days});
+		# Insure both $userComm and $userDays aren't -1 (expiry has
+		# just been turned on).
+		$userComm = $constants->{min_expiry_comm}
+			if $userComm < $constants->{min_expiry_comm};
+		$userDays = $constants->{min_expiry_days}
+			if $userDays < $constants->{min_expiry_days};
 		my $exp = $constants->{expiry_exponent};
 
 		# Increment only the trigger that was used.
-		my $new_comment_expiry = ($userComm > $maxComm) ?
+		my $new_comment_expiry = ($maxComm > 0 && $userComm > $maxComm) ?
 			$maxComm : $userComm * (($user->{expiry_comm} < 0) ? $exp : 1);
-		my $new_days_expiry = ($userDays > $maxDays) ?
+		my $new_days_expiry = ($maxDays > 0 && $userDays > $maxDays) ?
 			$maxDays : $userDays * (($user->{expiry_days} < 0) ? $exp : 1);
 	
 		# Reset re-registration triggers for user.
@@ -816,11 +824,9 @@ sub editUser {
 		$user = $slashdb->getUser($id); 
 	}
 
-	return if $user->{is_anon} && $curuser->{seclev} < 100;
+	return if isAnon($user_edit->{uid});
 
 	$user->{homepage} ||= "http://";
-
-	return if isAnon($user->{uid});
 
 	print getMessage('note', { note => $form->{note}}) if $form->{note};	
 
