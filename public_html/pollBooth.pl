@@ -152,7 +152,7 @@ sub vote {
 		push @pollitems, [$answer, $imagewidth, $votes, $percent];
 	}
 
-	my $postvote = $slashdb->getBlock("$constants->{currentSection}_postvote", 'block')
+	my $postvote = $slashdb->getBlock("$user->{currentSection}_postvote", 'block')
 		|| $slashdb->getBlock('postvote', 'block');
 
 	slashDisplay('pollBooth-vote', {

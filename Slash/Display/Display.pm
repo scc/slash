@@ -143,7 +143,7 @@ sub slashDisplay {
 		delete $opt->{Section};
 	} else {
 		$opt->{Section} ||= getCurrentUser('light') ? 'light' :
-			getCurrentStatic('currentSection');
+			getCurrentUser('currentSection');
 	}
 
 	if (!ref $name && $opt->{Section} && exists $templates->{"$opt->{Section}_$name"}) {

@@ -437,10 +437,11 @@ sub colorEdit {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 
 	my($color_select,$block,$colorblock_clean,$title);
 	my $colors = [];
-	return if getCurrentUser('seclev') < 500;
+	return if $user->{'seclev'} < 500;
 
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
@@ -459,12 +460,8 @@ sub colorEdit {
 
 	@{$colors} = split m/,/, $colorblock;
 
-	###########################################################################
-	# This will not give you the desired behavior
-	# Constants are constant
-	###########################################################################
-	$constants->{fg} = [@{$colors}->[0..3]];
-	$constants->{bg} = [@{$colors}->[4..7]];
+	$user->{fg} = [@{$colors}->[0..3]];
+	$user->{bg} = [@{$colors}->[4..7]];
 
        	$title = getTitle('colorEdit-title');
 
@@ -811,38 +808,22 @@ sub editStory {
 			$storyref->{time} = $form->{time};
 		}
 
-		my $tmp = $constants->{currentSection};
-	###########################################################################
-	# This will not give you the desired behavior
-	# Constants are constant
-	###########################################################################
-		$constants->{currentSection} = $storyref->{section};
+		my $tmp = $user->{currentSection};
+		$user->{currentSection} = $storyref->{section};
 
 		$storycontent = dispStory($storyref, $author, $topic, 'Full');
 
-	###########################################################################
-	# This will not give you the desired behavior
-	# Constants are constant
-	###########################################################################
-		$constants->{currentSection} = $tmp;
+		$user->{currentSection} = $tmp;
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
 			. otherLinks($slashdb->getAuthor($storyref->{aid}, 'nickname'), $storyref->{tid});
 
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
 
 	} elsif (defined $sid) { # Loading an existing SID
-		my $tmp = $constants->{currentSection};
-	###########################################################################
-	# This will not give you the desired behavior
-	# Constants are constant
-	###########################################################################
-		$constants->{currentSection} = $slashdb->getStory($sid, 'section');
+		my $tmp = $user->{currentSection};
+		$user->{currentSection} = $slashdb->getStory($sid, 'section');
 		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
-	###########################################################################
-	# This will not give you the desired behavior
-	# Constants are constant
-	###########################################################################
-		$constants->{currentSection} = $tmp;
+		$user->{currentSection} = $tmp;
 		$storybox = fancybox($constants->{fancyboxwidth},'Related Links', $storyref->{relatedtext},0,1);
 
 	} else { # New Story

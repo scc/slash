@@ -287,7 +287,7 @@ sub selectThreshold  {
 sub getSectionBlock {
 	my($name) = @_;
 	my $slashdb = getCurrentDB();
-	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
+	my $thissect = getCurrentUser('light') ? 'light' : getCurrentUser('currentSection');
 	my $block;
 
 	if ($thissect) {
@@ -414,7 +414,7 @@ sub linkStory {
 # on what section you're in.  Used during initialization
 sub getSectionColors {
 	my($color_block) = @_;
-	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 	my @colors;
 	my $colorblock = getCurrentForm('colorblock');
 
@@ -425,8 +425,8 @@ sub getSectionColors {
 		@colors = split m/,/, getSectionBlock('colors');
 	}
 
-	$constants->{fg} = [@colors[0..3]];
-	$constants->{bg} = [@colors[4..7]];
+	$user->{fg} = [@colors[0..3]];
+	$user->{bg} = [@colors[4..7]];
 }
 
 
@@ -480,7 +480,7 @@ sub pollbooth {
 	my $constants = getCurrentStatic();
 
 	$qid = $slashdb->getVar('currentqid', 'value') unless $qid;
-	my $sect = $constants->{currentSection};
+	my $sect = getCurrentUser('currentSection');
 	my $polls = $slashdb->getPoll($qid);
 
 	my $pollbooth = slashDisplay('pollbooth', {
@@ -518,10 +518,11 @@ Dependencies
 
 sub ssiHead {
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
 	slashDisplay('ssihead', {
 		dir	=> $dir,
-		section => "$constants->{currentSection}/"
+		section => "$user->{currentSection}/"
 	});
 }
 
@@ -543,10 +544,11 @@ Dependencies
 
 sub ssiFoot {
 	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
 	slashDisplay('ssifoot', {
 		dir	=> $dir,
-		section => "$constants->{currentSection}/"
+		section => "$user->{currentSection}/"
 	});
 }
 
@@ -733,7 +735,7 @@ sub header {
 	}
 
 	$constants->{userMode} = $user->{currentMode} eq 'flat' ? '_F' : '';
-	$constants->{currentSection} = $section || '';
+	$user->{currentSection} = $section || '';
 	getSectionColors();
 
 	$title =~ s/<(.*?)>//g;
@@ -1716,7 +1718,7 @@ sub getOlderStories {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories ||= $slashdb->getStories($section, $constants->{currentSection});
+	$stories ||= $slashdb->getStories($section, $user->{currentSection});
 	for (@$stories) {
 		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;

@@ -41,6 +41,7 @@ my $virtual_user = $ARGV[0];
 createEnvironment($ARGV[0]);
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
+my $user = getCurrentUser();
 
 my $totalChangedStories = 1;
 
@@ -449,11 +450,11 @@ sub freshenup {
 
 #######################################
 sub writePollBooth {
-	$constants->{currentSection} = "redhat";
+	$user->{currentSection} = "redhat";
 	my $poll = pollbooth("", "rh");
 	$poll = qq!\n<FONT FACE="$constants->{mainfontface}" SIZE="1">$poll</FONT>\n!;
 	save2file("$constants->{basedir}/pollbooth.html", $poll);
-	$constants->{currentSection} = "";
+	$user->{currentSection} = "";
 }
 
 
