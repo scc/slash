@@ -809,7 +809,12 @@ sub getStoriesWithFlag {
 	my $sqlorder;
 	$sqlorder = "ORDER BY time $order ";
 	$sqlorder .= "LIMIT $limit" if $limit;
-	
+
+	# if writestatus is delete, we want ALL the candidates,
+	# not just the ones that are displaying -- pudge
+	my $displaywhere = $writestatus eq 'delete' ? ''
+		: 'AND displaystatus > -1';
+
 	# Currently only used by two tasks and we do NOT want stories
 	# that are marked as "Never Display". If this changes, 
 	# another method will be required. If such is created, I would
@@ -822,7 +827,7 @@ sub getStoriesWithFlag {
 		"sid,title,section",
 		"stories", 
 		"time < now() AND 
-		writestatus='$writestatus' AND displaystatus > -1",
+		writestatus='$writestatus' $displaywhere",
 		$sqlorder
 	);
 
@@ -905,15 +910,13 @@ sub deleteStoryAll {
 
 ########################################################
 # For tasks/author_cache.pl
-# please don't unnecessarily stretch lines out to 250 columns -- pudge
-# This runs once a day, I am not worried -Brian
-# it makes it hard to read.  whether or not you are worried about
-# it doesn't matter.  that it was not readable matters.  -- pudge
+# GREATEST() is because of inconsistent schema were some values can
+# be NULL, which breaks MySQL -- pudge
 sub createAuthorCache {
 	my($self) = @_;
 	my $sql;
 	$sql .= "REPLACE INTO authors_cache ";
-	$sql .= "SELECT users.uid, nickname, fakeemail, homepage, 0, bio, author ";
+	$sql .= "SELECT users.uid, nickname, GREATEST(fakeemail, ''), GREATEST(homepage, ''), 0, GREATEST(bio, ''), author ";
 	$sql .= "FROM users, users_info ";
 	$sql .= "WHERE users.author =1 ";
 	$sql .= "AND users.uid=users_info.uid";
@@ -922,7 +925,7 @@ sub createAuthorCache {
 
 	my $sql2;
 	$sql2 .= "REPLACE INTO authors_cache ";
-	$sql2 .= "SELECT users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author ";
+	$sql2 .= "SELECT users.uid, nickname, GREATEST(fakeemail, ''), GREATEST(homepage, ''), count(stories.uid), GREATEST(bio, ''), author ";
 	$sql2 .= "FROM users, stories, users_info ";
 	$sql2 .= "WHERE stories.uid=users.uid ";
 	$sql2 .= "AND users.uid=users_info.uid GROUP BY stories.uid";
