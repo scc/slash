@@ -2144,11 +2144,9 @@ sub dispComment  {
 <B><FONT SIZE="${\( $I{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
 EOT
 
-	$C->{nickname} =~ s/ /+/g;
-
-	(my $anon_name = $I{anon_name}) =~ s/ /+/g;
-	my $userinfo = <<EOT unless $C->{nickname} eq $anon_name;
-(<A HREF="$I{rootdir}/users.pl?op=userinfo\&nick=$C->{nickname}">User Info</A>)
+	(my $nickname  = $C->{nickname}) =~ s/ /+/g;
+	my $userinfo = <<EOT unless $C->{nickname} eq $I{anon_name};
+(<A HREF="$I{rootdir}/users.pl?op=userinfo\&nick=$nickname">User Info</A>)
 EOT
 
 	my $userurl = qq!<A HREF="$C->{homepage}">$C->{homepage}</A><BR>!
