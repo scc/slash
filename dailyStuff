@@ -23,7 +23,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 #
-#  $constants->d: dailyStuff,v 1.3.2.7 2000/08/25 23:48:46 krow Exp $
+#  $Id$
 ###############################################################################
 use strict;
 use File::Basename;
@@ -33,7 +33,7 @@ use Slash::DB;
 use Slash::Utility;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my ($constants, $slashdb) = createEnvironment($virtual_user);
+my($constants, $slashdb) = createEnvironment($virtual_user);
 
 my($total) = $slashdb->sqlSelect("count(*)", "accesslog",
 	"to_days(now()) - to_days(ts)=1");

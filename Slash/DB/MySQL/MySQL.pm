@@ -257,7 +257,7 @@ sub setModeratorLog {
 
 ########################################################
 sub getModeratorCommentLog {
-	my ($self, $sid, $cid) = @_;
+	my($self, $sid, $cid) = @_;
 	my $comments = sqlSelectMany(  "comments.sid as sid,
 				 comments.cid as cid,
 				 comments.points as score,
@@ -273,9 +273,12 @@ sub getModeratorCommentLog {
 			     AND comments.sid=moderatorlog.sid
 			     AND comments.cid=moderatorlog.cid"
 	);
-	my @comments;
-	push @comments, $_ while ($comments->fetchrow_hashref);
-
+	my(@comments, $comment);
+	# $_ is not automatically set by while.  also, we could
+	# assign to $_, but only if we call local() on it first,
+	# so we don't overwrite $_ somewhere else -- pudge
+	# push @comments, $_ while ($comments->fetchrow_hashref);
+	push @comments, $comment while ($comment = $comments->fetchrow_hashref);
 	return \@comments;
 }
 
@@ -605,6 +608,8 @@ sub getUserInstance {
 sub getUserAuthenticate {
 	my($self, $user, $passwd, $kind) = @_;
 	my($uid, $cookpasswd, $newpass);
+
+	return unless $user && $passwd;
 
 	# if $kind is 1, then only try to auth password as plaintext
 	# if $kind is 2, then only try to auth password as MD5
@@ -1994,10 +1999,9 @@ sub getCommentReply {
 	return $reply;
 }
 
-
 ########################################################
 sub getCommentsForUser {
-	my ($self, $sid, $cid) = @_;
+	my($self, $sid, $cid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $sql = "SELECT cid," . getDateFormat('date', 'time') . ",
@@ -2022,8 +2026,9 @@ sub getCommentsForUser {
 
 	my $thisComment = $self->{dbh}->prepare_cached($sql) or apacheLog($sql);
 	$thisComment->execute or apacheLog($sql);
-	my @comments;
-	push @comments, $_ while($thisComment->fetchrow_hashref);
+	my(@comments, $comment);
+	# see note above from getModeratorCommentLog
+	push @comments, $comment while ($comment = $thisComment->fetchrow_hashref);
 	return \@comments;
 }
 
@@ -2541,6 +2546,7 @@ sub getTime {
 
 	return $now;
 }
+
 ##################################################################
 # Should this really be in here?
 sub getDay {

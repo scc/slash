@@ -42,7 +42,7 @@ use Slash::Utility;
 
 #*I = getSlashConf();
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my ($constants, $slashdb) = createEnvironment($virtual_user);
+my($constants, $slashdb) = createEnvironment($virtual_user);
 $I = $constants;
 
 my $totalChangedStories = 1;
@@ -234,7 +234,7 @@ sub newfooter {
 	sectionHeaders("");
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {
-		my($section) = $sections->{$_}->{'section'};
+		my($section) = $sections->{$_}{section};
 		mkdir "$I->{basedir}/$section", 0755;
 		sectionHeaders($section);
 	}
@@ -363,6 +363,8 @@ sub openBackend {
 	newxml();
 	newrdf();
 	newwml();
+
+	# ???
 	my $sections = $slashdb->getSections('section');
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {

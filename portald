@@ -34,7 +34,9 @@ Slashdot.  Exciting?  Nope.
 =cut
 
 use strict;
-#use vars qw(%savedBlocks);
+# this needs to be a global here so we can add to it from externally
+# called scripts (see portald-site)
+use vars qw(%savedBlocks);
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
@@ -46,7 +48,6 @@ use Slash::Utility;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
 my ($constants, $slashdb) = createEnvironment($virtual_user);
-my %savedBlocks;
 my $totalChangedStories = 1;
 
 sub makeTmp {
@@ -62,7 +63,8 @@ sub makeTmp {
 }
 
 sub deleteTmp {
-	unlink "$constants->{datadir}/logs/portald.pid" or warn "Can't unlink $constants->{datadir}/logs/portald.pid: $!";
+	unlink "$constants->{datadir}/logs/portald.pid"
+		or warn "Can't unlink $constants->{datadir}/logs/portald.pid: $!";
 }
 
 ################################################################################
@@ -84,7 +86,7 @@ sub geturl {
 ################################################################################
 
 sub getTop10Comments {
-	my $c=$slashdb->sqlSelectMany("stories.sid, title,
+	my $c = $slashdb->sqlSelectMany("stories.sid, title,
 		cid, subject,".
 		getDateFormat("date", "d", $constants->{U}).",
 		nickname,comments.points",

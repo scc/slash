@@ -25,6 +25,9 @@ require Exporter;
 	isAnon
 	getAnonId
 	getFormkey
+	bakeUserCookie
+	eatUserCookie
+	setCookie
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -69,18 +72,16 @@ sub apacheLog {
 ################################################################################
 # SQL Timezone things
 sub getDateOffset {
-	my ($col) = @_;
-
+	my($col) = @_;
 	my $offset = getCurrentUser('offset');
 	return $col unless $offset;
 	return " DATE_ADD($col, INTERVAL $offset SECOND) ";
 }
 
 sub getDateFormat {
-	my ($col, $as) = @_;
+	my($col, $as) = @_;
 	$as = 'time' unless $as;
 	my $user = getCurrentUser();
-
 
 	$user->{'format'} ||= '%W %M %d, @%h:%i%p ';
 	unless ($user->{tzcode}) {
@@ -238,11 +239,71 @@ sub createCurrentDB {
 	($static_db) = @_;
 }
 
-
 #################################################################
 sub isAnon {
 	my($uid) = @_;
 	return $uid == getCurrentStatic('anonymous_coward_uid');
+}
+
+#################################################################
+# create a user cookie from ingredients
+sub bakeUserCookie {
+	my($uid, $passwd) = @_;
+	my $cookie = $uid . '::' . $passwd;
+	$cookie =~ s/(.)/sprintf("%%%02x", ord($1))/ge;
+	return $cookie;
+}
+
+#################################################################
+# digest a user cookie, returning it back to its original ingredients
+sub eatUserCookie {
+	my($cookie) = @_;
+	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/ge;
+	my($uid, $passwd) = split(/::/, $cookie, 2);
+	return($uid, $passwd);
+}
+
+########################################################
+# In the future a secure flag should be set on 
+# the cookie for admin users. -- brian
+# well, it should be an option, of course ... -- pudge
+sub setCookie {
+	# for some reason, we need to pass in $r, because Apache->request
+	# was returning undef!  ack! -- pudge
+	my($name, $val, $session) = @_;
+	return unless $name;
+
+	# no need to getCurrent*, only works under Apache anyway
+	my $r = Apache->request;
+	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $constants = $dbcfg->{constants};
+
+	# We need to actually determine domain from preferences,
+	# not from the server.  ask me why. -- pudge
+	my $cookiedomain = $constants->{cookiedomain};
+	my $cookiepath = $constants->{cookiepath};
+	my $cookiesecure = 0;
+
+	# domain must start with a '.' and have one more '.'
+	# embedded in it, else we ignore it
+ 	my $domain = ($cookiedomain && $cookiedomain =~ /^\..+\./)
+ 		? $cookiedomain
+ 		: '';
+
+	my %cookie = (
+		-name	=> $name,
+		-path	=> $cookiepath,
+		-value	=> $val || '',
+		-secure	=> $cookiesecure,
+	);
+
+	$cookie{-expires} = '+1y' unless $session;
+ 	$cookie{-domain}  = $domain if $domain;
+
+	my $bakedcookie = CGI::Cookie->new(\%cookie);
+
+	# we need to support multiple cookies, like my tummy does
+	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
 }
 
 1;

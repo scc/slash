@@ -212,7 +212,7 @@ sub getEvalBlock {
 sub getSectionBlock {
 	my $dbslash = getCurrentDB();
 	my($name) = @_;
-	my $thissect = getCurrentUser('light')? 'light' : getCurrentStatic('currentSection');
+	my $thissect = getCurrentUser('light') ? 'light' : getCurrentStatic('currentSection');
 	my $block;
 	if ($thissect) {
 		$block = $dbslash->getBlock($thissect . "_$name", 'block');
@@ -1716,7 +1716,6 @@ sub pollItem {
 	print "\nError:$@\n" if $@;
 }
 
-
 ########################################################
 sub getOlderStories {
 	my($array_ref, $SECT) = @_;
@@ -1748,7 +1747,7 @@ EOT
 	if ($SECT->{issue}) {
 		my $yesterday;
 		unless ($I{F}{issue} > 1 || $I{F}{issue}) {
-			$yesterday = $dbslash->getDay() -1;
+			$yesterday = $dbslash->getDay() - 1;
 		} else {
 			$yesterday = int($I{F}{issue}) - 1;
 		}
@@ -1995,16 +1994,20 @@ EOT
 # Ok, in a CGI we need to set up enough of an
 # environment so that methods that are accustom
 # to Apache do not choke.
-sub createEnvironment{
-	my ($virtual_user) = @_;
+sub createEnvironment {
+	my($virtual_user) = @_;
 	my $slashdb = new Slash::DB($virtual_user);
 	my $constants = $slashdb->getSlashConf();
-	#We assume that the user for scripts is the anonymous user
+	# We assume that the user for scripts is the anonymous user
 	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
 	createCurrentDB($slashdb);
 	createCurrentStatic($constants);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 
-	return ($constants, $slashdb);
+	return($constants, $slashdb);
 }
+
+1;
+
+__END__

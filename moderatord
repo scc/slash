@@ -30,11 +30,11 @@ use Slash;
 use Slash::DB;
 
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-my ($constants, $slashdb) = createEnvironment($virtual_user);
+my($constants, $slashdb) = createEnvironment($virtual_user);
 $I = $constants;
-my $slashdb = new Slash::DB('slash');
+my $slashdb = Slash::DB->new('slash');
 
-sub modera$ordLog {
+sub moderatordLog {
 	local *LOG;
 	my $dir = "$I{datadir}/logs";
 	open LOG, ">>$dir/moderatord.log"
@@ -53,11 +53,10 @@ sub tokens2points {
 		moderatordLog("Giving $I{maxtokens}/$I{tokensperpoint} " .
 			($I{maxtokens}/$I{tokensperpoint}) . " to $uid");
 			$dbslash->setUser($uid, {
-				-lastgranted  => 'now()',
-				-tokens   => "tokens - $I{maxtokens}",
-				-points => "points +" . ($I{maxtokens} / $I{tokensperpoint})
-				}
-			);
+				-lastgranted	=> 'now()',
+				-tokens		=> "tokens - $I{maxtokens}",
+				-points		=> "points +" . ($I{maxtokens} / $I{tokensperpoint})
+			});
 	}
 
 	$c->finish;
@@ -117,7 +116,7 @@ sub comments2tokens {
 	my $eligibleusers = int($totalusers / 5) * 4;
 	moderatordLog("First $eligibleusers accounts available");
 
-	my $c=$dbslash->sqlSelectMany("users_info.uid,count(*) as c",
+	my $c = $dbslash->sqlSelectMany("users_info.uid,count(*) as c",
 			"users_info,users_prefs, accesslog",
 			"users_info.uid < $eligibleusers
 			 AND users_info.uid=accesslog.uid 
@@ -157,9 +156,9 @@ sub comments2tokens {
 	foreach $uid (@eligibles) {
 		next unless $scores[$uid];
 		# moderatordLog("$uid: ".$scores[$uid].", ");
-		$dbslash->sqlUpdate("users_info",{ 
+		$dbslash->setUser($uid, { 
 			-tokens	=> "tokens+" . $scores[$uid]
-		}, "uid=$uid");
+		});
 	}
 	$slashdb->sqlDo("UNLOCK TABLES");
 }

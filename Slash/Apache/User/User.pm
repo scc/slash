@@ -41,12 +41,12 @@ sub handler {
 
 	# Don't remove this. This solves a known bug in Apache -- brian
 	# and it creates a new one!  after this, $r is unreliable for some
-	# reason. -- pudge
+	# reason.  leave it out for now, seems not to be needed?  -- pudge
 #	$r->header_in('Content-Length' => '0');
 	$r->method('GET');
 
 	my $form = filter_params($r->args, $r->content);
-	my $cookies = CGI::Cookie->parse( $r->header_in('Cookie') );
+	my $cookies = CGI::Cookie->parse($r->header_in('Cookie'));
 
 	# So we are either going to pick the user up from 
 	# the form, a cookie, or they will be anonymous
@@ -66,19 +66,22 @@ sub handler {
 		}
 
 	} elsif ($op eq 'userclose' ) {
-		setCookie($r, $constants, 'user', '');
+		delete $cookies->{user};
+		setCookie('user', '');
 
 	} elsif ($op eq 'adminclose') {
-		setCookie($r, $constants, 'session', ' ');
+		delete $cookies->{session};
+		setCookie('session', '');
 
 	} elsif ($cookies->{user}) {
-		my($tmpuid, $password) = userCheckCookie($constants, $cookies->{user}->value);
+		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
 		print STDERR "COOKIE_AUTH: $tmpuid:$password\n";
-		$uid = $dbslash->getUserAuthenticate($tmpuid, $password);
-		if (!$uid) {
+		unless ($uid = $dbslash->getUserAuthenticate($tmpuid, $password)) {
 			$uid = $constants->{anonymous_coward_uid};
-			setCookie($r, $constants, 'user', '');
+			delete $cookies->{user};
+			setCookie('user', '');
 		}
+		print STDERR "COOKIE_AUTH: $tmpuid:$password\n";
 	} 
 
 	# This is just here for testing. This should actually occur way before this
@@ -99,26 +102,8 @@ sub handler {
 
 	print STDERR "UID: $uid\n";
 
-	setCookie($r, $constants, 'test1', 3);
-	setCookie($r, $constants, 'test2', 4);
-
 	return OK;
 }
-
-
-########################################################
-# Decode the Cookie: Cookies have all the special charachters encoded
-# in standard URL format.  This converts it back.  then it is split
-# on '::' to get the users info.
-sub userCheckCookie {
-	my($constants, $cookie) = @_;
-	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/ge;
-	my($uid, $passwd) = split(/::/, $cookie, 2);
-	return($constants->{anonymous_coward_uid}, '') unless $uid && $passwd;
-	return($uid, $passwd);
-}
-
-
 
 ########################################################
 sub userLogin {
@@ -129,54 +114,13 @@ sub userLogin {
 		$cfg->{dbslash}->getUserAuthenticate($name, $passwd, 1);
 
 	if (!isAnon($uid)) {
-		my $cookie = $uid . '::' . $cookpasswd;
-		$cookie =~ s/(.)/sprintf("%%%02x", ord($1))/ge;
-		setCookie($r, $cfg->{constants}, 'user', $cookie);
+		my $cookie = bakeUserCookie($uid, $cookpasswd);
+		setCookie('user', $cookie);
 		return($uid, $newpass);
 	} else {
 		return $cfg->{constants}{anonymous_coward_uid};
 	}
 }
-
-########################################################
-# In the future a secure flag should be set on 
-# the cookie for admin users. -- brian
-# well, it should be an option, of course ... -- pudge
-
-sub setCookie {
-	# for some reason, we need to pass in $r, because Apache->request
-	# was returning undef!  ack! -- pudge
-	my($r, $constants, $name, $val, $session) = @_;
-	return unless $name;
-
-	# We need to actually determine domain from preferences,
-	# not from the server.  ask me why. -- pudge
-	my $cookiedomain = $constants->{cookiedomain};
-	my $cookiepath = $constants->{cookiepath};
-	my $cookiesecure = 0;
-
-	# domain must start with a '.' and have one more '.'
-	# embedded in it, else we ignore it
- 	my $domain = ($cookiedomain && $cookiedomain =~ /^\..+\./)
- 		? $cookiedomain
- 		: '';
-
-	my %cookie = (
-		-name	=> $name,
-		-path	=> $cookiepath,
-		-value	=> $val || '',
-		-secure	=> $cookiesecure,
-	);
-
-	$cookie{-expires} = '+1y' unless $session;
- 	$cookie{-domain}  = $domain if $domain;
-
-	my $bakedcookie = CGI::Cookie->new(\%cookie);
-
-	# we need to support multiple cookies, like my tummy does
-	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
-}
-
 
 ########################################################
 # get all the user data, d00d
@@ -203,7 +147,7 @@ sub getUser {
 		}
 
 		my $coward = getCurrentAnonymousCoward();
-		setCookie($r, $constants, 'anon', $user->{anon_id}, 1);
+		setCookie('anon', $user->{anon_id}, 1);
 
 		@{$user}{ keys %$coward } = values %$coward;	
 		$user->{is_anon} = 1;
@@ -215,7 +159,7 @@ sub getUser {
 			$dbslash->setAdminInfo($form->{aaid}, $form->{apasswd});
 		if ($user->{aseclev}) {
 			$user->{aid} = $form->{aaid};
-			setCookie($r, $constants, 'session', $sid);
+			setCookie('session', $sid);
 		} else {
 			undef $user->{aid};
 		}

@@ -781,15 +781,8 @@ EOT
 	if ($I{F}{pass1} eq $I{F}{pass2} && length($I{F}{pass1}) > 5) {
 		$note .= "Password changed.";
 		$H->{passwd} = $I{F}{pass1};
-		my $cookie = $uid . '::' . $H->{passwd};
 		# check for DB error before setting cookie?  -- pudge
-
-		# hm ... cookies are now set in Slash::Apache::User ...
-		# is there a good way to set a cookie here? -- pudge
-		# $I{setcookie} = Slash::setCookie('user', $cookie);
-		# Yes, call the request rec and then just feed it
-		# into headers_out. Keep in mind though that this must
-		# occur before output has actualy occured. -Brian
+		setCookie('user', bakeUserCookie($uid, $H->{passwd}));
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
 		$note .= "Passwords don't match. Password not changed.";
