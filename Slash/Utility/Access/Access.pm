@@ -230,8 +230,7 @@ sub formkeyHandler {
 			$msg = formkeyError('maxreads', $formname, $limit);
 			$error_flag++;
                 }
-	}
-	elsif ($formkey_op eq 'max_post_check') {
+	} elsif ($formkey_op eq 'max_post_check') {
 		if ( my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
 			$msg = formkeyError('maxposts', $formname, $limit);
 			$error_flag++;

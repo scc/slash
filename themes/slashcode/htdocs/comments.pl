@@ -232,7 +232,7 @@ sub main {
 		# note: maxCid and length aren't really required - this is legacy from when formkeys was 
 		# comments specific, but it can't hurt to put some sort of length in there.. perhaps
 		# the length of the primary field in your form would be a good choice.
-		if ( $ops->{$op}{update_formkey}) {
+		if ($ops->{$op}{update_formkey}) {
 			if($retval) {
 				my $id = $form->{maxCid} ? $form->{maxCid} : '';
 				my $field_length= $form->{postercomment} ? 

@@ -419,7 +419,7 @@ sub sqlSelectAll {
 # other - limit, asc ...
 #
 # returns:
-# array ref of all records
+# hash ref of all records
 sub sqlSelectAllHashref {
 	my($self, $id , $select, $from, $where, $other) = @_;
 
