@@ -782,6 +782,7 @@ sub setSectionExtra {
 sub createAccessLog {
 	my($self, $op, $dat) = @_;
 	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 	my $r = Apache->request;
 	my $hostip = $r->connection->remote_ip; 
 
@@ -791,6 +792,7 @@ sub createAccessLog {
 	} else {
 		$uid = $constants->{anonymous_coward_uid};
 	}
+	my $section = $form->{section} ? $form->{section} : 'index';
 
 	my $ipid = getCurrentUser('ipid') || md5_hex($hostip);
 	$hostip =~ s/^(\d+\.\d+\.\d+)\.\d+$/$1.0/;
@@ -809,6 +811,7 @@ sub createAccessLog {
 		subnetid	=> $subnetid,
 		dat		=> $dat,
 		uid		=> $uid,
+		section		=> $section,
 		op		=> $op,
 		-ts		=> 'now()',
 		query_string	=> $ENV{QUERY_STRING} || '0',
@@ -2866,7 +2869,7 @@ sub countStorySubmitters {
 
 	my $ac_uid = getCurrentAnonymousCoward('uid');
 	my $submitters = $self->sqlSelectAll('count(*) as c, nickname',
-		'stories, users', "users.uid=stories.submitter AND users.uid != $ac_uid",
+		'stories, users, authors_cache', "users.uid=stories.submitter AND users.uid != $ac_uid AND stories.submitter != authors_cache.uid ",
 		'GROUP BY users.uid ORDER BY c DESC LIMIT 10'
 	);
 
@@ -5017,9 +5020,6 @@ sub createMenuItem {
 }
 
 ########################################################
-# It'd be faster for getMenus() to just "SELECT *" and parse
-# the results into a perl hash, than to "SELECT DISTINCT" and
-# then make separate calls to getMenuItems. XXX - Jamie
 sub getMenuItems {
 	my($self, $script) = @_;
 	my $sql = "SELECT * FROM menus WHERE page=" . $self->sqlQuote($script) . " ORDER by menuorder";
@@ -5055,22 +5055,6 @@ sub getMenus {
 	}
 
 	return $menus;
-}
-
-########################################################
-sub getMiscUserOpts {
-	my($self) = @_;
-
-	my $user_seclev = getCurrentUser('seclev') || 0;
-	my $hr = $self->sqlSelectAllHashref("name", "*", "misc_user_opts",
-		"seclev <= $user_seclev");
-	my $ar = [ ];
-	for my $row (
-		sort { $hr->{$a}{optorder} <=> $hr->{$b}{optorder} } keys %$hr
-	) {
-		push @$ar, $hr->{$row};
-	}
-	return $ar;
 }
 
 ########################################################
