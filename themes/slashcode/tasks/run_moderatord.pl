@@ -37,6 +37,10 @@ $task{$me}{code} = sub {
 sub reconcileM2 {
 	my($constants, $slashdb) = @_;
 
+	# XXX Until getMetamodIDs is fixed, this next line just crashes slashd.
+	# I'm NOPing this subroutine until it can be reviewed. - Jamie 2001/07/11
+	return ;
+
 	for my $m2id ($slashdb->getMetamodIDs()) {
 		my $m2_list = $slashdb->getMetaModerations($_);
 		my %m2_votes;

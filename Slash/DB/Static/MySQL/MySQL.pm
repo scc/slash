@@ -606,6 +606,13 @@ sub checkUserExpiry {
 #
 sub getMetamodIDs {
 	my($self) = @_;
+
+	# XXX This entire function was broken -- it had an extra "WHERE"
+	# string in the "WHERE" clause.  It won't work anyway because
+	# there's no "mmid" column in moderatorlog.  Until it's reviewed
+	# I'm turning this subroutine into a NOP.  - Jamie 2001/07/11
+	return [ ];
+
 	my $constants = getCurrentStatic();
 
 	# I hate having a literal '10' here, but that's the code that means
@@ -613,15 +620,20 @@ sub getMetamodIDs {
 	# another argument for a Slash::Constants module.
 	my $list = $self->sqlSelectAll(
 		'mmid', 'moderatorlog', 
-		"WHERE flag=10 AND
-		to_days(curdate())-to_days(ts) >= $constants->{archive_delay}"
+		"flag=10 AND TO_DAYS(CURDATE())-TO_DAYS(ts) >= $constants->{archive_delay}"
 	);
+
+	# XXX This is zillions of times less efficient than it need be.
+	# What you WANT to do is select your id and flag together from
+	# the table, then clear the flags all at once and return the
+	# remainder -- two selects, tops, instead of hundreds. - Jamie
 
 	# Flatten returned list into a list of MMIDs that don't have any 
 	# records marked with a flag of 0.
+	my @mmids = map { $_->[0] } @$list;
 	my @returnable = grep {
 		if ( $self->sqlSelect(	'mmid', 'moderatorlog',
-		 		 	"flag=0 and mmid=$_") )
+		 		 	"flag=0 AND mmid=$_") )
 		{
 			$self->clearM2Flag($_);
 			0;
@@ -668,6 +680,12 @@ sub updateMMFlag {
 #
 sub clearM2Flag {
 	my($self, $id);
+
+	# XXX This crashes, SQL error, you have an extra "where".
+	# It doesn't do what you want anyway, see my comments in
+	# getMetamodIDs.  Until it's reviewed, I'm turning this
+	# subroutine into a NOP. - Jamie 2001/07/11
+	return ;
 
 	# Note that we only update flags that are in the:
 	#	10 - M2 Pending
