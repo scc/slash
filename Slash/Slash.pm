@@ -58,7 +58,7 @@ BEGIN {
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
-		getFormkeyId checkSubmission errorMessage createSelect getFormkey
+		getFormkeyId checkSubmission errorMessage createSelect
 	);
 	$CRLF = "\015\012";
 }
@@ -68,36 +68,18 @@ BEGIN {
 
 
 ###############################################################################
-#
 # Let's get this party Started
-#
-
-# Load in config for proper SERVER_NAME.  If you do not want to use SERVER_NAME,
-# adjust here and in slashdotrc.pl
 sub getSlashConf {
-#	my $serv = exists $Slash::home{lc $ENV{SERVER_NAME}}
-#		? lc $ENV{SERVER_NAME}
-#		: 'DEFAULT';
-#
-#	require($Slash::home{$serv} ? catfile($Slash::home{$serv}, 'slashdotrc.pl')
-#		: 'slashdotrc.pl');
-#
-#	$serv = exists $Slash::conf{lc $ENV{SERVER_NAME}}
-#		? lc $ENV{SERVER_NAME}
-#		: 'DEFAULT';
-
 	my $constants = getCurrentStatic();
-	#*I = $Slash::conf{$constants->{basedomain}};
-	#Yes this is ugly and should go away
-	#Just as soon as the last of %I is gone, this is gone
-	for (keys %$constants) {
-		$I{$_} = $constants->{$_};
-	}
+	# Yes this is ugly and should go away
+	# Just as soon as the last of %I is gone, this is gone
+	@I{ keys %$constants } = values %$constants;
 
 	return \%I;
 }
 
 
+###############################################################################
 # Blank variables, get $I{r} (apache) $I{query} (CGI) $I{U} (User) and $I{F} (Form)
 # Handles logging in and printing HTTP headers
 sub getSlash {
@@ -106,14 +88,6 @@ sub getSlash {
 		undef $I{$_} if $I{$_};
 	}
 
-	# what do we do about when this is called from the command line,
-	# so there is no Apache?  cf. prog2file in slashd, when index.pl
-	# is called without Apache -- pudge
-	# Seperate method? -Brian
-	# Or maybe we don't need it... -Brian
-
-	#Ok, I hate single character variables, but 'r' is a bit
-	#of a tradition in apache stuff -Brian
 	my $r = Apache->request;
 	$I{r} = $r;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
@@ -124,13 +98,8 @@ sub getSlash {
 
 	# %I legacy
 	$I{F} = $user_cfg->{'form'};
-	my $user = getUser($ENV{REMOTE_USER});
+	my $user = $I{U} = $user_cfg->{'user'};
 	$I{currentMode} = $user->{mode};
-	# When we can move this method into Slash::Apache::User
-	# this can go away
-	$user_cfg->{'user'} = $user;
-	# %I legacy
-	$I{U} = $user;
 
 	return 1;
 }
@@ -269,142 +238,8 @@ sub getWidgetBlock {
 }
 
 
-########################################################
-# Replace $_[0] with $_[1] || "0" in the User Hash
-# users by getUser to allow form parameters to override user parameters
-sub overRide {
-	my($user, $p, $d) = @_;
-	if (defined $I{query}->param($p)) {
-		$user->{$p} = $I{query}->param($p);
-	} else {
-		$user->{$p} ||= $d || '0';
-	}
-}
-
-
-
-########################################################
-# When passed an ID it creates the user hash. If it is
-# determined that this is an anonymous coward, it
-# creates that form of the user account.
-sub getUser {
-	my($uid) = @_;
-	#Ok, lets build user
-	my $user;
-	my $form = getCurrentForm();
-
-	if (($uid != $I{anonymous_coward_uid})
-		&& ($user = $I{dbobject}->getUserInstance($uid, $ENV{SCRIPT_NAME}))) { 
-	# should the below just be done in the library call for getUser?
-
-		# Get the Timezone Stuff
-		my $timezones = $I{dbobject}->getCodes('tzcodes');
-
-		$user->{offset} = $timezones->{ $user->{tzcode} };
-
-		my $dateformats = $I{dbobject}->getCodes('dateformats');
-
-		$user->{'format'} = $dateformats->{ $user->{dfid} };
-		$user->{'is_anon'} = 0;
-
-
-	} else {
-		getAnonCookie($user);
-		my $coward = getCurrentAnonymousCoward();
-		$I{SETCOOKIE} = setCookie('anon', $user->{anon_id}, 1);
-		#Now, we copy $coward into user
-		#Probably should improve on this
-		for (keys %$coward) {
-			$user->{$_} = $coward->{$_};
-		}
-		$user->{'is_anon'} = 1;
-
-	}
-
-	# Add On Admin Junk
-	if ($form->{op} eq 'adminlogin') {
-		my $sid;
-		($user->{aseclev}, $sid) =
-			$I{dbobject}->setAdminInfo($form->{aaid}, $form->{apasswd});			
-		if ($user->{aseclev}) {
-			$user->{aid} = $I{F}{aaid};
-			$I{SETCOOKIE} = setCookie('session', $sid);
-		} else {
-			$user->{aid} = undef;
-		}
-
-	} elsif (length($I{query}->cookie('session')) > 3) {
-		(@{$user}{qw[aid aseclev asection url]}) =
-			$I{dbobject}->getAdminInfo(
-				$I{query}->cookie('session'), $I{admin_timeout}
-			);
-
-	} else { 
-		$user->{aid} = '';
-		$user->{aseclev} = 0;
-	}
-
-	# Set a few defaults
-	#passing in $user for the moment
-	overRide($user, 'mode', 'thread');
-	overRide($user, 'savechanges');
-	overRide($user, 'commentsort');
-	overRide($user, 'threshold');
-	overRide($user, 'posttype');
-	overRide($user, 'noboxes');
-	overRide($user, 'light');
-
-
-	$user->{seclev} = $user->{aseclev} if $user->{aseclev} > $user->{seclev};
-
-	$user->{breaking}=0;
-
-	if ($user->{commentlimit} > $I{breaking} && $user->{mode} ne 'archive') {
-		$user->{commentlimit} = int($I{breaking} / 2);
-		$user->{breaking} = 1;
-	}
-
-	# All sorts of checks on user data
-	$user->{tzcode}		= uc($user->{tzcode});
-	$user->{clbig}		||= 0;
-	$user->{clsmall}	||= 0;
-	$user->{exaid}		= testExStr($user->{exaid}) if $user->{exaid};
-	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
-	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
-	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
-
-	return $user;
-}
-
 ###############################################################	
 #  What is it?  Where does it go?  The Random Leftover Shit
-
-########################################################
-# is this in User.pm now, or here, or both?
-sub setCookie {
-	my($name, $val, $session) = @_;
-	return unless $name;
-
-	# domain must start with a . and have one more .
-	# embedded in it, else we ignore it
-	my $domain = $I{cookiedomain} &&
-		$I{cookiedomain} =~ /^\..+\./ ? $I{cookiedomain} : '';
-
-	my %cookie = (
-		-name	=> $name,
-		-path	=> $I{cookiepath},
-		-value	=> $val || '',
-	);
-
-	$cookie{-expires} = '+1y' unless $session;
-	$cookie{-domain}  = $domain if $domain;
-
-	return {
-		-date		=> CGI::expires(0, 'http'),
-		-set_cookie	=> $I{query}->cookie(%cookie)
-	};
-}
-
 
 ########################################################
 # Returns YY/MM/DD/HHMMSS all ready to be inserted
@@ -435,7 +270,7 @@ sub getsiddir {
 sub anonLog {
 	my($op, $data) = ('/', '');
 
-	$_ = $ENV{REQUEST_URI};
+	local $_ = $ENV{REQUEST_URI};
 	s/(.*)\?/$1/;
 	if (/404/) {
 		$op = '404';
@@ -767,14 +602,6 @@ sub fixurl {
 		my $decoded_url = decode_entities($url);
 		return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 	}
-}
-
-########################################################
-sub fixint {
-	my ($int) = @_;
-	$int =~ s/^\+//;
-	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
-	return $int;
 }
 
 ########################################################
@@ -1631,7 +1458,7 @@ sub dispComment  {
 <B><FONT SIZE="${\( $I{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
 EOT
 
-	(my $nickname  = $C->{nickname}) =~ s/ /+/g;
+	my $nickname = fixparam($C->{nickname});
 	my $userinfo = <<EOT unless $C->{nickname} eq $I{anon_name};
 (<A HREF="$I{rootdir}/users.pl?op=userinfo&nick=$nickname">User #$C->{uid} Info</A>)
 EOT
@@ -1921,21 +1748,55 @@ sub pollItem {
 }
 
 ########################################################
-sub testExStr {
-	local($_) = @_;
-	$_ .= "'" unless m/'$/;
-	return $_;
+sub selectStories {
+	my($SECT, $limit, $tid) = @_;
+
+	my $s = "SELECT sid, section, title, date_format(" .
+		getDateOffset('time', $I{U}) . ',"%W %M %d %h %i %p"),
+			commentcount, to_days(' . getDateOffset('time', $I{U}) . "),
+			hitparade
+		   FROM newstories
+		  WHERE 1=1 "; # Mysql's Optimize gets this.
+
+	$s .= " AND displaystatus=0 " unless $I{F}{section};
+	$s .= " AND time < now() "; # unless $I{U}{aseclev};
+	$s .= "	AND (displaystatus>=0 AND '$SECT->{section}'=section)" if $I{F}{section};
+	$I{F}{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
+	$s .= "   AND $I{F}{issue} >= to_days(" . getDateOffset("time", $I{U}) . ") "
+		if $I{F}{issue};
+	$s .= "	AND tid='$tid'" if $tid;
+
+	# User Config Vars
+	$s .= "	AND tid not in ($I{U}{extid})"		if $I{U}{extid};
+	$s .= "	AND aid not in ($I{U}{exaid})"		if $I{U}{exaid};
+	$s .= "	AND section not in ($I{U}{exsect})"	if $I{U}{exsect};
+
+	# Order
+	$s .= "	ORDER BY time DESC ";
+
+	if ($limit) {
+		$s .= "	LIMIT $limit";
+	} elsif ($I{currentSection} eq 'index') {
+		$s .= "	LIMIT $I{U}{maxstories}";
+	} else {
+		$s .= "	LIMIT $SECT->{artcount}";
+	}
+#	print "\n\n\n\n\n<-- stories select $s -->\n\n\n\n\n";
+
+	my $cursor = $I{dbh}->prepare($s) or apacheLog($s);
+	$cursor->execute or apacheLog($s);
+	return $cursor;
 }
 
 ########################################################
 sub getOlderStories {
-	my($array_ref, $SECT)=@_;
+	my($array_ref, $SECT) = @_;
 	my($today, $stuff);
 
-	$array_ref ||= $I{dbobject}->getStories(\$I{U},\$I{F},$SECT,$I{currentSection});
+	$array_ref ||= $I{dbobject}->getStories($I{U}, $I{F}, $SECT, $I{currentSection});
 
-	for(@{$array_ref}) {
-		my ($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
+	for (@{$array_ref}) {
+		my($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
 		if ($today ne $w) {
 			$today  = $w;
@@ -2043,17 +1904,7 @@ sub getAnonCookie {
 }
 
 ########################################################
-sub getAnonId {
-	return '-1-' . getFormkey();
-}
-
-########################################################
-sub getFormkey {
-	my @rand_array = ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 );
-	return join("", map { $rand_array[rand @rand_array] }  0 .. 9);
-}
-
-########################################################
+# we need to reorg this ... maybe get rid of the need for it -- pudge
 sub getFormkeyId {
 	my ($uid) = @_;
 	my $user = getCurrentUser();

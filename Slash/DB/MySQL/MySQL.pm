@@ -1736,17 +1736,6 @@ sub getStoryByTime {
 	);
 }
 
-#########################################################
-#sub setUsers {
-#	my($self, $uid, $hashref) = @_;
-#	if (exists $hashref->{passwd}) {
-#		# get rid of newpasswd if defined in DB
-#		$hashref->{newpasswd} = '';
-#		$hashref->{passwd} = md5_hex($hashref->{passwd});
-#	}
-#	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
-#}
-
 ########################################################
 sub countStories {
 	my($self) = @_;
@@ -1986,7 +1975,7 @@ sub getComments {
 
 ########################################################
 sub getStories {
-	my ($self,$U,$F,$SECT,$currentSection,$limit,$tid) = @_;
+	my($self, $U, $F, $SECT, $currentSection, $limit, $tid) = @_;
 
 	my $limit ||= $U->{maxstories};
 
@@ -2756,16 +2745,16 @@ sub _genericGetCombined {
 	my $cache = _getCache($self, $tables);
 	my $id_db = $self->{dbh}->quote($id);
 	if ($members == 1) {
-		my $table = $self->{$cache}->{$val[0]};
+		my $table = $self->{$cache}{$val[0]};
 		($answer) = $self->sqlSelect($val[0], $table, $table_prime . '=' .$id_db);
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
 		my %tables;
 		my $where;
-		for(@val) {
-			$tables{$self->{$cache}->{$_}} = 1;
+		for (@val) {
+			$tables{$self->{$cache}{$_}} = 1;
 		}
-		for(keys %tables) {
+		for (keys %tables) {
 			$where .= "$_.$table_prime=$id_db AND ";
 		}
 		$where =~ s/ AND $//;
@@ -2773,7 +2762,7 @@ sub _genericGetCombined {
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} else {
 		my $where;
-		for(keys %{$self->{$cache}}) {
+		for (keys %{$self->{$cache}}) {
 			$where .= "$_.$table_prime=$id_db AND ";
 		}
 		$where =~ s/ AND $//;
@@ -2810,11 +2799,11 @@ sub setUser {
 sub _getCache {
 	my($self, $tables) = @_;
 	my $cache = '_' . join ('_', sort(@$tables), 'cache');
-	unless(keys %{$self->{$cache}}) {
+	unless (keys %{$self->{$cache}}) {
 		for my $table (@$tables) {
 			my $keys = $self->getKeys($table);
 			for (@$keys) {
-				$self->{$cache}->{$_} = $table;
+				$self->{$cache}{$_} = $table;
 			}
 		}
 	} 
@@ -2833,8 +2822,9 @@ sub _genericSetCombined {
 	}
 	for my $table (keys %update_tables) {
 		my %minihash;
-		for(@{$update_tables{$table}}){
-			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
+		for my $key (@{$update_tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
 		}
 		$self->sqlUpdate($table, \%minihash, $table_prime . '=' . $id, 1);
 	}

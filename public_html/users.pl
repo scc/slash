@@ -782,8 +782,11 @@ EOT
 		$note .= "Password changed.";
 		$H->{passwd} = $I{F}{pass1};
 		my $cookie = $uid . '::' . $H->{passwd};
-		# check for DB error first?  -- pudge
-		$I{SETCOOKIE} = Slash::setCookie('user', $cookie);
+		# check for DB error before setting cookie?  -- pudge
+
+		# hm ... cookies are now set in Slash::Apache::User ...
+		# is there a good way to set a cookie here? -- pudge
+		# $I{SETCOOKIE} = Slash::setCookie('user', $cookie);
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
 		$note .= "Passwords don't match. Password not changed.";

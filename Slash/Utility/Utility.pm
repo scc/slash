@@ -16,9 +16,22 @@ require Exporter;
 	getCurrentStatic
 	getCurrentDB
 	getCurrentAnonymousCoward
+	getAnonId
+	getFormkey
 );
 $Slash::Utility::VERSION = '0.01';
 
+
+########################################################
+sub getAnonId {
+	return '-1-' . getFormkey();
+}
+
+########################################################
+sub getFormkey {
+	my @rand_array = ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 );
+	return join("", map { $rand_array[rand @rand_array] }  0 .. 9);
+}
 
 ########################################################
 # writes error message to apache's error_log if we're running under mod_perl
@@ -120,8 +133,8 @@ sub getCurrentStatic {
 }
 
 #################################################################
-sub getCurrentAnonymousCoward{
-	my $r = Apache->request;
+sub getCurrentAnonymousCoward {
+	my $r = $_[0] || Apache->request;
 	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $slashdb = $const_cfg->{'anonymous_coward'};
 
@@ -129,7 +142,7 @@ sub getCurrentAnonymousCoward{
 }
 
 #################################################################
-sub getCurrentDB{
+sub getCurrentDB {
 	my $r = Apache->request;
 	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $slashdb = $const_cfg->{'dbslash'};
