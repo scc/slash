@@ -64,6 +64,7 @@ my %descriptions = (
 	'commentcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'commentcodes') },
 	
+	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
 	
@@ -716,9 +717,9 @@ sub updateCommentTotals {
 ########################################################
 sub getCommentCid {
 	my($self, $sid, $cid) = @_;
-	my ($cid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
+	my ($scid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
 
-	retunr $cid;
+	retunr $scid;
 }
 ########################################################
 sub removeComment{
@@ -816,7 +817,7 @@ sub getSectionTitle {
 	my ($self) = @_;
 	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
 	$sth->execute;
-	my $sections = $sth->fetchrow_arrayref;
+	my $sections = $sth->fetchall_arrayref;
 	$sth->finish;
 
 	return $sections;
