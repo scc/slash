@@ -40,6 +40,8 @@ Apache::DBILogger
 
 Image::Size
 
+DBIx::Password
+
 
 =head1 DESCRIPTION
 

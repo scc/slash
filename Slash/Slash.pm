@@ -63,7 +63,8 @@ BEGIN {
 	$CRLF = "\015\012";
 }
 
-getSlashConf();
+# Not needed I believe....
+#getSlashConf();
 
 
 ###############################################################################
@@ -88,25 +89,10 @@ sub getSlashConf {
 	my $constants = getCurrentStatic();
 	#*I = $Slash::conf{$constants->{basedomain}};
 	#Yes this is ugly and should go away
+	#Just as soon as the last of %I is gone, this is gone
 	for(keys %$constants) {
 		$I{$_} = $constants->{$_};
 	}
-
-	$I{reasons} = [
-		'Normal',	# "Normal"
-		'Offtopic',	# Bad Responses
-		'Flamebait',
-		'Troll',
-		'Redundant',
-		'Insightful',	# Good Responses
-		'Interesting',
-		'Informative',
-		'Funny',
-		'Overrated',	# The last 2 are "Special"
-		'Underrated'
-	];
-
-	$I{badreasons} = 4; # number of "Bad" reasons in @$I{reasons}, skip 0 (which is neutral)
 
 	return \%I;
 }
@@ -2254,7 +2240,7 @@ EOT
 
 
 ########################################################
-sub CLOSE { $I{dbh}->disconnect if $I{dbh} }
+#sub CLOSE { $I{dbh}->disconnect if $I{dbh} }
 ########################################################
 sub handler { 1 }
 ########################################################

@@ -469,8 +469,8 @@ sub getDescriptions {
 # silly.
 # This is getting way to long... probably should
 # become a generic getDescription method
-	my $self = shift; # Shit off to keep things clean
-	my $codetype = shift; # Shit off to keep things clean
+	my $self = shift; # Shift off to keep things clean
+	my $codetype = shift; # Shift off to keep things clean
 	my $codeBank_hash_ref = {};
 	my $sth = &{$descriptions{$codetype}}($self);
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -701,8 +701,8 @@ sub getVars {
 
 ########################################################
 sub getVar {
-	my($self, $var) = @_;
-	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$var'");
+	my($self, $name) = @_;
+	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$name'");
 }
 
 ########################################################
@@ -869,7 +869,73 @@ sub deleteSection {
 sub getSectionBlockByBid {
 	my($self, $bid, @val) = @_;
 	my $values = join ',', @val;
-	my $section = sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
+	my $section = $self->sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
+}
+
+##################################################################
+sub saveBlock {
+	my ($self, $bid) = @_;
+	my ($rows) = 
+			$self->sqlSelect('count(*)', 'blocks', 'bid=' . $self->{dbh}->quote($bid));
+
+	my $form = getCurrentForm();
+	if ($form->{save_new} && $rows > 0) {
+		print qq[<P><B>This block, $bid, already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>]; 
+		return $rows;
+	}	
+
+	if ($rows == 0) {
+		$self->sqlInsert('blocks', { bid => $bid, seclev => 500 });
+		$self->sqlInsert('sectionblocks', { bid => $bid });
+	}
+
+	my ($portal,$retrieve) = (0,0);
+
+	# this is to make sure that a  static block doesn't get
+	# saved with retrieve set to true
+	$form->{retrieve} = 0 if $form->{type} ne 'portald';
+
+	$form->{block} = $self->autoUrl($form->{section}, $form->{block});
+
+	if ($rows == 0 || $form->{blocksavedef}) {
+		$self->sqlUpdate('blocks', {
+			seclev	=> $form->{bseclev}, 
+			block	=> $form->{block},
+			blockbak => $form->{block},
+			description => $form->{description},
+			type 	=> $form->{type},
+
+			}, 'bid=' . $self->{dbh}->quote($bid)
+		);
+	} else {
+		$self->sqlUpdate('blocks', {
+			seclev	=> $form->{bseclev}, 
+			block	=> $form->{block},
+			description => $form->{description},
+			type 	=> $form->{type},
+
+			}, 'bid=' . $self->{dbh}->quote($bid)
+		);
+	}
+
+	$self->sqlUpdate('sectionblocks', {
+			ordernum=> $form->{ordernum}, 
+			title 	=> $form->{title},
+			url	=> $form->{url},	
+			rdf	=> $form->{rdf},	
+			section => $form->{section},	
+			retrieve=> $form->{retrieve}, 
+			portal => $form->{portal}, 
+		}, 'bid=' . $self->{dbh}->quote($bid)
+	);
+
+	return $rows;
+}
+########################################################
+sub getBlockByBid {
+	my($self, $bid, @val) = @_;
+	my $values = join ',', @val;
+	my $section = $self->sqlSelectHashref($values, 'blocks', "bid='$bid'");
 }
 ########################################################
 sub getSectionBlock {
@@ -2022,7 +2088,66 @@ sub getSlashConf {
 		$conf{adminmail}	=> "$conf{sitename} Stats Report",
 	};
 
+	$conf{reasons} = [
+		'Normal',	# "Normal"
+		'Offtopic',	# Bad Responses
+		'Flamebait',
+		'Troll',
+		'Redundant',
+		'Insightful',	# Good Responses
+		'Interesting',
+		'Informative',
+		'Funny',
+		'Overrated',	# The last 2 are "Special"
+		'Underrated'
+	];
+
+	$conf{badreasons} = 4; # number of "Bad" reasons in @$I{reasons}, skip 0 (which is neutral)
 	return \%conf;
+}
+
+##################################################################
+sub autoUrl {
+	my $self = shift;
+	my $section = shift;
+	local $_ = join ' ', @_;
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $form->{fixquotes};
+	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
+	
+	my $initials = substr $user->{aid}, 0, 1;
+	my $more = substr $user->{aid}, 1;
+	$more =~ s/[a-z]//g;
+	$initials = uc($initials . $more);
+	my($now) = $self->sqlSelect('date_format(now(),"m/d h:i p")');
+
+	# Assorted Automatic Autoreplacements for Convenience
+	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$user->{url}">$user->{aid}</A> owns shares in $1</B>|ig;
+	s|<update>|<B>Update: <date></B> by <author>|ig;
+	s|<date>|$now|g;
+	s|<author>|<B><A HREF="$user->{url}">$initials</A></B>:|ig;
+	s/\[%(.*?)%\]/$self->getUrlFromTitle($1)/exg;
+
+	# Assorted ways to add files:
+	s|<import>|importText()|ex;
+	s/<image(.*?)>/importImage($section)/ex;
+	s/<attach(.*?)>/importFile($section)/ex;
+	return $_;
+}
+
+##################################################################
+# autoUrl & Helper Functions
+# Image Importing, Size checking, File Importing etc
+sub getUrlFromTitle {
+	my($self, $title) = @_;
+	my($sid) = $self->sqlSelect('sid', 'stories',
+		qq[title like "\%$title%"],
+		'order by time desc LIMIT 1'
+	);
+	my $rootdir = getCurrentStatic('rootdir');
+	return "$rootdir/article.pl?sid=$sid";
 }
 
 1;

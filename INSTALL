@@ -107,6 +107,9 @@ SOFTWARE REQUIREMENTS
     Storable-0.6.9
                 http://search.cpan.org/search?dist=Storable
 
+    DBIx::Password
+                http://search.cpan.org/search?dist=DBIx::Password
+
     ipc_shareable-0.30
                 http://search.cpan.org/search?dist=ipc_shareable
 
@@ -338,6 +341,10 @@ INSTALLATION AND SETUP
                 cpan> look File::Spec     # opens shell to proper dir
                 % make install UNINST=1   # install from shell
 
+				Note: Make sure you run DBIx::Password's make test and
+				that it worked. You will need that username for the
+				name to use with the Apache directive SlashVirtualUser.
+
     12. Copy the slash httpd.conf from the untarred slash code tarball's
         directory httpd (i.e., /home/slash/httpd/httpd.conf) to apache's
         conf directory. Take time to look over the file to make sure that it
@@ -367,9 +374,17 @@ INSTALLATION AND SETUP
 
                 echo "Listen MY.IP.ADD.RESS:80" > /etc/apache.listen
 
-    14. Start apache.
+    14. Run bender_slashdotrc_fix.pl with the name of the virtual user
+				you are using for this slashsite.
 
-    15. Copy the slashd startup script from the Slash source directory (i.e.
+    15. Go into Slash/ and type:
+				perl Makefile.PL
+				make
+				make install
+
+    16. Start apache.
+
+    17. Copy the slashd startup script from the Slash source directory (i.e.
         /home/slash/utils) slashd into the init.d directory (/etc/init.d on
         Debian). Chown it to the slash user (i.e., `chown slash:slash
         /etc/init.d/slashd') and then chmod it u+s and g+s (i.e., `chmod u+s
@@ -378,10 +393,10 @@ INSTALLATION AND SETUP
         a startup script, and is not the same script as the slashd in the
         same directory as Slash.pm.
 
-    16. Start slashd with the startup script (i.e., `/etc/init.d/slashd
+    18. Start slashd with the startup script (i.e., `/etc/init.d/slashd
         start').
 
-    17. Log into the server administration.
+    19. Log into the server administration.
 
                 http://whateveryoursiteiscalled.com/admin.pl
 
@@ -589,5 +604,5 @@ directory, and make sure you have the latest code.  Note that the
 commentkey table is no longer used; feel free to delete if you want to.
 
 AUTHOR
-    Patrick Galbraith and Chris Nandor. Last Modified May 18, 2000.
+    Patrick Galbraith, Brian Aker and Chris Nandor. Last Modified Aug 8, 2000.
 

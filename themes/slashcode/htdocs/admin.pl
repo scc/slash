@@ -117,7 +117,7 @@ sub main {
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
 	} elsif($I{F}{blockrevert}) {
-		blockRevert($I{F}{thisbid});
+		blockRevert($I{F}{thisbid}) if $I{U}{aseclev} < 500;
 		blockEdit($I{U}{aseclev}, $I{F}{thisbid});
 
 	} elsif($I{F}{blockdelete}) {
@@ -222,8 +222,7 @@ sub varEdit {
 	my $vars = $I{dbobject}->getDescriptions('vars');
 	createSelect('name', $vars, $name);
 
-	my($value, $desc) = sqlSelect('value,description',
-		'vars', "name='$name'");
+	my($value, $desc) = $I{dbobject}->getVar($name);
 	print "Next<BR>\n",
 		formLabel('Variable Name'),
 		$I{query}->textfield(-name => 'thisname', -default => $name),
@@ -375,6 +374,7 @@ EOT
 # based on value of new column in blocks "type". Added description field to use 
 # as information on the block to help the site editor get a feel for what the block 
 # is for, etc... 
+# Why bother passing seclev? Just pull it from the user object.
 sub blockEdit {
 	my($seclev, $bid) = @_;
 
@@ -434,7 +434,9 @@ EOT
 	# or this is a block save and the block is a portald block
 	# or this is a block edit via sections.pl
 	if (! $I{F}{blocknew} && $bid ) {
-		($isabid,$title,$url,$rdf,$ordernum,$retrieve,$section,$portal) = sqlSelect('bid,title,url,rdf,ordernum,retrieve,section,portal', 'sectionblocks', "bid='$bid'");
+		my @values = qw (bid title url rdf ordernum retrieve section portal);
+		($isabid,$title,$url,$rdf,$ordernum,$retrieve,$section,$portal) = 
+				$I{dbobject}->getSectionBlockByBid($bid, @values);
 		if ($isabid) {
 			$title = qq[<TR>\n\t\t<TD><B>Title</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="$title"></TD>\n\t</TR>];
 			$url = qq[<TR>\n\t\t<TD><B>URL</B></TD><TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="$url"></TD>\n\t</TR>];
@@ -463,8 +465,12 @@ EOT
 		$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_new" VALUE="1">];
 	}
 
-	my($block, $bseclev, $type, $description) =
-		sqlSelect('block,seclev,type,description', 'blocks', "bid='$bid'") if $bid;
+	my($block, $bseclev, $type, $description);
+	if ($bid) {
+		my @values = qw (block seclev type description);
+		($block, $bseclev, $type, $description) =
+				$I{dbobject}->getBlockByBid($bid, @values);
+	}
 
 	my $description_ta = stripByMode($description, 'literal', 1);
 	$block = stripByMode($block, 'literal', 1);
@@ -555,21 +561,16 @@ print <<EOT;
 <!-- end block editing form -->
 EOT
 
-	my $c = sqlSelectMany('section', 'sectionblocks', "bid='$bid'");
-	while (my($section) = $c->fetchrow) {
-		print <<EOT;
+	my ($section) = $I{dbobject}->getSectionBlockByBid($bid, 'section');
+	print <<EOT;
 <B><A HREF="$I{rootdir}/sections.pl?section=$section&op=editsection">$section</A></B>
-	(<A HREF="$I{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
+(<A HREF="$I{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
 EOT
-	}
-
-	$c->finish;
 }
 
 ##################################################################
 sub blockRevert {
-	my $bid = shift;
-	return if $I{U}{aseclev} < 500;
+	my ($bid) = @_;
 
 	$I{dbh}->do("update blocks set block = blockbak where bid = '$bid'");
 	
@@ -577,65 +578,20 @@ sub blockRevert {
 
 ##################################################################
 sub blockSave {
-	my $bid = shift;
+	my ($bid) = @_;
 	return if $I{U}{aseclev} < 500;
-	if ($bid) {
-		my ($rows) = sqlSelect('count(*)', 'blocks', 'bid=' . $I{dbh}->quote($bid)); 
-	
-		if ($I{F}{save_new} && $rows > 0) {
-			print qq[<P><B>This block, $bid, already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>]; 
-			return;
-		}	
+	return unless $bid;
+	my $saved = $I{dbobject}->saveBlock($bid);
 
-		if ($rows == 0) {
-			sqlInsert('blocks', { bid => $bid, seclev => 500 });
-			sqlInsert('sectionblocks', { bid => $bid });
-			print "Inserted $bid<BR>";
-		}
+	if ($I{F}{save_new} && $saved > 0) {
+		print qq[<P><B>This block, $bid, already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>]; 
+		return;
+	}	
 
-		my ($portal,$retrieve) = (0,0);
-
-		# this is to make sure that a  static block doesn't get
-		# saved with retrieve set to true
-		$I{F}{retrieve} = 0 if $I{F}{type} ne 'portald';
-
-		print "Saved $bid<BR>";
-			
-		$I{F}{block} = autoUrl($I{F}{section}, $I{F}{block});
-
-		if ($rows == 0 || $I{F}{blocksavedef}) {
-			sqlUpdate('blocks', {
-				seclev	=> $I{F}{bseclev}, 
-				block	=> $I{F}{block},
-				blockbak => $I{F}{block},
-				description => $I{F}{description},
-				type 	=> $I{F}{type},
-
-				}, 'bid=' . $I{dbh}->quote($bid)
-			);
-		} else {
-			sqlUpdate('blocks', {
-				seclev	=> $I{F}{bseclev}, 
-				block	=> $I{F}{block},
-				description => $I{F}{description},
-				type 	=> $I{F}{type},
-
-				}, 'bid=' . $I{dbh}->quote($bid)
-			);
-		}
-
-		sqlUpdate('sectionblocks', {
-				ordernum=> $I{F}{ordernum}, 
-				title 	=> $I{F}{title},
-				url	=> $I{F}{url},	
-				rdf	=> $I{F}{rdf},	
-				section => $I{F}{section},	
-				retrieve=> $I{F}{retrieve}, 
-				portal => $I{F}{portal}, 
-			}, 'bid=' . $I{dbh}->quote($bid)
-		);
-
+	if ($saved == 0) {
+		print "Inserted $bid<BR>";
 	}
+	print "Saved $bid<BR>";
 }
 
 ##################################################################
@@ -936,18 +892,6 @@ sub listtopics {
 }
 
 ##################################################################
-# autoUrl & Helper Functions
-# Image Importing, Size checking, File Importing etc
-sub getUrlFromTitle {
-	my($title) = @_;
-	my($section, $sid) = sqlSelect('section,sid', 'stories',
-		qq[title like "\%$title%"],
-		'order by time desc LIMIT 1'
-	);
-	return "$I{rootdir}/article.pl?sid=$sid";
-}
-
-##################################################################
 sub importImage {
 	# Check for a file upload
 	my $section = $_[0];
@@ -1018,33 +962,6 @@ sub linkNode {
 		. $I{query}->escape($n) . '">[?]</A></SUP>';
 }
 
-##################################################################
-sub autoUrl {
-	my($section) = shift;
-	local $_ = join ' ', @_;
-
-	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $I{F}{fixquotes};
-	s/\[(.*?)\]/linkNode($1)/ge if $I{F}{autonode};
-	
-	my $initials = substr $I{U}{aid}, 0, 1;
-	my $more = substr $I{U}{aid}, 1;
-	$more =~ s/[a-z]//g;
-	$initials = uc($initials . $more);
-	my($now) = sqlSelect('date_format(now(),"m/d h:i p")');
-
-	# Assorted Automatic Autoreplacements for Convenience
-	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$I{U}{url}">$I{U}{aid}</A> owns shares in $1</B>|ig;
-	s|<update>|<B>Update: <date></B> by <author>|ig;
-	s|<date>|$now|g;
-	s|<author>|<B><A HREF="$I{U}{url}">$initials</A></B>:|ig;
-	s/\[%(.*?)%\]/getUrlFromTitle($1)/exg;
-
-	# Assorted ways to add files:
-	s|<import>|importText()|ex;
-	s/<image(.*?)>/importImage($section)/ex;
-	s/<attach(.*?)>/importFile($section)/ex;
-	return $_;
-}
 
 ##################################################################
 # Generated the 'Related Links' for Stories
@@ -1145,8 +1062,8 @@ EOT
 		$S->{commentstatus} = $I{F}{commentstatus} if exists $I{F}{commentstatus};
 		$S->{dept} =~ s/ /-/gi;
 
-		$S->{introtext} = autoUrl($I{F}{section}, $S->{introtext});
-		$S->{bodytext} = autoUrl($I{F}{section}, $S->{bodytext});
+		$S->{introtext} = $I{dbobject}->autoUrl($I{F}{section}, $S->{introtext});
+		$S->{bodytext} = $I{dbobject}->autoUrl($I{F}{section}, $S->{bodytext});
 
 		$T = $I{dbobject}->getTopic($S->{tid});
 		$I{F}{aid} ||= $I{U}{aid};

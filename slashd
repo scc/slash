@@ -41,7 +41,7 @@ use Slash::Utility;
 
 #*I = getSlashConf();
 my $slashdb = Slash::DB->new('slash');
-$I = $slashdb->getCurrentStatic(); 
+$I = $slashdb->getSlashConf();
 my $totalChangedStories = 1;
 
 sub END { Carp::cluck("why am I here?") }
