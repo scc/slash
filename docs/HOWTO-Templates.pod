@@ -1,0 +1,38 @@
+=head1 NAME
+
+How to write templates
+
+=head1 What is a Template?
+
+First, check the man page on Slash::Display after you
+have installed slash. You may also want to look
+that the man page on Template.
+
+=head1 How do I get my template into a running site?
+
+Use the template-tool. You can find out information
+on it by calling it with a -? flag.
+
+=head1 How do I get my template installed with a plugin/theme?
+
+For a plugin it has to be added to the PLUGIN file. For a
+theme it just needs to be in the templates directory for
+the theme. See the HOWTO's for plugins and templates
+for more information.
+
+=head1 What language encoding are the templates using?
+
+# pudge?
+
+=head1 How do I generate a blank template?
+
+template-tool -g filename
+
+=head1 I have a cool template for a theme/plugin, how do I get it added to the distribution?
+
+We don't have any rules concerning this at the moment, so it will be
+on a case by case basis. At some point in the future we will come up
+with a much better answer. If the theme is owned by an individual
+you should contact them first.
+
+=cut
