@@ -81,7 +81,42 @@ sub getByID {
 
 sub DESTROY {
 	my ($self) = @_;
-	$self->{_dbh}->disconnect unless ($ENV{GATEWAY_INTERFACE});
+	if($self->{_dbh}) {
+		$self->{_dbh}->disconnect unless ($ENV{GATEWAY_INTERFACE});
+	}
+}
+
+sub readTemplateFile {
+	my ($self, $filename) = @_;
+	return unless(-f $filename);
+	open(FILE, $filename) or die "$! unable to open file $filename to read from";
+	my @file = <FILE>;
+	my %val;
+	my $latch;
+	for(@file) {
+		if (/^__(.*)__$/) {
+			$latch = $1;
+			next;
+		}
+		$val{$latch} .= $_  if $latch;
+	}
+	$val{'tpid'} = undef if $val{'tpid'};
+	for(qw| name page section lang seclev description title |) {
+		chomp($val{$_}) if $val{$_};
+	}
+	
+	return \%val;
+}
+
+sub writeTemplateFile {
+	my ($self, $filename, $template) = @_;
+	open(FILE, '>' . $filename) or die "$! unable to open file $filename to write to";
+	for(keys %$template) {
+		next if ($_ eq 'tpid');
+		print FILE "__${_}__\n";
+		print FILE "$template->{$_}\n";
+	}
+	close(FILE);
 }
 
 sub installPlugin {
@@ -156,13 +191,18 @@ sub _install {
 	for(@{$plugin->{'image'}}) {
 		copy "$plugin->{'dir'}/$_", "$prefix_site/htdocs/images";
 	}
+	if($plugin->{'template'}) {
+		for(@{$plugin->{'template'}}) {
+			my $template = $self->readTemplateFile();
+		}
+	}
 	if ($plugin->{note}) {
 		my $file = "$plugin->{dir}/$plugin->{note}";  
 		open(FILE, $file);
 		while(<FILE>) {
 			print;
-			}
 		}
+	}
 }
 
 sub getPluginList {

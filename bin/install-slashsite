@@ -278,6 +278,21 @@ $install->create({ name => 'db_driver', value => "$driver"});
 my $time = localtime();
 $install->create({ name => 'installed', value => $time});
 
+my $slashdb = Slash::DB->new($ARGV[0]);
+
+opendir(TEMPLATEDIR, "$theme/templates/");
+while(my $dir = readdir(TEMPLATEDIR)) {
+	chomp($dir);
+	next if $dir =~ /^\.$/;
+	next if $dir =~ /^\.\.$/;
+	next if $dir =~ /^CVS$/;
+print "Trying $theme/templates/$dir\n";
+	my $template = $install->readTemplateFile("$theme/templates/" . $dir);
+	next unless $template;
+	$slashdb->createTemplate($template);
+}
+closedir(TEMPLATEDIR);
+
 for (keys %$plugins) {
 	if ($answers[$plugins->{$_}{'order'}]) {
 		$install->create({ name => 'plugin', value => $plugins->{$_}{'order'}, description => $plugins->{$_}{'description'} });
@@ -286,7 +301,6 @@ for (keys %$plugins) {
 
 $install->installPlugin(\@answers);
 
-my $slashdb = Slash::DB->new($ARGV[0]);
 my $uid = $slashdb->createUser($username, $email, $username);
 $slashdb->setUser($uid, { 
 	passwd => $password, 

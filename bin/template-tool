@@ -16,6 +16,7 @@ use strict;
 use Slash;
 use Slash::Utility;
 use Slash::DB;
+use Slash::Install;
 use Getopt::Std;
 use Cwd;
 
@@ -26,20 +27,26 @@ my $COPYRIGHT =
 
 
 my %opts;
-usage('no options supplied to program') unless getopts('cdeilrsvD:O:P:S:p:f:u:?', \%opts);
+usage('no options supplied to program') unless getopts('cdilrsvD:O:P:S:p:f:u:?', \%opts);
 usage('help requested') if $opts{'?'};
+
 # can't have more than one template for a file in a dump
 usage('you have supplied more templates than there are files to save them to') 
+
 if ($opts{'f'} && ($opts{'d'} || $opts{'e'}) && @ARGV > 1);
 # you must have -f if you want to save a particular file as a template
 usage('no file to save') if ($opts{'s'} && ! $opts{'f'} && -f $ARGV[0]);
+
 # if deleting, then there should be no other operation or file flags
 usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
+
 # can't have multiple IDs on a save
 usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
 my $slash = Slash::DB->new($opts{'u'});
+my $install = Slash::Install->new($opts{'u'});
+
 createCurrentDB($slash);
 
 # datastruct of ALL templates, keyed by uid
@@ -93,53 +100,17 @@ if ($opts{'S'} and $opts{'P'}) {
 
 # start the processing
 if ($opts{'s'}) {
-	my ($section, $page, $name, $file, $tpid);
-
-	if ($opts{'D'} and $opts{'f'}) {
-		$file = $opts{'D'} . "/" . $opts{'f'};
-	} elsif ($opts{'f'}) {
-		$file = $opts{'f'}; 
-	} elsif ($opts{'D'}) {
-		$file = $opts{'D'};
-	} else {
-		$file = cwd;
-	}
-
-	# wierd hack to allow multiple files - two args would be
-	if (@ARGV > 2 && $opts{'f'}) { 
-		for (@ARGV) {
-			my $tmpfile = $opts{'D'} ? $opts{'D'} . "/" . $_ : $_;
-			# has to be a damned file and not dir
-			save_template("", "", "", $tmpfile) if -f $tmpfile;
-		}
-	# nab down the section and page that we'll be passing
-	} else {
-		if($opts{'i'}) {
-			$tpid = $ARGV[0];
-			$name = $ARGV[1];
+	for(@ARGV) {
+		my $template = $install->readTemplateFile($_);
+		next unless $template;
+		print "$template->{name}\n";
+		my $tpid = $slash->getTemplateByName($template->{name}, 'tpid', 1, $template->{page}, $template->{section});
+		print "TPID:$tpid\n";
+		if(defined($tpid)) {
+			$slash->setTemplate($tpid, $template);
 		} else {
-			$name = $ARGV[0];
+			$slash->createTemplate($template);
 		}
-
-		$name ||= '';
-		$tpid ||= '';
-
-		if ($sectionpage_flag) {
-			$section = $opts{'S'};
-			$page = $opts{'P'};
-		} 
-		elsif ($section_flag) {
-			$section = $opts{'S'};
-			$page = '';
-		}
-		elsif ($page_flag) {
-			$section = ''; 
-			$page = $opts{'P'};
-		} else {
-			$section = ''; 
-			$page = '';
-		}
-		save_template($tpid, $section, $page, $name, $file );
 	}
 } else {
 	my $templatelist = {};
@@ -208,167 +179,139 @@ if ($opts{'s'}) {
 			dump_templates($templatelist,$filename);
 		}
 	}
-	elsif ($opts{'e'}) {
-		sql_templates($templatelist, $filename);
-	}
 	elsif ($opts{'r'}) {
 		delete_templates($templatelist);
 	}
 }
 
 ###############################################
-sub sql_templates {
-	my ($templates,$filename) = @_;
-
-	$filename ||= 'templates.sql';
-	my $sql = '';
-
-	for my $template (keys %$templates) {
-		my ($values, $names);
-		for (keys %{$templates->{$template}}) {
-			$values .= $slash->{_dbh}->quote($templates->{$template}{$_}) . ",";
-			$names .= "$_,";
-		}
-		chop($values);
-		chop($names);
-		$sql .= "INSERT INTO templates ($names) VALUES ($values)\n";
-	}
-
-	open(SQL,">$filename") or die "$! unable to open file $filename\n";
-	print SQL "$sql\n";
-	close(SQL);
-} 
-
-###############################################
-sub save_template {
-	my ($tpid, $section, $page, $name, $file) = @_;
-	my @files;
-	my $dirflag = 0;
-	$dirflag = 1 if -d $file;
-	
-	if ($name eq '' && ! $tpid  && $dirflag) {
-		opendir(DIR, $file);
-		while(my $tmpfile = readdir(DIR)) {
-			next if $tmpfile =~ /\./;
-			print "processing $tmpfile\n";
-			push(@files, $file . '/' . $tmpfile);
-		}
-	} 
-	# this should be only one file
-	elsif (-f $file) {
-		push @files, $file;
-
-	} 
-
-	for my $tmpfile (@files) {
-		my ($tsection,$tpage,$tname,$data);
-		my ($psection,$ppage,$pname);
-		my $filename_flag = 0;
-		my $tmp = {};
-		my $exists = 0;
-
-		# you can't save a template without a section and page or without a name
-		# the file has the section, page, and name in it's filename and we don't 
-		# have a template id, so get any unset attributes from the file name
-		if($tpid) {
-			$tname = $name if $name ne '';	
-			$tpage = $page if $page ne '';
-			$tsection = $section if $section ne '';
-		}
-		elsif ($tmpfile =~ /(\w+)\;(\w+)\;(.*)$/i) {
-			$filename_flag = 1;
-			($pname,$ppage,$psection) = ($1,$2,$3);
-			$tname = $name eq '' ? $1 : $name ;
-			$tpage = $page eq '' ? $2 : $page ;
-			$tsection = $section eq '' ? $3 : $section ;
-		}
-		elsif ($name ne '') {
-			$tname = $name;
-			$tsection = $section ne '' ? $section : 'default';	
-			$tpage = $page ne '' ? $page : 'misc';
-		} else {
-			usage('There was an error saving the template.');
-		}
-
-		print "opening $tmpfile\n";
-		open(FILE, "<$tmpfile");
-		{ local $/; $data = <FILE> }
-		close(FILE);
-
-		if($tpid) {
-			$tmp = $slash->getTemplate($tpid);
-			if ($tmp && $tmp->{tpid} == $tpid) {
-				$exists = 1 ;
-				$tname = $name eq '' ? $tmp->{name} : $name ;
-				$tpage = $page eq '' ? $tmp->{page} : $page ;
-				$tsection = $section eq '' ? $tmp->{section} : $section ;
-			}
-			
-		} else {
-			if ($filename_flag && $dirflag) {
-				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
-				if (	$tmp &&
-					$tmp->{page} eq $ppage && 
-					$tmp->{section} eq $psection && 
-					$tmp->{name} eq $pname ) 
-				{
-					$exists = 1; 
-				}
-			} else {
-				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
-				if (	$tmp &&
-					$tmp->{page} eq $tpage && 
-					$tmp->{section} eq $tsection && 
-					$tmp->{name} eq $tname ) 
-				{
-					$exists = 1; 
-				}
-			}
-
-		}
-
-		if($exists) {
-			print "updating $tname, tpid $tmp->{tpid}\n";
-			$slash->setTemplate($tmp->{tpid}, { 	
-						page 	=> $tpage,
-						section => $tsection,
-						template => $data 
-						});
-		} else {
-			print "creating $tname\n";
-			my $seclev = 100;
-			$slash->createTemplate({ tpid		=> '',
-						name 		=> $tname,
-						page 		=> $tpage,
-						section		=> $tsection,
-						template	=> $data,
-						seclev		=> $seclev
-						});
-		}
-	}
-}
+#sub save_template {
+#	my ($tpid, $section, $page, $name, $file) = @_;
+#	my @files;
+#	my $dirflag = 0;
+#	$dirflag = 1 if -d $file;
+#	
+#	if ($name eq '' && ! $tpid  && $dirflag) {
+#		opendir(DIR, $file);
+#		while(my $tmpfile = readdir(DIR)) {
+#			next if $tmpfile =~ /\./;
+#			print "processing $tmpfile\n";
+#			push(@files, $file . '/' . $tmpfile);
+#		}
+#	} 
+#	# this should be only one file
+#	elsif (-f $file) {
+#		push @files, $file;
+#
+#	} 
+#
+#	for my $tmpfile (@files) {
+#		my ($tsection,$tpage,$tname,$data);
+#		my ($psection,$ppage,$pname);
+#		my $filename_flag = 0;
+#		my $tmp = {};
+#		my $exists = 0;
+#
+#		# you can't save a template without a section and page or without a name
+#		# the file has the section, page, and name in it's filename and we don't 
+#		# have a template id, so get any unset attributes from the file name
+#		if($tpid) {
+#			$tname = $name if $name ne '';	
+#			$tpage = $page if $page ne '';
+#			$tsection = $section if $section ne '';
+#		}
+#		elsif ($tmpfile =~ /(\w+)\;(\w+)\;(.*)$/i) {
+#			$filename_flag = 1;
+#			($pname,$ppage,$psection) = ($1,$2,$3);
+#			$tname = $name eq '' ? $1 : $name ;
+#			$tpage = $page eq '' ? $2 : $page ;
+#			$tsection = $section eq '' ? $3 : $section ;
+#		}
+#		elsif ($name ne '') {
+#			$tname = $name;
+#			$tsection = $section ne '' ? $section : 'default';	
+#			$tpage = $page ne '' ? $page : 'misc';
+#		} else {
+#			usage('There was an error saving the template.');
+#		}
+#
+#		print "opening $tmpfile\n";
+#		open(FILE, "<$tmpfile");
+#		{ local $/; $data = <FILE> }
+#		close(FILE);
+#
+#		if($tpid) {
+#			$tmp = $slash->getTemplate($tpid);
+#			if ($tmp && $tmp->{tpid} == $tpid) {
+#				$exists = 1 ;
+#				$tname = $name eq '' ? $tmp->{name} : $name ;
+#				$tpage = $page eq '' ? $tmp->{page} : $page ;
+#				$tsection = $section eq '' ? $tmp->{section} : $section ;
+#			}
+#			
+#		} else {
+#			if ($filename_flag && $dirflag) {
+#				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
+#				if (	$tmp &&
+#					$tmp->{page} eq $ppage && 
+#					$tmp->{section} eq $psection && 
+#					$tmp->{name} eq $pname ) 
+#				{
+#					$exists = 1; 
+#				}
+#			} else {
+#				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
+#				if (	$tmp &&
+#					$tmp->{page} eq $tpage && 
+#					$tmp->{section} eq $tsection && 
+#					$tmp->{name} eq $tname ) 
+#				{
+#					$exists = 1; 
+#				}
+#			}
+#
+#		}
+#
+#		if($exists) {
+#			print "updating $tname, tpid $tmp->{tpid}\n";
+#			$slash->setTemplate($tmp->{tpid}, { 	
+#						page 	=> $tpage,
+#						section => $tsection,
+#						template => $data 
+#						});
+#		} else {
+#			print "creating $tname\n";
+#			my $seclev = 100;
+#			$slash->createTemplate({ tpid		=> '',
+#						name 		=> $tname,
+#						page 		=> $tpage,
+#						section		=> $tsection,
+#						template	=> $data,
+#						seclev		=> $seclev
+#						});
+#		}
+#	}
+#}
 
 ###############################################
 sub dump_templates {
-	my ($templatelist, $file) = @_;
+	my ($templatelist, $directory) = @_;
 	my $filename;
 
 	for my $template (keys %$templatelist) {
-		if (! $file || -d $file) {
+		if (! $directory || -d $directory) {
 			$filename = $templatelist->{$template}{'name'} . ';' .  
 				$templatelist->{$template}{'page'} . ';' .  
 				$templatelist->{$template}{'section'};
 
-			$filename = $file . "/" . $filename if -d $file;
+			$filename = $directory . "/" . $filename;
 		} else {
-			$filename = $file;
+			$filename = $directory;
 		} 
 
 		print "dumping template to $filename\n";
 
-		open(FILE, ">$filename") or die "$! unable to open file $file to dump to\n";
-		print FILE $templatelist->{$template}{'template'};
-		close(FILE);
+		$install->writeTemplateFile($filename, $templatelist->{$template});
 	} 
 }
 
@@ -507,7 +450,6 @@ Usage: template-editor [OPTIONS] <template templateN>
 OPTIONS
 
 	-d dump templates
-	-e prints template out in a manner suitable for a sql dump file
 	-i use tpid (template id) instead of template name
 
 	-l list template(s) and their descriptions
@@ -523,9 +465,9 @@ OPTIONS
 	Save Notes:
 	* With no args except filename, uses template name to derive section, 
 	page and template name from.
-	* -s -f <multiple template filenames> allows you to save specific 
-	templates from the given files. You should make sure the template
-	name conforms to templatename;page;section standard 
+	* -s <filenames> allows you to save specific 
+	templates from the given files. This needs to be a template in a
+	template file format. Use -b to generate blank ones.
 	* If you don't supply a template name, or leave the section and page 
 	unset, the name will try to be derived from the filename.
 	* If you supply a section and/or page and your reading files out of a 

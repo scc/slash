@@ -89,7 +89,7 @@ install: slash plugins
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \
 	echo "|                                                        |"; \
-	echo "| Thanks for installing slashcode.                       |"; \
+	echo "| Thanks for installing slash.                           |"; \
 	echo "+--------------------------------------------------------+"; \
 
 
