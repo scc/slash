@@ -32,17 +32,22 @@ GROUP = nobody
 slash: 
 	(cd Slash; $(PERL) Makefile.PL; make)
 
+plugins: 
+	(cd plugins/Slash-Search; $(PERL) Makefile.PL; make)
+
 all: install
 
-install: slash
+install: slash plugins
 # Need to toss in a script here that will fix prefix so
 # that if someone wants to install in a different
 # directory it will be easy
 	# Lets go install the libraries
 	(cd Slash; make install)
+	# Lets go install the plugin's libraries
+	(cd plugins/Slash-Search; $(PERL) Makefile.PL; make install)
 
 	# First we do the default sutff
-	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/
+	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/
 	install -D bin/install-slashsite bin/tailslash bin/template-editor $(PREFIX)/bin/
 	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
@@ -50,6 +55,7 @@ install: slash
 
 	# Now for the default theme
 	cp -r public_html/* $(PREFIX)/themes/slashcode/htdocs/
+	cp -r plugins/* $(PREFIX)/plugins/
 	cp sql/postgresql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/postgresql/datadump.sql
 	cp sql/postgresql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/postgresql/prep.sql
 	cp sql/mysql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/mysql/datadump.sql
@@ -65,6 +71,7 @@ install: slash
 	chown -R $(USER):$(GROUP) $(PREFIX)/sbin
 	chown -R $(USER):$(GROUP) $(PREFIX)/bin
 	chown -R $(USER):$(GROUP) $(PREFIX)/sql
+	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
 
 reload: install
 	apachectl stop

@@ -10,7 +10,7 @@ use Getopt::Std;
 # -Brian (brian@tangent.org)
 
 my %opts;
-usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
+usage() unless getopts('h:o:g:s:a:e:p:t:?r', \%opts);
 
 usage() if $opts{'?'};
 
@@ -101,12 +101,6 @@ unless ($opts{'g'}) {
 }
 $group_id = getpwnam($group) or die "$group is not a valid group name.\n";
 
-# We also need to really be determining driver here and 
-# picking the right schema. Having it loop through
-# the themes directory would give us a list
-print "\nWhich theme do you want to use? (Skipping since we only have one theme.)\n";
-my $theme = "$prefix/themes/slashcode";
-
 if($opts{'r'}) {
 	$sitename = $host_noport;
 } else {
@@ -119,6 +113,53 @@ if($opts{'r'}) {
 	} else {
 		$sitename = $opts{'s'};
 	}
+}
+
+# We also need to really be determining driver here and 
+# picking the right schema. Having it loop through
+# the themes directory would give us a list
+print "\nWhich theme do you want to use? (Skipping since we only have one theme.)\n";
+my $theme = "$prefix/themes/slashcode";
+
+print "\nPlease select which plugins you would like?\n";
+opendir(PLUGINDIR, "$prefix/plugins");
+my %plugins;
+my $x = 0;
+while(my $dir = readdir(PLUGINDIR)) {
+	chomp($dir);
+	next if $dir =~ /^\.$/;
+	next if $dir =~ /^\.\.$/;
+	next if $dir =~ /^CVS$/;
+	open(PLUGIN,"<$prefix/plugins/$dir/PLUGIN") or next; 
+	$x++;
+	$plugins{$dir}->{'order'} = $x;
+	$plugins{$dir}->{'dir'} = "$prefix/plugins/$dir/";
+	$plugins{$dir}->{'name'} = $dir;
+	my @info = <PLUGIN>;
+	chomp(@info);
+	for(@info) {
+		my ($key, $val) = split(/=/, $_, 2);
+		$key = lc($key);
+		if( $key eq 'htdoc' ) {
+			push (@{$plugins{$dir}->{$key}}, $val);
+			print "Pushing $val\n";
+		} else {
+			$plugins{$dir}->{$key} = $val;
+		}
+	}
+	print "$plugins{$dir}->{'order'}.\t$dir $plugins{$dir}->{'description'}\n";
+}
+my @answers;
+my $select = 'a';
+print "Hit 'a' to select all, otherwise select numbers or 'q' to quit\n";
+while($select ne 'q'){
+	chomp($select = <STDIN>);
+	if($select eq 'a') {
+		@answers = ();
+		push @answers, $select;
+		last;
+	}
+	push @answers, $select;
 }
 
 unless ($opts{'a'}) {
@@ -224,6 +265,7 @@ find(sub {
 	}
 }, "$theme/htdocs/");
 
+install_plugin(\@answers, \%plugins);
 
 my $slashdb = Slash::DB->new($ARGV[0]);
 my $uid = $slashdb->createUser($username, $email, $username);
@@ -277,8 +319,32 @@ usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 	print "\te: Admin's email.\n";
 	print "\tp: The admin password.\n";
 	print "\tr: Reuse the hostname minus the port as the sitename.\n";
+	print "\tt: Choose your theme.\n";
+	print "\ti: Install all plugins.\n";
 	print "\n\tIf no virtual user is given the install will not run\n\n";
 	exit();
+}
+
+sub install {
+	my ($plugin) = @_;
+	print "Now installing $plugin->{'name'}\n";
+	for(@{$plugin->{'htdoc'}}) {
+		print "copying $_ to $prefix/$sitename/htdocs\n";
+		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
+	}
+}
+
+sub install_plugin {
+	my ($answers, $plugins) = @_;
+	if($answers->[0] eq 'a') {
+		for(keys %$plugins) {
+			install($plugins->{$_});
+		}
+	} else {
+		for(@$answers) {
+			install($plugins->{$_});
+		}
+	}
 }
 
 __END__

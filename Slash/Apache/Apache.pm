@@ -21,7 +21,7 @@ sub SlashVirtualUser ($$$) {
 	my($cfg, $params, $user) = @_;
 	$cfg->{VirtualUser} = $user;
 	$cfg->{slashdb} = Slash::DB->new($user);
-	$cfg->{constants} = $cfg->{slashdb}->getSlashConf();
+	$cfg->{constants} = $cfg->{slashdb}->getSlashConf(getCurrentSlashUser());
 
 	# Backwards compatibility
 	my $anonymous_coward = $cfg->{slashdb}->getUserInstance(

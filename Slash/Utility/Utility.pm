@@ -614,6 +614,27 @@ sub getCurrentAnonymousCoward {
 
 #========================================================================
 
+=item getCurrentSlashUser()
+
+Returns the current slash user
+
+Return value
+
+	Returns the current slash user
+
+=cut
+
+sub getCurrentSlashUser {
+	my $slashdb;
+
+	my $r = Apache->request;
+	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $user = $const_cfg->{VirtualUser};
+
+	return $user;
+}
+#========================================================================
+
 =item createCurrentAnonymousCoward(HASH)
 
 Creates the current anonymous coward for non Apache scripts.

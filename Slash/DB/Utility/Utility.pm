@@ -2,6 +2,7 @@ package Slash::DB::Utility;
 
 use strict;
 use Slash::Utility;
+use DBIx::Password;
 
 ($Slash::DB::Utility::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
@@ -231,6 +232,7 @@ sub sqlDo {
 
 	return $rows;
 }
+
 
 1;
 
