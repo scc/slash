@@ -18,43 +18,26 @@ CREATE TABLE accesslog (
   host_addr varchar(16) DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
-  uid int NOT NULL,
+  uid int4 NOT NULL,
   ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
   query_string varchar(50),
   user_agent varchar(50),
   PRIMARY KEY (id)
 );
 
-
-
-
-CREATE TABLE authors (
-  aid char(30) DEFAULT '' NOT NULL,
-  name char(50),
-  url char(50),
-  email char(50),
-  quote char(50),
-  description char(255),
-  pwd char(8),
-  seclev int4,
-  lasttitle char(20),
-  section char(20),
-  deletedsubmissions int4 DEFAULT '0',
-  matchname char(30),
-  PRIMARY KEY (aid)
+CREATE TABLE backup_blocks (
+	bid varchar(30) DEFAULT '' NOT NULL,
+	block text,
+	PRIMARY KEY (bid)
 );
-
-
-
 
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
-  aid varchar(20),
+  uid int4,
   seclev int2,
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
-  blockbak text,
   section varchar(30) DEFAULT '' NOT NULL,
   ordernum int2 DEFAULT '0',
   title varchar(128),
@@ -68,16 +51,14 @@ CREATE TABLE blocks (
 );
 
 
-
-
-CREATE TABLE commentcodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
+CREATE TABLE code_param (
+	param_id SERIAL,
+	type varchar(16),
+	code int2 DEFAULT '0' NOT NULL,
+	name varchar(32),
+	UNIQUE (type,code),
+	PRIMARY KEY (param_id)
 );
-
-
-
 
 CREATE TABLE commentmodes (
   mode varchar(16) DEFAULT '' NOT NULL,
@@ -97,7 +78,7 @@ CREATE TABLE comments (
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
   comment text NOT NULL,
-  uid int2 NOT NULL,
+  uid int4 NOT NULL,
   points int2 DEFAULT '0' NOT NULL,
   lastmod int2,
   reason int2 DEFAULT '0',
@@ -116,7 +97,7 @@ CREATE TABLE content_filters (
   regex varchar(100) DEFAULT '' NOT NULL,
   modifier varchar(5) DEFAULT '' NOT NULL,
   field varchar(20) DEFAULT '' NOT NULL,
-  ratio float(6,4) DEFAULT '0.0000' NOT NULL,
+  ratio float4 DEFAULT '0.0000' NOT NULL,
   minimum_match int4 DEFAULT '0' NOT NULL,
   minimum_length int4 DEFAULT '0' NOT NULL,
   err_message varchar(150) DEFAULT '',
@@ -145,15 +126,6 @@ CREATE TABLE discussions (
   url varchar(128),
   ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
   PRIMARY KEY (sid)
-);
-
-
-
-
-CREATE TABLE displaycodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
 );
 
 
@@ -192,38 +164,21 @@ CREATE TABLE hitters (
 
 
 
-
-CREATE TABLE isolatemodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
+CREATE TABLE menus (
+	id SERIAL,
+	menu varchar(20) DEFAULT '' NOT NULL,
+	label varchar(200) DEFAULT '' NOT NULL,
+	value text,
+	seclev int2,
+	menuorder int4,
+	UNIQUE (menu,label),
+	PRIMARY KEY (id)
 );
-
-
-
-
-CREATE TABLE issuemodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
-);
-
-
-
-
-CREATE TABLE maillist (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
-);
-
-
-
 
 CREATE TABLE metamodlog (
   id SERIAL,
   mmid int4 DEFAULT '0' NOT NULL,
-  uid int4 DEFAULT '0' NOT NULL,
+  uid int4 DEFAULT '1' NOT NULL,
   val int4 DEFAULT '0' NOT NULL,
   ts datetime,
   PRIMARY KEY (id)
@@ -234,7 +189,7 @@ CREATE TABLE metamodlog (
 
 CREATE TABLE moderatorlog (
   id SERIAL,
-  uid int2 DEFAULT '0' NOT NULL,
+  uid int4 DEFAULT '1' NOT NULL,
   val int2 DEFAULT '0' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
@@ -251,7 +206,7 @@ CREATE TABLE moderatorlog (
 CREATE TABLE newstories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30) DEFAULT '' NOT NULL,
+  uid int4 DEFAULT '1' NOT NULL,
   commentcount int2 DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
@@ -332,7 +287,7 @@ CREATE TABLE sections (
 
 CREATE TABLE sessions (
   session varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30),
+  uid int4 DEFAULT '1' NOT NULL,
   logintime datetime,
   lasttime datetime,
   lasttitle varchar(50),
@@ -375,7 +330,7 @@ CREATE TABLE statuscodes (
 CREATE TABLE stories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30) DEFAULT '' NOT NULL,
+  uid int4 DEFAULT '1' NOT NULL,
   commentcount int2 DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
@@ -418,7 +373,7 @@ CREATE TABLE submissions (
   note varchar(30),
   section varchar(30) DEFAULT '' NOT NULL,
   comment varchar(255),
-  uid int4 NOT NULL,
+  uid int4 DEFAULT '1' NOT NULL,
   del int2 DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid),
   UNIQUE (subid,section)
@@ -427,12 +382,14 @@ CREATE TABLE submissions (
 
 
 
-CREATE TABLE threshcodes (
-  thresh int2 DEFAULT '0' NOT NULL,
-  description char(64),
-  PRIMARY KEY (thresh)
+CREATE TABLE templates (
+	tpid varchar(30) DEFAULT '' NOT NULL,
+	template text,
+	seclev int4,
+	description text,
+	title varchar(128),
+	PRIMARY KEY (tpid)
 );
-
 
 
 
@@ -469,17 +426,6 @@ CREATE TABLE users (
   seclev int4 DEFAULT '0' NOT NULL,
   matchname varchar(20),
   newpasswd varchar(32),
-  PRIMARY KEY (uid),
-  UNIQUE (uid,passwd,nickname),
-  UNIQUE (nickname,realemail),
-  UNIQUE (realemail)
-);
-
-
-
-
-CREATE TABLE users_comments (
-  uid SERIAL,
   points int4 DEFAULT '0' NOT NULL,
   posttype varchar(10) DEFAULT 'html' NOT NULL,
   defaultpoints int4 DEFAULT '1' NOT NULL,
@@ -496,28 +442,12 @@ CREATE TABLE users_comments (
   noscores int2 DEFAULT '0' NOT NULL,
   mode varchar(10) DEFAULT 'thread',
   threshold int2 DEFAULT '0',
-  PRIMARY KEY (uid)
-);
-
-
-
-
-CREATE TABLE users_index (
-  uid SERIAL,
   extid varchar(255),
   exaid varchar(100),
   exsect varchar(100),
   exboxes varchar(255),
   maxstories int4 DEFAULT '30' NOT NULL,
   noboxes int2 DEFAULT '0' NOT NULL,
-  PRIMARY KEY (uid)
-);
-
-
-
-
-CREATE TABLE users_info (
-  uid SERIAL,
   totalmods int4 DEFAULT '0' NOT NULL,
   realname varchar(50),
   bio text,
@@ -529,36 +459,30 @@ CREATE TABLE users_info (
   lastmm date DEFAULT '1970-01-01' NOT NULL,
   lastaccess date DEFAULT '1970-01-01' NOT NULL,
   lastmmid int4 DEFAULT '0' NOT NULL,
-  PRIMARY KEY (uid)
-);
-
-
-
-
-#
-# Table structure for table 'users_param'
-#
-DROP TABLE IF EXISTS users_param;
-CREATE TABLE users_param (
-	param_id int6 DEFAULT '0' NOT NULL auto_increment,
-	uid int4 DEFAULT '0' NOT NULL,
-	name varchar(32) NOT NULL,
-	value text,
-	UNIQUE uid_key (uid, name),
-	PRIMARY KEY (param_id)
-);
-
-
-CREATE TABLE users_prefs (
-  uid int4 DEFAULT '0' NOT NULL,
+	session_login int2 DEFAULT '0' NOT NULL,
   willing int2 DEFAULT '1' NOT NULL,
   dfid int4 DEFAULT '0' NOT NULL,
   tzcode char(3) DEFAULT 'edt' NOT NULL,
   noicons int2 DEFAULT '0' NOT NULL,
   light int2 DEFAULT '0' NOT NULL,
   mylinks varchar(255) DEFAULT '' NOT NULL,
+  UNIQUE (uid,passwd,nickname),
+  UNIQUE (nickname,realemail),
+  UNIQUE (realemail),
   PRIMARY KEY (uid)
 );
+
+DROP TABLE IF EXISTS users_param;
+CREATE TABLE users_param (
+	param_id SERIAL,
+	uid int4 DEFAULT '1' NOT NULL,
+	name varchar(32) NOT NULL,
+	value text,
+	UNIQUE (uid, name),
+	PRIMARY KEY (param_id)
+);
+
+
 
 
 
