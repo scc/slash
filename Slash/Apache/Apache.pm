@@ -17,6 +17,11 @@ sub SlashVirtualUser ($$$){
 	my ($cfg, $params, $user) = @_;
 	$cfg->{Apache}{VirtualUser} = $user;
 	$cfg->{Apache}{dbslash} = new Slash::DB($user);
+	# More of a place holder to remind me that it
+	# is here. The uid will be populated once Patrick
+	# finishes up with slashdotrc
+	$cfg->{Apache}{anonymous_coward_uid} = '-1';
+	$cfg->{Apache}{anonymous_coward} = '';
 }
 
 __END__

@@ -476,11 +476,10 @@ sub getDescriptions {
 }
 ########################################################
 # Get user info from the users table.
-sub getUserInfoAuthenticate{
-  my($self, $uid, $passwd, $script) = @_;
+sub getUser{
+  my($self, $uid, $script) = @_;
 	my $user = $self->sqlSelectHashref('*', 'users',
-		' uid = ' . $self->{dbh}->quote($uid) .
-		' AND passwd = ' . $self->{dbh}->quote($passwd)
+		' uid = ' . $self->{dbh}->quote($uid)
 	);
 	return undef unless ($user);
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
@@ -520,7 +519,7 @@ sub getUserAuthenticate{
 
 	my ($uid) = $self->sqlSelect('uid', 'users',
 			'passwd=' . $self->{dbh}->quote($passwd) .
-			' AND nickname=' . $self->{dbh}->quote($name)
+			' AND uid=' . $self->{dbh}->quote($name)
 	);
 	return $uid;
 
@@ -1471,6 +1470,11 @@ sub setUsers{
 sub setUsersPrefrences{
 	my ($self, $uid, $hashref) = @_;
 	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid, 1);
+}
+########################################################
+sub setUsersIndex{
+	my ($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users_index", $hashref, "uid=" . $uid, 1);
 }
 ########################################################
 sub countStories{

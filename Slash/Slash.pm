@@ -37,7 +37,6 @@ use URI;
 use Slash::DB;
 use Slash::Utility;
 Apache::SIG->set;
-
 BEGIN {
 	# this is the worst damned warning ever, so SHUT UP ALREADY!
 	$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
@@ -64,18 +63,6 @@ BEGIN {
 }
 
 getSlashConf();
-																				# to do this later.
-																				# 	-Brian
-if ($ENV{GATEWAY_INTERFACE} =~ m|^CGI-Perl/|) {
-	my $r = Apache->request();
-	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	# Even bothering to populate %I will go away soon.
-	# We should be bootstrapped to the point where we 
-	# do not need it.
-	$I{dbobject} = $cfg->{'Apache'}->{'dbslash'};
-} else {
-	$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
-}
 
 
 ###############################################################################
@@ -122,73 +109,25 @@ sub getSlashConf {
 # Blank variables, get $I{r} (apache) $I{query} (CGI) $I{U} (User) and $I{F} (Form)
 # Handles logging in and printing HTTP headers
 sub getSlash {
+#We should pull 'r' out of %I
 	for (qw[r query F U SETCOOKIE]) {
 		undef $I{$_} if $I{$_};
 	}
 
-	$I{r} = Apache->request if $ENV{GATEWAY_INTERFACE} =~ m|^CGI-Perl/|;
-
+	#Ok, I hate single character variables, but 'r' is a bit
+	#of a tradition in apache stuff -Brian
+	my $r = Apache->request;
+	$I{r} = $r;
+	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	# We might as well put this here for the moment
+	$I{dbobject} = $cfg->{'Apache'}->{'dbslash'};
 	$I{query} = new CGI;
 
-	# fields that are numeric only
-	my %nums = map {($_ => 1)} qw(
-		last next artcount bseclev cid clbig clsmall
-		commentlimit commentsort commentspill commentstatus
-		del displaystatus filter_id height
-		highlightthresh isolate issue maillist max
-		maxcommentsize maximum_length maxstories min minimum_length
-		minimum_match ordernum pid
-		retrieve seclev startat uid uthreshold voters width
-		writestatus ratio
-	);
-
-	# regexes to match dynamically generated numeric fields
-	my @regints = (qr/^reason_.+$/, qr/^votes.+$/);
-
-	# special few
-	my %special = (
-		sid => sub { $_[0] =~ s|[^A-Za-z0-9/.]||g },
-	);
-
-	for ($I{query}->param) {
-		$I{F}{$_} = $I{query}->param($_);
-
-		# clean up numbers
-		if (exists $nums{$_}) {
-			$I{F}{$_} = fixint($I{F}{$_});
-		} elsif (exists $special{$_}) {
-			$special{$_}->($I{F}{$_});
-		} else {
-			for my $ri (@regints) {
-				$I{F}{$_} = fixint($I{F}{$_}) if /$ri/;
-			}
-		}
-	}
-
-	$I{F}{ssi} ||= '';
-	$ENV{SCRIPT_NAME} ||= '';
-
-	($I{anon_name}) = $I{dbobject}->getNicknameByUID($I{anonymous_coward}) unless $I{anon_name};
-
-	my $op = $I{query}->param('op') || '';
-
-	if (($op eq 'userlogin' || $I{query}->param('rlogin') )
-		&& length($I{F}{upasswd}) > 1) {
-
-		$I{U} = getUser(userLogin($I{F}{unickname}, $I{F}{upasswd}));
-
-	} elsif ($op eq 'userclose' ) {
-		$I{SETCOOKIE} = setCookie('user', ' ');
-
-	} elsif ($op eq 'adminclose') {
-		$I{SETCOOKIE} = setCookie('session', ' ');
-
-	} elsif ($I{query}->cookie('user')) {
-		$I{U} = getUser(userCheckCookie($I{query}->cookie('user')));
-
-	} else {
-		$I{U} ||= getUser($I{anonymous_coward});
-	}
+	$I{F} = $cfg->{'Apache'}->{'form'};
+	my $user = getUser($ENV{REMOTE_USER});
+	$r->notes('user' =>  $user);
+	$cfg->{'Apache'}->{'user'} = $user;
+	$I{U} = $user;
 
 	return 1;
 }
@@ -351,40 +290,6 @@ sub getWidgetBlock {
 }
 
 
-###############################################################################
-#  Stuff for dealing with Logging In
-#
-# It does what it says, it says what it does.
-########################################################
-sub userLogin {
-	my($name, $passwd) = @_;
-
-	$passwd = substr $passwd, 0, 20;
-	my $uid = $I{dbobject}->getUserAuthenticate($name, $passwd);
-
-	if ($uid != $I{anonymous_coward}) {
-		my $cookie = $uid . '::' . $passwd;
-		$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
-		$I{SETCOOKIE} = setCookie('user', $cookie);
-		return($uid, $passwd);
-	} else {
-		return($I{anonymous_coward}, '');
-	}
-}
-
-
-########################################################
-# Decode the Cookie: Cookies have all the special charachters encoded
-# in standard URL format.  This converts it back.  then it is split
-# on '::' to get the users info.
-sub userCheckCookie {
-	my($cookie) = @_;
-	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
-	my($uid, $passwd) = split('::', $cookie);
-	return($I{anonymous_coward}, '') if $uid eq ' ';
-	return($uid, $passwd);
-}
-
 ########################################################
 # Replace $_[0] with $_[1] || "0" in the User Hash
 # users by getUser to allow form parameters to override user parameters
@@ -409,10 +314,10 @@ sub addToUser {
 # IF passed a valid uid & passwd, it logs in $U
 # else $U becomes Anonymous Coward (eg UID $I{anonymous_coward})
 sub getUser {
-	my($uid, $passwd) = @_;
+	my($uid) = @_;
 	undef $I{U};
 
-	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUserInfoAuthenticate($uid, $passwd, $ENV{SCRIPT_NAME}))) { 
+	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
 
 		# Get the Timezone Stuff
 		my $timezones = $I{dbobject}->getCodes('tzcodes');
@@ -890,7 +795,7 @@ sub fixurl {
 
 ########################################################
 sub fixint {
-	my $int = shift;
+	my ($int) = @_;
 	$int =~ s/^\+//;
 	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
 	return $int;

@@ -104,7 +104,7 @@ sub main {
 		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{op} eq "Change") {
-		if ($I{U}{uid} != $I{anonymous_coward} || defined $I{query}->param("savechanges")) {
+		if ($I{U}{uid} != $I{anonymous_coward} || defined $I{F}->{"savechanges"}) {
 			$I{dbobject}->setUsersComments($I{U}{uid}, {
 					threshold	=> $I{U}{threshold}, 
 					mode		=> $I{U}{mode},

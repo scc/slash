@@ -971,7 +971,7 @@ sub getUrlFromTitle {
 sub importImage {
 	# Check for a file upload
 	my $section = $_[0];
- 	my $filename = $I{query}->param('importme');
+ 	my $filename = $I{F}->{'importme'};
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -998,7 +998,7 @@ sub importImage {
 sub importFile {
 	# Check for a file upload
 	my $section = $_[0];
- 	my $filename = $I{query}->param('importme');
+ 	my $filename = $I{F}->{'importme'};
 	my $tf = getsiddir() . $filename;
 	$tf =~ s|/|~|g;
 	$tf = "$section~$tf";
@@ -1021,7 +1021,7 @@ sub importFile {
 ##################################################################
 sub importText {
 	# Check for a file upload
- 	my $filename = $I{query}->param('importme');
+ 	my $filename = $I{F}->{'importme'};
 	my($r, $buffer);
 	if ($filename) {
 		while (read $filename, $buffer, 1024) {
