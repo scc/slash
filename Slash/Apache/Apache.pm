@@ -94,7 +94,7 @@ sub SlashCompileTemplates ($$$) {
 
 	$cfg->{template} = Slash::Display::get_template(0, 0, 1);
 	# let's make sure
-	$slashdb->{_dbh}->disonnect;
+	$slashdb->{_dbh}->disconnect;
 }
 
 sub IndexHandler {
