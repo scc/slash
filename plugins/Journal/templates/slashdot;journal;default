@@ -1,0 +1,81 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+slashdot
+__template__
+[% USE Slash %]
+<TABLE WIDTH="95%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+	[% FOREACH article = articles %]
+		[% FOREACH diatribe = article.article; topic = diatribe.topic %]
+  <TR><TD>
+[% INCLUDE titlebar title => diatribe.description, width => "90%" %]
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+	<TR><TD BGCOLOR="[% user.bg.2 %]" VALIGN="TOP">
+<I>[% Slash.timeCalc(diatribe.date) %]</I>
+	</TD><TD BGCOLOR="[% user.bg.2 %]" VALIGN="TOP" ALIGN="RIGHT">
+
+[
+[% IF user.uid == uid %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Edit</A> |
+<A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% diatribe.id %]">Delete</A> |
+[% ELSIF 1 # need to check if already friend %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=add&amp;uid=[% uid %]">Add Friend</A> |
+[% ELSE %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=delete&amp;uid=[% uid %]">Remove Friend</A> |
+[% END %]
+[% IF diatribe.discussion %]
+<A HREF="[% constants.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Comments</A>
+[% ELSE %]
+<A HREF="[% constants.rootdir %]/journal.pl?op=save&amp;id=[% diatribe.id %]&amp;comments_on=1&amp;journal_discuss=1">Enable Comments</A>
+[% END %]
+]
+
+	</TD></TR><TR><TD COLSPAN="2">
+[%# at some point, this needs to be linked to the topic lookup by discussion %]
+<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]" ALIGN="RIGHT">
+[% diatribe.article %]
+	</TD></TR>
+</TABLE>
+
+<BR><BR>
+		[% END %]
+	[% END %]
+
+	[% back = back || 0;
+	   IF (back > -1) || forward %]
+		<TR VALIGN="TOP">
+			<TD ALIGN="RIGHT" COLSPAN="2"><FONT SIZE="1">
+				[% IF forward %]
+					<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% uid %]&start=[% forward %]">&lt; Previous  [% constants.journal_default_display %] entries</A>
+				[% END %]
+				[% IF (back > -1) && forward %]
+					|
+				[% END %]
+				[% IF (back > -1) %]
+					<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% uid %]&start=[% back %]">Next [% constants.journal_default_display %] entries &gt;</A>
+				[% END %]
+			</FONT></TD>
+		</TR>
+	[% END %]
+
+	<TR VALIGN="TOP"><TD ALIGN="RIGHT" COLSPAN="2"><FONT SIZE="1">
+		<A HREF="[% constants.rootdir %]/journal.pl?op=list&uid=[% uid %]">List all Journal entries</A>
+	</FONT></TD></TR>
+
+	[% IF !user.is_anon && uid && uid != user.uid %]
+		<TR VALIGN="TOP"><TD ALIGN="RIGHT" BGCOLOR="#E0E0E0">
+			<A HREF="[% constants.rootdir %]/journal.pl?op=add&uid=[% uid %]">Make a friend</A>
+		</TD></TR>
+	[% END %]
+</TABLE>
+
+__seclev__
+500
