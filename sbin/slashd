@@ -270,12 +270,12 @@ sub newrdf {	# RSS 0.9
 		title		=> xmlEncodeStr($title),
 		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
 #		language	=> $constants->{rdflanguage},
-		description	=> $constants->{slogan},
+		description	=> xmlEncodeStr($constants->{slogan}),
 	);
 
 	$rss->image(
 		title		=> xmlEncodeStr($constants->{sitename}),
-		url		=> $constants->{rdfimg},
+		url		=> xmlEncodeStr($constants->{rdfimg}),
 		'link'		=> $constants->{absolutedir} . '/',
 	);
 
@@ -337,7 +337,7 @@ sub newrss {	# RSS 1.0
 
 	$rss->image(
 		title		=> xmlEncodeStr($constants->{sitename}),
-		url		=> $constants->{rdfimg},
+		url		=> xmlEncodeStr($constants->{rdfimg}),
 		'link'		=> $constants->{absolutedir} . '/',
 	);
 
