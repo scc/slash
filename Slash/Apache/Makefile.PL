@@ -13,6 +13,16 @@ my @directives = (
 	args_how		=> 'TAKE1',
 	req_overrive => 'ACCESS_CONF'
 	},
+	{ name			=> 'SlashSetVar',
+	errmsg			=> 'Takes a key and a value that will override the var values in the DB',
+	args_how		=> 'TAKE2',
+	req_overrive => 'ACCESS_CONF'
+	},
+	{ name			=> 'SlashSetForm',
+	errmsg			=> 'Takes a key and a value that will be applied to each form object',
+	args_how		=> 'TAKE2',
+	req_overrive => 'ACCESS_CONF'
+	},
 	{ name			=> 'SlashCompileTemplates',
 	errmsg			=> 'Turn precompiling templates on or off',
 	args_how		=> 'FLAG',

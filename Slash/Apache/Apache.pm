@@ -35,11 +35,22 @@ sub SlashVirtualUser ($$$) {
 	my($cfg, $params, $user) = @_;
 	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
 	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
+# In case someone calls SlashSetVar before we have done the big mojo -Brian
+	my $overrides = $cfg->{constants};
 	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf($user));
 
 	# placeholders ... store extra placeholders in DB?  :)
 	for (qw[user form themes template cookie objects cache]) {
 		$cfg->{$_} = '';
+	}
+
+	$cfg->{constants}{form_override} = {}
+		unless $cfg->{constants}{form_override};
+
+	if ($overrides && keys(%$overrides)) {
+		for (keys(%$overrides)) {
+			$cfg->{constants}{$_} = $overrides->{$_};
+		}
 	}
 
 	my $anonymous_coward = $cfg->{slashdb}->getUser(
@@ -58,6 +69,16 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 	# If this is not here this will go poorly.
 	$cfg->{slashdb}->{_dbh}->disconnect;
+}
+
+sub SlashSetVar ($$$$) {
+	my($cfg, $params, $key, $value) = @_;
+	$cfg->{constants}{$key} = $value;
+}
+
+sub SlashSetForm ($$$$) {
+	my($cfg, $params, $key, $value) = @_;
+	$cfg->{constants}{form_override}{$key} = $value;
 }
 
 sub SlashCompileTemplates ($$$) {

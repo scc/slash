@@ -83,6 +83,9 @@ sub handler {
 # 	$r->method_number(M_GET);
 
 	my $form = filter_params($r->args, $r->content);
+	for (keys %{$constants->{form_override}}) {
+		$form->{$_} = $constants->{form_override}{$_};
+	}
 	my $cookies = Apache::Cookie->fetch;
 
 	# So we are either going to pick the user up from
