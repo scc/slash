@@ -194,9 +194,8 @@ sub sqlUpdate {
 	chop $sql;
 	$sql .= "\nWHERE $where\n";
 	$self->sqlConnect();
-	my $rows = $self->{_dbh}->do($sql);
+	my $rows = $self->sqlDo($sql);
 	#print STDERR "SQL: $sql\n";
-	errorLog($sql) unless($rows);
 	return $rows;
 }
 
@@ -220,14 +219,17 @@ sub sqlInsert {
 
 	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{_dbh}->do($sql) or errorLog($sql);
+	return $self->sqlDo($sql);
 }
 
 #################################################################
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
-	$self->{_dbh}->do($sql) or errorLog($sql);
+	my $rows = $self->{_dbh}->do($sql);
+	errorLog($sql) unless($rows);
+
+	return $rows;
 }
 
 1;

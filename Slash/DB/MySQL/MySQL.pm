@@ -1225,7 +1225,7 @@ sub savePollQuestion {
 			});
 
 		} else {
-			$self->{_dbh}->do("DELETE from pollanswers WHERE qid="
+			$self->sqlDo("DELETE from pollanswers WHERE qid="
 					. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
 		}
 	}
@@ -1274,7 +1274,7 @@ sub deleteStory {
 		'sid=' . $self->{_dbh}->quote($sid)
 	);
 
-	$self->{_dbh}->do("DELETE from discussions WHERE sid = '$sid'");
+	$self->sqlDo("DELETE from discussions WHERE sid = '$sid'");
 }
 
 ########################################################
@@ -1282,8 +1282,8 @@ sub deleteStory {
 sub deleteStoryAll {
 	my($self, $sid) = @_;
 
-	$self->{_dbh}->do("DELETE from stories where sid='$sid'");
-	$self->{_dbh}->do("DELETE from newstories where sid='$sid'");
+	$self->sqlDo("DELETE from stories where sid='$sid'");
+	$self->sqlDo("DELETE from newstories where sid='$sid'");
 }
 
 ########################################################
@@ -1749,7 +1749,7 @@ sub setMetaMod {
 	my $returns = [];
 
 	# Update $muid's Karma
-	$self->{_dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
+	$self->sqlDo("LOCK TABLES users_info WRITE, metamodlog WRITE");
 	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
 		my $val = $m2victims->{$_}[1];
@@ -1781,7 +1781,7 @@ sub setMetaMod {
 			-flag => $flag
 		});
 	}
-	$self->{_dbh}->do("UNLOCK TABLES");
+	$self->sqlDo("UNLOCK TABLES");
 
 	return $returns;
 }
@@ -2489,7 +2489,7 @@ sub updateStory {
 		}, 'sid=' . $self->{_dbh}->quote($form->{sid})
 	);
 
-	$self->{_dbh}->do('UPDATE stories SET time=now() WHERE sid='
+	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
 		. $self->{_dbh}->quote($form->{sid})
 	) if $form->{fastforward} eq 'on';
 	$self->saveExtras($form);
@@ -3076,7 +3076,7 @@ sub sqlReplace {
 
 	my $sql = "REPLACE INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{_dbh}->do($sql) or errorLog($sql);
+	return $self->sqlDo($sql) or errorLog($sql);
 }
 
 ##################################################################

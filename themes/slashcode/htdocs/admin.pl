@@ -188,7 +188,7 @@ sub main {
 
 	# Display who is logged in right now.
 	footer();
-	writeLog('admin', $user->{aid}, $op, $form->{sid});
+	writeLog('admin', $user->{uid}, $op, $form->{sid});
 }
 
 ##################################################################
@@ -269,7 +269,7 @@ sub authorEdit {
 
 	$author_select = createSelect('myaid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;
-	$deletebutton_flag = 1 if (! $form->{authornew} && $aid ne $user->{aid}) ;
+	$deletebutton_flag = 1 if (! $form->{authornew} && $aid ne $user->{uid}) ;
 
 	for ($author->{email}, $author->{copy}) {
 		$_ = stripByMode($_, 'literal', 1);
@@ -829,7 +829,7 @@ sub editStory {
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
-		$storyref->{aid} ||= $user->{aid};
+		$storyref->{aid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
 
 		my $extracolumns = $slashdb->getKeys($storyref->{section});
@@ -847,8 +847,8 @@ sub editStory {
 		$storyref->{bodytext} = $slashdb->autoUrl($form->{section}, $storyref->{bodytext});
 
 		$topic = $slashdb->getTopic($storyref->{tid});
-		$form->{aid} ||= $user->{aid};
-		$author= $slashdb->getAuthor($form->{aid});
+		$form->{aid} ||= $user->{uid};
+		$author= $slashdb->getAuthor($form->{uid});
 		$sid = $form->{sid};
 
 		if (!$form->{time} || $form->{fastforward}) {
@@ -885,7 +885,7 @@ sub editStory {
 		$storyref->{tid} ||= 'news';
 		$storyref->{section} ||= 'articles';
 
-		$storyref->{aid} = $user->{aid};
+		$storyref->{aid} = $user->{uid};
 	}
 	$extracolumns =  $slashdb->getKeys($storyref->{section});
 
@@ -997,7 +997,7 @@ sub listStories {
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
 		$displayoff = 1 if($writestatus < 0 || $displaystatus < 0);
 
-		if ($user->{aid} eq $aid || $user->{seclev} > 100) {
+		if ($user->{uid} eq $aid || $user->{seclev} > 100) {
 			$canedit = 1;
 			$tbtitle = fixparam($title);
 		} 
@@ -1200,7 +1200,7 @@ sub saveStory {
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
-	) . otherLinks($user->{aid}, $form->{tid});
+	) . otherLinks($user->{uid}, $form->{tid});
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	$slashdb->saveStory();
