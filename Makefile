@@ -77,7 +77,7 @@ install: slash plugins
 	echo "| If you want to let slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
-	echo "| Include $(PREFIX)/slash.conf                           |"; \
+	echo "| Include $(PREFIX)/httpd/slash.conf                     |"; \
 	echo "|                                                        |"; \
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \

@@ -81,7 +81,8 @@ sub handler {
 		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 
-		if ($uid != $constants->{anonymous_coward_uid}) {
+		# newpass is only true if the password was changed
+		if ($uid && ! isAnon($uid)) {
 			my $newurl = url2abs($newpass
 				? "$constants->{rootdir}/users.pl?op=edit" .
 				  "user&note=Please+change+your+password+now!"

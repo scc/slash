@@ -44,14 +44,9 @@ sub main {
 		return;
 	}
 
-	my $note;
-	if ($form->{note}) {
-		for (split /\n+/, $form->{note}) {
-			$note .= sprintf "<H2>%s</H2>\n", strip_literal($_);
-		}
-	}
-
+	my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
 	header("$constants->{sitename} Users");  # this needs to be in a template
+	print getMessage('note', { note => $note } ) if defined $note;
 
 	if (!$user->{is_anon} && $op ne 'userclose') {
 		print createMenu('users');
@@ -223,7 +218,7 @@ sub newUser {
 			$title = getTitle('newUser_title');
 
 			$form->{pubkey} = strip_html($form->{pubkey}, 1);
-			print getMessage('newuser_msg', { title => $title });
+			print getMessage('newuser_msg', { title => $title, uid => $uid });
 			mailPassword($uid);
 
 			return;

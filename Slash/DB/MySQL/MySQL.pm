@@ -3105,6 +3105,10 @@ sub sqlSelectColumns {
 ########################################################
 # Get a unique string for an admin session
 sub generatesession {
+	# crypt() may be implemented differently so as to
+	# make the field in the db too short ... use the same
+	# MD5 encrypt function?  is this session thing used
+	# at all anymore?
 	my $newsid = crypt(rand(99999), $_[0]);
 	$newsid =~ s/[^A-Za-z0-9]//i;
 
