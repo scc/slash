@@ -3,7 +3,7 @@ default
 __description__
 The printing of the comments
 
-* can_moderate = boolean for whether current user is eligible to comment
+* can_moderate = boolean for whether current user is eligible to moderate
 * comment = hashref of main comment to display (if cid is specified)
 * comments = big ol' arrayref of comments
 * next = hashref of next comment for "next" link

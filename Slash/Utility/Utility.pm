@@ -1454,11 +1454,16 @@ sub stripByMode {
 		$str =~ s/\t/    /g;
 
 		if ($fmode == CODE) {
-			$str =~ s/ /&nbsp;/g;
+			$str =~ s{((?:  )+)(?: (\S))?} {
+				("&nbsp; " x (length($1)/2)) .
+				($2 ? "&nbsp;$2" : "")
+			}eg;
 			$str = '<CODE>' . $str . '</CODE>';
 
 		} else {
-			$str =~ s/<BR>\n?( +)/"<BR>\n" . ("&nbsp; " x length($1))/ieg;
+			$str =~ s{<BR>\n?( +)} {
+				"<BR>\n" . ("&nbsp; " x length($1))
+			}ieg;
 		}
 
 	# strip out all HTML
@@ -2000,7 +2005,7 @@ sub balanceTags {
 	my $constants = getCurrentStatic();
 
 	# set up / get preferences
-	if ($constants->{lonetags}) {
+	if (@{$constants->{lonetags}}) {
 		$match = join '|', @{$constants->{approvedtags}};
 	} else {
 		$constants->{lonetags} = [qw(P LI BR)];

@@ -1380,7 +1380,7 @@ sub printComments {
 	}
 
 	slashDisplay('printCommComments', {
-		can_moderate	=> (($user->{seclev} || $user->{points}) && !$user->{is_anon}),
+		can_moderate	=> (($user->{seclev} > 100 || $user->{points}) && !$user->{is_anon}),
 		comment		=> $comment,
 		comments	=> $comments,
 		'next'		=> $next,

@@ -275,7 +275,7 @@ sub authorEdit {
 
 	return if $user->{seclev} < 500;
 
-	my ($section_select,$author_select);
+	my($section_select, $author_select);
 	my $deletebutton_flag = 0;
 
 	$aid ||= $user->{uid};
@@ -1038,7 +1038,7 @@ sub editStory {
 	if ($user->{seclev} >= 100) {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
-		$author_select = createSelect('uid', $authors, $storyref->{aid}, 1);
+		$author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
 	} 
 
 	$storyref->{dept} =~ s/ /-/gi;

@@ -23,12 +23,27 @@ Before asking any questions, please read the relevant documentation.
 	    <A HREF="http://slashcode.com/docs/INSTALL.html">HTML</A> |
 	    <A HREF="http://slashcode.com/docs/INSTALL.pod">POD</A>
 	]</LI>
+	<LI>HOWTO-Templates [
+	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.txt">ASCII</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.html">HTML</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.pod">POD</A>
+	]</LI>
+	<LI>HOWTO-Themes [
+	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.txt">ASCII</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.html">HTML</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.pod">POD</A>
+	]</LI>
+	<LI>HOWTO-Plugins [
+	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.txt">ASCII</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.html">HTML</A> |
+	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.pod">POD</A>
+	]</LI>
 	<LI>Database schema description [
-	    <A HREF="http://slashcode.com/docs/slashtables_bender.html">ASCII</A>
+	    <A HREF="http://slashcode.com/docs/slashtables_bender.txt">ASCII</A>
 	]</LI>
 	<LI>ERD of database schema [
 	    <A HREF="http://slashcode.com/docs/slasherd_bender.fig">Fig</A> |
-	    <A HREF="http://slashcode.com/docs/slasherd_bender.png">PNG</A> |
+	    <A HREF="http://slashcode.com/docs/slasherd_bender.pdf">PDF</A> |
 	    <A HREF="http://slashcode.com/docs/slasherd_bender.ps">PostScript</A>
 	]</LI>
 
@@ -41,7 +56,7 @@ you are using an old version, please upgrade.
 </P>
 
 <UL>
-	<LI><A HREF="#Slashcodecom">Slashcode</A>
+	<LI><A HREF="#Slashcodecom">Slashcode.com</A>
 		<UL>	<LI><A HREF="#Slashcodecom0">What is Slash?</A></LI>
 	<LI><A HREF="#Slashcodecom1">Is this the same code that runs Slashdot?</A></LI>
 	<LI><A HREF="#Slashcodecom2">What other sites use Slash?</A></LI>
@@ -81,7 +96,7 @@ you are using an old version, please upgrade.
 	</LI>
 </UL>
 
-<H2><A NAME="Slashcodecom">Slashcode</A></H2>
+<H2><A NAME="Slashcodecom">Slashcode.com</A></H2>
 
 <H3><A NAME="Slashcodecom0">What is Slash?</A></H3>
 
@@ -107,9 +122,9 @@ porting Slashdot to Slash 2.0 (which will result in Slash 2.2).
 <H3><A NAME="Slashcodecom2">What other sites use Slash?</A></H3>
 
 <P>
-Well, Slashcode is one.  Look at the <A HREF="/sites.shtml">list of Slash sites we know about</A>
+Well, Slashcode is one.  Look at the <A HREF="http://slashcode.com/sites.shtml">list of Slash sites we know about</A>
 (including sites that host other Slash sites),
-and please <A HREF="/submit.pl?tid=slashsites&section=yass">tell us</A> about any other sites
+and please <A HREF="http://slashcode.com/submit.pl?tid=slashsites&section=yass">tell us</A> about any other sites
 we don't know about.
 </P>
 
@@ -117,7 +132,7 @@ we don't know about.
 <H3><A NAME="Slashcodecom3">Can I really use this code on my own site?  For free?</A></H3>
 
 <P>
-Yes.  Did you <A HREF="/docs/COPYING">read the license</A>?
+Yes.  Did you <A HREF="http://slashcode.com/docs/COPYING">read the license</A>?
 </P>
 
 
@@ -160,7 +175,7 @@ and other Slashdot authors Clifton Wood (Cliff) and Jamie McCarthy (jamie)
 put in a lot of time on it.  Of course, there is plenty of additional help
 given by the users of the code and the various sites, other OSDN
 programmers and sysadmins, etc.  Thanks!
-See the <A HREF="/authors.pl">authors</A> page for some more information.
+See the <A HREF="http://slashcode.com/authors.pl">authors</A> page for some more information.
 </P>
 
 
@@ -291,7 +306,7 @@ templates.
 Because we like Perl.  And no, Perl is not slow.  If you think it is, well,
 you are entitiled to your opinion, and we've heard it all before.  However,
 you are free to use whatever programs and languages you like, and we even
-have a <A HREF="/slashalikes.shtml">list of other systems and ports of
+have a <A HREF="http://slashcode.com/slashalikes.shtml">list of other systems and ports of
 Slash</A> that you can choose from.  Enjoy!
 </P>
 
@@ -438,6 +453,6 @@ information on how to contact us.  And thank you!
 
 
 
-<P><EM>Last updated Mon Mar  5 19:16:35 2001 GMT</EM></P>
+<P><EM>Last updated Tue Mar  6 18:31:57 2001 GMT</EM></P>
 
 <!--#include virtual="/slashfoot.inc"-->
