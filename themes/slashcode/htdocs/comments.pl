@@ -612,7 +612,7 @@ sub previewForm {
 		'time'		=> $slashdb->getTime(),
 		subject		=> $tempSubject,
 		comment		=> $tempComment,
-		sig				=> $user->{sig},
+		sig		=> $user->{sig},
 	};
 
 	my $tm = $user->{mode};
