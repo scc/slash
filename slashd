@@ -365,7 +365,7 @@ sub openBackend {
 	newrdf();
 	newwml();
 	my $sections = $slashdb->getSections('section');
-	for (@$sections)
+	for (@$sections) {
 		my($section) = @$_;
 		newxml($section);
 		newrdf($section);

@@ -30,13 +30,13 @@ $answers{basedomain} = $junk;
 print "Loading other defaults now.\n";
 print "Good to go\n";
 $answers{anonymous_coward_uid} = '-1';
-$answers{adminmail} = 'admin@example.com';
-$answers{mailfrom} = 'reply-to@example.com';
+$answers{adminmail} = 'patg@andover.net';
+$answers{mailfrom} = 'reply-to@andover.net';
 $answers{siteowner} = 'slash';
 $answers{cookiedomain} =  ''; 
 $answers{siteadmin} = 'admin';
-$answers{siteadmin_name} = 'Slash Admin';
-$answers{smtp_server} = 'smtp.example.com';
+$answers{siteadmin_name} = 'CaptTofu';
+$answers{smtp_server} = 'veda.andover.net';
 $answers{sitename} =  'Slash Site';
 $answers{slogan} = 'Slashdot Like Automated Storytelling Homepage';
 $answers{breaking} = 100;
@@ -98,6 +98,6 @@ $answers{m2_maxbonus}   = int $answers{goodkarma} / 2;
 while (my ($key, $value) = each %answers) {
 	print "Key $key\n";
 	print "Value $value\n\n";
-	$slashdb->newVar($key, $value, "Not documented");
+#	$slashdb->newVar($key, $value, "Not documented");
 #	$slashdb->sqlInsert('vars', {name => $key, value => $slashdb->{dbh}->quote($value)}));
 }
