@@ -28,7 +28,6 @@ Unless otherwise noted, they are publically available functions.
 use strict;  # ha ha ha ha ha!
 use Apache;
 use Apache::SIG ();
-use CGI ();
 use CGI::Cookie;
 use DBI;
 use Data::Dumper;  # the debuggerer's best friend
@@ -781,14 +780,12 @@ The 'html-redirect' template block.
 sub redirect {
 	my($url) = @_;
 	$url = url2abs($url);
+	my $r = Apache->request;
 
-	my %params = (
-		-type		=> 'text/html',
-		-status		=> '302 Moved',
-		-location	=> $url
-	);
-
-	print CGI::header(%params);
+	$r->content_type('text/html');
+	$r->header_out(Location => $url);
+	$r->status(302);
+	$r->send_http_header;
 	slashDisplay('html-redirect', { url => $url });
 }
 
@@ -846,15 +843,18 @@ sub header {
 	$title ||= '';
 
 	unless ($form->{ssi}) {
-		my %params = (
-			-cache_control => 'private',
-			-type => 'text/html'
-		);
-		$params{-status} = $status if $status;
-		$params{-pragma} = 'no-cache'
-			unless $user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/;
+		my $r = Apache->request;
+# This is here as a reminder -Brian
+#		$params{-status} = $status if $status;
 
-		print CGI::header(%params);
+		unless($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
+			$r->header_out('Cache-Control', 'no-cache')
+		} else {
+			$r->header_out('Cache-Control', 'private')
+		}
+
+		$r->content_type('text/html');
+		$r->send_http_header;
 	}
 
 	$constants->{userMode} = $user->{currentMode} eq 'flat' ? '_F' : '';
