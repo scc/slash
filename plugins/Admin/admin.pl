@@ -34,7 +34,6 @@ sub main {
 	}
 
 	# "backSlash" needs to be in a template or something -- pudge
-	my $slashdb = getCurrentDB();
 	my $gmt_now_secs = UnixDate(ParseDate($slashdb->getTime()), "%s");
 	my $gmt_ts = UnixDate("epoch $gmt_now_secs", "%T");
 	my $local_ts = UnixDate("epoch ".($gmt_now_secs + $user->{off_set}), "%T");
@@ -959,7 +958,7 @@ sub editStory {
 
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 	
-	my $extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
+	$extracolumns = $slashdb->getKeys($storyref->{section}) || [ ];
 	if ($form->{title}) { 
 		$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
