@@ -28,7 +28,6 @@ Unless otherwise noted, they are publically available functions.
 =cut
 
 use strict;
-use Apache;
 use Apache::ModuleConfig;
 use Compress::Zlib;
 use Date::Manip;
@@ -2685,8 +2684,7 @@ sub prepareUser {
 	$cookies ||= {};
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
-	my $r = Apache->request;
- 	my $hostip = $r->connection->remote_ip; 
+ 	my $hostip = $ENV{REMOTE_ADDR}; 
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
