@@ -931,6 +931,7 @@ sub createUser {
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
 		'emaildisplay'		=> 2,
+		'created_on'		=> scalar localtime(),
 	});
 
 	return $uid;
@@ -2406,7 +2407,7 @@ sub getComments {
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
-	$self->sqlSelect("uid,pid,subject,points,reason",
+	$self->sqlSelect("uid,pid,subject,points,reason,host_name",
 		$table, "cid=$cid and sid=$sid"
 	);
 }
