@@ -1,18 +1,30 @@
 #!/usr/bin/perl -w
-use DBI;
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
 use strict;
 use Getopt::Std;
-use Digest::MD5 'md5_hex';
-use vars qw(%dbh %my_conf);
+use File::Basename;
 
-$0 =~ /([^\/]+)$/;
-my $PROGNAME = $1;
+(my $PROGNAME) = basename($0);
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('PsdoupUPH?hv', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+
+use DBI;
+use Digest::MD5 'md5_hex';
+use vars qw(%my_conf);
 
 # Handle possibility of unexpected interruption.
 $SIG{INT} = sub { die "Interrupted.\n"; };
 
-my(%opts, %aidCache);
-getopt('PsdoupUPH?h', \%opts);
+my(%aidCache);
 # Show usage under the necessary conditions.
 usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
 			($opts{s} && ($opts{U} || $opts{H}));
@@ -35,6 +47,7 @@ usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
 		}
 	} until $b eq 'P';
 }
+
 # Perform sensible tilde expansion.
 my(@fileopts) = qw[P d s o];
 map {
@@ -149,7 +162,8 @@ END {
 	}
 };
 
-# %%%%% SUBROUTINE DEFINITIONS %%%%%
+
+
 
 sub tempDBname {
 	my $size = shift || 6;
@@ -395,7 +409,7 @@ sub usage {
 
 	print <<EOT;
 
-usage: $PROGNAME {-PsdoupUPH?h}
+usage: $PROGNAME {-PsdoupUPH?hv}
 
 	-P Prefix for Slash install 		[default: /usr/local/slash]
 	-d Location of source MySQL dump	[default: ./site.dump]
@@ -411,7 +425,8 @@ usage: $PROGNAME {-PsdoupUPH?h}
 
 	-H Database hostname
 
-	-? Displays this help screen (also -h)
+	-h Displays this help screen (also -?)
+	-v Displays version information.
 
 Notes: 
 	User given in slashdotrc.pl should have global CREATE/DROP priviledges
@@ -428,4 +443,16 @@ EOT
 	exit 0;
 }
 
-0;
+
+sub version {
+	print <<EOT;
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+EOT
+	exit;
+}
+
+__END__

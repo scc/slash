@@ -89,6 +89,7 @@ install: slash plugins
 
 
 	# Now for the default theme (be nice when this goes in themes)
+	(cd plugins; make clean)
 	$(CP) -r plugins/* $(SLASH_PREFIX)/plugins/
 	# Now all other themes
 	$(CP) -r themes/* $(SLASH_PREFIX)/themes

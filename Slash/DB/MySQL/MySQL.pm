@@ -1513,7 +1513,8 @@ sub checkForMetaModerator {
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
 	my($tuid) = $self->sqlSelect('count(*)', 'users');
-	return if $user->{uid} > $tuid * getVar('m2_userpercentage', 'value');
+	return if $user->{uid} >
+		  $tuid * $self->getVar('m2_userpercentage', 'value');
 	# what to do with I hash here?
 	return 1;  # OK to M2
 }

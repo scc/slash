@@ -52,6 +52,11 @@ __template__
 		today's stories at maximum.<BR>
 		<INPUT TYPE="TEXT" NAME="maxstories" SIZE="3" VALUE="[% user_edit.maxstories %]">
 
+		<P><INPUT TYPE="CHECKBOX" NAME="willing"[% w_check %]>
+        	<B>Willing to Moderate</B> By default all users are willing to
+	        <A HREF="[% constants.rootdir %]/moderation.shtml">
+		Moderate</A>. Uncheck this if you aren't interested.
+
 		[% tilde_ed %]
 
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="savehome">
