@@ -268,7 +268,8 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
-	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
+	# /my/ or /my can match, but not /mything
+	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my (?: /(.*) | /? ) $]x)) {
 		my $match = $1;
 		if ($r->header_in('Cookie') =~ $USER_MATCH) {
 			my($toss, $op) = split /\//, $match, 3;

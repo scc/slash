@@ -32,6 +32,12 @@ __template__
 
 [% PROCESS titlebar title = "$constants.sitename Story Submissions" %]
 
+[% IF constants.submiss_view %]
+<P><B>
+	<A HREF="[% env.script_name %]?op=list">View Current Pending Submissions</A>
+</B></P>
+[% END %]
+
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 [% IF form.formkey %]
 <INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
