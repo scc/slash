@@ -564,6 +564,7 @@ sub pollbooth {
 	my $constants = getCurrentStatic();
 
 	$qid = $slashdb->getVar('currentqid', 'value') unless $qid;
+	return "" if $qid eq "";
 	my $sect = getCurrentUser('currentSection');
 	my $polls = $slashdb->getPoll($qid);
 
