@@ -45,7 +45,10 @@ Subnet [% id %],  [% edit.subnetid %] has posted [% commentstruct.size %] commen
 		label    = comment.disc_title;
 	END %]
 <B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">[% comment.subj %]</A>
-posted on [% comment.cdate %] (Score:[% comment.pts %][% replies %])
+posted
+[% IF comment.uid %] by uid
+<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;userfield_flag=uid&amp;userfield=[% comment.uid %]">[% comment.uid %]</A>[% END %]
+on [% comment.cdate %] (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
            <BR>attached to <A HREF="[% comment.url %]">[% label %]</A>
       </FONT><BR>

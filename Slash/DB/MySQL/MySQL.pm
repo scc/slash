@@ -1034,27 +1034,15 @@ sub getCommentsByUID {
 }
 
 #################################################################
-sub getCommentsByNetID {
+sub getCommentsByNetOrSubnetID {
 	my($self, $id, $min) = @_;
 
-	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM comments WHERE ipid='$id' "
-			. " ORDER BY date DESC LIMIT $min ";
-
-	my $sth = $self->{_dbh}->prepare($sqlquery);
-	$sth->execute;
-	my($comments) = $sth->fetchall_arrayref;
-	formatDate($comments, 4);
-	return $comments;
-}
-
-#################################################################
-sub getCommentsBySubnetID{
-	my($self, $subnetid, $min) = @_;
-
-	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM comments WHERE subnetid='$subnetid' "
-			. " ORDER BY date DESC LIMIT $min ";
+	my $sqlquery = <<EOT;
+SELECT pid,sid,cid,subject,date,points,uid
+FROM comments
+WHERE ipid='$id' or subnetid='$id'
+ORDER BY date DESC LIMIT $min
+EOT
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;

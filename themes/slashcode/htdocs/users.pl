@@ -578,19 +578,10 @@ sub showInfo {
 		
 		$admin_block = getUserAdmin($netid, $fieldkey, 1, 0) if $admin_flag;
 
-		$commentcount = ($requested_user->{ipid} || $requested_user->{md5id}) ?
-			$slashdb->countCommentsByIPID($netid) :
-			$slashdb->countCommentsBySubnetID($netid);
-
-		if ($commentcount) {
-			$comments = ($requested_user->{ipid} || $requested_user->{md5id}) ?
-				$slashdb->getCommentsByNetID(
-					$netid, $constants->{user_comment_display_default}
-				) :
-				$slashdb->getCommentsBySubnetID(
-					$netid, $constants->{user_comment_display_default}
-				);
-		}
+		$comments = $slashdb->getCommentsByNetOrSubnetID(
+			$netid, $constants->{user_comment_display_default}
+		);
+		$commentcount = scalar(@$comments);
 
 	} else {
 		$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
@@ -604,7 +595,8 @@ sub showInfo {
 	}
 
 	for (@$comments) {
-		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
+		my($pid, $sid, $cid, $subj, $cdate, $pts, $uid) = @$_;
+		$uid ||= 0;
 
 		my $type;
 		# This works since $sid is numeric.
@@ -634,6 +626,7 @@ sub showInfo {
 			subj		=> $subj,
 			cdate		=> $cdate,
 			pts		=> $pts,
+			uid		=> $uid,
 			replies		=> $replies,
 		};
 	}
@@ -1727,7 +1720,7 @@ sub getUserAdmin {
 	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{md5id} = $id;
-		$uidlist = $slashdb->getUIDList('md5id', ($user_edit->{md5id}));
+		$uidlist = $slashdb->getUIDList('md5id', $user_edit->{md5id});
 
 	} elsif ($field eq 'ipid') {
 		$user_edit->{nonuid} = 1;
