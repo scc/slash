@@ -224,7 +224,7 @@ sub main {
 	if (verbosity() >= 2) {
 		my $duration = sprintf("%.2f", Time::HiRes::time - $start_time);
 		slashdLog("$task_name returned with: $rc\n") 
-			if $rc && vebosity() >= 3;
+			if $rc && verbosity() >= 3;
 		slashdLog("$task_name end (ran in ${duration}s)");
 	}
 }
