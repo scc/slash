@@ -963,8 +963,7 @@ sub deleteSubmission {
 			}
 		} else {
 			my $key = $n;
-			print "$key " if $self->sqlUpdate(
-				"submissions", { del => 1 }, "subid='$key'"
+			$self->sqlUpdate("submissions", { del => 1 }, "subid='$key'"
 			) && $self->sqlUpdate("authors",
 				{ -deletedsubmissions => 'deletedsubmissions+1' },
 				"aid='$aid'"
@@ -1053,7 +1052,6 @@ sub saveBlock {
 
 	my $form = getCurrentForm();
 	if ($form->{save_new} && $rows > 0) {
-		print qq[<P><B>This block, $bid, already exists! <BR>Hit the "back" button, and try another bid (look at the blocks pulldown to see if you are using an existing one.)</P>]; 
 		return $rows;
 	}	
 
@@ -2351,6 +2349,7 @@ sub getSlashConf {
 		badkarma	
 		basedir
 		basedomain
+		block_expire
 		breaking
 		comment_maxscore	
 		comment_minscore	
@@ -2648,6 +2647,7 @@ sub getPollQuestion {
 
 ########################################################
 sub getBlock {
+	_genericCacheRefresh($self, 'blocks', getCurrentStatic('block_expire'));
 	my $answer = _genericGetCache('blocks', 'bid', @_);
 	return $answer;
 }
@@ -2857,13 +2857,6 @@ sub _genericGetCache {
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
 
-	########################################
-	# Debug stuff:
-	my $DEBUG = 1;
-	my $DEBUG_TABLE = 'stories';
-	########################################
-	print STDERR "_genericGetCache: $table:$id cache hit($self->{$table_cache}{$id})\n"
-		if ($self->{$table_cache}{$id} and $DEBUG and $table eq $DEBUG_TABLE);
 	my $type;
 	if (ref($values) eq 'ARRAY') {
 		$type = 0;
@@ -2878,8 +2871,6 @@ sub _genericGetCache {
 		return $self->{$table_cache}->{$id} 
 			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
 	}
-	print STDERR "_genericGetCache: $table:$id was not found in cache\n"
-		if ($DEBUG and $table eq $DEBUG_TABLE);
 	# Lets go knock on the door of the database
 	# and grab the data's since it is not cached
 	# On a side note, I hate grabbing "*" from a database
@@ -2887,8 +2878,6 @@ sub _genericGetCache {
 	$self->{$table_cache}->{$id} = {};
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
 	$self->{$table_cache}->{$id} = $answer;
-	print STDERR "_genericGetCache: $table:$id now has $self->{$table_cache}{$id}\n"
-		if ($DEBUG and $table eq $DEBUG_TABLE);
 
 	$self->{$table_cache_time} = time();
 

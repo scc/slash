@@ -36,7 +36,7 @@ my $slashdb = Slash::DB->new('slash');
 
 sub moderatordLog {
 	local *LOG;
-	my $dir = "$I{datadir}/logs";
+	my $dir = "$I{logdir}";
 	open LOG, ">>$dir/moderatord.log"
 		or die "Can't append to $dir/moderatord.log: $!";
 	print LOG localtime() . "\t", join("\t", @_), "\n";

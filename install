@@ -1,0 +1,115 @@
+#!/usr/bin/perl -w 
+use strict;
+use DBIx::Password;
+
+# This is the uber install script.
+# -Brian (brian@tangent.org)
+
+
+my ($user, $dbh, @create, $sql, @sql, $hostname, @directories, @binaries);
+unless ($ARGV[0]) {
+	print "You need to give us a DBIx::Password virtual name\n";
+	exit 0;
+}
+
+$user = $ARGV[0];
+
+eval { require Slash::DB; };
+
+if($@) {
+	print "Woa, you need to cd into Slash and type:\n";
+	print "\tperl Makefile.PL\n";
+	print "\tmake install\n";
+	print "\nThen rerun this script.\n";
+}
+
+$dbh = DBIx::Password->connect($user);
+
+unless($dbh) {
+	print "The virtual user \"$user\" doesn't exist.\n";
+}
+
+open(CREATE, "<sql/mysql/slashschema_create.sql");
+
+while(<CREATE>) {
+	chomp;
+	next if /^#/;
+	next if /^$/;
+	next if /^ $/;
+	push @create, $_;
+}
+close (CREATE);
+
+$sql = join '', @create;
+@sql = split /;/, $sql;
+
+
+
+print "What is name of your slashsite (aka www.slashdot.org)?\n";
+$hostname = <STDIN>;
+chomp($hostname);
+
+open(DUMP,"<./sql/mysql/slashdata_dump.sql") or die "can't locate slashdata_dump.sql! Where is it?";
+
+while(<DUMP>) {
+	next unless /^INSERT/;
+	chomp;
+	s/(?:www\.)?example\.com/$hostname/g;
+	push @sql, $_;
+}
+close(DUMP);
+
+open(DUMP,"<./sql/mysql/slashdata_prep.sql") or die "can't locate slashdata_prep.sql! Where is it?";
+
+while(<DUMP>) {
+	chomp;
+	push @sql, $_;
+}
+close(DUMP);
+
+for(@sql) {
+	next unless $_;
+	$dbh->do($_);
+}
+
+
+
+@directories = qw (
+		/usr/local/slash
+		/usr/local/slash/backups
+		/usr/local/slash/bin
+		/usr/local/slash/log
+);
+push @directories, "/usr/local/slash/$hostname";
+push @directories, "/usr/local/slash/log/$hostname";
+
+print "Ok, done with database install \n";
+print "Now, lets make us some directories\n";
+for(@directories) {
+	next if -d $_;
+	system("mkdir $_");
+}
+
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/log/$hostname' WHERE name = 'logdir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$hostname' WHERE name = 'basedir' ");
+
+@binaries = qw (
+	slashd
+	portald
+	moderatord
+	dailyStuff
+);
+
+for(@binaries) {
+	next if -f "/usr/local/slash/bin/$_";
+	system("cp $_ /usr/local/slash/bin/$_");
+}
+
+# Yes, this will blow up on anything not using GNU cp
+# AND yes we should do this in perl. But it is late
+# and I am feeling like just making this work at
+# the moment. <thpthtphpt>
+# -Brian
+system("cp -r public_html/* /usr/local/slash/slash.tangent.org/");
+
+$dbh->disconnect;

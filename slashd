@@ -51,15 +51,15 @@ sub END { Carp::cluck("why am I here?") }
 
 sub slashdPid {
 	local *PID;
-	open PID,">$I->{datadir}/logs/slashd.pid"
-		or die "Can't open $I->{datadir}/logs/slashd.pid: $!";
+	open PID,">$I->{logdir}/slashd.pid"
+		or die "Can't open $I->{logdir}/slashd.pid: $!";
 	print PID $$;
 	close PID;
 }
 
 sub slashdLog {
 	local *LOG;
-	my $dir = "$I->{datadir}/logs";
+	my $dir = "$I->{logdir}";
 	open LOG, ">>$dir/slashd.log"
 		or die "Can't append to $dir/slashd.log: $!";
 	print LOG localtime() . "\t", join("\t", @_), "\n";
@@ -458,9 +458,9 @@ sub writePollBooth {
 main();
 
 sub main {
-	mkpath "$I->{datadir}/logs/", 0, 0755;
-	open STDERR, ">> $I->{datadir}/logs/slashd.log"
-		or die "Can't open STDERR to $I->{datadir}/logs/slashd.log: $!";
+	mkpath "$I->{logdir}/", 0, 0755;
+	open STDERR, ">> $I->{logdir}/slashd.log"
+		or die "Can't open STDERR to $I->{logdir}/slashd.log: $!";
 
 	slashdPid();
 	slashdLog("Starting up Slashd with pid $$");

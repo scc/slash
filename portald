@@ -51,20 +51,20 @@ my ($constants, $slashdb) = createEnvironment($virtual_user);
 my $totalChangedStories = 1;
 
 sub makeTmp {
-	if (-f "$constants->{datadir}/logs/portald.pid") {
-		my $log = `tail -n 3 $constants->{datadir}/logs/portald.log`;
+	if (-f "$constants->{logdir}/portald.pid") {
+		my $log = `tail -n 3 $constants->{logdir}/portald.log`;
 		#sendEmail($siteadmin,'portal - frickin - d',"Portald has failed. You may want to fix it in the near future. Here are the last 3 lines of the log:\n$log");
 	} else {
-		open LOCK, "> $constants->{datadir}/logs/portald.pid"
-			or die "Can't open $constants->{datadir}/logs/portald.pid: $!";
+		open LOCK, "> $constants->{logdir}/portald.pid"
+			or die "Can't open $constants->{logdir}/portald.pid: $!";
 		print LOCK "$$";
 		close LOCK;
 	}
 }
 
 sub deleteTmp {
-	unlink "$constants->{datadir}/logs/portald.pid"
-		or warn "Can't unlink $constants->{datadir}/logs/portald.pid: $!";
+	unlink "$constants->{logdir}/portald.pid"
+		or warn "Can't unlink $constants->{logdir}/portald.pid: $!";
 }
 
 ################################################################################
@@ -148,7 +148,7 @@ sub getSlashdotPoll {
 
 #################################################################
 sub portaldLog {
-	my $dir = "$constants->{datadir}/logs";
+	my $dir = "$constants->{logdir}";
 	unless (-e $dir) {
 		mkdir $dir, 0755 or die "Can't mkdir $dir: $!";
 	}

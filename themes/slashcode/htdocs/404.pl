@@ -27,6 +27,7 @@ use strict;
 use lib '../';
 use vars '%I';
 use Slash;
+use Slash::Utility;
 
 sub main {
 	*I = getSlashConf();

@@ -47,8 +47,6 @@ sub sqlSelect {
 	$self->sqlConnect();
 	if (!$sth->execute) {
 		apacheLog($sql);
-		# print "\n<P><B>SQL Error</B><BR>\n";
-		# kill 9,$$;
 		return undef;
 	}
 	my @r = $sth->fetchrow;
@@ -114,7 +112,6 @@ sub sqlSelectHashref {
 	unless ($sth->execute) {
 		apacheLog($sql);
 		return;
-		#kill 9,$$;
 	} 
 	my $H = $sth->fetchrow_hashref;
 	$sth->finish;
@@ -212,7 +209,7 @@ sub sqlInsert {
 
 	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or apacheLog($sql) && kill 9, $$;
+	return $self->{dbh}->do($sql) or apacheLog($sql);
 }
 
 ########################################################
