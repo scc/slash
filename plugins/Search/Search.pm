@@ -6,6 +6,7 @@
 package Slash::Search;
 
 use strict;
+use Slash::Utility;
 use Slash::DB::Utility;
 use vars qw($VERSION);
 use base 'Slash::DB::Utility';
@@ -138,14 +139,14 @@ sub findStory {
 	$start ||= 0;
 
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $columns = "nickname, title, $story_table.sid as sid, time, commentcount, section";
+	my $columns = "nickname, $story_table.title, $story_table.sid as sid, time, commentcount, section";
 	my $tables = "$story_table, story_text, users, discussions";
 	my $other = " ORDER BY time DESC";
 	$other .= " LIMIT $start, $limit" if $limit;
 
 	# The big old searching WHERE clause, fear it
-	my $key = $self->_keysearch($form->{query}, ['title', 'introtext']);
-	my $where = "$story_table.sid = story_text.sid AND $story_table.uid = users.uid";
+	my $key = $self->_keysearch($form->{query}, ["$story_table.title", 'introtext']);
+	my $where = "$story_table.sid = story_text.sid AND $story_table.sid=discussions.sid AND $story_table.uid = users.uid ";
 	$where .= " AND $key" if $form->{query};
 	if ($form->{section}) { 
 		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";
@@ -153,7 +154,7 @@ sub findStory {
 	} else {
 		$where .= " AND displaystatus >= 0";
 	}
-	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', flags) ";
+	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', $story_table.flags) ";
 	$where .= " AND $story_table.uid=" . $self->sqlQuote($form->{author})
 		if $form->{author};
 	$where .= " AND section=" . $self->sqlQuote($form->{section})
