@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..1\n"; }
+BEGIN { $| = 1; print "1..2\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Slash::DB;
 $loaded = 1;
@@ -19,8 +19,12 @@ $loaded = 1;
 
 my $object = new Slash::DB('slash');
 $object->sqlConnect();
-my $tpid = 'html-header';
+print "ok 1\n";
 
 ########################################################################
-my $template = $object->getTemplate($tpid,'','','html');
-print "ok 1\n";
+$object->createTemplate({ name => 'bee;zle', template => 'My monkey fried'});
+print "ok 2\n";
+$object->createTemplate({ name => 'beezle', template => 'My monkey fried'});
+print "ok 3\n";
+my $tpid =  $object->getTemplateByName('beezle', 'tpid');
+$object->setTemplate($tpid, { section => 'bee;zle', template => 'My monkey fried too'});

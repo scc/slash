@@ -253,7 +253,7 @@ sub errorLog {
 	}
 	print STDERR ("Error in library:$package:$filename:$line:@_\n");
 	($package, $filename, $line) = caller(2);
-	print STDERR ("Which was called by:$package:$filename:$line:@_\n");
+	print STDERR ("Which was called by:$package:$filename:$line:@_\n") if $package;
 
 	return 0;
 }

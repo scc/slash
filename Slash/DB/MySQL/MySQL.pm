@@ -762,6 +762,13 @@ sub setDiscussion {
 
 ########################################################
 sub setTemplate {
+	for(qw| page name section |) {
+		next unless $_[2]->{$_};
+		if ($_[2]->{$_} =~ /;/) {
+			errorLog("A semicolon was found in the $_ while trying to update a template");
+			return;
+		}
+	}
 	_genericSet('templates', 'tpid', '', @_);
 }
 
@@ -3013,6 +3020,13 @@ sub createBlock {
 ########################################################
 sub createTemplate {
 	my($self, $hash) = @_;
+	for(qw| page name section |) {
+		next unless $hash->{$_};
+		if ($hash->{$_} =~ /;/) {
+			errorLog("A semicolon was found in the $_ while trying to create a template");
+			return;
+		}
+	}
 	$self->sqlInsert('templates', $hash);
 }
 
