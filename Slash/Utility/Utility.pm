@@ -2537,6 +2537,12 @@ sub createEnvironment {
 
 	$ENV{SLASH_USER} = $constants->{anonymous_coward_uid};
 	my $user = prepareUser($constants->{anonymous_coward_uid}, $form, $0);
+
+	my $timezones = $slashdb->getDescriptions('tzcodes');
+	$user->{off_set} = $timezones->{ $user->{tzcode} };
+	my $dateformats = $slashdb->getDescriptions('datecodes');
+	$user->{'format'} = $dateformats->{ $user->{dfid} };
+
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 }
