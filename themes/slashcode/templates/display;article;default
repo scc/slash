@@ -110,7 +110,7 @@ IF user.is_admin;
 	center		= 1;
 END %]
  
-</TD></TR><TR><TD COLSPAN="3">
+</TD></TR><TR><TD COLSPAN="4">
 
 [% BLOCK nextStory;
 	IF !s;
