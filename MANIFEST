@@ -129,6 +129,7 @@ bin/bitchslap
 bin/chkuser
 bin/install-plugin
 bin/install-slashsite
+bin/install-theme
 bin/modslap
 bin/reload_armor
 bin/runtask
@@ -358,7 +359,6 @@ themes/slashcode/tasks/new_motd.pl
 themes/slashcode/tasks/open_backend.pl
 themes/slashcode/tasks/p2f_hof_topics.pl
 themes/slashcode/tasks/refresh_authors_cache.pl
-themes/slashcode/tasks/refresh_sectionindex.pl
 themes/slashcode/tasks/run_moderatord.pl
 themes/slashcode/tasks/run_portald.pl
 themes/slashcode/tasks/set_recent_topics.pl
@@ -396,6 +396,7 @@ themes/slashcode/templates/displayThread;misc;default
 themes/slashcode/templates/editComm;users;default
 themes/slashcode/templates/editHome;users;default
 themes/slashcode/templates/editKey;users;default
+themes/slashcode/templates/editMiscOpts;users;default
 themes/slashcode/templates/editSection;sections;default
 themes/slashcode/templates/editUser;users;default
 themes/slashcode/templates/edit_comment;comments;default

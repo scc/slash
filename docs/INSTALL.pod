@@ -408,6 +408,9 @@ data or functionality.>
 
 =head2 Slash 2.0 -> Slash 2.2
 
+Slash 2.2 is a major upgrade from Slash 2.0.  It takes a little bit
+of work to get it going.
+
 =over 4
 
 =item 1.

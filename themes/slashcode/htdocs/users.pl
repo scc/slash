@@ -1407,7 +1407,8 @@ sub saveUser {
 	}
 
 	my($err_message);
-	if (! filterOk('comments', 'postersubj', $bio, \$err_message)) {
+	# really, comment filters should ignore short length IMO ... oh well.
+	if (length($bio) > 1 && ! filterOk('comments', 'postersubj', $bio, \$err_message)) {
 		print getError('filter message', {
 			err_message	=> $err_message,
 			item		=> 'bio',
