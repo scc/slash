@@ -4,19 +4,27 @@
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
-# Proper comments will be added later.
-
 use strict;
+use File::Basename;
+use FindBin '$Bin';
 use Getopt::Std;
 use Slash::DB;
+ 
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my(@blocktypes) = ('blocks', 'portald');
 my(%opts);
-getopts('hDd:Tt:b:r:', \%opts);
+usage('Options used incorrectly') unless getopts('hDvu:TM:b:m:', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+
+$opts{'u'} ||= 'slash';
 $"='|';
 my $regexp = '^(' . "@blocktypes" . ')$';
-usage() if $#ARGV < 1 || $opts{h} || ($opts{r} && $opts{t}) ||
-	   ($opts{t} && $opts{t} !~ /$regexp/);
+usage() if	$#ARGV < 1 || $opts{h} || ($opts{m} && $opts{M}) ||
+	   		($opts{M} && $opts{M} !~ /$regexp/);
 
 my($search, $replace) = @ARGV;
 # Catch common errors.
@@ -24,7 +32,8 @@ $opts{r}=~ s/^\*//;
 $search =~ s/^\*//;
 
 my($dbName, $blockName, $debug, $cond, $count, $replaced) =
-	($opts{d} || 'slash', $opts{b}, $opts{D}, '', 0);
+	($opts{u}, $opts{b}, $opts{D}, '', 0);
+my($m_regexp, $m_type) = @opts{qw[m M]};
 
 my $dbobject = new Slash::DB($dbName) ||
 	die "%%%%%% Can't open database on Virtual User $dbName.\n";
@@ -32,12 +41,12 @@ my $dbobject = new Slash::DB($dbName) ||
 $cond = 'bid=' . $dbobject->{dbh}->quote($blockName) if $blockName;
 $cond .= ' type=' . $dbobject->{dbh}->quote($opts{t}) if $opts{t};
 if ($cond !~ /^bid/ && !$opts{T}) {
-	print (!$opts{t} ? <<EOGT:<<EOTT);
+	print (!$m_type ? <<EOGT:<<EOTT);
 %%%%%% You are about to perform a global search and replace on your blocks
 %%%%%% table.
 EOGT
 %%%%%% You are about to perform a global search and replace on all blocks of
-%%%%%% type $opts{t}.
+%%%%%% type $m_type.
 EOTT
 	print <<EOT;
 %%%%%%
@@ -48,16 +57,17 @@ EOT
 	my $response = <STDIN>;
 	die "%%%%%% Cancelled by user.\n" if $response ne 'YES';
 }
-print "%%%%%% Searching for: $search\n%%%%%% Replacing with: $replace\n" if $debug;
+print "%%%%%% Searching for: $search\n%%%%%% Replacing with: $replace\n"
+	if $debug;
 
 my $sth = $dbobject->sqlSelectMany('bid,block', 'blocks', $cond);
 while (my($bid, $block) = $sth->fetchrow_array()) {
-	print "%%%%%% Processing '$bid'\n" if !$opts{b};
+	print "%%%%%% Processing '$bid'\n" if !$blockName;
 	$count++;
 
-	if ($opts{r}) {
-		eval { next if $bid !~ /$opts{r}/ } ;
-		die "Invalid block regexp '$opts{r}'!\n" if $@;
+	if ($m_regexp) {
+		eval { next if $bid !~ /$m_regexp/ } ;
+		die "Invalid block regexp '$m_regexp'!\n" if $@;
 		print "%%%%%% -- Matched\n" if $debug;
 	}
 	my $replace_cond = 'bid='.$dbobject->{dbh}->quote($bid);
@@ -92,15 +102,19 @@ print "%%%%%% $count blocks processed, $replaced blocks substituted.\n";
 
 sub usage {
 	local $" = "\n\t\t";
+
 	print <<EOT;
-$0: [-b <block>|-r <regexp>] [-t <type>] [-d <DBVirtualUser>] [-Dh] <s> <r>
+
+$PROGNAME: [-b <block>|-m <regexp>] [-M <type>] [-u <DBVirtualUser>] [-Dhv] <s> <r>
    -b	Block on which we perform operation.
-   -r	Perform operation on blockname matching <regexp> [can't use with -t]
-   -t 	Specify Block Type [can't use with -r]
-   -d	Specify Database Virtual User (default: slash) [can't use with -t].
+   -m	Perform operation on blockname matching <regexp> [do not use with -M]
+   -M 	Specify Block Type [do not use with -m]
+   -u	Specify Database Virtual User (default: slash) [do not use with -M].
    -D	Display debugging information.
    -T	Test mode (does not actually perform replace)
+   
    -h	Shows this screen.
+   -v	Shows program version.
 
 	<s>	Search expression
 	<r>	Replacement expression
@@ -111,3 +125,19 @@ EOT
 
 	exit 1;
 }
+
+
+sub version {
+print <<EOT;
+ 
+$PROGNAME $VERSION
+ 
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+ 
+EOT
+exit;
+}
+
+__END__

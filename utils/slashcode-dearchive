@@ -1,11 +1,34 @@
 #!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
 
 use strict;
-
+use File::Basename;
+use FindBin '$Bin';
+use Getopt::Std;
 use Slash::DB;
 use Slash::DB::Utility;
-use Getopt::Std;
 use Date::Manip;
+
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly')
+	unless getopts('u:I:f:y:E:N:CDV?hv', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+usage("Must specify both -f and -u!") if !$opts{f} || !$opts{u};
+version() if $opts{'v'};
+
+my($virtuser, $year, $infile, $enclosure, $extractor, $sid, $ovrw, $confirm, $debug)=
+	@opts{qw[u y f N E I O C D]};
+$virtuser||= 'slash';
+$year	 ||= UnixDate('now', '%Y');
+
 
 # REGULAR EXPRESSION DEFINITIONS
 
@@ -33,28 +56,17 @@ my %idextractor_regexps = (
 );
 
 
-# Parameter validation.
-my(%opts);
-getopts('d:s:f:y:e:n:CXO', \%opts);
-&usage if !keys(%opts);
-# Optionally use single parameter as virtual username, however specification
-# with -d <virtualuser> will override anything given in @ARGV.
-$opts{d} = $ARGV[-1] if !$opts{d};
-$opts{y} = UnixDate('now', '%Y') if !$opts{y};
-my($confirm, $debug) = ($opts{C}, $opts{X});
-
-&usage if !$opts{f} || !$opts{d};
 
 # Initialize Slash site database object.
-my $slashdb = new Slash::DB($opts{d}) ||
-	die "*** Can't open database on Virtual User $opts{d}.\n";
+my $slashdb = new Slash::DB($virtuser) ||
+	die "*** Can't open database on Virtual User $virtuser.\n";
 
 # Set our timezone and initialize the date routines.
 $ENV{TZ} = 'EST5EDT';
 &Date_Init();
 
 # Globals.
-my($sid, %data);
+my(%data);
 my $ac_uid = $slashdb->getVar('anonymous_coward_uid', 'value');
 my $ac_nickname = $slashdb->getUser($ac_uid, 'nickname');
 
@@ -66,21 +78,21 @@ my $bigscalar;
 do {
 	local $/ = undef;
 
-	open(INPUT, "<$opts{f}");
+	open(INPUT, "<$infile");
 	$bigscalar = <INPUT>;
 	close(INPUT);
 };
 
-# Define parsing vars.
-my ($enclosure, $extractor) = ($opts{n}, $opts{e});
-
-# Determine which enclosure and extractor regular expressions to use for the given file; note
-# that choices for enclosures and/or extractors can be forced by command line options.
+# Determine which enclosure and extractor regular expressions to use for the given
+# file; note that choices for enclosures and/or extractors can be forced by command
+# line options.
 if (!$enclosure || !$extractor) {
 	my @enclosures;
 	push (@enclosures, ($enclosure) ? $enclosure : sort keys %{$enclosure_regexps});
+	$enclosure='';
 	for (@enclosures) {
-		printf STDERR "%s ENCLOSURE '$_'\n", ($opts{e}) ? 'Using':'Trying' if $debug;
+		printf STDERR "%s ENCLOSURE '$_'\n", ($enclosure) ? 'Using':'Trying'
+			if $debug;
 		$enclosure = $_ if $bigscalar =~ /$enclosure_regexps->{$_}->{regexp}/s;
 		next if ! $enclosure;
 		if (! $extractor) {
@@ -107,7 +119,7 @@ die "Can't determine enclosure/extractor pair!\n" if !$enclosure && !$extractor;
 die "Enclosure '$enclosure' matched, but no extractor found!\n" if !$extractor;
 print "Using Enclosure '$enclosure' and Extractor '$extractor'\n";
 
-if (! $opts{s}) {
+if (! $sid) {
 	for (sort keys %idextractor_regexps) {
 		print STDERR "Trying ID EXTRACTOR '$_'..." if $debug;
 		if ($bigscalar =~ /$idextractor_regexps{$_}/s) {
@@ -118,12 +130,11 @@ if (! $opts{s}) {
 	}
 } else {
 	print STDERR 'Using ID ' if $debug;
-	$sid = $opts{s};
 }
 die "\nCan't find ID using any extractor!\n" if !$sid;
 print STDERR "'$sid'\n" if $debug && $sid;
 if ($slashdb->sqlSelect('*', 'comments', 'sid=' . quote($sid))) {
-	if (!$opts{O}) {
+	if (!$ovrw) {
 		print "Data already exists for article '$sid'!!\n";
 		exit 1;
 	} else {
@@ -235,7 +246,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 			# Insure date is set to the correct year based on parameters.
 			# Could manually set this by SID, but SID isn't really 
 			# Y2K compliant...
-			$tsdate = Date_SetDateField($tsdate, 'y', $opts{y});
+			$tsdate = Date_SetDateField($tsdate, 'y', $year);
 
 			if ($tsdate) {
 				$gmt_ts = Date_ConvTZ($tsdate, $tszone, 'GMT');
@@ -343,35 +354,34 @@ sub quote {
 
 
 sub usage {
+	print "*** $_[0]\n" if $_[0];
 	my (@enlist)	= sort keys %{$enclosure_regexps};
 	my (@exlist)	= sort keys %extractor_regexps;
 	my (@idexlist)	= sort keys %idextractor_regexps;
 	local $" = "\t\t";
 	printf <<EOT, "@enlist", "@exlist", "@idexlist";
 
-Usage: slashcode-dearchive -[df] {-ysenCO} <slashsite virtual user>
+Usage: $PROGNAME [options]
 
 	Command line options:
-		-d <virtuser> 
+		-u <virtuser> 
 		-f <filename>
-		-s <discussion ID>
+		-I <discussion ID>
 		-y <year>
-		-n <comment enclosure name>
-		-e <comment extractor name>
+		-N <comment enclosure name>
+		-E <comment extractor name>
 	
 	Command line switches:
 		-C	Confirms all options and provides prompts during 
 			processing operations. Used primarily for debugging.
-		-O	Overwrite any comments for the given discussion ID.
+		-V	Overwrite any comments for the given discussion ID.
+		-D	Debug mode.
 
 Notes:
-	If -d is given, then the virtual user given as the last argument will be
-	ignored.
-
-	If -s is not given, then the program will cycle thru all defined ID
+	If -I is not given, then the program will cycle thru all defined ID
 	extractors in an attempt to find a key suitable for database insertion.
 	If no ID can be found, then the program will quit with an error and the
-	use of -s will be required.
+	use of -I will be required.
 
 Defined comment enclosures:
 	%s
@@ -384,7 +394,23 @@ Defined ID extractors:
 
 EOT
 
-	exit 1;
+	exit;
 
 }
+
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__
 
