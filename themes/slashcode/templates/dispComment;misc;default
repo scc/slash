@@ -48,7 +48,7 @@ __template__
 [% END %]
 [% END %]
 </FONT>
-[% IF user.seclev >= 100 %]
+[% IF user.seclev >= 100 && ipid && subnetid %]
 				<BR><FONT FACE="[% constants.mainfontface %]" SIZE="1">IPID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% ipid %]">[% ipid %]</A>&nbsp;&nbsp;SubnetID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% subnetid %]">[% subnetid %]</A></FONT>
 [% END %]
 			</TD></TR></TABLE></TD>

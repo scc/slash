@@ -1001,7 +1001,7 @@ sub _hard_dispComment {
 	}
 
 	my $ipidinfo_to_display;
-	$ipidinfo_to_display = <<EOT if $user->{seclev} >= 100;
+	$ipidinfo_to_display = <<EOT if $user->{seclev} >= 100 && $comment->{ipid} && $comment->{subnetid};
 <BR><FONT FACE="$constants->{mainfontface}" SIZE=1>IPID:
 <A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}">$comment->{ipid}</A>&nbsp;&nbsp;SubnetID: 
 <A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}">$comment->{subnetid}</A></FONT>
