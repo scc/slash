@@ -49,12 +49,16 @@ use constant LOAD => 3;
 use constant NEXT => 4;
 
 # store names for non-named templates by using text of template as
-# hash key
-my($anon_num, %anon_template);
-sub _get_anon_name {
-	my($text) = @_;
-	return $anon_template{$text} if exists $anon_template{$text};
-	return $anon_template{$text} = 'anon_' . ++$anon_num;
+# hash key; that it is not VirtualHost-specific is not a problem;
+# this just does a name lookup, and the actual template is compiled
+# and stored in the VirtualHosts' template objects
+{
+	my($anon_num, %anon_template);
+	sub _get_anon_name {
+		my($text) = @_;
+		return $anon_template{$text} if exists $anon_template{$text};
+		return $anon_template{$text} = 'anon_' . ++$anon_num;
+	}
 }
 
 sub fetch {
