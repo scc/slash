@@ -21,7 +21,7 @@ CREATE TABLE journal_friends (
 	id int(5) NOT NULL auto_increment,
 	uid int(11) NOT NULL,
 	friend int(11) NOT NULL,
-	unique jackandjill (uid,friend),
+	UNIQUE jackandjill (uid,friend),
 	PRIMARY KEY (id)
 );
 
@@ -29,6 +29,6 @@ DROP TABLE IF EXISTS journal_themes;
 CREATE TABLE journal_themes (
 	id int(5) NOT NULL auto_increment,
 	name varchar(30) NOT NULL,
-	PRIMARY KEY (name),
+	UNIQUE name(name),
 	PRIMARY KEY (id)
 );
