@@ -164,12 +164,10 @@ sub getCurrentUser {
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		$user = $cfg->{'user'};
+		$user = $cfg->{'user'} ||= {};
 	} else {
-		$user = $static_user;
+		$user = $static_user   ||= {};
 	}
-
-	$user ||= {};
 
 	# i think we want to test defined($foo), not just $foo, right?
 	if ($value) {
@@ -1483,12 +1481,10 @@ sub getCurrentCache {
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
 		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		$cache = $cfg->{'cache'};
+		$cache = $cfg->{'cache'} ||= {};
 	} else {
-		$cache = $static_cache;
+		$cache = $static_cache   ||= {};
 	}
-
-	$cache ||= {};
 
 	# i think we want to test defined($foo), not just $foo, right?
 	if ($value) {
