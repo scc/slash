@@ -157,15 +157,52 @@ sub getCodes {
 ########################################################
 # Get user info from the users table.
 sub getUserInfo{
-  my($self, $uid, $passwd) = @_;
+  my($self, $uid, $passwd, $script) = @_;
 	my $user = $self->sqlSelectHashref('*', 'users',
 		' uid = ' . $self->{dbh}->quote($uid) .
 		' AND passwd = ' . $self->{dbh}->quote($passwd)
 	);
+	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
+	while(my ($key, $val) = each %$user_extra) {
+		$user->{$key} = $val;
+	}
+
+	$user->{ keys %$user_extra } = values %$user_extra;
+
+	if (!$script || $script =~ /index|article|comments|metamod|search|pollBooth/) {
+		my $user_extra = $self->sqlSelectHashref('*', "users_comments", "uid=$uid");
+		while(my ($key, $val) = each %$user_extra) {
+			$user->{$key} = $val;
+		}
+	}
+	# Do we want the index stuff?
+	if (!$script || $script =~ /index/) {
+		my $user_extra = $self->sqlSelectHashref('*', "users_index", "uid=$uid");
+		while(my ($key, $val) = each %$user_extra) {
+			$user->{$key} = $val;
+		}
+	}
+
+
+	$user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
+	while(my ($key, $val) = each %$user_extra) {
+		$user->{$key} = $val;
+	}
 
 	return $user;
 }
 
+########################################################
+# Get user info from the users table.
+sub getUserUID{
+  my($self, $name, $passwd) = @_;
+
+	$self->sqlSelect('uid', 'users',
+			'passwd=' . $self->{dbh}->quote($passwd) .
+			' AND nickname=' . $self->{dbh}->quote($name)
+	);
+
+}
 ########################################################
 sub getAC{
 	my ($self) = @_;
@@ -237,18 +274,42 @@ sub updateCommentTotals {
 ########################################################
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
-	sqlSelect('pid', 'comments',
+	$self->sqlSelect('pid', 'comments',
 			"sid='$sid' and cid=$cid");
 }
 
 ########################################################
 # This method will go away when I am finished with the
 # user methods
-sub getCommentPid {
+sub getNicknameByUID {
 	my($self, $uid) = @_;
-	sqlSelect('nickname', 'users', "uid=$uid");
+	$self->sqlSelect('nickname', 'users', "uid=$uid");
 }
 
+########################################################
+sub getBlockBank {
+my ($self, $iHashRef) = @_;
+	return if $iHashRef->{blockBank}{cached};
+	$iHashRef->{blockBank}{cached} = localtime;
+
+	my $sth = $self->sqlSelectMany ('bid,block', 'blocks');
+	while (my($thisbid, $thisblock) = $sth->fetchrow) {
+		$iHashRef->{blockBank}{$thisbid} = $thisblock;
+	}
+	$sth->finish;
+}
+
+########################################################
+sub getSectionBank {
+my ($self, $sectionbank) = @_;
+	unless ($sectionbank) {
+		my $sth = $self->sqlSelectMany('*', 'sections');
+		while (my $S = $sth->fetchrow_hashref) {
+			$sectionbank->{ $S->{section} } = $S;
+		}
+		$sth->finish;
+	}
+}
 1;
 
 =head1 NAME

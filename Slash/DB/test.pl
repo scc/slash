@@ -24,4 +24,9 @@ $object->sqlConnect();
 print "ok 3\n";
 $object->sanityCheck();
 print "ok 4\n";
-print "ok 3\n";
+print "Lets grab some user data\n";
+my $user = $object->getUserInfo('2', 'change', 'index.pl');
+while(my ($key, $val) = each %$user) {
+	print "$key = $val \n";
+}
+print "ok 5\n";

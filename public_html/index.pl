@@ -26,6 +26,7 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::Utility;
 
 #################################################################
 sub main {
@@ -204,6 +205,7 @@ sub displayStories {
 	my($today, $x) = ('', 1);
 	my $cnt = int($I{U}{maxstories} / 3);
 
+	#stackTrace(8);
 	while (my($sid, $thissection, $title, $time, $cc, $d, $hp) = $cursor->fetchrow) {
 		my @threshComments = split m/,/, $hp;
 

@@ -52,7 +52,7 @@ BEGIN {
 		anonLog pollbooth stripByMode header footer pollItem
 		prepEvalBlock prepBlock nukeBlockCache blockCache formLabel
 		titlebar fancybox portalbox printComments displayStory
-		sendEmail getOlderStories selectStories timeCalc getBlockBank
+		sendEmail getOlderStories selectStories timeCalc 
 		getEvalBlock getTopic getAuthor dispStory lockTest getSlashConf
 		getDateFormat dispComment getDateOffset linkComment redirect
 		getFormkey getFormkeyId checkFormkey intervalString
@@ -128,14 +128,14 @@ sub getSlash {
 
 	# This method will go away when I am done building
 	# the different user methods
-	($I{anon_name}) = getNicknameByUID('-1') unless $I{anon_name};
+	($I{anon_name}) = $I{dbobject}->getNicknameByUID('-1') unless $I{anon_name};
 
 	my $op = $I{query}->param('op') || '';
 
 	if (($op eq 'userlogin' || $I{query}->param('rlogin') ) 
 		&& length($I{F}{upasswd}) > 1) {
 
-		$I{U} = $I{dbobject}->getUser(userLogin($I{F}{unickname}, $I{F}{upasswd}));
+		$I{U} = getUser(userLogin($I{F}{unickname}, $I{F}{upasswd}));
 
 	} elsif ($op eq 'userclose' ) {
 		$I{SETCOOKIE} = setCookie('user', ' ');
@@ -159,7 +159,6 @@ sub getSlash {
 # Generic way to convert a table into a drop down list
 sub selectGeneric {
 	my($table, $label, $code, $name, $default, $where, $order, $limit) = @_;
-	my($table, $code, $name, $default, $where, $order, $limit) = @_;
 	$default = '' unless defined $default;
 	$code 	 = '' unless defined $code;
 	
@@ -209,7 +208,7 @@ sub selectTopic {
 # Drop down list of available sections (based on admin seclev)
 sub selectSection {
 	my($name, $section, $SECT) = @_;
-	getSectionBank();
+	$I{dbobject}->getSectionBank(\$I{sectionBank});
 
 	if ($SECT->{isolate}) {
 		print qq!<INPUT TYPE="hidden" NAME="$name" VALUE="$section">\n!;
@@ -242,14 +241,7 @@ sub selectSortcode {
 
 ########################################################
 sub selectMode {
-	unless ($I{modeBank}) {
-		my $c = sqlSelectMany('mode,name', 'commentmodes');
-		while (my($id,$desc) = $c->fetchrow) {
-			$I{modeBank}{$id} = $desc;
-		}
-		$c->finish;
-	}
-	$I{dbobject}->getCodes(\$I{modeBank}, 'sortcodes') unless $I{modeBank};
+	$I{dbobject}->getCodes(\$I{modeBank}, 'commentmodes') unless ($I{modeBank});
 
 	my $o .= qq!<SELECT NAME="mode">\n!;
 	foreach my $id (keys %{$I{modeBank}}) {
@@ -264,7 +256,7 @@ sub selectMode {
 # Functions for dealing with Blocks (big chunks of data)
 sub getblock {
 	my($bid) = @_;
-	getBlockBank();
+	$I{dbobject}->getBlockBank(\%I);
 	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "-1";
 }
 
@@ -276,23 +268,11 @@ sub nukeBlockCache {
 }
 
 ########################################################
-sub getBlockBank {
-	return if $I{blockBank}{cached};
-	$I{blockBank}{cached} = localtime;
-
-	my $c = sqlSelectMany('bid,block', 'blocks');
-	while (my($thisbid, $thisblock) = $c->fetchrow) {
-		$I{blockBank}{$thisbid} = $thisblock;
-	}
-	$c->finish;
-}
-
-########################################################
 # Gets a block.  Stores a block.  Returns a block.  Future requests read
 # from cache.  Nice and quick.
 sub blockCache {
 	my($bid) = @_;
-	getBlockBank();
+	$I{dbobject}->getBlockBank(\%I);
 	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "-1");
 }
 
@@ -346,28 +326,6 @@ sub getWidgetBlock {
 	return $execme;
 }
 
-###############################################################################
-# Functions for dealing with vars (system config variables)
-
-########################################################
-sub getvars {
-	$I{dbobject}->getVars(@_);
-}
-
-########################################################
-sub getvar {
-	$I{dbobject}->getVar(@_);
-}
-
-########################################################
-sub setvar {
-	$I{dbobject}->setVar(@_);
-}
-
-########################################################
-sub newvar {
-	$I{dbobject}->newVar(@_);
-}
 
 ###############################################################################
 #  Stuff for dealing with Logging In
@@ -378,10 +336,7 @@ sub userLogin {
 	my($name, $passwd) = @_;
 
 	$passwd = substr $passwd, 0, 12;
-	my($uid) = sqlSelect('uid', 'users',
-		'passwd=' . $I{dbh}->quote($passwd) .
-		' AND nickname=' . $I{dbh}->quote($name)
-	);
+	my($uid) = $I{dbobject}->getUserUID($name, $passwd);
 
 	if ($uid > 0) {
 		my $cookie = $uid . '::' . $passwd;
@@ -425,13 +380,6 @@ sub addToUser {
 	@{$I{U}}{ keys %$H } = values %$H;
 }
 
-########################################################
-# Get users_$_ and at it to $U
-sub getExtraStuff {
-	my $s = shift;
-	my $H = sqlSelectHashref('*', "users_$s", "uid=$I{U}{uid}");
-	addToUser($H);
-}
 
 ########################################################
 # IF passed a valid uid & passwd, it logs in $U
@@ -441,12 +389,7 @@ sub getUser {
 	undef $I{U};
 
 	if($uid > 0) { # Authenticate
-		$I{U} = $I{dbobject}->getUserInfo($uid, $passwd);
-	}
-
-	if ($uid > 0 && $I{U}{uid}) { #  registered user 
-		# Get User Prefs
-		getExtraStuff('prefs');
+		$I{U} = $I{dbobject}->getUserInfo($uid, $passwd, $ENV{SCRIPT_NAME});
 
 		# Get the Timezone Stuff
 		$I{dbobject}->getCodes(\$I{timezones}, 'tzcodes') unless (defined $I{timezones});
@@ -457,16 +400,6 @@ sub getUser {
 
 		$I{U}{'format'} = $I{dateformats}{ $I{U}{dfid} };
 
-		# Do we want the comments stuff?
-		if (!$ENV{SCRIPT_NAME}
-		    || $ENV{SCRIPT_NAME} =~ /index|article|comments|metamod|search|pollBooth/) { 
-			getExtraStuff('comments');
-		}
-
-		# Do we want the index stuff?
-		if (!$ENV{SCRIPT_NAME} || $ENV{SCRIPT_NAME} =~ /index/) {
-			getExtraStuff('index');
-		}
 
 	} else {
 		unless ($I{AC}) {
@@ -611,7 +544,7 @@ sub anonLog {
 	$data =~ s/_F//;
 	$op =~ s/_F//;
 
-	writelog($I{U}{uid},$op,$data);
+	$I{dbobject}->writelog($I{U}{uid},$op,$data);
 }
 
 
@@ -666,16 +599,6 @@ sub getSectionColors {
 	$I{bg} = [@colors[4..7]];
 }
 
-########################################################
-sub getSectionBank {
-	return if keys %{$I{sectionBank}};
-	my $c = sqlSelectMany('*', 'sections');
-	while (my $S = $c->fetchrow_hashref) {
-		$I{sectionBank}{ $S->{section} } = $S;
-	}
-	$c->finish;
-}
-
 
 ########################################################
 # Gets sections wherver needed.  if blank, gets settings for homepage, and
@@ -685,7 +608,7 @@ sub getSection {
 	return { title => $I{slogan}, artcount => $I{U}{maxstories} || 30, issue => 3 }
 		unless $section;
 	return $I{sectionBank}{$section} if $I{sectionBank}{$section};
-	getSectionBank();
+	$I{dbobject}->getSectionBank(\$I{sectionBank});
 	return $I{sectionBank}{$section};
 }
 
@@ -1367,10 +1290,6 @@ sub reparentComments {
 	# adjust depth for root pid or cid
 	if (my $cid = $I{F}{cid} || $I{F}{pid}) {
 		while ($cid && (my($pid) = getCommentPid($I{F}{sid}, $cid))) {
-
-			sqlSelect('pid', 'comments',
-				"sid='$I{F}{sid}' and cid=$cid")
-		)) {
 			$depth++;
 			$cid = $pid;
 		}
@@ -2108,6 +2027,7 @@ sub selectStories {
 	# Order
 	$s .= "	ORDER BY time DESC ";
 	
+	print STDERR "Limit is :$limit:\n";
 	if ($limit) {
 		$s .= "	LIMIT $limit";
 	} elsif ($I{currentSection} eq 'index') {
@@ -2346,4 +2266,26 @@ sub sqlSelectColumns {
 	$I{dbobject}->sqlSelectColumns(@_);
 }
 
+###############################################################################
+# Functions for dealing with vars (system config variables)
+
+########################################################
+sub getvars {
+	$I{dbobject}->getVars(@_);
+}
+
+########################################################
+sub getvar {
+	$I{dbobject}->getVar(@_);
+}
+
+########################################################
+sub setvar {
+	$I{dbobject}->setVar(@_);
+}
+
+########################################################
+sub newvar {
+	$I{dbobject}->newVar(@_);
+}
 1;

@@ -13,6 +13,9 @@ $loaded = 1;
 print "ok 1\n";
 apacheLog('Creating an error');
 print "ok 2\n";
+printf('Dumping the stack');
+stackTrace(2);
+print "ok 3\n";
 
 ######################### End of black magic.
 

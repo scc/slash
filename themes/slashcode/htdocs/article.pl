@@ -256,6 +256,7 @@ sub nextStory {
 
 main();
 
-$I{dbh}->disconnect if $I{dbh};
+# Why disconnect when what we want to do is cache the database handle?
+#$I{dbh}->disconnect if $I{dbh};
 
 1;

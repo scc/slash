@@ -7,6 +7,7 @@ require Exporter;
 @Slash::Utility::ISA = qw(Exporter);
 @Slash::Utility::EXPORT = qw(
 	apacheLog	
+	stackTrace
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -20,6 +21,28 @@ sub apacheLog {
 		$r->log_error("$ENV{SCRIPT_NAME}:@_");
 	} else {
 		print @_, "\n";
+	}
+	return 0;
+}
+
+sub stackTrace {
+	my ($number) = @_;
+	$number |= 1;
+	if ($ENV{SCRIPT_NAME}) {
+		my $r = Apache->request;
+		print STDERR "\n";
+		for(1..$number) {
+			my @caller_values = caller($_);
+#			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:$subname:");
+			my $error_string = join ':', @caller_values;
+			print STDERR ("$error_string\n");
+		print STDERR "\n";
+		}
+	} else {
+		for(1..$number) {
+			my ($package, $filename, $line, $subname) = caller($_);
+			print("$package:$filename:$line:$subname:\n");
+		}
 	}
 	return 0;
 }
