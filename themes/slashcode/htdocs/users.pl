@@ -24,43 +24,45 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
 use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
 	getSlash();
+	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
-while(my ($key, $val) = each %$user) {
-	print STDERR "USER :$key:$val:\n";
-}
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
 
-	my $op = $I{F}{op};
+	my ($rootdir) = $constants->{rootdir};
+
+	my $op = $form->{op};
 
 	if ($op eq "userlogin" && !$user->{is_anon}) {
-		my $refer = $I{F}{returnto} || $I{rootdir};
+		my $refer = $form->{returnto} || $constants->{rootdir};
 		redirect($refer);
 		return;
 	} elsif ($op eq "saveuser") {
-		my $note = saveUser($I{U}{uid});
+		my $note = saveUser($user->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;
 	}
 
 	my $note;
-	if ($I{F}{note}) {
-		for (split /\n+/, $I{F}{note}) {
+	if ($form->{note}) {
+		for (split /\n+/, $form->{note}) {
 			$note .= sprintf "<H2>%s</H2>\n", stripByMode($_, 'literal');
 		}
 	}
 
-	header("$I{sitename} Users");
+	my $sitename = getCurrentStatic('sitename');
+	header("$sitename Users");
 
-	if (!$user->{is_anon} || $op ne "userclose") {
-		createMenu('user');
+	if (!$user->{is_anon} && $op ne "userclose") {
+		print createMenu('user');
 	}
 	# and now the carnage begins
 	if ($op eq "newuser") {
@@ -69,7 +71,7 @@ while(my ($key, $val) = each %$user) {
 	} elsif ($op eq "edituser") {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
-			editUser($I{U}{uid});
+			editUser($user->{uid});
 		} else {
 			displayForm(); 
 		}
@@ -77,7 +79,7 @@ while(my ($key, $val) = each %$user) {
 	} elsif ($op eq "edithome" || $op eq "preferences") {
 		# also known as the user_index table
 		if (!$user->{is_anon}) {
-			editHome($I{U}{uid});
+			editHome($user->{uid});
 		} else {
 			displayForm(); 
 		}
@@ -85,62 +87,63 @@ while(my ($key, $val) = each %$user) {
 	} elsif ($op eq "editcomm") {
 		# also known as the user_comments table
 		if (!$user->{is_anon}) {
-			editComm($I{U}{uid});
+			editComm($user->{uid});
 		} else {
 			displayForm(); 
 		}
 
 	} elsif ($op eq "userinfo" || !$op) {
-		if ($I{F}{nick}) {
-			userInfo($I{dbobject}->getUserUID($I{F}{nick}), $I{F}{nick});
+		if ($form->{nick}) {
+			userInfo($slashdb->getUserUID($form->{nick}), $form->{nick});
 		} elsif ($user->{is_anon}) {
 			displayForm();
 		} else {
-			userInfo($I{U}{uid}, $I{U}{nickname});
+			userInfo($user->{uid}, $user->{nickname});
 		}
 
 	} elsif ($op eq "savecomm") {
-		saveComm($I{U}{uid});
-		userInfo($I{U}{uid}, $I{U}{nickname});
+		saveComm($user->{uid});
+		userInfo($user->{uid}, $user->{nickname});
 
 	} elsif ($op eq "savehome") {
-		saveHome($I{U}{uid});
-		userInfo($I{U}{uid}, $I{U}{nickname});
+		saveHome($user->{uid});
+		userInfo($user->{uid}, $user->{nickname});
 
 	} elsif ($op eq "sendpw") {
-		mailPassword($I{U}{uid});
+		mailPassword($user->{uid});
 
 	} elsif ($op eq "mailpasswd") {
-		mailPassword($I{dbobject}->getUserUID($I{F}{unickname}));
+		mailPassword($slashdb->getUserUID($form->{unickname}));
 
-	} elsif ($op eq "suedituser" && $I{U}{aseclev} > 100) {
-		editUser($I{dbobject}->getUserUID($I{F}{name}));
+	} elsif ($op eq "suedituser" && $user->{aseclev} > 100) {
+		editUser($slashdb->getUserUID($form->{name}));
 
-	} elsif ($op eq "susaveuser" && $I{U}{aseclev} > 100) {
-		saveUser($I{F}{uid}); 
+	} elsif ($op eq "susaveuser" && $user->{aseclev} > 100) {
+		saveUser($form->{uid}); 
 
-	} elsif ($op eq "sudeluser" && $I{U}{aseclev} > 100) {
-		delUser($I{F}{uid});
+	} elsif ($op eq "sudeluser" && $user->{aseclev} > 100) {
+		delUser($form->{uid});
 
 	} elsif ($op eq "userclose") {
 		print "ok bubbye now.";
 		displayForm();
 
 	} elsif ($op eq "userlogin" && !$user->{is_anon}) {
-		userInfo($I{U}{uid}, $I{U}{nickname});
+		userInfo($user->{uid}, $user->{nickname});
 
 	} elsif ($op eq "preview") {
 		previewSlashbox();
 
 	} elsif (!$user->{is_anon}) {
-		userInfo($I{dbobject}->getUserUID($I{F}{nick}), $I{F}{nick});
+		userInfo($slashdb->getUserUID($form->{nick}), $form->{nick});
 
 	} else {
 		displayForm();
 	}
 
-	miniAdminMenu() if $I{U}{aseclev} > 100;
-	writeLog("users", $I{U}{nickname});
+	miniAdminMenu() if $user->{aseclev} > 100;
+	$slashdb->writeLog("users", $user->{nickname});
+
 	footer();
 }
 
@@ -155,7 +158,9 @@ sub checkList {
 	$string = sprintf "'%s'", join "','", @e;
 
 	if (length($string) > 254) {
-		print "You selected too many options<BR>";
+		my $msg = getMessage('checklist_msg');
+		# print "You selected too many options<BR>";
+		print $msg;
 		$string = substr($string, 0, 255);
 		$string =~ s/,'??\w*?$//g;
 	} elsif (length $string < 3) {
@@ -167,51 +172,61 @@ sub checkList {
 
 #################################################################
 sub previewSlashbox {
-	my $section = $I{dbobject}->getSection($I{F}{bid});
-	my $cleantitle = $section->{'title'};
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	my $section = $slashdb->getSection($form->{bid});
+	my $cleantitle = $section->{title};
 	$cleantitle =~ s/<(.*?)>//g;
 
-	my $title = eval prepBlock $I{dbobject}->getBlock('users_previewslashbox_title','block');
-	titlebar("100%",$title);
-	my $preview = eval prepBlock $I{dbobject}->getBlock('users_preview_slashbox','block');
-	print $preview;
-	if ($I{U}{aseclev} > 999) {
-		my $url = eval prepBlock $I{dbobject}->getBlock('users_preview_slashbox_edit','block');
-		print $url;
-	}
-	my $tdtag = $I{dbobject}->getBlock('users_preview_slashbox_tdt','block');
-	print $tdtag;
+	my $is_editable = 1 if $user->{aseclev} > 999;
 
-	print portalbox($I{fancyboxwidth}, $section->{'title'},
-		$section->{'content'}, "", $section->{'url'});
+	# my $title = eval prepBlock $slashdb->getBlock('users_previewslashbox_title','block');
+	my $title = getTitle('previewslashbox_title',{ cleantitle => $cleantitle });
+	slashDisplay('users-previewSlashbox', {
+		width		=> '100%',
+		title		=> $title,
+		cleantitle 	=> $cleantitle,
+		is_editable	=> $is_editable,
+		
+	});
+
+	print portalbox($constants->{fancyboxwidth}, $section->{title},
+		$section->{content}, "", $section->{url});
 }
 
 #################################################################
 sub miniAdminMenu {
-# userpage_miniadminmenu
-	my $miniadminmenu = eval prepBlock $I{dbobject}->getBlock('users_miniadminmenu','block');
-	print $miniadminmenu;
+	slashDisplay('users-miniAdminMenu');
 }
 
 #################################################################
 sub newUser {
+
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+
+	my $title = "";
+
 	# Check if User Exists
+	$form->{newuser} =~ s/\s+/ /g;
+	$form->{newuser} =~ s/[^ a-zA-Z0-9\$_.+!*'(),-]+//g;
+	$form->{newuser} = substr($form->{newuser}, 0, 20);
 
-	$I{F}{newuser} =~ s/\s+/ /g;
-	$I{F}{newuser} =~ s/[^ a-zA-Z0-9\$_.+!*'(),-]+//g;
-	$I{F}{newuser} = substr($I{F}{newuser}, 0, 20);
-
-	(my $matchname = lc $I{F}{newuser}) =~ s/[^a-zA-Z0-9]//g;
+	(my $matchname = lc $form->{newuser}) =~ s/[^a-zA-Z0-9]//g;
 
 
-	if ($matchname ne '' && $I{F}{newuser} ne '' && $I{F}{email} =~ /\@/) {
+	if ($matchname ne '' && $form->{newuser} ne '' && $form->{email} =~ /\@/) {
 		my $uid;
-		if ($uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
-			titlebar("100%", "User $I{F}{newuser} created.");
+		my $rootdir = getCurrentStatic('rootdir','value');
+		if ($uid = $slashdb->createUser($matchname, $form->{email}, $form->{newuser})) {
+			$title = getTitle('newUser_title');
 
-			$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");
-			my $newusermsg = eval prepBlock $I{dbobject}->getBlock('users_newusermsg','block');
-			print $newusermsg;
+			$form->{pubkey} = stripByMode($form->{pubkey}, "html");
+			my $newuser_msg = getMessage('newuser_msg', {title => $title});
+			print $newuser_msg;
 			mailPassword($uid);
 
 			return;
@@ -225,517 +240,515 @@ sub newUser {
 #################################################################
 sub mailPassword {
 	my($uid) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+
+	my $user_email = $slashdb->getUser($uid, ['nickname','realemail']);
+
 	unless ($uid) {
-		my $msg = $I{dbobject}->getBlock('users_mailpasswd_notmailed','block');
-		print $msg;
+		print getMessage('mailpasswd_notmailed_msg');
 		return;
 	}
 
-	my $user_email = $I{dbobject}->getUser($uid, [qw(nickname realemail)]);
-	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
-
+	my $newpasswd = $slashdb->getNewPasswd($uid);
 	my $tempnick = fixparam($user_email->{nickname});
 
-	my $msg = eval prepBlock $I{dbobject}->getBlock('users_mailpasswdmsg','block');
+	my $emailtitle = getTitle('mailPasswd_email_title',{nickname => $user_email->{nickname}});
 
-	my $emailtitle = eval prepBlock $I{dbobject}->getBlock('users_mailpasswd_emailtitle','block');
+	my $msg = getMessage('mailpasswd_msg',{newpasswd => $newpasswd, tempnick => $tempnick});
+
 	sendEmail($user_email->{realemail}, $emailtitle, $msg) if $user_email->{nickname};
-	my $mailed = eval prepBlock $I{dbobject}->getBlock('users_mailpasswd_mailed','block');
-	print $mailed;
+	print getMessage('mailpasswd_mailed_msg', {name => $user_email->{nickname}});
 }
 
 #################################################################
 sub userInfo {
 	my($uid, $nick) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+
+	my $title = "";
+	my ($question, $points, $nickmatch_flag);
+	my $mod_flag = 0;
+	my $karma_flag = 0;
+
 	unless (defined $uid) {
-		my $msg = eval prepBlock $I{dbobject}->getBlock('userpage_userinfo_nicknf','block');
-		print $msg;
+		print getMessage('userinfo_nicknf_msg', { nick => $nick });
 		return;
 	}
 
-	my @values = qw(homepage fakeemail bio seclev karma nickname);
-	my $userbio = $I{dbobject}->getUser($uid, \@values);
+	my $userbio = $slashdb->getUser($uid);
 
-	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
-	if ($I{U}{nickname} eq $nick) {
-		my $points = $I{dbobject}->getUser($uid, 'points');
+	$userbio->{bio} = stripByMode($userbio->{bio}, "html");
 
-		my $title = eval prepBlock $I{dbobject}->getBlock('users_userinfo_maintitle','block');
-		titlebar("95%", $title);
+	if ($userbio->{nickname} eq $nick) {
+		$nickmatch_flag = 1;
+		$points = $slashdb->getUser($uid, ['points']);
 
-		my $userinfo_msg = $I{dbobject}->getBlock('users_userinfo_msg','block');
-		print $userinfo_msg;
+		$title = getTitle('userInfo_main_title',{ nick => $nick, uid => $uid});
 
-		# Users should be able to see their own points.
-		if ($I{U}{uid} == $uid && $points > 0) {
-			my $userinfo_modmsg = eval prepBlock $I{dbobject}->getBlock('users_userinfo_modmsg','block');
-			print $userinfo_modmsg;
-		}
+		$mod_flag = 1 if ($userbio->{uid} == $uid && $points > 0) ; 
 
-		my $userinfo_grndot= eval prepBlock $I{dbobject}->getBlock('users_userinfo_grndot','block');
-		print $userinfo_grndot;
-
-	} else {
-		my $userinfo_usertitle = eval prepBlock $I{dbobject}->getBlock('users_userinfo_usertitle','block');
-		titlebar("95%", $userinfo_usertitle);
+		$title = getTitle('userinfo_user_title',{ nick => $nick, uid => $uid});
 	}
 
-		my $userinfo_homepage = eval prepBlock $I{dbobject}->getBlock('users_userinfo_homepage','block');
-		print $userinfo_homepage;
-	if ($I{U}{aseclev} || $I{U}{uid} == $uid) { 
-		my $userinfo_karma = eval prepBlock $I{dbobject}->getBlock('users_userinfo_karma','block');
-		print $userinfo_karma;
-	}	
-	if ($userbio->{'bio'}) {
-		my $userinfo_bio = eval prepBlock $I{dbobject}->getBlock('users_userinfo_bio','block');
-		print $userinfo_bio;
+ 	$karma_flag = 1 if ($user->{aseclev} || $user->{uidbio} == $uid) ; 
+
+	my $public_key = $slashdb->getUser($uid, ['pubkey']);
+
+	if($public_key) {
+		$public_key = stripByMode($public_key, "html");
 	}
 
-	my($k) = $I{dbobject}->getUser($uid, 'pubkey');
+	$form->{min} = 0 unless $form->{min};
 
-	if($k) {
-		$k = stripByMode($k, "html");
-		my $userinfo_pubkey = eval prepBlock $I{dbobject}->getBlock('users_userinfo_pubkey','block');
-		print $userinfo_pubkey;
-	}
-
-	$I{F}{min} = 0 unless $I{F}{min};
-
-	my $comments = $I{dbobject}->getCommentsByUID($uid, $I{F}{min});
+	my $comments = $slashdb->getUserComments($uid, $form->{min}, $user);
 
 	my $rows = @$comments;
 
-	my $userinfo_posted = eval prepBlock $I{dbobject}->getBlock('users_userinfo_posted','block');
-	print $userinfo_posted;
-
-	my $x;
+	my $n = 0;
+	my $commentstruct = {};
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
-		$x++;
-		my $r = $I{dbobject}->countComments($sid, $cid);
 
-		my $replies = '';
-		if($r) {
-			$replies = eval prepBlock $I{dbobject}->getBlock('users_userinfo_replies','block');
-		}
-
-		# userpage_userinfo_score
-		my $userinfo_score = eval prepBlock $I{dbobject}->getBlock('users_userinfo_score','block');
-		print $userinfo_score;
+		my $replies = $slashdb->countComments($sid, $cid);
 
 		# This is ok, since with all luck we will not be hitting the DB
-		my $story = $I{dbobject}->getStory($sid);
+		my $story = $slashdb->getStory($sid);
 
 		if ($story) {
 			my $href = $story->{writestatus} == 10
-				? "$I{rootdir}/$story->{section}/$sid.shtml"
-				: "$I{rootdir}/article.pl?sid=$sid";
+				? "$constants->{rootdir}/$story->{section}/$sid.shtml"
+				: "$constants->{rootdir}/article.pl?sid=$sid";
 
-			# userpage_userinfo_story
-			my $userinfo_story = eval prepBlock $I{dbobject}->getBlock('users_userinfo_story','block');
-			print $userinfo_story;
 		} else {
-			# userpage_userinfo_poll
-			my $question = $I{dbobject}->getPollQuestion($sid, 'question');
-			if($question) {
-				my $userinfo_poll = eval prepBlock $I{dbobject}->getBlock('users_userinfo_poll','block');
-				print $userinfo_poll;
-			}	
+			$question = $slashdb->getPollQuestion($sid, 'question');
 		}
+
+		$commentstruct->[$n] = {
+			pid 		=> $pid,
+			sid 		=> $sid,
+			cid 		=> $cid,
+			subj		=> $subj,
+			cdate		=> $cdate,
+			pts		=> $pts,
+			story		=> $story,
+			question	=> $question,
+			replies		=> $replies,
+		};
+
+		$n++;
 	}
+
+	slashDisplay('users-userInfo',{
+		title			=> $title,
+		uid			=> $uid,
+		nick			=> $nick,
+		fakeemail		=> $userbio->{fakeemail},
+		homepage		=> $userbio->{homepage},
+		bio			=> $userbio->{bio},
+		points			=> $points,
+		public_key		=> $public_key,
+		rows			=> $rows,
+		commentstruct		=> $commentstruct,
+		nickmatch_flag		=> $nickmatch_flag,
+		mod_flag		=> $mod_flag,
+		karma_flag		=> $karma_flag,
+	} );
 }
 
 #################################################################
 sub editKey {
 	my($uid) = @_;
 
-	my $k = $I{dbobject}->getUser($uid, 'pubkey');
+	my $slashdb = getCurrentDB();
 
-	# users_editkey (static)
-	my $editkey = $I{dbobject}->getBlock('users_editkey','block');
-	printf $editkey,stripByMode($k, 'literal');
+	my $key = $slashdb->getUser($uid, ['pubkey']);
+
+	$key = stripByMode($key, 'literal');
+	my $editkey = slashDisplay('users-editKey',{ key => $key }, 1);	
+	return $editkey;
 }
 
 #################################################################
 sub editUser {
 	my($uid) = @_;
 
+	my $slashdb = getCurrentDB();
+
 	my @values = qw(
 		realname realemail fakeemail homepage nickname
 		passwd sig seclev bio maillist
 	);
-	my $user_edit = $I{dbobject}->getUser($uid, \@values);
+
+	my $user_edit = $slashdb->getUser($uid, \@values);
+
 	$user_edit->{uid} = $uid;
+	$user_edit->{homepage} ||= "http://";
 
 	return if isAnon($user_edit->{uid});
 
-	my $edituser_title = eval prepBlock $I{dbobject}->getBlock('users_edituser_title','block');
-	titlebar("100%", $edituser_title);
+	my $title = getTitle('editUser_title',{ user_edit => $user_edit });
 
-	my $edituser_table= eval prepBlock $I{dbobject}->getBlock('users_edituser_table','block');
-	print $edituser_table;
-
-	$user_edit->{homepage} ||= "http://";
- 
 	my $tempnick = fixparam($user_edit->{nickname});
 	my $temppass = fixparam($user_edit->{passwd});
  
-	my $edituser_mainform = eval prepBlock $I{dbobject}->getBlock('users_edituser_mainform','block');
-	print $edituser_mainform;
-
-	my $description = $I{dbobject}->getDescriptions('maillist');
+	my $description = $slashdb->getDescriptions('maillist');
 	createSelect('maillist', $description, $user_edit->{maillist});
 
-	# users_edituser_sigbio
-	my $edituser_sigbio = $I{dbobject}->getBlock('users_edituser_sigbio','block');
-	printf $edituser_sigbio, stripByMode($user_edit->{sig}, 'literal'), stripByMode($user_edit->{bio}, 'literal');
-
-	editKey($user_edit->{uid});
-
-	my $edituser_passwd = $I{dbobject}->getBlock('users_edituser_passwd','block');
-	print $edituser_passwd; 
+	slashDisplay('users-editUser',{ 
+			user_edit 	=> $user_edit, 
+			title		=> $title,
+			temppass	=> $temppass,
+			tempnick	=> $tempnick,	
+			bio 		=> stripByMode($user_edit->{bio}), 
+			sig 		=> stripByMode($user_edit->{sig}),
+			editkey 	=> editKey($user_edit->{uid}) }
+	);
 }
 
 #################################################################
 sub tildeEd {
 	my($extid, $exsect, $exaid, $exboxes, $userspace) = @_;
 	
-	# users_tilded_title
-	my $tilded_title = $I{dbobject}->getBlock('users_tilded_title','block');
-	titlebar("100%", $tilded_title);
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $aidref = {};
+	my $tidref = {};
+	my $sectionref = {};
+	my $section_descref = {};
+	my ($tilde_ed,$tilded_msg_box);
 
-	my $tilded_menu = eval prepBlock $I{dbobject}->getBlock('users_tilded_menu','block');
-	print $tilded_menu;
+	# users_tilded_title
+	my $title = getTitle('tildeEd_title');
 
 	# Customizable Authors Thingee
-	my $tilded_exaid_code = prepBlock $I{dbobject}->getBlock('users_tilded_exaid','block');
-	my $tilded_exaid = '';
-	my $aids = $I{dbobject}->getAuthorAids();
+	my $aids = $slashdb->getAuthorAids();
+	my $n = 0;
 	for(@$aids) {
-	# Ok, this is probably dumb
 		my ($aid) = @$_;
-		my $checked = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
-		my $tilded_exaid = eval $tilded_exaid_code;
-		print $tilded_exaid;
+		$aidref->{$aid} = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
 	}
 
-	# Customizable Topic
-	my $tilded_topicsbegin = $I{dbobject}->getBlock('users_tilded_topicsbegin','block');
-	print $tilded_topicsbegin;
+	my $topics = $slashdb->getDescriptions('topics');
 
-	my $topics = $I{dbobject}->getDescriptions('topics');
-	my $tilded_topics_code = prepBlock $I{dbobject}->getBlock('users_tilded_topics','block');
-	my $tilded_topics = '';
 	while (my($tid, $alttext) = each %$topics) {
-		my $checked = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
-		$tilded_topics = eval $tilded_topics_code;
-		print $tilded_topics;
+		$tidref->{$tid}{checked} = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
+		$tidref->{$tid}{alttext} = $alttext;
 	}
 
-	my $tilded_topicsend = $I{dbobject}->getBlock('users_tilded_topicsend','block');
-	print $tilded_topicsend;
+	my $sections = $slashdb->getDescriptions('sections');
 
-	my $sections = $I{dbobject}->getDescriptions('sections');
-
-	# users_tilded_sectionex
-	my $tilded_sectionex_code = prepBlock $I{dbobject}->getBlock('users_tilded_sectionex','block');
-	my $tilded_sectionex = '';
 	while (my($section,$title) = each %$sections) {
-		my $checked = ($exsect =~ /'$section'/) ? " CHECKED" : "";
-		$tilded_sectionex = eval $tilded_sectionex_code;
-		print $tilded_sectionex;
+		$sectionref->{$section}{checked} = ($exsect =~ /'$section'/) ? " CHECKED" : "";
+		$sectionref->{$section}{title} = $title;
 	}
 
-	my $tilded_endtable1 = $I{dbobject}->getBlock('users_tilded_endtable1','block'); 
-	print $tilded_endtable1;
-	
-	my $tilded_customizetitle = $I{dbobject}->getBlock('users_tilded_customizetitle','block'); 
-	titlebar("100%", $tilded_customizetitle);
+	my $cust_title = getTitle('tildeEd_customize_title');
 
 	$userspace = stripByMode($userspace, 'literal');
 
-	# users_tilded_customizemsg
-	my $tilded_customizemsg = eval prepBlock $I{dbobject}->getBlock('users_tilded_customizemsg','block');
-	print $tilded_customizemsg;
+	my $tilded_customize_msg = getMessage('users_tilded_customize_msg',{ userspace => $userspace});
 
-	my $sections_description = $I{dbobject}->getSectionBlocks();
-	my $tilded_exboxes_code = prepBlock $I{dbobject}->getBlock('users_tilded_exboxes','block');
-	my $tilded_exboxes = '';
+	my $sections_description = $slashdb->getSectionBlocks();
+
 	for (@$sections_description) {
-		my($bid, $title, $o) = @$_;
-		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";
-		$title =~ s/<(.*?)>//g;
-		print "<B>" if $o > 0;
-		$tilded_exboxes = eval $tilded_exboxes_code;
-		print $tilded_exboxes;
+		my($bid, $title, $boldflag) = @$_;
 
-		unless ($bid eq "srandblock") {
-			print $title;
+		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";
+
+		$title =~ s/<(.*?)>//g;
+		$section_descref->{$bid}{title} = $title;
+		$section_descref->{$bid}{boldflag} = 1 if $boldflag > 0;
+
+		if ($bid eq "srandblock") {
+			$section_descref->{$bid}{srandflag} = 1;
+			# my $tilded_rand = eval prepBlock $slashdb->getBlock('users_tilded_rand','block');
+			# print $tilded_rand;
 		} else {
-			my $tilded_rand = eval prepBlock $I{dbobject}->getBlock('users_tilded_rand','block');
-			print $tilded_rand;
+			# print $title;
 		}
 
-		print "</A><BR>\n";
-		print "</B>" if $o > 0;
 	}
 
+	my $tilded_box_msg = getMessage('tilded_box_msg');
 
-	# users_tilded_boxmsg
-	my $tilded_boxmsg = eval prepBlock $I{dbobject}->getBlock('users_tilded_boxmsg','block');
-	print $tilded_boxmsg;
+	$tilde_ed = slashDisplay('users-tildeEd', { 
+			title			=> $title,
+			cust_title		=> $cust_title,
+			tilded_box_msg		=> $tilded_box_msg,
+			aidref			=> $aidref,
+			tidref			=> $tidref,
+			sectionref		=> $sectionref,
+			section_descref		=> $section_descref,
+			}, 1
+	);
+
+	return($tilde_ed);
 }
 
 #################################################################
 sub editHome {
 	my($uid) = @_;
 
-	# If you are seeing problems, check to see if I have
-	# missed a key -- brian
-	# added the ones needed for tildeEd() -- pudge
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+
 	my @values = qw(
 		realname realemail fakeemail homepage nickname
 		passwd sig seclev bio maillist dfid tzcode maxstories
 		extid exsect exaid exboxes mylinks
 	);
 
-	my $user_edit = $I{dbobject}->getUser($uid, \@values);
+	my $user_edit = $slashdb->getUser($uid, \@values);
 
-	return if isAnon($user_edit->{uid});
+	return if isAnon($user->{uid});
 
-	my $edithome_title = eval prepBlock $I{dbobject}->getBlock('users_edithome_title','block');
-	titlebar("100%", $edithome_title);
-
-	my $edithome_startform = eval prepBlock $I{dbobject}->getBlock('users_edithome_startform','block');
-	print $edithome_startform;
+	my $title = getTitle('editHome_title'); 
 
 	my $formats;
-	$formats = $I{dbobject}->getDescriptions('dateformats');
-	createSelect('tzformat', $formats, $user_edit->{dfid});
+	$formats = $slashdb->getDescriptions('dateformats');
+	my $tzformat_select = createSelect('tzformat', $formats, $user->{dfid}, 1);
 
-	$formats = $I{dbobject}->getDescriptions('tzcodes');
-	createSelect('tzcode', $formats, $user_edit->{tzcode});
+	$formats = $slashdb->getDescriptions('tzcodes');
+	my $tzcode_select = createSelect('tzcode', $formats, $user->{tzcode}, 1);
 
 	print "</NOBR>";
 
-	my $l_check = $user_edit->{light}	? " CHECKED" : "";
-	my $b_check = $user_edit->{noboxes}	? " CHECKED" : "";
-	my $i_check = $user_edit->{noicons}	? " CHECKED" : "";
-	my $w_check = $user_edit->{willing}	? " CHECKED" : "";
+	my $l_check = $user->{light}	? " CHECKED" : "";
+	my $b_check = $user->{noboxes}	? " CHECKED" : "";
+	my $i_check = $user->{noicons}	? " CHECKED" : "";
+	my $w_check = $user->{willing}	? " CHECKED" : "";
 
-	my $edithome_formbody = eval prepBlock $I{dbobject}->getBlock('users_edithome_formbody','block');
+	my $edithome_formbody = eval prepBlock $slashdb->getBlock('users_edithome_formbody','block');
 	print $edithome_formbody;
 
-	tildeEd(
-		$user_edit->{extid}, $user_edit->{exsect},
-		$user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks}
+	my $tilde_ed = tildeEd(
+		$user->{extid}, $user->{exsect},
+		$user->{exaid}, $user->{exboxes}, $user->{mylinks}
 	);
 
-	my $edithome_formend = $I{dbobject}->getBlock('users_edithome_formend','block');
-	print $edithome_formend;
+	slashDisplay('users-editHome', {
+			title			=> $title,
+			user_edit		=> $user_edit,
+			tzformat_select		=> $tzformat_select,
+			tzcode_select		=> $tzcode_select,
+			l_check			=> $l_check,			
+			b_check			=> $b_check,			
+			i_check			=> $i_check,			
+			w_check			=> $w_check,			
+			tilde_ed		=> $tilde_ed
+			}
+	);
+
 }
 
 #################################################################
 sub editComm {
 	my($uid) = @_;
 
+	my $slashdb = getCurrentDB();
+	my ($formats, $commentmodes_select, $commentsort_select, $uthreshold_select, $highlightthresh_select, $posttype_select);
+
 	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
-	my $user_edit = $I{dbobject}->getUser($uid, \@values);
+	my $user_edit = $slashdb->getUser($uid, \@values);
+
 	$user_edit->{uid} = $uid;
 
-	my $editcomm_title= $I{dbobject}->getBlock('users_editcomm_title','block');
-	titlebar("100%", $editcomm_title);
+	my $title = getTitle('editComm_title');
 
-	my $editcomm_startform = eval prepBlock $I{dbobject}->getBlock('users_editcomm_startform','block');
-	print $editcomm_startform;
+	$formats = $slashdb->getDescriptions('commentmodes');
+	$commentmodes_select = createSelect('umode', $formats, $user_edit->{mode}, 1);
 
-	my $formats;
-
-	my $editcomm_dispmode = $I{dbobject}->getBlock('users_editcomm_dispmode','block');
-	print $editcomm_dispmode;
-	$formats = $I{dbobject}->getDescriptions('commentmodes');
-	createSelect('umode', $formats, $user_edit->{mode});
-
-	my $editcomm_sortord = $I{dbobject}->getBlock('users_editcomm_sortord','block');
+	my $editcomm_sortord = $slashdb->getBlock('users_editcomm_sortord','block');
 	print $editcomm_sortord;
 
-	$formats = $I{dbobject}->getDescriptions('sortcodes');
-	createSelect('commentsort', $formats, $user_edit->{commentsort});
+	$formats = $slashdb->getDescriptions('sortcodes');
+	$commentsort_select = createSelect('commentsort', $formats, $user_edit->{commentsort}, 1);
 
-	my $editcomm_thres = $I{dbobject}->getBlock('users_editcomm_thres','block');
-	print $editcomm_thres;
+	$formats = $slashdb->getDescriptions('threshcodes');
+	$uthreshold_select = createSelect('uthreshold', $formats, $user_edit->{threshold}, 1);
 
-	$formats = $I{dbobject}->getDescriptions('threshcodes');
-	createSelect('uthreshold', $formats, $user_edit->{threshold});
-
-	my $editcomm_guidelines = eval prepBlock $I{dbobject}->getBlock('users_editcomm_guidelines','block');
-	print $editcomm_guidelines;
-
-	my $editcomm_hithres = $I{dbobject}->getBlock('users_editcomm_hithres','block');
-	print $editcomm_hithres;
-
-	$formats = $I{dbobject}->getDescriptions('threshcodes');
-	createSelect('highlightthresh', $formats, $user_edit->{highlightthresh});
-
-	my $editcomm_scoring = $I{dbobject}->getBlock('users_editcomm_scoring','block');
-	print $editcomm_scoring;
+	$formats = $slashdb->getDescriptions('threshcodes');
+	$highlightthresh_select = createSelect('highlightthresh', $formats, $user_edit->{highlightthresh}, 1);
 
 	my $h_check = $user_edit->{hardthresh}	? " CHECKED" : "";
 	my $r_check = $user_edit->{reparent}	? " CHECKED" : "";
 	my $n_check = $user_edit->{noscores}	? " CHECKED" : "";
 	my $s_check = $user_edit->{nosigs}	? " CHECKED" : "";
 
-	my $editcomm_form = eval prepBlock $I{dbobject}->getBlock('users_editcomm_form','block');
-	print $editcomm_form;
+	$formats = $slashdb->getDescriptions('postmodes');
+	$posttype_select = createSelect('posttype', $formats, $user_edit->{posttype}, 1);
 
-	$formats = $I{dbobject}->getDescriptions('postmodes');
-	createSelect('posttype', $formats, $user_edit->{posttype});
-
-	my $editcomm_formend = $I{dbobject}->getBlock('users_editcomm_formend','block');
-	print $editcomm_formend;
+	slashDisplay('users-editComm', {
+			title			=> $title,
+			user_edit		=> $user_edit,
+			h_check			=> $h_check,			
+			r_check			=> $r_check,			
+			n_check			=> $n_check,			
+			s_check			=> $s_check,			
+			commentmodes_select	=> $commentmodes_select,
+			commentsort_select	=> $commentsort_select,
+			highlightthresh_select	=> $highlightthresh_select,
+			uthreshold_select	=> $uthreshold_select,
+			posttype_select		=> $posttype_select,
+			}
+	);
 
 }
 
 #################################################################
 sub saveUser {
-	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $user_email  = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+
+	my $uid = $user->{aseclev} ? shift : $user->{uid};
+	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my $note;
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if isAnon($uid);
 
-	# $note = "Saving $user_email->{nickname}.\n";
-	$note = eval prepBlock $I{dbobject}->getBlock('users_savenickname','block');
+	$note = eval prepBlock $slashdb->getBlock('users_savenickname','block');
 
 	if(! $user_email->{nickname}) {
-		$note .= $I{dbobject}->getBlock('users_saveuser_note','block');
+		$note .= $slashdb->getBlock('users_saveuser_note','block');
 	}
 
 	# stripByMode _after_ fitting sig into schema, 120 chars
-	$I{F}{sig}	 = stripByMode(substr($I{F}{sig}, 0, 120), 'html');
-	$I{F}{fakeemail} = chopEntity(stripByMode($I{F}{fakeemail}, 'attribute'), 50);
-	$I{F}{homepage}	 = "" if $I{F}{homepage} eq "http://";
-	$I{F}{homepage}	 = fixurl($I{F}{homepage});
+	$form->{sig}	 	= stripByMode(substr($form->{sig}, 0, 120), 'html');
+	$form->{fakeemail} 	= chopEntity(stripByMode($form->{fakeemail}, 'attribute'), 50);
+	$form->{homepage}	= "" if $form->{homepage} eq "http://";
+	$form->{homepage}	= fixurl($form->{homepage});
 
 	# for the users table
-	my $H = {
-		sig		=> $I{F}{sig},
-		homepage	=> $I{F}{homepage},
-		fakeemail	=> $I{F}{fakeemail},
-		maillist	=> $I{F}{maillist},
-		realname	=> $I{F}{realname},
-		bio		=> $I{F}{bio},
-		pubkey		=> $I{F}{pubkey}
+	my $users_table = {
+		sig		=> $form->{sig},
+		homepage	=> $form->{homepage},
+		fakeemail	=> $form->{fakeemail},
+		maillist	=> $form->{maillist},
+		realname	=> $form->{realname},
+		bio		=> $form->{bio},
+		pubkey		=> $form->{pubkey}
 	};
 
-	if ($user_email->{realemail} ne $I{F}{realemail}) {
-		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
+	if ($user_email->{realemail} ne $form->{realemail}) {
+		$users_table->{realemail} = chopEntity(stripByMode($form->{realemail}, 'attribute'), 50);
 
-		$note .= eval prepBlock $I{dbobject}->getBlock('users_saveuser_changeemail','block');
+		$note .= eval prepBlock $slashdb->getBlock('users_saveuser_changeemail','block');
 
-		my $saveuser_emailtitle = eval prepBlock $I{dbobject}->getBlock('users_saveuser_emailtitle','block');
-		my $saveuser_emailmsg = eval prepBlock $I{dbobject}->getBlock('users_saveuser_emailmsg','block');
-		sendEmail($user_email->{realemail}, $saveuser_emailtitle, $saveuser_emailmsg);
+		my $saveuser_emailtitle = eval prepBlock $slashdb->getBlock('users_saveuser_emailtitle','block');
+		my $saveuser_email_msg = getMessage('saveuser_email_msg',{ nickname => $user_email->{nickname} });
+		sendEmail($user_email->{realemail}, $saveuser_emailtitle, $saveuser_email_msg);
 	}
 
-	delete $H->{passwd};
-	if ($I{F}{pass1} eq $I{F}{pass2} && length($I{F}{pass1}) > 5) {
-		$note .= $I{dbobject}->getBlock('users_saveuser_passchanged','block');
+	delete $users_table->{passwd};
+	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
+		$note .= $slashdb->getBlock('users_saveuser_passchanged','block');
 
-		$H->{passwd} = $I{F}{pass1};
-		# check for DB error before setting cookie?  -- pudge
-		setCookie('user', bakeUserCookie($uid, encryptPassword($H->{passwd})));
+		$users_table->{passwd} = $form->{pass1};
+		setCookie('user', bakeUserCookie($uid, encryptPassword($users_table->{passwd})));
 
-	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
-		$note .= $I{dbobject}->getBlock('users_saveuser_passnotmatch','block');
+	} elsif ($form->{pass1} ne $form->{pass2}) {
+		$note .= $slashdb->getBlock('users_saveuser_passnotmatch','block');
 
-	} elsif (length $I{F}{pass1} < 6 && $I{F}{pass1}) {
-		$note .= $I{dbobject}->getBlock('users_saveuser_passtooshort','block');
+	} elsif (length $form->{pass1} < 6 && $form->{pass1}) {
+		$note .= $slashdb->getBlock('users_saveuser_passtooshort','block');
 	}
 
-	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid, $H);
+	$slashdb->setUser($uid, $users_table);
 
 	return fixparam($note);
 }
 
 #################################################################
 sub saveComm {
-	my $uid  = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	my $uid  = $user->{aseclev} ? shift : $user->{uid};
+	my $name = $user->{aseclev} && $form->{name} ? $form->{name} : $user->{nickname};
+
+	my $slashdb = getCurrentDB();
 
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
 
-	my $savename = eval prepBlock $I{dbobject}->getBlock('users_savename','block');
+	my $savename = getMessage('savename_msg', {name => $name});
 	print $savename;
 
 	if (isAnon($uid) || !$name) {
-		my $cookiemsg = $I{dbobject}->getBlock('users_cookiemsg','block');
+		# my $cookiemsg = $slashdb->getBlock('users_cookiemsg','block');
+		my $cookiemsg = getMessage('cookiemsg');
 		print $cookiemsg;
 	}
 
 	# Take care of the lists
 	# Enforce Ranges for variables that need it
-	$I{F}{commentlimit} = 0 if $I{F}{commentlimit} < 1;
-	$I{F}{commentspill} = 0 if $I{F}{commentspill} < 1;
+	$form->{commentlimit} = 0 if $form->{commentlimit} < 1;
+	$form->{commentspill} = 0 if $form->{commentspill} < 1;
 
 	# for users_comments
-	my $H = {
-		clbig		=> $I{F}{clbig},
-		clsmall		=> $I{F}{clsmall},
-		mode		=> $I{F}{umode},
-		posttype	=> $I{F}{posttype},
-		commentsort	=> $I{F}{commentsort},
-		threshold	=> $I{F}{uthreshold},
-		commentlimit	=> $I{F}{commentlimit},
-		commentspill	=> $I{F}{commentspill},
-		maxcommentsize	=> $I{F}{maxcommentsize},
-		highlightthresh	=> $I{F}{highlightthresh},
-		nosigs		=> ($I{F}{nosigs}     ? 1 : 0),
-		reparent	=> ($I{F}{reparent}   ? 1 : 0),
-		noscores	=> ($I{F}{noscores}   ? 1 : 0),
-		hardthresh	=> ($I{F}{hardthresh} ? 1 : 0),
+	my $users_comments_table = {
+		clbig		=> $form->{clbig},
+		clsmall		=> $form->{clsmall},
+		mode		=> $form->{umode},
+		posttype	=> $form->{posttype},
+		commentsort	=> $form->{commentsort},
+		threshold	=> $form->{uthreshold},
+		commentlimit	=> $form->{commentlimit},
+		commentspill	=> $form->{commentspill},
+		maxcommentsize	=> $form->{maxcommentsize},
+		highlightthresh	=> $form->{highlightthresh},
+		nosigs		=> ($form->{nosigs}     ? 1 : 0),
+		reparent	=> ($form->{reparent}   ? 1 : 0),
+		noscores	=> ($form->{noscores}   ? 1 : 0),
+		hardthresh	=> ($form->{hardthresh} ? 1 : 0),
 	};
 
-	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid, $H);
+	# Update users with the $users_comments_table hash ref 
+	$slashdb->setUser($uid, $users_comments_table);
 }
 
 #################################################################
 sub saveHome {
-	my $uid  = $I{U}{aseclev} ? shift : $I{U}{uid};
-	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	my $uid  = $user->{aseclev} ? shift : $user->{uid};
+	my $name = $user->{aseclev} && $form->{name} ? $form->{name} : $user->{nickname};
+
+	my $slashdb = getCurrentDB();
 
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
 
-	# users_savename
-	my $savename = eval prepBlock $I{dbobject}->getBlock('users_savename','block');
-	print $savename;
-
-	# print "<P>Saving $name<BR><P>";
 	# users_cookiemsg
 	if (isAnon($uid) || !$name) {
-		my $cookiemsg = $I{dbobject}->getBlock('users_cookiemsg','block');
+		my $cookiemsg = getMessage('cookiemsg');
 		print $cookiemsg;
 	}
 
 	my($extid, $exaid, $exsect) = "";
-	my $exboxes = $I{dbobject}->getUser($uid, 'exboxes');
+	my $exboxes = $slashdb->getUser($uid, ['exboxes']);
 
 	$exboxes =~ s/'//g;
 	my @b = split m/,/, $exboxes;
 
 	foreach (@b) {
-		$_ = "" unless $I{F}{"exboxes_$_"};
+		$_ = "" unless $form->{"exboxes_$_"};
 	}
 
 	$exboxes = sprintf "'%s',", join "','", @b;
 	$exboxes =~ s/'',//g;
 
-	foreach my $k (keys %{$I{F}}) {
+	foreach my $k (keys %{$form}) {
 		if ($k =~ /^extid_(.*)/)	{ $extid  .= "'$1'," }
 		if ($k =~ /^exaid_(.*)/)	{ $exaid  .= "'$1'," }
 		if ($k =~ /^exsect_(.*)/)	{ $exsect .="'$1',"  }
@@ -746,120 +759,92 @@ sub saveHome {
 		}
 	}
 
-	$I{F}{maxstories} = 66 if $I{F}{maxstories} > 66;
-	$I{F}{maxstories} = 1 if $I{F}{maxstories} < 1;
+	$form->{maxstories} = 66 if $form->{maxstories} > 66;
+	$form->{maxstories} = 1 if $form->{maxstories} < 1;
 
-	my $H = {
+	my $users_index_table = {
 		extid		=> checkList($extid),
 		exaid		=> checkList($exaid),
 		exsect		=> checkList($exsect),
 		exboxes		=> checkList($exboxes),
-		maxstories	=> $I{F}{maxstories},
-		noboxes		=> ($I{F}{noboxes} ? 1 : 0),
-		light		=> ($I{F}{light} ? 1 : 0),
-		noicons		=> ($I{F}{noicons} ? 1 : 0),
-		willing		=> ($I{F}{willing} ? 1 : 0),
+		maxstories	=> $form->{maxstories},
+		noboxes		=> ($form->{noboxes} ? 1 : 0),
+		light		=> ($form->{light} ? 1 : 0),
+		noicons		=> ($form->{noicons} ? 1 : 0),
+		willing		=> ($form->{willing} ? 1 : 0),
 	};
 	
-	if (defined $I{F}{tzcode} && defined $I{F}{tzformat}) {
-		$H->{tzcode} = $I{F}{tzcode};
-		$H->{dfid}   = $I{F}{tzformat};
+	if (defined $form->{tzcode} && defined $form->{tzformat}) {
+		$users_index_table->{tzcode} = $form->{tzcode};
+		$users_index_table->{dfid}   = $form->{tzformat};
 	}
 
-	$H->{mylinks} = $I{F}{mylinks} if $I{F}{mylinks};
+	$users_index_table->{mylinks} = $form->{mylinks} if $form->{mylinks};
 
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
 	unless (isAnon($uid)) {
-		$I{dbobject}->setUser($uid, $users_comments)
-			unless $I{F}{willing};
+		$slashdb->setUser($uid, $users_comments)
+			unless $form->{willing};
 	}
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid, $H);
+	$slashdb->setUser($uid, $users_index_table);
 }
 
 #################################################################
 sub displayForm {
-	my $dispform_header = eval prepBlock $I{dbobject}->getBlock('users_dispform_header','block');
-	print $dispform_header;
 
-	my $dispform_login = $I{dbobject}->getBlock('users_dispform_login','block'); 
-	my $dispform_loginerr = $I{dbobject}->getBlock('users_dispform_loginerr','block'); 
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $allow_anonymous = $constants->{allow_anonymous};
 
-	print $I{F}{unickname} ? $dispform_loginerr : $dispform_login;
-	titlebar("100%", $I{F}{unickname} ? $dispform_loginerr : $dispform_login);
+	my ($title,$title2) = ('','');
 
-	# $I{F}{unickname} ? "Error Logging In" : "Login";
-	# titlebar("100%", $I{F}{unickname} ? "Error Logging In" : "Login");
+	$title = $form->{unickname}? getTitle('displayForm_err_title') : getTitle('displayForm_title');
 
-	# users_dispform_loginmsg1,users_dispform_loginmsg2,users_dispform_loginmsg3
-	if ($I{F}{unickname}) { 
-		my $msg = $I{dbobject}->getBlock('users_dispform_loginmsg1','block');
-		print $msg;
+	$form->{unickname} ||= $form->{newuser};
 
-		if($I{allow_anonymous}) {
-			my $msg = eval prepBlock $I{dbobject}->getBlock('users_dispform_loginmsg2','block');
-			print $msg;
-		} else {
-			my $msg = $I{dbobject}->getBlock('users_dispform_loginmsg3','block');
-			print $msg;
-		}
-	}
-
-	$I{F}{unickname} ||= $I{F}{newuser};
-
-	my $form1 = eval prepBlock $I{dbobject}->getBlock('users_dispform_form1','block');
-	print $form1 ;
-
-	my $title = '';
-	if($I{F}{newuser}) {
-		$title = $I{dbobject}->getBlock('users_dispform_duptitle','block');
+	if($form->{newuser}) {
+		$title2 = getTitle('displayForm_dup_title');
 	} else {
-		$title = $I{dbobject}->getBlock('users_dispform_newtitle','block');
+		$title2 = getTitle('displayForm_new_title');
 	}
-	titlebar("100%", $title);
 
-	# titlebar("100%", $I{F}{newuser} ? "Duplicate Account!" : "I'm a New User!");
-	# users_dispform_newmsg1: users_dispform_newmsg2
+	my $msg = getMessage('dispform_new_msg_1');
 
-	my $form2= $I{dbobject}->getBlock('users_dispform_newmsg1','block');
-	$form2 .= $I{dbobject}->getBlock('users_dispform_newmsg2','block') if ! $I{F}{newuser};
-	$form2 .= eval prepBlock $I{dbobject}->getBlock('users_dispform_form2','block');
+	$msg .= getMessage('dispform_new_msg_2') if ! $form->{newuser};
 
-	print $form2;
+	slashDisplay('users-displayForm', {
+			title 		=> $title,
+			title2 		=> $title2,
+			msg 		=> $msg
+		}
+	);
+}
 
-
-#	print $I{F}{newuser} ? <<EOT1 : <<EOT2;
-#	Apparently you tried to register with a <B>duplicate nickname</B>,
-#	a <B>duplicate email address</B>, or an <B>invalid email</B>.  You
-#	can try another below, or use the form on the left to either login,
-#	or retrieve your forgotten password.
-#EOT1
-#	What? You don't have an account yet?  Well enter your preferred <B>nick</B> name here:
-#EOT2
-
-	# users_dispform_form2
-#	print <<EOT;
-#	(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
-#	are allowed in nicknames, and all others will be stripped out.)
-
-#	<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="$I{F}{newuser}">
-#	<BR> and a <B>valid email address</B> address to send your registration
-#	information. This address will <B>not</B> be displayed on $I{sitename}.
-#	<INPUT TYPE="TEXT" NAME="email" SIZE="20" VALUE="$I{F}{email}"><BR>
-#	<INPUT TYPE="SUBMIT" NAME="op" VALUE="newuser"> Click the button to
-#	be mailed a password.<BR>
-
-#	</FORM>
-
-#</TD></TR></TABLE>
-
-#EOT
+#################################################################
+# this groups all the messages together in
+# one template, called "users-messages"
+sub getMessage {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('users-messages', $hashref, 1);
+}
+#################################################################
+# this groups all the titles together in
+# one template, called "users-titles"
+sub getTitle {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('users-titles', $hashref, 1);
 }
 
 main();
-# No kick the baby
-#$I{dbh}->disconnect if $I{dbh};
+
 1;
