@@ -30,7 +30,7 @@ __template__
 	END;
 %]
 
-[% INCLUDE titlebar title = "$constants.sitename Story Submissions" %]
+[% PROCESS titlebar title = "$constants.sitename Story Submissions" %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 [% IF form.formkey %]
@@ -46,13 +46,13 @@ anonymous, feel free to leave the identifying fields
 blank.  Anonymity has no affect on whether we will accept or 
 reject the story.</P>
 
-[% INCLUDE formLabel value => "Your Name", comment => "Leave Blank to be Anonymous" %]
+[% PROCESS formLabel value => "Your Name", comment => "Leave Blank to be Anonymous" %]
 <INPUT TYPE="text" NAME="name" VALUE="[% username %]" SIZE="50">
 
-[% INCLUDE formLabel value => "Your Email or Homepage", comment => "Where Users Can Contact You" %]
+[% PROCESS formLabel value => "Your Email or Homepage", comment => "Where Users Can Contact You" %]
 <INPUT TYPE="text" NAME="email" VALUE="[% fakeemail %]" SIZE="50">
 
-[% INCLUDE formLabel value => "Subject", comment => "Be Descriptive, Clear and Simple!" %]
+[% PROCESS formLabel value => "Subject", comment => "Be Descriptive, Clear and Simple!" %]
 <INPUT TYPE="text" NAME="subj" VALUE="[% form.subj %]" SIZE="50">
 
 <BR><FONT SIZE="2">
@@ -60,7 +60,7 @@ reject the story.</P>
 We get many submissions each day, and if yours isn't clear, it will
 be deleted.)</FONT>
 
-[% INCLUDE formLabel value => "Topic and Section" %]
+[% PROCESS formLabel value => "Topic and Section", comment => "" %]
 
 [% tid = form.tid || 'news' %]
 [% Slash.selectTopic('tid', tid, section, 1) %]
@@ -69,7 +69,7 @@ be deleted.)</FONT>
 <BR><FONT SIZE="2">(Almost everything should go under Articles)</FONT>
 
 [% IF savestory %]
-<P>[% INCLUDE titlebar("100%", title => form.subj) %]
+<P>[% PROCESS titlebar width => "100%", title => form.subj %]
 <IMG SRC="[% topic.imageclean %]" ALIGN="RIGHT" BORDER="0"
 	ALT="[% topic.alttext %]" HSPACE="30" VSPACE="10"
 	WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
@@ -77,7 +77,7 @@ be deleted.)</FONT>
 <P>[% subtext %]</P>
 [% END %]
 
-[% INCLUDE formLabel value => "The Scoop",
+[% PROCESS formLabel value => "The Scoop",
 	comment => "HTML is fine, but double check those URLs and HTML tags!" %]
 
 

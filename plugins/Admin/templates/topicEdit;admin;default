@@ -11,35 +11,35 @@ en_US
 __name__
 topicEdit
 __template__
-[% INCLUDE titlebar width='100%' %]
+[% PROCESS titlebar width='100%' %]
 <TABLE>
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="topics">
 		<TD VALIGN="TOP">
-			[% INCLUDE formLabel value => "Select a topic" comment => "hit the create button if you wish to create a new topic" %]
+			[% PROCESS formLabel value => "Select a topic" comment => "hit the create button if you wish to create a new topic" %]
 			[% topics_select %]
 
 			<INPUT TYPE="SUBMIT" NAME="topiced" VALUE="Select topic"><BR>
 
 			[% IF topic.tid %]
-			[% INCLUDE formLabel value => "Image as seen" %]
+			[% PROCESS formLabel value => "Image as seen", comment => "" %]
 			<IMG SRC="[% image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
 			[% END %]
 
 			<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
-			[% INCLUDE formLabel value => "Short Name" comment => "used in admin interface" %]
+			[% PROCESS formLabel value => "Short Name" comment => "used in admin interface" %]
 			<INPUT TYPE="TEXT" NAME="name" VALUE="[% FILTER strip_attribute %][% topic.name %][% END %]">
-			[% INCLUDE formLabel value => "Alt Text" %]
+			[% PROCESS formLabel value => "Alt Text", comment => "" %]
 			<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
-			[% INCLUDE formLabel value => "Dimensions", comment => "leave blank to determine automatically" %]
+			[% PROCESS formLabel value => "Dimensions", comment => "leave blank to determine automatically" %]
 			Width: <INPUT TYPE="TEXT" NAME="width" VALUE="[% topic.width %]" SIZE="4">
 			Height: <INPUT TYPE="TEXT" NAME="height" VALUE="[% topic.height %]" SIZE="4"><BR>
 			<BR>
 
 				[% IF images_flag %]
 
-				[% INCLUDE formLabel value => "Image" %]
+				[% PROCESS formLabel value => "Image", comment => "" %]
 				[% image_select %]
 				<BR><BR>
 				<FONT SIZE="-2">(note: if you enter a value in the field below, the image pulldown will be ignored)</FONT><BR>
@@ -49,7 +49,7 @@ __template__
 
 				[% ELSE %]
 
-				[% INCLUDE formLabel value => "No images were found in the topic images directory" %]
+				[% PROCESS formLabel value => "No images were found in the topic images directory", comment => "" %]
 					([% constants.basedir %]/images/topics).<BR>
 					<INPUT TYPE="TEXT" NAME="image" VALUE="[% image %]">
 
@@ -59,7 +59,7 @@ __template__
 			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
 		</TD>
 		<TD VALIGN="TOP">
-		[% INCLUDE formLabel value => "Sections", comment => "select which sections a topic belongs to" %]
+		[% PROCESS formLabel value => "Sections", comment => "select which sections a topic belongs to" %]
 		[% FOREACH section = sectionref.keys %]
 		    <INPUT TYPE="CHECKBOX" NAME="exsect_[% section %]"[% sectionref.$section.checked %]>[% sectionref.$section.title %]<BR>
 		[% END %]

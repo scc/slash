@@ -16,7 +16,7 @@ en_US
 __name__
 topTopics
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 <TABLE WIDTH="[% width %]" BORDER="0" CELLPADDING="3">
 [% FOREACH topic = topics %]
 	<TR><TD ALIGN="RIGHT" VALIGN="TOP>

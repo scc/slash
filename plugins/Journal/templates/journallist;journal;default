@@ -13,9 +13,9 @@ journallist
 __template__
 [% USE Slash %]
 [% showopts = !user.is_anon && (!uid || uid == user.uid) %]
-[% INCLUDE journaloptions IF showopts %]
+[% PROCESS journaloptions IF showopts %]
 
-[% INCLUDE titlebar title => "$nickname's Journal Entries", width => "90%" %]
+[% PROCESS titlebar title => "$nickname's Journal Entries", width => "90%" %]
 [% IF showopts %]<FORM METHOD="POST" ACTION="[% constants.rootdir %]/journal.pl">
 <INPUT TYPE="hidden" NAME="op" VALUE="remove">[% END %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">

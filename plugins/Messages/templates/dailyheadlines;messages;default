@@ -16,7 +16,7 @@ __template__
 [% constants.sitename %] Daily Headline Mailer
 
 ======================================================================
-[% INCLUDE emailsponsor %]
+[% PROCESS emailsponsor %]
 ======================================================================
 
 [% FOR story = stories.reverse; topicname = topics.${story.tid}.name

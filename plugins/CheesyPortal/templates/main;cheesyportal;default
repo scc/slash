@@ -15,7 +15,7 @@ en_US
 __name__
 main
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 <MULTICOL COLS="3">
 [% FOREACH portal = portals %][% portal.box %][% END %]

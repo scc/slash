@@ -22,7 +22,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD>
-[% INCLUDE titlebar width="100%" %]
+[% PROCESS titlebar title=title width="100%" %]
 		</TD>
 	</TR>
 </TABLE>
@@ -75,7 +75,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD COLSPAN="2">
-[% INCLUDE titlebar title="Mail Password" width="100%" %]
+[% PROCESS titlebar title="Mail Password" width="100%" %]
 		</TD>
 	</TR>
 	<TR>
@@ -101,7 +101,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD COLSPAN="2">
-[% INCLUDE titlebar title=title2 width="100%" %]
+[% PROCESS titlebar title=title2 width="100%" %]
 		</TD>
 	</TR>
 	<TR>

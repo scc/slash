@@ -20,7 +20,7 @@ __name__
 netIDInfo
 __template__
 [% USE Slash %]
-[% INCLUDE titlebar width="95%" %]
+[% PROCESS titlebar width="95%" %]
 
 <B>
 

@@ -18,7 +18,7 @@ ELSE;
 	title = story.title;
 END %]
 
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 <A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]">[% topic.alttext %]</A> | 
 <B>Posted by [% author.nickname %] [% user.aton %] [% story.storytime %]</B><BR>

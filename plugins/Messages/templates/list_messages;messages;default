@@ -14,7 +14,7 @@ __template__
 [% USE Slash %]
 [% Slash.createMenu("users") %]
 [% Slash.createMenu("messages") %]
-[% INCLUDE titlebar title => "$constants.sitename Messages for $user.nickname", width => "100%" %]
+[% PROCESS titlebar title => "$constants.sitename Messages for $user.nickname", width => "100%" %]
 
 [% IF note %]<H2>[% note %]</H2>[% END %]
 

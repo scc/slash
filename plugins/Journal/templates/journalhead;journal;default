@@ -14,7 +14,7 @@ __template__
 [% USE Slash %]
 [% Slash.createMenu("users") %]
 [% Slash.createMenu("journal") %]
-[% INCLUDE titlebar width => "100%" %]
+[% PROCESS titlebar width => "100%" %]
 
 __seclev__
 500

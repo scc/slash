@@ -11,7 +11,7 @@ en_US
 __name__
 listReadOnly
 __template__
-[% INCLUDE titlebar title="Read Only" width='100%' %]
+[% PROCESS titlebar title="Read Only" width='100%' %]
 
 [% IF readonlylist %]
 <P><B>Read Only List:</B></P>

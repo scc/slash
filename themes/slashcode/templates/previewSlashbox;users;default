@@ -16,7 +16,7 @@ en_US
 __name__
 previewSlashbox
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 What you see on the right hand side is a preview of the block thingee
 labeled "[% block.title | strip_literal %]".  If you select it from the

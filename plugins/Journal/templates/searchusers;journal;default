@@ -21,7 +21,7 @@ __template__
 <BR><I><FONT SIZE="-1">(Yes we all need a friend to hold on to)</FONT></I>
 [% END %]
 
-[% INCLUDE formbox
+[% PROCESS formbox
     title => "Find a User's Journal",
     begin => begin,
     end   => '</FORM>',

@@ -16,7 +16,7 @@ journalfriends
 __template__
 [% USE Slash %]
 [% IF search; nickstrip = form.nickname | strip_literal; END %]
-[% INCLUDE titlebar
+[% PROCESS titlebar
 	title => (search ? "User Search Results for \"$nickstrip\"" : "Your Friends"),
 	width => "90%"
 %]
@@ -42,7 +42,7 @@ __template__
 [% IF !user.is_anon && !search %]</FORM>[% END %]
 <BR><BR>
 
-[% INCLUDE searchusers %]
+[% PROCESS searchusers %]
 
 __seclev__
 100

@@ -13,7 +13,7 @@ en_US
 __name__
 newUserForm
 __template__
-[% INCLUDE titlebar title=title width="100%" %]
+[% PROCESS titlebar title=title width="100%" %]
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
 [% IF form.formkey %]

@@ -202,29 +202,21 @@ use Slash::Utility::Environment;
 
 # this is essentially the same as Template::Directive, but we want
 # to hijack simple calls to $constants to optimize it
+# I imagine this is still faster than using Stash::XS ... -- pudge
 sub ident {
 	my ($class, $ident) = @_;
 	return "''" unless @$ident;
 
-	if ($ident->[0] eq q['constants'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
-		my $data = getCurrentStatic($1);
-		$data =~ s/'/\\'/;
-		return "'$data'";
-	}
-	elsif ($ident->[0] eq q['form'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+	my $types = qr/(constants|form|user)/;
+	if ($ident->[0] =~ $types && (my $type = $1) && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
 		(my $data = $1) =~ s/'/\\'/;
-		return "\$form->{'$data'}";
-	}
-	elsif ($ident->[0] eq q['user'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+		return "\$${type}->{'$data'}";
+	# env
+	} elsif ($ident->[0] eq q['env'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
 		(my $data = $1) =~ s/'/\\'/;
-		return "\$user->{'$data'}";
-	}
-	elsif ($ident->[0] eq q['env'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
-		(my $data = $1) =~ s/'/\\'/;
-		return "\$ENV{uc '$data'}";
-	}
+		return qq[\$ENV{"\\U$data"}];
 	# fg/bg
-	elsif ($ident->[0] eq q['user'] && @$ident == 6 && $ident->[2] =~ /^'(fg|bg)'$/s) {
+	} elsif ($ident->[0] eq q['user'] && @$ident == 6 && $ident->[2] =~ /^'(fg|bg)'$/s) {
 		return "\$user->{'$1'}[$ident->[4]]";
 	}
 
@@ -246,6 +238,7 @@ sub template {
 	my $extra;
 	$extra .= "my \$user = Slash::getCurrentUser();\n" if $block =~ /\$user->/;
 	$extra .= "my \$form = Slash::getCurrentForm();\n" if $block =~ /\$form->/;
+	$extra .= "my \$constants = Slash::getCurrentStatic();\n" if $block =~ /\$constants->/;
 
     return <<EOF;
 sub {

@@ -45,7 +45,7 @@ __template__
 		[% END %]
 	[% END %]
 
-[% INCLUDE pagination %]
+[% PROCESS pagination %]
 
 	[% IF !user.is_anon && uid && uid != user.uid %]
 		<TR VALIGN="TOP"><TD ALIGN="RIGHT" BGCOLOR="#E0E0E0">

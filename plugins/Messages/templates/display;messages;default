@@ -12,7 +12,7 @@ __name__
 display
 __template__
 [% USE Slash %]
-[% INCLUDE titlebar title => "$constants.sitename Message for $user.nickname", width => "100%" %]
+[% PROCESS titlebar title => "$constants.sitename Message for $user.nickname", width => "100%" %]
 [% Slash.createMenu('messages') %]
 
 [% IF message && message.user.uid == user.uid %]

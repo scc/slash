@@ -11,7 +11,7 @@ en_US
 __name__
 topAbusers
 __template__
-[% INCLUDE titlebar title="Top Abusers" width='100%' %]
+[% PROCESS titlebar title="Top Abusers" width='100%' %]
 
 [% IF topabusers %]
 <P><B>Top Abusers:</B></P>

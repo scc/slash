@@ -18,18 +18,18 @@ edit_comment
 __template__
 [% USE Slash %]
 [% IF form.pid %]
-	[% INCLUDE titlebar width="95%" title=reply.subject %]
+	[% PROCESS titlebar width="95%" title=reply.subject %]
 	<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="95%" ALIGN="CENTER">
 	[% Slash.dispComment(reply) %]
 	</TABLE><P>
 [% END %]
 [% IF preview %]
-	[% INCLUDE titlebar width="95%" title="Preview Comment" %]
+	[% PROCESS titlebar width="95%" title="Preview Comment" %]
 	[% preview %]
 	<P>
 
 [% END %]
-	[% INCLUDE titlebar width="95%" title="Post Comment" %]
+	[% PROCESS titlebar width="95%" title="Post Comment" %]
 
 <!-- error message -->
 [% IF error_message %][% error_message %][% END %]

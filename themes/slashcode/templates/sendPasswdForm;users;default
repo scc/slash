@@ -26,7 +26,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD COLSPAN="2">
-[% INCLUDE titlebar title="Mail Password" width="100%" %]
+[% PROCESS titlebar title="Mail Password" width="100%" %]
 		</TD>
 	</TR>
 	<TR>

@@ -19,7 +19,7 @@ __template__
   <INPUT TYPE="submit" VALUE="Search [% constants.sitename %]">
 </FORM>
 
-[% INCLUDE motd %]
+[% PROCESS motd %]
 
 <P> All trademarks and copyrights on this
   page are owned by their respective companies.  Comments

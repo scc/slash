@@ -56,7 +56,7 @@ __template__
 		<TD BGCOLOR="[% user.bg.3 %]">&nbsp; </TD>
 		<TD BGCOLOR="[% user.bg.3 %]">
 		<FONT COLOR="[% user.fg.3 %]">
-		[% INCLUDE editbuttons %]
+		[% PROCESS editbuttons %]
 		[% topic_select %]
 
 		[% UNLESS user.section %]
@@ -140,7 +140,7 @@ __template__
 <TD valign="top">[% ispell_comments.introtext %]</TD>
 </TR></TABLE><BR>
 
-[% INCLUDE editbuttons %]
+[% PROCESS editbuttons %]
 
 <BR>Extended Copy<BR>
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
@@ -149,7 +149,7 @@ __template__
 <TD valign="top">[% ispell_comments.bodytext %]</TD>
 </TR></TABLE><BR>
 
-[% INCLUDE editbuttons %]
+[% PROCESS editbuttons %]
 
 </FORM>
 

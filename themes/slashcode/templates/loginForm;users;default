@@ -22,7 +22,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD>
-[% INCLUDE titlebar width="100%" %]
+[% PROCESS titlebar width="100%" %]
 		</TD>
 	</TR>
 	[% IF msg2 && ! logged_in %]

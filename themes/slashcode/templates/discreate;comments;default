@@ -32,7 +32,7 @@ __template__
 <INPUT TYPE="submit" NAME="submit" VALUE="Submit">
 [% END %]
 
-[% INCLUDE formbox
+[% PROCESS formbox
     title => "Create a discussion",
     begin => begin,
     end   => '</FORM>',

@@ -10,6 +10,7 @@ template=templates/colorEdit;admin;default
 template=templates/editFilter;admin;default
 template=templates/editStory;admin;default
 template=templates/editbuttons;admin;default
+template=templates/ispellok;admin;default
 template=templates/listFilters;admin;default
 template=templates/listStories;admin;default
 template=templates/listTopics;admin;default

@@ -30,7 +30,7 @@ __template__
 	you are now logged out.
 
 [% CASE 'newuser_msg' %]
-	[% INCLUDE titlebar title=title width="100%" %]
+	[% PROCESS titlebar title=title width="100%" %]
 	<B>email</B>=[% form.email %]<BR>
 	<B>user id</B>=[% uid %]<BR>
 	<B>nick</B>=[% form.newusernick %]<BR>

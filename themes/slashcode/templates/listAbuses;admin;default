@@ -12,7 +12,7 @@ en_US
 __name__
 listAbuses
 __template__
-[% INCLUDE titlebar title="User Abuses" width='100%' %]
+[% PROCESS titlebar title="User Abuses" width='100%' %]
 [% IF abuses.0 %]
 <TABLE CELLSPACING="0">
 	<TR>

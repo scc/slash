@@ -40,10 +40,10 @@ __template__
 [% IF user.is_anon;
 	# User is anonymous
 	contents = BLOCK;
-		INCLUDE userlogin
+		PROCESS userlogin
 			return_url = "${constants.rootdir}/article.pl?sid=${form.sid}";
 	END;
-	INCLUDE fancybox
+	PROCESS fancybox
 		title		= "${constants.sitename} Login"
 		contents	= contents
 		center		= 1;
@@ -78,26 +78,26 @@ for instructions. (<B>updated 9.9!</B>)
 	# show both names to make the user aware.
 	name = user.nickname;
 	IF user.uid; name = "$name &nbsp;($user.uid)"; END;
-	INCLUDE fancybox
+	PROCESS fancybox
 		title		= name
 		contents	= M
 		center		= 1;
 END %]
 
 [% IF show_poll;
-	INCLUDE fancybox
+	PROCESS fancybox
 		title		= 'Article Poll'
 		contents	= poll
 		center		= 1;
 END;
 
-INCLUDE fancybox
+PROCESS fancybox
 	title		= 'Related Links'
 	contents	= story.relatedtext
 	center		= 1;
 
 IF section_block.block;
-	INCLUDE fancybox
+	PROCESS fancybox
 		title		= section.title
 		contents	= section_block.block
 		center		= 1;
@@ -110,9 +110,11 @@ END %]
 	ELSIF s.title == story.title;
 		RETURN;
 	ELSE;
-		ls.link = s.title;
-		ls.sid = s.sid;
-		ls.section = s.section;
+		ls = {
+			link	=> s.title,
+			sid	=> s.sid,
+			section	=> s.section
+		};
 		Slash.linkStory(ls);
 	END;
 END %]

@@ -11,7 +11,7 @@ en_US
 __name__
 listFilters
 __template__
-[% INCLUDE titlebar width='100%' %]
+[% PROCESS titlebar width='100%' %]
 
 <FORM action="[% env.script_name %]" method="POST">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="listfilters">

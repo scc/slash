@@ -21,7 +21,7 @@ en_US
 __name__
 subEdTable
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" BGCOLOR="[% user.bg.2 %]">
 <TR ALIGN="RIGHT"><TD></TD>

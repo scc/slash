@@ -47,7 +47,7 @@ __template__
 	</TABLE>
 	[% END %]
 
-[% INCLUDE pagination %]
+[% PROCESS pagination %]
 
 	[% IF !user.is_anon && uid && uid != user.uid %]
 		</TD></TR>

@@ -59,7 +59,7 @@ sure that you want to delete your journal entry
 		[% END;
 END %]
 
-[% INCLUDE titlebar width => "100%" %]
+[% PROCESS titlebar width => "100%" %]
 <FORM ACTION="[% constants.rootdir %]/journal.pl" METHOD="POST">
 <INPUT TYPE="hidden" NAME="op" VALUE="[% op %]">
 <INPUT TYPE="hidden" NAME="[% name %]" VALUE="[% val %]">

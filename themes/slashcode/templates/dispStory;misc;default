@@ -26,7 +26,7 @@ ELSE;
 	title = story.title;
 END %]
 
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 	<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0"><TR>
 		<TD BACKGROUND="[% constants.imagedir %]/gl.gif"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="11" HEIGHT="11" ALT=""></TD>

@@ -17,7 +17,7 @@ en_US
 __name__
 changePasswd
 __template__
-[% INCLUDE titlebar width="100%" %]
+[% PROCESS titlebar width="100%" %]
 
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
 	<TR>

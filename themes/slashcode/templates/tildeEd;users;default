@@ -21,7 +21,7 @@ en_US
 __name__
 tildeEd
 __template__
-[% INCLUDE titlebar width="100%" %]
+[% PROCESS titlebar title=title width="100%" %]
 
 <TABLE WIDTH="95%" BORDER="0" CELLPADDING="3" CELLSPACING="3" ALIGN="CENTER">
 	<TR BGCOLOR="[% user.bg.3 %]">
@@ -52,7 +52,7 @@ __template__
 		</TD>
 	</TR>
 </TABLE>
-[% INCLUDE titlebar width='100%' title=customize_title %]
+[% PROCESS titlebar width='100%' title=customize_title %]
 <TABLE WIDTH="95%" ALIGN="CENTER" BORDER="0">
 	<TR>
 		<TD>

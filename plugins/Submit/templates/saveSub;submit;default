@@ -17,7 +17,7 @@ en_US
 __name__
 saveSub
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 
 [% IF missingemail %]
 	<P>Perhaps you would like to enter an email address or a URL next time.</P>

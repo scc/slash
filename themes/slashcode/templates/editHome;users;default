@@ -22,7 +22,7 @@ en_US
 __name__
 editHome
 __template__
-[% INCLUDE titlebar width="100%" %]
+[% PROCESS titlebar width="100%" %]
 
 [% admin_block %]
 

@@ -19,36 +19,36 @@ __name__
 main
 __template__
 [% USE Slash %]
-<P>[% INCLUDE titlebar title => 'Most Active Stories' %]
+<P>[% PROCESS titlebar title => 'Most Active Stories' %]
 [% FOREACH item = actives %]
 <B><FONT SIZE="4">[% item.3 %]</FONT></B>
 [% Slash.linkStory({ link => item.1, section => item.2, sid => item.0 }) %] by [% item.4 %]<BR>
 [% END %]</P>
 
 
-<P>[% INCLUDE titlebar title => 'Most Visited Stories' %]
+<P>[% PROCESS titlebar title => 'Most Visited Stories' %]
 [% FOREACH item = visited %]
 <B><FONT SIZE="4">[% item.3 %]</FONT></B>
 [% Slash.linkStory({ link => item.1, section => item.2, sid => item.0 }) %] by [% item.4 %]<BR>
 [% END %]</P>
 
-<P>[% INCLUDE titlebar title => 'Most Active Authors' %]
+<P>[% PROCESS titlebar title => 'Most Active Authors' %]
 [% FOREACH item = activea %]
 <B>[% item.0 %]</B> <A HREF="[% item.2 %]">[% item.1 %]</A><BR>
 [% END %]</P>
 
-<P>[% INCLUDE titlebar title => 'Most Active Submitters' %]
+<P>[% PROCESS titlebar title => 'Most Active Submitters' %]
 [% FOREACH item = activesub %]
 <B>[% item.0 %]</B> <A HREF="[% constants.rootdir %]/users.pl?nick=[% item.1 %]">[% item.1 %]</A><BR>
 [% END %]</P>
 
-<P>[% INCLUDE titlebar title => 'Most Active Poll Topics' %]
+<P>[% PROCESS titlebar title => 'Most Active Poll Topics' %]
 [% FOREACH item = activep %]
 <B>[% item.0 %]</B> <A HREF="[% constants.rootdir %]/pollBooth.pl?qid=[% item.2 %]">[% item.1 %]</A><BR>
 [% END %]</P>
 
 [% IF topcomments.size > 0 %]
-<P>[% INCLUDE titlebar title => 'Top 10 Comments' %]
+<P>[% PROCESS titlebar title => 'Top 10 Comments' %]
 [% FOREACH top = topcomments %]
 <B>[% top.score %]</B>
 	<A HREF="[% constants.rootdir %]/comments.pl?sid=[% top.sid %]&pid=[% top.pid %]#[% top.cid %]">[% top.subj %]</A>

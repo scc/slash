@@ -26,7 +26,7 @@ en_US
 __name__
 templateEdit
 __template__
-[% INCLUDE titlebar width='100%' %]
+[% PROCESS titlebar width='100%' %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 <INPUT TYPE="HIDDEN" NAME="op" VALUE="templates">

@@ -21,15 +21,15 @@ __template__
 		<INPUT TYPE="hidden" NAME="preview" VALUE="active">
 		<INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
 
-		[% INCLUDE formLabel value => "Subject", comment => "This is required" %]
+		[% PROCESS formLabel value => "Subject", comment => "This is required" %]
 		<INPUT TYPE="text" NAME="description" SIZE="60" MAXLENGTH="60" VALUE="[% article.description | strip_attribute %]">
 
-		[% INCLUDE formLabel value => "Journal Topic";
+		[% PROCESS formLabel value => "Journal Topic", comment => "";
 		   def_topic = article.tid || constants.journal_default_topic;
 		   Slash.selectTopic('tid', def_topic, '', 1) %]
 
 	[% IF !article.discussion %]
-		[% INCLUDE formLabel value => "Comments", comment => "Comments cannot be disabled once enabled" %]
+		[% PROCESS formLabel value => "Comments", comment => "Comments cannot be disabled once enabled" %]
  		[% jds = Slash.db.getDescriptions("journal_discuss");
  		   def_jd = form.journal_discuss.defined
  		   	? form.journal_discuss
@@ -38,10 +38,10 @@ __template__
  		   		: user.journal_discuss || 0;
 		   Slash.createSelect("journal_discuss", jds, def_jd, 1) %]
 	[% ELSE %]
-		[% INCLUDE formLabel value => "Comments", comment => "Comments are enabled" %]
+		[% PROCESS formLabel value => "Comments", comment => "Comments are enabled" %]
 	[% END %]
 
-		[% INCLUDE formLabel value => "Entry", comment => "This will go down on your permanent record" %]
+		[% PROCESS formLabel value => "Entry", comment => "This will go down on your permanent record" %]
 		<TEXTAREA WRAP="virtual" NAME="article" COLS="60" ROWS="20">[% article.article | strip_literal %]</TEXTAREA>
 		<P>
 		<INPUT TYPE="submit" NAME="op" value="preview">

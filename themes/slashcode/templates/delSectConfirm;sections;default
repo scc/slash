@@ -15,6 +15,6 @@ en_US
 __name__
 delSectConfirm
 __template__
-[% INCLUDE titlebar %]
+[% PROCESS titlebar %]
 __seclev__
 10000
