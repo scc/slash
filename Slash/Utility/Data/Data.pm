@@ -1440,6 +1440,67 @@ The decoded string.
 	}
 }
 
+#========================================================================
+
+=head2 getArmoredEmail (UID)
+
+Returns a Spam Armored email address for the user associated with the
+given UID.
+
+This routine DOES NOT save its results back to the user record. This is
+the responsibility of the calling routine.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item UID
+
+The user's ID whose email address you wish to randomize.
+
+=back
+
+=cut
+
+sub getArmoredEmail {
+	my ($uid) = @_;
+	
+	my $slashdb = getCurrentDB();
+
+	my $armor = $slashdb->getRandomSpamArmor();
+
+	# Execute the retrieved code in a Safe compartment. We do this
+	# in an anonymous block to enable local scoping for some variables.
+	{
+		local $_ = $slashdb->getUser($uid, 'realemail');
+
+		my $cpt = new Safe;
+		# We only permit basic arithmetic, loop and looping opcodes.
+		# We also explicitly allow join since some code may involve
+		# Separating the address so that obfuscation can be performed
+		# in parts.
+		$cpt->permit(qw[:base_core :base_loop :base_math join]);
+		# Each compartment should be designed to take input from, and 
+		# send output to, $_.
+		$cpt->reval($armor->{code});
+		return $_ unless $@;
+		
+		# If we are here, an error occured in the block. This should be
+		# logged.
+		#
+		# Ideally, this text should be in a template, somewhere
+		# but I hesitate to use Slash::getData() in a module where I
+		# don't see it already in use. - Cliff
+		errorLog(<<EOT);
+Error randomizing realemail using armor '$armor->{name}':
+$@
+EOT
+
+	}
+}	
+
 ########################################################
 # fix parameter input that should be integers
 sub fixint {
