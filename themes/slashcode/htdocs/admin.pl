@@ -388,18 +388,12 @@ sub templateEdit {
 			}
 		}
 		$page_select = createSelect('page',$pagehashref,$page,1);
-		if($template_ref) {
-			$template_select = createSelect('tpid', $template_ref, $tpid, 1);
-		} else {
-			$template_select = createSelect('tpid', $templates, $tpid, 1);
-		}
+		$template_select = createSelect('tpid', $template_ref, $tpid, 1);
 	}
 
 
-	if(! $form->{templatenew} && $tpid) {
-		if($templateref->{tpid}) {	
-			$templateedit_flag = 1;
-		}
+	if(! $form->{templatenew} && $tpid && $templateref->{tpid}) {
+		$templateedit_flag = 1;
 	}
 
 	$description_ta = strip_literal($templateref->{description}, 1);

@@ -258,6 +258,30 @@ CREATE TABLE moderatorlog (
 );
 
 #
+# Table structure for table 'newcomments'
+#
+
+DROP TABLE IF EXISTS newcomments;
+CREATE TABLE newcomments (
+  sid varchar(30) DEFAULT '' NOT NULL,
+  cid int(15) DEFAULT '0' NOT NULL,
+  pid int(15) DEFAULT '0' NOT NULL,
+  date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
+  subject varchar(50) DEFAULT '' NOT NULL,
+  comment text DEFAULT '' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
+  points int(1) DEFAULT '0' NOT NULL,
+  lastmod int(1),
+  reason int(11) DEFAULT '0',
+  PRIMARY KEY (sid,cid),
+  KEY display (sid,points,uid),
+  KEY byname (uid,points),
+  KEY theusual (sid,uid,points,cid),
+  KEY countreplies (sid,pid)
+);
+
+#
 # Table structure for table 'newstories'
 #
 

@@ -405,10 +405,6 @@ sub freshenup {
 		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=thread",
 			"$constants->{basedir}/$section/$sid.shtml")) {
 
-			# Don't need this any more.
-			#prog2file("$constants->{basedir}/article.pl sid=$sid ssi=yes mode=flat",
-			#	"$constants->{basedir}/$section/$sid"."_F.shtml");
-
 			push @updatedsids, $sid;
 		} else {
 			slashdLog("Trouble Updating $sid");
@@ -419,6 +415,8 @@ sub freshenup {
 	$slashdb->setStoryIndex(@updatedsids);
 
 	my $x = 0;
+	# this deletes stories that have a writestatus of 5, 
+	# which is the delete writestatus
 	$stories = $slashdb->getStoriesForSlashdb(5);
 	for (@$stories) {
 		my($sid, $title, $section) = @$_;
@@ -437,14 +435,12 @@ sub freshenup {
 #	if ($updates{articles} ne "" || $w ne "0") {
 		$slashdb->setVar("writestatus", "0");
 		prog2file("$constants->{basedir}/index.pl", "ssi=yes", "$constants->{basedir}/index.shtml");
-		# prog2file("$constants->{basedir}/index.pl ssi=yes mode=flat","$constants->{basedir}/index_F.shtml");
 #	}
 
 	foreach my $key (keys %updates) {
 		next unless $key;
 		prog2file("$constants->{basedir}/index.pl", "ssi=yes section=$key",
 			"$constants->{basedir}/$key/index.shtml");
-		# prog2file("$constants->{basedir}/index.pl ssi=yes mode=flat section=$key","$constants->{basedir}/$key/index_F.shtml");
 	}
 }
 

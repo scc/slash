@@ -157,6 +157,10 @@ sub setComment {
 
 	if ($self->sqlDo($insline)) {
 		$self->sqlDo("UNLOCK TABLES");
+		my $copyline = "insert into newcomments select * from comments where cid = $maxCid";
+		$copyline .= " AND sid = $sid_db";
+
+		$self->sqlDo($copyline);
 
 		# Update discussion
 		my($dtitle) = $self->sqlSelect(
@@ -227,15 +231,15 @@ sub getMetamodComments {
 	my($self, $id, $uid, $num_comments) = @_;
 
 	my $sth = $self->sqlSelectMany(
-		'comments.cid,date,' .
+		'newcomments.cid,date,' .
 		'subject,comment,nickname,homepage,fakeemail,realname,users.uid as uid,
-		sig,comments.points as points,pid,comments.sid as sid,
+		sig,newcomments.points as points,pid,newcomments.sid as sid,
 		moderatorlog.id as id,title,moderatorlog.reason as modreason,
-		comments.reason',
-		'comments,users,users_info,moderatorlog,stories',
-		"stories.sid=comments.sid AND moderatorlog.sid=comments.sid AND
-		moderatorlog.cid=comments.cid AND moderatorlog.id>$id AND
-		comments.uid!=$uid AND users.uid=comments.uid AND
+		newcomments.reason',
+		'newcomments,users,users_info,moderatorlog,stories',
+		"stories.sid=newcomments.sid AND moderatorlog.sid=newcomments.sid AND
+		moderatorlog.cid=newcomments.cid AND moderatorlog.id>$id AND
+		newcomments.uid!=$uid AND users.uid=newcomments.uid AND
 		users.uid=users_info.uid AND users.uid!=$uid AND
 		moderatorlog.uid!=$uid AND moderatorlog.reason<8 LIMIT $num_comments"
 	);
@@ -261,19 +265,19 @@ sub getModeratorCommentLog {
 #				"moderatorlog.active=1
 
 	my($self, $sid, $cid) = @_;
-	my $comments = $self->sqlSelectMany(  "comments.sid as sid,
-				 comments.cid as cid,
-				 comments.points as score,
+	my $comments = $self->sqlSelectMany(  "newcomments.sid as sid,
+				 newcomments.cid as cid,
+				 newcomments.points as score,
 				 subject, moderatorlog.uid as uid,
 				 users.nickname as nickname,
 				 moderatorlog.val as val,
 				 moderatorlog.reason as reason",
-				"moderatorlog, users, comments",
+				"moderatorlog, users, newcomments",
 				"moderatorlog.sid='$sid'
 			     AND moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
-			     AND comments.sid=moderatorlog.sid
-			     AND comments.cid=moderatorlog.cid"
+			     AND newcomments.sid=moderatorlog.sid
+			     AND newcomments.cid=moderatorlog.cid"
 	);
 	my(@comments, $comment);
 	push @comments, $comment while ($comment = $comments->fetchrow_hashref);
@@ -319,6 +323,9 @@ sub unsetModeratorlog {
 			{ -points => "points+" . (-1 * $val) },
 			"cid=$cid and sid=" . $self->{_dbh}->quote($sid) . " AND $scorelogic"
 		);
+		my $copyline = "replace into newcomments select * from comments where cid = $cid and sid = ";
+		$copyline .= $self->{_dbh}->quote($sid);
+		$self->sqlDo($copyline);
 		push(@removed, $cid);
 	}
 
@@ -688,7 +695,7 @@ sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM comments WHERE uid=$uid "
+			. " FROM newcomments WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -823,7 +830,7 @@ sub updateCommentTotals {
 ########################################################
 sub getCommentCid {
 	my($self, $sid, $cid) = @_;
-	my($scid) = $self->sqlSelectAll("cid", "comments", "sid='$sid' and pid='$cid'");
+	my($scid) = $self->sqlSelectAll("cid", "newcomments", "sid='$sid' and pid='$cid'");
 
 	return $scid;
 }
@@ -832,12 +839,18 @@ sub getCommentCid {
 sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	if ($cid) {
+		$self->sqlDo("delete from newcomments WHERE sid=" .
+			$self->{_dbh}->quote($sid) . " and cid=" . $self->{_dbh}->quote($cid)
+		);
 		$self->sqlDo("delete from comments WHERE sid=" .
 			$self->{_dbh}->quote($sid) . " and cid=" . $self->{_dbh}->quote($cid)
 		);
 	} else {
+		$self->sqlDo("delete from newcomments WHERE sid=" .
+			$self->{_dbh}->quote($sid));
 		$self->sqlDo("delete from comments WHERE sid=" .
 			$self->{_dbh}->quote($sid));
+
 		$self->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
 	}
 }
@@ -845,7 +858,7 @@ sub deleteComment {
 ########################################################
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
-	$self->sqlSelect('pid', 'comments',
+	$self->sqlSelect('pid', 'newcomments',
 		"sid='$sid' and cid=$cid");
 }
 
@@ -1579,13 +1592,13 @@ sub countComments {
 	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
 	if ($uid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid = ". $self->{_dbh}->quote($uid));
+		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid = ". $self->{_dbh}->quote($uid));
 	} elsif ($cid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($cid));
+		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($cid));
 	} elsif ($comment) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
+		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
 	} else {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid));
+		($value) = $self->sqlSelect("count(*)", "newcomments", "sid=" . $self->{_dbh}->quote($sid));
 	}
 
 	return $value;
@@ -1839,6 +1852,12 @@ sub setCommentCleanup {
 	if ($val ne "+0" && $self->sqlDo($strsql)) {
 		$self->setModeratorLog($cid, $sid, $user->{uid}, $modreason, $val);
 
+		# copy to comments cache
+		my $copyline = "replace into newcomments select * from comments where cid = $cid";
+		$copyline .= " and sid = " .  $self->{_dbh}->quote($sid);
+
+		$self->sqlDo($copyline);
+
 		# Adjust comment posters karma
 		if ($cuid != $constants->{anonymous_coward}) {
 			if ($val > 0) {
@@ -1888,15 +1907,15 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
-	my $reply = $self->sqlSelectHashref("date, subject,comments.points as points,
+	my $reply = $self->sqlSelectHashref("date, subject,newcomments.points as points,
 		comment,realname,nickname,
 		fakeemail,homepage,cid,sid,users.uid as uid",
-		"comments,users,users_info,users_comments",
+		"newcomments,users,users_info,users_comments",
 		"sid=" . $self->{_dbh}->quote($sid) . "
 		AND cid=" . $self->{_dbh}->quote($pid) . "
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
-		AND users.uid=comments.uid"
+		AND users.uid=newcomments.uid"
 	) || {};
 
 	formatDate([$reply]);
@@ -1912,18 +1931,18 @@ sub getCommentsForUser {
 				subject,comment,
 				nickname,homepage,fakeemail,
 				users.uid as uid,sig,
-				comments.points as points,pid,sid,
+				newcomments.points as points,pid,sid,
 				lastmod, reason
-			   FROM comments,users
+			   FROM newcomments,users
 			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
-			    AND comments.uid=users.uid";
+			    AND newcomments.uid=users.uid";
 	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$user->{uid} OR " unless $user->{is_anon};
+	$sql .= "		newcomments.uid=$user->{uid} OR " unless $user->{is_anon};
 	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		comments.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
+	$sql .= "		newcomments.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
 	$sql .= "		  1=1 )   ";
 	$sql .= "	  ORDER BY ";
-	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
+	$sql .= "newcomments.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
 
@@ -1942,7 +1961,7 @@ sub getCommentsForUser {
 sub getComments {
 	my($self, $sid, $cid) = @_;
 	$self->sqlSelect("uid,pid,subject,points,reason",
-		"comments", "cid=$cid and sid='$sid'"
+		"newcomments", "cid=$cid and sid='$sid'"
 	);
 }
 
@@ -1993,11 +2012,11 @@ sub getStories {
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $where = "stories.sid=comments.sid";
+	my $where = "stories.sid=newcomments.sid";
 	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
 	my $stories = $self->sqlSelectAll("section, stories.sid, uid, title, pid, subject,"
 		. "date, time, uid, cid, points"
-		, "stories, comments"
+		, "stories, newcomments"
 		, $where
 		, " ORDER BY points DESC, d DESC LIMIT 10 ");
 
@@ -2083,8 +2102,8 @@ sub getNewstoryTitle {
 ########################################################
 sub getTrollAddress {
 	my($self) = @_;
-	my($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
-			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
+	my($badIP) = $self->sqlSelect("sum(val)","newcomments,moderatorlog",
+			"newcomments.sid=moderatorlog.sid AND newcomments.cid=moderatorlog.cid
 			AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
 			AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
 	);
@@ -2096,10 +2115,10 @@ sub getTrollAddress {
 sub getTrollUID {
 	my($self) = @_;
 	my $user =  getCurrentUser();
-	my($badUID) = $self->sqlSelect("sum(val)","comments,moderatorlog",
-		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-		AND comments.uid=$user->{uid} AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
+	my($badUID) = $self->sqlSelect("sum(val)","newcomments,moderatorlog",
+		"newcomments.sid=moderatorlog.sid AND newcomments.cid=moderatorlog.cid
+		AND newcomments.uid=$user->{uid} AND moderatorlog.active=1
+		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY newcomments.uid"
 	);
 
 	return $badUID;
