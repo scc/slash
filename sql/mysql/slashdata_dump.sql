@@ -160,11 +160,6 @@ INSERT INTO commentcodes VALUES (1,'Read-Only');
 INSERT INTO commentcodes VALUES (-1,'Comments Disabled');
 
 #
-# Dumping data for table 'commentkey'
-#
-
-
-#
 # Dumping data for table 'commentmodes'
 #
 
@@ -277,6 +272,11 @@ INSERT INTO discussions VALUES ('00/01/25/1236215','Now What?','http://www.examp
 INSERT INTO displaycodes VALUES (0,'Always Display');
 INSERT INTO displaycodes VALUES (1,'Only Display Within Section');
 INSERT INTO displaycodes VALUES (-1,'Never Display');
+
+#
+# Dumping data for table 'formkeys'
+#
+
 
 #
 # Dumping data for table 'hitters'
@@ -649,13 +649,13 @@ INSERT INTO tzcodes VALUES ('iss',7200,'Israel Standard');
 # Dumping data for table 'users'
 #
 
-INSERT INTO users VALUES (1,'author1','author1@www.example.com',NULL,NULL,'change',NULL,0,'author1');
-INSERT INTO users VALUES (-1,'Anonymous Coward','','','','change','',0,'anonymouscoward');
-INSERT INTO users VALUES (2,'user1','user1@www.example.com',NULL,NULL,'change',NULL,0,'user1');
-INSERT INTO users VALUES (3,'user2','user2@www.example.com',NULL,NULL,'change',NULL,0,'user2');
-INSERT INTO users VALUES (4,'user3','user3@www.example.com',NULL,NULL,'change',NULL,0,'user3');
-INSERT INTO users VALUES (5,'user4','user4@www.example.com',NULL,NULL,'change',NULL,0,'user4');
-INSERT INTO users VALUES (6,'author2','author2@www.example.com',NULL,NULL,'change',NULL,0,'author2');
+INSERT INTO users VALUES (1,'author1','author1@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'author1',NULL);
+INSERT INTO users VALUES (-1,'Anonymous Coward','','','','eb399bcaca686f8609137153307eecf1','',0,'anonymouscoward',NULL);
+INSERT INTO users VALUES (2,'user1','user1@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user1',NULL);
+INSERT INTO users VALUES (3,'user2','user2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user2',NULL);
+INSERT INTO users VALUES (4,'user3','user3@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user3',NULL);
+INSERT INTO users VALUES (5,'user4','user4@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user4',NULL);
+INSERT INTO users VALUES (6,'author2','author2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'author2',NULL);
 
 #
 # Dumping data for table 'users_comments'
@@ -718,75 +718,76 @@ INSERT INTO users_prefs VALUES (7,1,0,'edt',0,0,'');
 # Dumping data for table 'vars'
 #
 
-INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
-INSERT INTO vars VALUES ('currentqid','happy','The Current Question on the homepage pollbooth');
-INSERT INTO vars VALUES ('totalhits','383','Total number of hits the site has had thus far');
-INSERT INTO vars VALUES ('defaultwritestatus','1','Default write status for newly created articles');
-INSERT INTO vars VALUES ('defaultdisplaystatus','0','Default display status...');
-INSERT INTO vars VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');
-INSERT INTO vars VALUES ('totalComments','0','Total number of comments posted');
-INSERT INTO vars VALUES ('today','730512','Today converted to days past a long time ago');
-INSERT INTO vars VALUES ('commentstatus','0','default comment code');
-INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.');
-INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points');
-INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
-INSERT INTO vars VALUES ('anonymous_coward_uid','-1','UID to use for anonymous coward');
-INSERT INTO vars VALUES ('adminmail','admin@www.example.com','All admin mail goes here');
-INSERT INTO vars VALUES ('mailfrom','admin@www.example.com','All mail addressed from the site looks like it is coming from here');
-INSERT INTO vars VALUES ('siteowner','slash','What user this runs as');
-INSERT INTO vars VALUES ('datadir','/usr/local/slash','What is the root of the install for slash');
-INSERT INTO vars VALUES ('basedomain','slash.www.example.com','The URL for the site');
-INSERT INTO vars VALUES ('cookiedomain','','What should the cookie domain be?');
-INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site');
-INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site');
-INSERT INTO vars VALUES ('smtp_server','localhost','The mailserver for the site');
-INSERT INTO vars VALUES ('sitename','Slash Site','Name of the site');
-INSERT INTO vars VALUES ('slogan','Slash Site','Slogan of the site');
-INSERT INTO vars VALUES ('breaking','100','Undefined');
-INSERT INTO vars VALUES ('shit','0','Undefined');
-INSERT INTO vars VALUES ('mainfontface','verdana,helvetica,arial','Fonts');
-INSERT INTO vars VALUES ('fontbase','0','base font size, default 0');
-INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5');
-INSERT INTO vars VALUES ('archive_delay','60','days to wait for story archiving, comments deleting');
-INSERT INTO vars VALUES ('submiss_view','1','allow users to view submissions queue');
-INSERT INTO vars VALUES ('submiss_ts','1','print timestamp in submissions view');
-INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu');
-INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends');
-INSERT INTO vars VALUES ('allow_anonymous','1','allow anonymous posters');
-INSERT INTO vars VALUES ('use_dept','1','use "dept." field');
-INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments');
-INSERT INTO vars VALUES ('approvedtags','[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)]','Tags that you can use');
-INSERT INTO vars VALUES ('defaultsection','articles','Default section to display');
-INSERT INTO vars VALUES ('http_proxy','','http://proxy.www.example.com');
-INSERT INTO vars VALUES ('rdflanguage','en','What language is the site in?');
-INSERT INTO vars VALUES ('rdfencoding','ISO-8859-1','Site encoding');
-INSERT INTO vars VALUES ('fancyboxwidth','200','What size should the boxes be in?');
-INSERT INTO vars VALUES ('story_expire','600','Default expiration time for a story');
-INSERT INTO vars VALUES ('titlebar_width','100%','The width of the titlebar');
-INSERT INTO vars VALUES ('run_ads','0','Should we be running ads?');
-INSERT INTO vars VALUES ('send_mail','0','Turn On/Off the mailing list');
-INSERT INTO vars VALUES ('authors_unlimited','1','Authors have unlimited moderation');
-INSERT INTO vars VALUES ('m2_comments','10','Number of comments for meta-moderation.');
-INSERT INTO vars VALUES ('m2_maxunfair','0.5','Minimum % of unfairs for M2 penalty.');
-INSERT INTO vars VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for which M2 is ignored.');
-INSERT INTO vars VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation.');
-INSERT INTO vars VALUES ('m2_penalty','-1','Penalty for misuse of meta-moderation.');
-INSERT INTO vars VALUES ('m2_userpercentage','1','UID must be below this percentage of the total userbase to metamoderate.');
-INSERT INTO vars VALUES ('comment_minscore','-1','Minimum score for a specific comment.');
-INSERT INTO vars VALUES ('comment_maxscore','5','Maximum score for a specific comment.');
-INSERT INTO vars VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value');
-INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value');
-INSERT INTO vars VALUES ('maxkaubmiss_tsma','50','Maximum karma a user can accumulate.');
-INSERT INTO vars VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)');
-INSERT INTO vars VALUES ('maxtokens','40','Token threshold that must be hit to get any points');
-INSERT INTO vars VALUES ('tokensperpoint','8','Number of tokens per point');
-INSERT INTO vars VALUES ('maxpoints','5','The maximum number of points any moderator can have');
-INSERT INTO vars VALUES ('stir','3','Number of days before unused moderator points expire');
-INSERT INTO vars VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment');
-INSERT INTO vars VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
-INSERT INTO vars VALUES ('post_limit','10','seconds delay before repeat posting');
-INSERT INTO vars VALUES ('max_posts_allowed','30','maximum number of posts per day allowed');
-INSERT INTO vars VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed');
-INSERT INTO vars VALUES ('submission_speed_limit','300','How fast they can submit');
-INSERT INTO vars VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey');
-INSERT INTO vars VALUES ('submission_bonus','3','Bonus given to user if submission is used.');
+INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting',NULL,NULL);
+INSERT INTO vars VALUES ('currentqid','happy','The Current Question on the homepage pollbooth',NULL,NULL);
+INSERT INTO vars VALUES ('totalhits','383','Total number of hits the site has had thus far',NULL,NULL);
+INSERT INTO vars VALUES ('defaultwritestatus','1','Default write status for newly created articles',NULL,NULL);
+INSERT INTO vars VALUES ('defaultdisplaystatus','0','Default display status...',NULL,NULL);
+INSERT INTO vars VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point',NULL,NULL);
+INSERT INTO vars VALUES ('totalComments','0','Total number of comments posted',NULL,NULL);
+INSERT INTO vars VALUES ('today','730512','Today converted to days past a long time ago',NULL,NULL);
+INSERT INTO vars VALUES ('commentstatus','0','default comment code',NULL,NULL);
+INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.',NULL,NULL);
+INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points',NULL,NULL);
+INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block',NULL,NULL);
+INSERT INTO vars VALUES ('anonymous_coward_uid','-1','UID to use for anonymous coward',NULL,NULL);
+INSERT INTO vars VALUES ('adminmail','admin@www.example.com','All admin mail goes here',NULL,NULL);
+INSERT INTO vars VALUES ('mailfrom','admin@www.example.com','All mail addressed from the site looks like it is coming from here',NULL,NULL);
+INSERT INTO vars VALUES ('siteowner','slash','What user this runs as',NULL,NULL);
+INSERT INTO vars VALUES ('datadir','/usr/local/slash','What is the root of the install for slash',NULL,NULL);
+INSERT INTO vars VALUES ('basedomain','slash.www.example.com','The URL for the site',NULL,NULL);
+INSERT INTO vars VALUES ('cookiedomain','','What should the cookie domain be?',NULL,NULL);
+INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site',NULL,NULL);
+INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site',NULL,NULL);
+INSERT INTO vars VALUES ('smtp_server','localhost','The mailserver for the site',NULL,NULL);
+INSERT INTO vars VALUES ('sitename','Slash Site','Name of the site',NULL,NULL);
+INSERT INTO vars VALUES ('slogan','Slash Site','Slogan of the site',NULL,NULL);
+INSERT INTO vars VALUES ('breaking','100','Undefined',NULL,NULL);
+INSERT INTO vars VALUES ('shit','0','Undefined',NULL,NULL);
+INSERT INTO vars VALUES ('mainfontface','verdana,helvetica,arial','Fonts',NULL,NULL);
+INSERT INTO vars VALUES ('fontbase','0','base font size, default 0',NULL,NULL);
+INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5',NULL,NULL);
+INSERT INTO vars VALUES ('archive_delay','60','days to wait for story archiving, comments deleting',NULL,NULL);
+INSERT INTO vars VALUES ('submiss_view','1','allow users to view submissions queue',NULL,NULL);
+INSERT INTO vars VALUES ('submiss_ts','1','print timestamp in submissions view',NULL,NULL);
+INSERT INTO vars VALUES ('articles_only','0','show only Articles in submission count in admin menu',NULL,NULL);
+INSERT INTO vars VALUES ('admin_timeout','30','time in minutes before idle admin session ends',NULL,NULL);
+INSERT INTO vars VALUES ('allow_anonymous','1','allow anonymous posters',NULL,NULL);
+INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
+INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments',NULL,NULL);
+INSERT INTO vars VALUES ('approvedtags','[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)]','Tags that you can use',NULL,NULL);
+INSERT INTO vars VALUES ('defaultsection','articles','Default section to display',NULL,NULL);
+INSERT INTO vars VALUES ('http_proxy','','http://proxy.www.example.com',NULL,NULL);
+INSERT INTO vars VALUES ('rdflanguage','en','What language is the site in?',NULL,NULL);
+INSERT INTO vars VALUES ('rdfencoding','ISO-8859-1','Site encoding',NULL,NULL);
+INSERT INTO vars VALUES ('fancyboxwidth','200','What size should the boxes be in?',NULL,NULL);
+INSERT INTO vars VALUES ('story_expire','600','Default expiration time for a story',NULL,NULL);
+INSERT INTO vars VALUES ('titlebar_width','100%','The width of the titlebar',NULL,NULL);
+INSERT INTO vars VALUES ('run_ads','0','Should we be running ads?',NULL,NULL);
+INSERT INTO vars VALUES ('send_mail','0','Turn On/Off the mailing list',NULL,NULL);
+INSERT INTO vars VALUES ('authors_unlimited','1','Authors have unlimited moderation',NULL,NULL);
+INSERT INTO vars VALUES ('m2_comments','10','Number of comments for meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_maxunfair','0.5','Minimum % of unfairs for M2 penalty.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for which M2 is ignored.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_penalty','-1','Penalty for misuse of meta-moderation.',NULL,NULL);
+INSERT INTO vars VALUES ('m2_userpercentage','1','UID must be below this percentage of the total userbase to metamoderate.',NULL,NULL);
+INSERT INTO vars VALUES ('comment_minscore','-1','Minimum score for a specific comment.',NULL,NULL);
+INSERT INTO vars VALUES ('comment_maxscore','5','Maximum score for a specific comment.',NULL,NULL);
+INSERT INTO vars VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value',NULL,NULL);
+INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value',NULL,NULL);
+INSERT INTO vars VALUES ('maxkaubmiss_tsma','50','Maximum karma a user can accumulate.',NULL,NULL);
+INSERT INTO vars VALUES ('metamod_sum','3','sum of moderations 1 for release (deprecated)',NULL,NULL);
+INSERT INTO vars VALUES ('maxtokens','40','Token threshold that must be hit to get any points',NULL,NULL);
+INSERT INTO vars VALUES ('tokensperpoint','8','Number of tokens per point',NULL,NULL);
+INSERT INTO vars VALUES ('maxpoints','5','The maximum number of points any moderator can have',NULL,NULL);
+INSERT INTO vars VALUES ('stir','3','Number of days before unused moderator points expire',NULL,NULL);
+INSERT INTO vars VALUES ('tokenspercomment','6','Number of tokens to feed the system for each comment',NULL,NULL);
+INSERT INTO vars VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated',NULL,NULL);
+INSERT INTO vars VALUES ('post_limit','10','seconds delay before repeat posting',NULL,NULL);
+INSERT INTO vars VALUES ('max_posts_allowed','30','maximum number of posts per day allowed',NULL,NULL);
+INSERT INTO vars VALUES ('max_submissions_allowed','20','maximum number of submissions per timeframe allowed',NULL,NULL);
+INSERT INTO vars VALUES ('submission_speed_limit','300','How fast they can submit',NULL,NULL);
+INSERT INTO vars VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey',NULL,NULL);
+INSERT INTO vars VALUES ('submission_bonus','3','Bonus given to user if submission is used.',NULL,NULL);
+
