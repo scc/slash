@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w 
+
 # This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
 # released under the GPL.  See README and COPYING for more information.
 # $Id$
-
+#
 # First version by Brian, brian@tanegnt.org
 # Updated by Patrick Galbraith, capttofu@slashdot.org
 
@@ -30,8 +31,7 @@ if ($opts{'f'} && ($opts{'d'} || $opts{'e'}) && @ARGV > 1);
 # you must have -f if you want to save a particular file as a template
 usage('no file to save') if ($opts{'s'} && ! $opts{'f'} && -f $ARGV[0]);
 # if deleting, then there should be no other operation or file flags
-usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} || $opts{'D'})); 
-usage('deletion with other op flags') if ( $opts{'r'} && ! @ARGV);
+usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
 # can't have multiple IDs on a save
 usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
