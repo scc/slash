@@ -34,7 +34,6 @@ CREATE TABLE backup_blocks (
 CREATE TABLE blocks (
 	bid varchar(30) DEFAULT '' NOT NULL,
 	block text,
-	uid int4,
 	seclev int2,
 	type varchar(20) DEFAULT '' NOT NULL,
 	description text,
@@ -404,7 +403,6 @@ CREATE TABLE templates (
 	UNIQUE (name,page,section,lang),
 	PRIMARY KEY (tpid)
 );
-CREATE INDEX idx_tmpltpage ON templates(page);
 
 
 
