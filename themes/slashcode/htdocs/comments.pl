@@ -749,9 +749,7 @@ sub deleteThread {
 		$delCount += deleteThread($sid, $_);
 	}
 
-	$delkids->finish;
-
-	$I{dbobject}->removeComment($sid, $cid);
+	$I{dbobject}->deleteComment($sid, $cid);
 
 	print "<BR>";
 	return $delCount;

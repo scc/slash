@@ -167,7 +167,7 @@ sub sqlUpdate
 	$sql .= "\nWHERE $where\n";
 	$self->sqlConnect();
 	my $rows = $self->{dbh}->do($sql);
-#	print STDERR "SQL: $sql\n";
+	#print STDERR "SQL: $sql\n";
 	apacheLog($sql) unless($rows);
 	return $rows;
 }

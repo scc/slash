@@ -357,7 +357,7 @@ EOT
 			print qq!<BR>attached to <A HREF="$href">$story->{title}</A>!;
 # $S->{section}/$sid.shtml
 		} else {
-			my $question = $I{dbobject}->getPollQuestionBySID($sid);
+			my $question = $I{dbobject}->getPollQuestion($sid, 'question');
 			print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $question</A>!
 				if $question;
 		}

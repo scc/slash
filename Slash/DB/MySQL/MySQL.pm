@@ -158,21 +158,8 @@ sub sqlConnect {
 }
 
 ########################################################
-# Lets say views? How about a better update?
-# This is here because MySQL can suck
 sub init {
 	my($self) = @_;
-	my @user_tables = qw(
-		users users_comments users_index
-		users_info users_key users_prefs
-	);
-	for my $table (@user_tables) {
-		my $keys = $self->getKeys($table);
-		for (@$keys) {
-			$self->{'_all_user_keys'}{$_} = $table;
-		}
-	}
-	$self->{_user_tables} = \@user_tables;
 	# These are here to remind us of what exists
 	$self->{_storyBank} = {};
 	$self->{_codeBank} = {};
@@ -831,7 +818,7 @@ sub getCommentCid {
 }
 
 ########################################################
-sub removeComment {
+sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	$self->sqlDo("delete from comments WHERE sid=" .
 		$self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
@@ -1231,27 +1218,6 @@ sub getPollQuestions {
 	$sth->finish;
 
 	return $poll_hash_ref;
-}
-
-########################################################
-# I don't like this method at all (AKA how it is used).
-# There has to be a better way. Should be a way to
-# combine its usage with the getPollQuestions()
-# All we are doing is making sure qid exists.
-sub getPollQuestionID {
-	my($self, $qid) = @_;
-	my($fetched_qid) = $self->sqlSelect('qid', 'pollquestions', "qid='${qid}'");
-
-	return $fetched_qid;
-}
-
-########################################################
-# Simple method
-sub getPollQuestionBySID {
-	my($self, $sid) = @_;
-	my($question) = $self->sqlSelect("question", "pollquestions", "qid='$sid'");
-
-	return $question;
 }
 
 ########################################################
@@ -1779,16 +1745,16 @@ sub getStoryByTime {
 	);
 }
 
-########################################################
-sub setUsers {
-	my($self, $uid, $hashref) = @_;
-	if (exists $hashref->{passwd}) {
-		# get rid of newpasswd if defined in DB
-		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = md5_hex($hashref->{passwd});
-	}
-	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
-}
+#########################################################
+#sub setUsers {
+#	my($self, $uid, $hashref) = @_;
+#	if (exists $hashref->{passwd}) {
+#		# get rid of newpasswd if defined in DB
+#		$hashref->{newpasswd} = '';
+#		$hashref->{passwd} = md5_hex($hashref->{passwd});
+#	}
+#	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
+#}
 
 ########################################################
 sub countStories {
@@ -2606,7 +2572,7 @@ sub _genericGet {
 # scripts directly.
 sub _genericGetCache {
 	my($table, $table_prime, $self, $id, @values) = @_;
-	my $table_cache= '_' . $table;
+	my $table_cache= '_' . $table . '_cache';
 
 	my $count = @values;
 	if ($count == 1) {
@@ -2636,7 +2602,7 @@ sub _genericGetCache {
 # scripts directly.
 sub _genericGetsCache {
 	my($table, $table_prime, $self) = @_;
-	my $table_cache= '_' . $table;
+	my $table_cache= '_' . $table . '_cache';
 
 	return $self->{$table_cache} if (keys %{$self->{$table_cache}});
 	# Lets go knock on the door of the database
@@ -2740,34 +2706,46 @@ sub getVar {
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
 sub getUser {
-	my($self, $uid, @val) = @_;
+	my $tables = [qw(
+		users users_comments users_index
+		users_info users_key users_prefs
+	)];
+	my $answer = _genericGetCombined($tables, 'uid', @_);
+	return $answer;
+}
+
+########################################################
+sub _genericGetCombined {
+	my($tables, $table_prime, $self, $id, @val) = @_;
 	my $members = @val;
 	my $answer;
+	# The sort makes sure that someone will always get the cache if
+	# they have the same tables
+	my $cache = _getCache($self, $tables);
+	my $id_db = $self->{dbh}->quote($id);
 	if ($members == 1) {
-		my $table = $self->{_all_user_keys}{$val[0]};
-		($answer) = $self->sqlSelect($val[0], $table, 'uid=' .$self->{dbh}->quote($uid));
+		my $table = $self->{$cache}->{$val[0]};
+		($answer) = $self->sqlSelect($val[0], $table, $table_prime . '=' .$id_db);
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
 		my %tables;
 		my $where;
-		my $uid_db = $self->{dbh}->quote($uid);
-		for (@val) {
-			$tables{$self->{_all_user_keys}{$_}} = 1;
+		for(@val) {
+			$tables{$self->{$cache}->{$_}} = 1;
 		}
-		for (keys %tables) {
-			$where .= "$_.uid=$uid_db AND ";
+		for(keys %tables) {
+			$where .= "$_.$table_prime=$id_db AND ";
 		}
 		$where =~ s/ AND $//;
 		my $table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} else {
 		my $where;
-		my $uid_db = $self->{dbh}->quote($uid);
-		for (keys %{$self->{_all_user_keys}}) {
-			$where .= "$_.uid=$uid_db AND ";
+		for(keys %{$self->{$cache}}) {
+			$where .= "$_.$table_prime=$id_db AND ";
 		}
 		$where =~ s/ AND $//;
-		my $table = join ',', @$self->{_user_tables};
+		my $table = join ',', @$tables;
 		$answer = $self->sqlSelectHashref('*', $table, $where);
 	} 
 
@@ -2775,31 +2753,58 @@ sub getUser {
 }
 
 ########################################################
-# Now here is the thing. We want setUser to look like
-# a generic, despite the fact that it is not :)
+# 
 sub setUser {
-	my($self, $uid, $hashref) = @_;
-	my %tables;
-
+	my ($self, $uid, $hashref) = @_;
+	my $tables = [qw(
+		users users_comments users_index
+		users_info users_key users_prefs
+	)];
 	# encrypt password  --  done here OK?
+	# Probably safer to put it here
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
 		$hashref->{newpasswd} = '';
 		$hashref->{passwd} = md5_hex($hashref->{passwd});
 	}
+	my $answer = _genericSetCombined($tables, 'uid', @_);
+	return $answer;
+}
+########################################################
+# This could be optimized by not making multiple calls
+# to getKeys or by fixing getKeys() to return multiple
+# values
 
-	for my $key (keys %$hashref) {
-		my $table = $self->{_all_user_keys}{$key};
-		push @{$tables{$table}}, $key;
-	}
-
-	for my $table (keys %tables) {
-		my %minihash;
-		for my $key (@{$tables{$table}}){
-			$minihash{$key} = $hashref->{$key}
-				if defined $hashref->{$key};
+sub _getCache {
+	my($self, $tables) = @_;
+	my $cache = '_' . join ('_', sort(@$tables), 'cache');
+	unless(keys %{$self->{$cache}}) {
+		for my $table (@$tables) {
+			my $keys = $self->getKeys($table);
+			for (@$keys) {
+				$self->{$cache}->{$_} = $table;
+			}
 		}
-		$self->sqlUpdate($table, \%minihash, "uid=$uid", 1);
+	} 
+	return $cache;
+}
+########################################################
+# Now here is the thing. We want setUser to look like
+# a generic, despite the fact that it is not :)
+sub _genericSetCombined {
+	my($tables, $table_prime, $self, $id, $hashref) = @_;
+	my %update_tables;
+	my $cache = _getCache($self, $tables);
+	for(keys %$hashref) {
+		my $key = $self->{$cache}->{$_};
+		push @{$update_tables{$key}}, $_;
+	}
+	for my $table (keys %update_tables) {
+		my %minihash;
+		for(@{$update_tables{$table}}){
+			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
+		}
+		$self->sqlUpdate($table, \%minihash, $table_prime . '=' . $id, 1);
 	}
 }
 

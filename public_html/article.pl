@@ -69,7 +69,7 @@ sub main {
 	yourArticle($S);
 
 	# Poll Booth
-	pollbooth($I{F}{sid}) if $I{dbobject}->getPollQuestionID($S->{sid});
+	pollbooth($I{F}{sid}) if $I{dbobject}->getPollQuestion($S->{sid});
 
 	# Related Links
 	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
