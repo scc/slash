@@ -10,7 +10,7 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	my $bd = $constants->{basedir}; # convenience
-	for my $name (qw( hof topics )) {
+	for my $name (qw( hof topics authors )) {
 		prog2file("$bd/$name.pl", "ssi=yes", "$bd/$name.shtml");
 	}
 
