@@ -16,7 +16,7 @@ sub new {
 			print STDERR "Picking MySQL \n";
 			require Slash::DB::MySQL;
 			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
-			if ($ENV{GATEWAY_INTERFACE}) {
+			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::MySQL;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
 			}
@@ -24,7 +24,7 @@ sub new {
 			print STDERR "Picking Oracle \n";
 			require Slash::DB::Oracle;
 			push(@Slash::DB::ISA, 'Slash::DB::Oracle');
-			if ($ENV{GATEWAY_INTERFACE}) {
+			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::Oracle;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
 			}
@@ -32,7 +32,7 @@ sub new {
 			print STDERR "Picking PostgreSQL \n";
 			require Slash::DB::PostgreSQL;
 			push(@Slash::DB::ISA, 'Slash::DB::PostgreSQL');
-#			if ($ENV{GATEWAY_INTERFACE}) {
+#			unless ($ENV{GATEWAY_INTERFACE}) {
 #				require Slash::DB::Static::PostgreSQL;
 #				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
 #			}

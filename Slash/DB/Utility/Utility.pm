@@ -51,6 +51,7 @@ sub sqlSelect {
 	}
 	my @r = $sth->fetchrow;
 	$sth->finish;
+
 	return @r;
 }
 

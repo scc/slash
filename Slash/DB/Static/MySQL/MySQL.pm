@@ -352,7 +352,7 @@ sub tokens2points {
 
 ########################################################
 # For moderatord
-sub stirpool {
+sub stirPool {
 	my($self) = @_;
 	my $stir = getCurrentStatic('stir');
 	my $c = $self->sqlSelectMany("points,users.uid as uid",
@@ -368,7 +368,6 @@ sub stirpool {
 	$self->sqlDo("LOCK TABLES users_comments WRITE");
 
 	while (my($p, $u) = $c->fetchrow) {
-		moderatordLog("Taking $p points from $u");
 		$revoked += $p;
 		$self->sqlUpdate("users_comments", { points => '0' }, "uid=$u");
 	}
@@ -376,6 +375,67 @@ sub stirpool {
 	$self->sqlDo("UNLOCK TABLES");
 	$c->finish;
 	return 0;
+}
+
+########################################################
+# For moderatord
+sub getUserLast {
+	my($self) = @_;
+	my($totalusers) = $self->sqlSelect("max(uid)", "users_info");
+
+	return $totalusers;
+}
+
+
+########################################################
+# For moderatord
+sub giveKarma {
+	my($self, $eligibleusers, $tokenpool) = @_;
+	my $c = $self->sqlSelectMany("users_info.uid,count(*) as c",
+			"users_info,users_prefs, accesslog",
+			"users_info.uid < $eligibleusers
+			 AND users_info.uid=accesslog.uid 
+			 AND users_info.uid=users_prefs.uid
+			 AND (op='article' or op='comments')
+			 AND willing=1
+			 AND karma >= 0
+			 GROUP BY users_info.uid
+			 ORDER BY c");
+
+	my $eligible = $c->rows;
+	my($uid, $cnt);
+	while ((($uid,$cnt) = $c->fetchrow) && ($cnt < 4)) {
+		$eligible--;
+	}
+
+	my($st, $fi) = (int($eligible / 6), int($eligible / 8) * 7);
+	my $x;
+
+	moderatordLog("Start at $st end at $fi.  $eligible left. First score is $cnt");
+
+	my @eligibles;
+	while (($x++ < $fi) && (($uid, $cnt) = $c->fetchrow)) {
+		next if $x < $st;
+		push @eligibles, $uid;
+	}
+	$c->finish;
+
+	my @scores;
+	for (my $x = 0; $x < $tokenpool; $x++) {
+		$scores[$eligibles[rand @eligibles]]++;
+	}
+
+
+	$self->sqlDo("LOCK TABLES users_info WRITE");
+	for (@eligibles) {
+		next unless $scores[$uid];
+		$self->setUser($uid, { 
+			-tokens	=> "tokens+" . $scores[$uid]
+		});
+	}
+	$self->sqlDo("UNLOCK TABLES");
+
+	return("Start at $st end at $fi.  $eligible left. First score is $cnt");
 }
 
 1;

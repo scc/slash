@@ -51,7 +51,8 @@ unless($httpd) {
 } else {
 	$httpd .= "/httpd.conf";
 }
-open(CREATE, "</usr/local/slash/sql/mysql/slashschema_create.sql");
+# Defaulting to the only theme at the moment
+open(CREATE, "</usr/local/slash/sql/mysql/schema.sql");
 
 while(<CREATE>) {
 	chomp;
@@ -70,8 +71,12 @@ $sql = join '', @create;
 print "What is name of your slashsite (aka www.slashdot.org)?\n";
 $hostname = <STDIN>;
 chomp($hostname);
+# We also need to really be determining driver here and 
+# picking the right schema
+print "Which theme do you want to use (skipping since we only have one theme)?\n";
+my $theme = '/usr/local/slash/themes/slashcode';
 
-open(DUMP,"</usr/local/slash/sql/mysql/slashdata_dump.sql") or die "can't locate slashdata_dump.sql! Where is it?";
+open(DUMP,"<$theme/sql/mysql/datadump.sql");
 
 while(<DUMP>) {
 	next unless /^INSERT/;
@@ -81,7 +86,7 @@ while(<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,"</usr/local/slash/sql/mysql/slashdata_prep.sql") or die "can't locate slashdata_prep.sql! Where is it?";
+open(DUMP,"<$theme/sql/mysql/prep_date.sql");
 
 while(<DUMP>) {
 	chomp;
@@ -94,14 +99,32 @@ for(@sql) {
 	$dbh->do($_);
 }
 
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/log/$hostname' WHERE name = 'logdir' ");
-$dbh->do("UPDATE vars SET value = '/usr/local/slash/$hostname' WHERE name = 'basedir' ");
+print "Ok, I am planning on user $hostname as the unique name for the slashcode site. If this is not ok, you need to fill in something else here. [$hostname]\n";
+my $sitename = <STDIN>;
+chomp($sitename);
+unless($sitename) {
+	$sitename = $hostname;
+}
 
-system("mkdir /usr/local/slash/$hostname");
-system("mkdir /usr/local/slash/logs/$hostname");
-system("cp -r /usr/local/slash/default/* /usr/local/slash/$hostname");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/log/$sitename' WHERE name = 'logdir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$sitename' WHERE name = 'basedir' ");
+
+system("mkdir /usr/local/slash/$sitename");
+system("mkdir /usr/local/slash/$sitename/logs");
+system("mkdir /usr/local/slash/$sitename/htdocs");
+system("mkdir /usr/local/slash/$sitename/backups");
+system("mkdir /usr/local/slash/$sitename/sbin");
+system("cp -r $theme/htdocs/* /usr/local/slash/$sitename/htdocs");
 
 $dbh->disconnect;
+
+my $slashdb = Slash::DB->new($ARGV[0]);
+
+print "Ok, we need a password for the God account (8 characters only please)\n";
+my $password = <STDIN>;
+chomp($password);
+
+$slashdb->setAuthor('God', {pwd => $password});
 
 # Now, lets update slash.sites
 open (SLASHSITES, "/usr/local/slash/slash.sites");
@@ -135,12 +158,5 @@ sub siteadd {
 	close(CONF);
 }
 
-my $slashdb = Slash::DB->new($ARGV[0]);
-
-print "Ok, we need a password for the God account (8 characters only please)\n";
-my $password = <STDIN>;
-chomp($password);
-
-$slashdb->setAuthor('God', {pwd => $password});
 
 
