@@ -269,11 +269,13 @@ CREATE TABLE formkeys (
 	formkey varchar(20) DEFAULT '' NOT NULL,
 	formname varchar(20) DEFAULT '' NOT NULL,
 	id varchar(30) DEFAULT '' NOT NULL,
+	idcount mediumint UNSIGNED DEFAULT 0 NOT NULL,
 	sid char(16) DEFAULT '' NOT NULL,
 	uid mediumint UNSIGNED NOT NULL,
 	ipid	char(32) DEFAULT '' NOT NULL,
 	value tinyint DEFAULT '0' NOT NULL,
 	cid mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	last_ts int UNSIGNED DEFAULT '0' NOT NULL,
 	ts int UNSIGNED DEFAULT '0' NOT NULL,
 	submit_ts int UNSIGNED DEFAULT '0' NOT NULL,
 	content_length smallint UNSIGNED DEFAULT '0' NOT NULL,
@@ -281,7 +283,9 @@ CREATE TABLE formkeys (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	KEY formname (formname),
 	KEY id (id),
+	KEY idcount (idcount),
 	KEY ts (ts),
+	KEY last_ts (ts),
 	KEY submit_ts (submit_ts)
 ) TYPE = myisam;
 

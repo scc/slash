@@ -1698,8 +1698,9 @@ sub setStory {
 }
 
 ########################################################
+# the the last time a user submitted a form successfuly
 sub getSubmissionLast {
-	my($self, $id, $formname) = @_;
+	my($self, $formname, $id) = @_;
 
 	my $where = $self->_whereFormkey($id);
 	my($last_submitted) = $self->sqlSelect(
@@ -1711,6 +1712,67 @@ sub getSubmissionLast {
 	return $last_submitted;
 }
 
+########################################################
+# get the last timestamp user created  or 
+# submitted a formkey 
+sub getLastTs {
+	my($self, $formname, $id, $submitted) = @_;
+
+	my $tscol = $submitted ? 'submit_ts' : 'ts'; 
+	my $where = $self->_whereFormkey($id);
+	$where .= " AND formname =  '$formname'";
+	$where .= ' AND value = 1' if $submitted;
+
+	my($last_created) = $self->sqlSelect(
+		"max($tscol)",
+		"formkeys",
+		$where);
+	$last_created ||= 0;
+}
+
+########################################################
+sub _getLastFkCount {
+	my($self, $formname, $id) = @_;
+
+	my $where = $self->_whereFormkey($id);
+	my($idcount) = $self->sqlSelect(
+		"max(idcount)",
+		"formkeys",
+		"$where AND formname = '$formname'");
+	$idcount ||= 0;
+
+}
+
+########################################################
+# gives a true or false of whether the system has given
+# out more than the allowed unused formkeys per form
+# over the formkey timeframe
+sub getUnsetFkCount {
+	my($self, $formname, $id) = @_;
+	my $constants = getCurrentStatic();
+
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	my $where = $self->_whereFormkey($id);
+	$where .=  " AND formname = '$formname'"; 
+	$where .= " AND ts >= $formkey_earliest";
+	$where .= " AND value = 0";
+
+	my $unused = 0;
+
+	my $max_unused = $constants->{"max_${formname}_unusedfk"};
+
+	if ($max_unused) {
+		($unused) = $self->sqlSelect(
+			"count(*) >= $max_unused",
+			"formkeys",
+			$where);
+		
+		return $unused;
+
+	} else {
+		return(0);
+	}
+}
 
 ########################################################
 sub updateFormkeyId {
@@ -1728,13 +1790,17 @@ sub updateFormkeyId {
 ########################################################
 sub createFormkey {
 	my($self, $formname, $id, $sid) = @_;
+
+	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $ipid = getCurrentUser('ipid');
 
 	# save in form object for printing to user
 	$form->{formkey} = getFormkey();
 
-	my $now = time();
+	my $last_count = $self->_getLastFkCount($formname, $id);
+	my $last_submitted = $self->getLastTs($formname, $id, 1);
+
 	# print STDERR "createFormkey time() $now\n";
 	# insert the fact that the form has been displayed, but not submitted at this point
 	$self->sqlInsert('formkeys', {
@@ -1745,8 +1811,11 @@ sub createFormkey {
 		uid		=> $ENV{SLASH_USER},
 		ipid		=> $ipid,
 		value		=> 0,
-		ts		=> $now
+		ts		=> time(),
+		last_ts		=> $last_submitted,
+		idcount		=> $last_count,
 	});
+	return(1);
 }
 
 ########################################################
@@ -1758,9 +1827,8 @@ sub checkResponseTime {
 
 	my $now =  time();
 
-	my $response_limits = {
-		comments 	=> $constants->{comments_response_limit},
-	};
+	my $response_limit = $constants->{"${formname}_response_limit"} || 0;
+
 	# 1 or 0
 	my($response_time) = $self->sqlSelect("$now - ts", 'formkeys',
 		'formkey = ' . $self->sqlQuote($form->{formkey}));
@@ -1771,7 +1839,7 @@ sub checkResponseTime {
 		print STDERR "LIMIT REACHED $response_time\n";
 	}
 
-	return $response_time < $response_limits->{$formname} ? $response_time : 0;
+	return $response_time < $response_limit ? $response_time : 0;
 }
 
 ########################################################
@@ -1809,7 +1877,7 @@ sub getFormkeyTs {
 	my($ts) = $self->sqlSelect(
 		$tscol,
 		"formkeys",
-		"formkey='" . $self->sqlQuote($formkey));
+		"formkey=" . $self->sqlQuote($formkey));
 
 	print STDERR "FORMKEY TS $ts\n" if $constants->{DEBUG};
 	return($ts);
@@ -1818,16 +1886,25 @@ sub getFormkeyTs {
 ##################################################################
 # two things at once. Validate and increment
 sub updateFormkeyVal {
-	my($self, $formkey) = @_;
+	my($self, $formname, $formkey) = @_;
 
 	my $constants = getCurrentStatic();
+
+	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
+	my $min = time() - $maxposts; 
+	my $where = " AND idcount < $maxposts ";
+	$where .= "AND last_ts <= $min ";
+	$where .= "AND value = 0";
+
+	print STDERR "MIN $min MAXPOSTS $maxposts WHERE $where\n";
 
 	# increment the value from 0 to 1 (shouldn't ever get past 1)
 	# this does two things: increment the value (meaning the formkey
 	# can't be used again) and also gives a true/false value
 	my $updated = $self->sqlUpdate("formkeys", {
 		-value		=> 'value+1',
-	}, "formkey=" . $self->sqlQuote($formkey) . " AND value = 0");
+		-idcount	=> 'idcount+1',
+	}, "formkey=" . $self->sqlQuote($formkey) . $where);
 
 	$updated = int($updated);
 
@@ -1846,6 +1923,7 @@ sub resetFormkey {
 	# reset the formkey to 0, and reset the ts
 	my $updated = $self->sqlUpdate("formkeys", {
 		-value		=> 0,
+		-idcount	=> '(idcount -1)',
 		ts		=> time(),
 	}, "formkey=" . $self->sqlQuote($formkey));
 
@@ -1880,29 +1958,18 @@ sub checkPostInterval {
 	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $constants = getCurrentStatic();
+	my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 
 	my $where = $self->_whereFormkey($id);
-	# this is not extensible at all.  why not just do
-	# $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
-	# ? -- pudge
-	my %speedlimit = (
-		comments 	=> $constants->{comments_speed_limit},
-		discussions	=> $constants->{discussions_speed_limit},
-		submissions	=> $constants->{submissions_speed_limit},
-		users		=> $constants->{users_speed_limit},
-	);
-
-	my $speedlimit = exists($speedlimit{$formname})
-		? $speedlimit{$formname}
-		: $constants->{"${formname}_speed_limit"};
-
-	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	$where .= " AND formname = '$formname' ";
+	$where .= "AND ts >= $formkey_earliest";
 
 	my $now = time();
 	my($interval) = $self->sqlSelect(
 		"$now - max(submit_ts)",
 		"formkeys",
-		"formname = '$formname' AND $where");
+		$where);
 
 	$interval ||= 0;
 	print STDERR "CHECK INTERVAL $interval speedlimit $speedlimit\n" if $constants->{DEBUG};
@@ -1915,20 +1982,20 @@ sub checkMaxReads {
 	my($self, $formname, $id) = @_;
 	my $constants = getCurrentStatic();
 
+	my $maxreads = $constants->{"max_${formname}_viewings"} || 0;
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+
 	my $where = $self->_whereFormkey($id);
-	my $maxreads = {
-		comments 	=> $constants->{max_comments_viewings},
-		users		=> $constants->{max_users_viewings},
-	};
-	my $count_max = $maxreads->{$formname} || 0;
+	$where .= " AND formname = '$formname'";
+	$where .= " AND ts >= $formkey_earliest";
+	$where .= " HAVING count >= $maxreads";
+
 	my($limit_reached) = $self->sqlSelect(
 		"COUNT(*) AS count",
 		"formkeys",
-		"$where AND ts >= $formkey_earliest AND formname = '$formname'",
-		"HAVING count >= $count_max");
+		$where);
 
-	return $limit_reached ? $maxreads->{$formname} : 0;
+	return $limit_reached ? $limit_reached : 0;
 }
 
 ##################################################################
@@ -1939,33 +2006,24 @@ sub checkMaxPosts {
 	$id       ||= getFormkeyId($ENV{SLASH_USER});
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
+
 	my $where = $self->_whereFormkey($id);
+	$where .= " AND submit_ts >= $formkey_earliest";
+	$where .= " AND formname = '$formname'",
+	$where .= " HAVING count >= $maxposts";
 
-	# this is not extensible at all.  why not just do
-	# $speedlimit = $constants->{"max_${formname}_allowed"} || 0;
-	# ? -- pudge
-	my %maxposts = (
-		comments 	=> $constants->{max_comments_allowed},
-		discussions	=> $constants->{max_discussions_allowed},
-		submissions	=> $constants->{max_submissions_allowed},
-		users		=> $constants->{max_userchanges_allowed},
-	);
-
-	my $maxposts = exists($maxposts{$formname})
-		? $maxposts{$formname}
-		: $constants->{"max_${formname}_allowed"};
-
-	my($limit_reached) = $self->sqlSelect(
+	my ($limit_reached) = $self->sqlSelect(
 		"COUNT(*) AS count",
 		"formkeys",
-		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'",
-		"HAVING count >= $maxposts");
+		$where );
 
 	if ($constants->{DEBUG}) {
 		print STDERR "LIMIT REACHED (times posted) $limit_reached\n";
-		print STDERR "LIMIT REACHED maxposts $maxposts\n";
+		print STDERR "LIMIT REACHED limit_reached maxposts $maxposts\n";
 	}
-	return $limit_reached ? $maxposts : 0;
+
+	return $limit_reached ? $limit_reached : 0;
 }
 
 ##################################################################

@@ -31,7 +31,9 @@ __template__
 [% END %]
 	[% INCLUDE titlebar width="95%" title="Post Comment" %]
 
+<!-- error message -->
 [% IF error_message %][% error_message %][% END %]
+<!-- end error message -->
 
 <FORM ACTION="[% constants.rootdir %]/comments.pl" METHOD="POST">
 

@@ -122,17 +122,20 @@ sub main {
 	#
 	######################################################
 	my $ops	= {
+		# there will only be a discussions creation form if 
+		# the user is anon, or if there's an sid, therefore, we don't want 
+		# a formkey if it's not a form 
 		default		=> { 
 			function		=> \&displayComments,
 			seclev			=> 0,
 			formname		=> 'discussions',
-			checks			=> ['generate_formkey'],
+			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
 		},
 		index			=> {
 			function		=> \&commentIndex,
 			seclev			=> 0,
 			formname 		=> 'discussions',
-			checks			=> ['generate_formkey'],
+			checks			=> ($form->{sid} || isAnon($user->{uid})) ? [] : ['generate_formkey'],
 		},
 		moderate		=> {
 			function		=> \&moderate,
@@ -184,8 +187,8 @@ sub main {
 			post			=> 1,
 			formname 		=> 'comments',
 			checks			=> 
-			[ qw ( max_post_check valid_check response_check 
-				interval_check formkey_check ) ],
+			[ qw ( max_post_check valid_check interval_check response_check 
+				formkey_check ) ],
 		},
 	};
 	
@@ -207,6 +210,13 @@ sub main {
 	}
 	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
 	$op = 'default' if (! $postflag && $ops->{$op}{post});
+
+	print STDERR "OP $op\n" if $constants->{DEBUG};
+	if ($constants->{DEBUG}) {
+		for(keys %{$form}) {
+			print STDERR "FORM key $_ value $form->{$_}\n";
+		}
+	}
 
 	# authors shouldn't jump through formkey hoops? right?	
 	if ($user->{seclev} < 100) {
@@ -348,15 +358,13 @@ sub createDiscussion {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($formkeyid, $error_message) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid, $error_message) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	print STDERR "ERROR MESSAGE $error_message OP $form->{op}\n";
 
 	my $formkey_earliest = time() - $constants->{formkey_timeframe};
 	my $preview;
+	my $error_flag = 0;
 
 	# Get the comment we may be responding to. Remember to turn off
 	# moderation elements for this instance of the comment.
@@ -367,8 +375,12 @@ sub editComment {
 		return;
 	}
 
-	if ($form->{postercomment}) {
-		$preview = previewForm(\$error_message);
+	unless (lc($form->{op}) eq 'reply') {
+		$error_flag++ unless validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message, 1); 
+	}
+
+	if ((! $error_flag && $form->{postercomment}) || $form->{op} eq 'preview') { 
+		$preview = previewForm();
 	}
 
 	if ($form->{pid} && !$form->{postersubj}) {
@@ -404,6 +416,7 @@ sub validateComment {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	print STDERR "ERROR MESSAGE beginning of validate comment $$error_message\n";
 
 	my $form_success = 1;
 	my $message = '';
@@ -414,7 +427,8 @@ sub validateComment {
 	if ($slashdb->checkReadOnly('comments')) {
 		$$error_message = getError('readonly');
 		$form_success = 0;
-		editComment('', $$error_message), return unless $preview;
+		# editComment('', $$error_message), return unless $preview;
+		return unless $preview;
 	}
 
 	if (isTroll($user, $constants, $slashdb)) {
@@ -429,6 +443,7 @@ sub validateComment {
 
 	unless ($$comm && $$subj) {
 		$$error_message = getError('no body');
+		print STDERR "NO BODY MESSAGE $$error_message\n";
 		return;
 	}
 
@@ -437,8 +452,8 @@ sub validateComment {
 
 	unless (defined($$comm = balanceTags($$comm, 1))) {
 		$$error_message = getError('nesting_toodeep');
-		editComment('', $$error_message), return unless $preview;
-		return;
+		# editComment('', $$error_message), return unless $preview;
+		return unless $preview;
 	}
 
 	my $dupRows = $slashdb->findCommentsDuplicate($form->{sid}, $$comm);
@@ -447,8 +462,9 @@ sub validateComment {
 		$$error_message = getError('validation error', {
 			dups	=> $dupRows,
 		});
-		editComment('', $$error_message), return unless $preview;
-		return;
+		# editComment('', $$error_message), return unless $preview;
+		return unless $preview;
+		# return;
 	}
 
 	if (length($$comm) > 100) {
@@ -463,8 +479,9 @@ sub validateComment {
 			$$error_message = getError('low words-per-line', {
 				ratio 	=> $w / ($br + 1),
 			});
-			editComment('', $$error_message), return unless $preview;
-			return;
+		#	editComment('', $$error_message), return unless $preview;
+			return unless $preview;
+		#	return;
 		}
 	}
 
@@ -485,7 +502,8 @@ sub validateComment {
 			});
 
 			$form_success = 0;
-			editComment('', $$error_message), return unless $preview;
+		#	editComment('', $$error_message), return unless $preview;
+			return unless $preview;
 			last;
 		}
 		# run through compress test
@@ -494,7 +512,8 @@ sub validateComment {
 			$$error_message = getError('compress filter', {
 					ratio	=> $_,
 			});
-			editComment('', $$error_message), return unless $preview;
+			#editComment('', $$error_message), return unless $preview;
+			return unless $preview;
 			$form_success = 0;
 			last;
 		}
@@ -502,6 +521,8 @@ sub validateComment {
 	}
 
 
+	$$error_message ||= '';
+	print STDERR "ERROR MESSAGE end of validate comment $$error_message\n";
 	# Return false if error condition...
 	return if ! $form_success;
 
@@ -513,7 +534,6 @@ sub validateComment {
 ##################################################################
 # Previews a comment for submission
 sub previewForm {
-	my($error_message) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 
@@ -521,8 +541,6 @@ sub previewForm {
 
 	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
 	my $tempSubject = strip_nohtml($form->{postersubj});
-
-	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return();
 
 	my $preview = {
 		nickname	=> $form->{postanon}
@@ -549,7 +567,6 @@ sub previewForm {
 	return $previewForm;
 }
 
-
 ##################################################################
 # Saves the Comment
 # A note, right now form->{sid} is a discussion id, not a
@@ -562,10 +579,10 @@ sub submitComment {
 	$form->{postersubj} = strip_nohtml($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
-	validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)
-		or return(0);
-
-	return if $error_message || !$form->{postercomment} || !$form->{postersubj};
+	unless ( validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {
+		editComment(@_, $error_message);
+		return(0);
+	}
 
 	$form->{postercomment} = addDomainTags($form->{postercomment});
 

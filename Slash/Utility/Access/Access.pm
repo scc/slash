@@ -127,12 +127,21 @@ sub formkeyError {
 	my $abuse_reasons = { usedform => 1, invalid => 1, maxposts => 1};
 	my $hashref = {};
 
-	if ($value eq 'response' || $value eq 'speed') {
-		my $limit_key = $formname . '_' . $value . '_limit';
-		$hashref->{limit} = intervalString($constants->{$limit_key});
-		$hashref->{interval} = intervalString($limit);
+	if ($value eq 'response' || $value eq 'speed' || $value eq 'fkspeed') {
+		if ($value eq 'fkspeed') {
+			$value = 'speed';
+			$hashref->{attempt} = 1;
+		}
+		$hashref->{limit} = intervalString($constants->{"${formname}_${value}_limit"});
+
+		# limit in this case is the interval 
+		$hashref->{interval} = intervalString($limit) if $limit;
 		$hashref->{value} = $formname . "_" . $value;
 
+	} elsif ($value eq 'unused') {
+		$hashref->{limit} = $limit;	
+		$hashref->{value} = $formname . "_" . $value;
+	
 	} elsif ($value eq 'invalid') {
 		$hashref->{formkey} = $form->{formkey};
 		$hashref->{value} = $value;
@@ -148,7 +157,9 @@ sub formkeyError {
 		$hashref->{value} = $formname . "_" . $value;
 
 	} elsif ($value eq 'usedform') {
-		$hashref->{interval} = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
+		if (my $interval = $slashdb->getFormkeyTs($form->{formkey},1)) {
+			$hashref->{interval} = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
+		}
 		$hashref->{value} = $value;
 	}
 
@@ -256,7 +267,7 @@ sub formkeyHandler {
 		}
 	} elsif ($formkey_op eq 'formkey_check') {
 		# check if form already used
-		unless (my $increment_val = $slashdb->updateFormkeyVal($formkey)) {	
+		unless (my $increment_val = $slashdb->updateFormkeyVal($formname, $formkey)) {	
 			$msg = formkeyError('usedform', $formname);
 			$error_flag++;
 		}
@@ -268,8 +279,28 @@ sub formkeyHandler {
 			$form->{upasswd}
 		);
 	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
-			my $sid = $form->{sid} ? $form->{sid} : '';
-			$slashdb->createFormkey($formname, $formkeyid, $sid);
+			if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
+				my $max_unused	= $constants->{"max_${formname}_unusedfk"};
+				$msg = formkeyError('unused', $formname, $max_unused);
+				$error_flag++;
+
+			} 
+			if ($formkey_op eq 'generate_formkey') {
+				my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
+				my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
+				# formkey creation can be a little less stringent
+				my $interval = ((time() - $last_created) * 2);
+				if ( $interval < $speedlimit) {
+					$msg = formkeyError('fkspeed', $formname, $interval);
+					$error_flag++;
+				}
+			
+			}
+
+			if (! $error_flag) {
+				my $sid = $form->{sid} ? $form->{sid} : '';
+				$slashdb->createFormkey($formname, $formkeyid, $sid); 
+			}
 	}
 		
 	if ($error_flag == 1) {
@@ -324,7 +355,7 @@ sub checkFormPost {
 	# may be the cause
 	my $formkey = getCurrentForm('formkey');
 
-	my $last_submitted = $slashdb->getSubmissionLast($id, $formname);
+	my $last_submitted = $slashdb->getLastTs($id, $formname, 1);
 
 	my $interval = time() - $last_submitted;
 

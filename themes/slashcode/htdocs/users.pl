@@ -58,7 +58,7 @@ sub main {
 			formname	=> $formname,
 			checks		=> 
 			[ qw (max_reads_check max_post_check valid_check 
-				interval_check formkey_check ) ],
+				interval_check formkey_check regen_formkey) ],
 		},
 		saveuseradmin	=> { 
 			function	=> \&saveUserAdmin,
@@ -203,17 +203,22 @@ sub main {
 
 	} elsif ($op eq 'savepasswd') {
 		my $error_flag = 0;
-		for my $check (@{$ops->{savepasswd}{checks}}) {	
-			# damnit to hell! the only way to save the error message
-			# is to pass by ref $note and add the message to note....
-			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
-			last if $error_flag;
+		if ($curuser->{seclev} < 100) { 
+			for my $check (@{$ops->{savepasswd}{checks}}) {	
+				# the only way to save the error message is to pass by ref 
+				# $note and add the message to note (you can't print it out
+				#  before header is called)
+				$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey, \$note);
+				last if $error_flag;
+			}
 		}
 		$note .= savePasswd($form->{uid}) if ! $error_flag;
 		# change op to edituser and let fall through;
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
-		my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})) if ! $error_flag; 
+		if ($curuser->{seclev} < 100) { 
+			my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})) if ! $error_flag; 
+		}
 		$op = 'changepasswd';
 	}
 
@@ -233,11 +238,13 @@ sub main {
 		$op = isAnon($curuser->{uid}) ? 'default' : 'userinfo';
 	} 
 
-	for my $check (@{$ops->{$op}{checks}}) {
-		last if $op eq 'savepasswd';
-		$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
-		$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
-		last if $error_flag;
+	if ($curuser->{seclev} < 100) { 
+		for my $check (@{$ops->{$op}{checks}}) {
+			last if $op eq 'savepasswd';
+			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+			$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
+			last if $error_flag;
+		}
 	}
 
 	# call the method
@@ -416,6 +423,14 @@ sub showInfo {
 		$id ||= $form->{userfield};
 		$requested_user->{ipid} = $id =~ /\d+\.\d+\.\d+\.?\d+?/ ?
 		md5_hex($id) : $id;
+
+		$user->{nonuid} = 1;
+		$user->{fg} = $curuser->{fg};
+		$user->{bg} = $curuser->{bg};
+
+		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
+		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
+		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
 
 		$requested_user->{nonuid} = 1;
 		$requested_user->{fg} = $user->{fg};
