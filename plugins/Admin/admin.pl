@@ -568,24 +568,21 @@ sub blockDelete {
 
 ##################################################################
 sub colorEdit {
-
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	my($color_select,$block,$colorblock_clean,$title);
-	my $colors = [];
+	my($color_select, $block, $colorblock_clean, $title, @colors);
 	return if $user->{'seclev'} < 500;
 
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
 
 	if ($form->{colorpreview}) {
-		$colorblock = 
-		"$form->{fg0},$form->{fg1},$form->{fg2},$form->{fg3},$form->{bg0},$form->{bg1},$form->{bg2},$form->{bg3}";
+		$colorblock_clean = $colorblock =
+			join ',', @{$form}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
 
-		$colorblock_clean = $colorblock;
 		# the #s will break the url 
 		$colorblock_clean =~ s/#//g;
 
@@ -593,10 +590,10 @@ sub colorEdit {
 		$colorblock = $slashdb->getBlock($form->{color_block}, 'block'); 
 	}
 
-	@{$colors} = split m/,/, $colorblock;
+	@colors = split m/,/, $colorblock;
 
-	$user->{fg} = [@{$colors}->[0..3]];
-	$user->{bg} = [@{$colors}->[4..7]];
+	$user->{fg} = [@colors[0..3]];
+	$user->{bg} = [@colors[4..7]];
 
        	$title = getTitle('colorEdit-title');
 
@@ -606,20 +603,18 @@ sub colorEdit {
 	slashDisplay('admin-colorEdit', {
 		title 			=> $title,
 		colorblock_clean	=> $colorblock_clean,
-		colors			=> $colors,
+		colors			=> \@colors,
 		color_select		=> $color_select,
 	});
-			
 }
 
 ##################################################################
 sub colorSave {
-
 	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 
 	return if getCurrentUser('seclev') < 500;
-	my $colorblock = join ',', @{$constants}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
+	my $colorblock = join ',', @{$form}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
 
 	$slashdb->saveColorBlock($colorblock);
 }
