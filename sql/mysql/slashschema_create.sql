@@ -228,7 +228,7 @@ DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
 	id mediumint UNSIGNED NOT NULL auto_increment, 
 	sid char(16) DEFAULT '' NOT NULL,
-	title varchar(128),
+	title varchar(128) NOT NULL,
 	url varchar(255) NOT NULL,
 	topic mediumint NOT NULL,
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -240,6 +240,7 @@ CREATE TABLE discussions (
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (topic) REFERENCES topics(tid),
+	KEY (sid),
 	PRIMARY KEY (id)
 );
 
