@@ -2593,22 +2593,24 @@ LOCK TABLES users_info WRITE, metamodlog WRITE, moderatorlog WRITE
 				$self->sqlUpdate("users_info", {
 					-m2fair => "m2fair+1"
 				}, "uid=$muid");
-				# There is a limit on how much karma you can
-				# get from proper moderation.
-				$self->sqlUpdate(
-					"users_info", { -karma => "karma+1" },
-					"$muid=uid AND
-					karma<$constants->{m2_maxbonus}"
-				);
+
+				# Karma changes deferred until reconcile time.
+				#$self->sqlUpdate(
+				#	"users_info", { -karma => "karma+1" },
+				#	"$muid=uid AND
+				#	karma<$constants->{m2_maxbonus}"
+				#);
 			} elsif ($val eq '-') {
 				$self->sqlUpdate("users_info", {
 					-m2unfair => "m2unfair+1",
 				}, "uid=$muid");
-				$self->sqlUpdate(
-					"users_info", { -karma => "karma-1" },
-					"$muid=uid AND
-					karma>$constants->{badkarma}"
-				);
+				
+				# Karma changes deferrred until reconcile time.
+				#$self->sqlUpdate(
+				#	"users_info", { -karma => "karma-1" },
+				#	"$muid=uid AND
+				#	karma>$constants->{badkarma}"
+				#);
 			}
 		}
 		# Time is now fixed at form submission time to ease 'debugging'
