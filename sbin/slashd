@@ -46,13 +46,13 @@ sub slashdLogInit {
 	my $ld = $constants->{logdir};
 	mkpath "$ld/", 0, 0755;
 	my $file = "$ld/slashd.log";
-	open(STDERR, ">>", $file) or die "Can't append STDERR to $file: $!";
+	open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
 }
 
 sub slashdLog {
 	local *LOG;
 	my $file = "$constants->{logdir}/slashd.log";
-	open(LOG, ">>", $file) or die "Can't append to $file: $!\nmsg: @_\n";
+	open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
 	print LOG localtime() . "\t", join("\t", @_), "\n";
 	close LOG;
 }
