@@ -2951,6 +2951,19 @@ sub _genericGetsCache {
 	return $self->{$table_cache};
 }
 
+sub getMenuItems {
+	my ($self, $script) = @_;
+	my $sql = "SELECT * from menus WHERE page=" . $self->{dbh}->quote($script) . "ORDER by menuorder";
+	my $sth =	$self->{dbh}->prepare($sql);
+	$sth->execute();
+	my @menu;
+	my $row;
+	push (@menu, $row) while ($row = $sth->fetchrow_hashref);
+	$sth->finish;
+
+	return \@menu;
+}
+
 1;
 
 __END__

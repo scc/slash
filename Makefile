@@ -1,5 +1,5 @@
 ##
-##  Makefile -- Build procedure for mod_layout Apache module
+##  Makefile -- Current one for slashcode
 ##
 
 #   the used tools
@@ -36,7 +36,7 @@ install: slash
 # directory it will be easy
 	(cd Slash; $(PERL) Makefile.PL; make ; make install)
 	install -d $(PREFIX)/bin/ $(PREFIX)/sql/ $(PREFIX)/default/ $(PREFIX)/backups $(PREFIX)/logs
-	install -CD slashd portald moderatord dailyStuff $(PREFIX)/bin/
+	install -CD slashd portald moderatord dailyStuff bin/install-slashsite $(PREFIX)/bin/
 	cp -r public_html/* $(PREFIX)/default/
 	cp -r sql/* $(PREFIX)/sql/
 	install -CD utils/slashd /etc/rc.d/init.d/

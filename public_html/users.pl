@@ -58,8 +58,10 @@ print STDERR "OP $I{F}{op}\n";
 	header("$I{sitename} Users");
 
 	if (!$user->{is_anon} && $op ne "userclose") {
-		my $block = eval prepBlock $I{dbobject}->getBlock('users_menu','block');
-		print $block;
+		# my $block = eval prepBlock $I{dbobject}->getBlock('users_menu','block');
+		# print $block;
+		my $menu = $I{dbobject}->getMenuItems('users.pl');
+		createMenu($menu);
 	}
 	# and now the carnage begins
 	if ($op eq "newuser") {

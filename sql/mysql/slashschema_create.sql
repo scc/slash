@@ -252,7 +252,7 @@ CREATE TABLE menus (
   label varchar(32) DEFAULT '' NOT NULL,
   value text,
   seclev int(1),
-  next int(5),
+  menuorder int(5),
   type varchar(20) DEFAULT '' NOT NULL,
   PRIMARY KEY (id),
   KEY page_labels (page,label)

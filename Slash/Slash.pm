@@ -60,7 +60,7 @@ BEGIN {
 		getEvalBlock dispStory lockTest getSlashConf
 		dispComment linkComment redirect fixurl fixparam chopEntity
 		getFormkeyId checkSubmission errorMessage createSelect
-		createEnvironment
+		createEnvironment createMenu
 	);
 	$CRLF = "\015\012";
 }
@@ -1961,6 +1961,26 @@ sub createEnvironment {
 	createCurrentAnonymousCoward($user);
 
 	return($constants, $slashdb);
+}
+
+########################################################
+sub createMenu {
+	my ($menu) = @_;
+	my $seclev = getCurrentUser('seclev');
+	print '[';
+	for my $item (@$menu) {
+		my ($value, $label); 
+		if($item->{type} eq 'eval') {
+			$value = eval prepBlock($item->{value}); 
+			$label = eval prepBlock($item->{label}); 
+		} elsif ($item->{type} eq 'text') {
+			$value = $item->{value}; 
+			$label = $item->{label}; 
+		}
+		print "<A HREF=\"$value\">$label</A>|" 
+			if $seclev >= $item->{seclev};
+	}
+	print ']';
 }
 
 1;

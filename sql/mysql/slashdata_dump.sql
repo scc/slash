@@ -416,6 +416,17 @@ INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
 
 
 #
+# Dumping data for table 'menus'
+#
+
+INSERT INTO menus VALUES (1,'users.pl','User Info','$ENV{SCRIPT_NAME}',0,1,'eval');
+INSERT INTO menus VALUES (2,'users.pl','Customize Homepage','$ENV{SCRIPT_NAME}?op=edithome',0,3,'eval');
+INSERT INTO menus VALUES (3,'users.pl','Edit User Info','$ENV{SCRIPT_NAME}?op=edituser',0,2,'eval');
+INSERT INTO menus VALUES (4,'users.pl','Customize Comments','$ENV{SCRIPT_NAME}?op=editcomm',0,4,'eval');
+INSERT INTO menus VALUES (5,'users.pl','Logout','$ENV{SCRIPT_NAME}?op=userclose',0,5,'eval');
+
+
+#
 # Dumping data for table 'newstories'
 #
 
