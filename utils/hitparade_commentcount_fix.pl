@@ -16,7 +16,7 @@ use Getopt::Std;
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 #my $PROGNAME = basename($0);
-my $PROGNAME = 'comment_story_update.pl';
+my $PROGNAME = 'hitparade_commentcount_fix.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 $task{$PROGNAME}{timespec} = '0,5,10,15,20,25,30,35,40,45,50,55 * * * *';
@@ -72,8 +72,9 @@ if ($0 =~ /$PROGNAME$/) {
 
 Usage: $PROGNAME -u [virtual user]
 
-	This program is designed for execution within the Slash architecture
-	and should only be run as a standalone for testing purposes.
+	This program rebuilds the story and discussion tables data for
+	hitparade and commentcount. This is normally taken care of
+	by slashd so odds are you will never need this program.
 EOT
 
 		exit 1;
