@@ -1278,29 +1278,6 @@ sub getPollQuestionBySID {
 	return $question;
 }
 
-#########################################################
-#sub getUserEditComment  {
-#	my($self, $name) = @_;
-#	my $bio = $self->sqlSelectHashref("users.uid, points, posttype, defaultpoints, maxcommentsize, clsmall, clbig, reparent, noscores, highlightthresh, commentlimit, nosigs, commentspill, commentsort, mode, threshold, hardthresh", "users, users_comments", "users.uid=users_info.uid AND nickname=" . $self->{dbh}->quote($name));
-#
-#	return $bio;
-#}
-
-########################################################
-sub getUserBio {
-	my($self, $nick) = @_;
-	my $sth = $self->{dbh}->prepare(
-			"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
-			FROM users, users_info
-			WHERE users.uid = users_info.uid AND nickname="
-			. $self->{dbh}->quote($nick)
-		);
-	$sth->execute;
-	my $bio = $sth->fetchrow_arrayref;
-
-	return $bio;
-}
-
 ########################################################
 sub deleteStory {
 	my($self, $sid) = @_;
@@ -2467,14 +2444,24 @@ sub getSlashConf {
 		max_submissions_allowed
 		submission_speed_limit
 		formkey_timeframe
-		rootdir
-		absolutedir
-		basedir
-		imagedir
 		rdfimg
-		cookiepath
-		m2_mincheck
-		m2_maxbonus
+		badkarma	
+		comment_maxscore	
+		comment_minscore	
+		fancyboxwidth
+		goodkarma	
+		m2_bonus	
+		m2_comments	
+		m2_maxunfair	
+		m2_penalty	
+		m2_toomanyunfair	
+		m2_userpercentage
+		maxkarma
+		rdfencoding	
+		rdflanguage	
+		run_ads	
+		submission_bonus
+		imagedir
 	);
 
 =pod
@@ -2517,6 +2504,15 @@ submission_bonus
 		$conf{$_} = $value;
 	}
 
+
+	$conf{rootdir} = "http://$conf{basedomain}";
+	$conf{absolutedir} = $conf{rootdir};
+	$conf{basedir} = $conf{datadir} . "/public_html";
+	$conf{imagedir}  = "$conf{rootdir}/images"  unless $conf{imagedir};
+	$conf{rdfimg}  = "$conf{imagedir}/topics/topicslash.gif";
+	$conf{cookiepath}  = URI->new($conf{rootdir})->path . '/';
+	$conf{m2_mincheck}   = int $conf{m2_comments} / 3;
+	$conf{m2_maxbonus}   = int $conf{goodkarma} / 2;
 
 	$conf{maxkarma} = 999 unless defined $conf{maxkarma};
 	$conf{m2_maxbonus} = $conf{maxkarma}
