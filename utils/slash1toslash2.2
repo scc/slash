@@ -137,7 +137,8 @@ EOT
 		}
 
 		# Program should accept a default topic for discussions.
-		$data->{'topic'} = -1;
+		$data->{'topic'} = 
+			$topics{$story_hash->{$data->{sid}}{tid}};
 		# Admins must disable stories via their own criterion.
 		$data->{'type'} = 0;
 		$data->{flags} = 'hitparade_dirty';
@@ -401,7 +402,10 @@ my (%conditions) = (
 # main body
 {
         my($sth_d, $allow_heaps);
-        my @prefs = qw(mysql_heap_table absolutedir comment_minscore);
+        my @prefs = qw(
+		mysql_heap_table absolutedir comment_minscore
+		discussion_default_topic
+	);
         push @prefs, 'anonymous_coward_uid' if $opts{I};
  
 	# Get AC UID, heap preference.
@@ -579,7 +583,7 @@ EOT
 				"DELETE FROM discussions WHERE ts >= $datecond"
 			);
 
-		$dbh_new->do(<<EOT);
+		$dbh_new->do(<<EOT) if $min_did;
 DELETE FROM discussion_hitparade WHERE discussion >= $min_did
 EOT
 	}
@@ -1029,6 +1033,28 @@ EOT
 	if ($opts{I}) {
 		$cond = "WHERE date > $datecond";
 		print "Deleting stale comments...\n";
+		my(@delete_sids) = @{$dbh_new->selectall_arrayref(<<EOT)};
+SELECT cid FROM comments $cond
+EOT
+
+		# Flatten resulting list into a list of CIDs to delete.
+                @delete_sids = 	map { $_ = $_->[0] } @delete_sids;
+		my $deleted_comm = $#delete_sids + 1;
+                # We delete in batches to prevent the SQL buffer from
+                # overflowing.
+                my $batchsize = 100;
+		LOOP: { do {
+			my @batch = grep { defined($_) }
+					 @delete_sids[0 .. $batchsize-1];
+			local $" = ',';
+			$dbh_new->do(<<EOT) if @batch;
+DELETE FROM comment_text WHERE cid IN (@batch)
+EOT
+
+			last LOOP if $#delete_sids < $batchsize - 1;
+			@delete_sids = @delete_sids[$batchsize..$#delete_sids];
+		} while (@delete_sids) };
+		
 		$dbh_new->do("DELETE FROM comments $cond");
 		print "Copying comment data and texts from $display...\n";
 	} else {
@@ -1114,7 +1140,7 @@ EOT
 	# Now update discussion_hitparade...
 	print "Updating story comment counts...";
 	$sth_d = $dbh_new->prepare(<<EOT);
-SELECT id FROM discussions WHERE FLAG_IN_SET(flags, 'hitparade_dirty')
+SELECT id FROM discussions WHERE FIND_IN_SET(flags, 'hitparade_dirty')
 EOT
 
 	$sth_d->execute();
