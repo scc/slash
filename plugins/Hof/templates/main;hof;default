@@ -37,6 +37,11 @@ __template__
 <B>[% item.0 %]</B> <A HREF="[% item.2 %]">[% item.1 %]</A><BR>
 [% END %]</P>
 
+<P>[% INCLUDE titlebar title => 'Most Active Submitters' %]
+[% FOREACH item = activesub %]
+<B>[% item.0 %]</B> <A HREF="[% constants.rootdir %]/users.pl?nick=[% item.1 %]">[% item.1 %]</A><BR>
+[% END %]</P>
+
 <P>[% INCLUDE titlebar title => 'Most Active Poll Topics' %]
 [% FOREACH item = activep %]
 <B>[% item.0 %]</B> <A HREF="[% constants.rootdir %]/pollBooth.pl?qid=[% item.2 %]">[% item.1 %]</A><BR>

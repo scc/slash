@@ -19,6 +19,10 @@ __template__
 <INPUT TYPE="HIDDEN" NAME="subid" VALUE="[% form.subid %]">
 	[% END %]
 
+	[% IF form.submitter %]
+<INPUT TYPE="HIDDEN" NAME="submitter" VALUE="[% form.submitter %]">
+	[% END %]
+
 <TABLE>
 	<TR>
 		<TD>

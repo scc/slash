@@ -107,7 +107,7 @@ sub previewForm {
 	my $form = getCurrentForm();
 
 	my $sub = $slashdb->getSubmission($subid,
-		[qw(email name subj tid story time comment)]);
+		[qw(email name subj tid story time comment uid)]);
 
 	$sub->{email} = processSub($sub->{email});
 
@@ -115,6 +115,7 @@ sub previewForm {
 
 	slashDisplay('previewForm', {
 		submission	=> $sub,
+		submitter	=> $sub->{uid},
 		subid		=> $subid,
 		lockTest	=> lockTest($sub->{subj}),
 		section		=> $form->{section} || $constants->{defaultsection},

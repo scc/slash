@@ -44,11 +44,7 @@ CREATE TABLE accesslist (
 	key ts (ts)
 );
 
-#
-# Table structure for table 'accesslog'
-#
-
-DROP TABLE IF EXISTS accesslog;
+DROP TABLE IF EXISTS accesslog; 
 CREATE TABLE accesslog (
 	id int UNSIGNED NOT NULL auto_increment,
 	host_addr char(32)	DEFAULT '' NOT NULL,
@@ -82,7 +78,7 @@ DROP TABLE IF EXISTS blocks;
 CREATE TABLE blocks (
 	bid varchar(30) DEFAULT '' NOT NULL,
 	block text,
-	seclev mediumint UNSIGNED,
+	seclev mediumint UNSIGNED NOT NULL,
 	type varchar(20) DEFAULT '' NOT NULL,
 	description text,
 	section varchar(30) DEFAULT '' NOT NULL,
@@ -239,7 +235,7 @@ CREATE TABLE discussions (
 	KEY (sid),
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
-	FOREIGN KEY (tid) REFERENCES topics(tid),
+	FOREIGN KEY (topic) REFERENCES topics(tid),
 	PRIMARY KEY (id)
 );
 
@@ -268,16 +264,6 @@ CREATE TABLE formkeys (
 	KEY submit_ts (submit_ts)
 );
 
-DROP TABLE IF EXISTS site_info;
-CREATE TABLE site_info (
-	param_id mediumint UNSIGNED NOT NULL auto_increment,
-	name varchar(50) NOT NULL,
-	value varchar(200) NOT NULL,
-	description varchar(255),
-	UNIQUE site_keys (name,value),
-	PRIMARY KEY (param_id)
-);
-
 #
 # Table structure for table 'menus'
 #
@@ -288,7 +274,7 @@ CREATE TABLE menus (
 	menu varchar(20) DEFAULT '' NOT NULL,
 	label varchar(200) DEFAULT '' NOT NULL,
 	value text,
-	seclev mediumint UNSIGNED,
+	seclev mediumint UNSIGNED NOT NULL,
 	menuorder mediumint(5),
 	PRIMARY KEY (id),
 	KEY page_labels (menu,label),
@@ -379,6 +365,20 @@ CREATE TABLE pollvoters (
 );
 
 #
+# Table structure for table 'related_links'
+#
+
+DROP TABLE IF EXISTS related_links;
+CREATE TABLE related_links (
+	id smallint UNSIGNED NOT NULL auto_increment,
+	keyword varchar(30) NOT NULL,
+	name varchar(30) NOT NULL,
+	link varchar(128) NOT NULL,
+	KEY (keyword),
+	PRIMARY KEY (id)
+);
+
+#
 # Table structure for table 'sections'
 #
 
@@ -392,7 +392,7 @@ CREATE TABLE sections (
 	isolate tinyint,
 	issue tinyint,
 	extras mediumint DEFAULT '0',
-	UNIQUE (section),
+	KEY (section),
 	FOREIGN KEY (qid) REFERENCES discussions(qid),
 	PRIMARY KEY (id)
 );
@@ -424,6 +424,17 @@ CREATE TABLE sessions (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (session)
 );
+
+DROP TABLE IF EXISTS site_info;
+CREATE TABLE site_info (
+	param_id mediumint UNSIGNED NOT NULL auto_increment,
+	name varchar(50) NOT NULL,
+	value varchar(200) NOT NULL,
+	description varchar(255),
+	UNIQUE site_keys (name,value),
+	PRIMARY KEY (param_id)
+);
+
 
 #
 # Table structure for table 'spamarmors'
@@ -458,7 +469,8 @@ CREATE TABLE stories (
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
 	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-	discussion mediumint UNSIGNED,
+	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	submitter mediumint UNSIGNED NOT NULL,
 	PRIMARY KEY (sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (tid) REFERENCES tid(topic),
@@ -486,7 +498,8 @@ CREATE TABLE story_heap (
 	displaystatus tinyint DEFAULT '0' NOT NULL,
 	commentstatus tinyint,
 	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-	discussion mediumint,
+	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
+	submitter mediumint UNSIGNED NOT NULL,
 	PRIMARY KEY (sid),
 	KEY time (time),
 	KEY searchform (displaystatus,time)
@@ -560,7 +573,7 @@ CREATE TABLE templates (
 	section varchar(30) DEFAULT 'default' NOT NULL,
 	lang char(5) DEFAULT 'en_US' NOT NULL,
 	template text,
-	seclev mediumint UNSIGNED,
+	seclev mediumint UNSIGNED NOT NULL,
 	description text,
 	title varchar(128),
 	PRIMARY KEY (tpid),

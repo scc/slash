@@ -750,7 +750,7 @@ sub topicDelete {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	my $tid ||= $form->{tid};
+	$tid ||= $form->{tid};
 
 	print getMessage('topicDelete-message', { tid => $tid });
 	$slashdb->deleteTopic($tid);
@@ -881,28 +881,15 @@ sub importText {
 sub getRelated {
 	my($story_content) = @_;
 
-	my $constants = getCurrentStatic();
-	my $related_links = "";
+	my $slashdb = getCurrentDB();
+	my $related_links = $slashdb->getRelatedLinks();
+	my $related_text;
 
-	# These really should be in the DB somewhere.
-	my %relatedLinks = (
-		intel		=> "Intel;http://www.intel.com",
-		linux		=> "Linux;http://www.linux.com",
-		redhat		=> "Red Hat;http://www.redhat.com",
-		'red hat'	=> "Red Hat;http://www.redhat.com",
-		lc $constants->{sitename}	=> "$constants->{sitename};$constants->{rootdir}",
-		cmdrtaco	=> "Rob Malda;http://CmdrTaco.net",
-		debian		=> "Debian;http://www.debian.org",
-		zdnet		=> "ZDNet;http://www.zdnet.com",
-		'news.com'	=> "News.com;http://www.news.com",
-		cnn		=> "CNN;http://www.cnn.com"
-	);
-
-	foreach my $key (sort keys %relatedLinks) {
-		if ($story_content =~ /\b$key\b/i) {
-			my($label, $url) = split m/;/, $relatedLinks{$key};
-			$label =~ s/(\S{20})/$1 /g;
-			$related_links .= qq[<LI><A HREF="$url">$label</A></LI>\n];
+	if($related_links) {
+		for my $key (values %$related_links) {
+			if ($story_content =~ /\b$key->{keyword}\b/i) {
+				$related_text .= qq[<LI><A HREF="$key->{link}">$key->{name}</A></LI>\n];
+			}
 		}
 	}
 
@@ -910,9 +897,11 @@ sub getRelated {
 	while ($story_content =~ m|<A(.*?)>(.*?)</A>|sgi) {
 		my($url, $label) = ($1, $2);
 		$label =~ s/(\S{30})/$1 /g;
-		$related_links .= "<LI><A$url>$label</A></LI>\n" unless $label eq "[?]";
+		$related_text .= "<LI><A$url>$label</A></LI>\n" unless $label eq "[?]";
 	}
-	return $related_links;
+
+	print STDERR "RELATED: $related_text\n";
+	return $related_text;
 }
 
 ##################################################################
@@ -949,7 +938,7 @@ sub editStory {
 	my $extracolref = {};
 	my($fixquotes_check, $autonode_check, $fastforward_check) = ('off', 'off', 'off');
 
-	foreach (keys %{$form}) { $storyref->{$_} = $form->{$_} }
+	for (keys %{$form}) { $storyref->{$_} = $form->{$_} }
 
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 
@@ -962,7 +951,7 @@ sub editStory {
 		$storyref->{uid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
 
-		foreach (@{$extracolumns}) {
+		for (@{$extracolumns}) {
 			$storyref->{$_} = $form->{$_} || $storyref->{$_};
 		}
 
@@ -1050,7 +1039,7 @@ sub editStory {
 	if (@{$extracolumns}) {
 		$extracolumn_flag = 1;
 
-		foreach (@{$extracolumns}) {
+		for (@{$extracolumns}) {
 			next if $_ eq 'sid';
 			my($sect, $col) = split m/_/;
 			$storyref->{$_} = $form->{$_} || $storyref->{$_};
@@ -1364,6 +1353,10 @@ sub saveStory {
 			"$rootdir/article.pl?sid=$sid", $form->{topic}
 		);
 		$slashdb->setStory($sid, { discussion => $id });
+	} else {
+		titlebar('100%', getData('story_creation_failed'));
+		listStories();
+		return;
 	}
 
 	titlebar('100%', getTitle('saveStory-title'));

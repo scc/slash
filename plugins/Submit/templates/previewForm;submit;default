@@ -45,7 +45,8 @@ __template__
 	[ <A HREF="[% env.script_name %]?op=Update&subid=[% subid %]">Delete Submission</A> ]<BR>
 
 	<FORM ACTION="[% constants.rootdir %]/admin.pl" METHOD="POST">
-		<INPUT TYPE="hidden" NAME="subid" VALUE="[% subid %]">
+		<INPUT TYPE="HIDDEN" NAME="subid" VALUE="[% subid %]">
+		<INPUT TYPE="HIDDEN" NAME="submitter" VALUE="[% submitter %]">
 		<BR>title <INPUT TYPE="text" NAME="title" VALUE="[% submission.subj %]" SIZE="50">
 		<BR>[% lockTest %]
 	[% IF constants.use_dept %]

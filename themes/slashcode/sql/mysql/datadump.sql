@@ -225,6 +225,23 @@ INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES 
 # Dumping data for table 'pollvoters'
 #
 
+#
+# Dumping data for table 'related_links'
+#
+
+INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://www.slashcode.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('intel','Intel','http://www.intel.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('linux','Linux','http://www.linux.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('redhat','Red Hat','http://www.redhat.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('red hat','Red Hat','http://www.redhat.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('example.com','example.com','http://www.example.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('slashdot','Slashdot','http://slashdot.org');
+INSERT INTO related_links (keyword, name, link) VALUES ('slash','Slash','http://slashcode.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('cmdrtaco','Rob Malda','http://CmdrTaco.net');
+INSERT INTO related_links (keyword, name, link) VALUES ('debian','Debian','http://www.debian.org');
+INSERT INTO related_links (keyword, name, link) VALUES ('zdnet','ZDNet','http://www.zdnet.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('news.com','News.com','http://www.news.com');
+INSERT INTO related_links (keyword, name, link) VALUES ('cnn','CNN','http://www.cnn.com');
 
 #
 # Dumping data for table 'sections'
@@ -259,8 +276,8 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1);
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion, submitter) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1, 2);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion, submitter) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2, 2);
 
 #
 # Dumping data for table 'story_heap'

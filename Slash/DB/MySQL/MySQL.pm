@@ -970,6 +970,11 @@ sub setBlock {
 }
 
 ########################################################
+sub setRelatedLink {
+	_genericSet('related_links', 'keyword', '', @_);
+}
+
+########################################################
 sub setDiscussion {
 	_genericSet('discussions', 'id', '', @_);
 }
@@ -2220,6 +2225,19 @@ sub countStoriesTopHits {
 }
 
 ########################################################
+sub countStorySubmitters {
+	my($self) = @_;
+
+	my $ac_uid = getCurrentAnonymousCoward('uid');
+	my $submitters = $self->sqlSelectAll("count(*) as c, nickname",
+		"stories, users", "users.uid=stories.submitter AND uid != $ac_uid",
+		"GROUP BY stories.uid ORDER BY c DESC LIMIT 10"
+	);
+
+	return $submitters;
+}
+
+########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
 	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
@@ -2697,6 +2715,7 @@ sub createStory {
 		section		=> $story->{section},
 		writestatus	=> $story->{writestatus},
 		displaystatus	=> $story->{displaystatus},
+		submitter	=> $story->{submitter} ? $story->{submitter} : $story->{uid},
 		commentstatus	=> $story->{commentstatus}
 	};
 
@@ -2852,7 +2871,8 @@ sub autoUrl {
 	my $form = getCurrentForm();
 
 	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $form->{fixquotes};
-	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
+#	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
+	s/\[([^\]]+)\]/linkNode($1)/ge if $form->{autonode};
 
 	my $initials = substr $user->{nickname}, 0, 1;
 	my $more = substr $user->{nickname}, 1;
@@ -2872,6 +2892,16 @@ sub autoUrl {
 	s/<image(.*?)>/importImage($section)/ex;
 	s/<attach(.*?)>/importFile($section)/ex;
 	return $_;
+}
+
+#################################################################
+# link to Everything2 nodes
+sub linkNode {
+	my ($title) = @_;
+	my $link = URI->new("http://www.everything2.com");
+	$link->query("node=$title");
+
+	return qq|$title<sup><a href="$link">?</a></sup>|;
 }
 
 ##################################################################
@@ -3141,6 +3171,12 @@ sub getAdmins {
 ########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', '', @_);
+	return $answer;
+}
+
+########################################################
+sub getRelatedLink {
+	my $answer = _genericGet('related_links', 'keyword', '', @_);
 	return $answer;
 }
 
@@ -3794,6 +3830,12 @@ sub getStories {
 }
 
 ########################################################
+sub getRelatedLinks {
+	my $answer = _genericGets('related_links', 'keyword', '', @_);
+	return $answer;
+}
+
+########################################################
 # single big select for ForumZilla ... if someone wants to
 # improve on this, please go ahead
 sub fzGetStories {
@@ -3840,6 +3882,12 @@ sub getSessions {
 sub createBlock {
 	my($self, $hash) = @_;
 	$self->sqlInsert('blocks', $hash);
+}
+
+########################################################
+sub createRelatedLink {
+	my($self, $hash) = @_;
+	$self->sqlInsert('related_links', $hash);
 }
 
 ########################################################
