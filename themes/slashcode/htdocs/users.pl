@@ -1335,20 +1335,23 @@ sub saveUser {
 		}
 	}
 
-	for $formname ('comments', 'submit') {
-		my $keyname = "readonly_" . $formname;
-		my $reason_keyname = $formname . "_ro_reason";
-		$form->{$keyname} = $form->{$keyname} eq 'on' ? 1 : 0 ;
-
-		$form->{$reason_keyname} ||= '';
-
-		$slashdb->setReadOnly(
-			$formname, $user_edit,
-			$form->{$keyname},
-			0,
-			$form->{$reason_keyname}
-		);
-	}
+# Users shouldn't be able to ban/unban themselves unless they have a
+# seclev!  And these form elements aren't written anyway.  I'm not sure
+# what this code was ever doing here. - Jamie
+#	for $formname ('comments', 'submit') {
+#		my $keyname = "readonly_" . $formname;
+#		my $reason_keyname = $formname . "_ro_reason";
+#		$form->{$keyname} = $form->{$keyname} eq 'on' ? 1 : 0 ;
+#
+#		$form->{$reason_keyname} ||= '';
+#
+#		$slashdb->setReadOnly(
+#			$formname, $user_edit,
+#			$form->{$keyname},
+#			0,
+#			$form->{$reason_keyname}
+#		);
+#	}
 
 	# The schema is 160 chars but we limit their input to 120.
 	# If the sig becomes too long to fit (domain tagging causes
