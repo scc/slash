@@ -1,0 +1,8 @@
+MANIFEST
+Makefile.PL
+Messages.pm
+PLUGIN
+dump
+lib/Slash/Messages/DB/MySQL.pm
+mysql_schema
+test.pl

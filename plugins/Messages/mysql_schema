@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS message_drop;
+CREATE TABLE message_drop (
+	id int(11) NOT NULL auto_increment,
+	uid int(11) NOT NULL,
+	fid int(11) DEFAULT '0' NOT NULL,
+	code int(1) DEFAULT '0' NOT NULL,
+	date timestamp NOT NULL,
+	message text DEFAULT '' NOT NULL,
+	PRIMARY KEY (id)
+);
