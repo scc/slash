@@ -450,6 +450,7 @@ A reference to an array with the menu in it, is returned.
 sub getCurrentMenu {
 	my($menu) = @_;
 	my $user = getCurrentUser();
+	my @menus;
 
 	unless ($menu) {
 		($menu = $ENV{SCRIPT_NAME}) =~ s/\.pl$//;
@@ -457,7 +458,13 @@ sub getCurrentMenu {
 
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my @menus = @{$cfg->{menus}{$menu}};
+
+	for(@{$cfg->{menus}{$menu}}) {
+		if($user->{seclev} >= $_->{seclev}) {
+			push @menus , $_;
+		}
+	}
+		
 
 	if (my $user_menu = $user->{menus}{$menu}) {
 		push @menus, values %$user_menu;
