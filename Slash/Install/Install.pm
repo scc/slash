@@ -266,6 +266,21 @@ sub getPluginList {
 	return \%plugins;
 }
 
+
+sub reloadArmorFile {
+	my ($self, $armors) = @_;
+	my $count = 0;
+
+	$self->sqlDo('DELETE FROM spamarmors');
+	for (@{$armors}) {
+		$_->{'-armor_id'} = 'null';
+		$self->sqlInsert('spamarmors', $_) && $count++;
+	}
+
+	return $count;
+}
+
+
 1;
 
 __END__

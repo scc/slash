@@ -28,10 +28,13 @@ $task{$PROGNAME}{code} = sub {
 	my ($virtual_user, $constants, $slashdb, $user) = @_;
 
 	# Loop over all users.
-	for ($slashdb->getDescriptions('users')) {
+	my $nicks = ($slashdb->getDescriptions('users'))[0];
+	for (keys %{$nicks}) {
 		# Iterates over an array of array references. Each array
 		# reference contains ($uid, $nickname).
-		my $user = getCurrentUser($_->[0]);
+		$user = $slashdb->getUser($_);
+
+		print STDERR "EMAILDISPLAY: [$user->{uid}/$user->{emaildisplay}]\n";
 		
 		# Should be a constant somewhere, probably. The naked '1' below
 		# refers to the code in $users->{emaildisplay} corresponding to 
@@ -42,6 +45,7 @@ $task{$PROGNAME}{code} = sub {
 		# Get a random record from the 'spamarmor' table and then 
 		# create a Safe compartment to execute its regexp code.
 		my $armor_code = $slashdb->getRandomSpamArmor()->{code};
+		print STDERR "CODE:[$armor_code]\n";
 		my $cpt = new Safe;
 		# We only permit basic arithmetic, loop and looping opcodes.
 		# We also explicitly allow join since some code may involve
@@ -55,12 +59,12 @@ $task{$PROGNAME}{code} = sub {
 
 		# Now check for errors.
 		if ($@) {
-			$print "Error in compartment execution: $@\n";
+			print "Error in compartment execution: $@\n";
 			next;
 		} else {
 			# If no errors? Save the result.
-			$slashdb->setUser($uid, {
-				fakeemail	=> $new_fake_email,
+			$slashdb->setUser($user->{uid}, {
+				fakeemail	=> $_,
 			});
 		}
 	}

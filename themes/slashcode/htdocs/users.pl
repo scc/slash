@@ -625,22 +625,29 @@ sub saveUser {
 
 		my $stuff = $slashdb->checkReadOnly($formname, $uid);
 
-		$slashdb->setReadOnly($formname, $uid, $form->{keyname}, $form->{$reason_keyname} );
+		$slashdb->setReadOnly(
+			$formname,
+			$uid, 
+			$form->{keyname}, 
+			$form->{$reason_keyname} 
+		);
 	}
 
 	# strip_mode _after_ fitting sig into schema, 120 chars
 	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
-	# Fry's form doesn't process fakeemail anymore.
-	#$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
+	# Close, but not quite, if a user moves from NODISP/SHOWREAL to 
+	# SHOWARMORED, then the code should do-the-right-thing to fakeemail,
+	# namely regenerate it.
+	my @email_choices = ('', undef, $form->{realemail});
+	$form->{fakeemail} 	= $email_choices[$form->{emaildisplay}];
 
 	# for the users table
 	my $users_table = {
 		sig		=> $form->{sig},
 		homepage	=> $form->{homepage},
-		#fakeemail	=> $form->{fakeemail},
 		maillist	=> $form->{maillist},
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
@@ -650,6 +657,9 @@ sub saveUser {
 		session_login	=> $form->{session_login},
 		emaildisplay	=> $form->{emaildisplay},
 	};
+	# Properly reset fakeemail based on user selection.
+	$users_table->{fakeemail} = $form->{fakeemail}
+		if defined $form->{fakeemail};
 
 	# don't want undef, want to be empty string so they
 	# will overwrite the existing record
@@ -663,9 +673,12 @@ sub saveUser {
 	}
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
-		$users_table->{realemail} = chopEntity(strip_attribute($form->{realemail}), 50);
+		$users_table->{realemail} =
+			chopEntity(strip_attribute($form->{realemail}), 50);
 
-		$note .= getMessage('changeemail_msg', { realemail => $user_email->{realemail} }, 1);
+		$note .= getMessage('changeemail_msg', {
+			realemail => $user_email->{realemail}
+		}, 1);
 
 		my $saveuser_emailtitle = getTitle('saveUser_email_title', {
 			nickname  => $user_email->{nickname},
