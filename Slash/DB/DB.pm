@@ -2,8 +2,10 @@ package Slash::DB;
 
 use strict;
 use DBIx::Password;
+use Slash::DB::Utility;
 
 $Slash::DB::VERSION = '0.01';
+@Slash::DB::ISA = qw[ Slash::Utility ];
 
 # BENDER: Bender's a genius!
 

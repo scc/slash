@@ -472,7 +472,6 @@ CREATE TABLE users (
   PRIMARY KEY (uid)
 );
 
-DROP TABLE IF EXISTS users_param;
 CREATE TABLE users_param (
 	param_id SERIAL,
 	uid int4 DEFAULT '1' NOT NULL,

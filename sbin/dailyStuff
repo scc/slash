@@ -76,31 +76,33 @@ $email .= "\n-----------------------\n";
 $email .= "\n-----------------------\n";
 
 
-my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
-my $comlim = $slashdb->getUser($anonymous_coward_uid, 'commentlimit');
-$slashdb->setUser($anonymous_coward_uid, { commentlimit => 50000 });
-$email .= "Archiving Comments...\n";
-
-# Find all stories over $constants->{archive_delay} days where writestatus != 5
-my $columns = "sid,time,section,title";
-my $tables = "stories";
-my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $constants->{archive_delay}";
-
-my $E = $slashdb->getOldStories($constants->{archive_delay});
-
-for (@{$E}) {
-	my($sid, $date, $section, $title) = ($_->[0], $_->[1], $_->[2], $_->[3]);
-	$email.= "archiving: $sid $title \n";
-	prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=archive",
-		"$constants->{basedir}/$section/$sid"."_F.shtml");
-
-	unlink("$constants->{basedir}/$section/$sid.shtml")
-		or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
-	symlink("$constants->{basedir}/$section/${sid}_F.shtml", "$constants->{basedir}/$section/$sid.shtml")
-		or die "Can't symlink $constants->{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
-	$slashdb->deleteComment($sid);
-}
-$slashdb->setUser($anonymous_coward_uid, { commentlimit=>$comlim });
+#if($constants->{archive_delay}) {
+#	my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
+#	my $comlim = $slashdb->getUser($anonymous_coward_uid, 'commentlimit');
+#	$slashdb->setUser($anonymous_coward_uid, { commentlimit => 50000 });
+#	$email .= "Archiving Comments...\n";
+#
+#	# Find all stories over $constants->{archive_delay} days where writestatus != 5
+#	my $columns = "sid,time,section,title";
+#	my $tables = "stories";
+#	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $constants->{archive_delay}";
+#
+#	my $E = $slashdb->getOldStories($constants->{archive_delay});
+#
+#	for (@{$E}) {
+#		my($sid, $date, $section, $title) = ($_->[0], $_->[1], $_->[2], $_->[3]);
+#		$email.= "archiving: $sid $title \n";
+#		prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=archive",
+#			"$constants->{basedir}/$section/$sid"."_F.shtml");
+#
+#		unlink("$constants->{basedir}/$section/$sid.shtml")
+#			or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
+#		symlink("$constants->{basedir}/$section/${sid}_F.shtml", "$constants->{basedir}/$section/$sid.shtml")
+#			or die "Can't symlink $constants->{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
+#		$slashdb->deleteComment($sid);
+#	}
+#	$slashdb->setUser($anonymous_coward_uid, { commentlimit=>$comlim });
+#}
 
 
 sub generateDailyMail {
@@ -166,4 +168,5 @@ if ($constants->{send_mail} == 1) {
 	}
 	mailingList();
 }
-
+# Now lets clean up the database
+$slashdb->deleteDaily();

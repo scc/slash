@@ -93,31 +93,31 @@ my %descriptions = (
 
 #################################################################
 # Private method used by the search methods
-my $keysearch = sub {
-	my $self = shift;
-	my $keywords = shift;
-	my @columns = @_;
-
-	my @words = split m/ /, $keywords;
-	my $sql;
-	my $x = 0;
-
-	foreach my $w (@words) {
-		next if length $w < 3;
-		last if $x++ > 3;
-		foreach my $c (@columns) {
-			$sql .= "+" if $sql;
-			$sql .= "($c LIKE " . $self->{_dbh}->quote("%$w%") . ")";
-		}
-	}
-#	void context, does nothing?
-	$sql = "0" unless $sql;
-	$sql .= " as kw";
-	return $sql;
-};
-
+#sub keySearch {
+#	my $self = shift;
+#	my $keywords = shift;
+#	my @columns = @_;
+#
+#	my @words = split m/ /, $keywords;
+#	my $sql;
+#	my $x = 0;
+#
+#	foreach my $w (@words) {
+#		next if length $w < 3;
+#		last if $x++ > 3;
+#		foreach my $c (@columns) {
+#			$sql .= "+" if $sql;
+#			$sql .= "($c LIKE " . $self->{_dbh}->quote("%$w%") . ")";
+#		}
+#	}
+##	void context, does nothing?
+#	$sql = "0" unless $sql;
+#	$sql .= " as kw";
+#	return $sql;
+#};
+#
 ########################################################
-my $whereFormkey = sub {
+sub _whereFormkey {
 	my($formkey_id) = @_;
 	my $where;
 
@@ -1306,7 +1306,7 @@ sub setStory {
 sub getSubmissionLast {
 	my($self, $id, $formname) = @_;
 
-	my $where = $whereFormkey->($id);
+	my $where = $self->_whereFormkey($self, $id);
 	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
@@ -1372,7 +1372,7 @@ sub insertFormkey {
 sub checkFormkey {
 	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
 
-	my $where = $whereFormkey->($formkey_id);
+	my $where = $self->_whereFormkey($self, $formkey_id);
 	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
 		'formkey = ' . $self->{_dbh}->quote($formkey) .
 		" AND $where " .
@@ -1384,7 +1384,7 @@ sub checkFormkey {
 sub checkTimesPosted {
 	my($self, $formname, $max, $id, $formkey_earliest) = @_;
 
-	my $where = $whereFormkey->($id);
+	my $where = $self->_whereFormkey($self, $id);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		"formkeys",
@@ -2005,7 +2005,10 @@ sub getStories {
 	# Order
 	my $other = "ORDER BY time DESC ";
 
+	if ($limit) {
+		$other .= "LIMIT $limit ";
 
+	# We need to check up on this late for performance -Brian
 	my(@stories, $count);
 	my $cursor = $self->sqlSelectMany($columns, $tables, $where, $other)
 		or errorLog("error in getStories columns $columns table $tables where $where other $other");

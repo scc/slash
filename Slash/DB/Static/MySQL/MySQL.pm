@@ -75,18 +75,18 @@ sub deleteDaily {
 	my $delay2 = $constants->{archive_delay} * 9;
 	$constants->{defaultsection} ||= 'articles';
 
-	$self->sqlDo("DELETE FROM newstories WHERE
-			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
-			or (to_days(now()) - to_days(time) > $delay2)");
-
-	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
+#	$self->sqlDo("DELETE FROM newstories WHERE
+#			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
+#			or (to_days(now()) - to_days(time) > $delay2)");
+#
+#	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
-	$self->sqlDo("DELETE from moderatorlog WHERE
-	  to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
-	$self->sqlDo("DELETE from metamodlog WHERE
-		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+#	$self->sqlDo("DELETE from moderatorlog WHERE
+#	  to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+#	$self->sqlDo("DELETE from metamodlog WHERE
+#		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 	# Formkeys
 	my $delete_time = time() - $constants->{'formkey_timeframe'};
 	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
@@ -143,7 +143,7 @@ sub countDaily {
 	}
 	$c->finish;
 
-	$self->sqlDo("delete from accesslog where date_add(ts,interval 48 hour) < now()");
+	$self->sqlDo("DELETE FROM accesslog WHERE date_add(ts,interval 48 hour) < now()");
 	$returnable{'index'} = \%indexes;
 	$returnable{'articles'} = \%articles;
 
@@ -202,17 +202,17 @@ sub getMailingList {
 
 ########################################################
 # For dailystuff
-sub getOldStories {
-	my($self, $delay) = @_;
-
-	my $columns = "sid,time,section,title";
-	my $tables = "stories";
-	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $delay";
-
-	my $stories = $self->sqlSelectAll($columns,$tables,$where);
-
-	return $stories;
-}
+#sub getOldStories {
+#	my($self, $delay) = @_;
+#
+#	my $columns = "sid,time,section,title";
+#	my $tables = "stories";
+#	my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $delay";
+#
+#	my $stories = $self->sqlSelectAll($columns,$tables,$where);
+#
+#	return $stories;
+#}
 
 ########################################################
 # For portald
