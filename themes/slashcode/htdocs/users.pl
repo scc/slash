@@ -452,7 +452,6 @@ sub showInfo {
 			$fieldkey = 'uid';
 			($uid, $id) = ($form->{uid}, $form->{uid});
 			$requested_user = $slashdb->getUser($id);
-			
 			$nick = $requested_user->{nickname};
 
 		} elsif ($form->{nick} && ! $id) {
@@ -537,7 +536,7 @@ sub showInfo {
 		
 		$admin_block = getUserAdmin($netid, $fieldkey, 1, 0) if $admin_flag;
 
-		$commentcount = ( $requested_user->{ipid} || $requested_user->{md5id}) ?
+		$commentcount = ($requested_user->{ipid} || $requested_user->{md5id}) ?
 			$slashdb->countCommentsByIPID($netid) :
 			$slashdb->countCommentsBySubnetID($netid);
 
@@ -1663,7 +1662,6 @@ sub getUserAdmin {
 		$user_editfield = $user_edit->{nickname};
 		$checked->{expired} = $slashdb->checkExpired($user_edit->{uid}) ? ' CHECKED' : '';
 		$iplist = $slashdb->getNetIDList($user_edit->{uid});
-
 
 	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;

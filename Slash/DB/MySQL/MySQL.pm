@@ -2844,7 +2844,7 @@ print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(key
 			return { };
 		}
 		#Archive, means it is doubtful this is useful in the cache. -Brian
-		if($archive) {
+		if ($archive) {
 			my %return;
 			my $in_list = join(",", @$cid);
 			my $comment_array = $self->sqlSelectAll(

@@ -252,8 +252,7 @@ sub formkeyHandler {
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'update_formkeyid') {
-		$slashdb->updateFormkeyId($formname, $formkey,$user->{uid}, $form->{rlogin}, $form->{upasswd});	
-		
+		$slashdb->updateFormkeyId($formname, $formkey, $user->{uid}, $form->{rlogin}, $form->{upasswd});
 	} elsif ($formkey_op eq 'valid_check') {
 		if (! $slashdb->validFormkey($formname)) {	
 			$msg = formkeyError('invalid', $formname);
