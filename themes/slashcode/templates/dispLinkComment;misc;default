@@ -12,28 +12,29 @@ en_US
 __name__
 dispLinkComment
 __template__
-[% IF user.mode != 'archive' && nickname != "-" %]
+[% USE Slash %]
+[% IF (user.mode != 'archive' && nickname != "-") %]
 	[% pid = realpid || pid %]
 	<TR><TD><FONT SIZE="2">
 
-	[ [% Slash.linkComment({
+	[ [% UNLESS user.state.comment_read_only %][% Slash.linkComment({
 		sid	=> sid,
 		pid	=> cid,
 		op	=> 'Reply',
 		subject	=> 'Reply to This',
-	}) %] | [% Slash.linkComment({
+	}) %] | [% END %][% Slash.linkComment({
 		sid	=> sid,
 		cid	=> pid,
 		pid	=> pid,
 		subject	=> 'Parent',
 	}, 1) %]
 
-	[% IF can_mod %]
+	[% IF can_mod && !user.state.comment_read_only %]
 	| [% Slash.createSelect("reason_$cid", reasons, '', 1, 1);
 	   END
 	%]
 
-	[% IF user.is_admin %]
+	[% IF user.is_admin && !user.state.comment_read_only %]
 | <INPUT TYPE="CHECKBOX" NAME="del_[% cid %]">
 	[% END %]
 	]

@@ -16,7 +16,7 @@ use constant MSG_CODE_COMMENT_REPLY	=> 4;
 
 use constant COMMENTS_OPEN 	=> 0;
 use constant COMMENTS_RECYCLE 	=> 1;
-use constant COMMENTS_ARCHIVE 	=> 2;
+use constant COMMENTS_READ_ONLY 	=> 2;
 
 ##################################################################
 sub main {
@@ -416,10 +416,6 @@ sub previewForm {
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 	my $error_message;
-
-	if (COMMENTS_ARCHIVE == $slashdb->getDiscussion($form->{sid}, 'type')) {
-		return;
-	}
 
 	unless (checkFormPost("comments",
 		$constants->{post_limit},

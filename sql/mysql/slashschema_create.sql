@@ -1,4 +1,4 @@
-# MySQL dump 8.10
+#  MySQL dump 8.10
 #
 # Host: localhost    Database: dump
 #--------------------------------------------------------
@@ -10,8 +10,8 @@
 
 DROP TABLE IF EXISTS abusers;
 CREATE TABLE abusers (
-  abuser_id int(5) NOT NULL auto_increment,
-  uid int(11) NOT NULL,
+  abuser_id int(5) UNSIGNED NOT NULL auto_increment,
+  uid int(11) UNSIGNED NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   pagename varchar(20) DEFAULT '' NOT NULL,
@@ -27,8 +27,8 @@ CREATE TABLE abusers (
 
 DROP TABLE IF EXISTS accesslist; 
 CREATE TABLE accesslist ( 
-  id int(10) NOT NULL auto_increment, 
-  uid int(11) NOT NULL,
+  id int(10) UNSIGNED UNSIGNED NOT NULL auto_increment, 
+  uid int(11) UNSIGNED NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   formname varchar(20) DEFAULT '' NOT NULL,
@@ -50,12 +50,12 @@ CREATE TABLE accesslist (
 
 DROP TABLE IF EXISTS accesslog;
 CREATE TABLE accesslog (
-  id int(5) NOT NULL auto_increment,
+  id int(5) UNSIGNED NOT NULL auto_increment,
   host_addr char(32)  DEFAULT '' NOT NULL,
   subnetid char(32)  DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   query_string varchar(50),
   user_agent varchar(50),
@@ -70,6 +70,7 @@ DROP TABLE IF EXISTS backup_blocks;
 CREATE TABLE backup_blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
+	FOREIGN KEY (bid) REFERENCES blocks(bid),
   PRIMARY KEY (bid)
 );
 
@@ -81,7 +82,7 @@ DROP TABLE IF EXISTS blocks;
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
-  seclev int(1),
+  seclev int(1) UNSIGNED,
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
   section varchar(30) DEFAULT '' NOT NULL,
@@ -102,7 +103,7 @@ CREATE TABLE blocks (
 
 DROP TABLE IF EXISTS code_param;
 CREATE TABLE code_param (
-  param_id int(11) NOT NULL auto_increment,
+  param_id int(11) UNSIGNED NOT NULL auto_increment,
   type varchar(16) NOT NULL,
   code int(1) DEFAULT '0' NOT NULL,
   name varchar(32),
@@ -127,14 +128,14 @@ CREATE TABLE commentmodes (
 #
 DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
-  sid int(16) NOT NULL,
-  cid int(15) NOT NULL auto_increment,
-  pid int(15) DEFAULT '0' NOT NULL,
+  sid int(16) UNSIGNED NOT NULL,
+  cid int(15) UNSIGNED NOT NULL auto_increment,
+  pid int(15) UNSIGNED DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1) DEFAULT '-1',
   reason int(11) DEFAULT '0',
@@ -153,14 +154,14 @@ CREATE TABLE comments (
 #
 DROP TABLE IF EXISTS comment_heap;
 CREATE TABLE comment_heap (
-  sid int(16) NOT NULL,
-  cid int(15) NOT NULL,
+  sid int(16) UNSIGNED NOT NULL,
+  cid int(15) UNSIGNED NOT NULL,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1) DEFAULT '-1',
   reason int(11) DEFAULT '0',
@@ -178,6 +179,7 @@ DROP TABLE IF EXISTS comment_text;
 CREATE TABLE comment_text (
 	cid int(15) NOT NULL,
 	comment text NOT NULL,
+	FOREIGN KEY (cid) REFERENCES comments(cid),
 	PRIMARY KEY (cid)
 );
 
@@ -187,7 +189,7 @@ CREATE TABLE comment_text (
 
 DROP TABLE IF EXISTS content_filters;
 CREATE TABLE content_filters (
-  filter_id int(4) NOT NULL auto_increment,
+  filter_id int(4) UNSIGNED NOT NULL auto_increment,
   form varchar(20) DEFAULT ''NOT NULL,
   regex varchar(100) DEFAULT '' NOT NULL,
   modifier varchar(5) DEFAULT '' NOT NULL,
@@ -220,15 +222,18 @@ CREATE TABLE dateformats (
 
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
-  id int(16) NOT NULL auto_increment, 
-  sid char(20) DEFAULT '' NOT NULL,
+  id int(16) UNSIGNED NOT NULL auto_increment, 
+  sid char(16) DEFAULT '' NOT NULL,
   title varchar(128),
   url varchar(255) NOT NULL,
   topic int(10) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   type int(2) DEFAULT 0 NOT NULL,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   KEY (sid),
+	FOREIGN KEY (sid) REFERENCES stories(sid),
+	FOREIGN KEY (uid) REFERENCES users(uid),
+	FOREIGN KEY (tid) REFERENCES topics(tid),
   PRIMARY KEY (id)
 );
 
@@ -241,8 +246,8 @@ CREATE TABLE formkeys (
   formkey varchar(20) DEFAULT '' NOT NULL,
   formname varchar(20) DEFAULT '' NOT NULL,
   id varchar(30) DEFAULT '' NOT NULL,
-  sid char(20) DEFAULT '' NOT NULL,
-  uid int(11) NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   ipid	char(32) DEFAULT '' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
@@ -250,6 +255,7 @@ CREATE TABLE formkeys (
   submit_ts int(12) DEFAULT '0' NOT NULL,
   content_length int(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (formkey),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   KEY formname (formname),
   KEY id (id),
   KEY ts (ts),
@@ -258,7 +264,7 @@ CREATE TABLE formkeys (
 
 DROP TABLE IF EXISTS site_info;
 CREATE TABLE site_info (
-  param_id int(11) NOT NULL auto_increment,
+  param_id int(11) UNSIGNED NOT NULL auto_increment,
   name varchar(50) NOT NULL,
   value varchar(200) NOT NULL,
   description varchar(255),
@@ -272,11 +278,11 @@ CREATE TABLE site_info (
 
 DROP TABLE IF EXISTS menus;
 CREATE TABLE menus (
-  id int(5) NOT NULL auto_increment,
+  id int(5) UNSIGNED NOT NULL auto_increment,
   menu varchar(20) DEFAULT '' NOT NULL,
   label varchar(200) DEFAULT '' NOT NULL,
   value text,
-  seclev int(1),
+  seclev int(1) UNSIGNED,
   menuorder int(5),
   PRIMARY KEY (id),
   KEY page_labels (menu,label),
@@ -290,10 +296,10 @@ CREATE TABLE menus (
 DROP TABLE IF EXISTS metamodlog;
 CREATE TABLE metamodlog (
   mmid int(11) DEFAULT '0' NOT NULL,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   val int(11) DEFAULT '0' NOT NULL,
   ts datetime,
-  id int(11) NOT NULL auto_increment,
+  id int(11) UNSIGNED NOT NULL auto_increment,
   flag int(11) DEFAULT '0' NOT NULL,
   PRIMARY KEY (id)
 );
@@ -304,8 +310,8 @@ CREATE TABLE metamodlog (
 
 DROP TABLE IF EXISTS moderatorlog;
 CREATE TABLE moderatorlog (
-  id int(10) NOT NULL auto_increment,
-  uid int(10) NOT NULL,
+  id int(10) UNSIGNED NOT NULL auto_increment,
+  uid int(10) UNSIGNED NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
   sid int(16) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -328,6 +334,7 @@ CREATE TABLE pollanswers (
   aid int(11) NOT NULL,
   answer char(255),
   votes int(11),
+	FOREIGN KEY (qid) REFERENCES pollquestions(qid),
   PRIMARY KEY (qid,aid)
 );
 
@@ -337,14 +344,16 @@ CREATE TABLE pollanswers (
 
 DROP TABLE IF EXISTS pollquestions;
 CREATE TABLE pollquestions (
-  qid int(10) NOT NULL auto_increment,
-  sid char(20),
+  qid int(10) UNSIGNED NOT NULL auto_increment,
+  sid char(16),
   question char(255) NOT NULL,
   voters int(11),
   topic int(11),
   discussion int(11),
   date datetime,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
+	FOREIGN KEY (discussion) REFERENCES discussions(id),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (qid)
 );
 
@@ -357,7 +366,9 @@ CREATE TABLE pollvoters (
   qid int(10) NOT NULL,
   id char(35) NOT NULL,
   time datetime,
-  uid int(11) NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
+	FOREIGN KEY (uid) REFERENCES users(uid),
+	FOREIGN KEY (qid) REFERENCES pollquestions(qid),
   KEY qid (qid,id,uid)
 );
 
@@ -367,16 +378,30 @@ CREATE TABLE pollvoters (
 
 DROP TABLE IF EXISTS sections;
 CREATE TABLE sections (
-  id int(11) NOT NULL auto_increment,
-  section varchar(30) DEFAULT '' NOT NULL,
+  id int(11) UNSIGNED NOT NULL auto_increment,
+  section varchar(30) NOT NULL,
   artcount int(11),
   title varchar(64),
-  qid varchar(20) DEFAULT '' NOT NULL,
+  qid int(11),
   isolate int(1),
   issue int(1),
   extras int(11) DEFAULT '0',
   UNIQUE (section),
+	FOREIGN KEY (qid) REFERENCES discussions(qid),
   PRIMARY KEY (id)
+);
+
+#
+# Table structure for table 'section_topics'
+#
+
+DROP TABLE IF EXISTS section_topics;
+CREATE TABLE section_topics (
+  section varchar(30) NOT NULL,
+  tid int(11) UNSIGNED NOT NULL,
+	FOREIGN KEY (section) REFERENCES sections(section),
+	FOREIGN KEY (tid) REFERENCES topics(tid),
+  PRIMARY KEY (section,tid)
 );
 
 #
@@ -385,11 +410,12 @@ CREATE TABLE sections (
 
 DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
-  session int(11) NOT NULL auto_increment,
-  uid int(11),
+  session int(11) UNSIGNED NOT NULL auto_increment,
+  uid int(11) UNSIGNED,
   logintime datetime,
   lasttime datetime,
   lasttitle varchar(50),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (session)
 );
 
@@ -399,7 +425,7 @@ CREATE TABLE sessions (
 
 DROP TABLE IF EXISTS spamarmors;
 CREATE TABLE spamarmors (
-  armor_id int(11) NOT NULL auto_increment,
+  armor_id int(11) UNSIGNED NOT NULL auto_increment,
   name varchar(40) default NULL,
   code text,
   active int(11) default '1',
@@ -413,21 +439,24 @@ CREATE TABLE spamarmors (
 
 DROP TABLE IF EXISTS stories;
 CREATE TABLE stories (
-  sid char(20) DEFAULT '' NOT NULL,
-  tid int(10) DEFAULT '' NOT NULL,
-  uid int(11) DEFAULT '1' NOT NULL,
-  commentcount int(1) DEFAULT '0',
+  sid char(16) NOT NULL,
+  tid int(10) UNSIGNED NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
+  commentcount int(1) UNSIGNED DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
   time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   writestatus int(1) DEFAULT '0' NOT NULL,
-  hits int(1) DEFAULT '0' NOT NULL,
+  hits int(1) UNSIGNED DEFAULT '0' NOT NULL,
   section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-  discussion int(16),
+  discussion int(16) UNSIGNED,
   PRIMARY KEY (sid),
+	FOREIGN KEY (uid) REFERENCES users(uid),
+	FOREIGN KEY (tid) REFERENCES tid(topic),
+	FOREIGN KEY (section) REFERENCES sections(section),
   KEY time (time),
   KEY searchform (displaystatus,time)
 );
@@ -438,15 +467,15 @@ CREATE TABLE stories (
 
 DROP TABLE IF EXISTS story_heap;
 CREATE TABLE story_heap (
-  sid char(20) DEFAULT '' NOT NULL,
-  tid int(10) NOT NULL,
-  uid int(11) NOT NULL,
-  commentcount int(1) DEFAULT '0',
+  sid char(16) NOT NULL,
+  tid int(10) UNSIGNED NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
+  commentcount int(1) UNSIGNED DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
   time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   writestatus int(1) DEFAULT '0' NOT NULL,
-  hits int(1) DEFAULT '0' NOT NULL,
+  hits int(1) UNSIGNED DEFAULT '0' NOT NULL,
   section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
@@ -463,10 +492,11 @@ CREATE TABLE story_heap (
 
 DROP TABLE IF EXISTS story_text;
 CREATE TABLE story_text (
-  sid char(20) DEFAULT '' NOT NULL,
+  sid char(16) NOT NULL,
   introtext text,
   bodytext text,
   relatedtext text,
+	FOREIGN KEY (sid) REFERENCES stories(sid),
   PRIMARY KEY (sid)
 );
 
@@ -476,8 +506,8 @@ CREATE TABLE story_text (
 
 DROP TABLE IF EXISTS story_param;
 CREATE TABLE story_param (
-  param_id int(11) NOT NULL auto_increment,
-  sid char(20) DEFAULT '' NOT NULL,
+  param_id int(11) UNSIGNED NOT NULL auto_increment,
+  sid char(16) NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
   value varchar(254) DEFAULT '' NOT NULL,
   UNIQUE story_key (sid,name),
@@ -490,7 +520,7 @@ CREATE TABLE story_param (
 
 DROP TABLE IF EXISTS submissions;
 CREATE TABLE submissions (
-  subid varchar(15) DEFAULT '' NOT NULL,
+  subid varchar(15) NOT NULL,
   email varchar(50),
   name varchar(50),
   time datetime,
@@ -498,13 +528,15 @@ CREATE TABLE submissions (
   story text,
   tid int(10),
   note varchar(30),
-  section varchar(30) DEFAULT '' NOT NULL,
+  section varchar(30) NOT NULL,
   comment varchar(255),
-  uid int(11) DEFAULT '1' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   ipid char(32) DEFAULT '' NOT NULL,
   subnetid char(32) DEFAULT '' NOT NULL,
   del tinyint(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid),
+	FOREIGN KEY (tid) REFERENCES topics(tid),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   KEY subid (subid,section),
   KEY ipid (ipid),
   KEY subnetid (subnetid)
@@ -516,13 +548,13 @@ CREATE TABLE submissions (
 #
 DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
-  tpid int(11) NOT NULL auto_increment,
+  tpid int(11) UNSIGNED NOT NULL auto_increment,
   name varchar(30) NOT NULL,
   page varchar(20) DEFAULT 'misc' NOT NULL,
   section varchar(30) DEFAULT 'default' NOT NULL,
   lang char(5) DEFAULT 'en_US' NOT NULL,
   template text,
-  seclev int(1),
+  seclev int(1) UNSIGNED,
   description text,
   title varchar(128),
   PRIMARY KEY (tpid),
@@ -534,8 +566,7 @@ CREATE TABLE templates (
 
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
-  tid int(11) NOT NULL auto_increment,
-  section int(11),
+  tid int(11) UNSIGNED NOT NULL auto_increment,
   image char(30),
   alttext char(40),
   width int(11),
@@ -561,14 +592,14 @@ CREATE TABLE tzcodes (
 
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
-  uid int(11) NOT NULL auto_increment,
+  uid int(11) UNSIGNED NOT NULL auto_increment,
   nickname varchar(20) DEFAULT '' NOT NULL,
   realemail varchar(50) DEFAULT '' NOT NULL,
   fakeemail varchar(50),
   homepage varchar(100),
   passwd char(32) DEFAULT '' NOT NULL,
   sig varchar(160),
-  seclev int(11) DEFAULT '0' NOT NULL,
+  seclev int(11) UNSIGNED DEFAULT '0' NOT NULL, 				/* This is set to 0 as a safety factor */
   matchname varchar(20),
   newpasswd varchar(8),
   PRIMARY KEY (uid),
@@ -579,17 +610,18 @@ CREATE TABLE users (
 );
 
 #
-# Table structure for table 'users'
+# Table structure for table 'users_acl'
 #
 
 DROP TABLE IF EXISTS users_acl;
 CREATE TABLE users_acl (
-  id int(11) NOT NULL auto_increment,
-  uid int(11) NOT NULL,
+  id int(11) UNSIGNED NOT NULL auto_increment,
+  uid int(11) UNSIGNED NOT NULL,
   name varchar(32) NOT NULL,
   value varchar(254),
   UNIQUE uid_key (uid,name),
   KEY uid (uid),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (id)
 );
 
@@ -600,7 +632,7 @@ CREATE TABLE users_acl (
 
 DROP TABLE IF EXISTS users_comments;
 CREATE TABLE users_comments (
-  uid int(11) DEFAULT '1' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   points int(11) DEFAULT '0' NOT NULL,
   posttype int(11) DEFAULT '2' NOT NULL,
   defaultpoints int(11) DEFAULT '1' NOT NULL,
@@ -617,6 +649,7 @@ CREATE TABLE users_comments (
   noscores tinyint(4) DEFAULT '0' NOT NULL,
   mode varchar(10) DEFAULT 'thread',
   threshold int(1) DEFAULT '0',
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (uid)
 );
 
@@ -626,13 +659,14 @@ CREATE TABLE users_comments (
 
 DROP TABLE IF EXISTS users_index;
 CREATE TABLE users_index (
-  uid int(11) DEFAULT '1' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   extid varchar(255),
   exaid varchar(100),
   exsect varchar(100),
   exboxes varchar(255),
   maxstories int(11) DEFAULT '30' NOT NULL,
   noboxes tinyint(4) DEFAULT '0' NOT NULL,
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (uid)
 );
 
@@ -642,7 +676,7 @@ CREATE TABLE users_index (
 
 DROP TABLE IF EXISTS users_info;
 CREATE TABLE users_info (
-  uid int(11) DEFAULT '1' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   totalmods int(11) DEFAULT '0' NOT NULL,
   realname varchar(50),
   bio text,
@@ -661,6 +695,7 @@ CREATE TABLE users_info (
   upmods int(11) DEFAULT '0' NOT NULL,
   downmods int(11) DEFAULT '0' NOT NULL,
   session_login tinyint(4) DEFAULT '0' NOT NULL,
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (uid)
 );
 
@@ -670,12 +705,13 @@ CREATE TABLE users_info (
 
 DROP TABLE IF EXISTS users_param;
 CREATE TABLE users_param (
-  param_id int(11) NOT NULL auto_increment,
-  uid int(11) DEFAULT '1' NOT NULL,
+  param_id int(11) UNSIGNED NOT NULL auto_increment,
+  uid int(11) UNSIGNED NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
   value text DEFAULT '' NOT NULL,
   UNIQUE uid_key (uid,name),
   KEY (uid),
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (param_id)
 );
 
@@ -685,7 +721,7 @@ CREATE TABLE users_param (
 
 DROP TABLE IF EXISTS users_prefs;
 CREATE TABLE users_prefs (
-  uid int(11) DEFAULT '1' NOT NULL,
+  uid int(11) UNSIGNED NOT NULL,
   willing tinyint(4) DEFAULT '1' NOT NULL,
   dfid int(11) DEFAULT '0' NOT NULL,
   tzcode char(3) DEFAULT 'EDT' NOT NULL,
@@ -693,6 +729,7 @@ CREATE TABLE users_prefs (
   light tinyint(4) DEFAULT '0' NOT NULL,
   mylinks varchar(255) DEFAULT '' NOT NULL,
   lang char(5) DEFAULT 'en_US' NOT NULL,
+	FOREIGN KEY (uid) REFERENCES users(uid),
   PRIMARY KEY (uid)
 );
 

@@ -232,7 +232,16 @@ INSERT INTO pollquestions (qid, question, voters, date, discussion, uid) VALUES 
 
 INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('articles',30,'Articles','',0,0,0);
 INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('features',21,'Features','eyesight',0,1,0);
-INSERT INTO sections (section, artcount, title, qid, isolate, issue, extras) VALUES ('slash',15,'Slash','firstpost',1,1,0);
+
+#
+# Dumping data for table 'section_topics'
+#
+
+INSERT INTO section_topics (section, tid) VALUES ('articles', 1);
+INSERT INTO section_topics (section, tid) VALUES ('articles', 2);
+INSERT INTO section_topics (section, tid) VALUES ('articles', 3);
+INSERT INTO section_topics (section, tid) VALUES ('articles', 4);
+INSERT INTO section_topics (section, tid) VALUES ('features', 1);
 
 #
 # Dumping data for table 'sessions'

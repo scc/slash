@@ -94,7 +94,7 @@ __template__
 	[% END %]
 
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
-		[% IF user.mode != 'archive' %]
+		[% UNLESS user.state.comment_read_only %]
 			<INPUT TYPE="submit" NAME="op" VALUE="Reply">
 		[% END %]
 	</TD></TR>
