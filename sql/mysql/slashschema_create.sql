@@ -342,7 +342,8 @@ CREATE TABLE moderatorlog (
 	m2count mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	KEY sid (sid,cid),
-	KEY sid_2 (cid,uid,sid,reason,m2count)
+	KEY sid_2 (sid,uid,cid),
+	KEY cid (cid)
 ) TYPE = myisam;
 
 
