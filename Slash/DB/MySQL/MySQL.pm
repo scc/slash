@@ -3884,7 +3884,7 @@ sub autoUrl {
 	my $more = substr $user->{nickname}, 1;
 	$more =~ s/[a-z]//g;
 	$initials = uc($initials . $more);
-	my($now) = timeCalc(scalar localtime, '%m/%d %H:%M %p %Z', 0);	# epoch time
+	my($now) = timeCalc(scalar localtime, '%m/%d %H:%M %Z', 0);
 
 	# Assorted Automatic Autoreplacements for Convenience
 	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$user->{homepage}">$user->{nickname}</A> owns shares in $1</B>|ig;
