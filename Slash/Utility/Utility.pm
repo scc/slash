@@ -62,6 +62,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	errorLog
 	filter_params
 	fixHref
+	fixint
 	fixparam
 	fixurl
 	formatDate
@@ -2596,12 +2597,12 @@ sub filter_params {
 
 		# clean up numbers
 		if (exists $nums{$_}) {
-			$form{$_} = _fixint($form{$_});
+			$form{$_} = fixint($form{$_});
 		} elsif (exists $special{$_}) {
 			$special{$_}->($form{$_});
 		} else {
 			for my $ri (@regints) {
-				$form{$_} = _fixint($form{$_}) if /$ri/;
+				$form{$_} = fixint($form{$_}) if /$ri/;
 			}
 		}
 	}
@@ -2612,10 +2613,10 @@ sub filter_params {
 
 ########################################################
 # fix parameter input that should be integers
-sub _fixint {
+sub fixint {
 	my($int) = @_;
 	$int =~ s/^\+//;
-	$int =~ s/^(-?[\d.]+).*$/$1/ or return;
+	$int =~ s/^(-?[\d.]+).*$/$1/s or return;
 	return $int;
 }
 
