@@ -196,7 +196,6 @@ sub getUptime {
 sub setblock {
 	my($bid, $block) = @_;
 	$savedBlocks{$bid} = $block;
-	#sqlUpdate("blocks",{ block => $block }, "bid=" . $slashdb->{dbh}->quote($bid) );
 	portaldLog("updated $bid");
 }
 

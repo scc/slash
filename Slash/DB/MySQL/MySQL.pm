@@ -708,6 +708,16 @@ sub setVar {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
 }
+########################################################
+sub setAuthor {
+	my($self, $author, $value) = @_;
+	if ($value) {
+		$self->sqlUpdate('authors', {value => $value}, 'name=' . $self->{dbh}->quote($author));
+	} else {
+		$self->{dbh}->do('DELETE from authors WHERE aid=' 
+				. $self->{dbh}->quote($author));
+	}
+}
 
 ########################################################
 sub newVar {
@@ -715,6 +725,11 @@ sub newVar {
 	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
 }
 
+########################################################
+sub createAuthor {
+	my($self, $aid) = @_;
+	$self->sqlInsert('authors', { aid => $aid});
+}
 
 ########################################################
 sub updateCommentTotals {
@@ -847,6 +862,12 @@ sub deleteSection {
 	$self->sqlDo("DELETE from sections WHERE section='$section'");
 }
 
+########################################################
+sub getSectionBlockByBid {
+	my($self, $bid, @val) = @_;
+	my $values = join ',', @val;
+	my $section = sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
+}
 ########################################################
 sub getSectionBlock {
 	my($self, $section) = @_;
@@ -1450,8 +1471,7 @@ sub setUserBoxes {
 
 ##################################################################
 sub getAuthorAids {
-# getAids.... get aids... huhu,huhu...
-	my($self) = @_;
+	my($self, $aid) = @_;
 	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
 
 	return $aids;
@@ -1569,6 +1589,27 @@ sub countUsersIndexExboxesByBid{
 			);
 
 	return $count;
+}
+########################################################
+sub saveVars {
+#this is almost copied verbatium. Needs to be cleaned up
+	my ($self) = @_;
+	my $form = getCurrentForm();
+	if($form->{desc}) {
+		my ($exists) = self->sqlSelect('count(*)', 'vars',
+			"name='$form->{thisname}'"
+		);
+		if ($exists == 0) {
+			$self->sqlInsert('vars', { name => $form->{thisname} });
+		}
+		$self->sqlUpdate("vars", {
+			value => $form->{value},
+			description => $form->{desc}
+			}, "name=" . $self->{dbh}->quote($form->{thisname})
+		);
+	} else {
+		$self->sqlDo("DELETE from vars WHERE name='$form->{thisname}'");
+	}
 }
 ########################################################
 # I'm not happy with this method at all
@@ -1857,6 +1898,57 @@ sub setCommentCount{
 	$self->sqlDo("UPDATE stories SET commentcount=commentcount-$delCount,
 	      writestatus=1 WHERE sid=" . $self->{dbh}->quote($form->{sid})
 	);
+}
+
+########################################################
+sub saveStory{
+	my ($self) = @_;
+	my $form =  getCurrentForm();
+	my $constants = getSlashConstants();
+	$self->sqlInsert('storiestuff', { sid => $form->{sid} });
+	$self->sqlInsert('discussions', {
+		sid	=> $form->{sid},
+		title	=> $form->{title},
+		ts	=> $form->{'time'},
+		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}"
+	});
+
+
+	# If this came from a submission, update submission and grant
+	# Karma to the user
+	my $suid;
+	if ($form->{subid}) {
+		my ($suid) = $self->sqlSelect(
+			'uid','submissions',
+			'subid=' . $self->{dbh}->quote($form->{subid})
+		);
+
+		$self->sqlUpdate('users_info',
+			{ -karma => 'karma + 3' }, 
+			"uid=$suid"
+		) if $suid != $constants->{anonymous_coward};
+
+		$self->sqlUpdate('submissions',
+			{ del=>2 }, 
+			'subid=' . $self->{dbh}->quote($form->{subid})
+		);
+	}
+
+	$self->sqlInsert('stories',{
+		sid		=> $form->{sid},
+		aid		=> $form->{aid},
+		tid		=> $form->{tid},
+		dept		=> $form->{dept},
+		'time'		=> $form->{'time'},
+		title		=> $form->{title},
+		section		=> $form->{section},
+		bodytext	=> $form->{bodytext},
+		introtext	=> $form->{introtext},
+		writestatus	=> $form->{writestatus},
+		relatedtext	=> $form->{relatedtext},
+		displaystatus	=> $form->{displaystatus},
+		commentstatus	=> $form->{commentstatus}
+	});
 }
 
 1;

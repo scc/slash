@@ -238,24 +238,11 @@ sub varEdit {
 ##################################################################
 sub varSave {
 	if ($I{F}{thisname}) {
-		my($exists) = sqlSelect('count(*)', 'vars',
-			"name='$I{F}{thisname}'"
-		);
-
-		if ($exists == 0) {
-			sqlInsert('vars', { name => $I{F}{thisname} });
-			print "Inserted $I{F}{thisname}<BR>\n";
-		}
+	$I{dbobject}->saveVars();
 		if($I{F}{desc}) {
 			print "Saved $I{F}{thisname}<BR>\n";
-			sqlUpdate("vars", {
-					value => $I{F}{value},
-					description => $I{F}{desc}
-				}, "name=" . $I{dbh}->quote($I{F}{thisname})
-			);
 		} else {
 			print "<B>Deleted $I{F}{thisname}!</B><BR>\n";
-			$I{dbh}->do("DELETE from vars WHERE name='$I{F}{thisname}'");
 		}
 	}
 }
@@ -270,18 +257,15 @@ sub authorEdit {
 	$aid ||= $I{U}{aid};
 	$aid = '' if $I{F}{authornew};
 
-	my ($name,$url,$email,$quote,$copy,$pwd,$seclev,$section); 
 
 	print qq!<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">!;
 	my $authors = $I{dbobject}->getAuthorNameByAid();
 	createSelect('myaid', $authors, $aid);
 
-	if ($aid) {	
-		($name,$url,$email,$quote,$copy,$pwd,$seclev,$section) = 
-		sqlSelect('name,url,email,quote,copy,pwd,seclev,section', 'authors','aid ='. $I{dbh}->quote($aid)); 
-	}
+	
+	my $author = $I{dbobject}->getAuthor($aid) if $aid;
 
-	for ($quote, $copy) {
+	for ($author->{email}, $author->{copy}) {
 		$_ = stripByMode($_, 'literal', 1);
 	}
 
@@ -292,31 +276,31 @@ sub authorEdit {
 		<TD>Aid</TD><TD><INPUT TYPE="text" NAME="thisaid" VALUE="$aid"></TD>
 	</TR>
 	<TR>
-		<TD>Name</TD><TD><INPUT TYPE="text" NAME="name" VALUE="$name"></TD>
+		<TD>Name</TD><TD><INPUT TYPE="text" NAME="name" VALUE="$author->{name}"></TD>
 	</TR>
 	<TR>
-		<TD>URL</TD><TD><INPUT TYPE="text" NAME="url" VALUE="$url"></TD>
+		<TD>URL</TD><TD><INPUT TYPE="text" NAME="url" VALUE="$author->{url}"></TD>
 	</TR>
 	<TR>
-		<TD>Email</TD><TD><INPUT TYPE="text" NAME="email" VALUE="$email"></TD>
+		<TD>Email</TD><TD><INPUT TYPE="text" NAME="email" VALUE="$author->{email}"></TD>
 	</TR>
 	<TR>
-		<TD>Quote</TD><TD><TEXTAREA NAME="quote" COLS="50" ROWS="4">$quote</TEXTAREA></TD>
+		<TD>Quote</TD><TD><TEXTAREA NAME="quote" COLS="50" ROWS="4">$author->{email}</TEXTAREA></TD>
 	</TR>
 	<TR>
-		<TD>Copy</TD><TD><TEXTAREA NAME="copy" COLS="50" ROWS="5">$copy</TEXTAREA></TD>
+		<TD>Copy</TD><TD><TEXTAREA NAME="copy" COLS="50" ROWS="5">$author->{copy}</TEXTAREA></TD>
 	</TR>
 	<TR>
-		<TD>Passwd</TD><TD><INPUT TYPE="password" NAME="pwd" VALUE="$pwd"></TD>
+		<TD>Passwd</TD><TD><INPUT TYPE="password" NAME="pwd" VALUE="$author->{pwd}"></TD>
 	</TR>
 	<TR>
-		<TD>Seclev</TD><TD><INPUT TYPE="text" NAME="seclev" VALUE="$seclev"></TD>
+		<TD>Seclev</TD><TD><INPUT TYPE="text" NAME="seclev" VALUE="$author->{seclev}"></TD>
 	</TR>
 </TABLE>
 		Restrict to Section
 EOT
 
-	selectSection('section', $section) ;
+	selectSection('section', $author->{section}) ;
 
 	print <<EOT;
 <TABLE BORDER="0">
@@ -338,17 +322,14 @@ print qq|\t</TR>\n</TABLE>\n</FORM>\n|;
 sub authorSave {
 	return if $I{U}{aseclev} < 500;
 	if ($I{F}{thisaid}) {
-		my($exists) = sqlSelect('count(*)', 'authors',
-			'aid=' . $I{dbh}->quote($I{F}{thisaid})
-		);
-
-		if (!$exists) {
-			sqlInsert('authors', { aid => $I{F}{thisaid}});
+		# And just why do we take two calls to do
+		# a new user? 
+		if ($I{dbobject}->createAuthor($I{F}{thisaid})) {
 			print "Inserted $I{F}{thisaid}<BR>";
 		}
 		if ($I{F}{thisaid}) {
 			print "Saved $I{F}{thisaid}<BR>";
-			sqlUpdate('authors',{
+			my %author = (
 					name	=> $I{F}{name},
 					pwd	=> $I{F}{pwd},
 					email	=> $I{F}{email},
@@ -357,13 +338,11 @@ sub authorSave {
 					copy	=> $I{F}{copy},
 					quote	=> $I{F}{quote},
 					section => $I{F}{section}
-				}, 'aid=' . $I{dbh}->quote($I{F}{thisaid})
-			);
+				);
+			$I{dbobject}->setAuthor($I{F}{thisaid}, \%author);
 		} else {
 			print "<B>Deleted $I{F}{thisaid}!</B><BR>";
-			$I{dbh}->do('DELETE from authors WHERE aid='
-				. $I{dbh}->quote($I{F}{thisaid})
-			);
+			$I{dbobject}->setAuthor($I{F}{thisaid});
 		}
 	}
 }
@@ -1647,53 +1626,9 @@ sub saveStory {
 	$I{F}{relatedtext} = getRelated(
 		"$I{F}{title} $I{F}{bodytext} $I{F}{introtext}"
 	) . otherLinks($I{U}{aid}, $I{F}{tid});
-
-	sqlInsert('storiestuff', { sid => $I{F}{sid} });
-	sqlInsert('discussions', {
-		sid	=> $I{F}{sid},
-		title	=> $I{F}{title},
-		ts	=> $I{F}{'time'},
-		url	=> "$I{rootdir}/article.pl?sid=$I{F}{sid}"
-	});
-
 	$I{F}{writestatus} = 1 unless $I{F}{writestatus} == 10;
 
-	# If this came from a submission, update submission and grant
-	# Karma to the user
-	if ($I{F}{subid}) {
-		my($suid) = sqlSelect(
-			'uid','submissions',
-			'subid=' . $I{dbh}->quote($I{F}{subid})
-		);
-
-		print "Assigning 3 karma to UID $suid" if $suid != $I{anonymous_coward};
-
-		sqlUpdate('users_info',
-			{ -karma => 'karma + 3' }, 
-			"uid=$suid"
-		) if $suid != $I{anonymous_coward};
-
-		sqlUpdate('submissions',
-			{ del=>2 }, 
-			'subid=' . $I{dbh}->quote($I{F}{subid})
-		);
-	}
-
-	sqlInsert('stories',{
-		sid		=> $I{F}{sid},
-		aid		=> $I{F}{aid},
-		tid		=> $I{F}{tid},
-		dept		=> $I{F}{dept},
-		'time'		=> $I{F}{'time'},
-		title		=> $I{F}{title},
-		section		=> $I{F}{section},
-		bodytext	=> $I{F}{bodytext},
-		introtext	=> $I{F}{introtext},
-		writestatus	=> $I{F}{writestatus},
-		relatedtext	=> $I{F}{relatedtext},
-		displaystatus	=> $I{F}{displaystatus},
-		commentstatus	=> $I{F}{commentstatus}
-	});
+	$I{dbobject}->saveStory();
 
 	titlebar('100%', "Inserted $I{F}{sid} $I{F}{title}");
 	saveExtras();

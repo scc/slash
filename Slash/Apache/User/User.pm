@@ -106,12 +106,10 @@ sub handler{
 			} else {
 				$uid = $user;
 			}
-		} else {
-			$uid = $user;
 		}
-	} else {
-		$uid = $dbcfg->{'anonymous_coward_uid'};
-	}
+	} 
+
+	$uid = $dbcfg->{'anonymous_coward_uid'} unless $uid;
 
 	#Ok, yes we could use %ENV here, but if we did and 
 	#if someone ever wrote a module in another language

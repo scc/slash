@@ -24,6 +24,7 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{anonymous_coward_uid} = '-1';
 	$cfg->{anonymous_coward} = '';
 	$cfg->{authors_unlimited} = '1';
+	$cfg->{rootdir} = '/usr/local/slash';
 }
 
 1;
