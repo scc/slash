@@ -5,6 +5,7 @@ INSERT INTO journal_friends (uid, friend) VALUES (2,2);
 
 INSERT INTO journal_themes (name) VALUES ('generic');
 INSERT INTO journal_themes (name) VALUES ('greypage');
+INSERT INTO journal_themes (name) VALUES ('bluebox');
 
 INSERT INTO journals (uid, date, article, description) VALUES (2,'2000-12-02 11:49:27','Today I setup my slash website! It\'s so exciting to be thinking that soon I will be sharing my ideas with the greater internet community. Just think, soon I will be writing witty and informative text that will make people laugh and think.','Dear journal');
 INSERT INTO journals (uid, date, article, description) VALUES (2,'2000-12-03 11:49:27','Today was such an exciting day, after having my website up for a day I got a request. I\'m not sure if it was from me or not, but still pretty exciting.','I got a hit to the website');
