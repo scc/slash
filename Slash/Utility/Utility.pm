@@ -86,7 +86,7 @@ sub getDateFormat {
 	$as = 'time' unless $as;
 	my $user = getCurrentUser();
 
-	$user->{'format'} ||= '%W %M %d, @%h:%i%p ';
+	$user->{'format'} ||= '%A %B %d, @%I:%M%p ';
 	unless ($user->{tzcode}) {
 		$user->{tzcode} = 'EDT';
 		$user->{offset} = '-14400';

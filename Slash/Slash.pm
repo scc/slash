@@ -112,7 +112,6 @@ sub createSelect {
 	print "</SELECT>\n";
 }
 
-
 ########################################################
 sub selectTopic {
 	my($name, $tid) = @_;
@@ -142,7 +141,7 @@ sub selectSection {
 	}
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
-	foreach my $s (sort keys %{$sectionBank}) {
+	for my $s (sort keys %{$sectionBank}) {
 		my $S = $sectionBank->{$s};
 		next if $S->{isolate} && getCurrentUser('aseclev') < 500;
 		my $selected = $s eq $section ? ' SELECTED' : '';
@@ -1599,46 +1598,12 @@ sub displayStory {
 }
 
 #######################################################################
-# timeCalc 051199 PMG
+# timeCalc 051100 PMG 
+# Removed timeformats hash and updated table to have perl formats 092000 PMG 
 # inputs: raw date from database
-# returns: formatted date string from dateformats in mysql, converted to
+# returns: formatted date string from dateformats converted to
 # time strings that Date::Manip can format
 #######################################################################
-# interpolative hash for converting
-# from mysql date format to perl
-# the key is mysql's format,
-# the value is perl's format
-# Date::Manip format
-my $timeformats = {
-	'%M' => '%B',
-	'%W' => '%A',
-	'%D' => '%E',
-	'%Y' => '%Y',
-	'%y' => '%y',
-	'%a' => '%a',
-	'%d' => '%d',
-	'%e' => '%e',
-	'%c' => '%f',
-	'%m' => '%m',
-	'%b' => '%b',
-	'%j' => '%j',
-	'%H' => '%H',
-	'%k' => '%k',
-	'%h' => '%I',
-	'%I' => '%I',
-	'%l' => '%i',
-	'%i' => '%M',
-	'%r' => '%r',
-	'%T' => '%T',
-	'%S' => '%S',
-	'%s' => '%S',
-	'%p' => '%p',
-	'%w' => '%w',
-	'%U' => '%U',
-	'%u' => '%W',
-	'%%' => '%%'
-};
-
 sub timeCalc {
 	# raw mysql date of story
 	my ($date) = @_;
@@ -1654,7 +1619,7 @@ sub timeCalc {
 	# It looks better for it to read:
 	# "posted by xxx around 6 ish"
 	# call me anal!
-	if ($user->{'format'} eq '%l ish' || $user->{'format'} eq '%h ish') {
+	if ($user->{'format'} eq '%i ish') {
 		$user->{aton} = " around ";
 	} else {
 		$user->{aton} = " on ";
@@ -1664,14 +1629,8 @@ sub timeCalc {
 	# in seconds
 	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
 
-	# create a new U{} hash key member for storing the new format
-	$user->{perlformat} = $user->{'format'};
-
-	# interpolate from mysql format to perl format
-	$user->{perlformat} =~ s/(\%\w)/$timeformats->{$1}/g;
-
 	# convert the raw date to pretty formatted date
-	$date = UnixDate($date, $user->{perlformat});
+	$date = UnixDate($date, $user->{format});
 
 	# return the new pretty date
 	return $date;

@@ -422,7 +422,7 @@ sub tildeEd {
 	print $tilded_topicsbegin;
 
 	my $topics = $I{dbobject}->getDescriptions('topics');
-	my $tilded_topics_code = prepBlock $I{dbobject}->('users_tilded_topics','block');
+	my $tilded_topics_code = prepBlock $I{dbobject}->getBlock('users_tilded_topics','block');
 	my $tilded_topics = '';
 	while (my($tid, $alttext) = each %$topics) {
 		my $checked = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
@@ -436,7 +436,7 @@ sub tildeEd {
 	my $sections = $I{dbobject}->getDescriptions('sections');
 
 	# users_tilded_sectionex
-	my $tilded_sectionex_code = prepBlock $I{dbobject}->('users_tilded_sectionex','block');
+	my $tilded_sectionex_code = prepBlock $I{dbobject}->getBlock('users_tilded_sectionex','block');
 	my $tilded_sectionex = '';
 	while (my($section,$title) = each %$sections) {
 		my $checked = ($exsect =~ /'$section'/) ? " CHECKED" : "";
@@ -444,10 +444,10 @@ sub tildeEd {
 		print $tilded_sectionex;
 	}
 
-	my $tilded_endtable1 = $I{dbobject}->('users_tilded_endtable1','block'); 
+	my $tilded_endtable1 = $I{dbobject}->getBlock('users_tilded_endtable1','block'); 
 	print $tilded_endtable1;
 	
-	my $tilded_customizetitle = $I{dbobject}->('users_tilded_customizetitle','block'); 
+	my $tilded_customizetitle = $I{dbobject}->getBlock('users_tilded_customizetitle','block'); 
 	titlebar("100%", $tilded_customizetitle);
 
 	$userspace = stripByMode($userspace, 'literal');
