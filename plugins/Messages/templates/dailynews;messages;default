@@ -50,7 +50,7 @@ Links:[%
   count = -1;
   FOR ref = story.refs;
     count = count + 1;
-    num(count, urlize(ref));
+    num(count, ref); #urlize(ref));
  END;
 END %]
 

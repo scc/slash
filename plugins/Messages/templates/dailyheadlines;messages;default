@@ -23,7 +23,7 @@ __template__
 %][% story.title %][% IF constants.use_dept %]
     from the [% story.dept %] dept.[% END %]
     posted by [% story.author %] on [% Slash.timeCalc(story.time, "%A %B %d, @%H:%M") %] ([% topicname %])
-    <URL:[% constants.absolutedir %]/article.pl?sid=[% story.sid %]>
+    [% constants.absolutedir %]/article.pl?sid=[% story.sid %]
 
 [% END %]
 
