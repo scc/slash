@@ -33,66 +33,6 @@ sub deleteUser {
 	$self->sqlDo("DELETE FROM users_param WHERE uid=$uid");
 }
 
-########################################################
-# Get user info from the users table.
-sub getUserAuthenticate {
-	my($self, $user, $passwd, $kind) = @_;
-	my($uid, $cookpasswd, $newpass, $dbh, $user_db,
-		$cryptpasswd, @pass);
-
-	return unless $user && $passwd;
-
-	# if $kind is 1, then only try to auth password as plaintext
-	# if $kind is 2, then only try to auth password as encrypted
-	# if $kind is undef or 0, try as encrypted
-	#	(the most common case), then as plaintext
-	my($EITHER, $PLAIN, $ENCRYPTED) = (0, 1, 2);
-	$kind ||= 0;
-
-
-	# RECHECK LOGIC!!  -- pudge
-
-	$dbh = $self->{_dbh};
-	$user_db = $dbh->quote($user);
-	$cryptpasswd = encryptPassword($passwd);
-	@pass = $self->sqlSelect(
-		'uid,passwd,newpasswd',
-		'users',
-		"uid=$user_db"
-	);
-
-	# try ENCRYPTED -> ENCRYPTED
-	if ($kind == $EITHER || $kind == $ENCRYPTED) {
-		if ($passwd eq $pass[1]) {
-			$uid = $pass[0];
-			$cookpasswd = $passwd;
-		}
-	}
-
-	# try plaintext -> ENCRYPTED
-	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($cryptpasswd eq $pass[1]) {
-			$uid = $pass[0];
-			$cookpasswd = $cryptpasswd;
-		}
-	}
-
-	# try newpass?
-	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($passwd eq $pass[2]) {
-			$self->sqlUpdate('users', {
-				newpasswd	=> '',
-				passwd		=> $cryptpasswd
-			}, "uid=$user_db");
-			$uid = $pass[0];
-			$cookpasswd = $cryptpasswd;
-			$newpass = 1;
-		}
-	}
-
-	return wantarray ? ($uid, $cookpasswd, $newpass) : $uid;
-}
-
 #################################################################
 # Replication issue. This needs to be a two-phase commit.
 sub createUser {
