@@ -2742,7 +2742,7 @@ sub getCommentsForUser {
 	my $sql;
 	$sql .= " SELECT	cid, date, date as time, subject, nickname, homepage, fakeemail, ";
 	$sql .= "	users.uid as uid, sig, $comment_table.points as points, pid, sid, ";
-	$sql .= " lastmod, reason, journal_last_entry_date ";
+	$sql .= " lastmod, reason, journal_last_entry_date, ipid, subnetid ";
 	$sql .= "	FROM $comment_table, users  ";
 	$sql .= "	WHERE sid=$sid_quoted AND $comment_table.uid=users.uid ";
 
@@ -2849,12 +2849,10 @@ sub _getCommentText {
 
 ########################################################
 sub getComments {
-# XXX comments.pl moderateCid() wants host_name returned here, which is gonna
-# be tough considering that data is now stored only in MD5 - Jamie
 	my($self, $sid, $cid) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	$self->sqlSelect("uid, pid, subject, points, reason",
+	$self->sqlSelect("uid, pid, subject, points, reason, ipid, subnetid",
 		$comment_table,
 		"cid=$cid AND sid=$sid_quoted"
 	);

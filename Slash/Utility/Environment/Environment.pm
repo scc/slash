@@ -1102,7 +1102,7 @@ sub prepareUser {
 	$user->{state}{post}	= $method eq 'POST' ? 1 : 0;
 	$user->{ipid}		= md5_hex($hostip);
 	$user->{subnetid}	= $hostip;
-	$user->{subnetid}	=~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;
+	$user->{subnetid}	=~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
 	$user->{subnetid}	= md5_hex($user->{subnetid});
 
 	my @defaults = (

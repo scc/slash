@@ -873,15 +873,25 @@ sub moderateCid {
 		}
 	}
 
-	# $ppid is unused in this context.
-	# XXX We can't get host_name anymore, it's no longer stored.  Check
-	# the logic here. - Jamie
-	my($cuid, $ppid, $subj, $points, $oldreason, $host_name) =
+	my($cuid, $ppid, $subj, $points, $oldreason, $ipid, $subnetid) =
 		$slashdb->getComments($sid, $cid);
-	# Do not allow moderation of anonymous comments with the same IP
-	# as the current user.
-	return if $host_name eq $ENV{REMOTE_ADDR} &&
-		  $cuid == $constants->{anonymous_coward_uid};
+
+	# The user should not have been been presented with the menu
+	# to moderate if any of the following tests trigger, but,
+	# an unscrupulous user could have faked their submission with
+	# or without us presenting them the menu options.  So do the
+	# tests again.
+
+	# Do not allow moderation of any comments with the same UID as the
+	# current user (duh!).
+	return if $user->{uid} == $cuid;
+	# Do not allow moderation of any comments (anonymous or otherwise)
+	# with the same IP as the current user.
+	return if $user->{ipid} eq $ipid;
+	# If the var forbids it, do not allow moderation of any comments
+	# with the same *subnet* as the current user.
+	return if $constants->{mod_same_subnet_forbid}
+		and $user->{subnetid} == $subnetid;
 
 	my $dispArgs = {
 		cid	=> $cid,

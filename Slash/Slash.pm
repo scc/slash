@@ -991,8 +991,20 @@ EOT
 			pid	=> $comment->{pid},
 			subject	=> 'Parent',
 		}, 1);
-		my $mod_select = " | " . createSelect("reason_$comment->{cid}", $reasons, '', 1, 1)
-			if $can_mod and !$user->{state}{comment_read_only};
+		my $mod_select = '';
+		if ($can_mod
+			and !$user->{state}{comment_read_only}
+			and $comment->{uid} != $user->{uid}
+			and $comment->{ipid} ne $user->{ipid}
+			and (
+				!$constants->{mod_same_subnet_forbid}
+				or $comment->{subnetid} ne $user->{subnetid}
+			)
+		) {
+			$mod_select = " | "
+				. createSelect("reason_$comment->{cid}",
+					$reasons, '', 1, 1);
+		}
 
 		my $deletion = qq? | <INPUT TYPE="CHECKBOX" NAME="del_comment->{cid}">?
 			if $user->{is_admin} and !$user->{state}{comment_read_only};
