@@ -860,6 +860,10 @@ sub linkComment {
 	my $constants = getCurrentStatic();
 
 	if($constants->{comments_hardcoded}) {
+		my $subject = $comment->{color}
+			? qq|<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>|
+			: $comment->{subject};
+
 		my $display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}|;
 		$display .= "&op=$comment->{op}" if $comment->{op};
 		$display .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
@@ -874,15 +878,10 @@ sub linkComment {
 			$display .= "#$comment->{cid}" if $comment->{cid};
 		}
 
-		my $s = $comment->{color}
-			? qq!<FONT COLOR="$comment->{color}">$comment->{subject}</FONT>!
-			: $comment->{subject};
-
-		$display .= qq!">$s</A>!;
-		$display .= " by $comment->{nickname}" if $comment->{nickname};
-		$display .= qq! <FONT SIZE="-1">(Score:$comment->{points})</FONT> !
+		$display .= qq!">$subject</A>!;
+		$display .= qq| <FONT SIZE="-1">(Score:$comment->{points})</FONT> |
 				if !$user->{noscores} && $comment->{points};
-		$display .= qq! <FONT SIZE="-1"> $comment->{'time'} </FONT>! if $date;
+		$display .= qq| <FONT SIZE="-1">| . timeCalc($comment->{date}) . qq| </FONT>| if $date;
 		$display .= "\n";
 
 		return $display;

@@ -377,7 +377,7 @@ sub moderatorCommentLog {
 	my $mod_admin = $seclev >= $constants->{modviewseclev} ? 1 : 0;
 	my $comments = $slashdb->getModeratorCommentLog($cid);
 #	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
-	my(@reasonHist, $reasonTotal);
+	my(@return, @reasonHist, $reasonTotal);
 
 	for my $comment (@$comments) {
 		$reasonHist[$comment->{reason}]++;
@@ -611,10 +611,10 @@ sub dispComment {
 			   $constants->{authors_unlimited}) );
 
 	# don't inherit these ...
-	for (qw(sid cid pid date subject comment uid points lastmod
-		reason nickname fakeemail homepage sig)) {
-		$comment->{$_} = '' unless exists $comment->{$_};
-	}
+#	for (qw(sid cid pid date subject comment uid points lastmod
+#		reason nickname fakeemail homepage sig)) {
+#		$comment->{$_} = '' unless exists $comment->{$_};
+#	}
 
 	if($constants->{comments_hardcoded}) {
 		my($comment_to_display, $score_to_display, $user_to_display, 
@@ -634,16 +634,18 @@ sub dispComment {
 			$comment_to_display = $comment->{comment};
 		}
 
+		$time_to_display = timeCalc($comment->{date});
 		unless($user->{noscores}) {
 			$score_to_display .= "(Score:$comment->{points}";
-			my $reasons = $constants->{reasons}[$comment->{reason}];
-			$score_to_display .= ", $reasons"
+
+			my $reason = $reasons{$comment->{'reason'}};
+			$score_to_display .= ", $reason"
 				if $constants->{reason};
-			$score_to_display .= ")";
+
+			$score_to_display .= ") $time_to_display";
 		}
 
 		$comment_link_to_display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}&cid=$comment->{cid}">#$comment->{cid}</A>|;
-		$time_to_display = timeCalc($comment->{date});
 		if(isAnon($comment->{uid})) {
 			$user_to_display = $user->{nickname};
 		} else {
@@ -652,7 +654,7 @@ sub dispComment {
 			$userinfo_to_display .= qq| <A HREF="$comment->{homepage}">$comment->{homepage}</A>|
 				if length($comment->{homepage}) > 8;
 
-			$user_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$user->{uid}"><SMALL>View User's Journal</SMALL></A>|
+			$userinfo_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$user->{uid}"><SMALL>View User's Journal</SMALL></A>|
 				if $comment->{journal_last_entry_date};
 
 			# This is wrong, must be fixed before we ship -Brian
@@ -664,12 +666,11 @@ sub dispComment {
 		}
 			
 
-		my $link = linkComment($comment, '', $comment->{date});
-		my $color = $user->{bg}[2];
-		my $return =  <<EOF;
-			<TR><TD BGCOLOR="$color">
-				<FONT SIZE="3" COLOR="$color">
-					<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>$score_to_display
+		my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
+		my $return =  qq|
+			<TR><TD BGCOLOR="$user->{bg}[2]">
+				<FONT SIZE="3" COLOR="$user->{fg}[2]">
+				$title $score_to_display
 				</FONT>
 				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
 				$userinfo_to_display
@@ -677,17 +678,46 @@ sub dispComment {
 			<TR><TD>
 				$comment_to_display
 			</TD></TR>
-			$link
-EOF
+			|;
+
+		if( $user->{mode} ne 'archive' and $comment->{nickname} ne "-") {
+			my $reply = (linkComment({
+						sid => $comment->{sid},
+						pid => $comment->{cid},
+						op  => 'Reply',
+						subject => 'Reply to This',
+				}) . "|")
+					unless $user->{state}{comment_read_only};
+			my $parent = linkComment({
+				sid	=> $comment->{sid},
+				cid	=> $comment->{pid},
+				pid	=> $comment->{pid},
+				subject	=> 'Parent',
+				}, 1);
+			my $mod_select = "|" . createSelect("reason_$comment->{cid}", \%reasons, '', 1, 1)
+				if $can_mod and !$user->{state}{comment_read_only};
+
+			my $deletion = qq?| <INPUT TYPE="CHECKBOX" NAME="del_comment->{cid}">?
+					if $user->{is_admin} and !$user->{state}{comment_read_only};
+
+			$return .= qq|
+				<TR><TD>
+					<FONT SIZE="2">
+					[$reply$parent]$mod_select$deletion
+					</FONT>
+				</TD></TR>
+				|;
+		}
+
 		return $return;
+
 	} else {
-		slashDisplay('dispComment', {
+		return slashDisplay('dispComment', {
 			%$comment,
 			comment_shrunk	=> $comment_shrunk,
 			reasons		=> \%reasons,
 			can_mod		=> $can_mod,
 			is_anon		=> isAnon($comment->{uid}),
-			link      => linkComment($comment, '', $comment->{date}),
 		}, { Return => 1, Nocomm => 1 });
 	}
 }
