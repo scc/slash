@@ -57,20 +57,24 @@ INSTALLMAN3DIR=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installman3dir
 # version of perl. 
 # I should also grab an install-sh instead of using $(CP)
 slash:
-	if ! [ $(RPM) ] ; then \
+	@echo "=== INSTALLING SLASH MODULES ==="
+	@if [ ! "$(RPM)" ] ; then \
 		(cd Slash; $(PERL) Makefile.PL; make); \
 	else \
+		echo " - Performing an RPM build"; \
 		(cd Slash; $(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make); \
 	fi
 
 plugins: 
-	(cd plugins; \
+	@echo "=== INSTALLING SLASH PLUGINS ==="
+	@(cd plugins; \
 	 for a in $(PLUGINS); do \
 	 	(cd $$a; \
 		 if ! [ -f Makefile.PL ]; then \
-		 	if ! [ $(RPM) ] ; then \
+		 	if [ ! "$(RPM)" ] ; then \
 				$(PERL) Makefile.PL; make;\
 			else \
+				echo " - Performing an RPM build."; \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); make; \
 			fi;
 		 fi);
@@ -94,15 +98,15 @@ install: slash plugins
 	 for a in $(PLUGINS); do \
 	 	(cd $$a; \
 	 	if [ -f Makefile ]; then \
-			echo; \
+			make install UNINST=1; \
 		elif [ -f Makefile.PL ]; then \
 			if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; \
 			else \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
 			fi; \
+			make install UNINST=1; \
 		fi); \
-		make install UNINST=1; \
 	done)
 
 	# Create all necessary directories.
