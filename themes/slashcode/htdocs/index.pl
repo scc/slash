@@ -34,7 +34,7 @@ sub main {
 	}
 
 	my $section;
-	if($form->{section}) {
+	if ($form->{section}) {
 		$section = $slashdb->getSection($form->{section});
 	} else {
 		$section->{section} = 'index';

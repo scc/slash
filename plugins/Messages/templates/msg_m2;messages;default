@@ -59,10 +59,18 @@ Some of your past moderations have been meta moderated by [% num_m2mods %] other
 [% END %]
 [%- END -%]
 [%
-	msg1 = '';  msg2 = '';
-	IF change > 0; msg1="outstanding"; msg2="granted";
-	ELSIF change < 0; msg1="poor"; msg2="penalized"; END;
-	IF change < 0; change = change * -1; END;
+	msg1 = '';
+	msg2 = '';
+	IF change > 0;
+		msg1="outstanding";
+		msg2="granted";
+	ELSIF change < 0;
+		msg1="poor";
+		msg2="penalized";
+	END;
+	IF change < 0;
+		change = change * -1;
+	END;
 %][% IF msg1 && msg2 %]
 For your [% msg1 %] moderation, you are [% msg2 %] [% change %] karma.
 [% END %]

@@ -28,7 +28,6 @@ sub main {
 	my $error_flag = 0;
 	my $success = 0;
 
-
 	if (($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}) {
 		my $success = displayRSS($slashdb, $constants, $user, $form);
 		return if $success;

@@ -31,7 +31,7 @@ sub main {
 
 	my $op = lc($form->{op});
 
-	my ($formkey,$stories);
+	my($formkey, $stories);
 
 	######################################################
 	#
