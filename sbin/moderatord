@@ -81,8 +81,9 @@ $read_db = $slashdb;
 if ($constants->{moderatord_read_user}) {
 	# What happens if these return more than one row?
 	my $count = $constants->{moderatord_replication_waitcount} || 2;
+	my $rusr = $constants->{moderatord_read_user};
 	while ($count--) {
-		$read_db = new Slash::DB($constants->{moderatord_read_user});
+		$read_db = new Slash::DB($rusr);
 		my $master_stat = ($slashdb->sqlShowMasterStatus())->[0];
 		my $slave_stat = ($read_db->sqlShowSlaveStatus())->[0];
 		fatalErrorLog('Replication requested but not active!')
@@ -94,7 +95,9 @@ if ($constants->{moderatord_read_user}) {
 			   $constants->{moderatord_lag_threshold};
 		sleep 5 if !$read_db;
 	}
-	fatalErrorLog('Aborting: Replication not sufficiently caught-up.') if !$read_db;
+	fatalErrorLog('Aborting: Replication not sufficiently caught-up.')
+		if !$read_db;
+	moderatordLog("Using replicated database => '$rusr'");
 }
 
 my $tc = $slashdb->getVar('totalComments', 'value');
