@@ -11,10 +11,16 @@ use vars qw( %task $me );
 $task{$me}{timespec} = '13,43 * * * *';
 $task{$me}{timespec_panic_1} = ''; # not that important
 $task{$me}{code} = sub {
-
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	my $stories = $slashdb->getBackendStories();
+	my($backupdb);
+	if ($constants->{backup_db_user}) {
+		$backupdb  = getObject('Slash::DB', $constants->{backup_db_user});
+	} else {
+		$backupdb = $slashdb;
+	}
+
+	my $stories = $backupdb->getBackendStories();
 	if ($stories and @$stories) {
 		newxml(@_, undef, $stories);
 		newrdf(@_, undef, $stories);
@@ -22,10 +28,10 @@ $task{$me}{code} = sub {
 		newrss(@_, undef, $stories);
 	}
 
-	my $sections = $slashdb->getSections();
+	my $sections = $backupdb->getSections();
 	for (keys %$sections) {
 		my($section) = $sections->{$_}->{section};
-		$stories = $slashdb->getBackendStories($section);
+		$stories = $backupdb->getBackendStories($section);
 		if ($stories and @$stories) {
 			newxml(@_, $section, $stories);
 			newrdf(@_, $section, $stories);
@@ -45,16 +51,16 @@ sub save2file {
 }
 
 sub site2file {
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
+	my($virtual_user, $constants, $backupdb, $user, $section) = @_;
 	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
 	return $file;
 }
 
 sub _do_rss {
-	my($virtual_user, $constants, $slashdb, $user, $section, $stories, $version) = @_;
+	my($virtual_user, $constants, $backupdb, $user, $section, $stories, $version) = @_;
 
-	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
-	my $SECT    = $slashdb->getSection($section);
+	my $file    = site2file($virtual_user, $constants, $backupdb, $user, $section);
+	my $SECT    = $backupdb->getSection($section);
 	my $link    = $constants->{absolutedir} .
 		($section ? "/index.pl?section=$section" : '/');
 	my $title   = $section
@@ -81,7 +87,7 @@ sub newrdf { _do_rss(@_, "0.9") } # RSS 0.9
 sub newrss { _do_rss(@_, "1.0") } # RSS 1.0
 
 sub newwml {
-	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
+	my($virtual_user, $constants, $backupdb, $user, $section, $stories) = @_;
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
@@ -115,12 +121,12 @@ EOT
 </wml>
 EOT
 
-	my $file = site2file($virtual_user, $constants, $slashdb, $user, $section);
+	my $file = site2file($virtual_user, $constants, $backupdb, $user, $section);
 	save2file("$constants->{basedir}/$file.wml", $x);
 }
 
 sub newxml {
-	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
+	my($virtual_user, $constants, $backupdb, $user, $section, $stories) = @_;
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
@@ -130,7 +136,7 @@ EOT
 
 	for my $sect (@$stories) {
 		my @str = (xmlencode($sect->{title}), xmlencode($sect->{dept}));
-		my $author = $slashdb->getUser($sect->{uid}, 'nickname');
+		my $author = $backupdb->getAuthor($sect->{uid}, 'nickname');
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
@@ -149,7 +155,7 @@ EOT
 
 	$x .= "</backslash>\n";
 
-	my $file = site2file($virtual_user, $constants, $slashdb, $user, $section);
+	my $file = site2file($virtual_user, $constants, $backupdb, $user, $section);
 	save2file("$constants->{basedir}/$file.xml", $x);
 }
 
