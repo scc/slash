@@ -2725,14 +2725,15 @@ sub getTemplate {
 sub getTemplateByName {
 	my($self, $name, $values, $cache_flag, $page, $section) = @_;
 	return if ref $name;	# no scalar refs, only text names
-	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
+	my $constants = getCurrentStatic();
+	_genericCacheRefresh($self, 'templates', $constants->{'block_expire'});
 
 	my $table_cache = '_templates_cache';
 	my $table_cache_time= '_templates_cache_time';
 	my $table_cache_id= '_templates_cache_id';
 
 	#First, we get the cache
-	$self->{$table_cache_id} = getCurrentStatic('cache_enabled')
+	$self->{$table_cache_id} = $self->{$table_cache_id} && $constants->{'cache_enabled'}
 		? $self->{$table_cache_id} : _getTemplateNameCache($self);
 
 	#Now, lets determine what we are after
