@@ -459,8 +459,10 @@ sub apache_site_conf {
     # in the database, after the first user's request
     # is completed (so as not to tie up their request)
     # and will only do something if cache_enabled is true
-    # and template_cache_size is 0
-    PerlCleanupHandler Slash::Apache::CompileTemplates
+    # and template_cache_size is 0.  this can really
+    # hammer your site at first, so be careful when
+    # enabling it.
+    #PerlCleanupHandler Slash::Apache::CompileTemplates
 
     # this directive will redirect non-logged-in users to
     # index.shtml if they request the home page; turn it
