@@ -2412,8 +2412,7 @@ sub getSubmissionCount {
 	my($count);
 	if ($articles_only) {
 		($count) = $self->sqlSelect('count(*)', 'submissions',
-			"(length(note)<1 or isnull(note)) and del=0" .
-			" and section='articles'"
+			"del=0 and section='articles' and note != ''"
 		);
 	} else {
 		($count) = $self->sqlSelect("count(*)", "submissions",
