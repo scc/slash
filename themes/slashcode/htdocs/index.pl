@@ -38,6 +38,7 @@ sub main {
 		$section = $slashdb->getSection($form->{section});
 	} else {
 		$section->{section} = 'index';
+		$section->{issue} = 1;
 	}
 
 	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
