@@ -25,14 +25,14 @@ information about Slash 2 running on Windows.
 
 PostgreSQL support in Slash 2 is currently alpha-quality.
 
-Slash can always be downloaded from SourceForge, from the FTP site,
+Slash can always be downloaded from SourceForge.net, from the FTP site,
 and via CVS.
 
 	http://sf.net/projects/slashcode/
 	ftp://ftp.slashcode.com//pub/slashcode/
 	http://cvs.slashcode.com/
 
-See the SourceForge page for patches and bug reports.
+See the SourceForge.net page for patches and bug reports.
 
 
 =head2 Important Note

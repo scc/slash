@@ -31,7 +31,7 @@ get a good grade in "Plays Well With Others" in kindergarten and you
 want to make up for it now.
 
 If you have any questions, please ask us on the slashcode-development
-mailing list at SourceForge.
+mailing list at SourceForge.net.
 
 	http://sf.net/projects/slashcode/
 
@@ -1010,7 +1010,7 @@ guide contained in this document.
 After the code is done (possibly going through multiple code reviews),
 if you do not have CVS access already, it will be taken over by a member
 of the Slash team and committed to the CVS repository.  From then on,
-you should submit any changes as patches on the SourceForge patches
+you should submit any changes as patches on the SourceForge.net patches
 page.
 
 =back
@@ -1018,10 +1018,10 @@ page.
 
 =head1 BUG REPORTS, PATCHES, CVS
 
-Use SourceForge for I<any> bug that is not being fixed immediately.  If
-it is not in SourceForge, there is a good chance it will be forgotten.
+Use SourceForge.net for I<any> bug that is not being fixed immediately.  If
+it is not in SourceForge.net, there is a good chance it will be forgotten.
 
-Upload patches to SourceForge, too.  Use C<diff -u> for patches.
+Upload patches to SourceForge.net, too.  Use C<diff -u> for patches.
 
 Do not add anything to the main branches in CVS without approval from
 a member of the core team.  If you have CVS access, feel free to create
@@ -1036,6 +1036,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.14  2001/10/31 17:02:57  pudge
+	Doc updates, seclev fixes, user admin editing by nickname fixes
+	
 	Revision 1.1.2.13  2001/10/23 20:15:55  pudge
 	Fix filtering user bio; move srand to User.pm; change checkEmail to existsEmail (I thought checkEmail would return true if the address was OK to use!); moved "adding back" of domain tags to parseDomainTags in Data.pm; changed some calls to strip_nohtml to strip_notags (and updated docs); other minor fixes
 	

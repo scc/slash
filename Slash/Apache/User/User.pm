@@ -9,7 +9,7 @@ use strict;
 use Apache;
 use Apache::Constants qw(:common M_GET REDIRECT);
 use Apache::Cookie;
-use Apache::Request();
+use Apache::Request ();
 use Apache::File;
 use Apache::ModuleConfig;
 use AutoLoader ();
@@ -20,7 +20,7 @@ use URI ();
 use vars qw($REVISION $VERSION @ISA @QUOTES $USER_MATCH);
 
 @ISA		= qw(DynaLoader);
-$VERSION	= '2.001000';	# v2.1.0
+$VERSION   	= '2.001001';  # v2.1.1
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
@@ -90,7 +90,7 @@ sub handler {
 	my @params_array = $apr->param;
 	my %params;
 	for (@params_array) {
-		$params {$_} = $apr->param("$_") ;
+		$params{$_} = $apr->param($_);
 	}
 	$params{query_apache} = $apr;
 	my $form = filter_params(%params);

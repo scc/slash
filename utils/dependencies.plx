@@ -1,7 +1,7 @@
 #!perl -w
 # we could probably add these in automatically with some work, but it
 # would be somewhat unreliable, so we need to keep this file up to date
-# just record what module depends on what
+# just record what module depends on what ... ha ha ha
 
 use Data::Dumper;
 
@@ -12,13 +12,17 @@ my %data = (
 		Slash::Utility
 	)],
 	'Slash::Apache' => [qw(
+		Slash
 		Slash::DB
+		Slash::Display
 		Slash::Utility
 	)],
 	'Slash::Apache::Log' => [qw(
 		Slash::Utility
 	)],
 	'Slash::Apache::User' => [qw(
+		Slash
+		Slash::Apache
 		Slash::Utility
 	)],
 	'Slash::DB' => [qw(

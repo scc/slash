@@ -14,49 +14,80 @@ Before asking any questions, please read the relevant documentation.
 	<LI>CHANGES [<A HREF="http://slashcode.com/docs/CHANGES">ASCII</A>]</LI>
 	<LI>AUTHORS [<A HREF="http://slashcode.com/docs/AUTHORS">ASCII</A>]</LI>
 	<LI>README [
-	    <A HREF="http://slashcode.com/docs/README">ASCII</A> |
-	    <A HREF="http://slashcode.com/docs/README.html">HTML</A> |
-	    <A HREF="http://slashcode.com/docs/README.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/README">ASCII</A> |
+		<A HREF="http://slashcode.com/docs/README.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/README.pod">POD</A>
 	]</LI>
 	<LI>INSTALL [
-	    <A HREF="http://slashcode.com/docs/INSTALL">ASCII</A> |
-	    <A HREF="http://slashcode.com/docs/INSTALL.html">HTML</A> |
-	    <A HREF="http://slashcode.com/docs/INSTALL.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/INSTALL">ASCII</A> |
+		<A HREF="http://slashcode.com/docs/INSTALL.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/INSTALL.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Templates [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.html">HTML</A> |
-	    <A HREF="http://slashcode.com/docs/HOWTO-Templates.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/HOWTO-Templates.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/HOWTO-Templates.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Themes [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.html">HTML</A> |
-	    <A HREF="http://slashcode.com/docs/HOWTO-Themes.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/HOWTO-Themes.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/HOWTO-Themes.pod">POD</A>
 	]</LI>
 	<LI>HOWTO-Plugins [
-	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.html">HTML</A> |
-	    <A HREF="http://slashcode.com/docs/HOWTO-Plugins.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/HOWTO-Plugins.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/HOWTO-Plugins.pod">POD</A>
+	]</LI>
+	<LI>slashstyle [
+		<A HREF="http://slashcode.com/docs/slashstyle">ASCII</A> |
+		<A HREF="http://slashcode.com/docs/slashstyle.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/slashstyle.pod">POD</A>
+	]</LI>
+	<LI>slashguide [
+		<A HREF="http://slashcode.com/docs/slashguide">ASCII</A> |
+		<A HREF="http://slashcode.com/docs/slashguide.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/slashguide.pod">POD</A>
+	]</LI>
+	<LI>Boilerplates [
+		<A HREF="http://slashcode.com/docs/boilerplates/command-line">Command-line program</A> |
+		<A HREF="http://slashcode.com/docs/boilerplates/web">Web program</A> |
+		<A HREF="http://slashcode.com/docs/boilerplates/module">Module program</A>
 	]</LI>
 	<LI>Database schema description [
-	    <A HREF="http://slashcode.com/docs/slashtables_bender.html">HTML</A>
-	    <A HREF="http://slashcode.com/docs/slashtables_bender.pod">POD</A>
+		<A HREF="http://slashcode.com/docs/slashtables.html">HTML</A> |
+		<A HREF="http://slashcode.com/docs/slashtables.pod">POD</A>
 	]</LI>
 	<LI>ERD of database schema [
-	    <A HREF="http://slashcode.com/docs/slasherd_bender.fig">Fig</A> |
-	    <A HREF="http://slashcode.com/docs/slasherd_bender.pdf">PDF</A> |
-	    <A HREF="http://slashcode.com/docs/slasherd_bender.ps">PostScript</A>
+		<A HREF="http://slashcode.com/docs/slasherd.fig">Fig</A> |
+		<A HREF="http://slashcode.com/docs/slasherd.pdf">PDF</A> |
+		<A HREF="http://slashcode.com/docs/slasherd.ps">PostScript</A>
 	]</LI>
 	<LI>Slash API Docs<UL>
 		<LI><A HREF="http://slashcode.com/docs/Slash.html">Slash</A></LI>
 		<LI><A HREF="http://slashcode.com/docs/Slash-DB.html">Slash::DB</A></LI>
 		<LI><A HREF="http://slashcode.com/docs/Slash-Display.html">Slash::Display</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Display-Plugin.html">Slash::Display::Plugin</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Display-Provider.html">Slash::Display::Provider</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Test.html">Slash::Test</A></LI>
 		<LI><A HREF="http://slashcode.com/docs/Slash-Utility.html">Slash::Utility</A></LI>
-		<LI><A HREF="http://slashcode.com/docs/Template.html">Template</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-Access.html">Slash::Utility::Access</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-Anchor.html">Slash::Utility::Anchor</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-Data.html">Slash::Utility::Data</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-Display.html">Slash::Utility::Display</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-Environment.html">Slash::Utility::Environment</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-Utility-System.html">Slash::Utility::System</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-XML.html">Slash::XML</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/Slash-XML-RSS.html">Slash::XML::RSS</A></LI>
 	</UL></LI>
 
 	<LI><A HREF="http://slashcode.com/docs/1.0/">(Old) Slash 1.0 Documentation</A></LI>
 
-	<LI><A HREF="http://www.template-toolkit.org/">Template Toolkit</A></LI>
+	<LI><A HREF="http://www.template-toolkit.org/docs/default/">Template Toolkit</A></LI>
 	<LI><A HREF="http://purl.org/rss/1.0/">RSS</A></LI>
 	<LI><A HREF="http://slashcode.com/rss/1.0/modules/Slash/">RSS Slash Module</A></LI>
+
+	<LI>Slash conversion utilities (also see INSTALL)<UL>
+		<LI><A HREF="http://slashcode.com/docs/slash1toslash2.html">slash1 -&gt; slash2</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/slash1toslash2.2.html">slash1 -&gt; slash2.2</A></LI>
+		<LI><A HREF="http://slashcode.com/docs/slash2toslash2.2.html">slash2 -&gt; slash2.2</A></LI>
+	</UL></LI>
 </UL>
 
 <P>
@@ -75,6 +106,7 @@ you are using an old version, please upgrade.
 	<LI><A HREF="#Slashcodecom6">How can I help?</A></LI>
 	<LI><A HREF="#Slashcodecom7">Who are you?</A></LI>
 	<LI><A HREF="#Slashcodecom8">How do I contact you guys about ... anything?</A></LI>
+	<LI><A HREF="#Slashcodecom9">What is discussed on Slashcode.com?</A></LI>
 </UL>
 	</LI>
 	<LI><A HREF="#SlashInstallation">Slash Installation</A>
@@ -156,7 +188,7 @@ used your code.
 <H3><A NAME="Slashcodecom5">OK, where do I download it from?</A></H3>
 
 <P>
-<A HREF="http://sf.net/projects/slashcode/">Our project page on SourceForge</A> has links
+<A HREF="http://sf.net/projects/slashcode/">Our project page on SourceForge.net</A> has links
 to all the latest files, through HTTP.  It is available on CVS
 at <A HREF="http://cvs.slashcode.com/">cvs.slashcode.com</A> and FTP
 at <A HREF="ftp://ftp.slashcode.com/pub/slashcode/">ftp.slashcode.com</A>.
@@ -198,7 +230,7 @@ or setup, read the <A HREF="#Troubleshooting"
 
 <UL>
 	<LI>Bug reports - Submit bug reports
-	at <A HREF="http://sf.net/tracker/?atid=104421&amp;group_id=4421">SourceForge</A>.</LI>
+	at <A HREF="http://sf.net/tracker/?atid=104421&amp;group_id=4421">SourceForge.net</A>.</LI>
 
 	<LI>Mailing lists -
 	Join the various
@@ -207,15 +239,15 @@ or setup, read the <A HREF="#Troubleshooting"
 
 	<LI>Patches - 
 	Please submit patches at
-	<A HREF="http://sf.net/tracker/?atid=304421&amp;group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sf.net/tracker/?atid=304421&amp;group_id=4421">SourceForge.net</A>.</LI>
 
 	<LI>Feature Requests - 
 	Please submit feature requests at
-	<A HREF="http://sf.net/tracker/?atid=354421&amp;group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sf.net/tracker/?atid=354421&amp;group_id=4421">SourceForge.net</A>.</LI>
 
 	<LI>IRC -
-	You'll often find us on <A HREF="http://slashnet.org/">SlashNET</A>
-	in the #slash channel.</LI>
+	You'll often find us on <A HREF="http://www.openprojects.net/">Open Projects Network</A>
+	in the #slash channel (try hostname irc.slashcode.com).</LI>
 
 	<LI>General Help -
 	A better place for general "I can't do it!" help is the mailing lists.
@@ -226,7 +258,7 @@ or setup, read the <A HREF="#Troubleshooting"
 	<A HREF="http://slashcode.com/submit.pl">story submission</A> link to
 	tell us about your new Slash sites, your ideas for the Slashcode
 	site, questions for Ask Slashcode.  DO NOT use this for bug reports.  Use
-	<A HREF="http://sf.net/bugs/?group_id=4421">SourceForge</A> for bug
+	<A HREF="http://sf.net/bugs/?group_id=4421">SourceForge.net</A> for bug
 	reports.  Also try not to use it for general "I can't do this!" help;
 	you'll get a much better response for those on the mailing list.</LI>
 
@@ -234,6 +266,16 @@ or setup, read the <A HREF="#Troubleshooting"
 
 <P>Please use these ways of getting in touch with us.  It makes our jobs
 easier, and it makes it easier for us to help you, the community.
+</P>
+
+
+<H3><A NAME="Slashcodecom9">What is discussed on Slashcode.com?</A></H3>
+
+<P>
+Anything that is on-topic.  On-topic comments include anything directly related
+to Slash.  This excludes flames and discussions about Slashdot editorial policies.
+This also excludes discussions about other Slash-like projects.  We reserve
+the right to delete any comments we feel are inappropriate.
 </P>
 
 
@@ -462,6 +504,6 @@ information on how to contact us.  And thank you!
 
 
 
-<P><EM>Last updated Tue Mar 13 20:42:50 2001 GMT</EM></P>
+<P><EM>Last updated Wed Oct 31 16:56:33 2001 GMT</EM></P>
 
 <!--#include virtual="/slashfoot.inc"-->

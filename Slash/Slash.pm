@@ -34,9 +34,9 @@ use Time::Local;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-$VERSION   = '2.001000';  # v2.1.0
+$VERSION   	= '2.001001';  # v2.1.1
 # note: those last two lines of functions will be moved elsewhere
-@EXPORT	   = qw(
+@EXPORT		= qw(
 	getData
 	gensym
 
@@ -335,7 +335,7 @@ sub printComments {
 
 	slashDisplay('printCommComments', {
 		can_moderate	=> 
-			( ($user->{seclev} > 100 || $user->{points}) &&
+			( ($user->{seclev} >= 100 || $user->{points}) &&
 			  !$user->{is_anon} ) &&
 			getCurrentStatic('allow_moderation'),
 		comment		=> $comment,
@@ -647,7 +647,7 @@ sub dispComment {
 			    (    !$constants->{mod_same_subnet_forbid}
 			      || $comment->{subnetid} ne $user->{subnetid} )
 			) || (
-			    $user->{seclev} > 99 &&
+			    $user->{seclev} >= 100 &&
 			    $constants->{authors_unlimited}
 			) );
 

@@ -1217,7 +1217,7 @@ sub filter_params {
 		$form{$_} = $params{$_};
 		# We don't filter the multivalue params yet -Brian
 		if (exists $multivalue{$_} && $apr) {
-			my @multi = $apr->param ($_);
+			my @multi = $apr->param($_);
 			$form{$_} = \@multi;
 			next;
 		}
