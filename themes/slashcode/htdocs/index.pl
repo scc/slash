@@ -33,6 +33,7 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+	#This still needed? -Brian
 	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
 		redirect($ENV{SCRIPT_NAME});
 		return;
@@ -146,6 +147,15 @@ sub displayStandardBlocks {
 			if ref $sectionBoxes->{$getblocks};
 	}
 
+	if($user->{is_anon}) {
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				$boxBank->{$bid}{title},
+				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
+				$boxBank->{$bid}{bid},
+				$boxBank->{$bid}{url}
+	}
+
 	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
 			$return .= portalbox(
@@ -163,18 +173,15 @@ sub displayStandardBlocks {
 				$bid
 			);
 
-		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
-			# do nothing!
-
-		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
-				$boxBank->{$bid}{title},
-				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-				$boxBank->{$bid}{bid},
-				$boxBank->{$bid}{url}
-			);
-
+#		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
+#			$return .= portalbox(
+#				$constants->{fancyboxwidth},
+#				$boxBank->{$bid}{title},
+#				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
+#				$boxBank->{$bid}{bid},
+#				$boxBank->{$bid}{url}
+#			);
+#
 		} else {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
@@ -266,16 +273,6 @@ sub displayStories {
 	return $return;
 }
 
-#################################################################
-# this gets little snippets of data all in grouped together in
-# one template, called "index-data"
-sub getData {
-	my($value, $hashref) = @_;
-	$hashref ||= {};
-	$hashref->{value} = $value;
-	return slashDisplay('index-data', $hashref,
-		{ Return => 1, Nocomm => 1 });
-}
 
 #################################################################
 createEnvironment();

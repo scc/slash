@@ -46,7 +46,7 @@ $VERSION = '1.0.9';
 @EXPORT  = qw(
 	checkSubmission createMenu createSelect
 	currentAdminUsers dispComment displayStory displayThread
-	dispStory errorMessage fancybox footer getFormkeyId
+	dispStory errorMessage fancybox footer getData getFormkeyId
 	getOlderStories getSection getSectionBlock getsid getsiddir
 	header horizmenu linkComment linkStory lockTest
 	moderatorCommentLog pollbooth portalbox printComments
