@@ -18,7 +18,7 @@ __template__
 	[% FOREACH comment=comments %]
 		[% user_email = Slash.db.getUser(comment.8, ['fakeemail', 'nickname']) %]
 		[% IF comment.10 %]
-			<BR><B>[% comment.11 %]</B>
+			<BR><B>[% comment.10 %]</B>
 		[% ELSE %]
 			<BR><B>[% x %]</B>
 		[% END %] 
