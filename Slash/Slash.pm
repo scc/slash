@@ -393,7 +393,7 @@ sub overRide {
 ########################################################
 # Add this hashref to $U
 sub addToUser {
-	my $H = shift;
+	my ($H) = @_;
 	@{$I{U}}{ keys %$H } = values %$H;
 }
 

@@ -752,6 +752,7 @@ sub setStoryBySid {
 	$storyBank{$sid}{$key} = $value;
 }
 
+########################################################
 sub getSubmissionLast {
 my ($self, $id, $formname) = @_;
   my($last_submitted) = $self->sqlSelect(
@@ -898,16 +899,8 @@ sub formAbuse {
 		reason    => $reason,
 		-ts   => 'now()',
 	});
-
-##################################################################
-# logs attempts to break, fool, flood a particular form
-getSubmissionCount{
-	my ($self) = @_;
-	$self->sqlSelect("count(*)", "submissions", "del=0");
 }
 
-return;
-}
 
 ##################################################################
 # Check to see if the form already exists
@@ -1023,14 +1016,27 @@ sub getPollComments {
 	return $comments;
 }
 ##################################################################
-# Get poll
+# Get submission count
+sub getSubmissions{
+	my ($self, $uid) = @_;
+	my $submissions = $self->sqlSelectAll("time, subj, section, tid, del", "submissions", "uid=$uid");
+
+	return $submissions;
+}
+##################################################################
+# Get submission count
 sub getSubmissionCount{
 	my ($self, $articles_only) = @_;
-	my($cnt) = $self->sqlSelect('count(*)', 'submissions',
-			"(length(note)<1 or isnull(note)) and del=0" .
-			($articles_only ? " and section='articles'" : '')
-	);
-	return $cnt;
+	my($count);
+	if($articles_only) {
+		$count = $self->sqlSelect('count(*)', 'submissions',
+				"(length(note)<1 or isnull(note)) and del=0" .
+				($articles_only ? " and section='articles'" : '')
+		);
+	} else {
+		$count = $self->sqlSelect("count(*)", "submissions", "del=0");
+	}
+	return $count;
 }
 
 ##################################################################

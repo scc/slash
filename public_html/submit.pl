@@ -102,10 +102,10 @@ sub main {
 
 #################################################################
 sub yourPendingSubmissions {
-	return unless $I{U}{uid} > 0;
-	my $c = sqlSelectMany("*", "submissions", "uid=$I{U}{uid}");
-	if ($c->rows) {
-		my($count) = sqlSelect("count(*)", "submissions", "del=0");
+	return unless $I{U}{uid} != $I{anonymous_coward};
+	my $submissions = $I{dbobject}->getSubmissions($I{U}{uid});
+	if ($submissions) {
+		my $count = $I{dbobject}->getSubmissionCount();
 		titlebar("100%", "Your Recent Submissions (total:$count)");
 		print <<EOT;
 <P>Here are your recent submissions to $I{sitename},
@@ -114,16 +114,16 @@ and their status within the system:
 <UL>
 EOT
 
-		while (my $S = $c->fetchrow_hashref) {
-			print "<LI>$S->{'time'} $S->{subj} ($S->{section},$S->{tid})";
-			print " (rejected) " if $S->{del} == 1;
-			print " (accepted) " if $S->{del} == 2;
+		for(@$submissions){
+			my ($time, $subj, $section, $tid, $del) = @$_;
+			print "<LI>$time $subj ($section,$tid)";
+			print " (rejected) " if $del == 1;
+			print " (accepted) " if $del == 2;
 			print "<BR>\n";
 		}
 
 		print "</UL>\n\n";
 	}
-	$c->finish;
 	print "<P>";
 }
 
