@@ -1579,18 +1579,19 @@ sub saveHome {
 sub listReadOnly {
 	my $slashdb = getCurrentDB();
 
-	my $readonlylist = $slashdb->getReadOnlyList(0,'readonly');
+	my $readonlylist = $slashdb->getReadOnlyList(0, 'readonly');
 
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,
 	});
 
 }
+
 #################################################################
 sub listBanned {
 	my $slashdb = getCurrentDB();
 
-	my $bannedlist = $slashdb->getReadOnlyList(0,'isbanned');
+	my $bannedlist = $slashdb->getReadOnlyList(0, 'isbanned');
 
 	slashDisplay('listBanned', {
 		bannedlist => $bannedlist,
