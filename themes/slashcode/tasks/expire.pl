@@ -27,16 +27,23 @@ $task{$PROGNAME}{code} = sub {
 
 	# We only perform the check if any of the following are turned on.
 	# the logic below, should probably be moved into Slash::Utility.
-	return unless allowExpiry();
+	unless (allowExpiry()) {
+		slashdLog("$PROGNAME - user expiration is disabled");
+		return;
+	}
 
-	# Loop over all about-to-expire users.
+	# This may need to go into a template somewhere.
 	my $reg_subj = "You're $constants->{sitename} password has expired.";
-	for my $e_user (@{$slashdb->checkUserExpiry()}) {
+	# Loop over all about-to-expire users.
+	my @users_to_expire = @{$slashdb->checkUserExpiry()};
+	for my $e_user (@users_to_expire) {
 		# Put user in read-only mode for all forms and other 'pages' that
 		# should be. This should also send the appropriate email. This
 		# is better off in the API, as it is used in users.pl, as well.
 		setUserExpired($e_user, 1);
 	}
+
+	slashdLog(sprintf "$PROGNAME: Expired %d users\n", @users_to_expire);
 };
 
 

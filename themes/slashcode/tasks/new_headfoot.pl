@@ -9,7 +9,8 @@ $task{$me}{timespec} = '3,33 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	# shouldn't be necessary, since sectionHeaders() restores STDOUT before exiting
+	# shouldn't be necessary, since sectionHeaders() restores STDOUT before
+	# exiting
 	local *SO = *STDOUT;
 
 	sectionHeaders(@_, "");

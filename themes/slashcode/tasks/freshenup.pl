@@ -77,7 +77,9 @@ $task{$me}{code} = sub {
 	}
 
 	# Delete stories marked as needing such
-	$stories = $slashdb->getStoriesWithFlag("delete_me");
+	$storyes = [];
+	$stories = $slashdb->getStoriesWithFlag("delete_me")
+		if $constants->{delete_old_stories};
 	for my $i (0..$#$stories) {
 		my $info_ary = $stories->[$i];
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
@@ -141,7 +143,7 @@ $task{$me}{code} = sub {
 
 	my $aborted_string = "";
 	$aborted_string = " (aborted: " . join(", ", @aborted) . ")" if @aborted;
-	slashdLog("$me total_freshens $total_freshens$aborted_string")
+	slashdLog("total_freshens $total_freshens$aborted_string")
 		if $total_freshens != $start_total_freshens;
 
 };

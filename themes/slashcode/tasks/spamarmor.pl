@@ -20,32 +20,48 @@ use Slash::Utility;
 my $PROGNAME = 'spamarmor.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-$task{$PROGNAME}{timespec} = '22 6 * * *';
+$task{$PROGNAME}{timespec} = '30 */1 * * *';
 
 # Handles rotation of fakeemail address of all users.
 $task{$PROGNAME}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	# Loop over all users.
-	my $nicks = ($slashdb->getDescriptions('users'))[0];
-	for (keys %{$nicks}) {
-		$user = $slashdb->getUser($_);
+	slashdLog("$PROGNAME begin");
 
-		# Should be a constant somewhere, probably. The naked '1' below
-		# refers to the code in $users->{emaildisplay} corresponding to
-		# random rotation of $users->{fakeemail}. This would be much
-		# easier to do if $users->{emaildisplay} was in the schema.
-		next if $user->{emaildisplay} != 1;
+	# Loop over all users. The call to iterateUsers gets a block of 
+	# users and iterates over that. As opposed to trying to grab all
+	# of the ENTIRE USERBASE at once. Since a statement handle would
+	# be the best way to get this data, but the API doesn't return 
+	# statement handles, we'll have to use a few tricks.
+	my ($count, $usr_block) = (0, 0);
+	do {
+		my $usr_block = $slashdb->iterateUsers(1000);
 
-		# Randomize the email armor.
-		$user->{fakeemail} = getArmoredEmail($_);
+		for my $user (@{$usr_block}) {
+	# Should be a constant somewhere, probably. The naked '1' below
+	# refers to the code in $users->{emaildisplay} corresponding to
+	# random rotation of $users->{fakeemail}.
+			next if $user->{emaildisplay} != 1;
 
-		# If executed properly, $user->{fakeemail} should have a value.
-		# If so, save the result.
-		$slashdb->setUser($user->{uid}, {
-			fakeemail	=> $user->{fakeemail},
-		}) if $user->{fakeemail};
-	}
+	# Randomize the email armor.
+			$user->{fakeemail} = getArmoredEmail($_);
+
+	# If executed properly, $user->{fakeemail} should have a value.
+	# If so, save the result.
+			if ($user->{fakeemail}) {
+				$slashdb->setUser($user->{uid}, {
+					fakeemail	=> $user->{fakeemail},
+				});
+				$count++;
+			}
+		}
+	} while $usr_block;
+
+	slashdLog(
+		sprintf "$PROGNAME: Rotated armoring on %d user accounts.",
+			$count
+	);
+	slashdLog("$PROGNAME end");
 };
 
 

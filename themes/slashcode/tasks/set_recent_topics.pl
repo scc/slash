@@ -18,6 +18,8 @@ $task{$me}{code} = sub {
 	while (my $cur_story = $sth->fetchrow_hashref) {
 		my $cur_tid = $cur_story->{tid};
 		next if $cur_tid eq $last_tid; # don't show two in a row
+
+# This really should be in a template.
 		$html .= <<EOT;
 	<TD><A HREF="$constants->{rootdir}/search.pl?topic=$cur_tid"><IMG
 		SRC="$constants->{imagedir}/topics/$cur_story->{image}"
@@ -29,7 +31,7 @@ EOT
 		$last_tid = $cur_tid;
 	}
 	$sth->finish();
-	my $tpid = $slashdb->getTemplateByName("recentTopics", "tpid");
+	my($tpid) = $slashdb->getTemplateByName('recentTopics', 'tpid');
 	$slashdb->setTemplate($tpid, { template => $html });
 
 };
