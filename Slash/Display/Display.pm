@@ -100,7 +100,9 @@ processed template data.  Default is print.
 
 Boolean for whether to include (false) or not include (true)
 HTML comments surrounding template, stating what template
-block this is.  Default is to include comments.
+block this is.  Default is to include comments if the var
+"template_show_comments" is true, to not include comments
+if it is false.  It is true by default.
 
 =item Section
 
@@ -150,9 +152,10 @@ Compiles templates and caches them.
 sub slashDisplay {
 	my($name, $data, $opt) = @_;
 	my(@comments, $err, $ok, $out, $origSection, $origPage,
-		$tempdata, $tempname, $user, $slashdb);
+		$tempdata, $tempname, $user, $slashdb, $constants);
 	return unless $name;
 
+	$constants = getCurrentStatic();
 	$slashdb = getCurrentDB();
 	$user = getCurrentUser();
 
@@ -225,7 +228,11 @@ sub slashDisplay {
 		$err = $template->error if !$ok;
 	}
 
-	$out = $comments[0] . $out . $comments[1] unless $opt->{Nocomm};
+	my $Nocomm = defined $opt->{Nocomm}
+		? $opt->{Nocomm}
+		: !$constants->{template_show_comments};
+
+	$out = $comments[0] . $out . $comments[1] unless $Nocomm;
 
 	if ($ok) {
 		print $out unless $opt->{Return};

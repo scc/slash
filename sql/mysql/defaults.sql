@@ -444,6 +444,7 @@ INSERT INTO vars (name, value, description) VALUES ('submit_categories','Back','
 INSERT INTO vars (name, value, description) VALUES ('template_cache_size','0','Number of templates to store in cache (0 = unlimited)');
 INSERT INTO vars (name, value, description) VALUES ('template_post_chomp','0','Chomp whitespace after directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
 INSERT INTO vars (name, value, description) VALUES ('template_pre_chomp','0','Chomp whitespace before directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
+INSERT INTO vars (name, value, description) VALUES ('template_show_comments', '1', 'Show HTML comments before and after template (see Slash::Display)');
 INSERT INTO vars (name, value, description) VALUES ('titlebar_width','100%','The width of the titlebar');
 INSERT INTO vars (name, value, description) VALUES ('today','730512','(Obviated) Today converted to days past a long time ago');
 INSERT INTO vars (name, value, description) VALUES ('token_retention', '0.25', 'Amount of tokens a user keeps at cleanup time.');
