@@ -140,12 +140,15 @@ Compiles templates and caches them.
 =cut
 
 sub slashDisplay {
-	# options: return, nocomm, section
 	my($name, $data, $opt) = @_;
-	my(@comments, $err, $ok, $out, $origSection, $origPage, $tempname);
+	my(@comments, $err, $ok, $out, $origSection, $origPage,
+		$tempdata, $tempname, $user, $slashdb);
 	return unless $name;
 
-	my $user = getCurrentUser();
+	$slashdb = getCurrentDB();
+	$user = getCurrentUser();
+
+	# save for later (local() seems not to work ... ?)
 	$origSection = $user->{currentSection};
 	$origPage = $user->{currentPage};	
 
@@ -175,7 +178,14 @@ sub slashDisplay {
 		$user->{$_} = defined $user->{$_} ? $user->{$_} : '';
 	}
 
-	$tempname = "$name ; $user->{currentPage} ; $user->{currentSection}";
+	# we don't want to have to call this here, but because
+	# it is cached the performance his it is generally light,
+	# and this is the only good way to get the actual name,
+	# page, section, we bite the bullet and do it
+	$tempdata = $slashdb->getTemplateByName($name, qw[tpid page section]);
+
+	$tempname = "ID$tempdata->{tpid} , " .
+		"$name;$tempdata->{page};$tempdata->{section}";
 	@comments = (
 		"\n\n<!-- start template: $tempname -->\n\n",
 		"\n\n<!-- end template: $tempname -->\n\n"
@@ -195,11 +205,15 @@ sub slashDisplay {
 		$err = $template->error if !$ok;
 	}
 
-	$out = join '', $comments[0], $out, $comments[1] unless $opt->{Nocomm};
-	print $out unless $opt->{Return};
+	$out = $comments[0] . $out . $comments[1] unless $opt->{Nocomm};
 
-	errorLog("$tempname : $err") if !$ok;
+	if ($ok) {
+		print $out unless $opt->{Return};
+	} else {
+		errorLog("$tempname : $err");
+	}
 
+	# restore our original values
 	$user->{currentSection}	= $origSection;
 	$user->{currentPage}	= $origPage;
 
@@ -303,7 +317,6 @@ sub _template {
 		: 0;						# cache off
 
 	return $cfg->{template} = Template->new({
-		AUTO_RESET	=> 1,
 		LOAD_FILTERS	=> $filters,
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
