@@ -930,16 +930,17 @@ sub deleteSubmission {
 	my($self, $subid) = @_;
 	my $aid = getCurrentUser('aid');
 	my $form = getCurrentForm();
+	my %subid;
 
 	if ($form->{subid}) {
 		$self->sqlUpdate("submissions", { del => 1 },
 			"subid=" . $self->{dbh}->quote($form->{subid})
 		);
-
 		$self->sqlUpdate("authors",
 			{ -deletedsubmissions => 'deletedsubmissions+1' },
 			"aid='$aid'"
 		);
+		$subid{$form->{subid}}++;
 	}
 
 	foreach (keys %{$form}) {
@@ -964,13 +965,17 @@ sub deleteSubmission {
 			}
 		} else {
 			my $key = $n;
-			$self->sqlUpdate("submissions", { del => 1 }, "subid='$key'")
-			&& $self->sqlUpdate("authors",
+			$self->sqlUpdate("submissions", { del => 1 },
+				"subid='$key'");
+			$self->sqlUpdate("authors",
 				{ -deletedsubmissions => 'deletedsubmissions+1' },
 				"aid='$aid'"
 			);
+			$subid{$n}++;
 		}
 	}
+
+	return keys %subid;
 }
 
 ########################################################
@@ -1390,10 +1395,14 @@ sub updateFormkeyId {
 ########################################################
 sub insertFormkey {
 	my($self, $formname, $id, $sid) = @_;
+	my $form = getCurrentForm();
+
+	# save in form object for printing to user
+	$form->{formkey} = getFormkey();
 
 	# insert the fact that the form has been displayed, but not submitted at this point
 	$self->sqlInsert("formkeys", {
-		formkey		=> getCurrentForm('formkey'),
+		formkey		=> $form->{formkey},
 		formname 	=> $formname,
 		id 		=> $id,
 		sid		=> $sid,
@@ -2103,6 +2112,7 @@ sub setQuickies {
 		section	=> 'articles',
 		tid	=> 'quickies',
 		story	=> $content,
+		uid	=> getCurrentStatic('anonymous_coward_uid'),
 	});
 }
 
@@ -2112,7 +2122,7 @@ sub getSubmissionForUser {
 	my($self, $dateformat) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
-	my $sql = "SELECT subid, subj, date_format($dateformat, 'm/d  H:i'), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
+	my $sql = "SELECT subid,subj,date_format($dateformat,'m/d  H:i'),tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
 	$sql .= $form->{note} ? "note=" . $self->{dbh}->quote($form->{note}) : "isnull(note)";
 	$sql .= "		or note=' ' " unless $form->{note};

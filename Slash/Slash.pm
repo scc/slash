@@ -91,6 +91,8 @@ sub getSlash {
 	$I{F} = $user_cfg->{form};
 	my $user = $I{U} = $user_cfg->{user};
 
+	getSlashConf();  # remove when %I is gone
+
 	return 1;
 }
 
@@ -103,19 +105,25 @@ sub getSlash {
 # use it, so we might as well make full use of it)
 # -Brian
 sub createSelect {
-	my($label, $hashref, $default) = @_;
-	print qq!\n<SELECT name="$label">\n!;
+	my($label, $hashref, $default, $return) = @_;
+	my $html = qq!\n<SELECT NAME="$label">\n!;
 
 	for my $code (sort keys %$hashref) {
 		my $selected = ($default eq $code) ? ' SELECTED' : '';
-		print qq!\t<OPTION value="$code"$selected>$hashref->{$code}</OPTION>\n!;
+		$html .= qq!\t<OPTION VALUE="$code"$selected>$hashref->{$code}</OPTION>\n!;
 	}
-	print "</SELECT>\n";
+	$html .= "</SELECT>\n";
+
+	if ($return) {
+		return $html;
+	} else {
+		print $html;
+	}
 }
 
 ########################################################
 sub selectTopic {
-	my($name, $tid) = @_;
+	my($name, $tid, $return) = @_;
 	my $dbslash = getCurrentDB();
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
@@ -126,15 +134,21 @@ sub selectTopic {
 		$html_to_display .= qq!\t<OPTION VALUE="$topic->{tid}"$selected>$topic->{alttext}</OPTION>\n!;
 	}
 	$html_to_display .= "</SELECT>\n";
-	print $html_to_display;
+
+	if ($return) {
+		return $html_to_display;
+	} else {
+		print $html_to_display;
+	}
 }
 
 ########################################################
 # Drop down list of available sections (based on admin seclev)
 sub selectSection {
-	my($name, $section, $SECT) = @_;
+	my($name, $section, $SECT, $return) = @_;
 	my $dbslash = getCurrentDB();
 	my $sectionBank = $dbslash->getSections();
+	$SECT ||= {};
 
 	if ($SECT->{isolate}) {
 		print qq!<INPUT TYPE="hidden" NAME="$name" VALUE="$section">\n!;
@@ -149,7 +163,12 @@ sub selectSection {
 		$html_to_display .= qq!\t<OPTION VALUE="$s"$selected>$S->{title}</OPTION>\n!;
 	}
 	$html_to_display .= "</SELECT>";
-	print $html_to_display;
+
+	if ($return) {
+		return $html_to_display;
+	} else {
+		print $html_to_display;
+	}
 }
 
 ########################################################
@@ -620,9 +639,14 @@ sub ssiFoot {
 
 ########################################################
 sub formLabel {
-	my $constants = getCurrentStatic();
-	return qq!<P><FONT COLOR="$constants->{bg}[3]"><B>!, shift, "</B></FONT>\n",
-		(@_ ? ('(', @_, ')') : ''), "<BR>\n";
+	my($value, $comment) = @_;
+	return unless $value;
+
+	my %data;
+	$data{value} = $value;
+	$data{comment} = $comment if defined $_[1];
+
+	slashDisplay('formLabel', \%data, 1, 1);
 }
 
 ########################################################
@@ -1707,8 +1731,8 @@ sub matchingStrings {
 
 ########################################################
 sub lockTest {
-	my ($subj) = @_;
-	return unless $subj;
+	my($subj) = @_;
+	return '' unless $subj;
 	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $msg;
@@ -1742,7 +1766,7 @@ sub getAnonCookie {
 ########################################################
 # we need to reorg this ... maybe get rid of the need for it -- pudge
 sub getFormkeyId {
-	my ($uid) = @_;
+	my($uid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 

@@ -31,7 +31,6 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	getSlashConf();
 	getSlash();
 
 	my $dbslash = getCurrentDB();
