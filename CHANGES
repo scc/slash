@@ -1,3 +1,14 @@
+slash-2.2.2, 2002.01.02
+-----------------------
+
+*	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.2 from
+	versions 2.2.0 and 2.2.1
+
+*	Fix journals problems, including proper handling of date
+	in last_journal_entry field
+
+*	Return arrayref always from getMessageUsers()
+
 slash-2.2.1, 2001.12.14
 -----------------------
 
