@@ -568,6 +568,10 @@ sub main {
 	my $last = my $modlast = 0;
 	while (1) {
 		freshenup();
+		if (check_daily()) {
+			slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
+			system("$constants->{sbindir}/dailyStuff $virtual_user &");
+		}
 		if ((time - $last) > 60 * 60 ) { # Every Hour
 			slashdLog("Doing Hourly Update");
 			newfooter();
@@ -578,10 +582,6 @@ sub main {
 			system("$constants->{sbindir}/portald $virtual_user&");
 			sleep(60 * 2);
 
-			if (check_daily()) {
-				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
-				system("$constants->{sbindir}/dailyStuff $virtual_user &");
-			}
 			$last = time;
 
 		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
