@@ -2,15 +2,14 @@
 
 # Need to pass the four passed-in vars to the newxxx() routines
 
-use XML::Parser::Expat;
-use XML::RSS 0.95;
-
 use strict;
+use Slash::XML;
+
 my $me = 'open_backend.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '10 * * * *';
+$task{$me}{timespec} = '10,40 * * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
@@ -25,6 +24,7 @@ $task{$me}{code} = sub {
 		my($section) = $sections->{$_}->{section};
 		newxml(@_, $section);
 		newrdf(@_, $section);
+		newrss(@_, $section);
 	}
 
 };
@@ -43,151 +43,53 @@ sub site2file {
 	return $file;
 }
 
-sub date2iso8601 {
-	my($time) = @_;
-	if ($time) {    # force to GMT
-		$time .= ' GMT';
-	} else {        # get current seconds
-		$time = 'epoch ' . time();
-	}
-
-	# calculate timezone differential from GMT
-	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
-	($diff = sprintf "%+0.4d", $diff) =~ s/(\d{2})$/:$1/;
-
-	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
-}
-
 sub newrdf {	# RSS 0.9
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
-	my $stories_and_topics = $slashdb->getBackendStories($section);
-	my $rss = XML::RSS->new(
-		version => '0.9',
-		$constants->{rdfencoding} ? (encoding => $constants->{rdfencoding}) : ()
-	);
 
-	my $SECT = getSection($section);
-	my $title = $SECT->{isolate}
-		? $SECT->{title}
-		: "$constants->{sitename}: $SECT->{title}";
-
-	$rss->channel(
-		title		=> xmlencode($title),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/')),
-#		language	=> $constants->{rdflanguage},
-		description	=> xmlencode($constants->{slogan}),
-	);
-
-	$rss->image(
-		title		=> xmlencode($constants->{sitename}),
-		url		=> xmlencode($constants->{rdfimg}),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . '/'),
-	);
-
-
-	for my $section (@$stories_and_topics) {
-		$rss->add_item(
-			title	=> xmlencode($section->{title}),
-			'link'	=> xmlencode_plain("$constants->{absolutedir}/article.pl?sid=$section->{sid}"),
-		);
-	}
-
-	my $file = site2file($virtual_user, $constants, $slashdb, $user, $section);
-	$rss->save("$constants->{basedir}/$file.rdf");
-}
-
-sub newrss {	# RSS 1.0
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
-	my $rss = XML::RSS->new(
-		version => '1.0',
-		$constants->{rdfencoding}
-			? (encoding => $constants->{rdfencoding})
-			: ()
-	);
-
-	$rss->add_module(
-		prefix	=> 'slash',
-		uri	=> 'http://slashcode.com/rss/1.0/modules/Slash/',
-	);
-
-	my $SECT = getSection($section);
-	my $title = $section
+	my $stories = $slashdb->getBackendStories($section);
+	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
+	my $SECT    = $slashdb->getSection($section);
+	my $link    = $constants->{absolutedir} .
+		($section ? "/index.pl?section=$section" : '/');
+	my $title   = $section
 		? $SECT->{isolate}
 			? $SECT->{title}
 			: "$constants->{sitename}: $SECT->{title}"
 		: $constants->{sitename};
 
-	$rss->channel(
-		title		=> xmlencode($title),
-		description	=> xmlencode($constants->{slogan}),
-		'link'		=> xmlencode_plain($constants->{absolutedir} .
-			($section ? "/index.pl?section=$section" : '/')),
+	my $rss = xmlDisplay('rss', {
+		version		=> 0.9,
+		title		=> $title,
+		'link'		=> $link,
+		textinput	=> 1,
+		image		=> 1,
+		items		=> [ map { { story => $_ } } @$stories ],
+	}, 1);
+	save2file("$constants->{basedir}/$file.rdf", $rss);
+}
 
-		dc => {
-			date		=> date2iso8601(),
-			subject		=> xmlencode($constants->{rdfsubject}),
-			language	=> $constants->{rdflanguage},
-			creator		=> xmlencode($constants->{adminmail}),
-			publisher	=> xmlencode($constants->{rdfpublisher}),
-			rights		=> xmlencode($constants->{rdfrights}),
-		},
+sub newrss {	# RSS 1.0
+	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 
-		syn => {
-			updatePeriod	=> $constants->{rdfupdateperiod},
-			updateFrequency	=> $constants->{rdfupdatefrequency},
-			updateBase	=> $constants->{rdfupdatebase},
-		},
-	);
+	my $stories = $slashdb->getBackendStories($section);
+	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
+	my $SECT    = $slashdb->getSection($section);
+	my $link    = $constants->{absolutedir} .
+		($section ? "/index.pl?section=$section" : '/');
+	my $title   = $section
+		? $SECT->{isolate}
+			? $SECT->{title}
+			: "$constants->{sitename}: $SECT->{title}"
+		: $constants->{sitename};
 
-	$rss->image(
-		title		=> xmlencode($constants->{sitename}),
-		url		=> xmlencode($constants->{rdfimg}),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . '/'),
-	);
-
-	$rss->textinput(
-		title		=> 'Search ' . xmlencode($constants->{sitename}),
-		description	=> 'Search ' . xmlencode($constants->{sitename}) . ' stories',
-		name		=> 'query',
-		'link'		=> xmlencode_plain("$constants->{absolutedir}/search.pl"),
-	);
-
-	my $stories_and_topics = $slashdb->getBackendStories($section);
-	for my $story (@$stories_and_topics) {
-		my $desc;
-		if ($constants->{rdfitemdesc} == 1) {
-			$desc = $story->{introtext};
-		} elsif ($constants->{rdfitemdesc}) {
-			$desc = balanceTags(
-				chopEntity($story->{introtext}, $constants->{rdfitemdesc})
-			);
-		}
-
-		my %data = (
-			title		=> xmlencode($story->{title}),
-			'link'		=> xmlencode_plain("$constants->{absolutedir}/article.pl?sid=$story->{sid}"),
-
-			dc => {
-				date		=> date2iso8601($story->{'time'}),
-				subject		=> xmlencode($story->{tid}),
-				creator		=> xmlencode($slashdb->getUser($story->{uid}, 'nickname')),
-			},
-
-			slash => {
-				section		=> xmlencode($story->{section}),
-				comments	=> $story->{commentcount},
-				hitparade	=> $story->{hitparade},
-			},
-		);
-
-		$data{description}       = xmlencode($desc) if $desc;
-		$data{slash}{department} = xmlencode($story->{dept}) if $constants->{use_dept};
-
-		$rss->add_item(%data);
-	}
-
-	my $file = site2file($virtual_user, $constants, $slashdb, $user, $section);
-	$rss->save("$constants->{basedir}/$file.rss");
+	my $rss = xmlDisplay('rss', {
+		title		=> $title,
+		'link'		=> $link,
+		textinput	=> 1,
+		image		=> 1,
+		items		=> [ map { { story => $_ } } @$stories ],
+	}, 1);
+	save2file("$constants->{basedir}/$file.rss", $rss);
 }
 
 sub newwml {

@@ -12,8 +12,11 @@ $task{$me}{code} = sub {
 
 	return unless -x '/usr/games/fortune';
 	chomp(my $t = `/usr/games/fortune -s`);
-	$slashdb->setBlock('motd', {block => $t}) if $t;
 
+	if ($t) {
+	        my $tpid = $slashdb->getTemplateByName("motd", "tpid");
+	        $slashdb->setTemplate($tpid, { template => $t });
+	}
 };
 
 1;
