@@ -114,7 +114,7 @@ sub IndexHandler {
 		# brian, why was this changed?  -- pudge
 		# cookie data will begin with word char or %
 		#if ($r->header_in('Cookie') =~ /\b(?:user)=[%\w]/) {
-		if ($r->header_in('Cookie') =~ /(?:user/) {
+		if ($r->header_in('Cookie') =~ /(?:user)/) {
 			$r->uri('/index.pl');
 			$r->filename("$basedir/index.pl");
 			return OK;
