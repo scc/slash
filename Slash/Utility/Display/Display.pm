@@ -25,7 +25,7 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use Date::Manip qw(ParseDate UnixDate);
+# use Date::Manip qw(ParseDate UnixDate);
 use Slash::Display;
 use Slash::Utility::Environment;
 
@@ -510,14 +510,15 @@ sub currentAdminUsers {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	my $now = UnixDate(ParseDate($slashdb->getTime()), "%s");
+# 	my $now = UnixDate(ParseDate($slashdb->getTime()), "%s");
+	my $now = timeCalc($slashdb->getTime(), "%s", 0);
 	my $aids = $slashdb->currentAdmin();
 	for my $data (@$aids) {
 		my($usernick, $usertime, $lasttitle) = @$data;
 		if ($usernick eq $user->{nickname}) {
 			$usertime = "-";
 		} else {
-			$usertime = $now - UnixDate(ParseDate($usertime), "%s");
+			$usertime = $now - timeCalc($usertime, "%s", 0); # UnixDate(ParseDate($usertime), "%s");
 			if ($usertime <= 99) {
 				$usertime .= "s";
 			} elsif ($usertime <= 3600) {

@@ -57,9 +57,9 @@ before you do any moderation.<BR><P>
 <A HREF="[% useredit.homepage %]">[% useredit.homepage %]</A><BR>
 [% END; IF useredit.fakeemail %]
 <A HREF="mailto:[% useredit.fakeemail %]">[% useredit.fakeemail %]</A><BR>
-[% END; journal_date = Slash.timeCalc(useredit.journal_last_entry_date); IF journal_date %]
+[% END; IF useredit.journal_last_entry_date.search('[1-9]') %]
 <A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% useredit.uid %]">
-Last Journal Entry was [% journal_date %]</A>
+Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A>
 [ <A HREF="[% constants.rootdir %]/journal.pl?op=list&amp;uid=[% useredit.uid %]">List</A> ]
 <BR>
 [% END %]

@@ -5,7 +5,7 @@
 # $Id$
 
 use strict;
-use Date::Manip;
+#use Date::Manip;  # is this needed?  -- pudge
 use HTML::Entities;
 use Slash;
 use Slash::Display;

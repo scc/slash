@@ -1501,7 +1501,7 @@ sub getPollQuestionList {
 	my $questions = $self->sqlSelectAll("qid, question, date",
 		"pollquestions order by date DESC LIMIT $time,20");
 
-	formatDate($questions, 2, 2, '%F'); # '%A %B %E' || '%F'
+	formatDate($questions, 2, 2, '%A, %B %e, %Y'); # '%F'
 
 	return $questions;
 }
@@ -2937,7 +2937,7 @@ EOT
 
 	while (my $data = $cursor->fetchrow_arrayref) {
 		formatDate([$data], 3, 3, '%A %B %d %I %M %p');
-		formatDate([$data], 5, 5, '%Q');
+		formatDate([$data], 5, 5, '%Y%m%d'); # %Q
 		next if $form->{issue} && $data->[5] > $form->{issue};
 		push @stories, [@$data];
 		last if ++$count >= $limit;
@@ -3368,7 +3368,7 @@ sub autoUrl {
 	my $more = substr $user->{nickname}, 1;
 	$more =~ s/[a-z]//g;
 	$initials = uc($initials . $more);
-	my($now) = timeCalc('epoch ' . time(), '%m/%d %H:%M %p %Z', 0);
+	my($now) = timeCalc(scalar localtime, '%m/%d %H:%M %p %Z', 0);	# epoch time
 
 	# Assorted Automatic Autoreplacements for Convenience
 	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$user->{homepage}">$user->{nickname}</A> owns shares in $1</B>|ig;
@@ -3432,7 +3432,7 @@ sub getTime {
 sub getDay {
 #	my($self) = @_;
 #	my($now) = $self->sqlSelect('to_days(now())');
-	my $yesterday = timeCalc('epoch ' . time, '%Q');
+	my $yesterday = timeCalc(scalar localtime, '%Y%m%d'); # epoch time, %Q
 	return $yesterday;
 }
 

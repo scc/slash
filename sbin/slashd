@@ -12,7 +12,7 @@
 use sigtrap;
 use strict;
 use Carp;
-use Date::Manip;
+# use Date::Manip;
 use File::Basename;
 use File::Path;
 use LWP::UserAgent;
@@ -175,7 +175,8 @@ EOT
 }
 
 sub db_time {
-	return UnixDate(ParseDate($slashdb->getTime()), "%s");
+# 	return UnixDate(ParseDate($slashdb->getTime()), "%s");
+	return timeCalc($slashdb->getTime(), "%s", 0);
 }
 
 # NOTE: This logic is busted. What we really need to do is keep a list

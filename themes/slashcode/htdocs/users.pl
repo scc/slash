@@ -5,7 +5,7 @@
 # $Id$
 
 use strict;
-use Date::Manip;
+use Date::Manip qw(UnixDate DateCalc);
 use Digest::MD5 'md5_hex';
 use Slash;
 use Slash::Display;
@@ -595,9 +595,9 @@ sub showInfo {
 				$lastgranted = $slashdb->getUser($uid, 'lastgranted');
 				if ($lastgranted) {
 					$lastgranted = timeCalc(
-						DateCalc($lastgranted,
-						'+ ' . ($constants->{stir}+1) . ' days'),
-						'%Y-%m-%d'
+						UnixDate(DateCalc($lastgranted,
+							'+ ' . ($constants->{stir}+1) . ' days'
+						), "%C"), '%Y-%m-%d'
 					);
 				}
 			}

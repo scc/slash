@@ -1141,7 +1141,7 @@ sub prepareUser {
 
 	# This is here so when user selects "6 ish" it
 	# "posted by xxx around 6 ish" instead of "on 6 ish"
-	if ($user->{'format'} eq '%i ish') {
+	if ($user->{'format'} eq '%l ish') {	# %i
 		$user->{aton} = 'around'; # getData('atonish');
 	} else {
 		$user->{aton} = 'on'; # getData('aton');

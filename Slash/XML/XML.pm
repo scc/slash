@@ -24,7 +24,7 @@ Slash::XML aids in creating XML.  Right now, only RSS is supported.
 =cut
 
 use strict;
-use Date::Manip;
+# use Date::Manip;
 use Time::Local;
 use Slash;
 use Slash::Utility;
@@ -135,7 +135,7 @@ Return a standard ISO 8601 time string.
 
 =item TIME
 
-Some sort of string in GMT that can be parsed by Date::Manip.
+Some sort of string in GMT that can be parsed by Date::Parse.
 If no TIME given, uses current time.
 
 =back
@@ -143,10 +143,6 @@ If no TIME given, uses current time.
 =item Return value
 
 The time string.
-
-=item Dependencies
-
-Date::Manip.
 
 =back
 
@@ -158,14 +154,14 @@ sub date2iso8601 {
 		$time .= ' GMT' unless $time =~ / GMT$/;
 	} else {	# get current seconds
 		my $t = defined $time ? 0 : time();
-		$time = "epoch $t";
+		$time = scalar localtime($t);
 	}
 
 	# calculate timezone differential from GMT
 	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
 	($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
 
-	return scalar UnixDate($time, "%Y-%m-%dT%H:%M:%S$diff");
+	return scalar timeCalc($time, "%Y-%m-%dT%H:%M:%S$diff", 0);
 }
 
 #========================================================================

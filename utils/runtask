@@ -8,7 +8,7 @@ use sigtrap;
 use strict;
 use Carp;
 use Getopt::Std;
-use Date::Manip;
+# use Date::Manip; # is this needed?  -- pudge
 use File::Basename;
 use File::Path;
 use LWP::UserAgent;
@@ -174,7 +174,8 @@ sub main {
 		exit 0;
 	};
 
-	srand(time() ^ ($$+($$<<15)));
+# srand is almost always superfluous in perl 5.004 and later -- pudge
+#	srand(time() ^ ($$+($$<<15)));
 
 	my $subref = get_task_subref;
 	slashdLog("$task_name begin");

@@ -25,7 +25,9 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use Date::Manip qw(DateCalc UnixDate Date_Init);
+use Date::Format qw(time2str);
+use Date::Parse qw(str2time);
+#use Date::Manip qw(DateCalc UnixDate Date_Init);
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 use HTML::FormatText;
@@ -201,7 +203,7 @@ the default value of AS is "time".
 
 =item FORMAT
 
-Optional Date::Manip format string.
+Optional Date::Format format string.
 
 =back
 
@@ -291,18 +293,22 @@ sub timeCalc {
 
 	# find out the user's time based on personal offset
 	# in seconds
-	$date = DateCalc($date, "$off_set SECONDS", \$err) if $off_set;
+# 	$date = DateCalc($date, "$off_set SECONDS", \$err) if $off_set;
+	$date = str2time($date) + $off_set;
 
 	# set user's language
 	my $lang = getCurrentStatic('datelang') || 'English';
-	Date_Init("Language=$lang") if $lang && $lang ne 'English';
+# 	Date_Init("Language=$lang") if $lang && $lang ne 'English';
+	Date::Format->language($lang) if $lang && $lang ne 'English';
 
 	# convert the raw date to pretty formatted date
-	$date = UnixDate($date, $format || $user->{'format'});
+# 	$date = UnixDate($date, $format || $user->{'format'});
+	$date = time2str($format || $user->{'format'}, $date);
 
 	# so we can handle database dates properly; maybe
 	# check database engine behavior?
-	Date_Init("Language=English") if $lang && $lang ne 'English';
+# 	Date_Init('Language=English') if $lang && $lang ne 'English';
+	Date::Format->language('English') if $lang && $lang ne 'English';
 
 	# return the new pretty date
 	return $date;

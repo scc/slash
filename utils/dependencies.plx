@@ -78,6 +78,7 @@ my %data = (
 	)],
 	'Slash::Utility::Display' => [qw(
 		Slash::Display
+		Slash::Utility::Data
 		Slash::Utility::Environment
 	)],
 	'Slash::Utility::Environment' => [qw(

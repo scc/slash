@@ -34,6 +34,7 @@ you use most.
 
 =cut
 
+BEGIN { $ENV{TZ} = 'GMT' }
 use Slash;
 use Slash::Display;
 use Slash::Utility;
