@@ -69,7 +69,7 @@ sub getBackendStories {
 		     AND ((displaystatus = 0 and \"$section\"=\"\")
 			      OR (stories.section=\"$section\" and displaystatus > -1))
 		     AND time < NOW()
-		     AND stories.writestatus != 'delete_me'
+		     AND stories.writestatus != 'delete'
 		ORDER BY time DESC
 		   LIMIT 10");
 
@@ -78,9 +78,6 @@ sub getBackendStories {
 	my $row;
 	push(@$returnable, $row) while ($row = $cursor->fetchrow_hashref);
 	$cursor->finish;
-
-	# XXX Need to stuff hitparade values in here or open_backend.pl
-	# will not write its RSS etc. files correctly. - Jamie
 
 	return $returnable;
 }
