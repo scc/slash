@@ -1,0 +1,136 @@
+#!/usr/bin/perl -w 
+use strict;
+use Slash::DB;
+
+# This is the uber install script.
+# -Brian (brian@tangent.org)
+
+
+my ($user, $dbh, @create, $sql, @sql, $hostname, @directories, @binaries, $httpd, $uname, %slash_sites);
+
+my @standard_http = qw (
+	PerlModule Apache::SIG
+	PerlModule Apache::DBI
+	PerlModule Slash::Apache
+	PerlModule Slash::Apache::User
+	PerlModule Slash::Apache::Log
+	PerlAccessHandler Slash::Apache::User
+	PerlLogHandler Slash::Apache::Log
+	PerlModule CGI
+	PerlHandler Apache::Registry
+	PerlSetupEnv On
+	PerlSetEnv TZ GMT
+);
+unless ($ARGV[0]) {
+	print "You need to give us a DBIx::Password virtual name\n";
+	exit 0;
+}
+
+eval { require DBIx::Password; };
+
+if($@) {
+	print "Doesn't look like you have Bundle::Slash installed.\n";
+	print "Run the CPAN tool and install Bundle::Slash.\n";
+}
+
+$user = $ARGV[0];
+
+$dbh = DBIx::Password->connect($user);
+
+unless($dbh) {
+	print "The virtual user \"$user\" doesn't exist.\n";
+}
+
+open(APXS, "apxs -q SYSCONFDIR |");
+($httpd) = <APXS>;
+close(APXS);
+
+unless($httpd) {
+	print "Ok, we couldn't find apxs so you won't have the option\n";
+	print "of us fixing your httpd.conf for you\n";
+} else {
+	$httpd .= "/httpd.conf";
+}
+open(CREATE, "</usr/local/slash/sql/mysql/slashschema_create.sql");
+
+while(<CREATE>) {
+	chomp;
+	next if /^#/;
+	next if /^$/;
+	next if /^ $/;
+	push @create, $_;
+}
+close (CREATE);
+
+$sql = join '', @create;
+@sql = split /;/, $sql;
+
+
+
+print "What is name of your slashsite (aka www.slashdot.org)?\n";
+$hostname = <STDIN>;
+chomp($hostname);
+
+open(DUMP,"</usr/local/slash/sql/mysql/slashdata_dump.sql") or die "can't locate slashdata_dump.sql! Where is it?";
+
+while(<DUMP>) {
+	next unless /^INSERT/;
+	chomp;
+	s/(?:www\.)?example\.com/$hostname/g;
+	push @sql, $_;
+}
+close(DUMP);
+
+open(DUMP,"</usr/local/slash/sql/mysql/slashdata_prep.sql") or die "can't locate slashdata_prep.sql! Where is it?";
+
+while(<DUMP>) {
+	chomp;
+	push @sql, $_;
+}
+close(DUMP);
+
+for(@sql) {
+	next unless $_;
+	$dbh->do($_);
+}
+
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/log/$hostname' WHERE name = 'logdir' ");
+$dbh->do("UPDATE vars SET value = '/usr/local/slash/$hostname' WHERE name = 'basedir' ");
+
+system("mkdir /usr/local/slash/$hostname");
+system("mkdir /usr/local/slash/logs/$hostname");
+system("cp -r /usr/local/slash/default/* /usr/local/slash/$hostname");
+
+$dbh->disconnect;
+
+# Now, lets update slash.sites
+open (SLASHSITES, "/usr/local/slash/slash.sites");
+while(<SLASHSITES>) {
+	chomp;
+	$slash_sites{$_} = 1;
+}
+close (SLASHSITES);
+
+unless($slash_sites{$user}) {
+	open (SLASHSITES, ">/usr/local/slash/slash.sites");
+	for(keys %slash_sites) {
+		print SLASHSITES ("$_\n");
+	}
+	print SLASHSITES ("$user\n");
+	close (SLASHSITES);
+}
+
+# Now, lets do the httpd.conf
+
+sub standardadd {
+	open(CONF, ">>$httpd");
+	for(@standard_http) {
+		print CONF ("$_\n");
+	}
+	close(CONF);
+}
+
+sub siteadd {
+	open(CONF, ">>$httpd");
+	close(CONF);
+}
