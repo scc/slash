@@ -402,7 +402,7 @@ sub newUser {
 	$form->{newusernick} = fixNickname($form->{newusernick});
 	(my $matchname = lc $form->{newusernick}) =~ s/[^a-zA-Z0-9]//g;
 
-	if (!$form->{email} || $form->{email} !~ /\@/ || $slashdb->checkEmail($form->{email})) {
+	if (!$form->{email} || $form->{email} !~ /\@/ || $slashdb->existsEmail($form->{email})) {
 		print getError('emailexists_err', 0, 1);
 		return;
 
