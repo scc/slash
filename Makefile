@@ -35,13 +35,23 @@ CP = cp
 # We should run a script on the binaries to get the right
 # version of perl. 
 # I should also grab an install-sh instead of using $(CP)
-slash: 
-	(cd Slash; $(PERL) Makefile.PL; make)
+slash:
+	if ! [ $(RPM) ] ; then \
+		(cd Slash; $(PERL) Makefile.PL; make) \
+	else \
+		(cd Slash; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make) \
+	fi
 
 plugins: 
-	(cd plugins/Search; $(PERL) Makefile.PL; make)
-	(cd plugins/Journal; $(PERL) Makefile.PL; make)
-	(cd plugins/Ladybug; $(PERL) Makefile.PL; make)
+	if ! [ $(RPM) ] ; then \
+		(cd plugins/Search; $(PERL) Makefile.PL; make) \
+		(cd plugins/Journal; $(PERL) Makefile.PL; make) \
+		(cd plugins/Ladybug; $(PERL) Makefile.PL; make) \
+	else \
+		(cd plugins/Search; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make) \
+		(cd plugins/Journal; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make) \
+		(cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make) \
+	fi
 
 all: install
 
@@ -52,9 +62,15 @@ install: slash plugins
 	# Lets go install the libraries
 	(cd Slash; make install)
 	# Lets go install the plugin's libraries
-	(cd plugins/Search; $(PERL) Makefile.PL; make install)
-	(cd plugins/Journal; $(PERL) Makefile.PL; make install)
-	(cd plugins/Ladybug; $(PERL) Makefile.PL; make install)
+	if ! [ $(RPM) ] ; then \
+		(cd plugins/Search; $(PERL) Makefile.PL; make install) \
+		(cd plugins/Journal; $(PERL) Makefile.PL; make install) \
+		(cd plugins/Ladybug; $(PERL) Makefile.PL; make install) \
+	else \
+		(cd plugins/Search; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install) \
+                (cd plugins/Journal; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install) \
+                (cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make install) \
+	fi
 
 	# First we do the default sutff
 	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/plugins/ $(PREFIX)/httpd/
@@ -80,12 +96,12 @@ install: slash plugins
 	# this needs BSD support (and Solaris)
 	if [ -d /etc/init.d ]; then\
 		install utils/slashd /etc/init.d/; \
-		ln -s -f /etc/init.d/slashd $(INIT)/rc3.d/S99slashd; \
-		ln -s -f /etc/init.d/slashd $(INIT)/rc6.d/K99slashd; \
+		ln -s -f ../init.d/slashd $(INIT)/rc3.d/S99slashd; \
+		ln -s -f ../init.d/slashd $(INIT)/rc6.d/K99slashd; \
 	elif [ -d /etc/init.d/rc.d/]; then \
 		install utils/slashd /etc/rc.d/init.d/ \
-		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd; \
-		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc6.d/K99slashd; \
+		ln -s -f ../init.d/slashd /etc/rc.d/rc3.d/S99slashd; \
+		ln -s -f ../init.d/slashd /etc/rc.d/rc6.d/K99slashd; \
 	else \
 		echo "This is either BSD or some other OS I do not understand"; \
 		echo "You will need to look at how to install utils/slashd"; \
@@ -138,4 +154,6 @@ manifest :
 	(cd Slash; make distclean)
 	$(PERL) -MExtUtils::Manifest -e 'ExtUtils::Manifest::mkmanifest'
 
+rpm :
+	rpm -ba slash-1.1.4_bender-1.spec
 
