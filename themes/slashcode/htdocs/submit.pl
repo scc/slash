@@ -60,7 +60,7 @@ sub main {
 		},
 		previewstory	=> {
 			seclev		=>  0,
-			checks		=> ['max_post_check','update_formkeyid'],
+			checks		=> ['update_formkeyid'],
 		},
 		submitstory	=> {
 			seclev		=> 0,

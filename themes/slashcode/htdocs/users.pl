@@ -62,14 +62,14 @@ sub main {
 			#I made this change, not all sites are going to care. -Brian
 			seclev		=> $constants->{users_show_info_seclev},
 			formname	=> $formname,
-			checks		=> ['max_reads_check'],
+			checks		=> [],
 		},
 		display	=>  {
 			function	=> \&showInfo,
 			#I made this change, not all sites are going to care. -Brian
 			seclev		=> $constants->{users_show_info_seclev},
 			formname	=> $formname,
-			checks		=> ['max_reads_check'],
+			checks		=> [],
 		},
 		savepasswd	=> {
 			function	=> \&savePasswd,
