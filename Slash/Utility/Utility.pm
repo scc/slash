@@ -11,6 +11,8 @@ require Exporter;
 	changePassword
 	getDateFormat
 	getDateOffset
+	getCurrentUser
+	getCurrentForm
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -83,6 +85,32 @@ sub getDateFormat {
 sub changePassword {
 	my @chars = grep !/[0O1Iil]/, 0..9, 'A'..'Z', 'a'..'z';
 	return join '', map { $chars[rand @chars] } 0 .. 7;
+}
+
+#################################################################
+sub getCurrentUser {
+	my $r = Apache->request;
+	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+	my $user = $user_cfg->{'user'};
+
+	return $user;
+}
+#################################################################
+sub getCurrentForm {
+	my $r = Apache->request;
+	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+	my $form = $user_cfg->{'form'};
+
+	return $form;
+}
+
+#################################################################
+sub getCurrentStatic{
+	my ($value) = @_;
+	my $r = Apache->request;
+	my $constants = Apache::ModuleConfig->get($r, 'Slash::Apache');
+
+	return $constants? ($value == undef) : $constants->{$value};
 }
 
 1;
