@@ -450,35 +450,56 @@ sub getModeratorLogID {
 }
 
 ########################################################
-sub unsetModeratorlog {
-	my($self, $uid, $sid, $max, $min) = @_;
+sub undoModeration {
+	my($self, $uid, $sid) = @_;
 	my $constants = getCurrentStatic();
 
 	# SID here really refers to discussions.id, NOT stories.sid
-	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
+	my $cursor = $self->sqlSelectMany("cid,val,active,cuid",
+			"moderatorlog",
 			"moderatorlog.uid=$uid and moderatorlog.sid=$sid"
 	);
 
-	$max ||= $constants->{comment_maxscore};
-	$min ||= $constants->{comment_minscore};
+	my $min_score = $constants->{comment_minscore};
+	my $max_score = $constants->{comment_maxscore};
+	my $min_karma = $constants->{minkarma};
+	my $max_karma = $constants->{maxkarma};
+
 	my @removed;
-	while (my($cid, $val, $active) = $cursor->fetchrow){
+	while (my($cid, $val, $active, $cuid) = $cursor->fetchrow){
+
+		# Make the logic a little plainer
+		my $adjust = -$val;
+		$adjust =~ s/^([^+-])/+$1/;
+
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
-		$self->sqlDo("delete from moderatorlog where
-			cid=$cid and uid=$uid"
-		);
+		$self->sqlDo("delete from moderatorlog where cid=$cid and uid=$uid");
 
 		# If moderation wasn't actually performed, we skip ahead one.
 		next if ! $active;
 
-		# Insure scores still fall within the proper boundaries
-		my $scorelogic = $val < 0 ? "points < $max" : "points > $min";
+		# Make sure the comment's score falls within the proper boundaries
+		my $scorelogic = $adjust < 0
+			? "points > $min_score"
+			: "points < $max_score";
 		$self->sqlUpdate(
 			"comments",
-			{ -points => "points+" . (-1 * $val) },
+			{ -points => "points $adjust" },
 			"cid=$cid AND $scorelogic"
 		);
+
+		# Restore modded user's karma, again within the proper boundaries
+		$scorelogic = $adjust < 0
+			? "karma > $min_karma"
+			: "karma < $max_karma";
+		$self->sqlUpdate(
+			"users_info",
+			{ -karma => "karma $adjust" },
+			"uid=$cuid AND $scorelogic"
+		);
+
+# comments_heap turned off (at least for now)
 # 		if ($constants->{mysql_heap_table}) {
 # 			$self->sqlUpdate(
 # 				"comment_heap",

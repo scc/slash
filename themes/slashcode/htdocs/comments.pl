@@ -1019,7 +1019,7 @@ sub undoModeration {
 	if ($sid !~ /^\d+$/) {
 		$sid = $slashdb->getDiscussionBySid($sid, 'header');
 	}
-	my $removed = $slashdb->unsetModeratorlog($user->{uid}, $sid);
+	my $removed = $slashdb->undoModeration($user->{uid}, $sid);
 
 	slashDisplay('undo_mod', {
 		removed	=> $removed,
