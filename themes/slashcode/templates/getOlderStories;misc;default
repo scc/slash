@@ -18,15 +18,17 @@ en_US
 __name__
 getOlderStories
 __template__
-[% FOREACH story = stories %]
-	[% IF story.today != story.w %]
-		[% IF section.issue > 1 %]
+[% today = '';
+   FOREACH story = stories;
+	IF today != "$story.w $story.m $story.d";
+		today = "$story.w $story.m $story.d";
+		IF section.issue > 1 %]
 			<P><B><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&issue=[% story.day %]&mode=[% user.currentMode %]"
 				><FONT SIZE="4">[% story.w %]</FONT></A> [% story.m %] [% story.d %]</B></P>
 		[% ELSE %]
 			<P><B><FONT SIZE="4">[% story.w %]</FONT> [% story.m %] [% story.d %]</B></P>
-		[% END %]
-	[% END %]
+		[% END;
+	END %]
 	<LI>[% story.link %] ([% story.commentcount %])</LI>
 [% END %]
 
