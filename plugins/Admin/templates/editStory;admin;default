@@ -118,8 +118,13 @@ __template__
 		</TD>
 	</TR>
 </TABLE>
+
 <BR>Intro Copy<BR>
-<TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">[% FILTER strip_literal; storyref.introtext; END %]</TEXTAREA><BR>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+<TD><TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">[% FILTER strip_literal; storyref.introtext; END %]</TEXTAREA></TD>
+<TD valign="top">[% ispell_comments.introtext %]</TD>
+</TR></TABLE><BR>
 
 [% IF extracolumn_flag %]
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
@@ -146,9 +151,12 @@ __template__
 
 [% INCLUDE editbuttons %]
 
-Extended Copy<BR>
-<TEXTAREA NAME="bodytext" COLS="70" WRAP="VIRTUAL" ROWS="10">[% FILTER strip_literal; storyref.bodytext; END %]</TEXTAREA>
-<BR>
+<BR>Extended Copy<BR>
+<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
+	<TR>
+<TD><TEXTAREA NAME="bodytext" COLS="70" WRAP="VIRTUAL" ROWS="10">[% FILTER strip_literal; storyref.bodytext; END %]</TEXTAREA></TD>
+<TD valign="top">[% ispell_comments.bodytext %]</TD>
+</TR></TABLE><BR>
 
 [% INCLUDE editbuttons %]
 

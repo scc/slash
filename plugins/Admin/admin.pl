@@ -5,6 +5,7 @@
 # $Id$
 
 use strict;
+use POSIX;
 use Image::Size;
 use Date::Manip;
 use Slash;
@@ -1084,6 +1085,11 @@ sub editStory {
 
 	$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 
+	my $ispell_comments = {
+		introtext =>    get_ispell_comments($storyref->{introtext}),
+		bodytext =>     get_ispell_comments($storyref->{bodytext}),
+	};
+
 	slashDisplay('editStory', {
 		storyref 		=> $storyref,
 		story			=> $story,
@@ -1104,7 +1110,65 @@ sub editStory {
 		extracolref		=> $extracolref,
 		user			=> $user,
 		authoredit_flag		=> $authoredit_flag,
+		ispell_comments		=> $ispell_comments,
 	});
+}
+
+sub write_to_temp_file {
+	my($data) = @_;
+	local *TMP;
+	my $tmp;
+	do {
+		# Note: don't mount /tmp over NFS, it's a security risk
+		# See Camel3, p. 574
+		$tmp = tmpnam();
+	} until sysopen(TMP, $tmp, O_RDWR|O_CREAT|O_EXCL, 0600);
+	print TMP $data;
+	close TMP;
+	$tmp;
+}
+
+sub get_ispell_comments {
+	my($text) = @_;
+	$text = strip_nohtml($text);
+	my $n_text_words = scalar(my @junk = split /\W+/, $text);
+	my $slashdb = getCurrentDB();
+
+	my $ispell = $slashdb->getVar("ispell");
+	$ispell = $ispell->{value} if $ispell;
+	return "" if !$ispell;
+	return "bad ispell var '$ispell'" unless $ispell eq 'ispell' or $ispell =~ /^\//;
+
+	my $ok = $slashdb->getTemplateByName('ispellok', '', 1);
+	$ok = $ok ? ($ok->{template} || "") : "";
+	$ok =~ s/\s+/\n/g;
+
+	local *ISPELL;
+	my $tmptext = write_to_temp_file($text);
+	my $tmpok = "";
+	$tmpok = write_to_temp_file($ok) if $ok;
+	$tmpok = " -p $tmpok" if $tmpok;
+	if (!open(ISPELL, "-|", "$ispell -a -B -S -W 3$tmpok < $tmptext 2> /dev/null")) {
+		warn "could not pipe to $ispell from $tmptext, $!";
+		return "could not pipe to $ispell from $tmptext, $!";
+	}
+	my %w = ( );
+	while (defined(my $line = <ISPELL>)) {
+		# Grab all ispell's flagged words and put them in the hash
+		$w{$1}++ if $line =~ /^[#?&]\s+(\S+)/;
+	}
+	close ISPELL;
+	unlink $tmptext, $tmpok;
+
+	my $comm = '';
+	for my $word (sort {lc($a) cmp lc($b) or $a cmp $b} keys %w) {
+		# if it's a repeated error, ignore it
+		next if $w{$word} >= 2 and $w{$word} > $n_text_words*0.002;
+		# a misspelling; report it
+		$comm = "ispell doesn't recognize:" if !$comm;
+		$comm .= " $word";
+	}
+	return $comm;
 }
 
 ##################################################################
