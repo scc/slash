@@ -1398,7 +1398,7 @@ sub saveStory {
 	if ($sid) {
 		my $id = $slashdb->createDiscussion(
 			$form->{title}, "$rootdir/article.pl?sid=$sid",
-			$form->{topic}, '', $sid, $form->{'time'},
+			$form->{tid}, '', $sid, $form->{'time'},
 		);
 		if ($id) {
 			$slashdb->setStory($sid, { discussion => $id });
