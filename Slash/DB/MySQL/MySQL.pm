@@ -769,11 +769,13 @@ sub setStoryBySid {
 
 ########################################################
 sub getSubmissionLast {
-my ($self, $id, $formname) = @_;
-  my($last_submitted) = $self->sqlSelect(
+	my($self, $id, $formname) = @_;
+
+	my $where = $self->whereFormkey($id);
+	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
-		"id = '$id' AND formname = '$formname'");
+		"$where AND formname = '$formname'");
 	$last_submitted ||= 0;
 
 	return $last_submitted;
@@ -845,6 +847,33 @@ sub getLock {
 
 
 ########################################################
+sub whereFormkey {
+	my($self, $formkey_id) = @_;
+	my $where;
+
+	# anonymous user without cookie, check host, not formkey id
+	if ($I{U}{anon_id} && ! $I{U}{anon_cookie}) {
+		$where = "host_name = '$ENV{REMOTE_ADDR}'";
+	} else {
+		$where = "id='$formkey_id'";
+	}
+
+	return $where;
+}
+
+########################################################
+sub updateFormkeyId {
+	my($self, $formname, $formkey) = @_;
+	if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
+		sqlUpdate("formkeys", {
+			id	=> $I{U}{uid},
+			uid	=> $I{U}{uid},
+		}, "formname='$formname' AND uid = $I{anonymous_coward} AND formkey=" .
+			$self->{dbh}->quote($formkey));
+	}
+}
+
+########################################################
 sub insertFormkey {
 	my($self, $formname, $id, $sid, $formkey, $uid, $remote ) = @_;
 
@@ -865,23 +894,23 @@ sub insertFormkey {
 sub checkFormkey {
 	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
 
-	# make sure that there's a valid form key, and we only care about formkeys
-	# submitted $formkey_earliest seconds ago
-	my($is_valid_formkey) = $self->sqlSelect("count(*)", "formkeys",
-		"ts >= $formkey_earliest AND formname = '$formname' and " .
-		"id='$formkey_id' and formkey=" .
-		$self->{dbh}->quote($formkey));
-
-	return($is_valid_formkey);
+	my $where = $self->whereFormkey($formkey_id);
+	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
+		'formkey = ' . $self->{dbh}->quote($I{F}{formkey}) .
+		" AND $where " .
+		"AND ts >= $formkey_earliest AND formname = '$formname'");
+	return($is_valid);
 }
 
 ##################################################################
 sub checkTimesPosted {
 	my($self, $formname, $max, $id, $formkey_earliest) = @_;
+
+	my $where = $self->whereFormkey($id);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		"formkeys",
-		"id = '$id' AND submit_ts >= $formkey_earliest AND formname = '$formname'");
+		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'");
 
 	return $times_posted >= $max ? 0 : 1;
 }

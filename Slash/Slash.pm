@@ -32,6 +32,7 @@ use Date::Manip;
 use File::Spec::Functions;
 use HTML::Entities;
 use Mail::Sendmail;
+use URI;
 
 use Slash::DB;
 use Slash::Utility;
@@ -43,7 +44,7 @@ BEGIN {
 
 	require Exporter;
 	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS %I $CRLF);
-	$VERSION = '1.0.5';
+	$VERSION = '1.0.6';
 	@ISA	 = 'Exporter';
 	@EXPORT  = qw(
 		sqlSelectMany sqlSelect sqlSelectHash sqlSelectAll approveTag
@@ -56,7 +57,7 @@ BEGIN {
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
-		dispComment linkComment redirect
+		dispComment linkComment redirect fixurl
 		getFormkeyId checkSubmission errorMessage createSelect getFormkey
 	);
 	$CRLF = "\015\012";
@@ -418,6 +419,9 @@ sub getUser {
 
 
 	} else {
+		getAnonCookie();
+		$I{SETCOOKIE} = setCookie('anon', $I{U}{anon_id}, 1);
+
 		unless ($I{AC}) {
 			# Get ourselves an AC if we don't already have one.
 			# (we have to get it /all/ remember!)
@@ -491,7 +495,7 @@ sub getUser {
 
 ########################################################
 sub setCookie {
-	my($name, $val) = @_;
+	my($name, $val, $session) = @_;
 
 	# domain must start with a . and have one more .
 	# embedded in it, else we ignore it
@@ -502,10 +506,10 @@ sub setCookie {
 		-name		=> $name,
 		-path		=> $I{cookiepath},
 		-value		=> $val,
-		-expires	=> '+1y',
 	);
 
-	$cookie{-domain} = $domain if $domain;
+	$cookie{-expires} = '+1y' unless $session;
+	$cookie{-domain}  = $domain if $domain;
 
 	return {
 		-date		=> CGI::expires(0, 'http'),
@@ -851,12 +855,20 @@ sub approveTag {
 
 ########################################################
 sub fixurl {
-	my $url = shift;
-	$url =~ s/[" ]//g;
-	$url =~ s/^'(.+?)'$/$1/g;
+	my($url, $parameter) = @_;
+
 	# encode all non-safe, non-reserved characters
-	$url =~ s/([^\w.+!*'(),;?:@=&\$\/%#-])/sprintf "%%%02X", ord $1/ge;
-	$url = fixHref($url) || $url;
+	# different char set if destined to be a query string parameter
+	if ($parameter) {
+		$url =~ s/([^\w.!*'(),;:@\$\/% -])/sprintf "%%%02X", ord $1/ge;
+		$url =~ s/ /+/g;
+	} else {
+		$url =~ s/[" ]//g;
+		$url =~ s/^'(.+?)'$/$1/g;
+		$url =~ s/([^\w.!*'(),;:@\$\/%?=&#+-])/sprintf "%%%02X", ord $1/ge;
+		$url = fixHref($url) || $url;
+	}
+
 	my $decoded_url = decode_entities($url);
 	return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 }
@@ -991,7 +1003,10 @@ EOT
 ########################################################
 sub redirect {
 	my $url = shift;
-	if ($url !~ m|^http://|i) {
+
+	if ($I{rootdir}) {	# rootdir strongly recommended
+		$url = URI->new_abs($url, $I{rootdir})->canonical->as_string;
+	} elsif ($url !~ m|^https?://|i) {	# but not required
 		$url =~ s|^/*|$I{rootdir}/|;
 	}
 
@@ -1207,13 +1222,16 @@ sub selectComments {
 		$C->{pid} = 0 if $I{U}{commentsort} > 3; # Ignore Threads
 
 		$C->{points}++ if length($C->{comment}) > $I{U}{clbig}
-			&& $C->{points} < 5 && $I{U}{clbig} != 0;
+			&& $C->{points} < $I{comment_maxscore} && $I{U}{clbig} != 0;
 
 		$C->{points}-- if length($C->{comment}) < $I{U}{clsmall}
-			&& $C->{points} > $I{anonymous_coward} && $I{U}{clsmall};
+			&& $C->{points} > $I{comment_minscore} && $I{U}{clsmall};
 
 		# fix points in case they are out of bounds
-		$C->{points} = $C->{points} < $I{anonymous_coward} ? $I{anonymous_coward} : $C->{points} > 5 ? 5 : $C->{points};
+		$C->{points} = $I{comment_minscore}
+			if $C->{points} < $I{comment_minscore};
+		$C->{points} = $I{comment_maxscore}
+			if $C->{points} > $I{comment_maxscore};
 
 		my $tmpkids = $comments->[$C->{cid}]{kids};
 		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
@@ -1222,7 +1240,7 @@ sub selectComments {
 		$comments->[$C->{cid}]{visiblekids} = $tmpvkids;
 
 		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
-		$comments->[0]{totals}[$C->{points} + 1]++;
+		$comments->[0]{totals}[$C->{points} - $I{comment_minscore}]++;  # invert minscore
 		$comments->[$C->{pid}]{visiblekids}++
 			if $C->{points} >= $I{U}{threshold};
 
@@ -1315,7 +1333,7 @@ sub selectThreshold  {
 	my($counts) = @_;
 
 	my $s = qq!<SELECT NAME="threshold">\n!;
-	foreach my $x (-1..5) {
+	foreach my $x ($I{comment_minscore}..$I{comment_maxscore}) {
 		my $select = ' SELECTED' if $x == $I{U}{threshold};
 		$s .= qq!\t<OPTION VALUE="$x"$select>$x: $counts->[$x+1] comments\n!;
 	}
@@ -1476,12 +1494,17 @@ EOT
 	print "\n\t</TD></TR>\n" if $lvl; # || ($I{U}{mode} eq "nested" and $lvl);
 	print $lcp;
 
-	print <<EOT if $I{U}{aseclev} || $I{U}{points};
+	my $delete_text = ($I{U}{aseclev} > 99 && $I{authors_unlimited})
+		? "<BR><B>NOTE: Checked comments will be deleted.</B>"
+		: "";
+
+	print <<EOT if ($I{U}{aseclev} || $I{U}{points}) && $I{U}{uid} > 0;
 	<TR><TD>
 		<P>Have you read the
 		<A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A>
 		yet? (<B>Updated 9.9</B>)
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="moderate">
+		$delete_text
 	</TD></TR></FORM>
 EOT
 
@@ -1499,7 +1522,8 @@ sub moderatorCommentLog {
 				 moderatorlog.val as val,
 				 moderatorlog.reason as reason",
 				"moderatorlog, users, comments",
-				"moderatorlog.sid='$sid'
+				"moderatorlog.active=1
+				 AND moderatorlog.sid='$sid'
 			     AND moderatorlog.cid=$cid
 			     AND moderatorlog.uid=users.uid
 			     AND comments.sid=moderatorlog.sid
@@ -1668,7 +1692,7 @@ sub displayThread {
 		print qq!\n<TR><TD BGCOLOR="$I{bg}[2]">\n! if $cagedkids;
 		print qq!<LI><FONT SIZE="${\( $I{fontbase} + 2 )}"><B> !,
 			linkComment({
-				sid => $sid, threshold => -1, pid => $pid,
+				sid => $sid, threshold => $I{comment_minscore}, pid => $pid,
 				subject => "$hidden repl" . ($hidden > 1 ? 'ies' : 'y')
 			}) . ' beneath your current threshold.</B></FONT>';
 		print "\n\t</TD></TR>\n" if $cagedkids;
@@ -1690,7 +1714,7 @@ EOT
 
 	(my $nickname  = $C->{nickname}) =~ s/ /+/g;
 	my $userinfo = <<EOT unless $C->{nickname} eq $I{anon_name};
-(<A HREF="$I{rootdir}/users.pl?op=userinfo&nick=$nickname">User Info</A>)
+(<A HREF="$I{rootdir}/users.pl?op=userinfo&nick=$nickname">User #$C->{uid} Info</A>)
 EOT
 
 	my $userurl = qq!<A HREF="$C->{homepage}">$C->{homepage}</A><BR>!
@@ -1733,11 +1757,12 @@ EOT
 			subject => 'Parent'
 		}, $pid);
 
-		if ((	   $I{U}{willing}
+		if (((	   $I{U}{willing}
 			&& $I{U}{points} > 0
 			&& $C->{uid} ne $I{U}{uid}
 			&& $C->{lastmod} ne $I{U}{uid})
-		    || ($I{U}{aseclev} > 99 && $I{authors_unlimited})) {
+		    || ($I{U}{aseclev} > 99 && $I{authors_unlimited}))
+		    	&& $I{U}{uid} != $I{anonymous_coward}) {
 
 			my $o;
 			foreach (0 .. @{$I{reasons}} - 1) {
@@ -2134,6 +2159,21 @@ EOT
 }
 
 ########################################################
+sub getAnonCookie {
+	if (my $cookie = $I{query}->cookie('anon')) {
+		$I{U}{anon_id} = $cookie;
+		$I{U}{anon_cookie} = 1;
+	} else {
+		$I{U}{anon_id} = getAnonId();
+	}
+}
+
+########################################################
+sub getAnonId {
+	return '-1-' . getFormkey();
+}
+
+########################################################
 sub getFormkey {
 	my @rand_array = ( 'a' .. 'z', 'A' .. 'Z', 0 .. 9 );
 	return join("", map { $rand_array[rand @rand_array] }  0 .. 9);
@@ -2149,14 +2189,13 @@ sub getFormkeyId {
 
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
-	if ($I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
-		# id includes '&' to prevent uid's and IPs
-		# from potentially being the same
-		$id = '-1-' . $ENV{REMOTE_ADDR};
-	} elsif ($uid != $I{anonymous_coward}) {
+	if ($I{U}{uid} > 0 && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
+		getAnonCookie();
+		$id = $I{U}{anon_id};
+	} elsif ($uid > 0) {
 		$id = $uid;
-		} else {
-		$id = '-1-' . $ENV{REMOTE_ADDR};
+	} else {
+		$id = $I{U}{anon_id};
 	}
 	return($id);
 }

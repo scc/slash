@@ -84,11 +84,8 @@ sub main {
 
 		# insert the fact that the form has been displayed,
 		# but not submitted at this point
-		my $formkey = getFormkey();
-		$I{dbobject}->insertFormkey("submissions", $id, "submission", $formkey, $I{U}{uid}, $ENV{REMOTE_ADDR});
-		$I{F}{formkey} = $formkey;
-
-
+		my $formkey = $I{F}{formkey};
+		$I{dbobject}->insertFormkey("submissions", $id, "submission", $I{F}{formkey}, $I{U}{uid}, $ENV{REMOTE_ADDR});
 
 		displayForm($I{F}{from}, $I{F}{email}, $I{F}{section}, $id);
 
@@ -204,7 +201,7 @@ ADMIN
 		selectTopic("tid", $tid);
 		selectSection("section", $I{F}{section} || $I{defaultsection});
 
-	print <<ADMIN, stripByMode($introtext, 'literal');
+		print <<ADMIN, stripByMode($introtext, 'literal');
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
 		<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL">%s</TEXTAREA><BR>
@@ -362,7 +359,7 @@ EOT
 
 	print qq!\n\n<TABLE WIDTH="95%" CELLPADDING="0" CELLSPACING="0" BORDER="0">\n!;
 
-	for(@$submission) {
+	for (@$submission) {
 		my($subid, $subj, $time, $tid, $note, $email, $name,
 		$section, $comment, $uid, $karma) = @$_; 
 
@@ -401,7 +398,7 @@ USER
 		printf(($admin ? <<ADMIN : <<USER), @strs);
 		</FONT><INPUT TYPE="CHECKBOX" NAME="del_$subid">
 	</NOBR></TD><TD>$ptime</TD><TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$title$sec">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$stitle$sec">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="2">%s$karma<BR>%s</FONT></TD></TR>
 ADMIN
 	<TD>\u$section</TD><TD>$ptime</TD>

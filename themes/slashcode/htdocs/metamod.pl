@@ -35,10 +35,6 @@ sub main {
 	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
 	header("Meta Moderation");
 
-	# This validation now performed in Slas.pm. This section will be removed
-	# in the near future.
-	$I{F}{cid}=~s/[^0-9]//g;
-
 	my $id = isEligible();
 	if (!$id) {
 		print <<EOT;
@@ -61,7 +57,7 @@ sub karmaBonus {
 	my $x = $I{m2_maxbonus} - $I{U}{karma};
 
 	return 0 unless $x > 0;
-	return 1 if rand($$I{m2_maxbonus}) < $x;
+	return 1 if rand($I{m2_maxbonus}) < $x;
 	return 0;
 }
 
@@ -77,7 +73,7 @@ sub metaModerate {
 
 		# Meta mod form data can only be a '+' or a '-' so we apply some
 		# protection from taint.
-		$I{F}{$_} =~ s/[^\+\-]//g;
+		next unless $I{F}{$_} =~ s/^[+-]$//; # bad input, bad!
 		if (/^mm(\d+)$/) {
 			$metamod{unfair}++ if $I{F}{$_} eq "-";
 			$metamod{fair}++ if $I{F}{$_} eq "+";
@@ -134,8 +130,8 @@ EOT
 	$metamod{unfair} ||= 0;
 	$metamod{fair} ||= 0;
 	sqlUpdate("users_info",{
-		-m2unfairvotes	=>	"m2unfairvotes+$metamod{unfair}",
-		-m2fairvotes	=>	"m2fairvotes+$metamod{fair}",
+		-m2unfairvotes	=> "m2unfairvotes+$metamod{unfair}",
+		-m2fairvotes	=> "m2fairvotes+$metamod{fair}",
 		-lastmm		=> 'now()',
 		lastmmid	=> 0
 	}, "uid=$I{U}{uid}") unless $I{U}{uid} == 1;

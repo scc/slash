@@ -264,6 +264,8 @@ sub varSave {
 sub authorEdit {
 	my ($aid) = @_;
 
+	return if $I{U}{aseclev} < 500;
+
 	$aid ||= $I{U}{aid};
 	$aid = '' if $I{F}{authornew};
 
@@ -273,10 +275,13 @@ sub authorEdit {
 	my $authors = $I{dbobject}->getAuthorNameByAid();
 	createSelect('myaid', $authors, $aid);
 
-	
-	if($aid) {	
+	if ($aid) {	
 		($name,$url,$email,$quote,$copy,$pwd,$seclev,$section) = 
 		sqlSelect('name,url,email,quote,copy,pwd,seclev,section', 'authors','aid ='. $I{dbh}->quote($aid)); 
+	}
+
+	for ($quote, $copy) {
+		$_ = stripByMode($_, 'literal');
 	}
 
 	print <<EOT;
@@ -330,6 +335,7 @@ print qq|\t</TR>\n</TABLE>\n</FORM>\n|;
 
 ##################################################################
 sub authorSave {
+	return if $I{U}{aseclev} < 500;
 	if ($I{F}{thisaid}) {
 		my($exists) = sqlSelect('count(*)', 'authors',
 			'aid=' . $I{dbh}->quote($I{F}{thisaid})
@@ -363,7 +369,8 @@ sub authorSave {
 
 ##################################################################
 sub authorDelete {
-		my $aid = shift;
+	return if $I{U}{aseclev} < 500;
+	my $aid = shift;
 
 	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
 	print <<EOT if $I{F}{authordelete};
@@ -476,8 +483,12 @@ EOT
 		$saveflag = qq[<INPUT TYPE="HIDDEN" NAME="save_new" VALUE="1">];
 	}
 
-	my($block, $bseclev,$type,$description) = sqlSelect('block,seclev,type,description', 'blocks', "bid='$bid'") if $bid;
-	$block =~ s/&/&amp;/g;
+	my($block, $bseclev, $type, $description) =
+		sqlSelect('block,seclev,type,description', 'blocks', "bid='$bid'") if $bid;
+
+	my $description_ta = stripByMode($description, 'literal');
+	$block = stripByMode($block, 'literal');
+
 	# main table
 	print <<EOT;
 <TABLE BORDER="0">
@@ -497,7 +508,7 @@ EOT
 		</TD>
 	</TR>
 EOT
-	
+
 # print the form if this is a new block, submitted block, or block edit via sections.pl
 	print <<EOT if ( (! $I{F}{blockdelete_confirm} && $bid) || $I{F}{blocknew}) ;
 	<TR>	
@@ -521,7 +532,7 @@ EOT
 	<TR>
 		<TD VALIGN="TOP"><B>Description</B></TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">$description</TEXTAREA>
+		<TEXTAREA ROWS="6" COLS="70" NAME="description">$description_ta</TEXTAREA>
 		</TD>
 	</TR>
 	<TR>	
@@ -804,7 +815,7 @@ sub topicEd {
 	my($tid, $width, $height, $alttext, $image, @available_images);
 
 	local *DIR;
-	opendir(DIR,"$I{basedir}/public_html/images/topics");
+	opendir(DIR, "$I{basedir}/images/topics");
 	@available_images = grep(!/^\./, readdir(DIR)); 
 	closedir(DIR);
 
@@ -886,7 +897,7 @@ sub topicSave {
 	if ($I{F}{tid}) {
 		my($rows) = sqlSelect('count(*)', 'topics', 'tid=' . $I{dbh}->quote($I{F}{tid}));
 		if (!$I{F}{width} && !$I{F}{height}) {
-		    @{ $I{F} }{'width', 'height'} = imgsize("$I{basedir}/public_html/images/topics/$I{F}{image}");
+		    @{ $I{F} }{'width', 'height'} = imgsize("$I{basedir}/images/topics/$I{F}{image}");
 		}
 		if($rows == 0 ) {
 			sqlInsert('topics', {
@@ -1212,8 +1223,8 @@ EOT
 	my @extracolumns = sqlSelectColumns($S->{section})
 		if sqlTableExists($S->{section});
 
-	$S->{introtext} =~ s/&/&amp;/g;
-	$S->{bodytext} =~ s/&/&amp;/g;
+	$S->{introtext} = stripByMode($S->{introtext}, 'literal');
+	$S->{bodytext} = stripByMode($S->{bodytext}, 'literal');
 	my $SECT = getSection($S->{section});
 
 	print '<TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">';
@@ -1488,6 +1499,7 @@ EOT
 			"content_filters","filter_id=$filter_id");
 
 	# this has to be here - it really screws up the block editor
+	$err_message = stripByMode($err_message, 'literal');
 	my $textarea = <<EOT;
 <TEXTAREA NAME="err_message" COLS="50" ROWS="2">$err_message</TEXTAREA>
 EOT

@@ -207,8 +207,7 @@ sub newUser {
 	# Check if User Exists
 
 	$I{F}{newuser} =~ s/\s+/ /g;
-	$I{F}{newuser} = stripByMode($I{F}{newuser}, "nohtml");
-	$I{F}{newuser} =~ s/&//g;
+	$I{F}{newuser} =~ s/[^ a-zA-Z0-9\$_.+!*'(),-]+//g;
 	$I{F}{newuser} = substr($I{F}{newuser}, 0, 20);
 
 	(my $matchname = lc $I{F}{newuser}) =~ s/[^a-zA-Z0-9]//g;
@@ -345,7 +344,8 @@ EOT
 #################################################################
 sub editKey {
 	my $k = $I{dbobject}->getUserPublicKey($_[0]);
-	print qq!<P><B>Public Key</B><BR><TEXTAREA NAME="pubkey" ROWS="4" COLS="60">$k</TEXTAREA>!;
+	printf qq!<P><B>Public Key</B><BR><TEXTAREA NAME="pubkey" ROWS="4" COLS="60">%s</TEXTAREA>!,
+		stripByMode($k, 'literal');
 }
 
 #################################################################
@@ -395,13 +395,13 @@ EOT
 	my $description = $I{dbobject}->getDescriptions('maillist');
 	createSelect('maillist', $description, $user->{maillist});
 
-	print <<EOT;
+	printf <<EOT, stripByMode($sig, 'literal'), stripByMode($bio, 'literal');
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
-		<TEXTAREA NAME="sig" rows=2 cols=60>$user->{sig}</TEXTAREA>
+		<TEXTAREA NAME="sig" ROWS="2" COLS="60">%s</TEXTAREA>
 
 	<P><B>Bio</B> (this information is publicly displayed on your
 		user page.  255 chars)<BR>
-		<TEXTAREA NAME="bio" rows=5 cols=60 wrap=virtual>$user->{bio}</TEXTAREA>
+		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">%s</TEXTAREA>
 
 EOT
 
@@ -409,9 +409,9 @@ EOT
 
   	print <<EOT;
 	<P><B>Password</B> Enter new passwd twice to change it.
-		(must be at least 6 chars long)<BR>
-		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="20">
-		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="20"><P>
+		(must be 6-20 chars long)<BR>
+		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="20" MAXLENGTH="20">
+		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="20" MAXLENGTH="20"><P>
 
 </TD></TR></TABLE><P>
 
@@ -471,6 +471,8 @@ EOT
 	print "</TD></TR></TABLE><P>";
 	
 	titlebar("100%", "Customize Slashboxes");
+
+	$userspace = stripByMode($userspace, 'literal');
 	print <<EOT;
 <TABLE WIDTH="95%" BGCOLOR="$I{bg}[2]" ALIGN="CENTER" BORDER="0">
 	<TR><TD>
@@ -908,11 +910,11 @@ EOT3
 
 	print <<EOT;
 
-	<P><B>Nick:</B><BR>
+	<P><B>Nick:</B> (maximum 20 characters long)<BR>
 	<INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="$I{F}{unickname}"><BR>
 
-	<B>Password:</B><BR>
-	<INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20"><BR>
+	<B>Password:</B> (6-20 characters long)<BR>
+	<INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20" MAXLENGTH="20"><BR>
 
 	<INPUT TYPE="SUBMIT" NAME="op" VALUE="userlogin">
 	<INPUT TYPE="SUBMIT" NAME="op" VALUE="mailpasswd">
@@ -931,7 +933,8 @@ EOT1
 EOT2
 
 	print <<EOT;
-	(Note: the characters &amp;, &lt; and &gt; are not allowed in nicknames.)
+	(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
+	are allowed in nicknames, and all others will be stripped out.)
 
 	<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="$I{F}{newuser}">
 	<BR> and a <B>valid email address</B> address to send your registration

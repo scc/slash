@@ -83,9 +83,10 @@ sub main {
 		$I{F}{op} eq "Preview" || $I{F}{op} eq "Reply") {
 
 		if ($I{F}{op} eq 'Reply') {
-			my $formkey = getFormkey();
-			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $formkey, $I{U}{uid}, $ENV{REMOTE_ADDR});	
-			$I{F}{formkey} = $formkey;
+			$I{F}{formkey} = getFormkey();
+			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid}, $ENV{REMOTE_ADDR});	
+		} else {
+			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey});
 		}
 
 		# find out their Karma
@@ -192,7 +193,7 @@ sub editComment {
 	);
 
 	# Display parent comment if we got one
-	if($I{F}{pid}) {
+	if ($I{F}{pid}) {
 		titlebar("95%", " $reply->{subject}");
 		print <<EOT;
 <TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="95%" ALIGN="CENTER">
@@ -427,10 +428,11 @@ EOT
 			} else {
 				$tags{$tag}++;
 
-				if (($tags{UL} + $tags{OL}) > 3) {
+				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
 					editComment() and return unless $preview;
 					print <<EOT;
-You can only post nested lists 3 levels deep.  Please fix your UL or OL tags.
+You can only post nested lists and blockquotes four levels deep.
+Please fix your UL, OL, and BLOCKQUOTE tags.
 EOT
 
 					return;
@@ -756,7 +758,7 @@ sub moderate {
 				"stories",
 				{
 					-commentcount	=> "commentcount-$delCount",
-					writestatus	=>1
+					writestatus	=> 1
 				},
 				"sid=" . $I{dbh}->quote($I{F}{sid}), 1
 			);
@@ -843,7 +845,7 @@ sub moderateCid {
 			cid	=> $cid,
 			reason	=> $modreason,
 			-ts	=> 'now()',
-			active => 0
+			active	=> 0
 		});
 
 		print "<LI>$subj ($sid-$cid, <B>Comment already at limit</B>)</LI>";
@@ -962,8 +964,9 @@ sub undoModeration {
 		next if ! $active;
 
 		# Insure scores still fall within the proper boundaries
-		my $scorelogic = $val < 0 ?	"points < $I{comment_maxscore}" :
-									"points > $I{comment_minscore}";
+		my $scorelogic = $val < 0
+			? "points < $I{comment_maxscore}"
+			: "points > $I{comment_minscore}";
 		sqlUpdate(
 			"comments",
 			{ -points => "points+" . (-1 * $val) },

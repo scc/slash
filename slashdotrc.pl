@@ -29,33 +29,33 @@ require URI;
 
 my %my_conf = (
 	anonymous_coward	=> '-1',
-	adminmail	=> 'admin@tanget.org',
-	mailfrom	=> 'reply-to@tangent.org',
-	siteowner	=> 'slash',
-	datadir		=> '/usr/local/slash',
-	basedomain	=> 'slash.tangent.org',    # add ":PORT" here if required
-	cookiedomain	=> '', # ".tangent.org', # off by default
-	siteadmin	=> 'admin',
-	siteadmin_name	=> 'Slash Admin',
-	smtp_server	=> 'mail.tangent.org',
-	sitename	=> 'Slash Site',
-	slogan		=> 'Slashdot Like Automated Storytelling Homepage',
-	breaking	=> 100,
-	shit		=> 0,
-	mainfontface	=> 'verdana,helvetica,arial',
-	fontbase	=> 0,	# base font size, default 0
-	updatemin	=> 5,	# do slashd updates, default 5
-	archive_delay	=> 60,	# days to wait for story archiving, comments deleting
-	submiss_view	=> 1,	# allow users to view submissions queue
-	submiss_ts	=> 1,	# print timestamp in submissions view
-	articles_only	=> 0,	# show only Articles in submission count in admin menu
-	admin_timeout	=> 30,	# time in minutes before idle admin session ends
-	allow_anonymous	=> 1,	# allow anonymous posters
-	use_dept	=> 1,	# use "dept." field
-	max_depth	=> 7,	# max depth for nesting of comments
-	approvedtags    => [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)],
-	defaultsection  => 'articles',  # default section for articles
-	http_proxy	=> '',	# 'http://proxy.example.com/'
+	adminmail		=> 'admin@tanget.org',
+	mailfrom		=> 'reply-to@tangent.org',
+	siteowner		=> 'slash',
+	datadir			=> '/usr/local/slash',
+	basedomain		=> 'slash.tangent.org',    # add ":PORT" here if required
+	cookiedomain		=> '', # ".tangent.org', # off by default
+	siteadmin		=> 'admin',
+	siteadmin_name		=> 'Slash Admin',
+	smtp_server		=> 'mail.tangent.org',
+	sitename		=> 'Slash Site',
+	slogan			=> 'Slashdot Like Automated Storytelling Homepage',
+	breaking		=> 100,
+	shit			=> 0,
+	mainfontface		=> 'verdana,helvetica,arial',
+	fontbase		=> 0,	# base font size, default 0
+	updatemin		=> 5,	# do slashd updates, default 5
+	archive_delay		=> 60,	# days to wait for story archiving, comments deleting
+	submiss_view		=> 1,	# allow users to view submissions queue
+	submiss_ts		=> 1,	# print timestamp in submissions view
+	articles_only		=> 0,	# show only Articles in submission count in admin menu
+	admin_timeout		=> 30,	# time in minutes before idle admin session ends
+	allow_anonymous		=> 1,	# allow anonymous posters
+	use_dept		=> 1,	# use "dept." field
+	max_depth		=> 7,	# max depth for nesting of comments
+	approvedtags    	=> [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)],
+	defaultsection  	=> 'articles',  # default section for articles
+	http_proxy		=> '',	# 'http://proxy.example.com/'
 
 # this controls the life of %storyBank
 	story_expire	=> 600,
@@ -74,21 +74,30 @@ my %my_conf = (
 	send_mail	=> 0,
 
 # The following variables can be used to tweak your Slash Moderation
-	authors_unlimited	=> 1,   # authors have unlimited moderation
-	metamod_sum		=> 3,   # sum of moderations 1 for release
-	maxtokens		=> 40,	# Token threshold that must be hit to get any points
-	tokensperpoint		=> 8,	# Number of tokens per point
-	maxpoints		=> 5,	# The maximum number of points any moderator can have
-	stir			=> 3,  	# Number of days before unused moderator points expire
-	tokenspercomment	=> 6,	# Number of tokens to feed the system for each comment
-	down_moderations	=> -6,	# number of how many comments you can post that get down moderated
+	authors_unlimited	=> 1,		# authors have unlimited moderation
+	m2_comments		=> 10,		# Number of comments for meta-moderation.
+	m2_maxunfair		=> 0.5,		# Minimum % of unfairs for M2 penalty.
+	m2_toomanyunfair	=> 0.3,		# Minimum % of unfairs for which M2 is ignored.
+	m2_bonus		=> '+1',	# Bonus for participating in meta-moderation.
+	m2_penalty		=> '-1',	# Penalty for misuse of meta-moderation.
+	comment_minscore	=> -1,		# Minimum score for a specific comment.
+	comment_maxscore	=> 5,		# Maximum score for a specific comment.
+	goodkarma		=> 25,		# Users get bonus points for posts if karma above this value
+	badkarma		=> -10,		# Users get penalized for posts if karma is below this value
+	metamod_sum		=> 3,		# sum of moderations 1 for release (deprecated)
+	maxtokens		=> 40,		# Token threshold that must be hit to get any points
+	tokensperpoint		=> 8,		# Number of tokens per point
+	maxpoints		=> 5,		# The maximum number of points any moderator can have
+	stir			=> 3,		# Number of days before unused moderator points expire
+	tokenspercomment	=> 6,		# Number of tokens to feed the system for each comment
+	down_moderations	=> -6,		# number of how many comments you can post that get down moderated
 
 # comment posting and story submission abuse settings
-	post_limit		=> 10,	# seconds delay before repeat posting
-	max_posts_allowed	=> 100,	# maximum number of posts per day allowed
-	max_submissions_allowed => 20,	# maximum number of submissions per timeframe allowed
-	submission_speed_limit	=> 1,	# how fast they can submit
-	formkey_timeframe 	=> 14400, # the time frame that we check for a formkey
+	post_limit		=> 10,		# seconds delay before repeat posting
+	max_posts_allowed	=> 30,		# maximum number of posts per day allowed
+	max_submissions_allowed => 20,		# maximum number of submissions per timeframe allowed
+	submission_speed_limit	=> 300,		# how fast they can submit
+	formkey_timeframe 	=> 14400,	# the time frame that we check for a formkey
 
 	# see Slash::fixHref()
 	fixhrefs => [
@@ -100,14 +109,6 @@ my %my_conf = (
 					$_[0],
 					"Everything that used to be in /malda is now located at http://cmdrtaco.net"
 				);
-			}
-		],
-
-		[
-			qr/^pudge/,
-			sub {
-				$_[0] =~ s|pudge|http://pudge.net|;
-				return($_[0], 0);
 			}
 		],
 
@@ -132,6 +133,8 @@ $my_conf{basedir}	= $my_conf{datadir} . "/public_html";
 $my_conf{imagedir}	= "$my_conf{rootdir}/images";
 $my_conf{rdfimg}	= "$my_conf{imagedir}/topics/topicslash.gif";
 $my_conf{cookiepath}	= URI->new($my_conf{rootdir})->path . '/';
+$my_conf{m2_mincheck} 	= int $my_conf{m2_comments} / 3;
+$my_conf{m2_maxbonus}   = int $my_conf{m2_goodkarma} / 2;
 
 # who to send daily stats reports to (email => subject)
 $my_conf{stats_reports} = {
