@@ -941,7 +941,7 @@ sub editStory {
 
 	my($authoredit_flag, $extracolumn_flag) = (0,0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
-		$editbuttons, $topic_select, $section_select, $author_select,
+		$editbuttons, $sections, $topic_select, $section_select, $author_select,
 		$extracolumns, $displaystatus_select, $commentstatus_select);
 	my $extracolref = {};
 	my($fixquotes_check,$autonode_check,$fastforward_check) = ('off','off','off');
@@ -1017,15 +1017,15 @@ sub editStory {
 
 		$storyref->{aid} = $user->{uid};
 	}
-	$extracolumns =  $slashdb->getKeys($storyref->{section});
+	$extracolumns = $slashdb->getKeys($storyref->{section});
 
-	my $SECT = getSection($storyref->{section});
+	$sections = $slashdb->getDescriptions('sections');
 
 	$editbuttons = editbuttons($newarticle);
 
 	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
 
-	$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
+	$section_select = selectSection('section', $storyref->{section}, $sections, 1) unless $user->{section};
 
 	if ($user->{seclev} >= 100) {
 		$authoredit_flag = 1;
