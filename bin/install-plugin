@@ -16,7 +16,7 @@ use Slash::Install;
 # -Brian (brian@tangent.org)
 
 my %opts;
-usage() unless getopts('?l', \%opts);
+usage() unless getopts('?lu:', \%opts);
 
 usage() if $opts{'?'};
 
@@ -24,15 +24,14 @@ $| = 1;
 
 my $prefix = "/usr/local/slash";
 
+$opts{'u'} ||= 'slash';
 
-usage() unless ($ARGV[0]);
-
-unless (DBIx::Password::checkVirtualUser($ARGV[0])) {
-	print "You did not supply a valid DBIx::Password virtual name.\n";
+unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
+	print "You did not supply a valid DBIx::Password virtual name($opts{'u'}).\n";
 	exit;
 }
 
-my $install = Slash::Install->new($ARGV[0]);
+my $install = Slash::Install->new($opts{'u'});
 #---------------------------------------------------
 print "\nPlease select which plugins you would like?\n" unless $opts{'l'} ;
 my $plugins = $install->getPluginList($prefix);

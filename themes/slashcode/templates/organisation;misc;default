@@ -18,7 +18,7 @@ __template__
 		<TR VALIGN="top" BGCOLOR="[% user.bg.3 %]">
 			<TD BGCOLOR="[% user.bg.2 %]"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="3" HEIGHT="3" ALT=""></TD>
 			<TD><IMG SRC="[% constants.imagedir %]/cl.gif" WIDTH="7" HEIGHT="10" ALT=""></TD>
-			<TD><A HREF="http://www.andover.net/"><FONT FACE="[% constants.mainfontface %]" SIZE="1" COLOR="[% user.bg.1 %]"><B>Andover.Net</B></FONT></A></TD>
+			<TD><A HREF="[% constants.rootdir %]"><FONT FACE="[% constants.mainfontface %]" SIZE="1" COLOR="[% user.bg.1 %]"><B>[% constants.sitename %]</B></FONT></A></TD>
 			<TD ALIGN="right"><IMG SRC="[% constants.imagedir %]/cr.gif" WIDTH="7" HEIGHT="10" ALT=""></TD>
 			<TD BGCOLOR="[% user.bg.2 %]" ALIGN="right"><IMG SRC="[% constants.imagedir %]/pix.gif" WIDTH="3" HEIGHT="3" ALT=""></TD>
 		</TR>
@@ -31,13 +31,7 @@ __template__
 			<TD WIDTH="100%">
 				<TABLE WIDTH="100%" BORDER="0" CELLPADDING="5" CELLSPACING="0"><TR>
 					<TD><FONT FACE="[% constants.mainfontface %]" SIZE="1">
-						<A HREF="http://www.andovernews.com/">AndoverNews</A><BR>
-						<A HREF="http://www.askreggie.com/">Ask Reggie</A><BR>
-						<A HREF="http://www.davecentral.com/">DaveCentral</A><BR>
-						<A HREF="http://www.freecode.com/">FreeCode</A><BR>
-						<A HREF="http://www.freshmeat.net/">Freshmeat</A><BR>
-						<A HREF="http://www.internettrafficreport.com/">ITR</A><BR>
-						<A HREF="http://www.mediabuilder.com/">MediaBuilder</A><BR>
+					You should update your organisation template and put some links here linking back to your site.
 					</FONT></TD>
 				</TR></TABLE>
 			</TD>

@@ -1,7 +1,8 @@
 __section__
 default
 __description__
-Hrm, we either need an easy API to update a template from slashd (do we have one?), or this needs to remain as a block.
+Hrm, we either need an easy API to update a template from slashd (do we have one?), or this needs to remain as a block. 
+That wouldn't be very hard to do to be honest. -Brian
 __title__
 
 __page__
@@ -11,9 +12,8 @@ eng
 __name__
 motd
 __template__
-I'm going to Vietnam at the request of the White House.  President Johnson
-says a war isn't really a war without my jokes.
-		-- Bob Hope
+Bite my shiny, metal ass! 
+		-- Bender
 
 __seclev__
 500
