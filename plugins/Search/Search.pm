@@ -160,7 +160,7 @@ sub findStory {
 
 	# The big old searching WHERE clause, fear it
 	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";
-	my $where = "stories.sid = story_text.sid AND stories.sid=discussions.sid AND stories.uid = users.uid ";
+	my $where = "stories.sid = story_text.sid AND stories.uid = users.uid ";
 	$where .= " AND $key" 
 		if $form->{query};
 
