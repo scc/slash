@@ -211,12 +211,14 @@ sub main {
 	# authors shouldn't jump through formkey hoops? right?	
 	if ($user->{seclev} < 100) {
 		$formkey = $form->{formkey};
+
 		# this is needed for formkeyHandler to print the correct messages 
 		# yeah, the next step is to loop through the array of $ops->{$op}{check}
 		for my $check (@{$ops->{$op}{checks}}) {
+			$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
 			my $formname = $ops->{$op}{formname}; 
-			# next if $_ eq 'formname';
 			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+
 			last if $error_flag;
 		}
 	} 
@@ -230,23 +232,21 @@ sub main {
 		# note: maxCid and length aren't really required - this is legacy from when formkeys was 
 		# comments specific, but it can't hurt to put some sort of length in there.. perhaps
 		# the length of the primary field in your form would be a good choice.
-		for my $check (@{$ops->{$op}{checks}}) {
-			if ( $check eq 'formkey_check') {
-				if($retval) {
-					my $id = $form->{maxCid} ? $form->{maxCid} : '';
-					my $field_length= $form->{postercomment} ? 
-						length($form->{postercomment}) : length($form->{postercomment});
+		if ( $ops->{$op}{update_formkey}) {
+			if($retval) {
+				my $id = $form->{maxCid} ? $form->{maxCid} : '';
+				my $field_length= $form->{postercomment} ? 
+					length($form->{postercomment}) : length($form->{postercomment});
 
-					# do something with updated? ummm.
-					my $updated = $slashdb->updateFormkey($formkey, $id, $field_length); 
+				# do something with updated? ummm.
+				my $updated = $slashdb->updateFormkey($formkey, $id, $field_length); 
 
-				# updateFormkeyVal updated the formkey before the function call, 
-				# but the form somehow had an error in the function it called 
-				# unrelated to formkeys so reset the formkey because this is 
-				# _not_ a successful submission
-				} else {
-					my $updated = $slashdb->resetFormkey($formkey);
-				}
+			# updateFormkeyVal updated the formkey before the function call, 
+			# but the form somehow had an error in the function it called 
+			# unrelated to formkeys so reset the formkey because this is 
+			# _not_ a successful submission
+			} else {
+				my $updated = $slashdb->resetFormkey($formkey);
 			}
 		}
 	}

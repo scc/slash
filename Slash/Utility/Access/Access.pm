@@ -171,7 +171,6 @@ sub formkeyError {
 		$hashref->{value} = $tmpvalue; 
 	}
 		
-
 	return slashDisplay('formkeyErrors', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
@@ -228,13 +227,13 @@ sub formkeyHandler {
 
 	if ($formkey_op eq 'max_reads_check') {
 		if (my $limit = $slashdb->checkMaxReads($formname, $formkeyid)) {
-			$msg = formkeyError("maxreads", $formname, $limit);
+			$msg = formkeyError('maxreads', $formname, $limit);
 			$error_flag++;
                 }
 	}
 	elsif ($formkey_op eq 'max_post_check') {
 		if ( my $limit = $slashdb->checkMaxPosts($formname, $formkeyid)) {
-			$msg = formkeyError("maxposts", $formname, $limit);
+			$msg = formkeyError('maxposts', $formname, $limit);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'valid_check') {
@@ -244,13 +243,13 @@ sub formkeyHandler {
 		}
 	} elsif ($formkey_op eq 'response_check') {
 		if ( my $interval = $slashdb->checkResponseTime($formname, $formkeyid)) {
-			$msg = formkeyError("response", $formname, $interval);
+			$msg = formkeyError('response', $formname, $interval);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'interval_check') {
 		# check interval from this attempt to last successful post
 		if ( my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
-			$msg = formkeyError("speed", $formname, $interval);
+			$msg = formkeyError('speed', $formname, $interval);
 			$error_flag++;
 		}
 	} elsif ($formkey_op eq 'formkey_check') {

@@ -229,26 +229,23 @@ sub main {
 		$op = 'userinfo';
 	}
 
-	if ( $ops->{$op}{post} && ! $postflag) {
-		$op eq isAnon($curuser->{uid}) ? 'default' : 'userinfo';
+	if ($ops->{$op}{post} && !$postflag) {
+		$op = isAnon($curuser->{uid}) ? 'default' : 'userinfo';
 	} 
 
 	for my $check (@{$ops->{$op}{checks}}) {
 		last if $op eq 'savepasswd';
 		$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+		$ops->{$op}{update_formkey} = 1 if $check eq 'formkey_check';
 		last if $error_flag;
 	}
 
 	# call the method
 	$ops->{$op}{function}->() if ! $error_flag;
 
-	if ($curuser->{seclev} < 100 && ! $error_flag) {
-		for my $check (@{$ops->{$op}{checks}}) {
-			# successful save action, no formkey errors, update existing formkey
-			if ($check eq 'formkey_check') {
-				my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})); 
-			}
-		}
+	if ($ops->{$op}{update_formkey} && $curuser->{seclev} < 100 && ! $error_flag) {
+		# successful save action, no formkey errors, update existing formkey
+		my $updated = $slashdb->updateFormkey($formkey, $op, length($ENV{QUERY_STRING})); 
 	} 
 	# if there were legit error levels returned from the save methods
 	# I would have it clear the formkey in case of an error, but that

@@ -1853,7 +1853,7 @@ sub checkPostInterval {
 	my $speedlimit = {
 		comments 	=> $constants->{comments_speed_limit},
 		discussions	=> $constants->{discussions_speed_limit},
-		submit		=> $constants->{submission_speed_limit},
+		submissions	=> $constants->{submissions_speed_limit},
 		users		=> $constants->{users_speed_limit},
 	};
 
@@ -1901,7 +1901,7 @@ sub checkMaxPosts {
 	my $maxposts = {
 		comments 	=> $constants->{max_comments_allowed},
 		discussions	=> $constants->{max_discussions_allowed},
-		submit		=> $constants->{max_submissions_allowed},
+		submissions	=> $constants->{max_submissions_allowed},
 		users		=> $constants->{max_userchanges_allowed},
 	};
 

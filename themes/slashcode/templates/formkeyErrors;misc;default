@@ -33,21 +33,29 @@ You can not use a form and hit the back button to use it again.
 <BR><P><B>Invalid form key: [% formkey %] !</B></P>
  
 [% CASE "users_maxreads" %]
-[% INCLUDE titlebar width="95%" title="Maximum User viewings reached" %]
+[% INCLUDE titlebar width="95%" title="Maximum Users Viewings Exceeded!" %]
 <BR><P><B>You've reached the maximum number of times you can access users.pl: [% limit %] accesses over [% interval %].
 </B></P>
 
 [% CASE "comments_maxposts" %]
+[% INCLUDE titlebar width="95%" title="Maximum Comments Exceeded!" %]
 <BR><P><B>You've reached your maximum number of comments you can post: [% limit %] comments over [% interval %].
 </B></P>
 
 [% CASE "discussions_maxposts" %]
+[% INCLUDE titlebar width="95%" title="Maximum Discussions Exceeded!" %]
 <BR><P><B>You've reached your maximum number of discussions you can submit: [% limit %] discussions over [% interval %].
 </B></P>
 
+[% CASE "submissions_maxposts" %]
+[% INCLUDE titlebar width="95%" title="Maximum Submissions Exceeded!" %]
+<BR><P><B>You've reached your maximum number of submissions you can post: [% limit %] submissions over [% interval %].
+The authors can only read so many submissions in a day!
+</B></P>
+
 [% CASE "users_maxposts" %]
-[% INCLUDE titlebar width="95%" title="Maximum User changes reached" %]
-<BR><P><B>You've reached your maximum number of user settings you can perform: [% limit %] modifications over [% interval %].
+[% INCLUDE titlebar width="95%" title="Maximum User Changes Exceeded!" %]
+<BR><P><B>You've reached your maximum number of user settings you can perform: [% limit %] user modifications over [% interval %].
 </B></P>
 
 [% CASE "comments_response" %]
@@ -62,6 +70,14 @@ hitting 'reply' and submitting a comment.</P>
 each successful posting of a comment to allow everyone a fair chance
 at posting a comment.</P>
 <P>It's been [% interval %] since you last successfully posted a comment</P>
+
+[% CASE "submissions_speed" %]
+[% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
+<P>[% constants.sitename %] requires you to wait [% limit %] between
+each successful posting of a submission to allow everyone a fair chance
+at posting a comment, and the authors a fair chance at reviewing your
+submission!</P>
+<P>It's been [% interval %] since you last successfully posted a submission</P>
 
 [% CASE "discussions_speed" %]
 [% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]

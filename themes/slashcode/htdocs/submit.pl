@@ -19,16 +19,20 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $formkeyid = getFormkeyId($user->{uid});
+	my $formkey = $form->{formkey};
+	my $formname = 'submissions';
 
 	$form->{del}	||= 0;
 	$form->{op}	||= '';
+	my $error_flag = 0;
+	my $subsaved = 0;
 
 	if (($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}) {
 		my $success = displayRSS($slashdb, $constants, $user, $form);
 		return if $success;
 	}
 
-	my $id = getFormkeyId($user->{uid});
 	my($section, $op) = (
 		$form->{section}, $form->{op});
 	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
@@ -46,8 +50,49 @@ sub main {
 		$tbtitle = "- $tbtitle";
 	}
 
+	# this is just skeletal right now
+	# not fully used
+	my $ops = {		
+		# initial form, no formkey needed due to 'preview' requirement
+		default		=> {
+			seclev		=> 0,
+		},
+		previewstory	=> {
+			seclev		=>  0,
+			checks		=> ['max_post_check','generate_formkey'],
+		},
+		submitstory	=> {
+			seclev		=> 0,
+			post		=> 1,
+			checks		=> [ qw (max_post_check valid_check response_check
+						interval_check formkey_check) ],
+		},
+		list		=> {
+			seclev		=> 100,
+		},
+		update		=> {
+			seclev		=> 100,
+		},
+		genquickies	=> {
+			seclev		=> 100,
+		},
+		viewsub		=> {
+			seclev		=> 100,
+		},
+	};
+	my $tmpop = lc($op);
+	$tmpop ||= 'default';
+
 	$section = 'admin' if $user->{submit_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
+	
+	if ($ops->{$tmpop}{checks}) {
+		for my $check (@{$ops->{$tmpop}{checks}}) {
+			$ops->{$tmpop}{update_formkey} = 1 if ($check eq 'formkey_check');
+			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+			last if $error_flag;
+		}	
+	}
 
 	if ($op eq 'list' && ($user->{submit_admin} || $constants->{submiss_view})) {
 		submissionEd();
@@ -61,21 +106,24 @@ sub main {
 		submissionEd(getData('quickieshead'));
 
 	} elsif ($op eq 'PreviewStory') {
-		$slashdb->createFormkey('submissions', $id, 'submission');
 		displayForm($form->{from}, $form->{email}, $form->{section},
-			$id, getData('previewhead'));
+			$formkeyid, getData('previewhead')) if ! $error_flag;
 
 	} elsif ($op eq 'viewsub' && ($user->{submit_admin} || $constants->{submiss_view})) {
 		previewForm($form->{subid});
 
 	} elsif ($op eq 'SubmitStory') {
-		saveSub($id);
+		$subsaved = saveSub($formkeyid) if ! $error_flag;
 		yourPendingSubmissions();
 
 	} else {
 		yourPendingSubmissions();
 		displayForm($user->{nickname}, $user->{fakeemail}, $form->{section},
-			$id, getData('defaulthead'));
+			$formkeyid, getData('defaulthead'));
+	}
+
+	if ($ops->{$tmpop}{update_formkey} && $subsaved && ! $error_flag ) {
+		my $updated = $slashdb->updateFormkey($formkey, $form->{tid},length($form->{story})); 
 	}
 
 	footer();
@@ -265,13 +313,6 @@ sub displayForm {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
-	my $formkey_earliest = time() - $constants->{formkey_timeframe};
-
-	if (!$slashdb->checkTimesPosted('submissions',
-		$constants->{max_submissions_allowed}, $id, $formkey_earliest)
-	) {
-		print getData('maxallowed');
-	}
 
 	if ($error_message ne '') {
 		titlebar('100%', getData('filtererror', { err_message => $error_message}));
@@ -318,74 +359,69 @@ sub saveSub {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
-	my $err_message = '';
-	if (checkFormPost('submissions', $constants->{submission_speed_limit},
-		$constants->{max_submissions_allowed}, $id, \$err_message)
-	) {
-		if (length($form->{subj}) < 2) {
-			titlebar('100%', getData('error'));
-			my $error_message = getData('badsubject');
-			displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $error_message);
-			return;
-		}
-
-		for (keys %$form) {
-			my $message = "";
-			# run through filters
-			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
-				displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $message);
-				return;
-			}
-			# run through compress test
-			if (! compressOk($form->{$_})) {
-				my $err = getData('compresserror');
-				displayForm($form->{from}, $form->{email}, $form->{section}, '', '');
-				return;
-			}
-		}
-
-		$form->{story} = strip_html(url2html($form->{story}));
-
-		my $uid ||= $form->{from}
-			? getCurrentUser('uid')
-			: getCurrentStatic('anonymous_coward_uid');
-
-		my $submission = {
-			email	=> $form->{email},
-			uid	=> $uid,
-			name	=> $form->{from},
-			story	=> $form->{story},
-			subj	=> $form->{subj},
-			tid	=> $form->{tid},
-			section	=> $form->{section}
-		};
-		$submission->{subid} = $slashdb->createSubmission($submission);
-		$slashdb->formSuccess($form->{formkey}, 0, length($form->{subj}));
-
-		my $messages = getObject('Slash::Messages');
-		if ($messages) {
-			my $users = $messages->getMessageUsers(MSG_CODE_NEW_SUBMISSION);
-			my $data  = {
-				template_name	=> 'messagenew',
-				subject		=> { template_name => 'messagenew_subj' },
-				submission	=> $submission,
-			};
-
-			for (@$users) {
-				$messages->create($_, MSG_CODE_NEW_SUBMISSION, $data);
-			}
-		}
-
-		slashDisplay('saveSub', {
-			title		=> 'Saving',
-			width		=> '100%',
-			missingemail	=> length($form->{email}) < 3,
-			anonsubmit	=> length($form->{from}) < 3,
-			submissioncount	=> $slashdb->getSubmissionCount(),
-		});
-	} else {
-		print $err_message;
+	if (length($form->{subj}) < 2) {
+		titlebar('100%', getData('error'));
+		my $error_message = getData('badsubject');
+		displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $error_message);
+		return(0);
 	}
+
+	for (keys %$form) {
+		my $message = "";
+		# run through filters
+		if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
+			displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $message);
+			return(0);
+		}
+		# run through compress test
+		if (! compressOk($form->{$_})) {
+			my $err = getData('compresserror');
+			displayForm($form->{from}, $form->{email}, $form->{section}, '', '');
+			return(0);
+		}
+	}
+
+	$form->{story} = strip_html(url2html($form->{story}));
+
+	my $uid ||= $form->{from}
+		? getCurrentUser('uid')
+		: getCurrentStatic('anonymous_coward_uid');
+
+	my $submission = {
+		email	=> $form->{email},
+		uid	=> $uid,
+		name	=> $form->{from},
+		story	=> $form->{story},
+		subj	=> $form->{subj},
+		tid	=> $form->{tid},
+		section	=> $form->{section}
+	};
+	$submission->{subid} = $slashdb->createSubmission($submission);
+	# $slashdb->formSuccess($form->{formkey}, 0, length($form->{subj}));
+
+	my $messages = getObject('Slash::Messages');
+	if ($messages) {
+		my $users = $messages->getMessageUsers(MSG_CODE_NEW_SUBMISSION);
+		my $data  = {
+			template_name	=> 'messagenew',
+			subject		=> { template_name => 'messagenew_subj' },
+			submission	=> $submission,
+		};
+
+		for (@$users) {
+			$messages->create($_, MSG_CODE_NEW_SUBMISSION, $data);
+		}
+	}
+
+	slashDisplay('saveSub', {
+		title		=> 'Saving',
+		width		=> '100%',
+		missingemail	=> length($form->{email}) < 3,
+		anonsubmit	=> length($form->{from}) < 3,
+		submissioncount	=> $slashdb->getSubmissionCount(),
+	});
+
+	return(1);
 }
 
 #################################################################

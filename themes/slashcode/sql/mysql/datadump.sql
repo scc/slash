@@ -568,7 +568,7 @@ INSERT INTO vars (name, value, description) VALUES ('story_expire','600','Defaul
 INSERT INTO vars (name, value, description) VALUES ('submiss_ts','1','print timestamp in submissions view');
 INSERT INTO vars (name, value, description) VALUES ('submiss_view','1','allow users to view submissions queue');
 INSERT INTO vars (name, value, description) VALUES ('submission_bonus','3','Bonus given to user if submission is used');
-INSERT INTO vars (name, value, description) VALUES ('submission_speed_limit','300','How fast they can submit');
+INSERT INTO vars (name, value, description) VALUES ('submissions_speed_limit','300','How fast they can submit');
 INSERT INTO vars (name, value, description) VALUES ('submit_categories','Back','Extra submissions categories');
 INSERT INTO vars (name, value, description) VALUES ('template_cache_size','0','Number of templates to store in cache (0 = unlimited)');
 INSERT INTO vars (name, value, description) VALUES ('template_post_chomp','0','Chomp whitespace after directives (0 = no, 1 = yes, 2 = collapse; 0 or 2 recommended)');
