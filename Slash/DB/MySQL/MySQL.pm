@@ -1003,6 +1003,7 @@ sub getCommentCid {
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
+	# Does this work?
 	my($scid) = $self->sqlSelectAll('cid', $table, "sid='$sid' and pid='$cid'");
 
 	return $scid;
@@ -2368,15 +2369,18 @@ sub getCommentsForUser {
 			    AND $table.uid=users.uid";
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
-		$sql .= "	$table.points >= " . $self->{_dbh}->quote($user->{threshold});
-		$sql .= "     OR $table.uid=$user->{uid}" unless $user->{is_anon};
+		$sql .= "	$table.points >= " .
+			$self->{_dbh}->quote($user->{threshold});
+		$sql .= "     OR $table.uid=$user->{uid}"
+			unless $user->{is_anon};
 		$sql .= "     OR cid=$cid" if $cid;
 		$sql .= "	)";
 	}
 	$sql .= "	  ORDER BY ";
 	$sql .= "$table.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
-	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
+	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ?
+		'DESC' : 'ASC';
 
 
 	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
@@ -2393,9 +2397,12 @@ sub getCommentsForUser {
 ########################################################
 # This is here to save us a database lookup when drawing comment pages.
 # 
-# Couldn't this go faster by having getCommentsForUser() (10 lines up) collect a list
-# of all the cid's it needs (i.e. doesn't already have in cache) and then grabbing them
-# all with one SELECT?  SELECT cid,comment_text FROM comment WHERE cid IN (2,3,5,7...);
+# Couldn't this go faster by having getCommentsForUser() (10 lines up) collect a
+# list of all the cid's it needs (i.e. doesn't already have in cache) and then
+# grabbing them all with one SELECT?
+#
+#	SELECT cid,comment_text FROM comment WHERE cid IN (2,3,5,7...);
+#
 # - Jamie
 sub _getCommentText {
 	my($self, $cid) = @_;
@@ -2403,7 +2410,8 @@ sub _getCommentText {
 		return $self->{_comment_text}{$cid};
 	}
 
-	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
+	$self->{_comment_text}{$cid} =
+		$self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
 	return $self->{_comment_text}{$cid};
 }
 
@@ -2432,12 +2440,15 @@ sub getStoriesEssentials {
 		? $user->{maxstories}
 		: $self->getSection($section, 'artcount');
 
-	my $table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $columns = 'sid, uid, commentcount, title, section, time, hits, hitparade';
+	my $table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
+	my $columns =
+		'sid, uid, commentcount, title, section, time, hits, hitparade';
 
 	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
 	$where .= "AND displaystatus=0 " unless $form->{section};
-	$where .= "AND (displaystatus>=0 AND section='$section') " if $section_display;
+	$where .= "AND (displaystatus>=0 AND section='$section') "
+		if $section_display;
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
@@ -2447,6 +2458,15 @@ sub getStoriesEssentials {
 
 	# Order
 	my $other = "ORDER BY time DESC ";
+
+	# With the change from newstories to story_heap, without a limit, here
+	# this will KILL your httpds with a resource bug.
+	$other .= "LIMIT $limit";
+	# This section of the code should be replace (or removed) when better
+	# story selection code is implemented (date_* functions + other logic...
+	# heck, this could probably even use a rewrite.
+	#
+	# - Cliff 7/2/01
 
 	# We need to check up on this later for performance -Brian
 	my(@stories, $count);
@@ -2468,6 +2488,8 @@ sub getStoriesEssentials {
 		# If we're not back to the day the user asked for, skip it.
 		next if $form->{issue} and $row->{day} > $form->{issue};
 
+		# Expressions like this will make someone crosseyed! %)
+		# - Cliff
 		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
 		push @stories, $row;
