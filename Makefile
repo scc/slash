@@ -93,12 +93,12 @@ install: slash plugins
 	$(CP) -r themes/* $(PREFIX)/themes
 
 	# this needs BSD support
-	if [ -d /etc/init.d ]; then\
+	if [ -d /etc/init.d ]; then \
 		install utils/slashd /etc/init.d/; \
 		ln -s -f /etc/init.d/slashd /etc/rc3.d/S99slashd; \
 		ln -s -f /etc/init.d/slashd /etc/rc6.d/K99slashd; \
-	elif [ -d /etc/init.d/rc.d/]; then \
-		install utils/slashd /etc/rc.d/init.d/ \
+	elif [ -d /etc/rc.d ]; then \
+		install utils/slashd /etc/rc.d/init.d/; \
 		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc3.d/S99slashd; \
 		ln -s -f /etc/rc.d/init.d/slashd /etc/rc.d/rc6.d/K99slashd; \
 	else \
