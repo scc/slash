@@ -242,7 +242,7 @@ sub newrdf {	# RSS 0.9
 		$constants->{rdfencoding} ? (encoding => $constants->{rdfencoding}) : ()
 	);
 
-	my $SECT = getSection($section);
+	my $SECT  = $slashdb->getSection($section);
 	my $title = $SECT->{isolate}
 		? $SECT->{title}
 		: "$constants->{sitename}: $SECT->{title}";
@@ -287,7 +287,7 @@ sub newrss {	# RSS 1.0
 		uri	=> 'http://slashcode.com/rss/1.0/modules/Slash/',
 	);
 
-	my $SECT = getSection($section);
+	my $SECT  = $slashdb->getSection($section);
 	my $title = $section
 		? $SECT->{isolate}
 			? $SECT->{title}
@@ -568,13 +568,27 @@ sub main {
 	slashdPid();
 	slashdLog("Starting up Slashd with pid $$");
 
-	my $last = my $modlast = 0;
+	my $last = my $modlast = my $messlast = 0;
 	while (1) {
 		freshenup();
 		if (check_daily()) {
 			slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
 			system("$constants->{sbindir}/dailyStuff $virtual_user &");
 		}
+
+		if ((time - $messlast) > 60 * 10 ) { # Every 10 minutes
+			if (-e "$constants->{sbindir}/messaged") {
+				slashdLog("Running Messaged");
+				system("$constants->{sbindir}/messaged -u $virtual_user &");
+
+				$messlast = time;
+
+			} else {
+				# try again in 10 years
+				$messlast += (60 * 60 * 24 * 365 * 10);
+			}
+		}
+
 		if ((time - $last) > 60 * 60 ) { # Every Hour
 			slashdLog("Doing Hourly Update");
 			newfooter();
@@ -586,8 +600,9 @@ sub main {
 			sleep(60 * 2);
 
 			$last = time;
+		}
 
-		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
+		if ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
 			slashdLog("Running Moderatord");
 			system("$constants->{sbindir}/moderatord $virtual_user");
 			prog2file("$constants->{basedir}/hof.pl", "ssi=yes", "$constants->{basedir}/hof.shtml");

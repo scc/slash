@@ -60,7 +60,7 @@ CASE "max posts" %]
 
 # READ ONLY
 CASE "readonly" %]
-<b>You can't post to this page</b><br>
+<b>You can't post to this page.</b><br>
 [%
 
 # TROLL MESSAGE.

@@ -62,6 +62,17 @@ $email .= "\n-----------------------\n";
 $email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
 $email .= "\n-----------------------\n";
 
+# Send a message to the site admin.
+for (@{$constants->{stats_reports}}) {
+	sendEmail($_, "$constants->{sitename} Stats Report", $email, 0, 'bulk');
+}
+mailingList();
+
+# Now lets clean up the database
+$slashdb->deleteDaily();
+
+1;
+
 sub generateDailyMail {
 	my $data = $slashdb->getDailyMail();
 
@@ -112,38 +123,15 @@ sub mailingList {
 
 	# need to change for specific prefs, later
 	my $users = $slashdb->getMailingList();
-	my $codes = $messages->getDescriptions('messagecodes');
-	my %news = (
-		id	=> 0,
-		user	=> {},
-		code	=> 1,
-		message	=> $newsletter,
-		fuser	=> 0,
-		altto	=> '',
-		date	=> time(),
-		type	=> $codes->{1},
-		subj	=> '',
-	);
-
-	my %head = (
-		id	=> 0,
-		user	=> {},
-		code	=> 1,
-		message	=> $headlines,
-		fuser	=> 0,
-		altto	=> '',
-		date	=> time(),
-		type	=> $codes->{1},
-		subj	=> '',
-	);
 
 	for (@{$users}) {
-		$news{user}{realemail} = $head{user}{realemail} = $_->[0];
-		$news{user}{uid}       = $head{user}{uid}       = $_->[2];
-		$news{subj} = "24 Hours of $constants->{sitename} Stories For $_->[1]";
-		$head{subj} = "24 Hours of $constants->{sitename} Headlines For $_->[1]";
-		$messages->send(\%news);
-		$messages->send(\%head);
+		my $news_subj = "24 Hours of $constants->{sitename} Stories For $_->[1]";
+		$messages->quicksend($_->[2], $news_subj, $newsletter, 0);
+	}
+
+	for (@{$users}) {
+		my $head_subj = "24 Hours of $constants->{sitename} Headlines For $_->[1]";
+		$messages->quicksend($_->[2], $head_subj, $headlines,  1);
 	}
 }
 
@@ -158,19 +146,9 @@ sub prog2file {
 		open F, ">$f" or die "Can't open $f: $!";
 		print F $d;
 		close F;
-		return "1";
+		return 1;
 
 	} else {
-		return "0";
+		return 0;
 	}
 }
-
-# Send a message to the site admin.
-if ($constants->{send_mail} == 1) {
-	for (@{$constants->{stats_reports}}) {
-		sendEmail($_, "$constants->{sitename} Stats Report", $email, 0, 'bulk');
-	}
-	mailingList();
-}
-# Now lets clean up the database
-$slashdb->deleteDaily();

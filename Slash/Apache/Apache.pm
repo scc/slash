@@ -6,6 +6,8 @@
 package Slash::Apache;
 
 use strict;
+use Apache;
+use Apache::SIG ();
 use Apache::ModuleConfig;
 use Apache::Constants qw(:common);
 use Slash::DB;
@@ -15,7 +17,7 @@ require AutoLoader;
 use vars qw($REVISION $VERSION @ISA);
 
 @ISA		= qw(DynaLoader);
-$VERSION	= '2.000000';	# v2.0.0
+$VERSION	= '2.001000';	# v2.1.0
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache $VERSION;

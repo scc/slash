@@ -231,7 +231,7 @@ sub displayForm {
 	if (!$slashdb->checkTimesPosted('submissions',
 		$constants->{max_submissions_allowed}, $id, $formkey_earliest)
 	) {
-		errorMessage(getData('maxallowed'));
+		print getData('maxallowed');
 	}
 
 	if ($error_message ne '') {

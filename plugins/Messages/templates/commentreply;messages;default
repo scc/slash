@@ -26,4 +26,4 @@ was replied to by [% rid.nickname %], [% cid2.subj %] at [% Slash.timeCalc(cid2.
     [% constants.absolutedir %]/users.pl?op=userinfo&nick=[% FILTER fixparam; rid.nickname; END; END %]
 
 __seclev__
-
+500

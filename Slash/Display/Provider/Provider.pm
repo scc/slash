@@ -33,7 +33,7 @@ use strict;
 use vars qw($VERSION $DEBUG);
 use base qw(Template::Provider);
 use File::Spec::Functions;
-use Slash::Utility;
+use Slash::Utility::Environment;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 $DEBUG     = $Template::Provider::DEBUG || 0 unless defined $DEBUG;

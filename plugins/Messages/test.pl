@@ -22,7 +22,7 @@ print "ok 1\n";
 
 use strict;
 use Data::Dumper;
-use Slash 2.000000;
+use Slash 2.001;
 use Slash::Utility;
 $ARGV[0] ||= 'virtual_user=slash';
 createEnvironment();

@@ -9,7 +9,7 @@ use File::Basename;
 use File::Spec;
 use FindBin '$Bin';
 use Getopt::Std;
-use Slash 2.000000;
+use Slash 2.001;
 use Slash::Messages;
 use Slash::Utility;
 
@@ -44,7 +44,7 @@ sub main {
 	}
 
 	for (sort { $a <=> $b } keys %msgs) {
-		messagedLog("Error: msg #{$_} not sent successfully.");
+		messagedLog("Error: msg \#$_ not sent successfully.");
 	}
 
 }

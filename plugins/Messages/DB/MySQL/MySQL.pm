@@ -69,7 +69,7 @@ sub init {
 
 
 sub _create {
-	my($self, $user, $type, $message, $fuser, $altto) = @_;
+	my($self, $user, $code, $message, $fuser, $altto) = @_;
 	my $table = $self->{_drop_table};
 
 	# fix scalar to be a ref for freezing
@@ -78,7 +78,7 @@ sub _create {
 		user	=> $user,
 		fuser	=> $fuser,
 		altto	=> $altto || '',
-		code	=> $type,
+		code	=> $code,
 		message	=> $frozen,
 	});
 

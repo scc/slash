@@ -12,8 +12,8 @@ use Slash::Utility;
 ##################################################################
 sub main {
 	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $section = getSection($form->{section});
+	my $form    = getCurrentForm();
+	my $section = $slashdb->getSection($form->{section});
 
 	header(getData('head'), $section->{section});
 

@@ -10,10 +10,10 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	my $slashdb = getCurrentDB();
+	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my $user      = getCurrentUser();
+	my $form      = getCurrentForm();
 
 
 	if ($form->{op} eq 'userlogin' && !$user->{is_anon}) {
@@ -33,7 +33,7 @@ sub main {
 		redirect($ENV{SCRIPT_NAME}), return if $c;
 	}
 
-	my $section = getSection($form->{section});
+	my $section = $slashdb->getSection($form->{section});
 	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
 	$section->{mainsize} = int($section->{artcount} / 3);
 
@@ -190,9 +190,10 @@ sub displayStandardBlocks {
 # pass it how many, and what.
 sub displayStories {
 	my($stories) = @_;
+	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
-	my $user = getCurrentUser();
+	my $form      = getCurrentForm();
+	my $user      = getCurrentUser();
 
 	my($today, $x) = ('', 1);
 	my $cnt = int($user->{maxstories} / 3);
@@ -247,7 +248,7 @@ sub displayStories {
 		}
 
 		if ($thissection ne $constants->{defaultsection} && !getCurrentForm('section')) {
-			my($section) = getSection($thissection);
+			my($section) = $slashdb->getSection($thissection);
 			push @links, getData('seclink', {
 				name	=> $thissection,
 				section	=> $section

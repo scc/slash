@@ -7,11 +7,12 @@ package Slash::Search;
 
 use strict;
 use Slash::DB::Utility;
+use vars qw($VERSION);
+use base 'Slash::DB::Utility';
+
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: The laws of science be a harsh mistress.
-
-$Slash::Search::VERSION = '0.01';
-@Slash::Search::ISA = qw( Slash::DB::Utility );
 
 #################################################################
 sub new {

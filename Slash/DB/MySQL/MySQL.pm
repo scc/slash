@@ -15,7 +15,6 @@ use strict;
 # -- pudge
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
-use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
 use vars qw($VERSION);
@@ -1297,7 +1296,6 @@ sub updateFormkeyId {
 sub createFormkey {
 	my($self, $formname, $id, $sid) = @_;
 	my $form = getCurrentForm();
-
 	my $ipid = getCurrentUser('ipid');
 
 	# save in form object for printing to user
@@ -1378,7 +1376,12 @@ sub formFailure {
 ##################################################################
 # logs attempts to break, fool, flood a particular form
 sub createAbuse {
-	my($self, $uid, $ipid, $subnetid, $reason, $script_name, $query_string) = @_;
+	my($self, $reason, $script_name, $query_string, $uid, $ipid, $subnetid) = @_;
+
+	my $user = getCurrentUser();
+	$uid      ||= $user->{uid};
+	$ipid     ||= $user->{ipid};
+	$subnetid ||= $user->{subnetid};
 
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {
@@ -1386,7 +1389,7 @@ sub createAbuse {
 		ipid		=> $ipid, 
 		subnetid	=> $subnetid,
 		pagename	=> $script_name,
-		querystring	=> $query_string,
+		querystring	=> $query_string || '',
 		reason		=> $reason,
 		-ts		=> 'now()',
 	});
@@ -1401,16 +1404,14 @@ sub checkReadOnly {
  	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	if($user->{uid} ne $constants->{anonymous_coward_uid}) {
-		$where = "uid = $user->{uid} or";
+	unless (isAnon($user->{uid})) {
+		$where = "uid = $user->{uid} or ";
 	}
 
-	$where = "($where ipid = '$user->{ipid}' or subnetid = '$user->{subnetid}') and readonly = 1 and formname = '$formname'"; 
+	$where .= "($where ipid = '$user->{ipid}' or subnetid = '$user->{subnetid}') "
+		. "and readonly = 1 and formname = '$formname'"; 
 
-	$self->sqlSelect(
-		"readonly",
-		"accesslist", $where
-	);
+	$self->sqlSelect("readonly", "accesslist", $where);
 }
 
 ##################################################################
@@ -2635,6 +2636,17 @@ sub getSubmission {
 
 ########################################################
 sub getSection {
+	my($self, $section) = @_;
+ 	if (!$section) {
+		my $constants = getCurrentStatic();
+		my $user      = getCurrentUser();
+		return {
+			title    => "$constants->{sitename}: $constants->{slogan}",
+			artcount => getCurrentUser('maxstories') || 30,
+			issue    => 3
+		};
+	}
+
 	my $answer = _genericGetCache('sections', 'section', '', @_);
 	return $answer;
 }

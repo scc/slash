@@ -60,10 +60,10 @@ sub main {
 		$form->{op} ||= 'stories';
 		my $authors = _authors();
 		slashDisplay('searchform', {
-			section => getSection($form->{section}),
-			tref =>$slashdb->getTopic($form->{topic}),
-			op => $form->{op},
-			authors => $authors
+			section		=> $slashdb->getSection($form->{section}),
+			tref		=> $slashdb->getTopic($form->{topic}),
+			op		=> $form->{op},
+			authors		=> $authors
 		});
 
 		if($ops{$form->{op}}) {

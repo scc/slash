@@ -110,19 +110,10 @@ sub create {
 		$fid = 0;	# default
 	}
 
-	my $codes = $self->getDescriptions('messagecodes');
-	if ($type =~ /^\d+$/) {
-		unless (exists $codes->{$type}) {
-			messagedLog("message type $type not found");
-			return;
-		}
-	} else {
-		my $rcodes = { map { ($codes->{$_}, $_) } %$codes };
-		unless (exists $rcodes->{$type}) {
-			messagedLog("message type $type not found");
-			return;
-		}
-		$type = $rcodes->{$type};
+	(my($code), $type) = $self->getDescription('messagecodes', $type);
+	unless (defined $code) {
+		messagedLog("message type $type not found");
+		return;
 	}
 
 	# check for $uid existence
@@ -138,13 +129,19 @@ sub create {
 		unless ($data->{template_name}) {
 			messagedLog("No template name"), return;
 		}
+
+		my $user = getCurrentUser();
+		$data->{_NAME}    = delete($data->{template_name});
+		$data->{_PAGE}    = $user->{currentPage};
+		$data->{_SECTION} = $user->{currentSection};
 		$message = $data;
+
 	} else {
 		messagedLog("Cannot accept data of type " . ref($data));
 		return;
 	}
 
-	my($msg_id) = $self->_create($uid, $type, $message, $fid, $altto);
+	my($msg_id) = $self->_create($uid, $code, $message, $fid, $altto);
 	return $msg_id;
 }
 
@@ -158,7 +155,7 @@ sub process {
 		$msg = $self->get($msg) unless ref($msg);
 		if ($self->send($msg)) {
 			push @success, $msg->{id}
-				; #if $self->delete($msg->{id});
+				if $self->delete($msg->{id});
 		}
 	}
 	return @success;
@@ -199,14 +196,9 @@ sub send {
 		};
 
 		$addr    = $msg->{altto} || $msg->{user}{realemail};
-		$content = slashDisplay('msg_email',      { msg => $msg }, $opt);
+		$content = slashDisplay('msg_email', { msg => $msg }, $opt);
 		if (exists $msg->{subj}) {
-			if (ref($msg->{subj}) eq 'HASH' && exists($msg->{subj}{template_name})) {
-				my $name = delete($msg->{subj}{template_name});
-				$subject = slashDisplay($name, { msg => $msg }, $opt);
-			} else {
-				$subject = $msg->{subj};
-			}
+			$msg->{subj} = $self->callTemplate($msg->{subj}, $msg);
 		} else {
 			$subject = slashDisplay('msg_email_subj', { msg => $msg }, $opt);
 		}
@@ -227,6 +219,27 @@ sub send {
 
 }
 
+sub quicksend {
+	my($self, $uid, $subj, $message, $code) = @_;
+
+	($code, my($type)) = $self->getDescription('messagecodes', $code);
+	return unless defined $code;
+
+	my $slashdb = getCurrentDB();
+
+	$self->send({
+		id		=> 0,
+		fuser	=> 0,
+		altto	=> '',
+		user	=> $slashdb->getUser($uid),
+		subj	=> $subj,
+		message	=> $message,
+		code	=> $code,
+		type	=> $type,
+		date	=> time(),
+	});
+}
+
 sub get {
 	my($self, $msg_id) = @_;
 
@@ -245,6 +258,7 @@ sub gets {
 
 sub delete {
 	my($self, @ids) = @_;
+
 	my $count;
 	for (@ids) {
 		$count += $self->_delete($_);
@@ -255,11 +269,10 @@ sub delete {
 sub render {
 	my($self, $msg) = @_;
 	my $slashdb = getCurrentDB();
-	my $codes = $self->getDescriptions('messagecodes');
 
 	$msg->{user}  = $slashdb->getUser($msg->{user});
 	$msg->{fuser} = $msg->{fuser} ? $slashdb->getUser($msg->{fuser}) : 0;
-	$msg->{type}  = $codes->{ $msg->{code} };
+	$msg->{type}  = $self->getDescription('messagecodes', $msg->{code});
 
 	# optimize these calls for getDescriptions ... ?
 	# they are cached already, but ...
@@ -268,19 +281,47 @@ sub render {
 	$msg->{user}{off_set}  = $timezones -> { $msg->{user}{tzcode} };
 	$msg->{user}{'format'} = $dateformats->{ $msg->{user}{dfid}   };
 
-	if (ref($msg->{message}) eq 'HASH') {
-		my $name = delete($msg->{message}{template_name});
-		my $data = { %{$msg->{message}}, %$msg };
-
-		$msg->{message} = slashDisplay($name, $data, {
-			Return	=> 1,
-			Nocomm	=> 1,
-			Page	=> 'messages',
-			Section => 'NONE',
-		});
-	}
-
+	$msg->{message} = $self->callTemplate($msg->{message}, $msg);
 	return;
+}
+
+sub callTemplate {
+	my($self, $data, $msg) = @_;
+	return $data unless ref($data) eq 'HASH' && exists $data->{_NAME};
+
+	my $name = delete($data->{_NAME});
+	my $opt  = { 
+		Return	=> 1,
+		Nocomm	=> 1,
+		Page	=> 'messages',
+		Section => 'NONE',
+	};
+
+	# set Page and Section as from the caller
+	$opt->{Page}    = delete($data->{_PAGE})    if exists $data->{_PAGE};
+	$opt->{Section} = delete($data->{_SECTION}) if exists $data->{_SECTION};
+
+	my $new = slashDisplay($name, { %$data, %$msg }, $opt);
+	return $new;
+}
+
+sub getDescription {
+	my($self, $codetype, $key) = @_;
+
+	my $codes = $self->getDescriptions($codetype);
+
+	if ($key =~ /^\d+$/) {
+		unless (exists $codes->{$key}) {
+			return;
+		}
+		return wantarray ? ($key, $codes->{$key}) : $key;
+	} else {
+		my $rcodes = { map { ($codes->{$_}, $_) } %$codes };
+		unless (exists $rcodes->{$key}) {
+			return;
+		}
+		return wantarray ? ($rcodes->{$key}, $key) : $rcodes->{key};
+	}
 }
 
 # dispatch to proper logging function

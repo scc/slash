@@ -1,0 +1,342 @@
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
+package Slash::Utility::Anchor;
+
+=head1 NAME
+
+Slash::Utility::Anchor - SHORT DESCRIPTION for Slash
+
+
+=head1 SYNOPSIS
+
+	use Slash::Utility;
+	# do not use this module directly
+
+=head1 DESCRIPTION
+
+LONG DESCRIPTION.
+
+
+=head1 EXPORTED FUNCTIONS
+
+=cut
+
+use strict;
+use Apache;
+use Slash::Display;
+use Slash::Utility::Display;
+use Slash::Utility::Environment;
+
+use base 'Exporter';
+use vars qw($VERSION @EXPORT);
+
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+@EXPORT	   = qw(
+	header
+	footer
+	redirect
+	ssiHead
+	ssiFoot
+	getAd
+);
+
+# really, these should not be used externally, but we leave them
+# here for reference as to what is in the package
+# @EXPORT_OK = qw(
+# 	getSectionBlock
+# 	getSectionColors
+# );
+
+#========================================================================
+
+=head2 header([TITLE, SECTION, STATUS])
+
+Prints the header for the document.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TITLE
+
+The title for the HTML document.  The HTML header won't
+print without this.
+
+=item SECTION
+
+The section to handle the header.  This sets the
+currentSection constant, too.
+
+=item STATUS
+
+A special status to print in the HTTP header.
+
+=back
+
+=item Return value
+
+None.
+
+=item Side effects
+
+Sets currentSection constant.
+
+=item Dependencies
+
+The 'html-header' and 'header' template blocks.
+
+=back
+
+=cut
+
+sub header {
+	my($title, $section, $status) = @_;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	my $adhtml = '';
+	$title ||= '';
+
+	unless ($form->{ssi}) {
+		my $r = Apache->request;
+# This is here as a reminder -Brian
+#		$params{-status} = $status if $status;
+
+# we need to doublecheck that Pragma header is not required -- pudge
+
+		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
+			$r->header_out('Cache-Control', 'no-cache')
+		} else {
+			$r->header_out('Cache-Control', 'private')
+		}
+
+		$r->content_type('text/html');
+		$r->send_http_header;
+	}
+
+	$user->{currentSection} = $section || '';
+	getSectionColors();
+
+	$title =~ s/<(.*?)>//g;
+
+	slashDisplay('html-header', { title => $title }, { Nocomm => 1 }) if $title;
+
+	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
+	if ($form->{ssi} eq 'yes') {
+		ssiHead($section);
+		return;
+	}
+
+	if ($constants->{run_ads}) {
+		$adhtml = getAd(1);
+	}
+
+	slashDisplay('header');
+
+	print createMenu('admin') if $user->{is_admin};
+}
+
+#========================================================================
+
+=head2 footer()
+
+Prints the footer for the document.
+
+=over 4
+
+=item Return value
+
+None.
+
+=item Dependencies
+
+The 'footer' template block.
+
+=back
+
+=cut
+
+sub footer {
+	my $form = getCurrentForm();
+
+	if ($form->{ssi}) {
+		ssiFoot();
+		return;
+	}
+
+	slashDisplay('footer', {}, { Nocomm => 1 });
+}
+
+#========================================================================
+
+=head2 redirect(URL)
+
+Redirect browser to URL.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item URL
+
+URL to redirect browser to.
+
+=back
+
+=item Return value
+
+None.
+
+=item Dependencies
+
+The 'html-redirect' template block.
+
+=back
+
+=cut
+
+sub redirect {
+	my($url) = @_;
+	$url = url2abs($url);
+	my $r = Apache->request;
+
+	$r->content_type('text/html');
+	$r->header_out(Location => $url);
+	$r->status(302);
+	$r->send_http_header;
+
+	slashDisplay('html-redirect', { url => $url });
+}
+
+#========================================================================
+
+=head2 ssiHead()
+
+Prints the head for server-parsed HTML pages.
+
+=over 4
+
+=item Return value
+
+The SSI head.
+
+=item Dependencies
+
+The 'ssihead' template block.
+
+=back
+
+=cut
+
+sub ssiHead {
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
+
+	slashDisplay('ssihead', {
+		dir	=> $dir,
+		section => "$user->{currentSection}/"
+	});
+}
+
+#========================================================================
+
+=head2 ssiFoot()
+
+Prints the foot for server-parsed HTML pages.
+
+=over 4
+
+=item Return value
+
+The SSI foot.
+
+=item Dependencies
+
+The 'ssifoot' template block.
+
+=back
+
+=cut
+
+sub ssiFoot {
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
+
+	slashDisplay('ssifoot', {
+		dir	=> $dir,
+		section => "$user->{currentSection}/"
+	});
+}
+
+########################################################
+sub getAd {
+	my $num = $_[0] || 1;
+	return qq|<!--#perl sub="sub { use Slash; print Slash::Utility::getAd($num); }" -->|
+		unless $ENV{SCRIPT_NAME};
+
+	return $ENV{"AD_BANNER_$num"};
+}
+
+########################################################
+# Gets the appropriate block depending on your section
+# or else fall back to one that exists
+sub getSectionBlock {
+	my($name) = @_;
+	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
+	my $thissect = $user->{light}
+		? 'light'
+		: $user->{currentSection};
+
+	my $block;
+	if ($thissect) {
+		$block = $slashdb->getBlock("${thissect}_${name}", 'block');
+	}
+
+	$block ||= $slashdb->getBlock($name, 'block');
+	return $block;
+}
+
+
+########################################################
+# Sets the appropriate @fg and @bg color pallete's based
+# on what section you're in.  Used during initialization
+sub getSectionColors {
+	my($color_block) = @_;
+	my $user = getCurrentUser();
+	my @colors;
+	my $colorblock = getCurrentForm('colorblock');
+
+	# they damn well better be legit
+	if ($colorblock) {
+		@colors = map { s/[^\w#]+//g ; $_ } split m/,/, $colorblock;
+	} else {
+		@colors = split m/,/, getSectionBlock('colors');
+	}
+
+	$user->{fg} = [@colors[0..4]];
+	$user->{bg} = [@colors[5..9]];
+}
+
+1;
+
+__END__
+
+
+=head1 SEE ALSO
+
+Slash(3), Slash::Utility(3).
+
+=head1 VERSION
+
+$Id$

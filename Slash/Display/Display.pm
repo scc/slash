@@ -45,7 +45,9 @@ use base 'Exporter';
 use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
 use Exporter ();
 use Slash::Display::Provider ();
-use Slash::Utility;
+use Slash::Utility::Data;
+use Slash::Utility::Environment;
+use Slash::Utility::System;
 use Template;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -210,10 +212,10 @@ sub slashDisplay {
 	my $template = $CONTEXT || get_template();
 
 	if ($CONTEXT) {
-		$ok = eval { $out = $template->include($name, $data) };
+		$ok  = eval { $out = $template->include($name, $data) };
 		$err = $@ if !$ok;
 	} else {
-		$ok = $template->process($name, $data, \$out);
+		$ok  = $template->process($name, $data, \$out);
 		$err = $template->error if !$ok;
 	}
 

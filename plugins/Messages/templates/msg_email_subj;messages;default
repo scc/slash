@@ -13,4 +13,4 @@ msg_email_subj
 __template__
 [ [% constants.sitename %] Message ] [% msg.type %]
 __seclev__
-
+500

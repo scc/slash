@@ -5,18 +5,17 @@
 
 package Slash::Install;
 use strict;
-use vars qw($VERSION @ISA);
 use DBIx::Password;
 use Slash;
-use Slash::DB::Utility;
 use Slash::DB;
 use File::Copy;
 use File::Find;
 use File::Path;
+use vars qw($VERSION);
+use base 'Slash::DB::Utility';
 
 # BENDER: Like most of life's problems, this one can be solved with bending.
 
-@ISA       = qw(Slash::DB::Utility);
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
@@ -197,7 +196,7 @@ sub _install {
 
 	if ($plugin->{"${driver}_dump"}) {
 		if (my $dump_file = "$plugin->{dir}/" . $plugin->{"${driver}_dump"}) {
-			open(DUMP, "< $dump_file");
+			open(DUMP, "< $dump_file") or warn "Can't open $dump_file: $!";
 			while (<DUMP>) {
 				next unless /^INSERT/;
 				chomp;

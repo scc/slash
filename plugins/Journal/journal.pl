@@ -5,15 +5,15 @@
 # $Id$
 
 use strict;
-use Slash;
-use Slash::DB;
-use Slash::Utility;
-use Slash::Journal;
-use Slash::Display;
+use Apache;
 use Date::Manip;
 use XML::RSS;
-use Apache;
 
+use Slash;
+use Slash::DB;
+use Slash::Display;
+use Slash::Journal;
+use Slash::Utility;
 
 sub main {
 	my %ops = (
@@ -294,8 +294,29 @@ sub saveArticle {
 			posttype	=> $form->{posttype},
 		});
 	} else {
-		$journal->create($description,
+		my $id = $journal->create($description,
 			$form->{article}, $form->{posttype});
+
+		# create messages
+		my $messages = getObject('Slash::Messages');
+		my $friends = $journal->reverse_friends;
+
+		my $user = getCurrentUser();
+		my $constants = getCurrentStatic();
+
+		my $data = {
+			template_name	=> 'messagenew',
+			description	=> $description,
+			article		=> $form->{article},
+			posttype	=> $form->{posttype},
+			id		=> $id,
+			uid		=> $user->{uid},
+			nickname	=> $user->{nickname}
+		};
+			
+		for (@$friends) {
+			$messages->create($_->[1], 5, $data);
+		}
 	}
 	listArticle(@_);
 }
@@ -314,7 +335,7 @@ sub addFriend {
 }
 
 sub deleteFriend {
-	my ($form, $journal) = @_;
+	my($form, $journal) = @_;
 
 	$journal->delete($form->{uid}) if $form->{uid} ;
 	displayDefault(@_);

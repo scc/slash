@@ -10,12 +10,12 @@ use Slash::Display;
 use Slash::Utility;
 
 sub main {
-	my $slashdb = getCurrentDB();
+	my $slashdb   = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
+	my $form      = getCurrentForm();
 
-	my $section = getSection($form->{section});
-	my $list = $slashdb->getAuthorDescription();
+	my $section = $slashdb->getSection($form->{section});
+	my $list    = $slashdb->getAuthorDescription();
 	my $authors = $slashdb->getAuthors();
 
 	header("$constants->{sitename}: Authors", $section->{section});

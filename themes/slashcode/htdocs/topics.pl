@@ -11,8 +11,9 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	my $form = getCurrentForm();
-	my $section = getSection();
+	my $slashdb = getCurrentDB();
+	my $form    = getCurrentForm();
+	my $section = $slashdb->getSection();
 
 	header(getData('head'), $section->{section});
 	print createMenu('topics');

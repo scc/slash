@@ -19,7 +19,6 @@ sub main {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $id = getFormkeyId($user->{uid});
-	
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -59,7 +58,7 @@ sub main {
 		$form->{op} eq "Preview" || $form->{op} eq "Reply") {
 
 		if ($form->{op} eq 'Reply') {
-			$form->{formkey} = $slashdb->getFormkey();
+			$form->{formkey} = getFormkey();
 			$slashdb->createFormkey("comments", $id, $form->{sid});
 		} else {
 			$slashdb->updateFormkeyId('comments',

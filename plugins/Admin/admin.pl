@@ -868,6 +868,15 @@ sub importFile {
 		. qq[">Attachment</A>];
 }
 
+########################################################
+# Returns the directory (eg YY/MM/DD/) that stories are being written in today
+sub getsiddir {
+	my($mday, $mon, $year) = (localtime)[3, 4, 5];
+	$year = $year % 100;
+	my $sid = sprintf('%02d/%02d/%02d/', $year, $mon+1, $mday);
+	return $sid;
+}
+
 ##################################################################
 sub importText {
 	# Check for a file upload

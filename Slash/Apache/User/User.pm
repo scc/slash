@@ -13,13 +13,12 @@ use Apache::File;
 use Apache::ModuleConfig;
 use AutoLoader ();
 use DynaLoader ();
-use Slash::DB;
 use Slash::Utility;
 use URI ();
 use vars qw($REVISION $VERSION @ISA @QUOTES);
 
 @ISA		= qw(DynaLoader);
-$VERSION	= '2.000000';	# v2.0.0
+$VERSION	= '2.001000';	# v2.1.0
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
