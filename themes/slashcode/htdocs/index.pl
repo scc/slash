@@ -33,7 +33,14 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	#This still needed? -Brian
+	# this is needed so that when the user does the automatic
+	# login from a URL ('http://foo/index.pl?op=userlogin&upasswd=la&unickname=me')
+	# the user's username and password will not stuck in the URL;
+	# this was a big problem because when someone would click a URL to
+	# another site from the home page after logging in this way, they would
+	# send their username and password along in the HTTP_REFERER.
+	# we could possibly move this to User.pm, though, I think.
+	# -- pudge
 	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
 		redirect($ENV{SCRIPT_NAME});
 		return;
@@ -147,16 +154,6 @@ sub displayStandardBlocks {
 			if ref $sectionBoxes->{$getblocks};
 	}
 
-# Yes, this is a hack for the moment -Brian
-#	if($user->{is_anon}) {
-#			$return .= portalbox(
-#				$constants->{fancyboxwidth},
-#				"User Login",
-#				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-#				'',
-#				'');
-#	}
-
 	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
 			$return .= portalbox(
@@ -174,15 +171,18 @@ sub displayStandardBlocks {
 				$bid
 			);
 
-#		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-#			$return .= portalbox(
-#				$constants->{fancyboxwidth},
-#				$boxBank->{$bid}{title},
-#				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-#				$boxBank->{$bid}{bid},
-#				$boxBank->{$bid}{url}
-#			);
-#
+		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
+			# do nothing!
+
+		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				$boxBank->{$bid}{title},
+				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
+				$boxBank->{$bid}{bid},
+				$boxBank->{$bid}{url}
+			);
+
 		} else {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},

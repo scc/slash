@@ -292,9 +292,10 @@ install_plugin(\@answers, \%plugins);
 my $slashdb = Slash::DB->new($ARGV[0]);
 my $uid = $slashdb->createUser($username, $email, $username);
 $slashdb->setUser($uid, { 
-									passwd => $password, 
-									author => 1, 
-									seclev => 10000 });
+	passwd => $password, 
+	author => 1, 
+	seclev => 10000
+});
 
 # Now, lets update slash.sites
 if (open(SLASHSITES, "< $prefix/slash.sites")) {

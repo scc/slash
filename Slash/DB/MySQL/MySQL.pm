@@ -733,11 +733,11 @@ sub createUser {
 	))[0];
 
 	$self->sqlInsert("users", {
-		uid	=> '',
+		uid		=> '',
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
-		seclev	=> 1,
+		seclev		=> 1,
 		passwd		=> encryptPassword(changePassword())
 	});
 
@@ -769,7 +769,9 @@ sub createUser {
 ########################################################
 sub setVar {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('vars', {value => ref($value) ? $value->{'value'} : $value}, 'name=' . $self->{_dbh}->quote($name));
+	$self->sqlUpdate('vars', {
+		value => ref($value) ? $value->{'value'} : $value
+	}, 'name=' . $self->{_dbh}->quote($name));
 }
 
 ########################################################
@@ -2723,10 +2725,10 @@ sub _genericGetCacheName {
 sub _genericSet {
 	my($table, $table_prime, $param_table, $self, $id, $value) = @_;
 
-	if($param_table) {
+	if ($param_table) {
 		my $cache = _genericGetCacheName($self, $table);
 
-		my (@param, %updates);
+		my(@param, %updates);
 		for (keys %$value) {
 			(my $clean_val = $_) =~ s/^-//;
 			my $key = $self->{$cache}{$clean_val};
@@ -2737,7 +2739,7 @@ sub _genericSet {
 			}
 		}
 		$self->sqlUpdate($table, \%updates, $table_prime . '=' . $self->{_dbh}->quote($id))
-			if(keys %updates);
+			if keys %updates;
 		# What is worse, a select+update or a replace?
 		# I should look into that. if EXISTS() the
 		# need for a fully sql92 database.
@@ -2751,7 +2753,7 @@ sub _genericSet {
 	}
 
 	my $table_cache= '_' . $table . '_cache';
-	return unless (keys %{$self->{$table_cache}});
+	return unless keys %{$self->{$table_cache}};
 
 	my $table_cache_time= '_' . $table . '_cache_time';
 	$self->{$table_cache_time} = time();
@@ -2812,7 +2814,7 @@ sub _genericGetCache {
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
 	$answer->{'_modtime'} = time();
-	if($param_table) {
+	if ($param_table) {
 		my $append = $self->sqlSelectAll('name,value', $param_table, "$table_prime=" . $self->{_dbh}->quote($id));
 		for (@$append) {
 			$answer->{$_->[0]} = $_->[1];
@@ -2852,8 +2854,7 @@ sub _genericGet {
 	my($answer, $type);
 	my $id_db = $self->{_dbh}->quote($id);
 
-
-	if($param_table) {
+	if ($param_table) {
 	# With Param table 
 		if (ref($val) eq 'ARRAY') {
 			my $cache = _genericGetCacheName($self, $table);
@@ -2948,23 +2949,21 @@ sub _genericGetsCache {
 # scripts directly.
 sub _genericGets {
 	my($table, $table_prime, $param_table, $self, $values) = @_;
-
-	my (%return, $sth, $params);
-
+	my(%return, $sth, $params);
 
 	if (ref($values) eq 'ARRAY') {
 		my $get_values;
 
-		if($param_table) {
+		if ($param_table) {
 			my $cache = _genericGetCacheName($self, $table);
-			for(@$values) {
+			for (@$values) {
 				(my $clean_val = $values) =~ s/^-//;
-				if($self->{$cache}{$clean_val}) {
+				if ($self->{$cache}{$clean_val}) {
 					push @$get_values, $_;
 				} else {
 					my $val = $self->sqlSelectAll('$table_prime, name, value', $param_table, "name='$_'");
 					for my $row (@$val) {
-						push (@$params, $row);
+						push @$params, $row;
 					}
 				}
 			}
@@ -2975,12 +2974,12 @@ sub _genericGets {
 		$val .= ",$table_prime" unless grep $table_prime, @$get_values;
 		$sth = $self->sqlSelectMany($val, $table);
 	} elsif ($values) {
-		if($param_table) {
+		if ($param_table) {
 			my $cache = _genericGetCacheName($self, $table);
 			(my $clean_val = $values) =~ s/^-//;
 			my $use_table = $self->{$cache}{$clean_val};
 
-			if($use_table) {
+			if ($use_table) {
 				$values .= ",$table_prime" unless $values eq $table_prime;
 				$sth = $self->sqlSelectMany($values, $table);
 			} else {
@@ -2995,21 +2994,23 @@ sub _genericGets {
 		}
 	} else {
 		$sth = $self->sqlSelectMany('*', $table);
-		if($param_table) {
+		if ($param_table) {
 			$params = $self->sqlSelectAll("$table_prime, name, value", $param_table);
 		}
 	}
 
-	if($sth) {
+	if ($sth) {
 		while (my $row = $sth->fetchrow_hashref) {
 			$return{ $row->{$table_prime} } = $row;
 		}
 		$sth->finish;
 	}
 
-	if($params) {
-		for(@$params) {
-			${return->{$_->[0]}->{$_->[1]}} = $_->[2]
+	if ($params) {
+		for (@$params) {
+			# this is not right ... perhaps the other is? -- pudge
+#			${return->{$_->[0]}->{$_->[1]}} = $_->[2]
+			$return{$_->[0]}{$_->[1]} = $_->[2]
 		}
 	}
 

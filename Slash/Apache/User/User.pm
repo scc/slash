@@ -232,14 +232,14 @@ sub getUser {
 	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
 	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
 	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
+
+	# This is here so when user selects "6 ish" it
+	# "posted by xxx around 6 ish" instead of "on 6 ish"
 	if ($user->{'format'} eq '%i ish') {
 		$user->{aton} = 'around'; # getData('atonish');
 	} else {
 		$user->{aton} = 'on'; # getData('aton');
 	}
-
-
-
 
 	if ($user->{seclev} >= 99) {
 		$user->{is_admin} = 1;

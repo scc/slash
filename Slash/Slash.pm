@@ -2227,10 +2227,9 @@ sub createMenu {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	my $menu_items = getCurrentMenu($menu);
+	my $menu_items = getCurrentMenu($menu) or return;
 	my $items = [];
 
-	return unless $menu_items;
 	for my $item (sort { $a->{menuorder} <=> $b->{menuorder} } @$menu_items) {
 		next unless $user->{seclev} >= $item->{seclev};
 		push @$items, {

@@ -330,10 +330,6 @@ sub timeCalc {
 	my $user = getCurrentUser();
 	my(@dateformats, $err);
 
-	# This is here so when user selects "6 ish" it
-	# "posted by xxx around 6 ish" instead of "on 6 ish"
-
-
 	# find out the user's time based on personal offset
 	# in seconds
 	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
@@ -452,14 +448,6 @@ sub getCurrentMenu {
 
 	return unless $cfg->{menus}{$menu};
 	@menus = @{$cfg->{menus}{$menu}};
-	# why is this here?  i'd think we could take care of
-	# this in the caller instead, as we do already in Slash.pm
-	# -- pudge
-	# for (@{$cfg->{menus}{$menu}}) {
-	#	if ($user->{seclev} >= $_->{seclev}) {
-	#		push @menus, $_;
-	#	}
-	#}		
 
 	if (my $user_menu = $user->{menus}{$menu}) {
 		push @menus, values %$user_menu;
