@@ -1827,6 +1827,37 @@ EOT
 
 	return $stories;
 }
+########################################################
+sub getTrollAddress{
+	my ($self) = @_;
+  my ($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
+			AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
+			AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
+	);
+
+	return $badIP;
+}
+########################################################
+sub getTrollUID{
+	my ($self) = @_;
+	my $user =  getCurrentUser();
+	my ($badUID) = $self->sqlSelect("sum(val)","comments,moderatorlog",
+		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
+		AND comments.uid=$user->{uid} AND moderatorlog.active=1
+		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
+	);
+
+	return $badUID;
+}
+########################################################
+sub setCommentCount{
+	my ($self, $delCount) = @_;
+	my $form =  getCurrentForm();
+	$self->sqlDo("UPDATE stories SET commentcount=commentcount-$delCount,
+	      writestatus=1 WHERE sid=" . $self->{dbh}->quote($form->{sid})
+	);
+}
 
 1;
 

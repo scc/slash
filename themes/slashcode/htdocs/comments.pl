@@ -91,9 +91,7 @@ sub main {
 		titlebar("99%", "Delete $I{F}{cid}");
 
 		my $delCount = deleteThread($I{F}{sid}, $I{F}{cid});
-		$I{dbh}->do("UPDATE stories SET commentcount=commentcount-$delCount,
-			writestatus=1 WHERE sid=" . $I{dbh}->quote($I{F}{sid})
-		);
+		$I{dbobject}->setCommentCount($delCount);
 		print "Deleted $delCount items from story $I{F}{sid}\n";
 
 	} elsif ($I{F}{op} eq "moderate") {
@@ -775,25 +773,17 @@ sub undoModeration {
 # Troll Detection: essentially checks to see if this IP or UID has been abusing
 # the system in the last 24 hours.
 # 1=Troll 0=Good Little Goober
+# This maybe should go into DB package -Brian
 sub isTroll {
 	return if $I{U}{aseclev} > 99;
 	my($badIP, $badUID) = (0, 0);
 	return 0 if $I{U}{uid} != $I{anonymous_coward} && $I{U}{karma} > -1;
 	# Anonymous only checks HOST
-	($badIP) = sqlSelect("sum(val)","comments,moderatorlog",
-		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-		AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
-	);
-
+	$badIP = $I{dbobject}->getTrollAddress();
 	return 1 if $badIP < $I{down_moderations}; 
 
 	if ($I{U}{uid} != $I{anonymous_coward}) {
-		($badUID) = sqlSelect("sum(val)","comments,moderatorlog",
-			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-			AND comments.uid=$I{U}{uid} AND moderatorlog.active=1
-			AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
-		);
+		$badUID = $I{dbobject}->getTrollUID();
 	}
 
 	return 1 if $badUID < $I{down_moderations};
