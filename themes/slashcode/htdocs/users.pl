@@ -1120,6 +1120,7 @@ sub editComm {
 	my $r_check = $user_edit->{reparent}		? ' CHECKED' : '';
 	my $n_check = $user_edit->{noscores}		? ' CHECKED' : '';
 	my $s_check = $user_edit->{nosigs}		? ' CHECKED' : '';
+	my $a_check = $user_edit->{anon_comments}		? ' CHECKED' : '';
 
 	$formats = $slashdb->getDescriptions('postmodes');
 	$posttype_select = createSelect(
@@ -1134,6 +1135,7 @@ sub editComm {
 		r_check			=> $r_check,
 		n_check			=> $n_check,
 		s_check			=> $s_check,
+		a_check			=> $a_check,
 		commentmodes_select	=> $commentmodes_select,
 		commentsort_select	=> $commentsort_select,
 		highlightthresh_select	=> $highlightthresh_select,
@@ -1471,6 +1473,7 @@ sub saveComm {
 		reparent	=> ($form->{reparent}   ? 1 : 0),
 		noscores	=> ($form->{noscores}   ? 1 : 0),
 		hardthresh	=> ($form->{hardthresh} ? 1 : 0),
+		anon_comments	=> ($form->{anon_comments} ? 1 : 0),
 	};
 
 	# Update users with the $users_comments_table hash ref

@@ -70,7 +70,7 @@ sub findComments {
 	my $query = $self->sqlQuote($form->{query});
 	my $columns = "section, discussions.url, discussions.uid, discussions.title, pid, subject, ts, date, comments.uid as uid, comments.cid as cid ";
 	$columns .= ", TRUNCATE((MATCH (comments.subject) AGAINST($query)), 1) as score "
-		if $form->{query};
+		if ($form->{query} && $sort ne 'date');
 
 	my $tables = "comments, discussions";
 
@@ -171,7 +171,7 @@ sub findUsers {
 
 	my $columns = 'fakeemail,nickname,users.uid ';
 	$columns .= ", TRUNCATE((MATCH (nickname,fakeemail) AGAINST($query)), 1) as score "
-		if $form->{query};
+		if ($form->{query} && $sort ne 'date');
 
 	my $key = " MATCH (nickname,fakeemail) AGAINST ($query) ";
 	my $tables = 'users';
@@ -205,7 +205,7 @@ sub findStory {
 	my $query = $self->sqlQuote($form->{query});
 	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
-		if $form->{query};
+		if ($form->{query} && $sort ne 'date');
 
 	my $tables = "stories,users";
 	$tables .= ",story_text" if $form->{query};
@@ -274,7 +274,7 @@ sub findJournalEntry {
 	my $query = $self->sqlQuote($form->{query});
 	my $columns = "users.nickname, journals.description, journals.id as id, date";
 	$columns .= ", TRUNCATE((((MATCH (description) AGAINST($query) + (MATCH (article) AGAINST($query)))) / 2), 1) as score "
-		if $form->{query};
+		if ($form->{query} && $sort ne 'date');
 	my $tables = "journals, journals_text, users";
 	my $other;
 	if ($form->{query} && $sort ne 'date') {

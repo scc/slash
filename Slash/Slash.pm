@@ -101,6 +101,10 @@ sub selectComments {
 		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
 			&& $C->{points} > $min && $user->{clsmall};
 
+		# If the user is AC and we think AC's suck
+		$C->{points} = -1 if  ($user->{anon_comments} 
+			&& $C->{uid} == $constants->{anonymous_coward_uid});
+
 		# fix points in case they are out of bounds
 		$C->{points} = $min if $C->{points} < $min;
 		$C->{points} = $max if $C->{points} > $max;

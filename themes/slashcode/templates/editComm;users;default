@@ -100,6 +100,10 @@ __template__
 		They still <B>apply</B> you just don't see them.)
 		<INPUT TYPE="CHECKBOX" NAME="noscores"[% n_check %]>
 
+		<P><B>Do Not Display Anonymous Coward Posts</B> (Sets AC scores
+		to -1 so as long as you have your threshhold higher you will not see them)
+		<INPUT TYPE="CHECKBOX" NAME="anon_comments"[% a_check %]>
+
 		<P><B>Limit</B> only display this many comments.
 		For best results, set this to a low number and sort by score.<BR>
 		<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="[% user_edit.commentlimit %]">
