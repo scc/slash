@@ -20,8 +20,7 @@ sub main {
 	# - Cliff
 	my $story = $slashdb->getStory($form->{sid});
 	$story = '' 
-		if(($story->{displaystatus} == -1) and  !($user->{author} or $user->{is_admin}));
-	
+		if (($story->{displaystatus} == -1) and !($user->{author} or $user->{is_admin}));
 
 	if ($story) {
 		my $SECT = $slashdb->getSection($story->{section});

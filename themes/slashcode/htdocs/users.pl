@@ -220,12 +220,11 @@ sub main {
 		},
 	} ;
 	$ops->{default} = $ops->{displayform};
-	
+
 	if ($form->{op} && ! defined $ops->{$op}) {
 		$note .= getError('bad_op', { op => $form->{op}}, 0, 1);
 		$op = isAnon($user->{uid}) ? 'userlogin' : 'userinfo'; 
 	}
-
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
@@ -1153,7 +1152,7 @@ sub saveUserAdmin {
 
 #################################################################
 sub savePasswd {
-	my ($note) = @_;
+	my($note) = @_;
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
