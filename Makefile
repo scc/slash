@@ -24,7 +24,8 @@ TARFLAGS = cvf
 PREOP = @$(NOOP)
 POSTOP = @$(NOOP)
 TO_UNIX = @$(NOOP)
-PREFIX = /usr/local/slash
+SLASH_PREFIX = /usr/local/slash
+INIT = /etc
 USER = nobody
 GROUP = nobody
 CP = cp
@@ -49,7 +50,7 @@ plugins:
 	else \
 		(cd plugins/Search; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make); \
 		(cd plugins/Journal; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make); \
-		(cd plugins/Ladybug; $(PERL) Makefile.PL INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make); \
+		(cd plugins/Ladybug; $(PERL) Makefile.PL  INSTALLSITEARCH=/var/tmp/slash-buildroot/usr/local/lib/perl/5.6.0 INSTALLSITELIB=/var/tmp/slash-buildroot/usr/local/share/perl/5.6.0; make); \
 	fi
 
 all: install
@@ -72,25 +73,25 @@ install: slash plugins
 	fi
 
 	# First we do the default stuff
-	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/plugins/ $(PREFIX)/httpd/
-	install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(PREFIX)/bin/
-	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
-	$(CP) sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql
-	$(CP) sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
+	install -d $(SLASH_PREFIX)/bin/ $(SLASH_PREFIX)/sbin $(SLASH_PREFIX)/sql/ $(SLASH_PREFIX)/sql/mysql/ $(SLASH_PREFIX)/sql/postgresql $(SLASH_PREFIX)/themes/ $(SLASH_PREFIX)/themes/slashcode/htdocs/ $(SLASH_PREFIX)/themes/slashcode/sql/ $(SLASH_PREFIX)/themes/slashcode/sql/postgresql $(SLASH_PREFIX)/themes/slashcode/sql/mysql $(SLASH_PREFIX)/plugins/ $(SLASH_PREFIX)/httpd/
+	install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(SLASH_PREFIX)/bin/
+	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(SLASH_PREFIX)/sbin/
+	$(CP) sql/mysql/slashschema_create.sql $(SLASH_PREFIX)/sql/mysql/schema.sql
+	$(CP) sql/postgresql/slashschema_create.sql $(SLASH_PREFIX)/sql/postgresql/schema.sql
 
-	if [ -f $(PREFIX)/httpd/slash.conf ]; then\
+	if [ -f $(SLASH_PREFIX)/httpd/slash.conf ]; then\
 		echo "Preserving old slash.conf"; \
 	else \
-		$(CP) httpd/slash.conf $(PREFIX)/httpd/slash.conf; \
+		$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf; \
 	fi
 
-	$(CP) httpd/slash.conf $(PREFIX)/httpd/slash.conf.def 
+	$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf.def 
 
 
 	# Now for the default theme (be nice when this goes in themes)
-	$(CP) -r plugins/* $(PREFIX)/plugins/
+	$(CP) -r plugins/* $(SLASH_PREFIX)/plugins/
 	# Now all other themes
-	$(CP) -r themes/* $(PREFIX)/themes
+	$(CP) -r themes/* $(SLASH_PREFIX)/themes
 
 	# this needs BSD support
 	if [ -d /etc/init.d ]; then \
@@ -106,20 +107,20 @@ install: slash plugins
 		echo "You will need to look at how to install utils/slash"; \
 	fi
 
-	touch $(PREFIX)/slash.sites
-	chown $(USER):$(GROUP) $(PREFIX)
-	chown -R $(USER):$(GROUP) $(PREFIX)/themes
-	chown -R $(USER):$(GROUP) $(PREFIX)/sbin
-	chown -R $(USER):$(GROUP) $(PREFIX)/bin
-	chown -R $(USER):$(GROUP) $(PREFIX)/sql
-	chown -R $(USER):$(GROUP) $(PREFIX)/plugins
+	touch $(SLASH_PREFIX)/slash.sites
+	chown $(USER):$(GROUP) $(SLASH_PREFIX)
+	chown -R $(USER):$(GROUP) $(SLASH_PREFIX)/themes
+	chown -R $(USER):$(GROUP) $(SLASH_PREFIX)/sbin
+	chown -R $(USER):$(GROUP) $(SLASH_PREFIX)/bin
+	chown -R $(USER):$(GROUP) $(SLASH_PREFIX)/sql
+	chown -R $(USER):$(GROUP) $(SLASH_PREFIX)/plugins
 # Add a @ to suppress output of the echo's
 	@echo "+--------------------------------------------------------+"; \
 	echo "| All done.                                              |"; \
 	echo "| If you want to let Slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
-	echo "| Include $(PREFIX)/httpd/slash.conf              |"; \
+	echo "| Include $(SLASH_PREFIX)/httpd/slash.conf              |"; \
 	echo "|                                                        |"; \
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \
