@@ -310,12 +310,12 @@ sub getMetamodComments {
 	my($minMod, $maxMod) =
 		$self->sqlSelect('min(id), max(id)', 'moderatorlog');
 	$minMod--;
-	my $count = 0;
-	while ($num_comments && $count++ < 2) {
+	my($count, $num) = (0, $num_comments);
+	while ($num && $count < 2) {
 		my @excluded;
 
 		@excluded = map { $_ = $_->{id} } (@excluded = @{$M2mods})
-		if @{$M2mods};
+			if @{$M2mods};
 		push @excluded, @{$previousM2s} if scalar @{$previousM2s};
 		$modpos = $minMod if $modpos < $minMod ||
 			             $maxMod - $modpos < $num_comments;
@@ -334,22 +334,37 @@ sub getMetamodComments {
 			'id, cid as mcid, reason as modreason',
 			'moderatorlog',
 			$cond,
-			"ORDER BY id LIMIT $num_comments"
+			"ORDER BY id LIMIT $num"
 		);
-		push @{$M2mods}, @{$result} if $result;
 
-		$num_comments -= scalar @{$M2mods};
+		if ($result) {
+			push @{$M2mods}, @{$result};
+			$num -= scalar @{$result};
+		}
 
 		# We only do this the first time thru.
-		if ($count == 1) {
+		if ($num && ! $count) {
 			$self->setVar('m2_modlog_cycles', $timesthru + 1);
 			$modpos = $minMod;
 		}
+		$count++;
 	}
 	# Only write position change if it changes for the user.
 	$self->setVar('m2_modlog_pos', $M2mods->[-1]{id})
 		if @{$M2mods} && !$user->{lastmmid};
 	$self->sqlTransactionFinish();
+
+	# Note in error log if we've picked up less than the requested number
+	# of comments.
+	if ($num) {
+		my @list = @{$M2mods};
+		map { $_ = $_->{id} } @list;
+		local $" = ', ';
+		errorLog(<<EOT);
+M2 - Gave U#$user->{uid} less than $num_comments comments: [@list]
+EOT
+
+	}
 
 	# Update user if necessary. Users are STUCK at the same moderations
 	# for M2 until they submit the form (or those comments fall out of 
@@ -2608,7 +2623,8 @@ sub checkForMetaModerator {
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
-	my($tuid) = $self->sqlSelect('count(*)', 'users_count');
+	my($tuid) = $self->sqlSelect('max(uid)', 'users_count');
+
 	return if $user->{uid} >
 		  $tuid * $self->getVar('m2_userpercentage', 'value');
 	return 1;  # OK to M2
