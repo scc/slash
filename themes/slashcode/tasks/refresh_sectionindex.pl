@@ -8,7 +8,7 @@ my $me = 'refresh_sectionindex.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '*/30 * * * *';
+$task{$me}{timespec} = '*/10 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 	my $sections = getSectionInfo();
@@ -25,6 +25,8 @@ $task{$me}{code} = sub {
 	} else {
 		$slashdb->createTemplate(\%template);
 	}
+
+	slashdLog("$me: %d sections refreshed");
 }
 
 1;
