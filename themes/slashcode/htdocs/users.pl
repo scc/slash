@@ -279,6 +279,7 @@ sub userInfo {
 
 #	if ($userbio->{nickname} eq $orignick) {
 #	wouldn't this be better?
+# slower comparison (and we already have both) -Brian
 	if ($userbio->{uid} == $user->{uid}) {
 		$nickmatch_flag = 1;
 		$points = $userbio->{points};
@@ -293,10 +294,11 @@ sub userInfo {
 			}
 		}
 		$mod_flag = 1 if $userbio->{uid} == $uid && $points > 0;
-		$title = getTitle('userinfo_user_title', { nick => $nick, uid => $uid });
+		$title = getTitle('userInfo_main_title', { nick => $nick, uid => $uid });
+	} else {
+		$title = getTitle('userInfo_user_title', { nick => $nick, uid => $uid });
 	}
 
-	# my $comments = $slashdb->getUserComments($uid, $form->{min}, $userbio);
 	my $comments = $slashdb->getCommentsByUID($uid, $form->{min}, $userbio);
 
 	for (@$comments) {

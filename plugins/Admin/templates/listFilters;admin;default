@@ -13,7 +13,7 @@ listFilters
 __template__
 [% INCLUDE titlebar %]
 
-<FORM ENCTYPE="multipart/form-data" action="$ENV{SCRIPT_NAME}" method="POST">
+<FORM ENCTYPE="multipart/form-data" action="[% env.script_name %]" method="POST">
 <TABLE>
 	<TR>
 		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create a new filter"></TD>
