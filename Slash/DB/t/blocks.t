@@ -10,7 +10,6 @@ BEGIN { $| = 1; print "1..1\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Slash::DB;
 $loaded = 1;
-print "ok 1\n";
 
 ######################### End of black magic.
 
@@ -20,18 +19,8 @@ print "ok 1\n";
 
 my $object = new Slash::DB('slash');
 $object->sqlConnect();
+my $bid = 'top10comments';
 
 ########################################################################
-print "Lets grab some user data\n";
-print "Creating a user \n";
-my $uid = $object->createUser('dork', 'dork@example.com', 'dork');
-print "Set user \n";
-$object->setUser($uid, {icq => '2342342334'});
-print "Getting user \n";
-my $user = $object->getUser($uid);
-print "Should dump the data for an user now\n";
-while(my ($key, $val) = each %$user) {
-	print "$key = $val \n";
-}
-print "Deleting user \n";
-my $user = $object->deleteUser($uid);
+my $story = $object->getBlock($bid);
+print "ok 1\n";
