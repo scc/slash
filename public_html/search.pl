@@ -40,11 +40,11 @@ sub main {
 	$I{F}{max}	||= "30";
 	$I{F}{'last'}	||= $I{F}{min} + $I{F}{max};
 
-	# don't echo bad characters back to browser
-	$I{F}{html_query} = stripByMode($I{F}{query}, 'exttrans');
+	# get rid of bad characters
+	$I{F}{query} =~ s/[^A-Z0-9'. ]//gi;
 
-	header("$I{sitename}: Search $I{F}{html_query}", $I{F}{section});
-	titlebar("99%", "Searching $I{F}{html_query}");
+	header("$I{sitename}: Search $I{F}{query}", $I{F}{section});
+	titlebar("99%", "Searching $I{F}{query}");
 
 	searchForm();
 
@@ -60,13 +60,14 @@ sub linkSearch {
 	my $C = shift;
 	my $r;
 
-	foreach (qw[threshold html_query min author op sid topic section total]) {
+	foreach (qw[threshold query min author op sid topic section total]) {
 		my $x = "";
 		$x =  $C->{$_} if defined $C->{$_};
 		$x =  $I{F}{$_} if defined $I{F}{$_} && !$x;
 		$x =~ s/ /+/g;
-		$r .= "$_=$x&" if defined $x;
+		$r .= "$_=$x&" unless $x eq "";
 	}
+	$r =~ s/&$//;
 
 	$r = qq!<A HREF="$ENV{SCRIPT_NAME}?$r">$C->{'link'}</A>!;
 }
@@ -76,7 +77,6 @@ sub keysearch {
 	my $keywords = shift;
 	my @columns = @_;
 
-	$keywords =~ s/[^A-Z0-9'\. ]//gi;
 	my @words = split m/ /, $keywords;
 	my $sql;
 	my $x = 0;
@@ -114,7 +114,7 @@ EOT
 
 	print <<EOT;
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	<INPUT TYPE="TEXT" NAME="query" VALUE="$I{F}{html_query}">
+	<INPUT TYPE="TEXT" NAME="query" VALUE="$I{F}{query}">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
 EOT
 
@@ -156,7 +156,7 @@ EOT
 	$I{F}{min} = int $I{F}{min};
 	my $prev = $I{F}{min} - 20;
 	print linkSearch({
-		'link'	=> "<B>$I{F}{mind} previous matches...</B>",
+		'link'	=> "<B>$I{F}{min} previous matches...</B>",
 		min	=> $prev
 	}), "<P>" if $prev >= 0;
 	
@@ -295,9 +295,9 @@ WHERE ((displaystatus = 0 and "$I{F}{section}"="")
 EOT
 
 	$sqlquery .= "   AND time < now() AND writestatus >= 0  ";
-	$sqlquery .= "   AND aid=\"$I{F}{author}\" " if $I{F}{author};
-	$sqlquery .= "   AND section=\"$I{F}{section}\" " if $I{F}{section};
-	$sqlquery .= "   AND tid=\"$I{F}{topic}\" " if $I{F}{topic};
+	$sqlquery .= "   AND aid="	. $I{dbh}->quote($I{F}{author})  if $I{F}{author};
+	$sqlquery .= "   AND section="	. $I{dbh}->quote($I{F}{section}) if $I{F}{section};
+	$sqlquery .= "   AND tid="	. $I{dbh}->quote($I{F}{topic})   if $I{F}{topic};
 
 	$sqlquery .= " ORDER BY ";
 	$sqlquery .= " kw DESC, " if $I{F}{query};

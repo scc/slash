@@ -35,7 +35,7 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	my $id = getFormkeyId($I{F}{uid});
+	my $id = getFormkeyId($I{U}{uid});
 
 	# Seek Section for Appropriate L&F
 	my $sct = $I{dbh}->quote($I{F}{sid}) || "''";
@@ -71,28 +71,25 @@ sub main {
 	}
 
 	if ($I{F}{op} eq "Submit") {
+
 		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-                        ($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}") if $I{U}{uid} > 0;
-                        submitComment();
-                }
+			($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}") if $I{U}{uid} > 0;
+			submitComment();
+		}
+
 	} elsif ($I{F}{op} eq "Edit" || $I{F}{op} eq "post" 
 			||
 		$I{F}{op} eq "Preview" || $I{F}{op} eq "Reply") {
 
 		if ($I{F}{op} eq 'Reply') {
-			insertFormkey("comments",$id,$I{F}{sid});
+			insertFormkey("comments",$id,$I{F}{sid});	
 		}
 
-		if (($I{F}{formkey} !~ /\w{10}/ || $I{F}{formkey} =~ /^(.)\1+$/ )
-			&& $I{F}{op} eq 'post' || ! $is_a_valid_key) {
-			print qq|<B>Invalid form key!</B>\n|;
+		# find out their Karma
+		($I{U}{karma}) = sqlSelect("karma", "users_info",
+			"uid=$I{U}{uid}") if $I{U}{uid} > 0;
+		editComment($id);
 
-		} else {
-			# find out their Karma
-			($I{U}{karma}) = sqlSelect("karma", "users_info",
-				"uid=$I{U}{uid}") if $I{U}{uid} > 0;
-			editComment();
-		}
 
 	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
 		($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
@@ -139,11 +136,9 @@ sub commentIndex {
 	titlebar("90%", "Several Active Discussions");
 	print qq!<MULTICOL COLS="2">\n!;
 
-	my $c = sqlSelectMany("discussions.sid,discussions.title,discussions.url",
-				<<SQL);
+	my $c = sqlSelectMany("discussions.sid,discussions.title,discussions.url", <<SQL);
 discussions,stories where displaystatus > -1 and discussions.sid=stories.sid and time <= now() order by time desc LIMIT 50
 SQL
-	);
 
 	while (my $C = $c->fetchrow_hashref) {
 		$C->{title} ||= "untitled";
@@ -177,7 +172,10 @@ sub saveChanges {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in whcih you edit a comment.
 sub editComment {
+	my $id = shift;
 	$I{U}{points} = 0;
+
+	my $formkey_earliest = time() - $I{formkey_timeframe};
 
 	my $reply = sqlSelectHashref(getDateFormat("date", "time") . ",
 		subject,comments.points as points,comment,realname,nickname,
@@ -689,7 +687,6 @@ EOT
 		my($dtitle) = sqlSelect(
 			'title', 'discussions', "sid=" . $I{dbh}->quote($I{F}{sid})
 		);
-		print "my $dtitle" if $I{U}{uid} == 1;
 
 		unless ($dtitle) {
 			sqlUpdate(
@@ -717,7 +714,6 @@ EOT
 			"uid=" . $I{dbh}->quote($I{U}{uid}), 1
 		);
 
-		
 		# successful submission		
 		formSuccess($I{F}{formkey},$maxCid,length($I{F}{postercomment}));
 
@@ -749,7 +745,7 @@ sub moderate {
 
 	# Handle Deletions, Points & Reparenting
 	foreach (sort keys %{$I{F}}) {
-		if (/\Adel_(.*)/) { # && $I{U}{points}) {
+		if (/^del_(\d+)$/) { # && $I{U}{points}) {
 			my $delCount = deleteThread($I{F}{sid}, $1);
 			$totalDel += $delCount;
 			sqlUpdate(
@@ -765,7 +761,7 @@ sub moderate {
 	<LI>Deleted $delCount items from story $I{F}{sid} under comment $I{F}{$_}</LI>
 EOT
 
-		} elsif (!$hasPosted && /\Areason_(.*)/) {
+		} elsif (!$hasPosted && /^reason_(\d+)$/) {
 			moderateCid($I{F}{sid}, $1, $I{F}{"reason_$1"});
 		}
 	}

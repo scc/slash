@@ -33,7 +33,7 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	my $id = getFormkeyId($I{F}{uid});
+	my $id = getFormkeyId($I{U}{uid});
 
 	my($section, $op, $seclev, $aid) = (
 		$I{F}{section}, $I{F}{op}, $I{U}{aseclev}, $I{U}{aid}
@@ -69,7 +69,7 @@ sub main {
 	} elsif (! $op) {
 		yourPendingSubmissions();
 		titlebar("100%", "$I{sitename} Submissions", "c");
-		displayForm($I{U}{nickname},$I{U}{fakeemail}, $I{F}{section}, $id);
+		displayForm($I{U}{nickname}, $I{U}{fakeemail}, $I{F}{section}, $id);
 
 	} elsif ($op eq "PreviewStory") {
 		titlebar("100%", "$I{sitename} Submission Preview", "c");
@@ -125,25 +125,27 @@ EOT
 #################################################################
 sub previewForm {
 	my($aid, $subid) = @_;
+	my $subid_dbi = $I{dbh}->quote($subid);
 
 	my $admin = $I{U}{aseclev} > 99;
 
 	my $writestatus = $I{dbobject}->getVar("defaultwritestatus");
-	($subid, my($email, $name, $title, $tid, $introtext,$time,$comment)) =
+	($subid, my($email, $name, $title, $tid, $introtext, $time, $comment)) =
 		sqlSelect("subid,email,name,subj,tid,story,time,comment",
-		"submissions","subid='$subid'");
+		"submissions", "subid=$subid_dbi");
 
 	$introtext =~ s/\n\n/\n<P>/gi;
 	$introtext .= " ";
-	$introtext =~  s{(?!"|=)(.|\n|^)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
-			{<A HREF="$2://$3"> link <\/A> }gi;
+	$introtext =~  s{(?<!"|=|>)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
+			{<A HREF="$1://$2">link</A> }gi;
+	$introtext =~ s/\s+$//;
 	$introtext = qq!<I>"$introtext"</I>! if $name;
 
 	if ($comment && $admin) {
 		# This probably should be a block.
 		print <<EOT;
 <P>Submission Notes:
-<TABLE WIDTH="95%"><TR><TD BGCOLOR="$I{bg}[2]"><FONT SIZE=-1 COLOR="$I{fg}[2]">$comment</FONT></TD></TR></TABLE>
+<TABLE WIDTH="95%"><TR><TD BGCOLOR="$I{bg}[2]"><FONT SIZE="-1" COLOR="$I{fg}[2]">$comment</FONT></TD></TR></TABLE>
 EOT
 	}
 
@@ -361,29 +363,35 @@ EOT
 	$sql .= "		or note=' ' " unless $I{F}{note};
 	$sql .= ")";
 	$sql .= "		and tid='$I{F}{tid}' " if $I{F}{tid};
-	$sql .= "         and section='$I{U}{asection}' " if $I{U}{asection};
-	$sql .= "         and section='$I{F}{section}' " if $I{F}{section};
+	$sql .= "         and section=" . $I{dbh}->quote($I{U}{asection}) if $I{U}{asection};
+	$sql .= "         and section=" . $I{dbh}->quote($I{F}{section})  if $I{F}{section};
 	$sql .= "	  ORDER BY time";
-
-	# print $sql;
 
 	my $cursor = $I{dbh}->prepare($sql);
 	$cursor->execute;
 
-	my %select = (DEFAULT => '', Hold => '', Quik => '');
+	my @select = (qw(DEFAULT Hold Quik),
+		(ref $I{submit_categories} ? @{$I{submit_categories}} : ())
+	);
+	my %select = map { ($_, '') } @select;
+
 
 	print qq!\n\n<TABLE WIDTH="95%" CELLPADDING="0" CELLSPACING="0" BORDER="0">\n!;
 	while (my($subid, $subj, $time, $tid, $note, $email, $name,
 		$section, $comment, $uid, $karma) = $cursor->fetchrow) {
 
-		$select{$note || 'DEFAULT'} = ' SELECTED';
+		local $select{$note || 'DEFAULT'} = ' SELECTED';
+		my $str;
+		for (@select) {
+			my $name = $_ eq 'DEFAULT' ? '' : $_;
+			$str .= "\t\t\t<OPTION$select{$_}>$name</OPTION>\n";
+		}
+
 		print $admin ? <<ADMIN : <<USER;
 	<TR><TD><NOBR>
 		<FONT SIZE="1"><INPUT TYPE="TEXT" NAME="comment_$subid" VALUE="$comment" SIZE="15">
 		<SELECT NAME="note_$subid">
-			<OPTION$select{DEFAULT}></OPTION>
-			<OPTION$select{Hold}>Hold</OPTION>
-			<OPTION$select{Quik}>Quik</OPTION>
+$str
 		</SELECT>
 ADMIN
 	<TR><TD>$comment</TD> <TD>$note</TD>
@@ -397,12 +405,12 @@ USER
 		$karma = $uid > -1 && defined $karma ? " ($karma)" : "";
 
 		my @strs = (substr($subj, 0, 35), substr($name, 0, 20), substr($email, 0, 20));
-		my $s = $section ne $I{defaultsection} ? "&section=$section" : "";
+		my $sec = $section ne $I{defaultsection} ? "&section=$section" : "";
 		printf(($admin ? <<ADMIN : <<USER), @strs);
 
 		</FONT><INPUT TYPE="CHECKBOX" NAME="del_$subid">
 	</NOBR></TD><TD>$ptime</TD><TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$s">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$sec">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="2">%s$karma<BR>%s</FONT></TD></TR>
 ADMIN
 	<TD>\u$section</TD><TD>$ptime</TD>
@@ -444,7 +452,7 @@ USER
 sub displayForm {
 	my($user, $fakeemail, $section, $id) = @_;
 	my $formkey_earliest = time() - $I{formkey_timeframe};
-	
+
 	if (!checkTimesPosted("submissions", $I{max_submissions_allowed}, $id, $formkey_earliest)) {
 		my $max_posts_warn = <<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day : $I{max_submissions_allowed}</B></P>
