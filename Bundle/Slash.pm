@@ -17,17 +17,17 @@ C<perl -MCPAN -e 'install "Bundle::Slash"'>
 
 =head1 CONTENTS
 
-Bundle::CPAN	- File::Spec,Digest::MD5,Compress::Zlib,libnet,Archive::Tar,Data::Dumper
+Bundle::CPAN		- File::Spec,Digest::MD5,Compress::Zlib,libnet,Archive::Tar,Data::Dumper
 
-Bundle::LWP	- URI,HTML::Parser,MIME::Base64
+Bundle::LWP		- URI,HTML::Parser,MIME::Base64
 
-Bundle::DBI	- Storable
+Bundle::DBI		- Storable
 
 DBI::FAQ
 
-Bundle::DBD::mysql  - Data::ShowTable
+Bundle::DBD::mysql	- Data::ShowTable
 
-Date::Parse         - TimeDate
+Date::Parse		- TimeDate
 
 XML::Parser
 
@@ -44,6 +44,8 @@ Apache::DBILogger
 Image::Size
 
 DBIx::Password
+
+Template		- Template Toolkit
 
 
 =head1 DESCRIPTION
