@@ -250,8 +250,16 @@ sub printComments {
 		$header = $discussion->{id};
 	}
 
-print STDERR "==========\nDEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n"
-	if getCurrentStatic('debug');
+	if (getCurrentStatic('DEBUG')) {
+		print STDERR join(" ",
+			"DEBUG",
+			"printComments: Sid:($sid)",
+			"Header:($header)",
+			"PID:($pid)",
+			"CID:($cid)",
+			"Discussion:($discussion)"
+		) . "\n";
+	}
 
 	$pid ||= 0;
 	$cid ||= 0;
@@ -259,8 +267,6 @@ print STDERR "==========\nDEBUG printComments: Sid:($sid) Header:($header) PID:(
 
 	# Get the Comments
 	my($comments, $count) = selectComments($header, $cid || $pid, $sid);
-
-# { use Data::Dumper; print STDERR "form: " . Dumper($form) . "comments: " . Dumper($comments) . "\n" }
 
 	# Should I index or just display normally?
 	my $cc = 0;
