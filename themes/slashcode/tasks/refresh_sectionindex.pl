@@ -7,8 +7,10 @@
 # Description: refreshes the static "sectionindex_display" template for use
 # in HTML output.
 
-
 use strict;
+
+use Slash::Display;
+
 my $me = 'refresh_sectionindex.pl';
 
 use vars qw( %task );

@@ -24,6 +24,7 @@ use XML::RSS 0.95;
 use Schedule::Cron;
 
 use Slash;
+use Slash::Display;
 use Slash::Utility;
 
 use vars qw( %task );

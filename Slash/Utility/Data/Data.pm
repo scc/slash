@@ -1247,9 +1247,9 @@ sub _url_to_domain_tag {
 	my($link) = @_;
 	my $absolutedir = getCurrentStatic('absolutedir');
 	my $uri = URI->new_abs($link, $absolutedir);
-	my $info = "";
-	if ($uri->can("host")) {
-		$info = lc $uri->host;
+	my($info, $host, $scheme) = ("", "", "");
+	if ($uri->can("host") and $host = $uri->host) {
+		$info = lc $host;
 		if ($info =~ m/^([\d.]+)\.in-addr\.arpa$/) {
 			$info = join(".", reverse split /\./, $1);
 		}
@@ -1272,11 +1272,12 @@ sub _url_to_domain_tag {
 				$info = join(".", @info[-3..-1]);
 			}
 		}
-	} elsif ($uri->can("scheme")) {
+	} elsif ($uri->can("scheme") and $scheme = $uri->scheme) {
 		# Most schemes, like ftp or http, have a host.  Some,
-		# most notably mailto, do not.  For those, at least give
-		# the user an idea of why not, by listing the scheme.
-		$info = lc $uri->scheme;
+		# most notably mailto and news, do not.  For those,
+		# at least give the user an idea of why not, by
+		# listing the scheme.
+		$info = lc $scheme;
 	} else {
 		$info = "?";
 	}

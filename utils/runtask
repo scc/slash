@@ -18,9 +18,9 @@ use Time::HiRes;
 use URI::Escape;
 use XML::Parser::Expat;
 use XML::RSS 0.95;
-use Schedule::Cron;
 
 use Slash;
+use Slash::Display;
 use Slash::Utility;
 
 use vars qw( %opts %task $task_name $virtual_user $constants $slashdb $user $dir );

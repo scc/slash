@@ -13,7 +13,7 @@ use base 'Slash::DB::Static::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: I hate people who love me.  And they hate me.
+# FRY: Whoa, slow down. You're going a mile a minute.
 
 1;
 

@@ -44,7 +44,7 @@ $task{$me}{code} = sub {
 		# @$discussions is an array of arrays, annoyingly.
 		my($discussion_id) = @$id_ary;
 		# Don't do too many at once.
-		if (time > $start_time+30) {
+		if (time > $start_time+45) {
 			push @aborted, "discussions on $i/$#$discussions";
 			last;
 		}
@@ -84,7 +84,7 @@ $task{$me}{code} = sub {
 		my $info_ary = $stories->[$i];
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
 		# Don't do too many at once.
-		if (time > $start_time+45) {
+		if (time > $start_time+90) {
 			push @aborted, "delete_stories on $i/$#$stories";
 			last;
 		}
@@ -105,7 +105,7 @@ $task{$me}{code} = sub {
 		my($discussion_id, $title, $section);
 		($sid, $discussion_id, $title, $section) = @{$updates{story}{$sid}};
 		# Don't do too many at once.
-		if (time > $start_time+60) {
+		if (time > $start_time+135) {
 			push @aborted, "update_stories on $i/$#story_order";
 			last;
 		}

@@ -18,7 +18,7 @@ use base 'Slash::DB::MySQL';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: Bite my shiny, metal ass!
+# FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
 ########################################################
 # for slashd

@@ -12,7 +12,7 @@ use base 'Slash::DB::Utility';
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: The laws of science be a harsh mistress.
+# FRY: And where would a giant nerd be? THE LIBRARY!
 
 #################################################################
 sub new {

@@ -33,7 +33,7 @@ $task{$PROGNAME}{code} = sub {
 	}
 
 	# This may need to go into a template somewhere.
-	my $reg_subj = "You're $constants->{sitename} password has expired.";
+	my $reg_subj = "Your $constants->{sitename} password has expired.";
 	# Loop over all about-to-expire users.
 	my @users_to_expire = @{$slashdb->checkUserExpiry()};
 	for my $e_user (@users_to_expire) {
