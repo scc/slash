@@ -298,7 +298,7 @@ CREATE TABLE newstories (
   bodytext text,
   writestatus int(1) DEFAULT '0' NOT NULL,
   hits int(1) DEFAULT '0' NOT NULL,
-  section varchar(15) DEFAULT '' NOT NULL,
+  section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
@@ -395,7 +395,7 @@ CREATE TABLE stories (
   bodytext text,
   writestatus int(1) DEFAULT '0' NOT NULL,
   hits int(1) DEFAULT '0' NOT NULL,
-  section varchar(15) DEFAULT '' NOT NULL,
+  section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
@@ -458,14 +458,17 @@ CREATE TABLE submissions (
 #
 DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
-  tpid varchar(30) DEFAULT '' NOT NULL,
+  tpid int(11) NOT NULL auto_increment,
+  name varchar(30) DEFAULT '' NOT NULL,
   template text,
   seclev int(1),
   description text,
   title varchar(128),
   page varchar(20) DEFAULT 'misc' NOT NULL,
+  section varchar(30) DEFAULT 'default' NOT NULL,
+  lang char(3) DEFAULT 'eng' NOT NULL,
   PRIMARY KEY (tpid),
-  KEY page (page)
+  UNIQUE true_template (name,page,section,lang)
 );
 #
 # Table structure for table 'topics'

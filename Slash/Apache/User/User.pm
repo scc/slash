@@ -241,6 +241,15 @@ sub getUser {
 		$user->{aton} = 'on'; # getData('aton');
 	}
 
+
+	if($r->uri =~ m[^/$]) {
+		$user->{currentPage} = 'index';
+	} elsif ($r->uri =~ m[^/(.*)\.pl$]) {
+		$user->{currentPage} = $1;
+	} else {
+		$user->{currentPage} = 'misc';
+	}
+
 	if ($user->{seclev} >= 99) {
 		$user->{is_admin} = 1;
 		#$user->{aid} = $user->{nickname}; # Just here for the moment

@@ -235,7 +235,7 @@ CREATE TABLE newstories (
   bodytext text,
   writestatus int2 DEFAULT '0' NOT NULL,
   hits int2 DEFAULT '0' NOT NULL,
-  section varchar(15) DEFAULT '' NOT NULL,
+  section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int2 DEFAULT '0' NOT NULL,
   commentstatus int2,
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
@@ -330,7 +330,7 @@ CREATE TABLE stories (
   bodytext text,
   writestatus int2 DEFAULT '0' NOT NULL,
   hits int2 DEFAULT '0' NOT NULL,
-  section varchar(15) DEFAULT '' NOT NULL,
+  section varchar(30) DEFAULT '' NOT NULL,
   displaystatus int2 DEFAULT '0' NOT NULL,
   commentstatus int2,
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
@@ -343,7 +343,7 @@ CREATE TABLE stories (
 CREATE INDEX idx_time ON stories(time);
 CREATE INDEX idx_searchform ON stories(displaystatus,time);
 
-CREATE TABLE users_param (
+CREATE TABLE story_param (
 	param_id SERIAL,
   sid varchar(20) DEFAULT '' NOT NULL,
 	name varchar(32) NOT NULL,
@@ -384,12 +384,16 @@ CREATE INDEX idx_subid ON submissions(subid,section);
 
 
 CREATE TABLE templates (
-	tpid varchar(30) DEFAULT '' NOT NULL,
+	tpid SERIAL,
+	name varchar(30) DEFAULT '' NOT NULL,
 	template text,
 	seclev int4,
 	description text,
 	title varchar(128),
 	page varchar(20) DEFAULT 'misc' NOT NULL,
+  section varchar(30) DEFAULT 'default' NOT NULL,
+  lang char(3) DEFAULT 'eng' NOT NULL,
+  UNIQUE (name,page,section,lang),
 	PRIMARY KEY (tpid)
 );
 CREATE INDEX idx_tmpltpage ON templates(page);

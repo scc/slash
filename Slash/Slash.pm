@@ -2250,10 +2250,10 @@ sub createMenu {
 # this gets little snippets of data all in grouped together in
 # one template, called "Slash-data"
 sub getData {
-	my($value, $hashref) = @_;
+	my($value, $hashref, $page) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('Slash-data', $hashref,
+	return slashDisplay($page . '-data', $hashref,
 		{ Return => 1, Nocomm => 1 });
 }
 
