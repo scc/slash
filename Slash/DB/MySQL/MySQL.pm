@@ -971,6 +971,7 @@ sub createUser {
 	$self->sqlInsert("users_prefs", { uid => $uid });
 	$self->sqlInsert("users_comments", { uid => $uid });
 	$self->sqlInsert("users_index", { uid => $uid });
+	$self->sqlInsert("users_count", { uid => $uid });
 
 	# All param fields should be set here, as some code may not behave
 	# properly if the values don't exist.
@@ -2434,10 +2435,9 @@ sub checkForMetaModerator {
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
-	my $num_users = getCurrentStatic('num_users_approx');
-	$num_users = 1 if !$num_users or $num_users < 1;
+	my($tuid) = $self->sqlSelect('count(*)', 'users_count');
 	return if $user->{uid} >
-		  $num_users * $self->getVar('m2_userpercentage', 'value');
+		  $tuid * $self->getVar('m2_userpercentage', 'value');
 	return 1;  # OK to M2
 }
 
@@ -2458,14 +2458,13 @@ sub getAuthorNames {
 # data from the cache? Or is it just as fast to grab it from
 # the database?
 sub getStoryByTime {
-	my($self, $sign, $story, $isolate, $section) = @_;
+	my($self, $sign, $story, $section) = @_;
 	my($where);
 	my $user = getCurrentUser();
 
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
-	if ($isolate) {
+	if ($section->{isolate}) {
 		$where = 'AND section=' . $self->sqlQuote($story->{'section'})
-			if $isolate == 1;
 	} else {
 		$where = 'AND displaystatus=0';
 	}

@@ -695,6 +695,15 @@ CREATE TABLE users_comments (
 ) TYPE = myisam;
 
 #
+# Table structure for table 'users_count'
+#
+
+DROP TABLE IF EXISTS users_count;
+CREATE TABLE users_count (
+	uid mediumint UNSIGNED NOT NULL,
+) TYPE = myisam;
+
+#
 # Table structure for table 'users_index'
 #
 
