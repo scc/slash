@@ -1,4 +1,4 @@
 htdoc=cheesyportal.pl
 description=CheesyPortal is a script to get an overall look at portal boxes
-template=data;cheesyportal;default
-template=main;cheesyportal;default
+template=templates/data;cheesyportal;default
+template=templates/main;cheesyportal;default
