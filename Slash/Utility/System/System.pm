@@ -49,6 +49,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	doLogPid
 	doLogExit
 	prog2file
+	makeDir
 );
 @EXPORT_OK = qw();
 
@@ -327,6 +328,20 @@ sub prog2file {
 	# New way.
 	return ($success, $err);
 }
+
+
+# Makes a directory based on a base directory, a section name and a char-based
+# SID.
+sub makeDir {
+	my($bd, $section, $sid) = @_;
+
+	my $monthid = substr($sid, 3, 2);
+	my $yearid = substr($sid, 0, 2);
+	my $dayid = substr($sid, 6, 2);
+
+	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0775;
+}
+
 
 
 1;

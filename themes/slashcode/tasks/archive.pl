@@ -89,14 +89,5 @@ $task{$me}{code} = sub {
 	      	"totalArchivedStories $totalChangedStories" : '';
 };
 
-sub makeDir {
-	my($bd, $section, $sid) = @_;
-
-	my $monthid = substr($sid, 3, 2);
-	my $yearid = substr($sid, 0, 2);
-	my $dayid = substr($sid, 6, 2);
-
-	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0775;
-}
 
 1;
