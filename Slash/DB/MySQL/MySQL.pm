@@ -743,6 +743,7 @@ sub getCommentsByUID {
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $table WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min,50 ";
+	print STDERR "getCommentsByUID query $sqlquery\n";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
@@ -762,6 +763,7 @@ sub getCommentsByNetID {
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
+	print STDERR "getCommentsByNetID query $sqlquery\n";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;

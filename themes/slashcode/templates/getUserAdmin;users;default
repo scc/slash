@@ -10,7 +10,6 @@ Template for editing user
 * author_select = select popup for authors
 * author_flag = current user is author
 * authoredit_flag = current user can edit authors
-* form_flag = i have no idea
 __title__
 users admin
 __page__
@@ -20,9 +19,6 @@ en_US
 __name__
 getUserAdmin
 __template__
-[% IF form_flag %]
-[% END %]
-
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 [% IF authoredit_flag %]
 	<TR>
@@ -72,10 +68,9 @@ __template__
 		<INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info">
 		<INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User">
 		</TD>
-		</FORM>
 	</TR>
 	<TR>
-		<TD COLSPAN=3 HEIGHT=10></TD>
+		<TD COLSPAN=3 HEIGHT=10>&nbsp;</TD>
 	</TR>
 
 [% IF authoredit_flag && seclev_field && ! edituser.nonuid  %]
@@ -115,10 +110,7 @@ __template__
 		Save Admin: <INPUT TYPE="SUBMIT" NAME="saveuseradmin" VALUE="Save Admin">
 		</TD>
 	</TR>
-
+	</FORM>
 </TABLE>
-[% IF form_flag %]
-</FORM>
-[% END %]
 __seclev__
 10000
