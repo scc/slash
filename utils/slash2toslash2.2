@@ -30,16 +30,13 @@ usage('Need new virtual user') unless $opts{'u'};
 	last if $opts{I};
 
 	my $answer = ask(<<'EOT');
-SLASH v2 (Bender) to Slash v2.2 (Fry) Conversion Utility
-	based on original slash1toslash2 script by pudge
- 	2.2 conversions by Cliff
-
+Slash 2.0.0 (Bender) to Slash 2.2.0 (Fry) Conversion Utility
 
 By running this I realize that there is no warranty, expressed or implied.
 Any data loss as a result of running this program is my responsibility.
 I have read the documentation for this program, I understand it, and I
 have taken the necessary precautions and done the required preparation.
-[yes/No]
+[yes/No]:
 EOT
 	exit unless $answer eq 'yes';
 }
@@ -62,7 +59,7 @@ my @user_tables = qw(
 );
 
 my %plugins = (
-	journals => {
+	Journal => {
 		tables => [qw(
 			journals journals_text journal_friends journal_themes
 		)],
@@ -363,7 +360,7 @@ my (%conditions) = (
 
 	####################################
 	# Conversion Questions
-	$del_users = ask(<<'EOT') =~ /^y/i;
+	$del_users = ask(<<'EOT') eq 'yes';
 Should we delete all rows from the existing users tables? If not, you should
 take steps to insure that no user collisions will result as the importer
 will otherwise attempt to merge the user databases, and a collision will
@@ -463,22 +460,19 @@ sub convert_plugins {
 	my($new_plugins, $old_plugins);
 
 	print "\nConverting PLUGINS...\n\n";
-	$new_plugins = $dbh_new->selectall_arrayref(
-		'value, name', 'site_info', "name='plugin'"
+	$new_plugins = $dbh_new->selectcol_arrayref(
+		'SELECT value FROM site_info WHERE name="plugin"'
 	);
-	$_ = $_->[0] for @{$new_plugins};
-
-	$old_plugins = $dbh_old->selectall_arrayref(
-		'value, name', 'site_info', "name='plugin'"
+	$old_plugins = $dbh_old->selectcol_arrayref(
+		'SELECT value FROM site_info WHERE name="plugin"'
 	);
-	$_ = $_->[0] for @{$old_plugins};
 
 	for (@{$new_plugins}) {
 		local $" = '|';
 		my $alit = "(@{$old_plugins})";
 		if (/^$alit$/) {
-			next if ! $plugins{$_}->{tables};
-			for (@{$plugins{$_}->{tables}}) {
+			next if ! $plugins{$_}{tables};
+			for (@{$plugins{$_}{tables}}) {
 				duplicate($_, 1);
 			}
 		}
@@ -1381,7 +1375,8 @@ I know it's a pain, but you'll be _much_ happier with the results.
 If you invoke this program using the -I switch, an incremental conversion will
 be performed. The name implies exactly what it means, each table has a condition
 that will allow for incremental updates to be performed between a Beast site and
-a Fry site, which is useful for sites attempting to upgrade to Fry by using another system in tandem.
+a Fry site, which is useful for sites attempting to upgrade to Fry by using another
+system in tandem.
 
 An incremental update assumes that a previous conversion (or a working Slash site
 already exists at the database referred to by the specified virtual user.

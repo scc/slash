@@ -181,193 +181,36 @@ sub _install {
 	my $driver = $self->getValue('db_driver');
 	my $prefix_site = $self->getValue('site_install_directory');
 
-	# YEs, the next bit could be cleaned up -Brian
-	if ($hash->{htdoc}){
-		my $filename;
-		for (@{$hash->{htdoc}}) {
-			if (/\//) {
-				/.*\/(.*)$/;
-				$filename = $1;
-			} else {
-				$filename = $_;
-			}
+	my %stuff = ( # [relative directory, executable]
+		htdoc		=> ["htdocs",			1],
+		htdoc_code	=> ["htdocs/code",		0],
+		htdoc_faq	=> ["htdocs/faq",		0],
+		sbin		=> ["sbin",			1],
+		image		=> ["htdocs/images",		0],
+		image_award	=> ["htdocs/images/awards",	0],
+		image_banner	=> ["htdocs/images/banners",	0],
+		topic		=> ["htdocs/images/topics",	0],
+	);
 
+	for my $section (keys %stuff) {
+		next unless exists $hash->{$section} && @{$hash->{$section}};
+		my $instdir = "$prefix_site/$stuff{$section}[0]";
+		mkpath $instdir, 0, 0755;
+
+		for (@{$hash->{$section}}) {
+			(my $filename = $_) =~ s/^.*\/(.*)$/$1/;
+			my $old = "$hash->{dir}/$_";
+			my $new = "$instdir/$filename";
+
+			# I don't think we should delete the file first,
+			# but it is a thought. -- pudge
+			# unlink $new;
 			if ($symlink) {
-				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/$filename";
+				symlink $old, $new;
 			} else {
-				copy "$hash->{dir}/$_", "$prefix_site/htdocs/$filename";
-				chmod 0755, "$prefix_site/htdocs/$_";
-			}
-		}
-	}
-
-        if ($hash->{htdoc_code}){
-		mkpath "$prefix_site/htdocs/code", 0, 0775;
-                my $filename;
-                for (@{$hash->{htdoc_code}}) {
-                        if (/\//) {
-                                /.*\/(.*)$/;
-                                $filename = $1;
-                        } else {
-                                $filename = $_;
-                        }
-
-                        if ($symlink) {
-                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/code/$filename";
-                        } else {
-                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/code/$filename";
-                        }
-                }
-        }
-
-        if ($hash->{htdoc_faq}){
-		mkpath "$prefix_site/htdocs/faq", 0, 0775;
-                my $filename;
-                for (@{$hash->{htdoc_faq}}) {
-                        if (/\//) {
-                                /.*\/(.*)$/;
-                                $filename = $1;
-                        } else {
-                                $filename = $_;
-                        }
-
-                        if ($symlink) {
-                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/faq/$filename";
-                        } else {
-                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/faq/$filename";
-                        }
-                }
-        }
-
-	if ($hash->{task}){
-		my $filename;
-		for (@{$hash->{task}}) {
-			if (/\//) {
-				/.*\/(.*)$/;
-				$filename = $1;
-			} else {
-				$filename = $_;
-			}
-
-			if ($symlink) {
-				symlink "$hash->{dir}/$_", "$prefix_site/tasks/$filename";
-			} else {
-				copy "$hash->{dir}/$_", "$prefix_site/tasks/$filename";
-				chmod 0755, "$prefix_site/tasks/$_";
-			}
-		}
-	}
-
-        if ($hash->{sbin}){
-                my $filename;
-                for (@{$hash->{sbin}}) {
-                        if (/\//) {
-                                /.*\/(.*)$/;
-                                $filename = $1;
-                        } else {
-                                $filename = $_;
-                        }
-
-                        if ($symlink) {
-                                symlink "$hash->{dir}/$_", "$prefix_site/sbin/$filename";
-                        } else {
-                                copy "$hash->{dir}/$_", "$prefix_site/sbin/$filename";
-                                chmod 0755, "$prefix_site/sbin/$_";
-                        }
-                }
-        }
-
-	if ($hash->{misc}){
-		my $filename;
-		for (@{$hash->{misc}}) {
-			if (/\//) {
-				/.*\/(.*)$/;
-				$filename = $1;
-			} else {
-				$filename = $_;
-			}
-
-			if ($symlink) {
-				symlink "$hash->{dir}/$_", "$prefix_site/misc/$filename";
-			} else {
-				copy "$hash->{dir}/$_", "$prefix_site/misc/$filename";
-				chmod 0755, "$prefix_site/misc/$_";
-			}
-		}
-	}
-
-	if ($hash->{image}){
-		my $filename;
-		for (@{$hash->{image}}) {
-			if (/\//) {
-				/.*\/(.*)$/;
-				$filename = $1;
-			} else {
-				$filename = $_;
-			}
-
-			if ($symlink) {
-				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/$filename";
-			} else {
-				copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/$filename";
-				chmod 0755, "$prefix_site/htdocs/images/$_";
-			}
-		}
-	}
-
-        if ($hash->{image_award}){
-		mkpath "$prefix_site/htdocs/images/awards", 0, 0775;
-                my $filename;
-                for (@{$hash->{image_award}}) {
-                        if (/\//) {
-                                /.*\/(.*)$/;
-                                $filename = $1;
-                        } else {
-                                $filename = $_;
-                        }
-
-                        if ($symlink) {
-                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/awards/$filename";
-                        } else {
-                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/awards/$filename";
-                        }
-                }
-        }
-
-        if ($hash->{image_banner}){
-		mkpath "$prefix_site/htdocs/images/banners", 0, 0775;
-                my $filename;
-                for (@{$hash->{image_banner}}) {
-                        if (/\//) {
-                                /.*\/(.*)$/;
-                                $filename = $1;
-                        } else {
-                                $filename = $_;
-                        }
-
-                        if ($symlink) {
-                                symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/banners/$filename";
-                        } else {
-                                copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/banners/$filename";
-                        }
-                }
-        }
-
-	if ($hash->{topic}){
-		my $filename;
-		for (@{$hash->{topic}}) {
-			if (/\//) {
-				/.*\/(.*)$/;
-				$filename = $1;
-			} else {
-				$filename = $_;
-			}
-
-			if ($symlink) {
-				symlink "$hash->{dir}/$_", "$prefix_site/htdocs/images/topics/$filename";
-			} else {
-				copy "$hash->{dir}/$_", "$prefix_site/htdocs/images/topics/$filename";
-				chmod 0755, "$prefix_site/htdocs/images/topics/$filename";
+				copy $old, $new;
+				my $mode = $stuff{$section}[1] ? 0755 : 0644;
+				chmod $mode, $new;
 			}
 		}
 	}
