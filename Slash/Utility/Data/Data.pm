@@ -616,6 +616,14 @@ sub stripBadHtml {
 	$str =~ s/<(.*?)>/approveTag($1)/sge;
 	$str =~ s/></> </g;
 
+	# Encode stray >
+	1 while $str =~ s/(>[^<]*)>/$1\&gt;/g;
+	1 while $str =~ s/^([^<]*)>/$1\&gt;/g;
+
+	# Encode stray <
+	1 while $str =~ s/<([^>]*<)/\&lt;$1/g;
+	1 while $str =~ s/<([^>]*)$/\&lt;$1/g;
+
 	return $str;
 }
 
@@ -847,13 +855,16 @@ sub approveTag {
 	my($tag) = @_;
 
 	$tag =~ s/^\s*?(.*)\s*?$/$1/; # trim leading and trailing spaces
-	$tag =~ s/\bstyle\s*=(.*)$//i; # go away please
+	$tag =~ s/\bstyle\s*=(.*)$//is; # go away please
 
 	# Take care of URL:foo and other HREFs
-	if ($tag =~ /^URL:(.+)$/i) {
+	# Using /s means that the entire variable is treated as a single line
+	# which means \n will not fool it into stopping processing.  fixurl()
+	# knows how to handle multi-line URLs (it removes whitespace).
+	if ($tag =~ /^URL:(.+)$/is) {
 		my $url = fixurl($1);
 		return qq!<A HREF="$url">$url</A>!;
-	} elsif ($tag =~ /href\s*=(.+)$/i) {
+	} elsif ($tag =~ /href\s*=(.+)$/is) {
 		my $url = fixurl($1);
 		return qq!<A HREF="$url">!;
 	}
@@ -897,7 +908,9 @@ The escaped data.
 =cut
 
 sub fixparam {
-	fixurl($_[0], 1);
+	my($url) = @_;
+	$url =~ s/([^$URI::unreserved])/$URI::Escape::escapes{$1}/oge;
+	return $url;
 }
 
 #========================================================================
@@ -939,44 +952,47 @@ The escaped data.
 =cut
 
 sub fixurl {
-	my($url, $parameter) = @_;
+	my($url) = @_;
 
-	# this is a temporary hack, to make sure we strip auth
-	# info if called from submit.pl.  If the path to get
-	# here from submit.pl changes (different number of
-	# calling functions), then this will break; that's
-	# why it is temporary -- pudge
-	my $stripauth = (caller(4))[1] =~ /submit\.pl/;
+	# Remove quotes and whitespace (we will expect some at beginning and end,
+	# probably)
+	$url =~ s/["\s]//g;
+	# any < or > char after the first char truncates the URL right there
+	# (we will expect a trailing ">" probably)
+	$url =~ s/^[<>]+//;
+	$url =~ s/[<>].*//;
+	# strip surrounding ' if exists
+	$url =~ s/^'(.+?)'$/$1/g;
+	# add '#' to allowed characters; escape anything not allowed.
+	$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
+	# run it through the grungy URL miscellaneous-"fixer"
+	$url = fixHref($url) || $url;
 
-	if ($parameter) {
-		$url =~ s/([^$URI::unreserved])/$URI::Escape::escapes{$1}/oge;
-		return $url;
-	} else {
-		$url =~ s/[" ]//g;
-		# strip surrounding ' if exists
-		$url =~ s/^'(.+?)'$/$1/g;
-		# add '#' to allowed characters
-		$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
-		$url = fixHref($url) || $url;
-
-		if ($stripauth) {
-			my $uri = new URI $url;
-			if ($uri && $uri->can('host') && $uri->can('authority')) {
-				# don't need to print the port if we
-				# already have the correct port
-				my $host = $uri->can('host_port') &&
-					$uri->port != $uri->default_port
-					? $uri->host_port
-					: $uri->host;
-				$uri->authority($host);
-				$url = $uri->as_string;
-			}
+	if (1) {
+		# Strip the authority, if any.
+		# This prevents annoying browser-display-exploits
+		# like "http://cnn.com%20%20%20...%20@baddomain.com".
+		# In future we may set up a package global or a field like
+		# getCurrentUser()->{state}{fixurlauth} that will allow
+		# this behavior to be turned off -- it's wrapped in
+		# "if (1)" to remind us of this...
+		my $uri = new URI $url;
+		if ($uri && $uri->can('host') && $uri->can('authority')) {
+			# don't need to print the port if we
+			# already have the correct port
+			my $host = $uri->can('host_port') &&
+				$uri->port != $uri->default_port
+				? $uri->host_port
+				: $uri->host;
+			$host =~ tr/A-Za-z0-9.-//cd; # per RFC 1035
+			$uri->authority($host);
+			$url = $uri->canonical->as_string;
 		}
-
-		# we don't like SCRIPT a the beginning of a URL
-		my $decoded_url = decode_entities($url);
-		return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 	}
+
+	# we don't like SCRIPT at the beginning of a URL
+	my $decoded_url = decode_entities($url);
+	return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 }
 
 #========================================================================
@@ -1257,16 +1273,32 @@ sub addDomainTags {
 
 	# Now, since we know that every <A> has a </A>, this pattern will
 	# match and let the subroutine above do its magic properly.
+	# Note that, since a <A> followed immediately by </A> will not
+	# only fail to appear in a browser, but would also look goofy if
+	# followed by a [domain.tag], in such a case we simply remove the
+	# <A></A> pair entirely.
 
 	$html =~ s
 	{
-		(<A[ ]HREF="
-			([^">]+)
-		">[\000-\377]+?)
+		(<A\s+HREF="		# $1 is the whole <A HREF...>
+			([^">]*)	# $2 is the URL (quotes guaranteed to
+					# be there thanks to approveTag)
+		">)
+		(.*?)			# $3 is whatever's between <A> and </A>
 		</A\b[^>]*>
 	}{
-		$1 . _url_to_domain_tag($2)
-	}gixe;
+		$3	? $1 . $3 . _url_to_domain_tag($2)
+			: ""
+	}gisex;
+
+	# If there were unmatched <A> tags in the original, balanceTags()
+	# would have added the corresponding </A> tags to the end.  These
+	# will stick out now because they won't have domain tags.  We
+	# know we've added enough </A> to make sure everything balances
+	# and doesn't overlap, so now we can just remove the extra ones,
+	# which are easy to tell because they DON'T have domain tags.
+
+	$html =~ s{</A>}{}g;
 
 	return $html;
 }
@@ -1309,7 +1341,12 @@ sub _url_to_domain_tag {
 	} else {
 		$info = "?";
 	}
-	if (length($info) >= 25) {
+	if ($info ne "?") {
+		$info =~ tr/A-Za-z0-9.-//cd;
+	}
+	if (length($info) == 0) {
+		$info = "?";
+	} elsif (length($info) >= 25) {
 		$info = substr($info, 0, 10) . "..." . substr($info, -10);
 	}
 	return "</a $info>";
