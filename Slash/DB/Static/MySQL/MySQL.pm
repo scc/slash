@@ -56,7 +56,7 @@ sub sqlShowSlaveStatus {
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $cursor = $self->{_dbh}->prepare("SELECT
 		$story_table.sid, $story_table.title, time, dept, $story_table.uid,
 		alttext,
@@ -115,7 +115,7 @@ sub updateCommentTotals {
 sub getNewStoryTopic {
 	my($self) = @_;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $sth = $self->sqlSelectMany(
 		"alttext, image, width, height, $story_table.tid as tid",
 		"$story_table, topics",
@@ -135,7 +135,6 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 
-	# Optimize later to use heap table -Brian
 	my @comments = $self->sqlSelectAll(
 		'cid, discussions.id',
 		'comments,discussions',
@@ -183,6 +182,7 @@ sub _deleteThread {
 # -Brian
 sub updateStoriesCounts {
 	my($self) = @_;
+	my $constants = getCurrentStatic();
 	my $counts = $self->sqlSelectAll(
 		'dat,count(*)',
 		'accesslog',
@@ -306,7 +306,7 @@ sub updateStamps {
 sub getDailyMail {
 	my($self) = @_;
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $columns = "$story_table.sid, $story_table.title, $story_table.section,
 		users.nickname,
 		$story_table.tid, $story_table.time, $story_table.dept,
@@ -357,7 +357,7 @@ sub getMailingList {
 # For portald
 sub getTop10Comments {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $c = $self->sqlSelectMany("$story_table.sid, title, cid, subject, date, nickname, comments.points",
 		"comments, $story_table, users",
 		"comments.points >= 4 AND users.uid=comments.uid AND comments.sid=$story_table.sid",
@@ -427,8 +427,7 @@ sub getSitesRDF {
 # tasks/refresh_sectionblocks.pl in the defaut theme.
 sub getSectionInfo {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $sections = $self->sqlSelectAllHashrefArray(
 		'section', "sections",
 		"isolate=0 and (section != '' and section != 'articles')
