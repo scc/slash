@@ -1455,6 +1455,14 @@ sub saveUser {
 	if ($user_edit->{realemail} ne $form->{realemail}) {
 		$user_edits_table->{realemail} =
 			chopEntity($form->{realemail}, 50);
+		my $new_fakeemail = ''; # at emaildisplay 0, don't show any email address
+		if ($user->{emaildisplay}) {
+			$new_fakeemail = getArmoredEmail($uid, $user_edits_table->{realemail})
+				if $user->{emaildisplay} == 1;
+			$new_fakeemail = $user_edits_table->{realemail}
+				if $user->{emaildisplay} == 2;
+		}
+		$user_edits_table->{fakeemail} = $new_fakeemail;
 
 		$note .= getMessage('changeemail_msg', {
 			realemail => $user_edit->{realemail}
