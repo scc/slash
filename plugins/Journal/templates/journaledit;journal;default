@@ -19,6 +19,7 @@ __template__
 		<INPUT TYPE="hidden" NAME="id" VALUE="[% article.id %]">
 		<INPUT TYPE="hidden" NAME="state" VALUE="editing">
 		<INPUT TYPE="hidden" NAME="preview" VALUE="active">
+		<INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
 
 		[% INCLUDE formLabel value => "Subject", comment => "This is required" %]
 		<INPUT TYPE="text" NAME="description" SIZE="60" VALUE="[% FILTER strip_attribute; article.description; END %]">

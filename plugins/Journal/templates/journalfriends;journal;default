@@ -28,11 +28,11 @@ __template__
     <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER strip_attribute; friend.0; END %]">[% friend.0 %]</A></TD>
     <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% friend.1 %]"><B>[% friend.3 %]</B></A></TD>
     <TD VALIGN="TOP"><EM>[% Slash.timeCalc(friend.2) %]</EM></TD>
-[% IF !user.is_anon && !search %]     <TD><INPUT TYPE="checkbox" NAME="del_[% friend.1 %]" VALUE="1"></TD>
+[% IF !user.is_anon && !search %]     <TD VALIGN="TOP" ALIGN="CENTER"><INPUT TYPE="checkbox" NAME="del_[% friend.1 %]" VALUE="1"></TD>
 [% END %]
 </TR>
 [% END %]
-[% IF !user.is_anon && !search %]<TR><TD ALIGN="RIGHT" COLSPAN="4"><INPUT TYPE="submit" VALUE="Remove Friends"></TD></TR>[% END %]
+[% IF !user.is_anon && !search %]<TR><TD COLSPAN="3">&nbsp;</TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="Remove Friends"></TD></TR>[% END %]
 </TABLE>
 [% IF !user.is_anon && !search %]</FORM>[% END %]
 <BR><BR>
