@@ -1037,10 +1037,11 @@ sub editHome {
 	$tzcode_select =
 		createSelect('tzcode', [ keys %$formats ], $user_edit->{tzcode}, 1);
 
-	my $l_check = $user_edit->{light}	? ' CHECKED' : '';
-	my $b_check = $user_edit->{noboxes}	? ' CHECKED' : '';
-	my $i_check = $user_edit->{noicons}	? ' CHECKED' : '';
-	my $w_check = $user_edit->{willing}	? ' CHECKED' : '';
+	my $l_check = $user_edit->{light}		? ' CHECKED' : '';
+	my $b_check = $user_edit->{noboxes}		? ' CHECKED' : '';
+	my $i_check = $user_edit->{noicons}		? ' CHECKED' : '';
+	my $w_check = $user_edit->{willing}		? ' CHECKED' : '';
+	my $s_check = $user_edit->{sectioncollapse}	? ' CHECKED' : '';
 
 	my $tilde_ed = tildeEd(
 		$user_edit->{extid}, $user_edit->{exsect},
@@ -1057,6 +1058,7 @@ sub editHome {
 		b_check			=> $b_check,
 		i_check			=> $i_check,
 		w_check			=> $w_check,
+		s_check			=> $s_check,
 		tilde_ed		=> $tilde_ed
 	});
 }
@@ -1540,6 +1542,7 @@ sub saveHome {
 		light		=> ($form->{light} ? 1 : 0),
 		noicons		=> ($form->{noicons} ? 1 : 0),
 		willing		=> ($form->{willing} ? 1 : 0),
+		sectioncollapse	=> ($form->{sectioncollapse} ? 1 : 0),
 	};
 
 	if (defined $form->{tzcode} && defined $form->{tzformat}) {

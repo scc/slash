@@ -3452,9 +3452,15 @@ sub getStoriesEssentials {
 	# Added this to narrow the query a bit more, I need
 	# see about the impact on this -Brian
 	$where .= "AND writestatus != 'delete' ";
-	$where .= "AND displaystatus=0 " unless $section;
-	$where .= "AND (displaystatus>=0 AND section='$section') "
-		if $section;
+
+	if ($section) {
+		$where .= "AND (displaystatus>=0 AND section='$section') ";
+	} elsif ($user->{sectioncollapse}) {
+		$where .= "AND displaystatus>=0 ";
+	} else {
+		$where .= "AND displaystatus=0 ";
+	}
+
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
