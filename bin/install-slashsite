@@ -18,6 +18,10 @@ use File::Spec::Functions;
 use Slash::DB;
 use Slash::Install;
 
+use vars qw(
+	$dirname
+);
+
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
