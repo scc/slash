@@ -738,6 +738,7 @@ sub saveKeyword {
 sub topicEdit {
 	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{basedir};
+	my $image2;
 
 	my($topic, $topics_menu, $topics_select);
 	my $available_images = {};
@@ -780,6 +781,11 @@ sub topicEdit {
 		}
 	}
 
+	if ($topic->{image} !~ /^\w+\.\w+$/) {
+		$image2 = $topic->{image};
+	}
+	$topic->{image} = "$constants->{imagedir}/topics/$topic->{image}";
+
 	if ($available_images) {
 		$images_flag = 1;
 		my $default = $topic->{image};
@@ -790,6 +796,8 @@ sub topicEdit {
 	slashDisplay('topicEdit', {
 		title			=> getTitle('editTopic-title', { tname => $topicname }),
 		images_flag		=> $images_flag,
+		image			=> $image2 ? $image2 : $topic->{image},
+		image2			=> $image2,
 		topic			=> $topic,
 		topics_select		=> $topics_select,
 		image_select		=> $image_select,
@@ -816,9 +824,10 @@ sub topicSave {
 	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{basedir};
 
-	if (!$form->{width} && !$form->{height}) {
+	if (!$form->{width} && !$form->{height} && ! $form->{image2}) {
 		@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
 	}
+
 	$form->{tid} = $slashdb->saveTopic($form);
 
 	$slashdb->deleteSectionTopicsByTopic($form->{tid});

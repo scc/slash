@@ -17,12 +17,15 @@ $task{$me}{code} = sub {
 
 	while (my $cur_story = $sth->fetchrow_hashref) {
 		my $cur_tid = $cur_story->{tid};
+		if ($cur_story->{image} =~ /^\w+\.\w+$/) {
+			$cur_story->{image} = "$constants->{imagedir}/topics/$cur_story->{image}";
+		}
 		next if $cur_tid eq $last_tid; # don't show two in a row
 
 # This really should be in a template.
 		$html .= <<EOT;
 	<TD><A HREF="$constants->{rootdir}/search.pl?topic=$cur_tid"><IMG
-		SRC="$constants->{imagedir}/topics/$cur_story->{image}"
+		SRC="$cur_story->{image}"
 		WIDTH="$cur_story->{width}" HEIGHT="$cur_story->{height}"
 		BORDER="0" ALT="$cur_story->{alttext}"></A>
 	</TD>

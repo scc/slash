@@ -48,7 +48,7 @@ END %]
 			<TABLE WIDTH="100%" BORDER="0" CELLPADDING="5" CELLSPACING="0"><TR><TD BGCOLOR="[% user.bg.1 %]">
 				[% IF user.noicons %][ <A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]"><B>[% topic.alttext %]</B></A> ]
 				[% ELSE %]<A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]"
-					><IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" WIDTH="[% topic.width %]"
+					><IMG SRC="[% topic.image %]" WIDTH="[% topic.width %]"
 						HEIGHT="[% topic.height %]" BORDER="0" ALIGN="RIGHT"
 						HSPACE="20" VSPACE="10" ALT="[% topic.alttext %]"></A>
 				[% END %]

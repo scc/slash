@@ -1381,9 +1381,9 @@ sub deleteContentFilter {
 sub saveTopic {
 	my($self, $topic) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'topics', "tid=$topic->{tid}");
+	my $image = $topic->{image2} ? $topic->{image2} : $topic->{image};
 
 	if ($rows == 0) {
-		my $image = $topic->{image2} ? $topic->{image2} : $topic->{image};
 		$self->sqlInsert('topics', {
 			name	=> $topic->{name},
 			image	=> $image,
@@ -1394,7 +1394,7 @@ sub saveTopic {
 		$topic->{tid} = $self->getLastInsertId();
 	} else {
 		$self->sqlUpdate('topics', {
-				image	=> $topic->{image},
+				image	=> $image,
 				alttext	=> $topic->{alttext},
 				width	=> $topic->{width},
 				height	=> $topic->{height},

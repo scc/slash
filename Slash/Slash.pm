@@ -670,6 +670,8 @@ sub dispStory {
 
 	my $section = $slashdb->getSection($story->{section});
 
+	$topic->{image} = "$constants->{imagedir}/topics/$topic->{image}" 
+		if $topic->{image} =~ /^\w+\.\w+$/; 
 	my %data = (
 		story	=> $story,
 		section => $section,

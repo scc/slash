@@ -609,7 +609,7 @@ DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
 	tid smallint UNSIGNED NOT NULL auto_increment,
 	name char(20) NOT NULL,
-	image char(30),
+	image varchar(100),
 	alttext char(40),
 	width smallint UNSIGNED,
 	height smallint UNSIGNED,

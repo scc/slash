@@ -24,7 +24,7 @@ __template__
 
 			[% IF topic.tid %]
 			[% INCLUDE formLabel value => "Image as seen" %]
-			<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
+			<IMG SRC="[% image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
 			[% END %]
 
 			<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
@@ -42,21 +42,20 @@ __template__
 				[% INCLUDE formLabel value => "Image" %]
 				[% image_select %]
 				<br><br>
+				Or enter image URL:
+				<INPUT TYPE="TEXT" LENGTH="40" NAME="image2" VALUE="[% image2 %]">
+				<BR>
 
 				[% ELSE %]
 
 				[% INCLUDE formLabel value => "No images were found in the topic images directory" %]
 					([% constants.basedir %]/images/topics).<BR>
-					<INPUT TYPE="TEXT" NAME="image" VALUE="[% topic.image %]">
+					<INPUT TYPE="TEXT" NAME="image" VALUE="[% image %]">
 
 				[% END %]
-			Or enter image URL:
-			<INPUT TYPE="TEXT" LENGTH="40" NAME="image2"><BR>
-
 			<INPUT TYPE="SUBMIT" NAME="topicnew" VALUE="Create new topic">
 			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
 			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
-
 		</TD>
 		<TD VALIGN="TOP">
 		[% INCLUDE formLabel value => "Sections", comment => "select which sections a topic belongs to" %]

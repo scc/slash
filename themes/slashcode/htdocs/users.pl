@@ -36,6 +36,7 @@ sub main {
 	my $savepass_flag = $op eq 'savepasswd' ? 1 : 0 ;
 
 	# my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
+
 	my $note;
 
 	my $ops = { 

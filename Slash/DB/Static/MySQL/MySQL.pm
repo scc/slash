@@ -111,7 +111,7 @@ sub getNewStoryTopic {
 
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
 	my $sth = $self->sqlSelectMany(
-		"alttext, image, width, height, $story_table.tid",
+		"alttext, image, width, height, $story_table.tid as tid",
 		"$story_table, topics",
 		"$story_table.tid=topics.tid AND displaystatus = 0
 		AND NOT FIND_IN_SET('delete_me', flags) AND time < NOW()",
