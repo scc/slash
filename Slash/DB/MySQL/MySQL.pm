@@ -1846,15 +1846,17 @@ sub getUnsetFkCount {
 ########################################################
 sub updateFormkeyId {
 	my($self, $formname, $formkey, $uid, $rlogin, $upasswd) = @_;
-	my $constants = getCurrentStatic();
 
-	my $last_count = $self->_getLastFkCount($formname);
 	if (! isAnon($uid) && $rlogin && length($upasswd) > 1) {
+		my $constants = getCurrentStatic();
+		my $last_count = $self->_getLastFkCount($formname);
 		$self->sqlUpdate("formkeys", {
-			uid	=> $uid,
-			idcount	=> $last_count,
-		}, "formname='$formname' AND uid = $constants->{anonymous_coward_uid} AND formkey=" .
-			$self->sqlQuote($formkey));
+				uid	=> $uid,
+				idcount	=> $last_count,
+			},
+			"formname='$formname' AND uid = $constants->{anonymous_coward_uid} AND formkey=" .
+			$self->sqlQuote($formkey)
+		);
 	}
 }
 
@@ -3454,7 +3456,8 @@ sub getStoriesEssentials {
 	$where .= "AND writestatus != 'delete' ";
 
 	if ($section) {
-		$where .= "AND (displaystatus>=0 AND section='$section') ";
+		my $section_dbi = $self->sqlQuote($section || '');
+		$where .= "AND (displaystatus>=0 AND section=$section_dbi) ";
 	} elsif ($user->{sectioncollapse}) {
 		$where .= "AND displaystatus>=0 ";
 	} else {
@@ -4919,22 +4922,36 @@ sub getRelatedLinks {
 sub fzGetStories {
 	my($self, $section) = @_;
 	my $slashdb = getCurrentDB();
-	my $section_dbi = $self->sqlQuote($section || '');
+	my $user = getCurrentUser();
 
+	my $section_where;
+	if ($section) {
+		my $section_dbi = $self->sqlQuote($section || '');
+		$section_where = "(S.displaystatus>=0 AND S.section=$section_dbi) ";
+	} elsif ($user->{sectioncollapse}) {
+		$section_where = "S.displaystatus>=0 ";
+	} else {
+		$section_where = "S.displaystatus=0 ";
+	}
+
+# right now, we do not get lastcommentdate ... this is too big a drain
+# on the server. -- pudge
 #,MAX(comments.date) AS lastcommentdate
 #LEFT OUTER JOIN comments ON discussions.id = comments.sid
+
+# stories as S for when we did a join, keep in case we do another
+# at some point -- pudge
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-stories.sid, stories.title, time, commentcount
+S.sid, S.title, S.time
 S
-discussions, stories
+stories AS S
 F
-stories.sid = discussions.sid
-AND ((displaystatus = 0 and $section_dbi="")
-OR (stories.section=$section_dbi and displaystatus > -1))
-AND time < NOW()  stories.writestatus != 'delete' 
+    time < NOW()
+AND S.writestatus != 'delete' 
+AND $section_where
 W
-GROUP BY stories.sid
-ORDER BY time DESC
+GROUP BY S.sid
+ORDER BY S.time DESC
 LIMIT 10
 E
 

@@ -115,7 +115,8 @@ sub getNewStoryTopic {
 	return $sth;
 }
 
-
+########################################################
+# For dailystuff
 sub updateArchivedDiscussions {
 	my($self) = @_;
 
@@ -151,6 +152,8 @@ sub getArchiveList {
 }
 
 
+########################################################
+# For dailystuff
 sub deleteRecycledComments {
 	my($self) = @_;
 

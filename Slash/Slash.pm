@@ -102,8 +102,7 @@ sub selectComments {
 			&& $C->{points} > $min && $user->{clsmall};
 
 		# If the user is AC and we think AC's suck
-		$C->{points} = -1 if  ($user->{anon_comments} 
-			&& $C->{uid} == $constants->{anonymous_coward_uid});
+		$C->{points} = -1 if ($user->{anon_comments} && isAnon($C->{uid}));
 
 		# fix points in case they are out of bounds
 		$C->{points} = $min if $C->{points} < $min;
@@ -638,9 +637,9 @@ sub dispComment {
 		$comment->{sig} =~ s{</A[^>]+>}{</A>}gi;
 		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
 	}
-	if ($user->{sigdash} and $comment->{sig}
-		and $comment->{uid} != $constants->{anonymous_coward_uid}) {
-		$comment->{sig} = "<BR>--<BR>$comment->{sig}"
+
+	if ($user->{sigdash} && $comment->{sig} && !isAnon($comment->{uid})) {
+		$comment->{sig} = "<BR>--<BR>$comment->{sig}";
 	}
 
 	my @reasons = ( );

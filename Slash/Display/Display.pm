@@ -404,6 +404,8 @@ sub _populate {
 
 =head1 TEMPLATE ENVIRONMENT
 
+=head2 Preferences
+
 The template has the options PRE_CHOMP and POST_CHOMP set by default.
 You can change these in the B<vars> table in your database
 (template_pre_chomp, template_post_chomp).  Also
@@ -411,8 +413,12 @@ look at the template_cache_size variable for setting the cache size.
 L<Template> for more information.  The cache will be disabled entirely if
 cache_enabled is false.
 
+=head2 Plugin
+
 The template provider is Slash::Display::Provider, and the plugin module
 Slash::Display::Plugin can be referenced by simply "Slash".
+
+=head2 Additional Ops
 
 Additional scalar ops (which are global, so they are in effect
 for every Template object created, from this or any other module)
@@ -421,10 +427,18 @@ which all do what you think.
 
 	[% myscalar.uc %]  # return upper case myscalar
 
+C<substr> accepts 1 or 2 args, for the two corresponding forms of the
+perl function C<substr>.
+
+	[% myscalar.substr(2)    # all but first two characters %]
+	[% myscalar.substr(2, 1) # third character %]
+
 Additional list ops include C<rand>, which returns a random element
 from the given list.
 
 	[% mylist.rand %]  # return single random element from mylist
+
+=head2 Additional Filters
 
 Also provided are some filters.  The C<fixurl>, C<fixparam>, C<fudgeurl>,
 and C<strip_*> filters are just frontends to the functions of those
@@ -434,25 +448,27 @@ names in the Slash API:
 		I think that 1 > 2!
 	[% END %]
 
-(Note that [% var | filter %] is a synonym for [% FILTER filter; var; END %].)
+See L<Slash::Utility::Data> for a complete list of available C<strip_*>
+filters, and descriptions of each.
+
+Note that [% var | filter %] is a synonym for [% FILTER filter; var; END %]:
 
 	<A HREF="[% env.script_name %]?op=[% form.op | fixparam %]">
 
-Each strip_* function in Slash::Utility is also available as a filter.
 It might seem simpler to just use the functional form:
 
-	[% form.something | strip_nohtml %]
-	[% Slash.strip_nohtml(form.something) %]
+	[% form.something | strip_nohtml      # filter %]
+	[% Slash.strip_nohtml(form.something) # function %]
 
 But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>)
 in the future (perhaps only certain seclevs?), so it is best to stick with the filter,
-which is probably faster, too.
+which is most likely faster anyway.
 
 =cut
 
 my %list_ops = (
 	'rand'		=> sub {
-		my $list = shift;
+		my $list = $_[0];
 		return $list->[rand @$list];
 	}
 );

@@ -1294,7 +1294,7 @@ An object, unless object cannot be gotten; then undef.
 =cut
 
 sub getObject {
-	my($value, $user, @args) = @_;
+	my($class, $user, @args) = @_;
 	my($cfg, $objects);
 
 	if ($ENV{GATEWAY_INTERFACE} && (my $r = Apache->request)) {
@@ -1304,18 +1304,22 @@ sub getObject {
 		$objects = $static_objects   ||= {};
 	}
 
-	if ($objects->{$value}) {
-		return $objects->{$value};
+	if ($objects->{$class}) {
+		return $objects->{$class};
 	} else {
 		$user    ||= getCurrentVirtualUser();
-		return unless $user;
+		return undef unless $user;
 
-		eval "require $value";
+		eval "require $class";
 		if ($@) {
 			errorLog($@);
-			return;
+			return undef;
+		} elsif (!$class->can("new")) {
+			errorLog("Class $class is not working properly.  Try " .
+				"`perl -M$class -le '$class->new'` to see why.\n");
+			return undef;
 		}
-		return $objects->{$value} = $value->new($user, @args);
+		return $objects->{$class} = $class->new($user, @args);
 	}
 }
 

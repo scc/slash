@@ -38,16 +38,16 @@ __template__
 				<FONT FACE="[% constants.mainfontface %]" SIZE="1">by
 [% IF fakeemail %]<A HREF="mailto:[% fakeemail | fixparam %]">[% nickname %]</A>
 <B><FONT SIZE="2">([% fakeemail | strip_literal %])</FONT></B>[% ELSE %][% nickname %][% END %]
- on [% Slash.timeCalc(time) %] (<A HREF="[% constants.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]">#[% cid %]</A>)</FONT><BR>
-				<FONT FACE="[% constants.mainfontface %]" SIZE="1">
+ on [% Slash.timeCalc(time) %] (<A HREF="[% constants.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]">#[% cid %]</A>)</FONT>
 [% UNLESS is_anon %]
+<BR><FONT FACE="[% constants.mainfontface %]" SIZE="1">
 <A HREF="[% constants.rootdir %]/~[% nickname | fixparam %]/">User #[% uid %] Info</A>
 [% IF homepage && homepage.length > 8 %] | <A HREF="[% homepage %]">[% homepage | strip_literal %]</A>[% END %]
 [% IF journal_last_entry_date.search('[1-9]') %] | Last Journal:
 <A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]">[% Slash.timeCalc(journal_last_entry_date) %]</A>
 [% END %]
-[% END %]
 </FONT>
+[% END %]
 [% IF user.seclev >= 100 && ipid && subnetid %]
 				<BR><FONT FACE="[% constants.mainfontface %]" SIZE="1">IPID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% ipid %]">[% ipid %]</A>&nbsp;&nbsp;SubnetID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% subnetid %]">[% subnetid %]</A></FONT>
 [% END %]

@@ -114,6 +114,7 @@ sub _topics {
 
 #################################################################
 sub _sort {
+	# this needs to be in the database -- pudge
 	my $sort;
 	$sort->{''} = 'Default Order';
 	$sort->{'date'} = 'Order By Date';

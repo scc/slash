@@ -71,7 +71,8 @@ case "$1" in
 			else
 				su - $USERNAME -c "TZ=GMT $SLASHD $SERVER_NAME" &
 			fi
-			echo $! > $RUNNING_PID/slashd.$SERVER_NAME.pid 
+# this is handled by slashd
+#			echo $! > $RUNNING_PID/site/$SITENAME/logs/slashd.pid
 			echo "ok PID = $! "
 		done
     ;;
@@ -81,14 +82,17 @@ case "$1" in
     do
 			SERVER_NAME=`echo $server_name |$WHICH_CUT -d":" -f1`
 			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
-			if [ -f $RUNNING_PID/slashd.$SERVER_NAME.pid ] ;then
+			SITENAME=`echo $server_name |$WHICH_CUT -d":" -f3`
+			if [ -f $RUNNING_PID/site/$SITENAME/logs/slashd.pid ] ;then
 				echo -n "Stopping slashd $SERVER_NAME: "
-				if ! kill `cat $RUNNING_PID/slashd.$SERVER_NAME.pid` ;then
+				if ! kill `cat $RUNNING_PID/site/$SITENAME/logs/slashd.pid` ;then
 					echo -n "...using kill -9..."
 					sleep 3
-					kill -9 `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
+					kill -9 `cat $RUNNING_PID/site/$SITENAME/logs/slashd.pid`
+					rm -f $RUNNING_PID/site/$SITENAME/logs/slashd.pid
 				fi
-				rm -f $RUNNING_PID/slashd.$SERVER_NAME.pid
+# this is handled by slashd
+#				rm -f $RUNNING_PID/site/$SITENAME/logs/slashd.pid
 				echo "ok."
 			else
 				echo "Slashd $SERVER_NAME has no PID file"

@@ -24,7 +24,7 @@ sub handler {
 	Apache->request($r);
 	my $cur_ipid = md5_hex($r->connection->remote_ip);
 	my $cur_subnet = $r->connection->remote_ip;
-	$cur_subnet =~ s/(\d+\.\d+\.\d+)\.\d+/$1\.0/;
+	$cur_subnet =~ s/^(\d+\.\d+\.\d+)\.\d+$/$1.0/;
 	$cur_subnet = md5_hex($cur_subnet);
 
 	my $slashdb = getCurrentDB();

@@ -275,13 +275,6 @@ sub formkeyHandler {
 			$msg = formkeyError('usedform', $formname);
 			$error_flag++;
 		}
-	} elsif ($formkey_op eq 'updateformkeyid') {
-		$slashdb->updateFormkeyId($formname, $formkey, 
-			$constants->{anonymous_coward_uid},
-			$user->{uid},
-			$form->{'rlogin'},
-			$form->{upasswd}
-		);
 	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
 		# another nobel attempt at trying to prevent abusers from saving up formkeys
 		# more trouble than it's worth. I'll leave it in for now Patrick 8/16/01
