@@ -1,0 +1,428 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
+use strict;
+use File::Basename;
+use FindBin '$Bin';
+use Getopt::Std;
+use DBIx::Password;
+use Digest::MD5 'md5_hex';
+use vars qw(@SKIP_BLOCKS %my_conf);
+
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hvu:', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+usage('Need virtual user') unless $opts{'u'};
+usage("Need slashdotrc.pl file") unless my $rcfile = $ARGV[0];
+
+####################################
+# disclaimer
+{
+	print <<'EOT';
+By running this I realize that there is no warranty and that
+I am on my own. I have also read the poddoc for this script and
+understand it. [yes/no]
+EOT
+	chomp(my $answer = <STDIN>);
+	exit unless $answer eq 'yes';
+}
+
+####################################
+# setup
+require $rcfile;
+*my_conf = $Slash::conf{DEFAULT} = $Slash::conf{DEFAULT};
+
+my $dbh_old = DBI->connect(@my_conf{qw[dsn dbuser dbpass]});
+my $dbh_new = DBIx::Password->connect($opts{'u'});
+
+END {
+	$dbh_old->disconnect if $dbh_old;
+	$dbh_new->disconnect if $dbh_new;
+}
+
+
+####################################
+# fix AC UID
+my $ac_uid;
+{
+	print <<EOT;
+Please select a UID for the anonymous user of the site.  It is probably
+best if it is the lowest positive integer that is unused on the old
+Slash 1.0 site.  Enter the integer here (enter "1" to do no change):
+EOT
+	chomp($ac_uid = <STDIN>);
+	die "[$ac_uid] is not an integer.\n"
+		unless $ac_uid =~ /^\d+$/;
+
+	print <<EOT;
+Should we delete uid 2, the new admin user created by the installation?
+In theory, your other admin accounts will be copied from the old site,
+and you can use those.  If you choose not to do this, make sure uid 2
+is not a conflict from your other site.  [yes/no]
+EOT
+	chomp(my $answer = <STDIN>);
+
+	if ($ac_uid != 1) {
+		$dbh_new->do("update vars set value=$ac_uid where name='anonymous_coward_uid'");
+		for (qw(users users_comments users_info users_index
+			users_prefs users_param)) {
+			$dbh_new->do("delete from $_ where uid=$ac_uid");
+			$dbh_new->do("update $_ set uid=$ac_uid where uid=1");
+		}
+	}
+
+	if ($answer =~ /^y/i) {
+		for (qw(users users_comments users_info users_index
+			users_prefs users_param)) {
+			$dbh_new->do("delete from $_ where uid=2");
+		}
+	}
+}
+
+####################################
+# main body
+{
+	# 0 just add; 1 delete data first; str delete id first
+	my %straight = qw(
+		abusers			1
+		accesslog		1
+		content_filters		1
+		discussions		1
+		formkeys		1
+		metamodlog		1
+		moderatorlog		1
+		pollanswers		1
+		pollquestions		1
+		pollvoters		1
+		sections		1
+		storiestuff		1
+		topics			1
+	);
+	duplicate($_, $straight{$_}) for keys %straight;
+
+	# offset -> off_set
+	duplicate('tzcodes', 'tz', sub {
+		my($data) = @_;
+		$data->{off_set} = $data->{offset};
+		delete $data->{offset};
+		return $data;
+	});
+
+	# no more uid == -1
+	for (qw(users users_comments users_index users_info users_prefs)) {
+		duplicate($_, 0, sub {
+			my($data) = @_;
+			return if $data->{uid} == -1 || $data->{uid} == $ac_uid;
+
+			$data->{seclev} = 1
+				if exists $data->{seclev} && $data->{seclev} == 0;
+
+			$data->{tzcode} = uc($data->{tzcode})
+				if exists $data->{tzcode};
+
+			$data->{passwd} = md5_hex($data->{passwd})
+				if exists $data->{passwd};
+
+			return $data;
+		});
+	}
+
+	# put keys into users_param
+	users_keys();
+
+	# fix uid == -1
+	for (qw(comments submissions)) {
+		duplicate($_, 1, sub {
+			my($data) = @_;
+			$data->{uid} = $ac_uid if $data->{uid} == -1;
+			return $data;
+		});
+	}
+
+	# update aid's etc.
+	my $story_authors = fix_authors();
+
+	# aid -> uid
+	for (qw(stories sessions)) {
+		duplicate($_, 1, sub {
+			my($data, $story_authors) = @_;
+			$data->{uid} = $story_authors->{$data->{aid}};
+			delete $data->{aid};
+			return $data;
+		}, $story_authors);
+	}
+
+	# find null stories
+	null_stories($story_authors);
+
+	duplicate('blocks', 'bid', sub {
+		my($data) = @_;
+		for (qw(aid blockbak)) {
+			delete $data->{$_};
+		}
+		return $data;
+	});
+
+	fix_sectionblocks();
+
+	fix_vars();
+
+	fix_colors();
+
+	backup_blocks();
+}
+
+####################################
+sub backup_blocks {
+	$dbh_new->do('DROP TABLE backup_blocks');
+	$dbh_new->do('CREATE TABLE backup_blocks SELECT bid, block FROM blocks');
+}
+
+####################################
+# add [4] color to fg and bg
+sub fix_colors {
+	print "Fixing colors\n";
+	my $bids = $dbh_new->selectall_arrayref('SELECT bid,block FROM blocks WHERE bid = "colors" OR bid LIKE "%_colors"');
+	my $nc = '[^,]+,?';
+
+	for my $bid (@$bids) {
+		$bid->[1] =~ s/^($nc$nc$nc$nc)($nc$nc$nc$nc)$/$1#CCCCCC,$2,#CCCCCC/;
+		my $color = $dbh_new->quote($bid->[1]);
+		$dbh_new->do("UPDATE blocks SET block=$color WHERE bid='$bid->[0]'");
+	}
+}
+
+####################################
+# get vars out of slashdotrc.pl
+sub fix_vars {
+	for (qw(mailfrom siteadmin siteadmin_name smtp_server
+		sitename slogan mainfontface updatemin
+		archive_delay submiss_ts articles_only
+		allow_anonymous use_dept max_depth
+		defaultsection http_proxy fancyboxwidth
+		story_expire titlebar_width run_ads
+		authors_unlimited m2_comments m2_maxunfair
+		m2_toomanyunfair m2_bonus m2_penalty
+		m2_userpercentage comment_minscore
+		comment_maxscore submission_bonus goodkarma
+		badkarma maxkarma metamod_sum maxtokens
+		tokensperpoint maxpoints stir tokenspercomment
+		down_moderations post_limit max_posts_allowed
+		max_submissions_allowed submission_speed_limit
+		formkey_timeframe m2_mincheck m2_maxbonus
+	)) {
+		my $value = $dbh_new->quote($my_conf{$_});
+		$dbh_new->do("UPDATE vars SET value=$value where name='$_'");
+	}
+}
+
+####################################
+# add old sectionblocks data to blocks table
+sub fix_sectionblocks {
+	print "Processing sectionblocks\n";
+
+	my $sth_s = $dbh_old->prepare("SELECT * FROM sectionblocks");
+	$sth_s->execute;
+	
+	while (my $data = $sth_s->fetchrow_hashref) {
+		my $bid = $dbh_new->quote($data->{bid});
+		delete $data->{bid};
+
+		my $insert = sprintf("UPDATE blocks SET %s WHERE bid=$bid",
+			join ', ',
+			map { "$_=" . $dbh_new->quote($data->{$_}) }
+			keys %$data);
+
+		$dbh_new->do($insert);
+		my $err = $dbh_new->errstr;
+		die $err if $err;
+	}
+}
+
+####################################
+# get users keys into users_param table
+sub users_keys {
+	my $users = $dbh_old->selectall_arrayref("SELECT uid,pubkey FROM users_key");
+	for my $user (@$users) {
+		my $string = $dbh_new->quote($user->[1]);
+		$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($user->[0], 'pubkey', $string)");
+	}
+}
+
+####################################
+# bunch of things to get users fixed up
+sub fix_authors {
+	my %story_authors;
+	my $authors = $dbh_old->selectall_arrayref(<<'EOT');
+SELECT aid,seclev,lasttitle,section,deletedsubmissions
+FROM   authors
+WHERE  name != 'All Authors'
+EOT
+
+	for my $author (@$authors) {
+		(my $matchname = lc $author->[0]) =~ s/[^a-zA-Z0-9]//g;
+		my $uid = $dbh_old->selectrow_array(<<EOT);
+SELECT uid
+FROM   users
+WHERE  matchname='$matchname'
+EOT
+		if ($uid) {
+			$story_authors{$author->[0]} = $uid;
+			my @data = map { $dbh_new->quote($_) } @$author;
+			$dbh_new->do("UPDATE users SET seclev=$data[1] WHERE uid=$uid");
+			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'author', '1')");
+			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'lasttitle', $data[2])")
+				if $data[2] && $data[2] ne "NULL";
+			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'section', $data[3])")
+				if $data[3] && $data[3] ne "NULL";
+			$dbh_new->do("INSERT INTO users_param (uid,name,value) VALUES ($uid, 'deletedsubmissions', $data[4])")
+				if $data[4];
+		}
+		
+
+	}
+
+	return \%story_authors;
+}
+
+####################################
+# find any orphaned stories
+sub null_stories {
+	my($story_authors) = @_;
+	my $null_sids = $dbh_new->selectall_arrayref('SELECT sid FROM stories WHERE uid is NULL');
+	if (@$null_sids) {
+		print "Found stories lacking authors, select a uid to assign them to:\n";
+		for (keys %$story_authors) {
+			print "Authors $_ : $story_authors->{$_}\n";
+		}
+		chomp(my $uid = <STDIN>);
+		$dbh_new->do("UPDATE stories SET uid=$uid WHERE uid IS NULL");
+	}
+
+	$dbh_new->do('DROP TABLE newstories');
+	$dbh_new->do('CREATE TABLE newstories SELECT * FROM stories');
+}
+
+####################################
+# the main function to copy data from old DB to new DB
+sub duplicate {
+	my($table, $opt, $filter, $extra) = @_;
+
+	print "Processing $table\n";
+
+	my $sth_s = $dbh_old->prepare("SELECT * FROM $table");
+	$sth_s->execute;
+
+	if ($opt eq 1) {
+		$dbh_new->do("DELETE FROM $table");
+	}
+
+	while (my $data = $sth_s->fetchrow_hashref) {
+		$data = $filter->($data, $extra) if $filter;
+		next unless $data;
+		
+		my $insert = sprintf("INSERT INTO $table (%s) VALUES (%s)",
+			join(', ', keys %$data),
+			join(', ', map { $dbh_new->quote($_) } values %$data)
+		);
+
+		if ($opt =~ /[a-zA-Z]/) {
+			my $val = $dbh_new->quote($data->{$opt});
+			$dbh_new->do("DELETE FROM $table WHERE $opt = $val");
+		}
+
+		$dbh_new->do($insert);
+		my $err = $dbh_new->errstr;
+		die $err if $err;
+	}
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] RCFILE
+
+Converts Slash 1.0 data to Slash 1.1/2.0 data.
+
+Main options:
+		slashdotrc.pl file from 1.0 installation
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash") [REQUIRED]
+
+This program will copy data from your old Slash 1.0 database
+to your new Slash 2.0 database.  It will copy over your data,
+but if you've done any customizations to display blocks, or code,
+it will not copy that over.
+
+*	Install a new 2.0 Slash site to be used as your new
+	2.0 version of your 1.0 site.  Do not do any customization
+	beyond the basic install with install-slashsite.
+
+*	*** Make a backup of your 1.0 site database! ***
+	No warranties are expressed or implied.  If you lose
+	data, you are responsible.
+
+*	Make sure there are no author/user conflicts.  That is,
+	in Slash 1.0, you could have a user name "timothy"
+	that is different from an author named "timothy".  This
+	is not allowed in Slash 2.0.
+
+*	Copy your slahsdotrc.pl file from your old site to
+	the machine running the new site.  Modify that
+	slashdotrc.pl (and the old 1.0 database) if necessary
+	so it can be used to connect to the old 1.0 database
+	(this may invovle changing the DB host to be something
+	other than "localhost", for example).  Also make
+	sure "\$Slash::conf{DEFAULT}" is not commented out
+	in slashdotrc.pl.
+
+*	Decide what you wany your Anonymous User UID to be.
+	This should be the lowest available UID on the old site.
+	The chosen UID will then be skipped when copying from
+	the old data, as it will be the Anonymous UID instead.
+	The default Anonymous UID is 1.
+
+*	Decide if you want to delete UID 2 from the new site.
+	Unless you've already done customization, you will
+	want to delete it.  The admins from the old site
+	will be carried over to the new one.
+
+*	Run `$PROGNAME -u VIRTUAL_USER path/to/slashdotrc.pl`
+	and answer the questions.
+
+*	When it finishes, you will still need to copy over
+	any images and any static pages not created by Slash
+	(ones you created by hand).
+
+EOT
+	exit;
+}
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+1;
+
+__END__
