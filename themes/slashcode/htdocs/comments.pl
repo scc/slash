@@ -217,7 +217,6 @@ sub main {
 			$discussion = $slashdb->getDiscussion($form->{sid});
 		}
 		if(!$user->{is_admin} && $discussion->{sid}) {
-			my $status = $slashdb->getStory($discussion->{sid}, 'writestatus');
 			if ($slashdb->checkStoryViewable($discussion->{sid})) {
 				$form->{sid} = '';
 				$discussion = '';

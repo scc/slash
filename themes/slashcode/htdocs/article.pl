@@ -21,6 +21,9 @@ sub main {
 	my $story = $slashdb->getStory($form->{sid});
 	$story = '' 
 		if (($story->{displaystatus} == -1) and !($user->{author} or $user->{is_admin}));
+	#Yeah, I am being lazy -Brian
+	$story = ''
+		unless $slashdb->checkStoryViewable($discussion->{sid});
 
 	if ($story) {
 		my $SECT = $slashdb->getSection($story->{section});
