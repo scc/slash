@@ -311,17 +311,15 @@ INSTALLATION
                 make install SLASH_PREFIX=/home/slash
 
         When done, a configuration file for Apache will be created at
-        $SLASH_PREFIX/slash.conf. You can put its contents into your
-        httpd.conf, or you can just "Include" it in your httpd.conf.
+        $SLASH_PREFIX/httpd/slash.conf. We suggest you "Include" it in your
+        httpd.conf. <http://httpd.apache.org/docs/mod/core.html#include>
 
-        WARNING!
-
-        Please be aware that if you include $SLASH_PREFIX/slash.conf or
-        $SLASH_PREFIX/sites/sitename/sitename.conf more than once, or if
-        this file shares contents with directives in httpd.conf, that your
-        Slash site WILL break. The directives in $SLASH_PREFIX/slash.conf
-        should be run only ONCE in any any site context. Read through
-        $SLASH_PREFIX/slash.conf to make sure it all looks proper.
+        WARNING! If you copy'n'paste the text into httpd.conf manually,
+        or otherwise decide not to use "Include", you will want to be sure
+        you don't end up including this file or the $SITENAME.conf files
+        (see step 6) more than once. Repeating directives WILL break your
+        Slash site. Read through $SLASH_PREFIX/slash.conf to make sure it
+        all looks proper.
 
     6.  Install your Slash site.
 
@@ -333,9 +331,10 @@ INSTALLATION
 
         The program will prompt for answers to several configuration
         questions. Answer the questions. When done, another configuration
-        file will be created at $SLASH_PREFIX/$SITENAME/$SITENAME.conf. You
-        can put its contents unto your httpd.conf, or you can just "Include"
-        it in your httpd.conf.
+        file will be created at $SLASH_PREFIX/$SITENAME/$SITENAME.conf and
+        it will be Included automatically by $SLASH_PREFIX/httpd/slash.conf.
+        You won't need to do anything to your httpd.conf assuming you added
+        the "Include $SLASH_PREFIX/httpd/slash.conf" we suggested above.
 
         Read the message printed at the end of running install_slashsite.
 
