@@ -336,6 +336,11 @@ usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 sub install {
 	my ($plugin) = @_;
 	print "Now installing $plugin->{'name'}\n";
+	for(@{$plugin->{'htdoc'}}) {
+		print "copying $_ to $prefix/$sitename/htdocs\n";
+		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
+		chmod('0755', "$prefix/$sitename/htdocs/$_");
+	}
 	my($sql, @sql, @create);
 
 	if ($plugin->{"${driver}_schema"}) {
