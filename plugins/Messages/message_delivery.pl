@@ -6,8 +6,6 @@
 
 use strict;
 use File::Spec::Functions;
-use Slash 2.001;	# require Slash 2.1
-use Slash::Messages;
 use Slash::Utility;
 
 my $me = 'message_delivery.pl';
@@ -18,10 +16,14 @@ $task{$me}{timespec} = '5-59/5 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
+	my $messages = getObject('Slash::Messages');
+	unless ($messages) {
+		slashdLog("$me: could not instantiate Slash::Messages object");
+		return;
+	}
+
 	slashdLog("$me begin");
 	messagedLog("$me begin");
-
-	my $messages = getObject('Slash::Messages');
 
 	my $count = $constants->{message_process_count} || 10;
 	my $msgs  = $messages->gets($count);

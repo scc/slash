@@ -16,9 +16,11 @@ __template__
 
 [% IF note %]<H2>[% note %]</H2>[% END %]
 
+<FORM ACTION="[% constants.rootdir %]/messages.pl" METHOD="POST">
 [% IF message_list.size %]
 <TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
 	<TR BGCOLOR="[% user.bg.2 %]">
+		<TD><B>Delete</B></TD><TD WIDTH="20">&nbsp;</TD>
 		<TD><B>New</B></TD><TD WIDTH="20">&nbsp;</TD>
 		<TD><B>Date</B></TD><TD WIDTH="20">&nbsp;</TD>
 		<TD><B>Subject</B></TD>
@@ -31,6 +33,7 @@ __template__
 			color = user.bg.1;
 		END %]
 	<TR VALIGN="TOP" BGCOLOR="[% color %]">
+		<TD><INPUT TYPE="checkbox" NAME="del_[% message.id %]"></TD></TD><TD WIDTH="20">&nbsp;</TD>
 		<TH>[% IF ! message.readed %]<FONT COLOR="[% user.bg.3 %]">*</FONT>[%
 			ELSE
 		%]&nbsp;[% END %]</TH><TD WIDTH="20">&nbsp;</TD>
@@ -43,6 +46,11 @@ __template__
 
 [% x = x + 1; END %]
 </TABLE>
+
+<INPUT TYPE="hidden" NAME="op" VALUE="deletemsgs">
+<INPUT TYPE="submit" VALUE="Delete Selected Messages">
+</FORM>
+
 [% ELSE %]
 
 <P>
@@ -53,5 +61,6 @@ method.
 </P>
 
 [% END %]
+
 __seclev__
 500

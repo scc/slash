@@ -8,7 +8,7 @@
 # so i document it here.  yay for me!
 
 use strict;
-use Slash;
+use Slash 2.001;	# require Slash 2.1
 use Slash::Display;
 use Slash::Utility;
 use vars qw($VERSION);
@@ -39,6 +39,7 @@ sub main {
 		display		=> [ !$user->{is_anon},	\&display_message	],
 		delete_message	=> [ !$user->{is_anon},	\&delete_message	],
 		'delete'	=> [ !$user->{is_anon},	\&delete_message	],
+		deletemsgs	=> [ !$user->{is_anon},	\&delete_messages	],
 		default		=> [ 1,			\&display_prefs		]
 	);
 
@@ -140,6 +141,22 @@ sub delete_message {
 	list_messages(@_, $note);
 }
 
+sub delete_messages {
+	my($messages, $constants, $user, $form) = @_;
+	my($note, @success, @fail);
+
+	for my $id (grep { /^del_(\d+)$/, $_ = $1 } keys %$form) {
+		if ($messages->_delete_web($id)) {
+			push @success, $id;
+		} else {
+			push @fail, $id;
+		}
+	}
+
+	$note = getData('deletes', { success => \@success, fail => \@fail });
+
+	list_messages(@_, $note);
+}
 
 # etc.
 

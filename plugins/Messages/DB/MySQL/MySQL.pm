@@ -41,7 +41,7 @@ my %descriptions = (
 
 sub getDescriptions {
 	my($self, $codetype, $optional, $flag) =  @_;
-	# handle in Slash::DB::MySQL (or whatever)	
+	# handle in Slash::DB::MySQL (or whatever)
 	return $self->SUPER::getDescriptions($codetype, $optional, $flag, \%descriptions);
 }
 

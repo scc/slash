@@ -36,6 +36,7 @@ More to come.
 use strict;
 use base qw(Slash::Messages::DB::MySQL);
 use vars qw($VERSION);
+use Slash 2.001;	# require Slash 2.1
 use Slash::Display;
 use Slash::Utility;
 
@@ -66,7 +67,9 @@ uid in the users table.
 
 =item TYPE
 
-The message type.  Preferably a number, but will also handle strings.
+The message type.  Preferably a number, but will also handle strings
+(but those are subject to change by a site admin!).  It is best to
+stick with a number.
 
 =item MESSAGE
 
@@ -161,6 +164,32 @@ sub create {
 	return $msg_id;
 }
 
+#========================================================================
+
+=head2 create_web(MESSAGE)
+
+Create a message record in message_web.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item MESSAGE
+
+A rendered message hashref.
+
+=back
+
+=item Return value
+
+The message ID.
+
+=back
+
+=cut
+
 sub create_web {
 	my($self, $msg) = @_;
 
@@ -175,6 +204,38 @@ sub create_web {
 	);
 	return $msg_id;
 }
+
+#========================================================================
+
+=head2 process(MESSAGES)
+
+Process a list of messages, sending them and deleting them when sent.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item MESSAGES
+
+A list of messages.  Each message may be a rendered message hashref
+or a message ID.
+
+=back
+
+=item Return value
+
+An array of 
+
+=item Side effects
+
+
+=item Dependencies
+
+=back
+
+=cut
 
 # takes message refs or message IDs or a combination of both
 sub process {
@@ -192,12 +253,45 @@ sub process {
 	return @success;
 }
 
+#========================================================================
+
+=head2 checkMessageCodes(CODE, UIDS)
+
+Returns a list of UIDs from UIDS that are set to recieve messages for CODE.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item CODE
+
+Message code to test.
+
+=item UIDS
+
+List of UIDs to test.
+
+=back
+
+=item Return value
+
+List of UIDs from UIDS that are set to receive messages for CODE.
+
+=back
+
+=cut
+
 sub checkMessageCodes {
 	my($self, $code, $uids);
 	my @newuids;
 	$code = "messagecodes_$code";
 	for (@$uids) {
-		push @newuids, $_ if $self->getUser($_, $code);
+		# test this!
+		my $user = $self->getUser($_, ['deliverymodes', $code]);
+		push @newuids, $_
+			if $user->{deliverymodes} >= 0 && $user->{$code};
 	}
 	return \@newuids;
 }
@@ -355,6 +449,32 @@ sub getWebByUID {
 	return $msgs;
 }
 
+#========================================================================
+
+=head2 gets(ID)
+
+Get message with ID from messages queue.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ID
+
+The message ID of the message to get.
+
+=back
+
+=item Return value
+
+A hashref containing the rendered message.
+
+=back
+
+=cut
+
 sub get {
 	my($self, $msg_id) = @_;
 
@@ -362,6 +482,33 @@ sub get {
 	$self->render($msg);
 	return $msg;
 }
+
+#========================================================================
+
+=head2 gets([COUNT])
+
+Get the next COUNT messages from the messages queue.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item COUNT
+
+A number of messages to fetch.  Will fetch the oldest messages.
+If COUNT is false, will fetch all messages.
+
+=back
+
+=item Return value
+
+An arrayref of hashrefs of rendered messages.
+
+=back
+
+=cut
 
 sub gets {
 	my($self, $count) = @_;
@@ -371,7 +518,39 @@ sub gets {
 	return $msgs;
 }
 
-# should we delete msgs completely?  keep a record somewhere?
+#========================================================================
+
+=head2 delete(IDS)
+
+Delete the messages of the given IDS from the messages queue.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item IDS
+
+A list of message IDS to delete.
+
+=back
+
+=item Return value
+
+Number of messages deleted.
+
+=item Side effects
+
+Maybe we should log the deletions somewhere?  Creation date,
+uid, type, and deletion date?
+
+=item Dependencies
+
+=back
+
+=cut
+
 sub delete {
 	my($self, @ids) = @_;
 
@@ -381,6 +560,48 @@ sub delete {
 	}
 	return $count;
 }
+
+#========================================================================
+
+=head2 render(MESSAGE [, NOTEMPLATE])
+
+Given message data from the database, renders the message by filling
+in the user's information from the database, getting the description
+for the message code, and rendering the templates as appropriate.
+
+This method should always be called after getting the data from the
+database, and before using the data.  It is called automatically
+by the get* methods.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item MESSAGE
+
+The hashref of data from the database (see the get* methods).
+
+=item NOTEMPLATE
+
+Boolean for whether or not the templates should be processed.  In
+the get() and gets() methods, this boolean is false, because the raw
+unrendered template data is stored in those messages.  But for the
+getWeb() and getWebByUID() methods, the templates have already been
+rendered and stored in the messages_web table, so the templates
+should not be processed.
+
+=back
+
+=item Return value
+
+The hashref containing the rendered message data.
+
+=back
+
+=cut
+
 
 sub render {
 	my($self, $msg, $notemplate) = @_;
@@ -418,9 +639,48 @@ sub render {
 
 		$msg->{message} = $self->callTemplate($msg->{message}, $msg);
 	}
-	
+
 	return $msg;
 }
+
+#========================================================================
+
+=head2 callTemplate(DATA, MESSAGE)
+
+A wrapper for calling templates in Slash::Messages.  It tries to figure
+out the right page/section to call the template in, etc.  It sets the
+Nocomm parameter in its call to slashDisplay().
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item DATA
+
+This can either be a template name, or a hashref of template data.
+If a hashref, the _NAME parameter is the template name.  The
+_PAGE and _SECTION parameters may also be set.  These will all be
+set appropriately by the create() method.  The rest of
+the key/value pairs will be passed to the template.
+
+=item MESSAGE
+
+The message hashref.  This will be assigned to the "msg" template
+variable, e.g., so you can call "msg.mode" and "msg.id" in the
+template.
+
+=back
+
+=item Return value
+
+The rendered template.
+
+=back
+
+=cut
+
 
 sub callTemplate {
 	my($self, $data, $msg) = @_;
@@ -435,7 +695,7 @@ sub callTemplate {
 		return 0;
 	}
 
-	my $opt  = { 
+	my $opt  = {
 		Return	=> 1,
 		Nocomm	=> 1,
 		Page	=> 'messages',
@@ -450,8 +710,42 @@ sub callTemplate {
 	return $new;
 }
 
-# in scalar context, if numeric key, return text; if text key, return numeric
-# in list context, return (numeric, text)
+#========================================================================
+
+=head2 getDescription(CODETYPE, KEY)
+
+Given a codetype, will fetch a description if KEY is a code,
+and code if KEY is a description.  KEY is determined to be a code
+if it is an integer.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item CODETYPE
+
+A type of code, such as "deliverymodes" or "messagecodes".
+
+=item KEY
+
+A code or description.
+
+=back
+
+=item Return value
+
+This is a little bit tricky.
+
+In scalar context, if KEY is code, return description;
+if KEY is description, return code.  In list context,
+always return a list of (code, description).
+
+=back
+
+=cut
+
 sub getDescription {
 	my($self, $codetype, $key) = @_;
 
@@ -470,6 +764,34 @@ sub getDescription {
 		return wantarray ? ($rcodes->{$key}, $key) : $rcodes->{key};
 	}
 }
+
+#========================================================================
+
+=head2 messagedLog(ERROR)
+
+Will dispatch error message to main::messagedLog() (if exists)
+or errorLog().  main::messagedLog() will normally exist only when
+the message_delivery task is running under slashd.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ERROR
+
+Error message to log.
+
+=back
+
+=item Side effects
+
+goto() is used, so this function will not show up in a stack trace.
+
+=back
+
+=cut
 
 # dispatch to proper logging function
 sub messagedLog {
