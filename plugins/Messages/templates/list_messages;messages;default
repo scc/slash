@@ -18,6 +18,8 @@ __template__
 
 [% IF note %]<H2>[% note %]</H2>[% END %]
 
+<P>Messages marked with "<FONT COLOR="[% user.bg.3 %]">*</FONT>" are unread.</P>
+
 <FORM ACTION="[% constants.rootdir %]/messages.pl" METHOD="POST">
 [% IF message_list.size %]
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
