@@ -819,10 +819,18 @@ sub editStory {
 		}
 
 		my $tmp = $constants->{currentSection};
+	###########################################################################
+	# This will not give you the desired behavior
+	# Constants are constant
+	###########################################################################
 		$constants->{currentSection} = $storyref->{section};
 
 		$storycontent = dispStory($storyref, $author, $topic, 'Full');
 
+	###########################################################################
+	# This will not give you the desired behavior
+	# Constants are constant
+	###########################################################################
 		$constants->{currentSection} = $tmp;
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
 			. otherLinks($slashdb->getAuthor($storyref->{aid}, 'nickname'), $storyref->{tid});
@@ -831,8 +839,16 @@ sub editStory {
 
 	} elsif (defined $sid) { # Loading an existing SID
 		my $tmp = $constants->{currentSection};
-		($constants->{currentSection}) = $slashdb->getStory($sid, 'section');
+	###########################################################################
+	# This will not give you the desired behavior
+	# Constants are constant
+	###########################################################################
+		$constants->{currentSection} = $slashdb->getStory($sid, 'section');
 		($story, $storyref, $author, $topic) = displayStory($sid, 'Full');
+	###########################################################################
+	# This will not give you the desired behavior
+	# Constants are constant
+	###########################################################################
 		$constants->{currentSection} = $tmp;
 		$storybox = fancybox($constants->{fancyboxwidth},'Related Links', $storyref->{relatedtext},0,1);
 
