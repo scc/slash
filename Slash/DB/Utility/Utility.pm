@@ -14,27 +14,32 @@ use vars qw($VERSION);
 
 # BENDER: Oh no! Not the magnet! 
 
-my $timeout = 30; #This should eventualy be a parameter that is configurable
+my $timeout = 30; # This should eventualy be a parameter that is configurable
 
 ########################################################
 # Generic methods for libraries.
 ########################################################
 #Class variable that stores the database handle
 sub new {
-	my($class, $user, $val) = @_;
+	my($class, $user, @args) = @_;
 	my $self = {};
 	my $where;
 
-	bless ($self,$class);
-	$self->{_virtual_user} = $user;
+	bless($self, $class);
+	$self->{virtual_user} = $user;
 	$self->sqlConnect();
-	$self->init($val);
-	for(keys (%{$self->{'_where'}})){
-		$where .= "$_=$self->{'_where'}->{$_}"; 
-		$where .= " AND "; 
+
+	if ($self->can('init')) {
+		$self->init(@args);
+
+		if (exists $self->{'_where'}) {
+			for (keys %{ $self->{'_where'} }) {
+				$where .= "$_=$self->{'_where'}{$_} AND "; 
+			}
+			$where =~ s/ AND $//g if $where;
+			$self->{_wheresql} = $where;
+		}
 	}
-	$where =~ s/ AND $//g if $where;
-	$self->{_wheresql} = $where;
 
 	return $self;
 }
@@ -62,6 +67,7 @@ sub get {
 	my $prime = $self->{'_prime'};
 	my $id_db = $self->{_dbh}->quote($id);
 	my $where;
+
 	if ($self->{_wheresql}) {
 		$where = "$prime=$id_db  AND " . $self->{_wheresql};
 	} else {
@@ -129,8 +135,9 @@ sub create {
 	my $prime = $self->{'_prime'};
 	my $id_db = $self->{_dbh}->quote($id);
 	my $where;
+
 	if ($self->{_wheresql}) {
-		$where = "$prime=$id_db  AND " . $self->{_wheresql};
+		$where = "$prime=$id_db AND " . $self->{_wheresql};
 	} else {
 		$where = "$prime=$id_db";
 	}
@@ -138,8 +145,8 @@ sub create {
 	my($found) = $self->sqlSelect($prime, $table, $where);
 	return if $found;
 
-	for(keys %{$self->{'_where'}}) {
-		$val->{$_} = $self->{'_where'}->{$_};
+	for (keys %{ $self->{'_where'} }) {
+		$val->{$_} = $self->{'_where'}{$_};
 	}
 	$val->{$prime} = $id if $id;
 	$self->sqlInsert($table, $val);
@@ -157,6 +164,7 @@ sub delete {
 	my $prime = $self->{'_prime'};
 	my $id_db = $self->{_dbh}->quote($id);
 	my $where;
+
 	if ($self->{_wheresql}) {
 		$where = "$prime=$id_db  AND " . $self->{_wheresql};
 	} else {

@@ -52,6 +52,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	createCurrentForm
 	createCurrentStatic
 	createCurrentUser
+	createCurrentVirtualUser
 	createEnvironment
 	eatUserCookie
 	encryptPassword
@@ -67,9 +68,9 @@ use vars qw($VERSION @ISA @EXPORT);
 	getCurrentDB
 	getCurrentForm
 	getCurrentMenu
-	getCurrentVirtualUser
 	getCurrentStatic
 	getCurrentUser
+	getCurrentVirtualUser
 	getFormkey
 	getObject
 	isAnon
@@ -88,10 +89,10 @@ use vars qw($VERSION @ISA @EXPORT);
 	strip_nohtml
 	strip_plaintext
 	timeCalc
-	writeLog
 	url2abs
-	xmlencode
+	writeLog
 	xmldecode
+	xmlencode
 );
 
 # LEELA: We're going to deliver this crate like professionals.
@@ -384,14 +385,15 @@ The 'atonish' and 'aton' template blocks.
 
 sub timeCalc {
 	# raw mysql date of story
-	my($date, $format) = @_;
+	my($date, $format, $off_set) = @_;
 	my $user = getCurrentUser();
 	my(@dateformats, $err);
 
+	$off_set = $user->{off_set} unless defined $off_set;
+
 	# find out the user's time based on personal offset
 	# in seconds
-	$date = DateCalc($date, "$user->{off_set} SECONDS", \$err)
-		if $user->{off_set};
+	$date = DateCalc($date, "$off_set SECONDS", \$err) if $off_set;
 
 	# convert the raw date to pretty formatted date
 	$date = UnixDate($date, $format || $user->{'format'});
@@ -2555,9 +2557,9 @@ sub createEnvironment {
 
 #========================================================================
 
-=head2 getObject(CLASS_NAME [VIRTUAL_NAME])
+=head2 getObject(CLASS_NAME [, VIRTUAL_USER, ARGS])
 
-Returns a object
+Returns a object in CLASS_NAME, using the new() constructor.
 
 =over 4
 
@@ -2569,9 +2571,14 @@ Returns a object
 
 A class name to use in creating a object
 
-=item VIRTUAL_NAME
+=item VIRTUAL_USER
 
-Optional name for DBIx::Password
+Optional; will default to main Virtual User for site if not supplied.
+Passed as second argument to the new() constructor (after class name).
+
+=item ARGS
+
+Any other arguments to be passed to the object's constructor.
 
 =back
 
@@ -2584,16 +2591,17 @@ An object.
 =cut
 
 sub getObject {
-	my($value, $user, $args) = @_;
+	my($value, $user, @args) = @_;
 	my $objects;
 
 	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
-		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		$objects = $cfg->{'objects'};
-		$user ||=	$cfg->{VirtualUser};
+		my $r    =   Apache->request;
+		my $cfg  =   Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$objects =   $cfg->{'objects'};
+		$user    ||= $cfg->{VirtualUser};
 	} else {
 		$objects = {};
+		$user    ||= getCurrentVirtualUser();
 	}
 	return unless $user;
 
@@ -2601,7 +2609,11 @@ sub getObject {
 		return $objects->{$value};
 	} else {
 		eval "require $value";
-		$objects->{$value} = $value->new($value, $args);
+		if ($@) {
+			errorLog($@);
+			return;
+		}
+		$objects->{$value} = $value->new($user, @args);
 		return $objects->{$value};
 	}
 }
