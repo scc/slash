@@ -24,6 +24,7 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{constants} = $cfg->{slashdb}->getSlashConf($user);
 	$cfg->{user} = '';
 	$cfg->{form} = '';
+	$cfg->{themes} = '';
 
 	# Backwards compatibility
 	my $anonymous_coward = $cfg->{slashdb}->getUser(
