@@ -25,6 +25,7 @@ $dbh->do('DELETE FROM users_index WHERE UID < 1');
 $dbh->do('DELETE FROM users_info WHERE UID < 1');
 $dbh->do('DELETE FROM users_key WHERE UID < 1');
 $dbh->do('DELETE FROM users_prefs WHERE UID < 1');
+$dbh->do("UPDATE users SET seclev=1 WHERE seclev=0");
 my %story_authors;
 
 my $authors = $dbh->selectall_arrayref("SELECT aid,seclev,lasttitle,section,deletedsubmissions from authors WHERE name != 'All Authors'");
