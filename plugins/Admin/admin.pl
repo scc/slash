@@ -1113,9 +1113,11 @@ sub listStories {
 	$displaystatus, $writestatus, $td, $td2, $yesterday,$tbtitle,
 	$count,$left,$substrtid,$substrsection,$sectionflag);
 
+
 	my ($storiestoday,$not_today,$i,$display,$canedit,$storymin) = (0,0,0,0,0,0);
 	my $displayoff = 1;
 
+	$yesterday = '';
 	my $bgcolor = '';
 	
 	for (@$storylist) {

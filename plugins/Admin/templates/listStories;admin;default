@@ -13,13 +13,13 @@ listStories
 __template__
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
 
-[% FOREACH i = storylistref %]
+[% FOREACH story = storylistref %]
 
-[% IF i.not_today %]
+[% IF story.not_today %]
 	<TR>
 		<TD ALIGN="RIGHT" BGCOLOR="[% user.bg.2 %]">
 
-		[% IF storymin %]
+		[% IF story.storymin %]
 		<FONT SIZE="2"></FONT>
 		[% ELSE %]
 		<FONT SIZE="2">[% storiestoday %]</FONT>
@@ -27,13 +27,13 @@ __template__
 
 		</TD>
 		<TD COLSPAN="7" ALIGN="right" BGCOLOR="[% user.bg.3 %]">
-		<FONT COLOR="[% user.fg.3 %]" SIZE="2">[% td %]</FONT>
+		<FONT COLOR="[% user.fg.3 %]" SIZE="2">[% story.td %]</FONT>
 		</TD>
 	</TR>
 [% END %]
 
 
-[% IF i.displayoff %]
+[% IF story.displayoff %]
 	<TR BGCOLOR="#999999">
 		<TD ALIGN="RIGHT">
 [% ELSE %]
@@ -42,51 +42,52 @@ __template__
 [% END %]
 
 
-[% IF i.canedit %]
-		[<A HREF="[% env.script_name %]?title=[% i.tbtitle %]&op=edit&sid=[% i.sid %]">[% i.x %]</A>]
+[% IF story.canedit %]
+		[<A HREF="[% env.script_name %]?title=[% story.tbtitle %]&op=edit&sid=[% story.sid %]">[% story.x %]</A>]
 [% ELSE %]
-		[[% i.x %]]
+		[[% story.x %]]
 [% END %]
 
 		</TD>
-		<TD><A HREF="[% constants.rootdir %]/article.pl?sid=[% i.sid %]">
-		[% i.title %]&nbsp;</A>
+		<TD><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">
+		[% story.title %]&nbsp;</A>
 		</TD>
-		<TD><FONT SIZE="2"><B>[% i.aid %]</B></FONT></TD>
-		<TD><FONT SIZE="2">[% i.substrtid %]</FONT></TD>
+		<TD><FONT SIZE="2"><B>[% story.aid %]</B></FONT></TD>
+		<TD><FONT SIZE="2">[% story.substrtid %]</FONT></TD>
 
 [% IF sectionflag %]
 		<TD>
 		<FONT SIZE="2">
-		<A HREF="[% env.script_name %]?section=[% i.section %]">
-		[% i.substrsection %]</A>
+		<A HREF="[% env.script_name %]?section=[% story.section %]">
+		[% story.substrsection %]</A>
 		</TD>
 [% END %]
 
 		<TD ALIGN="RIGHT">
-		<FONT SIZE="2">[% i.hits %]</FONT>
+		<FONT SIZE="2">[% story.hits %]</FONT>
 		</TD>
 		<TD>
-		<FONT SIZE="2">[% i.comments %]</FONT>
+		<FONT SIZE="2">[% story.comments %]</FONT>
 		</TD>
 
 
 [% IF form.section %]
-		<TD><FONT SIZE="2">[% i.td2 %]</TD>
+		<TD><FONT SIZE="2">[% story.td2 %]</TD>
 [% END %]
 
-		<TD><FONT SIZE="2">[% i.time %]</TD>
+		<TD><FONT SIZE="2">[% story.time %]</TD>
 	</TR>
 
 [% END %]
 
 </TABLE>
 
-[% IF x > 0 %]
+[% IF story.x > 0 %]
 <P ALIGN="RIGHT">
 <B>
-<A HREF="[% env.script_name %]?section=[% form.section %]&op=list&next=[% x %]">[% left %] More</A></B></P>
+<A HREF="[% env.script_name %]?section=[% form.section %]&op=list&next=[% story.x %]">[% left %] More</A></B></P>
 [% END %]
+
 
 __seclev__
 500

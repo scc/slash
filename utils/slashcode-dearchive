@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+
 use Slash::DB;
 use Slash::DB::Utility;
 use Getopt::Std;
