@@ -2,21 +2,32 @@
 
 use DBI;
 use Getopt::Std;
+use vars (%dbh);
 
-$0 =~ /[^\/]+$/;
+$0 =~ /([^\/]+)$/;
 my $PROGNAME = $1;
 
-my(%optsi, %aidCache);
-getopts('P:s:d:o:?h', \%opts);
-# Blindly show usage under the usual conditions.
+# Handle possibility of unexpected interruption.
+$SIG{INT} = sub { die "Interrupted.\n"; };
+
+my(%opts, %aidCache);
+getopt('Psdoup?h', \%opts);
+# Show usage under the necessary conditions.
 usage() if $opts{'?'} || $opts{h} || !keys(%opts);
+if (	(exists $opts{u} && !exists $opts{p}) ||
+		(!exists $opts{u} && exists $opts{p}))
+{
+	print "Improper use of -u/-p! Both must be specified.\n\n";
+	usage();
+}
 # Perform sensible tilde expansion.
 my(@fileopts) = qw[P d s o];
 map {
 	$opts{$_} =~ s/^\~(\w+)?/(($1) ? getpwnam($1):getpwuid($<))[7]/e; 
 } @fileopts;
 
-my ($prefix, $dumpfile, $rcfile, $outfile) = @opts{qw[P d s o]};
+my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd) =
+	@opts{qw[P d s o u p]};
 $prefix 	||= '/usr/local/slash';
 $dumpfile	||= './site.dump';
 $rcfile 	||= './slashdotrc.pl';
@@ -27,11 +38,20 @@ die "FATAL ERROR: Can't read $rcfile: $!\n"
 die "FATAL ERROR: Can't read input dump file: $!\n"
 	if ! -r $dumpfile;
 
+if ($opts{u} && !length($opts{p})) {
+	print "Enter password: ";
+	chomp($g_pwd = <STDIN>);
+}
+
 $rcfile =~ s!^(.+)/!!;
 my $rcdir = $1 || '.';
 unshift(@INC, $rcdir);
 require $rcfile;
 *my_conf = $Slash::conf{DEFAULT};
+
+# Grab any necessary defaults from the rc file.
+$g_user	||= $my_conf{dbuser};
+$g_pwd 	||= $my_conf{dbpass};
 
 my(@updateFile);
 open(INFILE, "<$prefix/sql/updates/$PROGNAME")
@@ -43,12 +63,12 @@ close(INFILE);
 # Process table status directives from update file.
 my(@rtables, @otables);
 for (@updateFile) {
-	/^#### %REQUIRED TABLES: (.+)$/ && do {
+	/^#### \%REQUIRED TABLES: (.+)$/ && do {
 		push (@rtables, split(/\s*,\s*/, $1));
 		next;
 	};
 
-	/^#### %OBSOLETE TABLES: (.+)$/ && do {
+	/^#### \%OBSOLETE TABLES: (.+)$/ && do {
 		push (@otables, split(/\s*,\s*/, $1));
 		next;
 	};
@@ -59,19 +79,23 @@ for (@updateFile) {
 
 # Create temporary database.
 my $tempDBname = tempDBname();
-my $dbh = DBI->connect($my_conf{dsn}, $my_conf{dbuser}, $my_conf{dbpass}, {
-	PrintError => 0,
-}) or
-	exit 1;
-$dbh->do("CREATE DATABASE $tempDBname") ||
-	die "Can't create temporary database for conversion: " . 
-		$dbh->errstr . "\n";
-$dbh->disconnect();
 $my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
 my $dbhostname = $1 || 'localhost';
-$dbh = DBI->connect("DBI:mysql:database=$tempDBnam;host=$dbhostname", 
-		    $my_conf{dbuser}, $my_conf{dbpass}, {PrintError=>0});
-die "Can't connect to temporary conversion database!\n" if !$dbh;
+# We can just exit if the global handle has errors because we're being wordy in
+# the connect.
+my $g_dbh =
+	DBI->connect("DBI:mysql:database=;host=$dbhostname", $g_user, $g_pwd, {
+		PrintError => 1, 
+	}) or exit 1;
+$g_dbh->do("CREATE DATABASE $tempDBname") or
+	print "\n\nCREATE DATABASE failed for '$tempDBname'\n" && exit 1;
+# Can't forget the grant...
+$g_dbh->do("GRANT ALL on $tempDBname.* TO $my_conf{dbuser}\@$dbhostname") or
+	print "\n\nGRANT failed!\n" && exit 1;
+my $dbh =
+	DBI->connect(	"DBI:mysql:database=$tempDBname;host=$dbhostname", 
+					$my_conf{dbuser}, $my_conf{dbpass}, {PrintError=>0});
+die "\n\nCan't connect to temporary conversion database!\n" if ! $dbh;
 
 # Perform selective import of given dump.
 importDump();
@@ -102,14 +126,11 @@ print "DONE!\n";
 
 END {
 	# Destroy temporary database.
-	if ($dbh) {
-		$dbh->do("DROP DATABASE $tempDBname") ||
-			printf STDERR <<EOT, $dbh->errstr;
-Cannot DROP DATABASE '$tempDBname': %s
-Database drop should be performed manually!
-
-EOT
-		$dbh->disconnect;
+	if ($g_dbh) {
+		# Destroy the one we've create.
+		$g_dbh->do("DROP DATABASE $tempDBname") or
+			print "\n\nDatabase drop should be performed manually!\n";
+		$g_dbh->disconnect;
 	}
 };
 
@@ -117,7 +138,7 @@ EOT
 
 sub tempDBname {
 	my $size = shift || 6;
-	my $ret = 'slashConvert';
+	my $ret = $PROGNAME;
 	my @chars = ('A'..'Z', 'a'..'z', '0'..'9');
 
 	while ($size) {
@@ -130,7 +151,13 @@ sub tempDBname {
 
 
 sub importDump {
-	my @vtables = (@rtables, @otables);
+	my(@vtables)= (@rtables, @otables);
+	my($regexp);
+	
+	{
+		local $" = "|";
+		$regexp = "^(@vtables)\$";
+	}
 
 	print "-- Opening $dumpfile\n";
 	open(DUMPFILE, "<$dumpfile") or 
@@ -140,24 +167,32 @@ sub importDump {
 		do {
 			my $c = <DUMPFILE>;
 			chomp($c);
-			$cmd .= $c;
-		} until $cmd =~ /\;$/ || eof DUMPFILE;
-		next if $cmd =~ /^(#|\s+)$/;
+			$c =~ s/^\s+//;
+			$cmd .= "$c " if length($c);
+		} until ($cmd =~ /\;\s*$/) || ($cmd =~ /^\#/) || eof DUMPFILE;
+		#print "CMD: '$cmd'\n";
+		next if $cmd =~ /^(#.+|[\n\s]+|)$/s;
+		$cmd =~ s/\;\s*//;
 
 		# We only deal with CREATE TABLE and INSERT statements for now.
 		my ($op, $tablename);
-		if ($cmd =~ /(?:(CREATE) TABLE (.+?)|(INSERT) INTO (.+?) VALUES)/i) {
-			($op, $tablename) = (uc $1, uc $2);
-			local $" = '|';
-			my $valid = ($tablename =~ /"(@vtables)"/);
-			print "---- Skipping command '$cmd'\n" && next 
-				if ! $valid;
-		} else {
-			print "---- Skipping command '$cmd'\n";
+		if ($cmd=~/^(?:(CREATE) TABLE (\w+)\b|(INSERT) INTO (\w+)\b)/i) {
+			$op = $1;
+			$tablename = $2;
+			my $valid;
+			$valid = $tablename =~ /$regexp/;
+			if (! $valid) {
+				print "---- ($op|$tablename) Skipping command '$cmd'\n";
+				next;
+			}
 		}
 		
 		print "-- Creating table '$tablename'\n" if $op eq 'CREATE';
-		$dbh->do($cmd);
+		$dbh->do($cmd) or 
+			print STDERR 	"Error executing statement on import: " . 
+							$dbh->errstr . "\n";
+			printf STDERR	"(%d) '$cmd'", length($cmd)
+				if ($a = $dbh->errstr) =~ /empty/,
 	}
 	print "-- Closing $dumpfile\n";
 }
@@ -335,17 +370,25 @@ sub usage {
 
 	print <<EOT;
 
-usage: $PROGNAME {-Psdo?h}
+usage: $PROGNAME {-Psdoup?h}
 
 	-P Prefix for Slash install 		[default: /usr/local/slash]
 	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
 	-d Location of source MySQL dump	[default: ./site.dump]
 	-o Location of output dump 		[default: ./bendersite.dump]
+
+	-u User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
+	-p Password for user given by -u
+
 	-? Displays this help screen (also -h)
 
 Notes: 
 	User given in slashdotrc.pl should have global CREATE/DROP priviledges
 	when this program is run. See INSTALL file for more details.	
+
+	You must specify -p if you specify -u, if no user is given, the one
+	in the rc file specified by -s will be used. If you specify -p with no
+	password, then the user will be prompted.
 
 EOT
 
