@@ -43,7 +43,7 @@ sub main {
 	}
 
 	header("$I{sitename} Users");
-
+print STDERR "UID = $I{U}{uid}";
 	print <<EOT if $I{U}{uid} != $I{anonymous_coward} && $op ne "userclose";
  [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
@@ -260,9 +260,10 @@ sub mailPassword {
 sub userInfo {
 	my($nick) = @_;
 
-	my $bio = $I{dbobject}->getUserBio($nick);
+	my $userbio = $I{dbobject}->getUserBio($nick);
+	print STDERR ":$userbio:$nick:\n";
 
-	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$bio) {
+	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$userbio) {
 		$bio = stripByMode($bio, "html");
 		if ($I{U}{nickname} eq $nick) {
 			my $points = $I{dbobject}->getUserPoints($uid);
@@ -395,7 +396,7 @@ EOT
 	my $description = $I{dbobject}->getDescriptions('maillist');
 	createSelect('maillist', $description, $user->{maillist});
 
-	printf <<EOT, stripByMode($sig, 'literal'), stripByMode($bio, 'literal');
+	printf <<EOT, stripByMode($user->{sig}, 'literal'), stripByMode($user->{bio}, 'literal');
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
 		<TEXTAREA NAME="sig" ROWS="2" COLS="60">%s</TEXTAREA>
 

@@ -161,6 +161,81 @@ sub sqlConnect {
 }
 
 ########################################################
+sub setComment{
+	my ($self, $form, $user, $pts, $default_user) = @_;
+
+	$dbh->do("LOCK TABLES comments WRITE");
+	my($maxCid) = $self->sqlSelect(
+		"max(cid)", "comments", "sid=" . $dbh->quote($form->{sid})
+	);
+
+	$maxCid++; # This is gonna cause troubles
+	my $insline = "INSERT into comments values (".
+		$dbh->quote($form->{sid}) . ",$maxCid," .
+		$dbh->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
+		$dbh->quote($form->{postersubj}) . "," .
+		$dbh->quote($form->{postercomment}) . "," .
+		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
+
+	# don't allow pid to be passed in the form.
+	# This will keep a pid from being replace by
+	# with other comment's pid
+	if ($form->{pid} >= $maxCid || $form->{pid} < 0) {
+		return;
+	}
+
+	if ($dbh->do($insline)) {
+		$dbh->do("UNLOCK TABLES");
+
+		# Update discussion
+		my($dtitle) = $self->sqlSelect(
+			'title', 'discussions', "sid=" . $dbh->quote($form->{sid})
+		);
+
+		unless ($dtitle) {
+			sqlUpdate(
+				"discussions",
+				{ title => $form->{postersubj} },
+				"sid=" . $dbh->quote($form->{sid})
+			) if $form->{sid};
+		}
+
+		my($ws) = sqlSelect(
+			"writestatus", "stories", "sid=" . $dbh->quote($form->{sid})
+		);
+
+		if ($ws == 0) {
+			sqlUpdate(
+				"stories",
+				{ writestatus => 1 }, 
+				"sid=" . $dbh->quote($form->{sid})
+			);
+		}
+
+		sqlUpdate(
+			"users_info",
+			{ -totalcomments => 'totalcomments+1' },
+			"uid=" . $dbh->quote($user->{uid}), 1
+		);
+
+		# successful submission		
+		$self->formSuccess($form->{formkey},$maxCid,length($form->{postercomment}));
+
+		my($tc, $mp, $cpp) = $self->getVars(
+			"totalComments",
+			"maxPoints",
+			"commentsPerPoint"
+		);
+
+		$self->setVar("totalComments", ++$tc);
+
+	} else {
+		$dbh->do("UNLOCK TABLES");
+		apacheLog("$DBI::errstr $insline");
+		return -1;
+	}
+}
+########################################################
 sub unsetModeratorlog{
 	my ($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
@@ -193,6 +268,12 @@ sub unsetModeratorlog{
 	}
 
 	return \@removed;
+}
+########################################################
+sub getContentFilters {
+	my ($self) = @_;
+	my $filters = sqlSelectAll("*","content_filters","regex != '' and field != ''");
+	return $filters;
 }
 ########################################################
 sub createDiscussions{
@@ -547,7 +628,7 @@ sub getUserAll{
   my $ac_hash_ref;
 	$ac_hash_ref = $self->sqlSelectHashref('*',
 		'users, users_index, users_comments, users_prefs',
-		'users.uid=$uid AND users_index.uid=$uid AND ' .
+		"users.uid=$uid AND users_index.uid=$uid AND " .
 		"users_comments.uid=$uid AND users_prefs.uid=$uid"
 	);
 	return $ac_hash_ref;
@@ -1050,7 +1131,6 @@ sub currentAdmin {
 my ($self) = @_;
   my $aids = $self->sqlSelectAll('aid,now()-lasttime,lasttitle', 'sessions',
 			'aid=aid GROUP BY aid'
-			#   'aid!=' . $self->{dbh}->quote($I{U}{aid}) . ' GROUP BY aid'
 			);
 
 	return $aids;

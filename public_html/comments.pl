@@ -472,9 +472,9 @@ EOT
 	# minimum length (minimum length of that comment has to be to be tested), err_message 
 	# message displayed upon failure to post if regex matches contents.
 	# make sure that we don't select new filters without any regex data
-	my $filter_hashref = sqlSelectAll("*","content_filters","regex != '' and field != ''");
+	my $filters = $I{dbobject}->getContentFilters();
 
-	for (@$filter_hashref) {
+	for (@$filters) {
 		my($number_match, $regex);
 		my $raw_regex		= $_->[1];
 		my $modifier		= 'g' if $_->[2] =~ /g/;
@@ -499,9 +499,6 @@ EOT
 		$regex = $raw_regex . $number_match;
 		my $tmp_regex = $regex;
 
-		# DEBUG
-		# print "<br>\n";
-		# print "number $_->[0] regex $tmp_regex minimum_match $minimum_match modifier $modifier case $case<br>\n";
 
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
@@ -629,7 +626,6 @@ sub submitComment {
 
 	titlebar("95%", "Submitted Comment");
 
-	my $ident = $ENV{REMOTE_ADDR};
 	my $pts = 0;
 
 	if($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
@@ -641,85 +637,21 @@ sub submitComment {
 		$pts = $I{comment_maxscore} if $pts > $I{comment_maxscore};
 	}
 
-	$I{dbh}->do("LOCK TABLES comments WRITE");
-	my($maxCid) = sqlSelect(
-		"max(cid)", "comments", "sid=" . $I{dbh}->quote($I{F}{sid})
-	);
-
-	$maxCid++; # This is gonna cause troubles
-	my $insline = "INSERT into comments values (".
-		$I{dbh}->quote($I{F}{sid}) . ",$maxCid," .
-		$I{dbh}->quote($I{F}{pid}) . ",now(),'$ident'," .
-		$I{dbh}->quote($I{F}{postersubj}) . "," .
-		$I{dbh}->quote($I{F}{postercomment}) . "," .
-		($I{F}{postanon} ? $I{anonymous_coward} : $I{U}{uid}) . ",$pts,-1,0)";
-
-	# don't allow pid to be passed in the form.
-	# This will keep a pid from being replace by
-	# with other comment's pid
-	if ($I{F}{pid} >= $maxCid || $I{F}{pid} < 0) {
-		print "Don't you have anything better to do with your life?";
-		return;
-	}
-
-	if ($I{dbh}->do($insline)) {
-		$I{dbh}->do("UNLOCK TABLES");
-		print <<EOT;
-Comment Submitted. There will be a delay before the comment becomes part
-of the static page.  What you submitted appears below.  If there is a
-mistake, well, you should have used the Preview button!<P>
-EOT
-
-		# Update discussion
-		my($dtitle) = sqlSelect(
-			'title', 'discussions', "sid=" . $I{dbh}->quote($I{F}{sid})
-		);
-
-		unless ($dtitle) {
-			sqlUpdate(
-				"discussions",
-				{ title => $I{F}{postersubj} },
-				"sid=" . $I{dbh}->quote($I{F}{sid})
-			) if $I{F}{sid};
+	# It would be nice to have an arithmatic if right here
+	if(my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, $I{anonymous_coward})) {
+		if($maxCid == -1) {
+			print "<P>There was an unknown error in the submission.<BR>";
+		}else {
+			print "Don't you have anything better to do with your life?";	
 		}
-
-		my($ws) = sqlSelect(
-			"writestatus", "stories", "sid=" . $I{dbh}->quote($I{F}{sid})
-		);
-
-		if ($ws == 0) {
-			sqlUpdate(
-				"stories",
-				{ writestatus => 1 }, 
-				"sid=" . $I{dbh}->quote($I{F}{sid})
-			);
-		}
-
-		sqlUpdate(
-			"users_info",
-			{ -totalcomments => 'totalcomments+1' },
-			"uid=" . $I{dbh}->quote($I{U}{uid}), 1
-		);
-
-		# successful submission		
-		$I{dbobject}->formSuccess($I{F}{formkey},$maxCid,length($I{F}{postercomment}));
-
-		my($tc, $mp, $cpp) = $I{dbobject}->getVars(
-			"totalComments",
-			"maxPoints",
-			"commentsPerPoint"
-		);
-
-		$I{dbobject}->setVar("totalComments", ++$tc);
-
+	} else {
+		print "Comment Submitted. There will be a delay before the comment becomes part
+				of the static page.  What you submitted appears below.  If there is a
+				mistake, well, you should have used the Preview button!<P>";
 		undoModeration($I{F}{sid});
 		printComments($I{F}{sid}, $maxCid, $maxCid);
-
-	} else {
-		$I{dbh}->do("UNLOCK TABLES");
-		$I{r}->log_error("$DBI::errstr $insline");
-		print "<P>There was an unknown error in the submission.<BR>";
 	}
+
 }
 
 ##################################################################

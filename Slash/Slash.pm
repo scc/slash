@@ -404,6 +404,7 @@ sub addToUser {
 sub getUser {
 	my($uid, $passwd) = @_;
 	undef $I{U};
+	print "#$uid:\n";
 
 	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUserInfoAuthenticate($uid, $passwd, $ENV{SCRIPT_NAME}))) { 
 
