@@ -304,7 +304,7 @@ sub userInfo {
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 
-		my $replies = $slashdb->countComments($sid, $cid);
+		my $replies = $slashdb->countCommentsBySidPid($sid, $cid);
 
 		# This is ok, since with all luck we will not be hitting the DB
 		my $story = $slashdb->getStory($sid);

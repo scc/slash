@@ -1476,22 +1476,27 @@ sub getPortalsCommon {
 }
 
 ##################################################################
-# counts the number of comments for a user
-# This is pretty questionable -Brian
-sub countComments {
-	my($self, $sid, $cid, $comment, $uid) = @_;
-	my $value;
-	if ($uid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND uid=$uid");
-	} elsif ($cid) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($cid));
-	} elsif ($comment) {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
-	} else {
-		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{_dbh}->quote($sid));
-	}
+sub countCommentsBySid {
+	my($self, $sid) = @_;
+	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid));
+}
 
-	return $value;
+##################################################################
+sub countCommentsBySidUID {
+	my($self, $sid, $uid) = @_;
+	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid) . " AND uid=$uid");
+}
+
+##################################################################
+sub countCommentsBySidPid {
+	my($self, $sid, $pid) = @_;
+	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid) . " AND pid = ". $self->{_dbh}->quote($pid));
+}
+
+##################################################################
+sub findCommentsDuplicate {
+	my($self, $sid, $comment) = @_;
+	return $self->sqlCount('comments', "sid=" . $self->{_dbh}->quote($sid) . ' AND comment=' . $self->{_dbh}->quote($comment));
 }
 
 ##################################################################

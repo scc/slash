@@ -573,7 +573,7 @@ sub pollbooth {
 		question	=> $polls->[0][0],
 		qid		=> $qid,
 		voters		=> $slashdb->getPollQuestion($qid, 'voters'),
-		comments	=> $slashdb->countComments($qid),
+		comments	=> $slashdb->countCommentsBySid($qid),
 		sect		=> $sect,
 	}, 1);
 

@@ -225,7 +225,7 @@ sub validateComment {
 		return;
 	}
 
-	my $dupRows = $slashdb->countComments($form->{sid}, '', $$comm);
+	my $dupRows = $slashdb->findCommentsDuplicate($form->{sid}, $$comm);
 
 	if ($dupRows || !$form->{sid}) {
 		$$error_message = slashDisplay('errors', {
@@ -509,7 +509,7 @@ sub moderate {
 	my $hasPosted;
 
 	unless ($user->{seclev} > 99 && $constants->{authors_unlimited}) {
-		$hasPosted = $slashdb->countComments($form->{sid}, '', '', $user->{uid});
+		$hasPosted = $slashdb->countCommentsBySidUID($form->{sid}, $user->{uid});
 	}
 
 	slashDisplay('mod_header');
@@ -535,7 +535,7 @@ sub moderate {
 	} elsif ($user->{seclev} && $total_deleted) {
 		slashDisplay('del_message', {
 			total_deleted	=> $total_deleted,
-			comment_count	=> $slashdb->countComments($form->{sid}),
+			comment_count	=> $slashdb->countCommentsBySid($form->{sid}),
 		});
 	}
 }
