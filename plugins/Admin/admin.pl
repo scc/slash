@@ -1175,8 +1175,7 @@ sub get_ispell_comments {
 	my $n_text_words = scalar(my @junk = split /\W+/, $text);
 	my $slashdb = getCurrentDB();
 
-	my $ispell = $slashdb->getVar("ispell");
-	$ispell = $ispell->{value} if $ispell;
+	my $ispell = $slashdb->getVar("ispell", "value");
 	return "" if !$ispell;
 	return "bad ispell var '$ispell'" unless $ispell eq 'ispell' or $ispell =~ /^\//;
 	return "insecure ispell var '$ispell'" if $ispell =~ /\s/;
@@ -1185,7 +1184,8 @@ sub get_ispell_comments {
 			if !-e $ispell or !-f _ or !-r _ or !-x _;
 	}
 
-	my $ok = $slashdb->getTemplateByName('ispellok', '', 1);
+	# That last "1" means to ignore errors
+	my $ok = $slashdb->getTemplateByName('ispellok', '', 1, '', '', 1);
 	$ok = $ok ? ($ok->{template} || "") : "";
 	$ok =~ s/\s+/\n/g;
 
