@@ -47,12 +47,11 @@ $VERSION = '1.0.9';
 	checkSubmission createMenu createSelect
 	currentAdminUsers dispComment displayStory displayThread
 	dispStory errorMessage fancybox footer getFormkeyId
-	getOlderStories getSection getSectionBlock getsid getsiddir
+	getOlderStories getSection getSectionBlock getsiddir
 	header horizmenu linkComment linkStory lockTest
 	moderatorCommentLog pollbooth portalbox printComments
 	redirect selectMode selectSection selectSortcode
 	selectThreshold selectTopic sendEmail titlebar
-	anonLog
 );  # anonLog
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
@@ -352,52 +351,12 @@ sub getSectionBlock {
 #  What is it?  Where does it go?  The Random Leftover Shit
 
 ########################################################
-# Returns YY/MM/DD/HHMMSS all ready to be inserted
-sub getsid {
-	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
-	$year = $year % 100;
-	my $sid = sprintf('%02d/%02d/%02d/%02d%0d2%02d',
-		$year, $mon+1, $mday, $hour, $min, $sec);
-	return $sid;
-}
-
-
-########################################################
 # Returns the directory (eg YY/MM/DD/) that stories are being written in today
 sub getsiddir {
 	my($mday, $mon, $year) = (localtime)[3, 4, 5];
 	$year = $year % 100;
 	my $sid = sprintf('%02d/%02d/%02d/', $year, $mon+1, $mday);
 	return $sid;
-}
-
-
-########################################################
-# Saves an entry to the access log for static pages
-# typically called now as part of getAd()
-# We need to have logging occur in its own module
-# for the next version
-sub anonLog {
-	my($op, $data) = ('/', '');
-
-	local $_ = $ENV{REQUEST_URI};
-	s/(.*)\?/$1/;
-	if (/404/) {
-		$op = '404';
-	} elsif (m[/(.*?)/(.*).shtml]) {
-		($op, $data) = ($1,$2);
-	} elsif (m[/(.*).shtml]) {
-		$op = $1;
-	} elsif (m[/(.+)]) {
-		$data = $op = $1;
-	} else {
-		$data = $op = 'index';
-	}
-
-	$data =~ s/_F//;
-	$op =~ s/_F//;
-
-	writeLog($op, $data);
 }
 
 
@@ -763,8 +722,6 @@ sub getAd {
 	my $num = $_[0] || 1;
 	return qq|<!--#perl sub="sub { use Slash; print Slash::getAd($num); }" -->|
 		unless $ENV{SCRIPT_NAME};
-
-	anonLog() unless $ENV{SCRIPT_NAME} =~ /\.pl/; # Log non .pl pages
 
 	return $ENV{"AD_BANNER_$num"};
 }

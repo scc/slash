@@ -1256,8 +1256,8 @@ sub saveStory {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $rootdir = getCurrentStatic('rootdir');
 
-	$form->{sid} = getsid();
 	$form->{displaystatus} ||= 1 if $user->{section};
 	$form->{section} = $user->{section} if $user->{section};
 	$form->{dept} =~ s/ /-/g;
@@ -1266,7 +1266,11 @@ sub saveStory {
 	) . otherLinks($user->{nickname}, $form->{tid});
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
-	$slashdb->createStory();
+	my $sid = $slashdb->createStory();
+	$slashdb->createDiscussion($sid, $form->{title}, 
+			$form->{'time'}, 
+			"$rootdir/article.pl?sid=$sid"
+			);
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories();

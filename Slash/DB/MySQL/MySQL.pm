@@ -2033,26 +2033,37 @@ sub setCommentCount {
 }
 
 ########################################################
+sub createDiscussion {
+	my($self, $sid, $title, $time, $url) = @_;
+
+	$self->sqlInsert('discussions', {
+		sid	=> $sid,
+		title	=> $title,
+		ts	=> $time,
+		url	=> $url
+	});
+}
+
+########################################################
 sub createStory {
 	my($self, $story) = @_;
 	unless ($story) {
 		my $form = getCurrentForm() unless ($story);
 		$story ||= $form;
 	}
-	my $constants = getCurrentStatic();
-	$self->sqlInsert('storiestuff', { sid => $story->{sid} });
-	$self->sqlInsert('discussions', {
-		sid	=> $story->{sid},
-		title	=> $story->{title},
-		ts	=> $story->{'time'},
-		url	=> "$constants->{rootdir}/article.pl?sid=$story->{sid}"
-	});
+	#Create a sid 
+	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
+	$year = $year % 100;
+	my $sid = sprintf('%02d/%02d/%02d/%02d%0d2%02d',
+		$year, $mon+1, $mday, $hour, $min, $sec);
 
+	$self->sqlInsert('storiestuff', { sid => $sid });
 
 	# If this came from a submission, update submission and grant
 	# Karma to the user
 	my $suid;
 	if ($story->{subid}) {
+		my $constants = getCurrentStatic();
 		my($suid) = $self->sqlSelect(
 			'uid','submissions',
 			'subid=' . $self->{_dbh}->quote($story->{subid})
@@ -2079,7 +2090,7 @@ sub createStory {
 	}
 
 	$self->sqlInsert('stories',{
-		sid		=> $story->{sid},
+		sid		=> $sid,
 		uid		=> $story->{uid},
 		tid		=> $story->{tid},
 		dept		=> $story->{dept},
@@ -2094,6 +2105,8 @@ sub createStory {
 		commentstatus	=> $story->{commentstatus}
 	});
 	$self->_saveExtras($story);
+
+	return $sid;
 }
 
 ##################################################################

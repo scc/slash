@@ -105,7 +105,7 @@ CREATE TABLE commentmodes (
 
 DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
-  sid varchar(30) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE dateformats (
 
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
-  sid varchar(20) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   title varchar(128),
   url varchar(128),
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE formkeys (
   formkey varchar(20) DEFAULT '' NOT NULL,
   formname varchar(20) DEFAULT '' NOT NULL,
   id varchar(30) DEFAULT '' NOT NULL,
-  sid varchar(30) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   uid int(11) DEFAULT '1' NOT NULL,
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
@@ -247,7 +247,7 @@ CREATE TABLE moderatorlog (
   id int(1) NOT NULL auto_increment,
   uid int(1) DEFAULT '1' NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
-  sid varchar(30) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   cid int(1) DEFAULT '0' NOT NULL,
   reason int(11) DEFAULT '0',
@@ -263,7 +263,7 @@ CREATE TABLE moderatorlog (
 
 DROP TABLE IF EXISTS newcomments;
 CREATE TABLE newcomments (
-  sid varchar(30) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -287,7 +287,7 @@ CREATE TABLE newcomments (
 
 DROP TABLE IF EXISTS newstories;
 CREATE TABLE newstories (
-  sid varchar(20) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
   uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
@@ -384,7 +384,7 @@ CREATE TABLE sessions (
 
 DROP TABLE IF EXISTS stories;
 CREATE TABLE stories (
-  sid varchar(20) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
   uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
@@ -413,7 +413,7 @@ CREATE TABLE stories (
 DROP TABLE IF EXISTS story_param;
 CREATE TABLE story_param (
   param_id int(11) NOT NULL auto_increment,
-  sid varchar(20) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
   value text,
   UNIQUE story_key (sid,name),
@@ -426,7 +426,7 @@ CREATE TABLE story_param (
 
 DROP TABLE IF EXISTS storiestuff;
 CREATE TABLE storiestuff (
-  sid varchar(20) DEFAULT '' NOT NULL,
+  sid char(16) DEFAULT '' NOT NULL,
   hits int(1) DEFAULT '0' NOT NULL,
   PRIMARY KEY (sid)
 );

@@ -19,9 +19,27 @@ $loaded = 1;
 
 my $object = new Slash::DB('slash');
 $object->sqlConnect();
-my $sid = '00/01/25/1236215';
+
+my $time = $object->getTime();
+
+my %story =  (
+		uid		=> 2,
+		tid		=> 'articles',
+		dept		=> 'Story testers',
+		'time'		=> $time,
+		title		=> 'Test Story',
+		section		=> 'articles',
+		bodytext	=> 'This is body text',
+		introtext	=> 'This is intro text',
+		writestatus	=> 0,
+		relatedtext	=> 'Some related text',
+		displaystatus	=> 0,
+		commentstatus	=> 0
+);
 
 ########################################################################
+my $sid = $object->createStory(\%story);
+
 my $story = $object->getStory($sid);
 print "ok 1\n";
 
