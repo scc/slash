@@ -27,7 +27,11 @@ sub main {
 	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
 	my $postflag = $curuser->{state}{post};
 	my $op = lc($form->{op});
-	$op ||= 'userinfo';
+	$op ||= isAnon($curuser->{uid}) ? 'userlogin' : 'userinfo';
+	# savepasswd is a special case, because once it's called, you
+	# have to reload the form, and you don't want to do any checks if
+	# you've just saved.
+	my $savepass_flag = $op eq 'savepasswd' ? 1 : 0 ;
 
 	# my $note = [ split /\n+/, $form->{note} ] if defined $form->{note};
 	my $note;
@@ -43,7 +47,7 @@ sub main {
 			function	=> \&showInfo,
 			seclev		=> 1,
 			formname	=> $formname,
-			checks		=> ['generate_formkey'],
+			checks		=> [],
 		},
 		userinfo	=>  {
 			function	=> \&showInfo,
@@ -106,7 +110,7 @@ sub main {
 			function	=> \&changePasswd,
 			seclev		=> 1,
 			formname	=> $formname,
-			checks		=> 
+			checks		=> $savepass_flag ? [] :
 			[ qw (max_reads_check max_post_check generate_formkey) ],
 		},
 		edituser	=> {
@@ -220,13 +224,16 @@ sub main {
 				last if $error_flag;
 			}
 		}
-		$note .= savePasswd($form->{uid}) if ! $error_flag;
+	
+		if ( ! $error_flag) {
+			$note .= savePasswd($form->{uid}) ;
+		}
 		# change op to edituser and let fall through;
 		# we need to have savePasswd set the cookie before
 		# header() is called -- pudge
-		if ($curuser->{seclev} < 100) { 
+		if ($curuser->{seclev} < 100 && ! $error_flag) { 
 			# why assign to an unused variable? -- pudge
-			my $updated = $slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING})) if ! $error_flag;
+			$slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
 		}
 		$op = 'changepasswd';
 	}
@@ -780,7 +787,7 @@ sub changePasswd {
 
 	print getMessage('note', { note => $form->{note}}) if $form->{note};
 
-	$title = getTitle('changePasswd', { user_edit => $user});
+	$title = getTitle('changePasswd_title', { user_edit => $user});
 
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user->{session_login}, 1);
