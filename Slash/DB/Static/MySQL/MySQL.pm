@@ -557,13 +557,11 @@ sub fetchEligibleModerators {
 sub updateTokens {
 	my($self, $modlist) = @_;
 
-	$self->sqlTransactionStart("LOCK TABLES users_info WRITE");
 	for (@{$modlist}) {
 		$self->setUser($_, {
 			-tokens	=> "tokens+1",
 		});
 	}
-	$self->sqlTransactionFinish();
 }
 
 ########################################################
@@ -579,13 +577,11 @@ sub checkUserExpiry {
 	my($ret);
 
 	# Subtract one from number of 'registered days left' for all users.
-	$self->sqlTransactionStart("LOCK TABLES users_info WRITE");
 	$self->sqlUpdate(
 		'users_info',
 		{ -'expiry_days' => 'expiry_days-1' },
 		'1=1'
 	);
-	$self->sqlTransactionFinish();
 
 	# Now grab all UIDs that look to be expired, we explicitly exclude
 	# authors from this search.
