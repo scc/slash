@@ -95,8 +95,7 @@ sub main {
 # Ugly isn't it?
 sub _authors {
 	my $slashdb = getCurrentDB();
-	# this is a problem right now PMG 9/26/01
-	my $authors = {}; #$slashdb->getDescriptions('authors');
+	my $authors = $slashdb->getDescriptions('all-authors');
 	$authors->{''} = 'All Authors';
 
 	return $authors;

@@ -409,6 +409,7 @@ $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename/logs")
 $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename/htdocs") . " WHERE name = 'basedir'");
 $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename") . " WHERE name = 'datadir'");
 $dbh->do("UPDATE vars SET value = " . $dbh->quote($sitename) . " WHERE name = 'siteid'");
+$slashdb->createAuthorCache();
 
 $dbh->disconnect;
 install_message();

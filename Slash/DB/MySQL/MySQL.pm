@@ -102,7 +102,10 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', "author = 1") },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'authors_cache', "author = 1") },
+
+	'all-authors'
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'authors_cache') },
 
 	'admins'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 100') },
@@ -1596,10 +1599,10 @@ sub getSectionBlocks {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll('count(*) as c, stories.uid',
-		'stories, users',
-		"users.uid = stories.uid AND users.author = 1",
-		'GROUP BY uid ORDER BY c DESC'
+	my $authors = $self->sqlSelectAll('storycount, uid, nickname, homepage, bio',
+		'authors_cache',
+		'author = 1',
+		'GROUP BY uid ORDER BY storycount DESC'
 	);
 
 	return $authors;
@@ -2820,11 +2823,12 @@ sub countStorySubmitters {
 }
 
 ########################################################
+# Just used for Hof
 sub countStoriesAuthors {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll('count(*) as c, nickname, homepage',
-		'stories, users', 'users.uid=stories.uid',
-		'GROUP BY stories.uid ORDER BY c DESC LIMIT 10'
+	my $authors = $self->sqlSelectAll('storycount, nickname, homepage',
+		'authors_cache', '',
+		'GROUP BY uid ORDER BY storycount DESC LIMIT 10'
 	);
 	return $authors;
 }
@@ -4052,95 +4056,17 @@ sub getStory {
 
 ########################################################
 sub getAuthor {
-	my($self, $id, $values, $cache_flag) = @_;
-	my $table = 'authors';
-	my $table_cache = '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
-
-	my $type;
-	if (ref($values) eq 'ARRAY') {
-		$type = 0;
-	} else {
-		$type  = $values ? 1 : 0;
-	}
-
-	if ($type) {
-		return $self->{$table_cache}{$id}{$values}
-			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
-	} else {
-		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
-			my %return = %{$self->{$table_cache}{$id}};
-			return \%return;
-		}
-	}
-
-	# Lets go knock on the door of the database
-	# and grab the data's since it is not cached
-	# On a side note, I hate grabbing "*" from a database
-	# -Brian
-	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,homepage,bio',
-		'users,users_info', 'users.uid=' . $self->sqlQuote($id) . ' AND users.uid = users_info.uid');
-	$self->{$table_cache}{$id} = $answer;
-
-	$self->{$table_cache_time} = time();
-
-	if ($type) {
-		return $self->{$table_cache}{$id}{$values};
-	} else {
-		if ($self->{$table_cache}{$id}) {
-			my %return = %{$self->{$table_cache}{$id}};
-			return \%return;
-		} else {
-			return;
-		}
-	}
+	my($self) = @_;
+	_genericCacheRefresh($self, 'authors_cache', getCurrentStatic('block_expire'));
+	my $answer = _genericGetCache('authors_cache', 'uid', '', @_);
+	return $answer;
 }
 
 ########################################################
 # This of course is modified from the norm
 sub getAuthors {
-	my($self, $cache_flag) = @_;
-
-	my $table = 'authors';
-	my $table_cache= '_' . $table . '_cache';
-	my $table_cache_time= '_' . $table . '_cache_time';
-	my $table_cache_full= '_' . $table . '_cache_full';
-
-	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
-		my %return = %{$self->{$table_cache}};
-		return \%return;
-	}
-
-	my $where;
-	# allow overriding with set of UIDs
-	if (ref($cache_flag) eq 'ARRAY') {
-		$where = 'users.uid IN (' .
-			(join ",", map { $self->sqlQuote($_) } @$cache_flag) .
-		')';
-	} else {
-		$where = 'users.author=1';
-	}
-
-	my %return;
-	my $sth = $self->sqlSelectMany(
-		'users.uid,nickname,fakeemail,homepage,bio',
-		'users,users_info',
-		$where .
-		'AND users.uid = users_info.uid'
-	);
-	while (my $row = $sth->fetchrow_hashref) {
-		$return{ $row->{'uid'} } = $row;
-	}
-	$sth->finish;
-
-	if (!ref($cache_flag) eq 'ARRAY') {
-		$self->{$table_cache} = \%return;
-		$self->{$table_cache_full} = 1;
-		$self->{$table_cache_time} = time();
-	}
-
-	return \%return;
+	my $answer = _genericGetsCache('authors_cache', 'uid', '', @_);
+	return $answer;
 }
 
 ########################################################
