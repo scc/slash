@@ -787,7 +787,7 @@ sub getOlderStories {
 		stories		=> $newstories,
 		section		=> $section,
 		yesterday	=> $yesterday,
-		min		=> $section->{artcount} + $form->{min},
+		start		=> $section->{artcount} + $form->{start},
 	}, 1);
 }
 
