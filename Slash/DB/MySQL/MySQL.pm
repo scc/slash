@@ -3447,7 +3447,7 @@ sub getStoryList {
 	my $story_table = getCurrentStatic('mysql_heap_table') ?
 		'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
-	my $columns = "hits, commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
+	my $columns = "hits, $story_table.commentcount as commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
 		. "time, name, section, displaystatus, $story_table.writestatus";
 	my $tables = "$story_table, discussions, topics";
 	my $where = "$story_table.tid=topics.tid AND $story_table.discussion=discussions.id";
