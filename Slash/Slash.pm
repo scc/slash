@@ -47,7 +47,7 @@ $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 $VERSION = '1.0.9';
 @ISA	 = 'Exporter';
 @EXPORT  = qw(
-	checkSubmission createEnvironment createMenu createSelect
+	checkSubmission createMenu createSelect
 	currentAdminUsers dispComment displayStory displayThread
 	dispStory errorMessage fancybox footer getFormkeyId
 	getOlderStories getSection getSectionBlock getsid getsiddir
@@ -1948,25 +1948,6 @@ sub checkSubmission {
 		}
 	}
 	return 1;
-}
-
-########################################################
-# Ok, in a non CGI we need to set up enough of an
-# environment so that methods that are accustom
-# to Apache do not choke.
-sub createEnvironment {
-	my($virtual_user) = @_;
-	my $slashdb = Slash::DB->new($virtual_user);
-	my $constants = $slashdb->getSlashConf();
-
-	# We assume that the user for scripts is the anonymous user
-	my $user = $slashdb->getUser($constants->{anonymous_coward_uid});
-	createCurrentDB($slashdb);
-	createCurrentStatic($constants);
-	createCurrentUser($user);
-	createCurrentAnonymousCoward($user);
-
-	return($constants, $slashdb);
 }
 
 #========================================================================
