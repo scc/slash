@@ -34,7 +34,7 @@ Slashdot.  Exciting?  Nope.
 =cut
 
 use strict;
-use vars qw($I %savedBlocks);
+#use vars qw(%savedBlocks);
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
@@ -44,32 +44,32 @@ use Slash;
 use Slash::DB;
 use Slash::Utility;
 
-#*I = getSlashConf();
-my $slashdb = Slash::DB->new('slash');
-$I = $slashdb->getSlashConf();
+my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+my ($constants, $slashdb) = createEnvironment($virtual_user);
+my %savedBlocks;
 my $totalChangedStories = 1;
 
 sub makeTmp {
-	if (-f "$I->{datadir}/logs/portald.pid") {
-		my $log = `tail -n 3 $I->{datadir}/logs/portald.log`;
+	if (-f "$constants->{datadir}/logs/portald.pid") {
+		my $log = `tail -n 3 $constants->{datadir}/logs/portald.log`;
 		#sendEmail($siteadmin,'portal - frickin - d',"Portald has failed. You may want to fix it in the near future. Here are the last 3 lines of the log:\n$log");
 	} else {
-		open LOCK, "> $I->{datadir}/logs/portald.pid"
-			or die "Can't open $I->{datadir}/logs/portald.pid: $!";
+		open LOCK, "> $constants->{datadir}/logs/portald.pid"
+			or die "Can't open $constants->{datadir}/logs/portald.pid: $!";
 		print LOCK "$$";
 		close LOCK;
 	}
 }
 
 sub deleteTmp {
-	unlink "$I->{datadir}/logs/portald.pid" or warn "Can't unlink $I->{datadir}/logs/portald.pid: $!";
+	unlink "$constants->{datadir}/logs/portald.pid" or warn "Can't unlink $constants->{datadir}/logs/portald.pid: $!";
 }
 
 ################################################################################
 sub geturl {
 	my $ua = new LWP::UserAgent;
 	my $request = new HTTP::Request('GET', $_[0]);
-	$ua->proxy(http => $I->{http_proxy}) if $I->{http_proxy}; 
+	$ua->proxy(http => $constants->{http_proxy}) if $constants->{http_proxy}; 
 	$ua->timeout(30);
 	my $result = $ua->request($request);
 
@@ -84,9 +84,9 @@ sub geturl {
 ################################################################################
 
 sub getTop10Comments {
-	my $c=sqlSelectMany("stories.sid, title,
+	my $c=$slashdb->sqlSelectMany("stories.sid, title,
 		cid, subject,".
-		getDateFormat("date", "d", $I->{U}).",
+		getDateFormat("date", "d", $constants->{U}).",
 		nickname,comments.points",
 		"comments,stories,users",
 		"comments.points >= 4
@@ -102,9 +102,9 @@ sub getTop10Comments {
 		my($sid, $title, $cid, $subj, $d, $nickname, $points) = @$_;
 		$block .= <<EOT;
 
-<LI><B><A HREF="$I->{rootdir}/comments.pl?sid=$sid&cid=$cid">$subj</A>
+<LI><B><A HREF="$constants->{rootdir}/comments.pl?sid=$sid&cid=$cid">$subj</A>
 	($points points) by $nickname</B> on $d <FONT SIZE="1">attached to
-	<A HREF="$I->{rootdir}/article.pl?sid=$sid">$title</A></FONT>
+	<A HREF="$constants->{rootdir}/article.pl?sid=$sid">$title</A></FONT>
 EOT
 	}
 	setblock("top10comments", $block);
@@ -116,7 +116,7 @@ EOT
 ################################################################################
 
 sub randomBlock {
-	my $c = sqlSelectMany("blocks.bid,title,url,block",
+	my $c = $slashdb->sqlSelectMany("blocks.bid,title,url,block",
 		"blocks,sectionblocks",
 		"blocks.bid=sectionblocks.bid
 		AND sectionblocks.section='index'
@@ -129,7 +129,7 @@ sub randomBlock {
 	my $R = $A->[rand @$A];
 	my($bid, $title, $url, $block) = @$R;
 
-	sqlUpdate("sectionblocks", {
+	$slashdb->sqlUpdate("sectionblocks", {
 		title	=> "rand($title);",
 		url	=> $url
 	}, "bid='rand'");
@@ -146,7 +146,7 @@ sub getSlashdotPoll {
 
 #################################################################
 sub portaldLog {
-	my $dir = "$I->{datadir}/logs";
+	my $dir = "$constants->{datadir}/logs";
 	unless (-e $dir) {
 		mkdir $dir, 0755 or die "Can't mkdir $dir: $!";
 	}
@@ -177,7 +177,7 @@ sub getUptime {
 
 	my $stats = $x;
 
-	my $c = sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",
+	my $c = $slashdb->sqlSelectMany("count(*), to_days(now()) - to_days(ts) as d",
 		"accesslog","","GROUP by d order by d asc");
 
 	my($today) = $c->fetchrow;
@@ -234,7 +234,7 @@ sub getRDF {
 sub getSectionMenu2 {
 	my $menu = "\n\n<!-- begin section index block -->\n\n";
 
-	my $c = sqlSelectMany("section","sections",
+	my $c = $slashdb->sqlSelectMany("section","sections",
 		"isolate=0 and (section != '' and section != 'articles') 
 		ORDER BY section");
 
@@ -252,7 +252,7 @@ sub getSectionMenu2 {
 		$menu .= " ($count[0])" if $count[0] > 1;
 		$menu .= <<EOT;
 <BR>
-<B><A HREF="$I->{rootdir}/index.pl?section=$s">$s</A></B><BR>
+<B><A HREF="$constants->{rootdir}/index.pl?section=$s">$s</A></B><BR>
 EOT
 	}
 	$menu .= "\n\n<!-- end section index block -->\n\n";
@@ -268,7 +268,6 @@ makeTmp();
 portaldLog("Launching Portald");
 
 $|++;
-$slashdb->{dbh} ||= sqlconnect();
 require 'portald-site' if -e 'portald-site';
 portaldLog("Updating Portal Box Thingees");
 
@@ -279,7 +278,7 @@ my $columns = "bid,url,rdf,retrieve";
 my $tables = "sectionblocks";
 my $where = "rdf != '' and retrieve=1";
 my $other = "";
-my $RDFlist = sqlSelectAll($columns, $tables, $where, $other);
+my $RDFlist = $slashdb->sqlSelectAll($columns, $tables, $where, $other);
 
 for (@{$RDFlist}) {
 	my($bid, $url, $rdf) = ($_->[0], $_->[1], $_->[2]);
@@ -297,7 +296,7 @@ deleteTmp();
 # $slashdb->{dbh}->do("LOCK TABLES blocks WRITE");
 
 foreach (keys %savedBlocks) {
-	sqlUpdate("blocks", { block => $savedBlocks{$_} },
+	$slashdb->sqlUpdate("blocks", { block => $savedBlocks{$_} },
 		"bid=" . $slashdb->{dbh}->quote($_)
 	);
 }

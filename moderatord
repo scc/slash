@@ -25,14 +25,16 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
+use vars '$I';
 use Slash;
 use Slash::DB;
 
-*I = getSlashConf();
+my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+my ($constants, $slashdb) = createEnvironment($virtual_user);
+$I = $constants;
 my $slashdb = new Slash::DB('slash');
 
-sub moderatordLog {
+sub modera$ordLog {
 	local *LOG;
 	my $dir = "$I{datadir}/logs";
 	open LOG, ">>$dir/moderatord.log"
@@ -42,42 +44,41 @@ sub moderatordLog {
 }
 
 sub tokens2points {
-	my $c = sqlSelectMany("uid,tokens", "users_info", "tokens >= $I{maxtokens}");
-	$slashdb->{dbh}->do("LOCK TABLES users READ, 
+	my $c = $dbslash->sqlSelectMany("uid,tokens", "users_info", "tokens >= $I{maxtokens}");
+	$slashdb->sqlDo("LOCK TABLES users READ, 
 		users_info WRITE, 
 		users_comments WRITE");
 
 	while (my($uid, $tokens) = $c->fetchrow) {
 		moderatordLog("Giving $I{maxtokens}/$I{tokensperpoint} " .
 			($I{maxtokens}/$I{tokensperpoint}) . " to $uid");
-		sqlUpdate("users_info", {
-			-lastgranted	=> 'now()',
-			-tokens		=> "tokens - $I{maxtokens}"
-		}, "uid=$uid");
-		sqlUpdate("users_comments", {
-			-points => "points +" . ($I{maxtokens} / $I{tokensperpoint})
-		}, "uid=$uid");
+			$dbslash->setUser($uid, {
+				-lastgranted  => 'now()',
+				-tokens   => "tokens - $I{maxtokens}",
+				-points => "points +" . ($I{maxtokens} / $I{tokensperpoint})
+				}
+			);
 	}
 
 	$c->finish;
 
-	$c = sqlSelectMany("users.uid as uid", "users,users_comments,users_info",
+	$c = $dbslash->sqlSelectMany("users.uid as uid", "users,users_comments,users_info",
 		"karma > -1 AND
 		 points > 5 AND 
 		 seclev < 100 AND
 		 users.uid=users_comments.uid AND
 		 users.uid=users_info.uid");
-	$slashdb->{dbh}->do("UNLOCK TABLES");
+	$slashdb->sqlDo("UNLOCK TABLES");
 
-	$slashdb->{dbh}->do("LOCK TABLES users_comments WRITE");
+	$slashdb->sqlDo("LOCK TABLES users_comments WRITE");
 	while (my($uid) = $c->fetchrow) {
-		sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
+		$dbslash->sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
 	}
-	$slashdb->{dbh}->do("UNLOCK TABLES");
+	$slashdb->sqlDo("UNLOCK TABLES");
 }
 
 sub stirpool {
-	my $c = sqlSelectMany("points,users.uid as uid",
+	my $c = $dbslash->sqlSelectMany("points,users.uid as uid",
 			"users,users_comments,users_info",
 			"users.uid=users_comments.uid AND
 			 users.uid=users_info.uid AND
@@ -87,15 +88,15 @@ sub stirpool {
 
 	my $revoked = 0;
 
-	$slashdb->{dbh}->do("LOCK TABLES users_comments WRITE");
+	$slashdb->sqlDo("LOCK TABLES users_comments WRITE");
 
 	while (my($p, $u) = $c->fetchrow) {
 		moderatordLog("Taking $p points from $u");
 		$revoked += $p;
-		sqlUpdate("users_comments", { points => '0' }, "uid=$u");
+		$dbslash->sqlUpdate("users_comments", { points => '0' }, "uid=$u");
 	}
 
-	$slashdb->{dbh}->do("UNLOCK TABLES");
+	$slashdb->sqlDo("UNLOCK TABLES");
 	$c->finish;
 	return 0;
 	# return $revoked;
@@ -112,11 +113,11 @@ sub comments2tokens {
 		($stirredpoints ? "Stirred out $stirredpoints points, " : '')
 		. "So the total token Pool=$tokenpool");
 
-	my($totalusers) = sqlSelect("max(uid)", "users_info");
+	my($totalusers) = $dbslash->sqlSelect("max(uid)", "users_info");
 	my $eligibleusers = int($totalusers / 5) * 4;
 	moderatordLog("First $eligibleusers accounts available");
 
-	my $c=sqlSelectMany("users_info.uid,count(*) as c",
+	my $c=$dbslash->sqlSelectMany("users_info.uid,count(*) as c",
 			"users_info,users_prefs, accesslog",
 			"users_info.uid < $eligibleusers
 			 AND users_info.uid=accesslog.uid 
@@ -152,23 +153,23 @@ sub comments2tokens {
 	}
 
 
-	$slashdb->{dbh}->do("LOCK TABLES users_info WRITE");
+	$slashdb->sqlDo("LOCK TABLES users_info WRITE");
 	foreach $uid (@eligibles) {
 		next unless $scores[$uid];
 		# moderatordLog("$uid: ".$scores[$uid].", ");
-		sqlUpdate("users_info",{ 
+		$dbslash->sqlUpdate("users_info",{ 
 			-tokens	=> "tokens+" . $scores[$uid]
 		}, "uid=$uid");
 	}
-	$slashdb->{dbh}->do("UNLOCK TABLES");
+	$slashdb->sqlDo("UNLOCK TABLES");
 }
 
-my($tc, $lc) = $I{dbobject}->getVars("totalComments", "lastComments");
+my($tc, $lc) = $dbslash->getVars("totalComments", "lastComments");
 my $newcomments = $tc - $lc;
 #$newcomments+=1000;
 
 if ($newcomments > 0) {
-	$I{dbobject}->setVar("lastComments", $tc);
+	$dbslash->setVar("lastComments", $tc);
 	comments2tokens($newcomments);
 	tokens2points();
 }

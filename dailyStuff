@@ -23,31 +23,30 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 #
-#  $Id$
+#  $constants->d: dailyStuff,v 1.3.2.7 2000/08/25 23:48:46 krow Exp $
 ###############################################################################
 use strict;
-use vars '%I';
 use File::Basename;
 use File::Path;
 use Slash;
 use Slash::DB;
 use Slash::Utility;
 
-*I = getSlashConf();
-my $slashdb = new Slash::DB('slash');
+my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+my ($constants, $slashdb) = createEnvironment($virtual_user);
 
-my($total) = sqlSelect("count(*)", "accesslog",
+my($total) = $slashdb->sqlSelect("count(*)", "accesslog",
 	"to_days(now()) - to_days(ts)=1");
 
-my $c = sqlSelectMany("count(*)","accesslog",
+my $c = $slashdb->sqlSelectMany("count(*)","accesslog",
 	"to_days(now()) - to_days(ts)=1 GROUP BY host_addr");
 my($unique) = $c->rows;
 $c->finish;
 
-my($comments) = sqlSelect("count(*)","accesslog",
+my($comments) = $slashdb->sqlSelect("count(*)","accesslog",
 	"to_days(now()) - to_days(ts)=1 AND op='comments'");
 
-$c = sqlSelectMany("dat,count(*)","accesslog",
+$c = $slashdb->sqlSelectMany("dat,count(*)","accesslog",
 	"to_days(now()) - to_days(ts)=1 AND 
 	(op='index' OR dat='index')
 	GROUP BY dat");
@@ -59,7 +58,7 @@ while(my($sect, $cnt) = $c->fetchrow) {
 }
 $c->finish;
 
-$c = sqlSelectMany("dat,count(*),op","accesslog",
+$c = $slashdb->sqlSelectMany("dat,count(*),op","accesslog",
 	"to_days(now()) - to_days(ts)=1 AND op='article'",
 	"GROUP BY dat");
 
@@ -70,8 +69,8 @@ $c->finish;
 
 # clean the key table
 
-my $delete_time = time() - $I{formkey_timeframe};
-$slashdb->{dbh}->do("DELETE FROM formkeys WHERE ts < $delete_time");
+my $delete_time = time() - $constants->{formkey_timeframe};
+$slashdb->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
 
 sub updateStamps {
 	my $columns = "uid";
@@ -79,21 +78,20 @@ sub updateStamps {
 	my $where = "to_days(now())-to_days(ts)=1 AND uid > 0";
 	my $other = "GROUP BY uid";
 
-	my $E = sqlSelectAll($columns, $tables, $where, $other);
+	my $E = $slashdb->sqlSelectAll($columns, $tables, $where, $other);
 
-	$slashdb->{dbh}->do("LOCK TABLES users_info WRITE");
+	$slashdb->sqlDo("LOCK TABLES users_info WRITE");
 
 	for (@{$E}) {
 		my $uid=$_->[0];
-#		print "Update $uid\n";
-		sqlUpdate("users_info",{-lastaccess=>'now()'},"uid=$uid");
+		$slashdb->setUser($uid, {-lastaccess=>'now()'});
 	}
-	$slashdb->{dbh}->do("UNLOCK TABLES");
+	$slashdb->sqlDo("UNLOCK TABLES");
 }
 
 updateStamps();
 
-$c = sqlSelectMany("dat,count(*)","accesslog",
+$c = $slashdb->sqlSelectMany("dat,count(*)","accesslog",
 	"to_days(now()) - to_days(ts)=1 AND op='comments'",
 	"GROUP BY dat");
 while(my($sid, $cnt) = $c->fetchrow) {
@@ -101,15 +99,15 @@ while(my($sid, $cnt) = $c->fetchrow) {
 }
 $c->finish;
 
-$slashdb->{dbh}->do("delete from accesslog where date_add(ts,interval 48 hour) < now()");
+$slashdb->sqlDo("delete from accesslog where date_add(ts,interval 48 hour) < now()");
 
-my $sdTotalHits = $I{dbobject}->getVar("totalhits");
+my $sdTotalHits = $slashdb->getVar("totalhits");
 
 $sdTotalHits = $sdTotalHits + $total;
-$I{dbobject}->setVar("totalhits", $sdTotalHits);
+$slashdb->setVar("totalhits", $sdTotalHits);
 
 my $email = <<EOT;
-$I{sitename} Stats for yesterday
+$constants->{sitename} Stats for yesterday
 
      total $total
     unique $unique
@@ -127,7 +125,7 @@ $email .= "\n-----------------------\n";
 foreach my $key (sort { $articles{$b} <=> $articles{$a} } keys %articles) {
 	my $value = $articles{$key};
 
-	my($title, $author) = sqlSelect("title,aid", "stories",
+	my($title, $author) = $slashdb->sqlSelect("title,aid", "stories",
 		"sid=" . $slashdb->{dbh}->quote($key));
 
 	$email .= "$value\t$key " . substr($title, 0, 30) .
@@ -135,50 +133,51 @@ foreach my $key (sort { $articles{$b} <=> $articles{$a} } keys %articles) {
 }
 
 $email .= "\n-----------------------\n";
-$email .= `$I{datadir}/bin/tailslash today`;
+$email .= `$constants->{datadir}/bin/tailslash today`;
 $email .= "\n-----------------------\n";
 
-$slashdb->{dbh}->do("DELETE from pollvoters");
-$slashdb->{dbh}->do("DELETE from moderatorlog WHERE
-	to_days(now()) - to_days(ts) > $I{archive_delay} ");
-$slashdb->{dbh}->do("DELETE from metamodlog WHERE
-	to_days(now()) - to_days(ts) > $I{archive_delay} ");
+$slashdb->sqlDo("DELETE from pollvoters");
+$slashdb->sqlDo("DELETE from moderatorlog WHERE
+	to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+$slashdb->sqlDo("DELETE from metamodlog WHERE
+	to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 
-my($comlim) = sqlSelect("commentlimit", "users_comments", "uid=-1");
-sqlUpdate("users_comments", { commentlimit => 50000 }, "uid=-1");
+my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
+my $comlim = $slashdb->getUser($anonymous_coward_uid, 'commentlimit');
+$slashdb->setUser($anonymous_coward_uid, { commentlimit => 50000 });
 $email .= "Archiving Comments...\n";
 
-# Find all stories over $I{archive_delay} days where writestatus != 5
+# Find all stories over $constants->{archive_delay} days where writestatus != 5
 my $columns = "sid,time,section,title";
 my $tables = "stories";
-my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $I{archive_delay}";
+my $where = "writestatus<5 AND writestatus >= 0 AND to_days(now()) - to_days(time) > $constants->{archive_delay}";
 
-my $E = sqlSelectAll($columns, $tables, $where); #, $other);
+my $E = $slashdb->sqlSelectAll($columns, $tables, $where); #, $other);
 
 for (@{$E}) {
 	my($sid, $date, $section, $title) = ($_->[0], $_->[1], $_->[2], $_->[3]);
 	$email.= "archiving: $sid $title \n";
-	prog2file("$I{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=archive",
-		"$I{basedir}/$section/$sid"."_F.shtml");
+	prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=archive",
+		"$constants->{basedir}/$section/$sid"."_F.shtml");
 
-	unlink("$I{basedir}/$section/$sid.shtml")
-		or warn "Can't unlink $I{basedir}/$section/$sid.shtml: $!";
-	symlink("$I{basedir}/$section/${sid}_F.shtml", "$I{basedir}/$section/$sid.shtml")
-		or die "Can't symlink $I{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
-	$slashdb->{dbh}->do("DELETE FROM comments WHERE sid='$sid'");
-	$slashdb->{dbh}->do("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
+	unlink("$constants->{basedir}/$section/$sid.shtml")
+		or warn "Can't unlink $constants->{basedir}/$section/$sid.shtml: $!";
+	symlink("$constants->{basedir}/$section/${sid}_F.shtml", "$constants->{basedir}/$section/$sid.shtml")
+		or die "Can't symlink $constants->{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
+	$slashdb->sqlDo("DELETE FROM comments WHERE sid='$sid'");
+	$slashdb->sqlDo("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
 }
-sqlUpdate("users_comments",{ commentlimit=>$comlim },"uid=-1");
+$slashdb->setUser($anonymous_coward_uid, { commentlimit=>$comlim });
 
-my $delay1 = $I{archive_delay} * 2;
-my $delay2 = $I{archive_delay} * 9;
-$I{defaultsection} ||= 'articles';
+my $delay1 = $constants->{archive_delay} * 2;
+my $delay2 = $constants->{archive_delay} * 9;
+$constants->{defaultsection} ||= 'articles';
 
-$slashdb->{dbh}->do("delete from newstories WHERE 
-	(section='$I{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
+$slashdb->sqlDo("delete from newstories WHERE 
+	(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
 	or (to_days(now()) - to_days(time) > $delay2)");
 
-$slashdb->{dbh}->do("delete from comments where to_days(now()) - to_days(date) > $I{archive_delay}");
+$slashdb->sqlDo("delete from comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 sub generateDailyMail {
 	my $columns = "sid,title,section,aid,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";
@@ -186,22 +185,22 @@ sub generateDailyMail {
 	my $where = "to_days(now()) - to_days(time) = 1 AND displaystatus=0 AND time < now()";
 	my $other = " ORDER BY time DESC";
 
-	my $E = sqlSelectAll($columns,$tables,$where,$other);
+	my $E = $slashdb->sqlSelectAll($columns,$tables,$where,$other);
 
-	my $r = "$I{sitename} Daily Headline Mailer\n\n";
-	$r .= $I{dbobject}->getBlock("emailsponsor");
+	my $r = "$constants->{sitename} Daily Headline Mailer\n\n";
+	$r .= $slashdb->getBlock("emailsponsor");
 	# newlines after advert 
 	$r .= "\n\n";
 
 	return unless @$E;
 	for (@{$E}) {
 		my($sid, $title, $section, $aid, $tid, $time, $dept) = @$_;
-		$dept = $I{use_dept} ? "\n     from the $dept dept." : "";
+		$dept = $constants->{use_dept} ? "\n     from the $dept dept." : "";
 
 		$r .= <<EOT;
 $title$dept
      posted by $aid on $time ($tid)
-     $I{rootdir}/article.pl?sid=$sid
+     $constants->{rootdir}/article.pl?sid=$sid
 EOT
 	}
 	return $r;
@@ -215,13 +214,13 @@ sub mailingList {
 	my $where = "users.uid=users_comments.uid AND users.uid=users_info.uid AND maillist=1";
 	my $other = "order by realemail";
 
-	my $E = sqlSelectAll($columns,$tables,$where,$other);
+	my $E = $slashdb->sqlSelectAll($columns,$tables,$where,$other);
 
 	for (@{$E}) {
-		sendEmail($_->[0], "24 Hours of $I{sitename} Headlines For $_->[2]", <<EOT);
+		sendEmail($_->[0], "24 Hours of $constants->{sitename} Headlines For $_->[2]", <<EOT);
       $p
       You are getting this message because you subscribed to it.
-      If you want to unsubscribe from this, go to $I{rootdir}/users.pl
+      If you want to unsubscribe from this, go to $constants->{rootdir}/users.pl
       You can login as $_->[2] and disable the mailing from there.
 EOT
 	}
@@ -245,10 +244,10 @@ sub prog2file {
 	}
 }
 
-# Send a message to the shite admin.
-if ($I{send_mail} == 1) {
-	for (keys %{$I{stats_reports}}) {
-		sendEmail($_, $I{stats_reports}{$_}, $email);
+# Send a message to the site admin.
+if ($constants->{send_mail} == 1) {
+	for (keys %{$constants->{stats_reports}}) {
+		sendEmail($_, $constants->{stats_reports}{$_}, $email);
 	}
 	mailingList();
 }

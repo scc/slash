@@ -42,7 +42,6 @@ use Slash::Utility;
 
 #*I = getSlashConf();
 my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
-print "USING  $virtual_user \n";
 my ($constants, $slashdb) = createEnvironment($virtual_user);
 $I = $constants;
 
@@ -481,7 +480,7 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 
 
 			newmotd();
-			system("$I->{datadir}/portald &");
+			system("$I->{datadir}/portald $virtual_user&");
 			sleep(60 * 2);
 
 			my($today) = $slashdb->getTime();
@@ -490,13 +489,13 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			if ($today ne $yesterday) {
 				$slashdb->setVar("today", $today);
 				slashdLog("It's Tomorrow: Run Slashd daily Voodoo");
-				system("$I->{datadir}/dailyStuff &");
+				system("$I->{datadir}/dailyStuff $virtual_user &");
 			}
 			$last = time;
 
 		} elsif ((time - $modlast) > (60 * 60 * 2)) { # Every 2 Hours
 			slashdLog("Running Moderatord");
-			system("$I->{datadir}/moderatord");
+			system("$I->{datadir}/moderatord $virtual_user");
 			prog2file("$I->{basedir}/hof.pl ssi=yes", "$I->{basedir}/hof.shtml");
 			prog2file("$I->{basedir}/topics.pl ssi=yes", "$I->{basedir}/topics.shtml");
 			prog2file("$I->{basedir}/cheesyportal.pl ssi=yes",
