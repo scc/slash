@@ -860,7 +860,7 @@ sub linkComment {
 	my $constants = getCurrentStatic();
 
 	if($constants->{comments_hardcoded}) {
-	my $display = qq!<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}!;
+		my $display = qq|<A HREF="$constants->{rootdir}/comments.pl?sid=$comment->{sid}|;
 		$display .= "&op=$comment->{op}" if $comment->{op};
 		$display .= "&threshold=" . ($comment->{threshold} || $user->{threshold});
 		$display .= "&commentsort=$user->{commentsort}";
@@ -884,6 +884,7 @@ sub linkComment {
 				if !$user->{noscores} && $comment->{points};
 		$display .= qq! <FONT SIZE="-1"> $comment->{'time'} </FONT>! if $date;
 		$display .= "\n";
+
 		return $display;
 	} else {
 			my $adminflag = $user->{seclev} >= 10000 ? 1 : 0;

@@ -664,8 +664,9 @@ sub dispComment {
 		}
 			
 
+		my $link = linkComment($comment, '', $comment->{date});
 		my $color = $user->{bg}[2];
-		print <<EOF;
+		my $return =  <<EOF;
 			<TR><TD BGCOLOR="$color">
 				<FONT SIZE="3" COLOR="$color">
 					<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>$score_to_display
@@ -676,8 +677,9 @@ sub dispComment {
 			<TR><TD>
 				$comment_to_display
 			</TD></TR>
+			$link
 EOF
-		print linkComment($comment, '', $comment->{date})
+		return $return;
 	} else {
 		slashDisplay('dispComment', {
 			%$comment,
