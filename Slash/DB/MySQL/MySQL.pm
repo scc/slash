@@ -14,6 +14,10 @@ my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
 my %topicBank; # This is here to save us a database call
 my %codeBank; # This is here to save us a database call
+my $commonportals; # portals on the front page.
+my $boxes;
+my $sectionBoxes;
+
 
 ########################################################
 sub sqlConnect {
@@ -767,9 +771,14 @@ sub getSubmissionCount{
 }
 
 ##################################################################
-# Get portals
+# Get all portals
 sub getPortals {
 	my ($self) = @_;
+	# As a side note portal seems to only be a 1 and 0 in
+	# in slash's database currently (even though since it
+	# is a tinyint it could easily be a negative number.
+	# It is a shame we are currently hitting the database
+	# for this since the same info can be found in $commonportals
 	my $strsql="SELECT block,title,blocks.bid,url
 		   FROM blocks,sectionblocks
 		  WHERE section='index'
@@ -780,9 +789,33 @@ sub getPortals {
 
 	my $sth = $self->{dbh}->prepare($strsql);
 	$sth->execute;
-
 	my $portals = $sth->fetchall_arrayref;
+
 	return $portals;
+}
+##################################################################
+# Get standard portals
+sub getPortalsCommon {
+	my ($self) = @_;
+	return ($boxes, $sectionBoxes) if (keys %$boxes);
+	$boxes = {};
+	$sectionBoxes = {};
+	my $sth = $self->sqlSelectMany(
+			'blocks.bid as bid,title,url,section,portal,ordernum',
+			'sectionblocks,blocks',
+			'sectionblocks.bid=blocks.bid ORDER BY ordernum ASC'
+	);
+	# We could get rid of tmp at some point
+	my %tmp;
+	while (my $SB = $sth->fetchrow_hashref) {
+		$boxes->{$SB->{bid}} = $SB;  # Set the Slashbox
+		next unless $SB->{ordernum} > 0;  # Set the index if applicable
+		push @{$tmp{$SB->{section}}}, $SB->{bid};
+	}
+	$sectionBoxes = \%tmp;
+	$sth->finish;
+
+	return ($boxes, $sectionBoxes);
 }
 ##################################################################
 # counts the number of stories
@@ -791,6 +824,23 @@ sub countStory {
 	my ($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{dbh}->quote($tid));
 
 	return $value;
+}
+
+##################################################################
+sub checkForModerator {
+	my ($self, $user) = @_;
+	return unless $user->{willing};
+	return if $user->{uid} < 1;
+	return if $user->{karma} < 0;
+	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
+	'users_info', "uid = '$user->{uid}'");
+}
+
+##################################################################
+sub setUserBoxes {
+	my ($self, $uid, $exboxes) = @_;
+	$self->sqlUpdate('users_index', { exboxes => $exboxes },
+			"uid=$uid", 1)
 }
 
 1;

@@ -53,7 +53,7 @@ sub main {
 	$title = "$I{sitename}: $title" unless $SECT->{isolate};
 	
 	header($title, $SECT->{section});
-	checkForM2(); # if $I{U}{uid}==1;
+#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($I{U});
 		
 	my $block = getEvalBlock("index");
 	my $execme = prepEvalBlock($block);
@@ -83,8 +83,8 @@ sub saveUserBoxes {
 	my(@a) = @_;
 
 	$I{U}{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
-	sqlUpdate('users_index', { exboxes => $I{U}{exboxes} },
-		"uid=$I{U}{uid}", 1) if $I{U}{uid} > 0;
+	$I{dbobject}->setUserBoxes($I{U}{uid}, $I{U}{exboxes}) 
+		if $I{U}{uid} > 0;
 }
 
 #################################################################
@@ -136,41 +136,22 @@ sub rmBid {
 }
 
 #################################################################
-sub getAllSlashBoxes {
-	return if defined $I{boxBank};
-	undef $I{sectionBoxes};
-
-	my $c = sqlSelectMany(
-		'blocks.bid as bid,title,url,section,portal,ordernum',	
-		'sectionblocks,blocks',
-		'sectionblocks.bid=blocks.bid ORDER BY ordernum ASC'
-	);
-
-	my %tmp;
-	while (my $SB = $c->fetchrow_hashref) {
-		$I{boxBank}{$SB->{bid}} = $SB;	# Set the Slashbox
-		next unless $SB->{ordernum} > 0;	# Set the index if applicable
-		push @{$tmp{$SB->{section}}}, $SB->{bid};
-		# push @{$I{sectionBoxes}{$SB->{section}}}, $SB->{bid};
-	}
-	$I{sectionBoxes} = {%tmp};
-	$c->finish;
-}
 
 #################################################################
 sub displayStandardBlocks {
 	my ($SECT, $olderStuff) = @_;
 	return if $I{U}{noboxes};
 
+	my ($boxBank, $sectionBoxes) = $I{dbobject}->getPortalsCommon();
+
 	my $getblocks = $SECT->{section} || 'index';
 	my @boxes;
-	getAllSlashBoxes();
 
 	if ($I{U}{exboxes} && $getblocks eq 'index') {
 		$I{U}{exboxes} =~ s/'//g;
 		@boxes = split m/,/, $I{U}{exboxes};
 	} else {
-		@boxes = @{$I{sectionBoxes}{$getblocks}} if ref $I{sectionBoxes}{$getblocks};
+		@boxes = @{$sectionBoxes->{$getblocks}} if ref $sectionBoxes->{$getblocks};
 	}
 
 	foreach my $bid (@boxes) {
@@ -187,11 +168,11 @@ sub displayStandardBlocks {
 		} elsif ($bid eq "userlogin" && $I{U}{uid} > 0) {
 			# Don't do nuttin'
 		} elsif ($bid eq "userlogin") {
-			my $SB = $I{boxBank}{$bid};
+			my $SB = $boxBank->{$bid};
 			my $B = eval prepBlock $I{blockBank}{$bid};
 			print portalbox(200, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		} else {
-			my $SB = $I{boxBank}{$bid};
+			my $SB = $boxBank->{$bid};
 			my $B = $I{blockBank}{$bid};
 			print portalbox(200, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		}
@@ -272,17 +253,6 @@ sub displayStories {
 #		print "<!-- <$today> <$w> <$x> <$cnt> <$time> -->\n";
 		last if ++$x > $cnt && $today ne $w;
 	}
-}
-
-#################################################################
-sub checkForM2 {
-	return unless $I{U}{willing};
-	return if $I{U}{uid} < 1;
-	return if $I{U}{karma} < 0;
-	my($d) = sqlSelect('to_days(now()) - to_days(lastmm)',
-		'users_info', "uid=$I{U}{uid}");
-	return unless $d;
-	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>';
 }
 
 
