@@ -96,7 +96,7 @@ in this block -->
 
 <!-- begin sectionindex block -->
 
-[% INCLUDE sectionindex %]
+[% INCLUDE sectionindex_display %]
 
 <!-- end sectionindex block -->
 
