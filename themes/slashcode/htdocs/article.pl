@@ -184,7 +184,7 @@ sub nextStory {
 			&&
 		$array_place != -1
 			&&
-		$I{U}{uid} == $I{anonymous_coward};
+		$I{U}{uid} == $I{anonymous_coward}
 	) {
 		my $title   = $I{dbobject}->getStoryBySid($I{sid_array}[$array_place], 'title');
 		my $psid    = $I{sid_array}[$array_place];

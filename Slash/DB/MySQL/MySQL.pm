@@ -808,7 +808,7 @@ sub getSectionblocks {
 
 	my $blocks = $self->sqlSelectAll("bid,title,ordernum", "sectionblocks", "portal=1", "order by bid");
 
-	retunr $blocks;
+	return $blocks;
 }
 
 ########################################################
