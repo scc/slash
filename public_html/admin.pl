@@ -35,8 +35,7 @@ sub main {
 
 	getSection('admin');
 
-	
-	redirect("/users.pl") if($user->{seclev} < 100);
+	redirect('/users.pl') if $user->{seclev} < 100;
 
 	my($tbtitle);
 	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {

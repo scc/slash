@@ -21,7 +21,8 @@ use constant DATA => 2;
 use constant LOAD => 3;
 use constant NEXT => 4;
 
-# store names for non-named templates
+# store names for non-named templates by using text of template as
+# hash key
 my($anon_num, %anon_template);
 sub _get_anon_name {
 	my($text) = @_;
@@ -31,18 +32,22 @@ sub _get_anon_name {
 
 sub fetch {
 	my($self, $text) = @_;
-	my($name, $data, $error, $slot);
-
-	print STDERR "fetch($name)\n" if $DEBUG;
+	my($name, $siteid, $savename, $data, $error, $slot);
+	$siteid = getCurrentStatic('siteid');
 
 	if (ref $text eq 'SCALAR') {
-		$name = _get_anon_name($text);
+		$savename = $name = _get_anon_name($text);
 	} else {
 		$name = $text;
 		undef $text;
+
+		# $; is multidimensional array emulation separator
+		$savename = $siteid . $; . $name;
 	}
 
-	if ($slot = $self->{ LOOKUP }{$name}) {
+	print STDERR "fetch($name [$savename])\n" if $DEBUG;
+
+	if ($slot = $self->{ LOOKUP }{ $savename }) {
 		# cached entry exists, so refresh slot and extract data
 		($data, $error) = $self->_refresh($slot);
 		$data = $slot->[ DATA ] unless $error;
@@ -54,7 +59,7 @@ sub fetch {
 		# nothing in cache so try to load, compile and cache
 		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless $error; # , $compfile
-		$data = $self->_store($name, $data) unless $error;
+		$data = $self->_store($savename, $data) unless $error;
 	}
 
 	return($data, $error);
@@ -62,8 +67,11 @@ sub fetch {
 
 sub _load {
 	my($self, $name, $text) = @_;
-	my($data, $error, $slashdb);
-	my $now = time;
+	my($data, $error, $now, $slashdb, $siteid, $savename);
+	$now = time;
+	$siteid = getCurrentStatic('siteid');
+	# $; is multidimensional array emulation separator
+	$savename = $siteid . $; . $name;
 
 	if (defined $text) {
 		$text = $$text;
@@ -72,11 +80,11 @@ sub _load {
 		$text = $slashdb->getTemplate($name, 'template');
 	}
 
-	print STDERR "_load($name)\n" if $DEBUG;
+	print STDERR "_load($name [$savename])\n" if $DEBUG;
 
 	if ($text) {
 		$data = {
-			name	=> $name,
+			name	=> $savename,
 			text	=> $text,
 			'time'	=> $now,   # get cache timestamp!
 			load	=> $now,
@@ -154,7 +162,29 @@ by way of the Slash API (which basically means that it grabs templates
 from the blocks table in the database).  It caches them, too.  It also
 can process templates passed in as text, like the base Provider module,
 but this one will create a unique name for the "anonymous" template so
-it can be cached.
+it can be cached.  Overriden methods include C<fetch>, C<_load>,
+and C<_refresh>.
+
+
+=head1 BUGS
+
+=over 4
+
+=item *
+
+Crap, I think right now caching is not done per virtual host.
+
+=item *
+
+I am not sure how useful the caching is right now, especially the LRU
+part.  Rethink.
+
+=item *
+
+We need to find a way to speed up execution of cached templates, if
+possible.
+
+=back
 
 
 =head1 AUTHOR

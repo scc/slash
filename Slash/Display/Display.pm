@@ -214,7 +214,7 @@ sub _populate {
 		unless exists $data->{constants};
 	$data->{user} = getCurrentUser() unless exists $data->{user};
 	$data->{form} = getCurrentForm() unless exists $data->{form};
-	$data->{env} = { map { (lc $_, $ENV{$_}) } keys %ENV }
+	$data->{env} = { map { (lc, $ENV{$_}) } keys %ENV }
 		unless exists $data->{env}; 
 }
 
@@ -234,17 +234,45 @@ A Template object.  See L<"TEMPLATE ENVIRONMENT">.
 
 =cut
 
-my $filters;
+require Template::Filters;
 
+my $strip_mode = sub {
+	my($context, @args) = @_;
+	return sub { strip_mode($_[0], @args) };
+};
+
+my $filters = Template::Filters->new({
+	FILTERS => {
+		fixparam	=> \&fixparam,
+		fixurl		=> \&fixurl,
+		strip_attribute	=> \&strip_attribute,
+		strip_code	=> \&strip_code,
+		strip_extrans	=> \&strip_extrans,
+		strip_html	=> \&strip_html,
+		strip_literal	=> \&strip_literal,
+		strip_nohtml	=> \&strip_nohtml,
+		strip_plaintext	=> \&strip_plaintext,
+		strip_mode	=> [ $strip_mode, 1 ]
+	}
+});
+
+my $template = Template->new(
+	TRIM		=> 1,
+	PRE_CHOMP	=> 1,
+	POST_CHOMP	=> 1,
+	LOAD_FILTERS	=> $filters,
+	LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
+	PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
+);
+
+
+# damn, why is it bad to reuse the same object ... ?
+# i can't remember, it was almost two months ago.  sigh.
+# maybe something to do with calling templates from templates?
+# i don't think so, but cannot recall.
+# -- pudge
 sub _template {
-	Template->new(
-		TRIM		=> 1,
-		PRE_CHOMP	=> 1,
-		POST_CHOMP	=> 1,
-		LOAD_FILTERS	=> $filters,
-		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
-		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
-	);
+	$template;
 }
 
 =back
@@ -287,29 +315,6 @@ But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugi
 in the future, so it is best to stick with the filter.
 
 =cut
-
-require Template::Filters;
-
-my $strip_mode = sub {
-	my($context, @args) = @_;
-	return sub { strip_mode($_[0], @args) };
-};
-
-$filters = Template::Filters->new({
-	FILTERS => {
-		fixparam	=> \&fixparam,
-		fixurl		=> \&fixurl,
-		strip_attribute	=> \&strip_attribute,
-		strip_code	=> \&strip_code,
-		strip_extrans	=> \&strip_extrans,
-		strip_html	=> \&strip_html,
-		strip_literal	=> \&strip_literal,
-		strip_nohtml	=> \&strip_nohtml,
-		strip_plaintext	=> \&strip_plaintext,
-		strip_mode	=> [ $strip_mode, 1 ]
-	}
-});
-
 
 require Template::Stash;
 

@@ -69,7 +69,8 @@ Slash::Display::Plugin - Template Toolkit plugin for Slash
 
 =head1 DESCRIPTION
 
-Call functions in Slash and Slash::Utility.  Also call methods from Slash::DB
+Call available exported functions from Slash and Slash::Utility
+from within your template.  Also call methods from Slash::DB
 with the C<db> method.  Invoke with C<[% USE Slash %]>.
 
 

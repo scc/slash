@@ -751,7 +751,7 @@ INSERT INTO vars VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for whic
 INSERT INTO vars VALUES ('m2_userpercentage','1','UID must be below this percentage of the total userbase to metamoderate.',NULL,NULL);
 INSERT INTO vars VALUES ('mailfrom','admin@example.com','All mail addressed from the site looks like it is coming from here',NULL,NULL);
 INSERT INTO vars VALUES ('mainfontface','verdana,helvetica,arial','Fonts',NULL,NULL);
-INSERT INTO vars VALUES ('maxkaubmiss_tsma','50','Maximum karma a user can accumulate.',NULL,NULL);
+INSERT INTO vars VALUES ('maxkarma','50','Maximum karma a user can accumulate.',NULL,NULL);
 INSERT INTO vars VALUES ('maxpoints','5','The maximum number of points any moderator can have',NULL,NULL);
 INSERT INTO vars VALUES ('maxtokens','40','Token threshold that must be hit to get any points',NULL,NULL);
 INSERT INTO vars VALUES ('max_depth','7','max depth for nesting of comments',NULL,NULL);

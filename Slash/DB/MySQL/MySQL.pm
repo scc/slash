@@ -2199,13 +2199,17 @@ sub saveStory {
 # Now, the idea is to not cache here, since we actually
 # cache elsewhere (namely in %Slash::Apache::constants)
 # Getting populated with my info for the moment
+
+# We should really make this dynamic, because getCurrentStatic()
+# fails if it is missing from this array ...
+
 sub getSlashConf {
 	my($self) = @_;
 	my %conf; # We are going to populate this and return a reference
 	my @keys = qw(
 		absolutedir
-		admin_timeout
 		adminmail
+		admin_timeout
 		allow_anonymous
 		anonymous_coward_uid
 		approvedtags
@@ -2218,12 +2222,18 @@ sub getSlashConf {
 		block_expire
 		breaking
 		cache_enabled
+		commentsPerPoint
+		commentstatus
 		comment_maxscore
 		comment_minscore
 		cookiedomain
 		cookiepath
+		currentqid
 		datadir
+		defaultcommentstatus
+		defaultdisplaystatus
 		defaultsection
+		defaultwritestatus
 		down_moderations
 		fancyboxwidth
 		fontbase
@@ -2231,6 +2241,8 @@ sub getSlashConf {
 		goodkarma
 		http_proxy
 		imagedir
+		lastComments
+		lastsrandsec
 		logdir
 		m2_bonus
 		m2_comments
@@ -2242,17 +2254,15 @@ sub getSlashConf {
 		m2_userpercentage
 		mailfrom
 		mainfontface
-		max_depth
-		max_posts_allowed
-		max_submissions_allowed
-		maxkarma
 		maxkarma
 		maxpoints
 		maxtokens
+		max_depth
+		max_posts_allowed
+		max_submissions_allowed
 		metamod_sum
 		post_limit
 		rdfencoding
-		rdfimg
 		rdfimg
 		rdflanguage
 		rootdir
@@ -2261,24 +2271,29 @@ sub getSlashConf {
 		send_mail
 		siteadmin
 		siteadmin_name
+		siteid
 		sitename
 		siteowner
-		slogan
 		slashdir
+		slogan
 		smtp_server
 		stats_reports
 		stir
 		story_expire
-		submiss_ts
-		submiss_view
 		submission_bonus
 		submission_speed_limit
+		submiss_ts
+		submiss_view
 		submit_categories
 		titlebar_width
+		today
 		tokenspercomment
 		tokensperpoint
+		totalComments
+		totalhits
 		updatemin
 		use_dept
+		writestatus
 	);
 
 	# This should be optimized.
