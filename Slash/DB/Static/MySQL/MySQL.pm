@@ -787,10 +787,16 @@ sub getStoriesWithFlag {
 	my $sqlorder;
 	$sqlorder = "ORDER BY sid $order " if $order;
 	$sqlorder .= "LIMIT $limit" if $limit;
+	
+	# Currently only used by two tasks and we do NOT want stories
+	# that are marked as "Never Display". If this changes, 
+	# another method will be required. If such is created, I would
+	# suggest getAllStoriesWithFlag() as the method name.
+	# - Cliff 14-Oct-2001
 	my $returnable = $self->sqlSelectAll(
 		"sid,title,section",
 		"stories", 
-		"writestatus='$writestatus'",
+		"writestatus='$writestatus' AND displaystatus > -1",
 		$sqlorder
 	);
 

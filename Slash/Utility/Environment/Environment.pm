@@ -1103,8 +1103,9 @@ sub prepareUser {
 		}
 	}
 
-	if ($user->{commentlimit} > $constants->{breaking}
-		&& $user->{mode} ne 'archive') {
+	if ($user->{commentlimit} > $constants->{breaking} &&
+	    $user->{mode} ne 'archive')
+	{
 		$user->{commentlimit} = int($constants->{breaking} / 2);
 		$user->{breaking} = 1;
 	} else {
