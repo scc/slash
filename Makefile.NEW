@@ -77,7 +77,7 @@ plugins:
 
 all: install
 
-install: slash plugins
+install: #slash plugins
 # Need to toss in a script here that will fix prefix so
 # that if someone wants to install in a different
 # directory it will be easy
@@ -135,13 +135,6 @@ install: slash plugins
 
 	$(CP) sql/mysql/slashschema_create.sql $(SLASH_PREFIX)/sql/mysql/schema.sql
 	$(CP) sql/postgresql/slashschema_create.sql $(SLASH_PREFIX)/sql/postgresql/schema.sql
-	if [ -f $(SLASH_PREFIX)/httpd/slash.conf ]; then\
-		echo "Preserving old slash.conf"; \
-	else \
-		$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf; \
-	fi
-
-	$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf.def 
 
 	# Note the use of -u in the copy commands below. We don't want to
 	# overwrite any of the perl scritps we've already modified and put
@@ -157,7 +150,7 @@ install: slash plugins
 	# ... and the $(SLASH_PREFIX) section is a really ugly hack, too.
 	(if [ "$(SLASH_PREFIX)" != "/usr/local/slash" ]; then			\
 	 for a in $(PREFIX_REPLACE_FILES); do 					\
-		perl -i.bak -pe 's{/usr/local/slash/}{$(SLASH_PREFIX)}' $$a	\
+		perl -i.bak -pe 's{/usr/local/slash}{$(SLASH_PREFIX)}' $$a;	\
 		case "$$a" in							\
 	 	'utils/slash')							\
 			 if [ -d $(INIT) ]; then				\
@@ -174,12 +167,20 @@ install: slash plugins
 			 else 								\
 				echo "*** Makefile can't determine where your init scripts live."; \
 				if [ $$init ]; then				\
-					echo "***   ('$$init' does not exist)"	\
+					echo "***   ('$$init' does not exist)";	\
 				fi;						\
 				echo "*** You will need to look at how to install utils/slashd"; \
 				echo "*** on your own.";			\
-			 fi							\
+			 fi;							\
 			 ;;							\
+		'httpd/slash.conf')						\
+			if [ -f $(SLASH_PREFIX)/httpd/slash.conf ]; then	\
+				echo "Preserving old slash.conf"; \
+			else \
+				$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf; \
+			fi;								\
+			$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf.def; \
+			;;							\
 		*)								\
 			install $$a $(SLASH_PREFIX)/$$a				\
 			;;							\
