@@ -20,6 +20,11 @@ $dbh->do('ALTER TABLE stories add uid int(11)');
 $dbh->do('ALTER TABLE newstories add uid int(11)');
 $dbh->do($users_param);
 $dbh->do('DELETE FROM users WHERE UID < 1');
+$dbh->do('DELETE FROM users_comments WHERE UID < 1');
+$dbh->do('DELETE FROM users_index WHERE UID < 1');
+$dbh->do('DELETE FROM users_info WHERE UID < 1');
+$dbh->do('DELETE FROM users_key WHERE UID < 1');
+$dbh->do('DELETE FROM users_prefs WHERE UID < 1');
 my %story_authors;
 
 my $authors = $dbh->selectall_arrayref("SELECT aid,seclev,lasttitle,section,deletedsubmissions from authors WHERE name != 'All Authors'");
