@@ -180,6 +180,7 @@ sub getPluginList {
 		my @info = <PLUGIN>;
 		chomp(@info);
 		for(@info) {
+			next if /^#/;
 			my ($key, $val) = split(/=/, $_, 2);
 			$key = lc($key);
 			if( $key eq 'htdoc' ) {
