@@ -15,7 +15,7 @@ __template__
 [% IF users %]
 	[% FOREACH user=users %]
 		[% user.3 IF user.3 %]
-		<A HREF="[% constants.rootdir %]/users.pl?nick=[% user.1 | fixparam %]">[% user.1 | strip_literal %]</A> &nbsp;
+		<A HREF="[% constants.rootdir %]/~[% user.1 | fixparam %]/">[% user.1 | strip_literal %]</A> &nbsp;
 		[% IF user.0 %]
 			([% user.2 %]) email: <A HREF="mailto:[% user.0 | fixparam %]">[% user.0 | strip_literal %]</A> <BR>
 		[% ELSE %]

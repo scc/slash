@@ -99,6 +99,7 @@ sub findComments {
 
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
 
+	$self->sqlConnect();
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 
@@ -186,6 +187,7 @@ sub findUsers {
 
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
 
+	$self->sqlConnect();
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute;
 
@@ -237,6 +239,7 @@ sub findStory {
 	
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
 
+	$self->sqlConnect();
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 	my $stories = $cursor->fetchall_arrayref;
@@ -254,6 +257,7 @@ sub findRetrieveSite {
 	my $sql = " SELECT bid,title, MATCH (description,title,block) AGAINST($query) as score  FROM blocks WHERE rdf IS NOT NULL AND url IS NOT NULL and retrieve=1 AND MATCH (description,title,block) AGAINST ($query) $limit";
 
 
+	$self->sqlConnect();
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 
@@ -293,6 +297,7 @@ sub findJournalEntry {
 	
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
 
+	$self->sqlConnect();
 	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 	my $stories = $cursor->fetchall_arrayref;
