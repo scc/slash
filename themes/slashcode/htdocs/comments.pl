@@ -221,6 +221,7 @@ sub main {
 			if ($slashdb->checkStoryViewable($discussion->{sid})) {
 				$form->{sid} = '';
 				$discussion = '';
+				$op = 'default';
 			}
 		}
 	}

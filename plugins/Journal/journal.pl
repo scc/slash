@@ -34,7 +34,7 @@ sub main {
 		$constants->{journal_top_posters} ||
 		$constants->{journal_top_friend}  ||
 		$constants->{journal_top_recent}
-	)) or $user->{is_admin};
+	)) || $user->{is_admin};
 
 	# possible value of "op" parameter in form
 	my %ops = (
