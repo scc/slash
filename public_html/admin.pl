@@ -1719,5 +1719,6 @@ sub prog2file {
 
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+# No kick the baby
+#$I{dbh}->disconnect if $I{dbh};
 1;
