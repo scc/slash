@@ -46,10 +46,17 @@ my %extractor_regexps = (
 #'^<A name="([^>]+?)"><B>(.+?)</B></A>(.+?)<BR> by (.+?) on (.+?)<BR> (?:\(.+?User Info</A>\) (?:<A href="([^>]+?)">(.+?)</A><BR>)?)? </TD></TR> <TR><TD bgcolor=ffffff>(.+?)<BR>(.+?)?</TD></TR> (?:<TR><TD> |<LI><FONT size=2><B>.+)?$'
 );
 
+# SID extration defs.
+
 my %idextractor_regexps = (
 	'Slash v0.9.2+'		=>
 '<INPUT (?i:TYPE="?HIDDEN"? NAME)="?returnto"? (?i:VALUE)="?(?:[^>]+?)?article\.pl\?sid=([^>]+?)"?>',
 );
+
+# Think about having regular expressions that can be applied to extracted
+# stories to look for parent information.
+#
+# - Cliff 6/6/01
 
 
 my %opts;
@@ -244,7 +251,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 		# around with this code a bit more, but that's extremely low 
 		# priority right now. Maybe come around 2.2 or 2.4 release time.
 		#
-		#												- Cliff 3/22/2001
+		#						- Cliff 3/22/2001
 
 		# Convert date to internal representation and then adjust for GMT
 		# time (since all times should be stored as GMT in dB).
@@ -363,6 +370,9 @@ foreach (keys(%data)) {
 	$sqldata{'date'} = UnixDate($data{$_}->{date}, '%Y-%m-%d %H:%M');
 
 	# Can $slashdb return meaningful errors if one of its methods fails?
+	#
+	# Use createComments(), here...especially since the comment system
+	# is changing and these details should be behind the API.
 	if ($slashdb->sqlInsert('comments', \%sqldata)) {
 		$nr++;
 	} else {
