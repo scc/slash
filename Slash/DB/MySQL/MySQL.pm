@@ -859,6 +859,11 @@ sub setAuthor {
 }
 
 ########################################################
+sub setBlock {
+	_genericSet('blocks', 'bid', @_);
+}
+
+########################################################
 sub setTemplate {
 	_genericSet('templates', 'tpid', @_);
 }
