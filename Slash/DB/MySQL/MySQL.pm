@@ -1126,7 +1126,7 @@ sub checkStoryViewable {
 	return unless $sid;
 
 	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $count = $self->sqlSelect('count(sid)', $story_table, "sid='$sid' AND  displaystatus != -1 AND time < now()");
+	my $count = $self->sqlCount($story_table, "sid='$sid' AND  displaystatus != -1 AND time < now()");
 	return $count;
 }
 
