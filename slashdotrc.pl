@@ -134,7 +134,7 @@ $my_conf{imagedir}	= "$my_conf{rootdir}/images";
 $my_conf{rdfimg}	= "$my_conf{imagedir}/topics/topicslash.gif";
 $my_conf{cookiepath}	= URI->new($my_conf{rootdir})->path . '/';
 $my_conf{m2_mincheck} 	= int $my_conf{m2_comments} / 3;
-$my_conf{m2_maxbonus}   = int $my_conf{m2_goodkarma} / 2;
+$my_conf{m2_maxbonus}   = int $my_conf{goodkarma} / 2;
 
 # who to send daily stats reports to (email => subject)
 $my_conf{stats_reports} = {
