@@ -57,7 +57,7 @@ sub main {
 
 	if ($user->{uid} < 1 && length($form->{upasswd}) > 1) {
 		slashDisplay('comments-error', {
-			type		=> 'login error'
+			type		=> 'login error',
 			nickname	=> $form->{unickname},
 			op			=> $form->{op},
 		});
@@ -337,7 +337,7 @@ sub validateComment {
 		# Should the naked '7' be converted to a Slash Variable for return by
 		# getCurrentStatic(). 	- Cliff
 		if (($w / ($br + 1)) < 7) {
-			my $err_msg = slashDisplay('comments-error',
+			my $err_msg = slashDisplay('comments-error', {
 				type	=> 'low words-per-line',
 				ratio 	=> $w / ($br + 1),
 			}, 1);
