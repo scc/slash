@@ -65,12 +65,14 @@ sub fetch {
 	# if reference, then get a unique name to cache by
 	if (ref $text eq 'SCALAR') {
 		$text = $$text;
+		print STDERR "fetch text : $text\n" if $DEBUG > 2;
 		$name = _get_anon_name($text);
 
 	# if regular scalar, get proper template ID ("name") from DB
 	} else {
 		my $slashdb = getCurrentDB();
 		$name = $slashdb->getTemplateByName($text, 'tpid');
+		print STDERR "fetch text : $text\n" if $DEBUG > 1;
 		undef $text;
 	}
 
@@ -89,7 +91,7 @@ sub fetch {
 
 	# nothing in cache so try to load, compile and cache
 	} else {
-		print STDERR "fetch($name) [uncache:$size]\n" if $DEBUG;
+		print STDERR "fetch($name) [uncached:$size]\n" if $DEBUG;
 		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless $error;
 		$data = $self->_store($name, $data) unless $error;
