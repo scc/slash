@@ -1245,6 +1245,19 @@ sub checkStoryViewable {
 }
 
 ########################################################
+sub getStorySection {
+	my($self, $sid) = @_;
+	return '' unless $sid;
+
+	my $return_val = $self->sqlSelect(
+		'section', 'stories', "sid='$sid'"
+	);
+	$return_val ||= '';
+
+	return $return_val;
+}
+
+########################################################
 sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian

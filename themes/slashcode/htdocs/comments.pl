@@ -140,7 +140,10 @@ sub main {
 
 	$form->{pid} ||= "0";
 
-	header($discussion ? $discussion->{'title'} : 'Comments');
+	my $section = '';
+	$section = $slashdb->getStorySection($discussion->{sid})
+		if $discussion and $discussion->{sid};
+	header($discussion ? $discussion->{'title'} : 'Comments', $section);
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
 		print getError('login error');

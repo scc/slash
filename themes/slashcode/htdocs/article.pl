@@ -18,7 +18,7 @@ sub main {
 
 	my $story;
 	#Yeah, I am being lazy and paranoid  -Brian
-	if (!($user->{author} or $user->{is_admin}) and !($slashdb->checkStoryViewable($form->{sid}))) {
+	if (!($user->{author} or $user->{is_admin}) and !$slashdb->checkStoryViewable($form->{sid})) {
 		$story = '';
 	} else {
 		$story = $slashdb->getStory($form->{sid});

@@ -333,7 +333,6 @@ sub getSectionBlock {
 # Sets the appropriate @fg and @bg color pallete's based
 # on what section you're in.  Used during initialization
 sub getSectionColors {
-	my($color_block) = @_;
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my @colors;
