@@ -57,8 +57,12 @@ sub default {
 		my $vote = vote(@_);
 		if (getCurrentStatic('poll_discussions')) {
 			my $slashdb = getCurrentDB();
-			my $discussion = $slashdb->getPollQuestion($form->{'qid'}, 'discussion');
-			printComments($discussion)
+			my $discussion_id = $slashdb->getPollQuestion(
+				$form->{'qid'}, 'discussion'
+			);
+			my $discussion = 
+				$slashdb->getDiscussion($discussion_id);
+			printComments($discussion) if $discussion;
 		}
 	}
 }

@@ -486,7 +486,7 @@ sub apache_site_conf {
 	open($fh, "< $PREFIX/httpd/slash.conf\0")
 		or die "Can't write to $PREFIX/httpd/slash.conf: $!";
 
-	unless (grep /^Include $file$/, <$fh>) {
+	unless (grep /^(?:#\s*)?Include $file$/, <$fh>) {
 		close $fh;
 		open($fh, ">> $PREFIX/httpd/slash.conf\0")
 			or die "Can't open $PREFIX/httpd/slash.conf: $!";

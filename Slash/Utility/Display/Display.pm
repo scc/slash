@@ -194,6 +194,7 @@ sub selectTopic {
 	my($label, $default, $section, $return, $all) = @_;
 	my $slashdb = getCurrentDB();
 	$section ||= getCurrentStatic('defaultsection');
+	$default ||= getCurrentStatic('defaulttopic');
 
 	my $topics = $slashdb->getDescriptions('topics_section', $section);
 

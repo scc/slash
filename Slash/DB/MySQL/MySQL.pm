@@ -3297,10 +3297,6 @@ sub getSlashConf {
 		$conf{$_} =~ s|/+$||;
 	}
 
-	$conf{m2_mincheck} = defined($conf{m2_mincheck})
-				? $conf{m2_mincheck}
-				: int $conf{m2_comments} / 3;
-
 	if (!$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma}) {
 		# this was changed on slashdot in 6/2001
 		# $conf{m2_maxbonus} = int $conf{goodkarma} / 2;

@@ -23,6 +23,7 @@ __template__
 	<INPUT TYPE="TEXT" NAME="question" VALUE="[% question.question %]" SIZE="40">
 	<INPUT TYPE="TEXT" NAME="voters" VALUE="[% question.voters %]" SIZE="5"><BR>
 	[% INCLUDE formLabel value => "Poll Topic" comment => "this doesn't do much right now but in the future it will" %]
+	[% DEFAULT question.topic=constants.discussion_default_topic %]
 	[% Slash.selectTopic('topic', question.topic, '', 1) %]
 	[% INCLUDE formLabel value => "The Answers" comment => "voters" %]
 

@@ -55,7 +55,7 @@ sub reconcileM2 {
 	for my $m2id (@{$m2ids}) {
 		my $m2_list = $slashdb->getMetaModerations($m2id->{mmid});
 		my $modlog = $slashdb->getModeratorLog($m2id->{mmid});
-		my(%m2_votes);
+		my(%m2_votes) = ('-1' => 0, '1' => 0);
 		my(@con, @dis);
 
 		for (@{$m2_list}) {
@@ -64,13 +64,13 @@ sub reconcileM2 {
 		}
 
 		# %m2_votes now holds the tally. Which ever value is the
-		# highest is the consensus.
+		# highest is the consensus. Sort in descending order.
 		my @rank = sort { 
-			$m2_votes{$a} <=> $m2_votes{$b}
+			$m2_votes{$b} <=> $m2_votes{$a}
 		} keys %m2_votes;
 		# Prevent errors due to undef'd value.
 		map { $m2_votes{$_} ||= 0 } @rank;
-		my($con, $dis) = @{%m2_votes}{@rank};
+		my($con, $dis) = @m2_votes{@rank};
 		next if $con+$dis == 0;
 		my($con_avg, $dis_avg) = ($con/($con+$dis), $dis/($con+$dis));
 
@@ -87,11 +87,13 @@ sub reconcileM2 {
 		my $change;
 		if ($dis && $dis_avg < $constants->{m2_minority_trigger}) {
 			# Penalty cost is the dissension cost per head
-			# of each dissenter.
-			$change = int(
-				($con/$dis) *
+			# of each dissenter. If you want to severly penalize
+			# M2 that doesn't go with the grain, you can uncomment
+			# the optional expression below.
+			$change = abs(int(
+				#($con/$dis) *
 				$constants->{m2_dissension_penalty}
-			);
+			));
 			for (@dis) {
 				$slashdb->setUser($_->[0], {
 					-karma => "karma-$change",
@@ -108,10 +110,11 @@ sub reconcileM2 {
 		
 		# Ugh-ly.
 		slashdLog(
-			sprintf 
-			"$me - %ld (mod #%ld): CON=%d (%6.4f) DIS=%d (%6.4f)",
-			$m2id->{id}, $m2id->{mmid}, $con, $con_avg, $dis,
-			$dis_avg
+			sprintf
+			"$me - %ld (mod #%ld): %s CON=%d (%6.4f) DIS=%d (%6.4f)",
+			$m2id->{id}, $m2id->{mmid}, 
+			($rank[0] == 1) ? 'Fair' : 'Unfair',
+			$con, $con_avg, $dis, $dis_avg
 		) if $constants->{moderatord_debug_info};
 
 		# Dole out reward among the consensus if there is a clear
@@ -199,7 +202,7 @@ sub reconcileM2 {
 		# Sends the actual message, varying M2 results by user.
 		for (keys %m2_results) {
 			my $msg_user = 
-				$messages->checkMessageCodes(MSG_CODE_M2, $_);
+				$messages->checkMessageCodes(MSG_CODE_M2, [$_]);
 			if (@{$msg_user}) {
 				$data->{m2} = $m2_results{$_}->{m2};
 				$data->{change} = $m2_results{$_}->{change};

@@ -304,8 +304,9 @@ sub delete {
 	$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
 }
 
+
 ##################################################################
-sub change {
+sub displayComments {
 	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
@@ -315,12 +316,6 @@ sub change {
 			commentsort	=> $user->{commentsort}
 		});
 	}
-	displayComments(@_);
-}
-
-##################################################################
-sub displayComments {
-	my($form, $slashdb, $user, $constants, $formkeyid, $discussion) = @_;
 
 	if ($form->{cid}) {
 		printComments($discussion, $form->{cid}, $form->{cid});
