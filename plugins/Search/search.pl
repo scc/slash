@@ -9,6 +9,7 @@ use Slash;
 use Slash::Display;
 use Slash::Search;
 use Slash::Utility;
+use XML::RSS;
 
 #################################################################
 sub main {
@@ -46,10 +47,11 @@ sub main {
 		$r->send_http_header;
 		$r->rflush;
 		if($ops_rss{$form->{op}}) {
-			$ops_rss{$form->{op}}->($form, $constants);
+			$r->print($ops_rss{$form->{op}}->($form, $constants));
 		} else {
-			$ops_rss{'stories'}->($form, $constants);
+			$r->print($ops_rss{'stories'}->($form, $constants));
 		}
+		$r->rflush;
 		$r->status(200);
 	} else {
 		header("$constants->{sitename}: Search $form->{query}", $form->{section});
@@ -231,21 +233,21 @@ sub commentSearchRSS {
 
 	$rss->channel(
 		title	=> xmlencode($constants->{sitename} . ' Search'),
-		'link'	=> xmlencode($constants->{absolutedir} . '/search.pl'),
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
 		description	=> xmlencode($constants->{sitename} . ' Search'),
 	);
 
 	$rss->image(
 		title	=> xmlencode($constants->{sitename}),
 		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> $constants->{absolutedir} . '/',
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
 	);
 
 	for my $entry (@$comments) {
 			my $time = timeCalc($entry->[8]);
 			$rss->add_item(
 				title	=> xmlencode("$entry->[5] ($time)"),
-				'link'	=> ($constants->{absolutedir} . "/comments.pl?sid=entry->[1]&amp;pid=entry->[4]#entry->[10]"),
+				'link'	=> xmlencode_plain($constants->{absolutedir} . "/comments.pl?sid=entry->[1]&pid=entry->[4]#entry->[10]"),
 			);
 	}
 	return $rss->as_string;
@@ -266,21 +268,21 @@ sub userSearchRSS {
 
 	$rss->channel(
 		title	=> xmlencode($constants->{sitename} . ' Search'),
-		'link'	=> xmlencode($constants->{absolutedir} . '/search.pl'),
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
 		description	=> xmlencode($constants->{sitename} . ' Search'),
 	);
 
 	$rss->image(
 		title	=> xmlencode($constants->{sitename}),
 		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> $constants->{absolutedir} . '/',
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
 	);
 
 	for my $entry (@$users) {
 			my $time = timeCalc($entry->[3]);
 			$rss->add_item(
 				title	=> xmlencode("$entry->[0]"),
-				'link'	=> xmlencode($constants->{absolutedir} . '/users.pl?nick=' . $entry->[0]),
+				'link'	=> xmlencode_plain($constants->{absolutedir} . '/users.pl?nick=' . $entry->[0]),
 			);
 	}
 	return $rss->as_string;
@@ -302,21 +304,21 @@ sub storySearchRSS {
 
 	$rss->channel(
 		title	=> xmlencode($constants->{sitename} . ' Search'),
-		'link'	=> xmlencode($constants->{absolutedir} . '/search.pl'),
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
 		description	=> xmlencode($constants->{sitename} . ' Search'),
 	);
 
 	$rss->image(
 		title	=> xmlencode($constants->{sitename}),
 		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> $constants->{absolutedir} . '/',
+		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
 	);
 
 	for my $entry (@$stories) {
 			my $time = timeCalc($entry->[3]);
 			$rss->add_item(
 				title	=> xmlencode("$entry->[1] ($time)"),
-				'link'	=> xmlencode($constants->{absolutedir} . '/article.pl?sid=' . $entry->[2]),
+				'link'	=> xmlencode_plain($constants->{absolutedir} . '/article.pl?sid=' . $entry->[2]),
 			);
 	}
 	return $rss->as_string;
