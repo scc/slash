@@ -49,7 +49,10 @@ sub main {
 	my $limit ||= $section->{section} eq 'index' ?
 	    $user->{maxstories} : $section->{artcount};
 
-	my $stories = $slashdb->getStoriesEssentials($limit, ($form->{section} ne 'index') ? $form->{section} : '');
+	my $stories = $slashdb->getStoriesEssentials(
+		$limit, 
+		($form->{section} ne 'index') ? $form->{section} : ''
+	);
 
 	my $Stories = displayStories($stories);
 	my $StandardBlocks = displayStandardBlocks($section, $stories);
@@ -228,7 +231,8 @@ sub displayStories {
 
 		if ($story->{bodytext} || $cc) {
 			push @links, linkStory({
-				'link'	=> length($story->{bodytext}) . ' ' . getData('bytes'),
+				'link'	=> length($story->{bodytext}) . ' ' .
+					   getData('bytes'),
 				sid	=> $sid,
 				mode	=> 'nocomment'
 			}) if $story->{bodytext};

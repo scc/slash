@@ -126,7 +126,8 @@ sub header {
 
 	$title =~ s/<(.*?)>//g;
 
-	slashDisplay('html-header', { title => $title }, { Nocomm => 1 }) if $title;
+	# This is ALWAYS displayed. Let the template handle $title.
+	slashDisplay('html-header', { title => $title }, { Nocomm => 1 });
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
 	if ($form->{ssi} eq 'yes') {
