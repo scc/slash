@@ -61,14 +61,23 @@ $werder = new Silly::Werder;
 	my $max_uid = $slashdb->getLastUser();
 	my $min_uid = $slashdb->sqlSelect("MIN(uid)", "users");
 
-	my $story_id = $opts{I};
+	my $story_id = $opts{I} || "";
 
 	my $t0 = new Benchmark;
 	my $count = $opts{num_comments};
 	while ($count) {
-		my $sid = getRandomSid();
-		my $discussion_id = $slashdb->sqlSelect("discussion",
-			$story_table, "sid=".$slashdb->sqlQuote($sid));
+		my($sid, $discussion_id) = ('', '');
+		if ($story_id =~ /^\d+$/) {
+			$discussion_id = $story_id;
+		} else {
+			if ($story_id =~ m{/}) {
+				$sid = $story_id;
+			} else {
+				$sid = getRandomSid();
+			}
+			$discussion_id = $slashdb->sqlSelect("discussion",
+				$story_table, "sid=".$slashdb->sqlQuote($sid));
+		}
 		my $discussion = $slashdb->getDiscussion($discussion_id);
 	 
 		%family_tree = ( );
@@ -145,7 +154,7 @@ $werder = new Silly::Werder;
                 	},
 	                $user, $score
         	);
-		$slashdb->setStory($sid, { writestatus => 'dirty' });
+		$slashdb->setStory($sid, { writestatus => 'dirty' }) if $sid;
 	        $family_tree{$cid} = $pid if ! $opts{T};
 	        print "($count) Comment created (user $uid discussion $discussion_id cid $cid pid $pid)\n";
  

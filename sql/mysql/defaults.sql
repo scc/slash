@@ -36,7 +36,7 @@ INSERT INTO code_param (type, code, name) VALUES ('commentcodes',0,'Comments Ena
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',1,'Read-Only');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',-1,'Comments Disabled');
 INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',0,'Discussion Enabled');
-INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',1,'Recycle Discusison');
+INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',1,'Recycle Discussion');
 INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',2,'Read Only Discussion');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes',0,'Always Display');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes',1,'Only Display Within Section');

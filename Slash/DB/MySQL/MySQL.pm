@@ -1086,11 +1086,18 @@ sub deleteComment {
 	}
 	# We have to update the discussion, so make sure we have its id.
 	if (!$discussion_id) {
-		($discussion_id) = sqlSelect("sid", $comment_table, "cid=$cid");
+		($discussion_id) = $self->sqlSelect("sid", $comment_table, "cid=$cid");
 	}
+	my $total_rows = 0;
 	for my $table (@comment_tables) {
-		$self->sqlDo("DELETE FROM $table WHERE cid=$cid");
+		$total_rows += $self->sqlDo("DELETE FROM $table WHERE cid=$cid");
 	}
+	if ($total_rows != scalar(@comment_tables)) {
+		errorLog("deleteComment cid $cid from $discussion_id,"
+			. " only $total_rows deletions");
+		return 0;
+	}
+	return 1;
 }
 
 ########################################################
@@ -1136,13 +1143,19 @@ sub setDiscussionDelCount {
 	my($self, $sid, $count) = @_;
 	return unless $sid;
 
+	my $where = '';
+	if ($sid =~ /^\d+$/) {
+		$where = "id=$sid";
+	} else {
+		$where = "sid=" . $self->sqlQuote($sid);
+	}
 	$self->sqlUpdate(
 		'discussions',
 		{
 			-commentcount	=> "commentcount-$count",
 			flags		=> "dirty",
 		},
-		'sid=' . $self->sqlQuote($sid)
+		$where
 	);
 }
 
