@@ -279,28 +279,27 @@ sub formkeyHandler {
 			$form->{upasswd}
 		);
 	} elsif ($formkey_op eq 'generate_formkey' || $formkey_op eq 'regen_formkey') {
-			if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
-				my $max_unused	= $constants->{"max_${formname}_unusedfk"};
-				$msg = formkeyError('unused', $formname, $max_unused);
+		if ( my $unused = $slashdb->getUnsetFkCount($formname, $formkeyid)) { 
+			my $max_unused	= $constants->{"max_${formname}_unusedfk"};
+			$msg = formkeyError('unused', $formname, $max_unused);
+			$error_flag++;
+		} 
+
+		if ($formkey_op eq 'generate_formkey') {
+			my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
+			my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
+			# formkey creation can be a little less stringent
+			my $interval = ((time() - $last_created) * 2);
+			if ( $interval < $speedlimit) {
+				$msg = formkeyError('fkspeed', $formname, $interval);
 				$error_flag++;
-
-			} 
-			if ($formkey_op eq 'generate_formkey') {
-				my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
-				my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
-				# formkey creation can be a little less stringent
-				my $interval = ((time() - $last_created) * 2);
-				if ( $interval < $speedlimit) {
-					$msg = formkeyError('fkspeed', $formname, $interval);
-					$error_flag++;
-				}
-			
 			}
+		}
 
-			if (! $error_flag) {
-				my $sid = $form->{sid} ? $form->{sid} : '';
-				$slashdb->createFormkey($formname, $formkeyid, $sid); 
-			}
+		if (! $error_flag) {
+			my $sid = $form->{sid} ? $form->{sid} : '';
+			$slashdb->createFormkey($formname, $formkeyid, $sid); 
+		}
 	}
 		
 	if ($error_flag == 1) {

@@ -64,6 +64,8 @@ sub CompileTemplates {
 		  && !$constants->{template_already_cached}
 		  && !$constants->{template_cache_size};
 
+	print STDERR "$$: Compiling All Templates Begin\n";
+
 	my $templates = $slashdb->getTemplateNameCache();
 
 	# temporarily turn off warnings and errors, see errorLog()
@@ -83,6 +85,8 @@ sub CompileTemplates {
 			Nocomm	=> 1
 		});
 	}
+
+	print STDERR "$$: Compiling All Templates Done\n";
 
 	# don't y'all come back now, y'hear?
 	$constants->{template_already_cached} = 1;

@@ -579,7 +579,7 @@ sub submitComment {
 	$form->{postersubj} = strip_nohtml($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
-	unless ( validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {
+	unless (validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {
 		editComment(@_, $error_message);
 		return(0);
 	}
