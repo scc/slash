@@ -457,9 +457,9 @@ sub processSub {
 
 	my $proto = qr[^(?:mailto|http|https|ftp|gopher|telnet):];
 
-	if ($known_to_be eq 'mailto' or ($home =~ /\@/ && $home !~ $proto)) {
+	if 	($home =~ /\@/	&& ($known_to_be eq 'mailto' || $home !~ $proto)) {
 		$home = "mailto:$home";
-	} elsif ($known_to_be eq 'http' or ($home ne '' && $home !~ $proto)) {
+	} elsif	($home ne ''	&& ($known_to_be eq 'http'   || $home !~ $proto)) {
 		$home = "http://$home";
 	}
 
