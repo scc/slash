@@ -1,4 +1,9 @@
 #!/usr/bin/perl -w 
+
+# This code is a part of Slash, which is copyright (C) OSDN, and
+# released under the GPL.  See README for more information.
+# $Id$
+
 # First version by Brian, brian@tanegnt.org
 
 use strict;
