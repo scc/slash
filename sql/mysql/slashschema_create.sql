@@ -209,7 +209,7 @@ CREATE TABLE hitters (
 DROP TABLE IF EXISTS site_info;
 CREATE TABLE site_info (
   param_id int(11) NOT NULL auto_increment,
-  name varchar(255) NOT NULL,
+  name varchar(50) NOT NULL,
   value varchar(200) NOT NULL,
   description varchar(255),
   UNIQUE site_keys (name,value),
