@@ -826,9 +826,9 @@ sub editStory {
 	if ($form->{title}) { 
 		$slashdb->setSessionByAid($user->{aid}, { lasttitle => $storyref->{title} });
 
-		$storyref->{writestatus} = getVar('defaultwritestatus', 'value');
-		$storyref->{displaystatus} = getVar('defaultdisplaystatus', 'value');
-		$storyref->{commentstatus} = getVar('defaultcommentstatus', 'value');
+		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
+		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
+		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
 		$storyref->{aid} ||= $user->{aid};
 		$storyref->{section} = $form->{section};
