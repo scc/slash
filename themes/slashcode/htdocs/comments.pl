@@ -771,7 +771,7 @@ sub moderate {
 	my $sid = $form->{sid};
 	my $was_touched = 0;
 
-	if (! $constants->{allow_moderation}) {
+	if (! $constants->{allow_moderation} or $discussion->{type} == COMMENTS_READ_ONLY) {
 		print getData('no_moderation');
 		return;
 	}
