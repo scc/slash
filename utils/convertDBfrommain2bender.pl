@@ -5,6 +5,15 @@ use DBIx::Password;
 usage() unless $ARGV[0];
 my $dbh = DBIx::Password->connect($ARGV[0]);
 
+my $answer;
+print "By running this I realize that there is no warranty and that
+I am on my own. I have also read the poddoc for this script and
+understand it. (yes/no)\n";
+chomp($answer = <STDIN>);
+exit unless $answer eq 'yes';
+
+
+
 my $users_param = qq|
 CREATE TABLE users_param (
 	param_id int(11) NOT NULL auto_increment,
@@ -65,10 +74,16 @@ if($null_sids = $dbh->selectall_arrayref('select sid from stories WHERE uid is N
 	}
 	my $uid;
 	chomp($uid = <STDIN>);
-	die "You did not select a valid author uid\n" unless $story_authors{$uid};
 	$dbh->do("update stories SET uid=$uid WHERE uid is NULL");
 }
 $dbh->do('UPDATE users_prefs SET tzcode=UCASE(tzcode)');
+
+
+print "What is your Anonymous Coward's uid?\n";
+my $uid;
+chomp($uid = <STDIN>);
+$dbh->do("update submissions SET uid=$uid WHERE uid = -1");
+$dbh->do("update comments SET uid=$uid WHERE uid = -1");
 
 
 # This is what pudge will probably want to change :) 		-Brian
@@ -86,6 +101,7 @@ my @tables = qw |
 	commentcodes    
 	commentkey      
 	commentmodes    
+	content_filters
 	dateformats     
 	displaycodes    
 	isolatemodes    
@@ -116,7 +132,7 @@ sub usage {
 
 =head1 NAME
 
-convert.pl - Convert from 1.0.9 to 2.0 data
+convertDBfrommain2bender.pl - Convert from 1.0.9 to 2.0 data
 
 =head1 What does this do?
 
@@ -138,6 +154,27 @@ This is what I would suggest:
 First, make sure that your author accounts and
 user accounts match. AKA for every aid you
 have, you must have a username of the same.
+
+Next, you need to make a decision, how are you going
+to handle Anonymous Coward? If you installed slash
+with the default data, you can just remove the first
+6 accounts from your live data once you dump it
+to disk and you are good to go. If this was not
+the case you have a bit more work to do. You are
+either going to have to move anonymous coward
+once you set your site up before you insert your
+original data (more on this in a couple of paragraphs)
+or you are going to need to make sure that uid 1
+is open for anonymous coward (and uid 2 if you
+want to keep the account you will create during
+the install). Remember that if you move your anonymous
+user that you need to update the vars table with
+the anonymous user's new uid.
+
+I would also suggest that you remove all of the data
+from stories, storiestuff, discussions and from
+the poll tables just to make sure no collisions
+happen.
 
 Use mysqldump to make a copy of your data. Example:
 
@@ -161,6 +198,10 @@ mysqldump -u slash -p slash --complete-insert --no-create-info > datadump
 Now, install a slashsite and then dump this data into the site.
 
 mysqldump -u slash -p slash < datadump
+
+A couple of things, you may want to move some of your blocks over
+by hand, and if you added or deleted any filters you will need
+to move those by hand.
 
 
 =head1 What am I likely to mess up?
