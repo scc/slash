@@ -28,36 +28,70 @@ sub moderatordLog {
 	close LOG;
 }
 
-
 sub comments2tokens {
 	my $comments = shift;
 	my $tokenpool = $comments * $constants->{tokenspercomment};
-	moderatordLog("$comments becomes $tokenpool tokens.");
-
 	my $stirredpoints = $slashdb->stirPool();
 	$tokenpool += $stirredpoints * $constants->{tokensperpoint};
-	moderatordLog(
-		($stirredpoints ? "Stirred out $stirredpoints points, " : '')
-		. "So the total token Pool=$tokenpool");
 
-	my($totalusers) = $slashdb->getUserLast();
-	my $eligibleusers = int($totalusers / 5) * 4;
-	moderatordLog("First $eligibleusers accounts available");
+	my $eligibleMods = $slashdb->fetchEligibleModerators();
+	my $eligible = scalar @{$eligibleMods};
+	my($st, $fi) = (int($eligible * $constants->{m1_pointgrant_start}),
+					int($eligible * $constants->{m1_pointgrant_end}));
 
-	my $report = $slashdb->giveKarma($eligibleusers, $tokenpool);
-	moderatordLog($report);
+	my %updateUIDs;
+	# $tokenpool used to be the amount of tokens to distribute, now it's just
+	# used to provide a method of getting random, unique UIDs since we only
+	# increment per selected UID.
+	for (my $x = 0; $x < $tokenpool; $x++) {
+		$updateUIDs{$eligibleMods->[$st + rand ($fi - $st) - 1]}++;
+	}
+	# Note, there is a slight chance that this message will NOT be
+	# accurate in it's report of the number of accounts available,
+	# due to how the API is designed. We could pass the number of
+	# users to fetchEligibleModerators(), for example...
+	moderatordLog(getData('moderatord_tokenmsg', {
+		stirredpoints	=> $stirredpoints,
+		last_user		=> $slashdb->getLastUser(),
+		tokenpool		=> $tokenpool,
+		eligible		=> $eligible,
+		st				=> $st,
+		fi				=> $fi,
+		num_updated		=> scalar keys %updateUIDs,
+	}));
+	$slashdb->updateTokens(keys %updateUIDs);
 }
 
+
+# MAIN CODE #
+moderatordLog(getData('moderatord_log_header'));
 my $tc = $slashdb->getVar('totalComments', 'value');
 my $lc = $slashdb->getVar('lastComments', 'value');
-my $newcomments = $tc - $lc;
-#$newcomments+=1000;
 
+# Check to see if we have any M2 that has attained
+# a quorum and is of sufficient age to be handled.
+$slashdb->applyMetaModeration();
+
+# Maybe we should think about adding in a minimum 
+# value here which would affect the minimum # of 
+# tokens/points distributed per execution. It would
+# be a way of injecting a certain amount of points 
+# into the system without requiring the need to have
+# comments. Something a site admin might want to 
+# consider with a small pool of moderatorsm ala...
+#
+#$newcomments += $constants->{moderatord_minnewcomments}
+#$newcomments += $constants->{moderatord_mintokens} /
+#				 $constants->{tokenspercomment}
+#
+# - 5/8/01 Cliff (attempting to make sense of old Slash comments)
+my $newcomments = $tc - $lc;
 if ($newcomments > 0) {
-	$slashdb->setVar("lastComments", $tc);
+	$slashdb->setVar('lastComments', $tc);
 	comments2tokens($newcomments);
 	my $log = $slashdb->tokens2points();
 	for(@$log) {
 		moderatordLog(@_);
 	}
 }
+moderatordLog(getData('moderatord_log_footer'));

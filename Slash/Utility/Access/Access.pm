@@ -27,6 +27,10 @@ LONG DESCRIPTION.
 use strict;
 use HTML::Entities;
 use Slash::Utility::Environment;
+use Slash::Display;
+use Digest::MD5 'md5_hex';
+# Since we use objects via getObject(), below, should those modules be
+# included, here?
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -39,6 +43,8 @@ use vars qw($VERSION @EXPORT);
 	getFormkey
 	getFormkeyId
 	submittedAlready
+	allowExpiry
+	setUserExpired
 );
 
 # really, these should not be used externally, but we leave them
@@ -322,6 +328,138 @@ sub compressOk {
 
 	return 1;
 }
+
+#========================================================================
+
+=head2 allowExpiry()
+
+Returns whether the system allows user expirations or not.
+
+=over 4
+
+=item Return value
+
+Boolean value. True if users are to be expired, false if not.
+
+The following variables can control this behavior:
+	min_expiry_days
+	max_expiry_days
+	min_expiry_comm
+	max_expiry_comm
+
+	do_expiry
+
+=back
+
+=cut
+
+sub allowExpiry {
+	my $constants = getCurrentStatic();
+
+	# We only perform the check if any of the following are turned on.
+	return ($constants->{min_expiry_days} > 0 ||
+			$constants->{max_expiry_days} > 0 ||
+            $constants->{min_expiry_comm} > 0 ||
+			$constants->{max_expiry_comm} > 0) && 
+		   $constants->{do_expiry};
+}
+
+#========================================================================
+
+=head2 setUserExpiry($uid, $val)
+
+Set/Clears the expired status on the given UID based on $val. If $val
+is non-zero, then expiration will be performed on the user, this
+include:
+	- Generating a registration ID for the user so that they can re-register.
+	- Marking all forms in vars.[expire_forms] as read-only.
+	- Clearing the registration flag.
+	- Sending the registration email which notifies user of expiration.
+
+If $val is non-zero, then the above operations are "cleared" by 
+performing the following:
+
+	- Clearing the registration ID associated with the user.
+	  (it's not the job of this routine to perform checks on reg-id)
+	- Unmarking all forms marked read-only (note: this is NOT a deletion!)
+	- Setting the registration flag.
+
+=over 4
+
+=item Return value
+
+None.
+
+=back
+
+=cut
+
+sub setUserExpired {
+    my ($uid, $val) = @_;
+
+	my $user = getCurrentUser($uid);
+    my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	# Apply the appropriate readonly flags.
+	for (split /,\s+/, $constants->{expire_forms}) {
+		$slashdb->setReadOnly($_, $uid, $val, 'expired');
+	}
+
+	if ($val) {
+		# Determine regid. We want to strive for as much randomness as we
+        # can without getting overly complex. Let's just create a string
+        # that should have a reasonable degree of uniqueness by user.
+        #
+        # Now, how likely is it that this will result in a collision?
+        # Note that we obscure with an MD5 hex has which is safer in URLs
+        # than base64 hashes.
+        my $regid = md5_hex(
+            (sprintf "%s%s%d", time, $user->{nickname}, int(rand 256))
+        );
+ 
+        # We now unregister the user, but we need to keep the ID for later.
+        # Consider removal of the 'registered' flag. This state can simply
+        # be determined by the presence of a non-zero length value in
+        # 'reg_id'. If 'reg_id' doesn't exist, that is considered to be
+        # a zero-length value.
+        $slashdb->setUser($uid, {
+            'registered'    => '0',
+            'reg_id'        => $regid,
+        });
+		
+        my $reg_msg = slashDisplay('rereg_mail',
+            {
+                # This should probably be renamed to prevent confusion.
+                # But there is no real need for the CURRENT user's value
+                # in this template, just the user we are expiring.
+				reg_id		=> $regid,
+                useradmin   => $constants->{reg_useradmin} ||
+                               $constants->{adminmail},
+            },
+ 		
+            {
+                Return  => 1,
+                Nocomm  => 1,
+                Page    => 'messages',
+            }
+        );
+
+		my $reg_subj = Slash::getData('rereg_email_subject', '', '');
+	
+		# Error check here? If so, what do we do?
+    	my $messages = getObject('Slash::Messages');
+		# Send the message.
+        $messages->quicksend($uid, $reg_subj, $reg_msg, 0, 0);
+	} else {
+		# We only need to clear these.
+		$slashdb->setUser($uid, {
+			'registered'	=> '1',
+			'reg_id'		=> '',
+		});
+	}
+}
+
 
 1;
 

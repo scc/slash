@@ -131,29 +131,35 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	<P>Saving [% name %]<BR><P>
 
 [% CASE 'savenickname_msg' %]
-	<P>Saving [% nickname %].
+	<P>Saving [% nickname %].<BR>
 
 [% CASE 'changeemail_msg' %]
-	Notifying [% realemail %] of the change to their account.
+	Notifying [% realemail %] of the change to their account.<BR>
+	E-mail address changed and re-registration information sent to: [% form.realemail %]<BR>
 
 [% CASE 'saveuser_passchanged_msg' %]
-	Password changed.
+	Password changed.<BR>
 
 [% CASE 'saveuser_passnomatch_msg' %]
-	Passwords don't match. Password not changed.
+	Passwords don't match. Password not changed.<BR>
 
 [% CASE 'saveuser_passtooshort_msg' %]
-	Password is too short and was not changed.
+	Password is too short and was not changed.<BR>
 
 [% CASE 'anon_validation_attempt' %]
 	<P>I'm sorry. Anonymous users have no accounts that need to be validated.
 	If you do have an account on [% constants.sitename %] that you would like
-	to re-register, then please log in as that user, first.
+	to re-register, then please log in as that user, first.<BR>
 
 [% CASE 'no_registration_needed' %]
 	<P>Hello, [% user.nickname %]. Your account is currently registered with
-	the system. No re-registration is necessary at this time.
+	the system. No re-registration is necessary at this time.<BR>
 
+[% CASE 'emailexists_msg' %]
+	Sorry, [% form.realemail %] already exists in our userbase.<BR>
+
+[% CASE DEFAULT %]
+	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>
 
 [% END %]
 __seclev__

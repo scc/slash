@@ -79,9 +79,6 @@ plugins:
 all: install
 
 install: slash plugins
-# Need to toss in a script here that will fix prefix so
-# that if someone wants to install in a different
-# directory it will be easy
 	# Lets go install the libraries, remember to clean out old versions.
 	(cd Slash; make install UNINST=1)
 	# Lets go install the plugin libraries
@@ -124,6 +121,11 @@ install: slash plugins
 	# Install the plugins...(will also install kruft like CVS/ and blib/
 	# directories if they are around. Maybe a smarter copying procedure
 	# is called for, here?)
+	# 
+	# Note: Many users of Slash have taken to symlinking the plugins and themes
+	# directories into $(SLASH_PREFIX) from their checked-out CVS trees. We
+	# should try to check for this in the future and behave accordingly.
+	#
 	(cd plugins; make clean) 
 	$(CP) -rv plugins/* $(SLASH_PREFIX)/plugins/
 	# Now all other themes

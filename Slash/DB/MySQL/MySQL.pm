@@ -217,7 +217,13 @@ sub createComment {
 		$self->{_dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
 
+	# We subtract one from current comment expiry count.
+	$self->setUser($user->{uid}, 'expiry_comm', {
+		'-expiry_comm'	=> 'expiry_comm-1',
+	}) if allowExpiry();
+
 	$self->sqlTransactionFinish();
+
 	# don't allow pid to be passed in the form.
 	# This will keep a pid from being replace by
 	# with other comment's pid
@@ -778,6 +784,14 @@ sub createContentFilter {
 	return $filter_id;
 }
 
+sub checkEmail {
+	my($self, $email) = @_;
+
+	# Returns count of users matching $email. 
+	return ($self->sqlSelect('count(uid)', 'users', 
+							 'realemail=' . $self->{_dbh}->quote($email)))[0];
+}
+
 #################################################################
 # Replication issue. This needs to be a two-phase commit.
 sub createUser {
@@ -787,10 +801,7 @@ sub createUser {
 	return if ($self->sqlSelect(
 		"count(uid)","users",
 		"matchname=" . $self->{_dbh}->quote($matchname)
-	))[0] || ($self->sqlSelect(
-		"count(uid)","users",
-		" realemail=" . $self->{_dbh}->quote($email)
-	))[0];
+	))[0] || $self->checkEmail($email);
 
 	$self->sqlInsert("users", {
 		uid		=> '',
@@ -805,10 +816,34 @@ sub createUser {
 # bite us at some point. -Brian
 	my $uid = $self->getLastInsertId('users','uid');
 	return unless $uid;
-	$self->sqlInsert("users_info", { uid => $uid, -lastaccess => 'now()' } );
+	$self->sqlInsert("users_info", {
+		uid 			=> $uid, 
+		-lastaccess		=> 'now()',
+	} );
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
+
+	# All param fields should be set here, as some code may not behave
+	# properly if the values don't exist.
+	# 
+	# You know, I know this might be slow, but maybe this thing could be
+	# initialized by a template? Wild thought, but that would prevent 
+	# site admins from having to edit CODE to set this stuff up.
+	#
+	#	- Cliff
+	# Initialize the expiry variables...
+	# ...users start out as registered...
+	# ...the default email view is to SHOW email address...
+	my $constants = getCurrentStatic();
+	$self->setUser($uid, {
+		'registered'		=> 1,
+		'expiry_comm'		=> $constants->{min_expiry_comm},
+		'expiry_days'		=> $constants->{min_expiry_days},
+		'user_expiry_comm'	=> $constants->{min_expiry_comm},
+		'user_expiry_days'	=> $constants->{min_expiry_days},
+		'emaildisplay'		=> 2,
+	});
 
 	return $uid;
 }
@@ -1441,7 +1476,7 @@ sub createAbuse {
 sub checkExpired {
 	my($self, $uid) = @_;
 
-	my $where = "uid = '$uid' AND readonly = 1 AND reason = 'expired'"; 
+	my $where = "uid = $uid AND readonly = 1 AND reason = 'expired'"; 
 
 	$self->sqlSelect(
 		"readonly",
@@ -2385,6 +2420,12 @@ sub getSlashConf {
 	$conf{cookiepath}	||= URI->new($conf{rootdir})->path . '/';
 	$conf{maxkarma}		= 999  unless defined $conf{maxkarma};
 	$conf{minkarma}		= -999 unless defined $conf{minkarma};
+	$conf{expiry_exponent} = 1 unless defined $conf{expiry_exponent};
+	# For all fields that it is safe to default to -1 if their
+	# values are not present...
+	for (qw[min_expiry_days max_expiry_days min_expiry_comm max_expiry_comm]) {
+		$conf{$_}	= -1 unless exists $conf{$_};
+	} 
 
 	# no trailing newlines on directory variables
 	# possibly should rethink this for basedir,
@@ -2412,7 +2453,7 @@ sub getSlashConf {
 				$_
 			)[-1]}
 			split /\|/, $_[0]
-		]
+		] if $_[0];
 	};
 
 	$conf{fixhrefs} = [];  # fix later
@@ -2733,7 +2774,8 @@ sub getTemplateByName {
 	my $table_cache_id= '_templates_cache_id';
 
 	#First, we get the cache
-	$self->{$table_cache_id} = $self->{$table_cache_id} && $constants->{'cache_enabled'}
+	$self->{$table_cache_id} =
+		$constants->{'cache_enabled'} && $self->{$table_cache_id}
 		? $self->{$table_cache_id} : _getTemplateNameCache($self);
 
 	#Now, lets determine what we are after

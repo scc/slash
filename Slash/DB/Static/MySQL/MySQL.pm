@@ -371,32 +371,36 @@ sub tokens2points {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 	my @log;
-	my $c = $self->sqlSelectMany("uid,tokens", "users_info", "tokens >= $constants->{maxtokens}");
-	$self->sqlTransactionStart("LOCK TABLES users READ, users_info WRITE, users_comments WRITE");
+	my $c = $self->sqlSelectMany('uid,tokens',
+								 'users_info', 
+								 "tokens >= $constants->{maxtokens}");
 
+	$self->sqlTransactionStart('LOCK TABLES users READ, 
+								users_info WRITE, users_comments WRITE');
 	while (my($uid, $tokens) = $c->fetchrow) {
-		push @log, ("Giving $constants->{maxtokens}/$constants->{tokensperpoint} " .
-			($constants->{maxtokens}/$constants->{tokensperpoint}) . " to $uid");
+		push @log, getData('moderatord_tokengrantmsg', { uid => $uid });
 		$self->setUser($uid, {
 			-lastgranted	=> 'now()',
-			-tokens		=> "tokens - $constants->{maxtokens}",
-			-points		=> "points +" . ($constants->{maxtokens} / $constants->{tokensperpoint})
+			-tokens			=> "tokens*$constants->{token_retention}",
+			-points			=> "points+" .
+				($constants->{maxtokens} / $constants->{tokensperpoint})
 		});
 	}
-
 	$c->finish;
-
-	$c = $self->sqlSelectMany("users.uid as uid", "users,users_comments,users_info",
-		"karma > -1 AND
-		 points > 5 AND 
-		 seclev < 100 AND
-		 users.uid=users_comments.uid AND
-		 users.uid=users_info.uid");
+	$c = $self->sqlSelectMany('users.uid as uid',
+							  'users,users_comments,users_info',
+							  "karma >= 0 AND
+							   points > $constants->{maxpoints} AND 
+							   seclev < 100 AND
+							   users.uid=users_comments.uid AND
+							   users.uid=users_info.uid");
 	$self->sqlTransactionFinish();
 
 	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");
 	while (my($uid) = $c->fetchrow) {
-		$self->sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
+		$self->sqlUpdate('users_comments', {
+			points => $constants->{maxpoints},
+		}, "uid=$uid");
 	}
 	$self->sqlTransactionFinish();
 
@@ -427,6 +431,9 @@ sub stirPool {
 
 	$self->sqlTransactionFinish();
 	$c->finish;
+
+	# We aren't using this for Slashdot, feel free to turn this on if you
+	# wish to use it (the proper return value is: $revoked)
 	return 0;
 }
 
@@ -473,54 +480,89 @@ sub getAccessLogInfo {
 
 ########################################################
 # For moderatord
-sub giveKarma {
-	my($self, $eligibleusers, $tokenpool) = @_;
-	my $c = $self->sqlSelectMany("users_info.uid,count(*) as c",
+sub fetchEligibleModerators {
+	my($self) = @_;
+	my $constants = getCurrentStatic();
+	my $eligibleUsers = 
+		$self->getLastUser() * $constants->{m1_eligible_percentage};
+
+	my $returnable =
+		$self->sqlSelectAll("users_info.uid,count(*) as c",
 			"users_info,users_prefs, accesslog",
-			"users_info.uid < $eligibleusers
+			"users_info.uid < $eligibleUsers
 			 AND users_info.uid=accesslog.uid 
 			 AND users_info.uid=users_prefs.uid
 			 AND (op='article' or op='comments')
 			 AND willing=1
 			 AND karma >= 0
 			 GROUP BY users_info.uid
+			 HAVING c >= $constants->{m1_eligible_hitcount}
 			 ORDER BY c");
 
-	my $eligible = $c->rows;
-	my($uid, $cnt);
-	while ((($uid,$cnt) = $c->fetchrow) && ($cnt < 4)) {
-		$eligible--;
-	}
+	return $returnable;
+}
 
-	my($st, $fi) = (int($eligible / 6), int($eligible / 8) * 7);
-	my $x;
 
-	moderatordLog("Start at $st end at $fi.  $eligible left. First score is $cnt");
-
-	my @eligibles;
-	while (($x++ < $fi) && (($uid, $cnt) = $c->fetchrow)) {
-		next if $x < $st;
-		push @eligibles, $uid;
-	}
-	$c->finish;
-
-	my @scores;
-	for (my $x = 0; $x < $tokenpool; $x++) {
-		$scores[$eligibles[rand @eligibles]]++;
-	}
-
+########################################################
+# For moderatord
+sub updateTokens {
+	my ($self, $modlist) = @_;
 
 	$self->sqlTransactionStart("LOCK TABLES users_info WRITE");
-	for (@eligibles) {
-		next unless $scores[$uid];
-		$self->setUser($uid, { 
-			-tokens	=> "tokens+" . $scores[$uid]
+	for (@{$modlist}) {
+		$self->setUser($_, { 
+			-tokens	=> "tokens+1",
 		});
 	}
 	$self->sqlTransactionFinish();
-
-	return("Start at $st end at $fi.  $eligible left. First score is $cnt");
 }
+
+
+########################################################
+# For moderatord
+sub applyMetaModeration {
+	my ($self) = @_;
+
+	# Coming Soon!
+	# The meat behind consensus metamoderation!
+}
+
+
+########################################################
+# For dailyStuff
+# 	This should only be run once per day, if this isn't
+#	true, the simple logic below, breaks. This returns 
+# 	a list of RECENTLY expired users. We define RECENTLY
+#	as since-the-last-time-this-code-was-executed.
+sub checkUserExpiry {
+	my ($self) = @_;
+	my ($ret); 
+
+	# Subtract one from number of 'registered days left' for all users.
+	$self->sqlTransactionStart("LOCK TABLES users_param WRITE");
+	$self->sqlUpdate('users_param', {
+		-'value'	=> 'value-1',
+	}, "name='expiry_days' AND value >= 0");
+	$self->sqlTransactionFinish();
+	
+	# Now grab all UIDs that look to be expired, we explicitly exclude 
+	# authors from this search.
+	$ret = $self->sqlSelectAll(	'distinct uid', 'users_param',
+								"(name='expiry_days' OR name='expiry_comm')
+								AND value < 0"  );
+
+	# We only want the list of UIDs that aren't authors and have not already
+	# expired. The extra perl code would be completely unavoidable if we had
+	# subselects... *sigh*
+	my(@returnable) = grep {
+		my $user = $self->getUser($_->[0]);
+		$_ = $_->[0];
+		!($user->{author} || ! $user->{registered});
+	} @{$ret};
+
+	return \@returnable;
+}
+
 
 1;
 

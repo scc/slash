@@ -39,6 +39,9 @@ customize [% constants.sitename %], change your password, or just click pretty w
 <A HREF="[% constants.rootdir %]/moderation.shtml">Moderator Guidelines</A>
 before you do any moderation.<BR><P>
 [% END %]
+[% IF ! user.registered %]
+<P>This account is currently expired. Please <A HREF="[% constants.rootdir %]/users.pl?op=validateuser">re-register</A> at your earliest opportunity.<BR><P>
+[% END %]
 
 <P><HR></P>
 

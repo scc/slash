@@ -43,8 +43,9 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 <BR>
 	<B>Your Email Address</B><BR>
 	<SMALL>(required but never displayed publicly. This is where your passwd is mailed. 
-	If you change this address, a notification will be sent)</SMALL><BR>
-	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; user_edit.realemail; END %]" SIZE="40"><BR>
+	If you change this address, a notification will be sent, and you will need follow the
+	enclosed instructions to re-register)</SMALL><BR>
+	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% user_edit.realemail %]" SIZE="40"><BR>
 <BR>
 [% emaildisplay.${user.emaildisplay} = 'CHECKED' -%]
 	<B>Email Display</B><BR>

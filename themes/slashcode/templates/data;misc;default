@@ -95,6 +95,12 @@ Giving [% points %] points ([% constants.maxtokens %]t/[% constants.tokensperpoi
 [% CASE 'moderatord_log_footer' %]
 ---------------- END MODERATORD EXECUTION ----------------
 
+[% CASE 'rereg_email_subject' %]
+You're [% constants.sitename %] account has expired.
+
+[% CASE DEFAULT %]
+---- MISSING MISCELLANEOUS DATA SEGMENT --- [[% value %]] block not found.
+
 [% END %]
 
 __seclev__

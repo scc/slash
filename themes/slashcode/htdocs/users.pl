@@ -119,7 +119,7 @@ sub main {
 		userInfo($user->{uid}, $user->{nickname});
 
 	} elsif ($op eq 'validateuser') {
-		if ($user->{is_anon} || ! $user->{reg_id}) {
+		if ($user->{is_anon} || !length($user->{reg_id})) {
 			if ($user->{is_anon}) {
 				print getMessage('anon_validation_attempt');
 				displayForm();
@@ -347,51 +347,44 @@ sub userInfo {
 
 sub validateUser {
 	my $user = getCurrentUser();
-	my $form = getCurerntForm();
+	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
 	# If we aren't expiring accounts in some way, we don't belong here.
-	if ($constants->{expiry_min_comm} < 0 &&
-		$constants->{expiry_max_comm} < 0 &&
-		$constants->{expiry_min_days} < 0 && 
-		$constants->{expiry_max_days} < 0)
-	{
+	if (! allowExpiry()) {
 		displayForm();
 		exit;
 	}
 
-	if ($user->{reg_id} eq $form->{reg_id}) {
+	# Maybe this should be taken care of in a more centralized location?
+	if ($user->{reg_id} eq $form->{id}) {
 		# We have a user and the registration IDs match. We are happy!
-		my($maxComm, $maxDays) = ($constants->{expiry_max_comm},
-			$constants->{expiry_max_days});
-		my($userComm, $userDays) = ($user->{user_expiry_comm},
-			$user->{user_expiry_days});		
+		my ($maxComm, $maxDays) = (	$constants->{max_expiry_comm},
+									$constants->{max_expiry_days} );
+		my ($userComm, $userDays) = ($user->{user_expiry_comm},
+									 $user->{user_expiry_days});		
 		my $exp = $constants->{expiry_exponent};
 
+		# Increment only the trigger that was used.
 		my $new_comment_expiry = ($userComm > $maxComm) ?
-			$maxComm : $userComm * (($user->{expiry_comm} < 0) ? 1 : $exp);
+			$maxComm : $userComm * (($user->{expiry_comm} < 0) ? $exp : 1);
 		my $new_days_expiry = ($userDays > $maxDays) ?
-			$maxDays : $userDays * (($user->{expiry_days} < 0) ? 1 : $exp);
+			$maxDays : $userDays * (($user->{expiry_days} < 0) ? $exp : 1);
 
-		# Reregister user.
+		# Reset re-registration triggers for user.
 		$slashdb->setUser($user->{uid}, {
-			'registered'		=> '1',
-			'reg_id'			=> '',
 			'expiry_comm'		=> $new_comment_expiry,
 			'expiry_days'		=> $new_days_expiry,
 			'user_expiry_comm'	=> $new_comment_expiry,
 			'user_expiry_days'	=> $new_days_expiry,
 		});
 
-		# Since expiry CAN be viewed as an atomic operation, this also should
-		# be a method (but it's still only a wrapper for Slash::DB::setReadOnly()
-		for (split /,\s+/, $constants->{reg_expireforms}) {
-			$slashdb->setReadOnly($_, $user->{uid}, 0, 'expired');
-		}
+		# Handles rest of re-registration process.
+		setUserExpired($user->{uid}, 0);
 	}
 
-	slashDisplay('registrationResult');
+	slashDisplay('regResult');
 }
 
 #################################################################
@@ -605,10 +598,21 @@ sub saveUser {
 	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my($note, $author_flag);
 
+	# We start with the 'Saved ...' message.
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if isAnon($uid);
+	$note = getMessage('savenickname_msg', {
+		nickname => $user_email->{nickname},
+	}, 1);
 
-	$note = getMessage('savenickname_msg', { nickname => $user_email->{nickname} }, 1);
+	# Check to insure that if a user is changing his email address, that
+	# it doesn't already exist in the userbase.
+	if ($user->{realemail} ne $form->{realemail}) {
+		if ($slashdb->checkEmail($form->{realemail})) {
+			$note = getMessage('emailexists_msg', 0, 1);
+			return fixparam($note);
+		}
+	}
 
 	if (!$user_email->{nickname}) {
 		$note .= getMessage('cookiemsg', 0, 1);
@@ -672,6 +676,10 @@ sub saveUser {
 			realemail => $form->{realemail}
 		}, 1);
 		sendEmail($user_email->{realemail}, $saveuser_emailtitle, $saveuser_email_msg);
+		# Users are expired once they change their email, but this is
+		# an immediate expiration and users should be able to 
+		# quickly reregister.
+		setUserExpired($user->{uid}, 1);
 	}
 
 	delete $users_table->{passwd};
