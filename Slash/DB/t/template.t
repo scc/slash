@@ -22,5 +22,5 @@ $object->sqlConnect();
 my $tpid = 'html-header';
 
 ########################################################################
-my $template = $object->getTemplate($tpid);
+my $template = $object->getTemplate($tpid,'','','html');
 print "ok 1\n";

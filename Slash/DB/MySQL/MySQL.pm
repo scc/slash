@@ -2506,10 +2506,80 @@ sub getBlock {
 }
 
 ########################################################
+sub _getTemplateNameCache {
+	my ($self) = @_;
+	my %cache;
+	my $templates = $self->sqlSelectAll('tpid,name,page,section', 'templates');
+	for(@$templates) {
+		$cache{$_->[1],$_->[2],$_->[3]} = $_->[0];
+	}
+	return \%cache;
+}
+
+########################################################
+# This is a bit different
 sub getTemplate {
-	my($self) = @_;
+	my($self, $name, $values, $cache_flag, $page, $section) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
-	my $answer = _genericGetCache('templates', 'tpid', '', @_);
+
+	my $table_cache = '_template_cache';
+	my $table_cache_time= '_template_cache_time';
+	my $table_cache_id= '_template_cache_id';
+
+	#First, we get the cache
+	$self->{$table_cache_id} ||= _getTemplateNameCache($self);
+
+	#Now, lets determine what we are after
+	unless($page) {
+		$page = getCurrentUser('currentPage');
+		$page ||= 'misc';
+	}
+	unless($section) {
+		$section = getCurrentUser('currentSection');
+		$section ||= 'default';
+	}
+	#Now, lets figure out the id
+	#name|page|section => name|page|default => name|misc|section => name|misc|default
+	# That frat boy march with a paddle
+	my $id = $self->{$table_cache_id}->{$name,$page,$section};
+	$id ||= $self->{$table_cache_id}->{$name,$page,'default'};
+	$id ||= $self->{$table_cache_id}->{$name,'misc',$section};
+	$id ||= $self->{$table_cache_id}->{$name,'misc','default'};
+	return unless $id;
+
+	my $type;
+	if (ref($values) eq 'ARRAY') {
+		$type = 0;
+	} else {
+		$type  = $values ? 1 : 0;
+	}
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values}
+			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
+	} else {
+		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		}
+	}
+
+	$self->{$table_cache}{$id} = {};
+	my $answer = $self->sqlSelectHashref('*', "templates", "tpid=$id");
+	$answer->{'_modtime'} = time();
+	$self->{$table_cache}{$id} = $answer;
+
+	$self->{$table_cache_time} = time();
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values};
+	} else {
+		if ($self->{$table_cache}{$id}) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		}
+	}
+
 	return $answer;
 }
 
