@@ -18,7 +18,7 @@ __template__
 				<input type=hidden name=id value="[% form.id %]">
 				<input type=hidden name=state value="editing">
 				<input type=text name=description value="[% FILTER strip_attribute; form.description; END %]"><p>
-				<textarea name=article cols=60 rows=20>[% FILTER strip_attribute; form.article; END %]</textarea><p>
+				<textarea name=article cols=60 rows=20>[% FILTER strip_literal; form.article; END %]</textarea><p>
 				<input  type=submit name=op value="preview">
 				<input  type=submit name=op value="save">
 			</FORM>
