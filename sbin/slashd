@@ -158,7 +158,7 @@ EOT
 		)
 	);
 	slashdLogDie("aborting: no files successfully processed from $dir")
-		if !%task 
+		if !%task;
 
 	# The appropriate data is in $task{"filename.pl"} -- write it all into
 	# the $cron object.
