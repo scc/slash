@@ -1377,7 +1377,7 @@ sub getPoll {
 	my($self, $qid) = @_;
 
 	my $sth = $self->{_dbh}->prepare_cached("
-			SELECT question,answer,aid  from pollquestions, pollanswers
+			SELECT question,answer,aid,votes  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
 			pollquestions.qid= " . $self->{_dbh}->quote($qid) . "
 			ORDER BY pollanswers.aid

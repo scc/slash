@@ -163,6 +163,15 @@ sub displayStandardBlocks {
 				$boxBank->{$bid}{url}
 			);
 
+		} elsif ($bid eq 'poll') {
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				$boxBank->{$bid}{title},
+				pollbooth('', 1),
+				$boxBank->{$bid}{bid},
+				$boxBank->{$bid}{url}
+			);
+
 		} else {
 			$return .= portalbox(
 				$constants->{fancyboxwidth},

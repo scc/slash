@@ -19,6 +19,21 @@ en_US
 __name__
 pollbooth
 __template__
+[% USE Slash %]
+[% IF Slash.db.getPollVoter(qid) %]
+<B>[% question %]</B>
+
+[% FOREACH ans = polls %][% answer = ans.1; aid = ans.2; votes = ans.3 %]
+	<BR>&bull; [% answer %] ([% votes %])
+[% END %]
+
+<P><EM>(You've already voted.)</EM><BR>
+[ <A HREF="[% constants.rootdir %]/pollBooth.pl?section=[% sect %]&qid=[% qid %]&aid=-1"><B>Results</B></A> |
+<A HREF="[% constants.rootdir %]/pollBooth.pl?section=[% sect %]"><B>Polls</B></A> ] <BR>
+Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
+
+[% ELSE %]
+
 <FORM ACTION="[% constants.rootdir %]/pollBooth.pl">
 	<INPUT TYPE="hidden" NAME="qid" VALUE="[% FILTER strip_attribute; qid; END %]">
 	[% IF user.currentSection %]
@@ -26,7 +41,7 @@ __template__
 	[% END %]
 <B>[% question %]</B>
 
-[% FOREACH ans = polls %][% answer = ans.1; aid = ans.2 %]
+[% FOREACH ans = polls %][% answer = ans.1; aid = ans.2; votes = ans.3 %]
 	<BR><INPUT TYPE="radio" NAME="aid" VALUE="[% aid %]">[% answer %]
 [% END %]
 
@@ -35,6 +50,6 @@ __template__
 <A HREF="[% constants.rootdir %]/pollBooth.pl?section=[% sect %]"><B>Polls</B></A> ] <BR>
 Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
 </FORM>
-
+[% END %]
 __seclev__
 10000
