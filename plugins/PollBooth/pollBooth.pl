@@ -41,6 +41,8 @@ sub main {
 	}
 
 	# add to admin menu before calling header()
+	# remove this, maybe, and just add it to the database?
+	# -- pudge
 	if ($user->{is_admin}) {
 		my @menu = split /\|/, getData('admin');
 		addToMenu('admin', 'newpoll', {

@@ -180,7 +180,7 @@ sub sqlSelectAll {
 
 	$self->sqlConnect();
 	my $H = $self->{_dbh}->selectall_arrayref($sql);
-	unless($H) {
+	unless ($H) {
 		errorLog($sql);
 		$self->sqlConnect;
 		return;
@@ -238,6 +238,7 @@ sub sqlQuote {
 
 	return $db_sql;
 }
+
 #################################################################
 sub sqlDo {
 	my($self, $sql) = @_;

@@ -36,7 +36,6 @@ sub main {
 	my $form = getCurrentForm();
 
 	my $op = $form->{op};
-
 	my $uid = $user->{uid};
 
 	if ($op eq 'userlogin' && !$user->{is_anon}) {
@@ -70,11 +69,12 @@ sub main {
 		editUser($form->{authoruid});
 
 	} elsif ($form->{useredit} && $user->{seclev} >= 10000) {
-		if($form->{edit_nick}) {
+		if ($form->{edit_nick}) {
 			editUser($slashdb->getUserUID($form->{edit_nick}));
 		} elsif ($form->{edit_uid}) {
 			editUser($form->{edit_uid});
 		}
+
 	} elsif ($op eq 'edituser') {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
@@ -381,7 +381,7 @@ sub editUser {
 	my $user_edit = $slashdb->getUser($uid);
 	my $currentuser = getCurrentUser();
 
-	my ($author_select, $admin_block);
+	my($author_select, $admin_block);
 
 	$user_edit->{homepage} ||= "http://";
 
@@ -820,7 +820,7 @@ sub getTitle {
 # getUserAdmin - returns a block of text
 # containing fields for admin users
 sub getUserAdmin {
-	my ($uid,$seclev,$form_flag,$display_seclev) = @_;
+	my($uid, $seclev, $form_flag, $display_seclev) = @_;
 
 	my $slashdb = getCurrentDB();
 

@@ -520,7 +520,7 @@ sub createAccessLog {
 
 ########################################################
 sub getDescriptions {
-	my ($self, $codetype, $flag) =  @_;
+	my($self, $codetype, $flag) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $cache = '_getDescriptions_' . $codetype;
@@ -2974,6 +2974,7 @@ sub _genericGets {
 
 	return \%return;
 }
+
 ########################################################
 sub createBlock {
 	my($self, $hash) = @_;
@@ -3122,7 +3123,7 @@ No documentation yet. Sue me.
 
 Brian Aker, brian@tangent.org
 
-Chris Nandor, pudge@pobox.com
+Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
 
 =head1 SEE ALSO
 

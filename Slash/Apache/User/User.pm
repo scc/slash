@@ -39,7 +39,7 @@ sub SlashAuthAll ($$$) {
 sub handler {
 	my($r) = @_;
 
-	return DECLINED unless ($r->is_main);
+	return DECLINED unless $r->is_main;
 
 	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
@@ -358,7 +358,7 @@ environmental variable.
 
 Brian Aker, brian@tangent.org
 
-Chris Nandor, pudge@pobox.com
+Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
 
 =head1 SEE ALSO
 

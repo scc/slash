@@ -72,7 +72,7 @@ sub new {
 
 sub DESTROY {
 	my($self) = @_;
-	$self->{_dbh}->disconnect unless ($ENV{GATEWAY_INTERFACE});
+	$self->{_dbh}->disconnect unless $ENV{GATEWAY_INTERFACE};
 }
 
 # This is for sites running in multiple threaded/process environments
