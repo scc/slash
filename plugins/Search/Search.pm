@@ -189,6 +189,62 @@ sub findStory {
 	return $stories;
 }
 
+################################################################################
+sub findRetrieveSite {
+	my($self, $query, $start, $limit) = @_;
+	$query = $self->sqlQuote($query);
+	$limit = " LIMIT $start, $limit" if $limit;
+
+	# Welcome to the join from hell -Brian
+	my $sql = " SELECT bid,title, MATCH (description,title,block) AGAINST($query) as score  FROM blocks WHERE rdf IS NOT NULL AND url IS NOT NULL and retrieve=1 AND MATCH (description,title,block) AGAINST ($query) $limit";
+
+
+	my $cursor = $self->{_dbh}->prepare($sql);
+	$cursor->execute;
+
+	my $search = $cursor->fetchall_arrayref;
+	return $search;
+}
+
+####################################################################################
+sub findJournalEntry {
+	my($self, $form, $start, $limit) = @_;
+	$start ||= 0;
+
+	my $query = $self->sqlQuote($form->{query});
+	my $columns = "users.nickname, journals.description, journals.id as id, date";
+	$columns .= ", TRUNCATE((((MATCH (description) AGAINST($query) + (MATCH (article) AGAINST($query)))) / 2), 1) as score "
+		if $form->{query};
+	my $tables = "journals, journals_text, users";
+	my $other;
+	if($form->{query}) {
+		$other = " ORDER BY score DESC";
+	} else {
+		$other = " ORDER BY date DESC";
+	}
+	$other .= " LIMIT $start, $limit" if $limit;
+
+	# The big old searching WHERE clause, fear it
+	my $key = " (MATCH (description) AGAINST ($query) or MATCH (article) AGAINST ($query)) ";
+	my $where = "journals.id = journals_text.id AND journals.uid = users.uid ";
+	$where .= " AND $key" if $form->{query};
+	$where .= " AND time < now() AND NOT FIND_IN_SET('delete_me', stories.flags) ";
+	$where .= " AND users.nickname=" . $self->sqlQuote($form->{nickname})
+		if $form->{nickname};
+	$where .= " AND users.uid=" . $self->sqlQuote($form->{uid})
+		if $form->{uid};
+	$where .= " AND tid=" . $self->sqlQuote($form->{topic})
+		if $form->{topic};
+	
+	my $sql = "SELECT $columns FROM $tables WHERE $where $other";
+
+	my $cursor = $self->{_dbh}->prepare($sql);
+	$cursor->execute;
+	my $stories = $cursor->fetchall_arrayref;
+
+	return $stories;
+}
+
 #################################################################
 sub DESTROY {
 	my($self) = @_;

@@ -71,7 +71,7 @@ sub selectComments {
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..$num_scores-1) {
-		$comments->[0]{totals}[$x] = $comments->[0]{natural_totals}[$x] = 0
+		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
 	}
 
 	my $thisComment = $slashdb->getCommentsForUser($header, $cid);
@@ -83,7 +83,7 @@ sub selectComments {
 
 		# Tally up this comment in its "natural" score category (before the user's
 		# preferences get a chance to knock it up or down).
-		$comments->[0]{natural_totals}[$C->{points} - $min]++;
+		$comments->{0}{natural_totals}[$C->{points} - $min]++;
 
 		$C->{points}++ if $user->{clbig} and length($C->{comment}) > $user->{clbig}
 			and $C->{points} < $max;
@@ -97,16 +97,16 @@ sub selectComments {
 		$C->{points} = $max if $C->{points} > $max;
 
 		# Also tally up this comment for the user's personal score.
-		$comments->[0]{totals}[$C->{points} - $min]++;
+		$comments->{0}{totals}[$C->{points} - $min]++;
 
-		my $tmpkids = $comments->[$C->{cid}]{kids};
-		my $tmpvkids = $comments->[$C->{cid}]{visiblekids};
-		$comments->[$C->{cid}] = $C;
-		$comments->[$C->{cid}]{kids} = $tmpkids;
-		$comments->[$C->{cid}]{visiblekids} = $tmpvkids;
+		my $tmpkids = $comments->{$C->{cid}}{kids};
+		my $tmpvkids = $comments->{$C->{cid}}{visiblekids};
+		$comments->{$C->{cid}} = $C;
+		$comments->{$C->{cid}}{kids} = $tmpkids;
+		$comments->{$C->{cid}}{visiblekids} = $tmpvkids;
 
-		push @{$comments->[$C->{pid}]{kids}}, $C->{cid};
-		$comments->[$C->{pid}]{visiblekids}++
+		push @{$comments->{$C->{pid}}{kids}}, $C->{cid};
+		$comments->{$C->{pid}}{visiblekids}++
 #			if $C->{points} >= ($user->{threshold} || $min); # XXX wrong for two reasons - should be form->threshold, and a threshold of 0 should not be replaced by -1 - still fixing this logic elsewhere, stay tuned - Jamie
 			if $C->{points} >= (defined($form->{threshold}) ? $form->{threshold} : $user->{threshold});
 
@@ -118,11 +118,11 @@ sub selectComments {
 	# Cascade comment point totals down to the lowest score, so
 	# (2, 1, 3, 5, 4, 2, 1) becomes (18, 16, 15, 12, 7, 3, 1).
 	for my $x (reverse(0..$num_scores-2)) {
-		$comments->[0]{totals}[$x]		+= $comments->[0]{totals}[$x+1];
-		$comments->[0]{natural_totals}[$x]	+= $comments->[0]{natural_totals}[$x+1];
+		$comments->{0}{totals}[$x]		+= $comments->{0}{totals}[$x+1];
+		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
 	}
 
-	reparentComments($comments);
+	#reparentComments($comments);
 	return($comments, $count);
 }
 
@@ -270,8 +270,8 @@ sub printComments {
 
 	# Should I index or just display normally?
 	my $cc = 0;
-	if ($comments->[$cid || $pid]{visiblekids}) {
-		$cc = $comments->[$cid || $pid]{visiblekids};
+	if ($comments->{$cid || $pid}{visiblekids}) {
+		$cc = $comments->{$cid || $pid}{visiblekids};
 	}
 
 	$lvl++ if $user->{mode} ne 'flat' && $user->{mode} ne 'archive'
@@ -300,8 +300,8 @@ sub printComments {
 	my($comment, $next, $previous);
 	if ($cid) {
 		my($next, $previous);
-		$comment = $comments->[$cid];
-		if (my $sibs = $comments->[$comment->{pid}]{kids}) {
+		$comment = $comments->{$cid};
+		if (my $sibs = $comments->{$comment->{pid}}{kids}) {
 			FINDSIBS: for (my $x = 0; $x <= $#$sibs; $x++) {
 				if ($sibs->[$x] == $cid) {
 					($next, $previous) = ($sibs->[$x+1], $sibs->[$x-1]);
@@ -309,8 +309,8 @@ sub printComments {
 				}
 			}
 		}
-		$next = $comments->[$next] if $next;
-		$previous = $comments->[$previous] if $previous;
+		$next = $comments->{$next} if $next;
+		$previous = $comments->{$previous} if $previous;
 	}
 
 	slashDisplay('printCommComments', {
@@ -461,8 +461,8 @@ sub displayThread {
 		}
 	}
 
-	foreach my $cid (@{$comments->[$pid]{kids}}) {
-		my $comment = $comments->[$cid];
+	foreach my $cid (@{$comments->{$pid}{kids}}) {
+		my $comment = $comments->{$cid};
 
 		$skipped++;
 		$form->{startat} ||= 0;
@@ -489,7 +489,7 @@ sub displayThread {
 			}
 			$displayed++;
 		} else {
-			my $pntcmt = @{$comments->[$comment->{pid}]{kids}} > $user->{commentspill};
+			my $pntcmt = @{$comments->{$comment->{pid}}{kids}} > $user->{commentspill};
 			$return .= $const->{commentbegin} .
 				linkComment($comment, $pntcmt, 1);
 			$finish_list++;

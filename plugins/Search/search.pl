@@ -9,7 +9,7 @@ use Slash;
 use Slash::Display;
 use Slash::Search;
 use Slash::Utility;
-use XML::RSS;
+use Slash::XML;
 
 #################################################################
 sub main {
@@ -37,19 +37,11 @@ sub main {
 	$form->{query} =~ s/[^A-Z0-9'. ]/ /gi;
 
 	if ($form->{content_type} eq 'rss') {
-		my $r = Apache->request;
-		$r->header_out('Cache-Control', 'private');
-		$r->content_type('text/xml');
-		$r->status(200);
-		$r->send_http_header;
-		$r->rflush;
 		if ($ops_rss{$form->{op}}) {
-			$r->print($ops_rss{$form->{op}}->($form, $constants));
+			$ops_rss{$form->{op}}->($form, $constants);
 		} else {
-			$r->print($ops_rss{'stories'}->($form, $constants));
+			$ops_rss{'stories'}->($form, $constants);
 		}
-		$r->rflush;
-		$r->status(200);
 	} else {
 		header("$constants->{sitename}: Search $form->{query}", $form->{section});
 		titlebar("99%", "Searching $form->{query}");
@@ -243,31 +235,24 @@ sub commentSearchRSS {
 	my $start = $form->{start} || 0;
 	my $comments = $searchDB->findComments($form, $start, 15);
 
-	my $rss = XML::RSS->new(
-		version		=> '1.0',
-		encoding	=> $constants->{rdfencoding},
-	);
-
-	$rss->channel(
-		title		=> xmlencode($constants->{sitename} . ' Search'),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
-		description	=> xmlencode($constants->{sitename} . ' Search'),
-	);
-
-	$rss->image(
-		title	=> xmlencode($constants->{sitename}),
-		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
-	);
-
+	my @items;
 	for my $entry (@$comments) {
-			my $time = timeCalc($entry->[8]);
-			$rss->add_item(
-				title	=> xmlencode("$entry->[5] ($time)"),
-				'link'	=> xmlencode_plain($constants->{absolutedir} . "/comments.pl?sid=entry->[1]&pid=entry->[4]#entry->[10]"),
-			);
+		my $time = timeCalc($entry->[3]);
+		push @items, {
+			title	=> "$entry->[5] ($time)",
+			'link'	=> ($constants->{absolutedir} . "/comments.pl?sid=entry->[1]&pid=entry->[4]#entry->[10]"),
+		};
 	}
-	return $rss->as_string;
+
+	xmlDisplay(rss => {
+		channel => {
+			title		=> "$constants->{sitename} Comment Search",
+			'link'		=> "$constants->{absolutedir}/search.pl",
+			description	=> "$constants->{sitename} Comment Search",
+		},
+		image	=> 1,
+		items	=> \@items
+	});
 }
 
 #################################################################
@@ -278,32 +263,24 @@ sub userSearchRSS {
 	my $start = $form->{start} || 0;
 	my $users = $searchDB->findUsers($form, $start, 15);
 
-	my $rss = XML::RSS->new(
-		version		=> '1.0',
-		encoding	=> $constants->{rdfencoding},
-	);
-
-	$rss->channel(
-		title		=> xmlencode($constants->{sitename} . ' Search'),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
-		description	=> xmlencode($constants->{sitename} . ' Search'),
-	);
-
-	$rss->image(
-		title	=> xmlencode($constants->{sitename}),
-		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
-	);
-
+	my @items;
 	for my $entry (@$users) {
-			my $time = timeCalc($entry->[3]);
-			$rss->add_item(
-				title	=> xmlencode("$entry->[1]"),
-				'link'	=> xmlencode_plain($constants->{absolutedir} . '/users.pl?nick=' . $entry->[1]),
-			);
+		my $time = timeCalc($entry->[3]);
+		push @items, {
+			title	=> "$entry->[1]",
+			'link'	=> ($constants->{absolutedir} . '/users.pl?nick=' . $entry->[1]),
+		};
 	}
-	return $rss->as_string;
 
+	xmlDisplay(rss => {
+		channel => {
+			title		=> "$constants->{sitename} User Search",
+			'link'		=> "$constants->{absolutedir}/search.pl",
+			description	=> "$constants->{sitename} User Search",
+		},
+		image	=> 1,
+		items	=> \@items
+	});
 }
 
 #################################################################
@@ -314,31 +291,163 @@ sub storySearchRSS {
 	my $start = $form->{start} || 0;
 	my $stories = $searchDB->findStory($form, $start, 15);
 
-	my $rss = XML::RSS->new(
-		version		=> '1.0',
-		encoding	=> $constants->{rdfencoding},
-	);
-
-	$rss->channel(
-		title		=> xmlencode($constants->{sitename} . ' Search'),
-		'link'		=> xmlencode_plain($constants->{absolutedir} . '/search.pl'),
-		description	=> xmlencode($constants->{sitename} . ' Search'),
-	);
-
-	$rss->image(
-		title	=> xmlencode($constants->{sitename}),
-		url	=> xmlencode($constants->{rdfimg}),
-		'link'	=> xmlencode_plain($constants->{absolutedir} . '/'),
-	);
-
+	my @items;
 	for my $entry (@$stories) {
-			my $time = timeCalc($entry->[3]);
-			$rss->add_item(
-				title	=> xmlencode("$entry->[1] ($time)"),
-				'link'	=> xmlencode_plain($constants->{absolutedir} . '/article.pl?sid=' . $entry->[2]),
-			);
+		my $time = timeCalc($entry->[3]);
+		push @items, {
+			title	=> "$entry->[1] ($time)",
+			'link'	=> ($constants->{absolutedir} . '/article.pl?sid=' . $entry->[2]),
+		};
 	}
-	return $rss->as_string;
+
+	xmlDisplay(rss => {
+		channel => {
+			title		=> "$constants->{sitename} Story Search",
+			'link'		=> "$constants->{absolutedir}/search.pl",
+			description	=> "$constants->{sitename} Story Search",
+		},
+		image	=> 1,
+		items	=> \@items
+	});
+}
+
+#################################################################
+# Do not enable -Brian
+sub findRetrieveSite {
+	my($form, $constants) = @_;
+	my $slashdb = getCurrentDB();
+	my $searchDB = Slash::FeedSearch->new(getCurrentVirtualUser());
+
+	my $start = $form->{start} || 0;
+	my $feeds = $searchDB->findRetrieveSite($form->{query}, $start, $constants->{search_default_display} + 1);
+
+	# check for extra feeds ... we request one more than we need
+	# and if we get the extra one, we know we have extra ones, and
+	# we pop it off
+	my $forward;
+	if (@$feeds == $constants->{search_default_display} + 1) {
+		pop @$feeds;
+		$forward = $start + $constants->{search_default_display};
+	} else {
+		$forward = 0;
+	}
+
+	# if there are less than search_default_display remaning,
+	# just set it to 0
+	my $back;
+	if ($start > 0) {
+		$back = $start - $constants->{search_default_display};
+		$back = $back > 0 ? $back : 0;
+	} else {
+		$back = -1;
+	}
+
+	slashDisplay('retrievedsites', {
+		feeds	=> $feeds,
+		back		=> $back,
+		forward		=> $forward,
+		start		=> $start,
+	});
+}
+
+
+#################################################################
+# Do not enable -Brian
+sub findRetrieveSiteRSS {
+	my($form, $constants) = @_;
+	my $slashdb = getCurrentDB();
+	my $searchDB = Slash::FeedSearch->new(getCurrentVirtualUser());
+
+	my $start = $form->{start} || 0;
+	my $feeds = $searchDB->findFeeds($form->{query}, $start, 15);
+
+	# I am aware that the link has to be improved.
+	my @items;
+	for my $entry (@$feeds) {
+		my $time = timeCalc($entry->[8]);
+		push @items, {
+			title	=> "$entry->[2] ($time)",
+			'link'	=> ($constants->{absolutedir} . "/users.pl?op=preview&bid=entry->[0] %]"),
+		};
+	}
+
+	xmlDisplay(rss => {
+		channel => {
+			title		=> "$constants->{sitename} Retrieve Site Search",
+			'link'		=> "$constants->{absolutedir}/search.pl",
+			description	=> "$constants->{sitename} Retrieve Site Search",
+		},
+		image	=> 1,
+		items	=> \@items
+	});
+}
+
+#################################################################
+# Do not enable -Brian
+sub findJournalEntry {
+	my($form, $constants) = @_;
+	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+
+	my $start = $form->{start} || 0;
+	my $entries = $searchDB->findJournalEntry($form, $start, $constants->{search_default_display} + 1);
+
+	# check for extra articles ... we request one more than we need
+	# and if we get the extra one, we know we have extra ones, and
+	# we pop it off
+	my $forward;
+	if (@$entries == $constants->{search_default_display} + 1) {
+		pop @$entries;
+		$forward = $start + $constants->{search_default_display};
+	} else {
+		$forward = 0;
+	}
+
+	# if there are less than search_default_display remaning,
+	# just set it to 0
+	my $back;
+	if ($start > 0) {
+		$back = $start - $constants->{search_default_display};
+		$back = $back > 0 ? $back : 0;
+	} else {
+		$back = -1;
+	}
+
+	slashDisplay('storysearch', {
+		entries		=> $entries,
+		back		=> $back,
+		forward		=> $forward,
+		args		=> _buildargs($form),
+		start		=> $start,
+	});
+}
+
+#################################################################
+# Do not enable -Brian
+sub findJournalEntryRSS {
+	my($form, $constants) = @_;
+	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+
+	my $start = $form->{start} || 0;
+	my $entries = $searchDB->findJournalEntry($form, $start, 15);
+
+	my @items;
+	for my $entry (@$entries) {
+		my $time = timeCalc($entry->[3]);
+		push @items, {
+			title	=> "$entry->[1] ($time)",
+			'link'	=> ($constants->{absolutedir} . '/article.pl?sid=' . $entry->[2]),
+		};
+	}
+
+	xmlDisplay(rss => {
+		channel => {
+			title		=> "$constants->{sitename} Journal Search",
+			'link'		=> "$constants->{absolutedir}/search.pl",
+			description	=> "$constants->{sitename} Journal Search",
+		},
+		image	=> 1,
+		items	=> \@items
+	});
 }
 
 #################################################################

@@ -257,6 +257,7 @@ CREATE TABLE discussion_hitparade (
 	discussion mediumint UNSIGNED NOT NULL,
 	threshold tinyint NOT NULL,
 	count smallint UNSIGNED DEFAULT '0' NOT NULL,
+	INDEX (discussion),
 	UNIQUE hdkey (hpid, discussion),
 	UNIQUE dtkey (discussion, threshold),
 	FOREIGN KEY (discussion) REFERENCES discussions(id),
@@ -447,6 +448,7 @@ CREATE TABLE sessions (
 	logintime datetime,
 	lasttime datetime,
 	lasttitle varchar(50),
+	INDEX (uid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (session)
 ) TYPE = myisam;

@@ -2,6 +2,7 @@ name=Journal
 description="Journal system for users"
 mysql_schema=mysql_schema
 mysql_dump=dump
+mysql_prep=mysql_prep
 htdoc=journal.pl
 topic=journaltopic.png
 template=templates/bluebox;journal;default
