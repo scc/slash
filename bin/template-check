@@ -58,12 +58,15 @@ sub usage {
 	# Remember to doublecheck these match getopts()!
 	print <<EOT;
 
-Usage: $PROGNAME [OPTIONS] ... [FILES]
+Usage: $PROGNAME [DIRECTORY]
 
-This program will compare a folder of templates against
-the templates in the theme and plugins directories.  Dump
-your templates to a directory using template-tool, then
-compare them against the default ones with this.
+This program will show the differences between installed
+templates (after they have been dumped to DIRECTORY),
+and templates in the installation directory (usually
+in /usr/local/slash/themes/ and /usr/local/slash/plugins/).
+
+Dump your templates out using template-tool, then
+run this program on that directory.
 
 Main options:
 		Directory to diff against (default is current dir)
