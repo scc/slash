@@ -22,13 +22,13 @@ $task{$me}{code} = sub {
 		sections => $sections,
 	}, 1);
 
-	my $tpid = $slashdb->getTemplateByName('sectionindex_display','tpid');
+	# If it exists, we update it, if not, we create it.
+	my($tpid)= $slashdb->getTemplateByName('sectionindex_display','tpid');
 	my(%template) = ( 
 		name => 'sectionindex_display',
 		tpid => $tpid, 
 		template => $new_template,
 	);
-	# If it exists, we update it, if not, we create it.
 	if ($tpid) {
 		$slashdb->setTemplate($tpid, \%template);
 	} else {
