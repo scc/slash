@@ -3,6 +3,7 @@
 # Need to pass the four passed-in vars to the newxxx() routines
 
 use strict;
+use Slash;
 use Slash::XML;
 
 my $me = 'open_backend.pl';
@@ -31,10 +32,10 @@ $task{$me}{code} = sub {
 
 sub save2file {
 	my($f, $d) = @_;
-	local *FH;
-	open FH, ">$f" or die "Can't open $f: $!";
-	print FH $d;
-	close FH;
+	my $fh = gensym();
+	open $fh, ">$f" or die "Can't open $f: $!";
+	print $fh $d;
+	close $fh;
 }
 
 sub site2file {

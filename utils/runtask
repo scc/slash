@@ -32,73 +32,73 @@ main();
 exit 0;
 
 sub slashdLogInit {
-        my $ld = $constants->{logdir};
-        mkpath "$ld/", 0, 0755;
-        my $file = "$ld/slashd.log";
-        open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
+	my $ld = $constants->{logdir};
+	mkpath "$ld/", 0, 0755;
+	my $file = "$ld/slashd.log";
+	open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
 }
 
 sub slashdLog {
 	chomp @_;
-        local *LOG;
-        my $file = "$constants->{logdir}/slashd.log";
-        open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
+	my $fh = gensym();
+	my $file = "$constants->{logdir}/slashd.log";
+	open($fh, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
 	my $log_msg = scalar(localtime) . "\t" . join("\t", @_) . "\n";
-	print LOG $log_msg;
+	print $fh $log_msg;
 	print     $log_msg;
-        close LOG;
+	close $fh;
 }
 
 sub slashdLogDie {
-        my $err = join(" ", @_);
-        slashdLog($err);
-        die $err;
+	my $err = join(" ", @_);
+	slashdLog($err);
+	die $err;
 }
 
 sub get_task_subref {
 
-        # "require" all the task files -- each will put its info into $task{"filename.pl"}
+	# "require" all the task files -- each will put its info into $task{"filename.pl"}
 
-        if (!-e $dir or !-d _ or !-r _) {
-                slashdLogDie("could not process task files in $dir, not readable to $>");
-        }
+	if (!-e $dir or !-d _ or !-r _) {
+		slashdLogDie("could not process task files in $dir, not readable to $>");
+	}
 
-        # Go through the files and require them all.  Each file will store its
-        # data and code in %task and execute any necessary initialization.  We also
-        # do some rudimentary checks of whether an attacker with guest access on
-        # this system could be feeding us bad code (the better solution, of course,
-        # is not to let attackers have local guest access).
+	# Go through the files and require them all.  Each file will store its
+	# data and code in %task and execute any necessary initialization.  We also
+	# do some rudimentary checks of whether an attacker with guest access on
+	# this system could be feeding us bad code (the better solution, of course,
+	# is not to let attackers have local guest access).
 
-        my $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE = 0;
-        if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
-                and (stat $dir)[2] & 002) {
-                slashdLogDie("you really don't want me to use task files",
-                        "from a directory that's world-writable: $dir");
-        }
+	my $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE = 0;
+	if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
+		and (stat $dir)[2] & 002) {
+		slashdLogDie("you really don't want me to use task files",
+			"from a directory that's world-writable: $dir");
+	}
 	my $subref = '';
-        my @files =
-                sort
-                grep { -e $_ and -f _ and -r _ }
-                glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
-        for my $fullname (@files) {
-                if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
-                        and (stat $fullname)[2] & 002) {
-                        slashdLogDie("you really don't want me to use a task file",
-                                "that's world-writable: $fullname");
-                }
-                my $file = basename($fullname);
+	my @files =
+		sort
+		grep { -e $_ and -f _ and -r _ }
+		glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
+	for my $fullname (@files) {
+		if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
+			and (stat $fullname)[2] & 002) {
+			slashdLogDie("you really don't want me to use a task file",
+				"that's world-writable: $fullname");
+		}
+		my $file = basename($fullname);
 		next unless $file eq $task_name or $file eq "$task_name.pl";
 		$task_name = $file;
-                my $ok = 0;
-                eval { $ok = require $fullname; };
-                if ($@) {
-                        slashdLog("requiring '$fullname' raised exception: $@");
-                        $ok = 0;
-                }
-                if ($!) {
-                        slashdLog("requiring '$fullname' caused error: $!");
-                        $ok = 0;
-                }
+		my $ok = 0;
+		eval { $ok = require $fullname; };
+		if ($@) {
+			slashdLog("requiring '$fullname' raised exception: $@");
+			$ok = 0;
+		}
+		if ($!) {
+			slashdLog("requiring '$fullname' caused error: $!");
+			$ok = 0;
+		}
 		if (!$task{$file}{timespec}) {
 			slashdLog("'$fullname' did not set timespec properly");
 			$ok = 0;
@@ -111,7 +111,7 @@ sub get_task_subref {
 			$subref = $task{$file}{code};
 			last ;
 		}
-        }
+	}
 	die "No task '$task_name' found in $dir" if !$subref;
 	return $subref;
 }
@@ -121,8 +121,9 @@ sub parse_slash_sites {
 	my $file = '/usr/local/slash/slash.sites';
 	my $line;
 	my($virtual_user, $unix_user, $sitename);
-	open(F, $file) or die "can't open $file, $!";
-	while (defined($line = <F>)) {
+	my $fh = gensym();
+	open($fh, "< $file") or die "can't open $file, $!";
+	while (defined($line = <$fh>)) {
 		chomp $line;
 		($virtual_user, $unix_user, $sitename) = split /:/, $line;
 		if ($virtual_user eq $wanted_virtual_user) {
@@ -203,12 +204,12 @@ sub prog2file {
 	} elsif ($bytes == 0) {
 		$err_str .= " no data";
 	} else {
-		local *F;
-		if (!open F, ">$f") {
+		my $fh = gensym();
+		if (!open $fh, ">$f") {
 			$err_str .= " could not write to '$f': '$!'";
 		} else {
-			print F $data;
-			close F;
+			print $fh $data;
+			close $fh;
 			$success = 1;
 		}
 	}

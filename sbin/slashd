@@ -36,11 +36,11 @@ my $slashdb = getCurrentDB();
 my $user = getCurrentUser();
 
 sub slashdPid {
-	local *PID;
-	open PID, ">$constants->{logdir}/slashd.pid"
+	my $fh = gensym();
+	open $fh, ">$constants->{logdir}/slashd.pid"
 		or die "Can't open $constants->{logdir}/slashd.pid: $!";
-	print PID $$;
-	close PID;
+	print $fh $$;
+	close $fh;
 }
 
 sub slashdLogInit {
@@ -52,12 +52,12 @@ sub slashdLogInit {
 
 sub slashdLog {
 	chomp @_;
-	local *LOG;
+	my $fh = gensym();
 	my $file = "$constants->{logdir}/slashd.log";
-	open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
+	open($fh, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
 	my $log_msg = scalar(localtime) . "\t" . join("\t", @_) . "\n";
-	print LOG $log_msg;
-	close LOG;
+	print $fh $log_msg;
+	close $fh;
 }
 
 sub slashdLogDie {
@@ -261,12 +261,12 @@ sub prog2file {
 	} elsif ($bytes == 0) {
 		$err_str .= " no data";
 	} else {
-		local *F;
-		if (!open F, ">$f") {
+		my $fh = gensym();
+		if (!open $fh, ">$f") {
 			$err_str .= " could not write to '$f': '$!'";
 		} else {
-			print F $data;
-			close F;
+			print $fh $data;
+			close $fh;
 			$success = 1;
 		}
 	}

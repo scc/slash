@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Slash;
 my $me = 'new_headfoot.pl';
 
 use vars qw( %task );
@@ -29,21 +30,22 @@ sub sectionHeaders {
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 
 	my $form = getCurrentForm();
-	local(*FH, *STDOUT);
+	local(*STDOUT);
 
 	setCurrentForm('ssi', 1);
-	open FH, ">$constants->{basedir}/$section/slashhead.inc"
+	my $fh = gensym();
+	open $fh, ">$constants->{basedir}/$section/slashhead.inc"
 		or die "Can't open $constants->{basedir}/$section/slashhead.inc: $!";
-	*STDOUT = *FH;
+	*STDOUT = $fh;
 	header("", $section, "thread");
-	close FH;
+	close $fh;
 
 	setCurrentForm('ssi', 0);
-	open FH, ">$constants->{basedir}/$section/slashfoot.inc"
+	open $fh, ">$constants->{basedir}/$section/slashfoot.inc"
 		or die "Can't open $constants->{basedir}/$section/slashfoot.inc: $!";
-	*STDOUT = *FH;
+	*STDOUT = $fh;
 	footer();
-	close FH;
+	close $fh;
 }
 
 1;
