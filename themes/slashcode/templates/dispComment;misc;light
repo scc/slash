@@ -23,7 +23,7 @@ __template__
 		[% END %]
 		[% END %]
 		[% IF user.seclev >= 100 %]
-		<BR>IPID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% ipid %]">[% ipid %]</A>&nbsp;&nbsp;SubnetID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% subnetid %]">[% subnetid %]</A>
+		<BR>IPID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% ipid %]&fieldname=ipid">[% ipid %]</A>&nbsp;&nbsp;SubnetID: <A HREF="[% constants.rootdir %]/users.pl?op=userinfo&userfield=[% subnetid %]&fieldname=ipid">[% subnetid %]</A>
 		[% END %]
 		<P>[% comment %]
 		[% UNLESS user.nosigs %]

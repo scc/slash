@@ -1042,8 +1042,8 @@ sub _hard_dispComment {
 		$short_subnetid = substr($short_subnetid, 0, $vislength) if $vislength;
 		$ipidinfo_to_display = <<EOT;
 <BR><FONT FACE="$constants->{mainfontface}" SIZE=1>IPID:
-<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}">$short_ipid</A>&nbsp;&nbsp;SubnetID: 
-<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}">$short_subnetid</A></FONT>
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}&fieldname=ipid">$short_ipid</A>&nbsp;&nbsp;SubnetID: 
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}&fieldname=subnetid">$short_subnetid</A></FONT>
 EOT
 	}
 

@@ -2230,6 +2230,10 @@ sub checkReadOnly {
 			$where = "ipid = '$user->{ipid}'";
 		}
 	} elsif ($user->{md5id}) {
+		# Note, this is a slow query -- either column by itself is
+		# fast since they're both indexed, but if you OR them, it's
+		# about 10-12 seconds, MySQL is weird sometimes.  Good thing
+		# we rarely (ever?) do this.
 		$where = "(ipid = '$user->{md5id}' OR subnetid = '$user->{md5id}')";
 
 	} elsif ($user->{ipid}) {
@@ -2256,15 +2260,17 @@ sub checkReadOnly {
 sub getUIDList {
 	my($self, $column, $id) = @_;
 
-	my $where;
-	my $fields = { ipid => 'ipid', subnetid => 'subnetid' };
-	if (length($id) == 32 || $column eq 'md5id') {
-		$where = "WHERE ipid = '$id' OR subnetid = '$id'";
+	my $where = '';
+	$id = md5_hex($id) if length($id) != 32;
+	if ($column eq 'md5id') {
+		# Avoid this when possible, the OR makes the query slow.
+		$where = "ipid = '$id' OR subnetid = '$id'";
+	} elsif ($column =~ /^(ipid|subnetid)$/) {
+		$where = "$column = '$id'";
 	} else {
-		$id = md5_hex($id);
-		$where = "WHERE $fields->{$column} = '$id'";
+		return [ ];
 	}
-	$self->sqlSelectAll("DISTINCT uid ", "comments $where");
+	return $self->sqlSelectAll("DISTINCT uid ", "comments", $where);
 }
 
 ##################################################################

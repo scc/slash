@@ -1864,7 +1864,11 @@ sub getUserAdmin {
 	} elsif ($field eq 'md5id') {
 		$user_edit->{nonuid} = 1;
 		$user_edit->{md5id} = $id;
-		$uidlist = $slashdb->getUIDList('md5id', $user_edit->{md5id});
+		if ($form->{fieldname} and $form->{fieldname} =~ /^(ipid|subnetid)$/) {
+			$uidlist = $slashdb->getUIDList($form->{fieldname}, $user_edit->{md5id});
+		} else {
+			$uidlist = $slashdb->getUIDList('md5id', $user_edit->{md5id});
+		}
 
 	} elsif ($field eq 'ipid') {
 		$user_edit->{nonuid} = 1;
