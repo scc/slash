@@ -941,6 +941,11 @@ sub revertBlock {
 }
 
 ########################################################
+sub deleteBlock {
+	my($self, $bid) = @_;
+	$self->sqlDo('DELETE FROM blocks WHERE bid =' . $self->{_dbh}->quote($bid));
+}
+########################################################
 sub deleteTemplate {
 	my($self, $tpid) = @_;
 	$self->sqlDo('DELETE FROM templates WHERE tpid=' . $self->{_dbh}->quote($tpid));
