@@ -28,7 +28,6 @@ Unless otherwise noted, they are publically available functions.
 use strict;  # ha ha ha ha ha!
 use Apache;
 use Apache::SIG ();
-use CGI::Cookie;
 use DBI;
 use Data::Dumper;  # the debuggerer's best friend
 use Exporter ();
@@ -2048,7 +2047,7 @@ sub lockTest {
 sub getAnonCookie {	
 	my($user) = @_;
 	my $r = Apache->request;
-	my $cookies = CGI::Cookie->parse($r->header_in('Cookie'));
+	my $cookies = getCurrentCookie();
 	if (my $cookie = $cookies->{anon}->value) {
 		$user->{anon_id} = $cookie;
 		$user->{anon_cookie} = 1;

@@ -49,6 +49,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	changePassword
 	chopEntity
 	createCurrentAnonymousCoward
+	createCurrentCookie
 	createCurrentDB
 	createCurrentForm
 	createCurrentStatic
@@ -64,6 +65,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	formatDate
 	getAnonId
 	getCurrentAnonymousCoward
+	getCurrentCookie
 	getCurrentDB
 	getCurrentForm
 	getCurrentMenu
@@ -108,7 +110,7 @@ use constant CODE	=> 4;
 # These are file-scoped variables that are used when you need to use the
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
-	$static_anonymous_coward);
+	$static_anonymous_coward, $static_cookie);
 
 #========================================================================
 
@@ -787,6 +789,95 @@ sub createCurrentForm {
 
 #========================================================================
 
+=head2 getCurrentCookie([MEMBER])
+
+Returns the current cookie.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item MEMBER
+
+A member from the cookies record to be returned.
+
+=back
+
+=item Return value
+
+A hash reference with the cookie incookieation is returned 
+unless VALUE is passed.  If MEMBER is passed in then 
+only its value will be returned.
+
+=back
+
+=cut
+
+sub getCurrentCookie {
+	my($value) = @_;
+	my $cookie;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$cookie = $cfg->{'cookie'};
+	} else {
+		$cookie = $static_cookie;
+	}
+
+	if ($value) {
+		return defined($cookie->{$value})
+			? $cookie->{$value}
+			: undef;
+	} else {
+		return $cookie;
+	}
+}
+
+#========================================================================
+
+=head2 createCurrentCookie(COOKIE)
+
+Creates the current cookie.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item COOKIE
+
+COOKIE to be inserted into current cookie.
+
+=back
+
+=item Return value
+
+Returns no value.
+
+=back
+
+=cut
+
+sub createCurrentCookie {
+	my($cookie) = @_;
+
+	$cookie ||= {};
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$cfg->{'cookie'} = $cookie;
+	} else {
+		$static_cookie = $cookie;
+	}
+}
+
+#========================================================================
+
 =head2 getCurrentStatic([MEMBER])
 
 Returns the current static variables (or variable).
@@ -1238,24 +1329,26 @@ sub setCookie {
 		? $cookiedomain
 		: '';
 
-	my %cookie = (
-		-name	=> $name,
-		-path	=> $cookiepath,
-		-value	=> $val || '',
-	);
-
 # I cannot get HTTPS here ... I think it is not set until later.
 # This poses a problem.  -- pudge
+# Need to scan the connection class to find this information.
+# (I'll do it later). This may also be in $r->protocol -Brian
 # 	if ($constants->{cookiesecure} && $r->subprocess_env->{HTTPS}) {
 # 		$cookie{-secure} = 1;
 # 	}
-	$cookie{-expires} = '+1y' unless $session;
-	$cookie{-domain}  = $domain if $domain;
 
-	my $bakedcookie = CGI::Cookie->new(\%cookie);
+	$session ||= '+1y'; 
 
-	# we need to support multiple cookies, like my tummy does
-	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
+	my $cookie = Apache::Cookie->new($r,
+		-name    =>  $name,
+		-value   =>  $val || '',
+		-expires =>  $session,
+		-path    =>  $cookiepath
+	);
+
+	$cookie->domain($domain) if $domain;
+
+	$cookie->bake;
 }
 
 #========================================================================
@@ -2133,7 +2226,7 @@ The URI of the page the user is on.
 
 =item COOKIES
 
-A CGI::Cookie object (not used in "command line" mode).
+A Apache::Cookie object (not used in "command line" mode).
 
 =back
 

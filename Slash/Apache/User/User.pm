@@ -8,10 +8,10 @@ package Slash::Apache::User;
 use strict;
 use Apache; 
 use Apache::Constants qw(:common REDIRECT);
+use Apache::Cookie; 
 use Apache::File; 
 use Apache::ModuleConfig;
 use AutoLoader ();
-use CGI::Cookie;
 use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
@@ -52,7 +52,9 @@ sub handler {
 	my $slashdb = $dbcfg->{slashdb};
 
 	$r->header_out('X-Powered-By' => 'Slash');
+	$r->err_header_out('X-Powered-By' => 'Slash');
 	random($r);
+
 	# let pass unless / or .pl
 	my $uri = $r->uri;
 	if ($constants->{rootdir}) {
@@ -66,6 +68,7 @@ sub handler {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			createCurrentUser();
 			createCurrentForm();
+			createCurrentCookie();
 			return OK;
 		}
 	}
@@ -83,7 +86,7 @@ sub handler {
 	$r->method('GET');
 
 	my $form = filter_params($r->args, $r->content);
-	my $cookies = CGI::Cookie->parse($r->header_in('Cookie'));
+	my $cookies = Apache::Cookie->fetch;
 
 	# So we are either going to pick the user up from 
 	# the form, a cookie, or they will be anonymous
@@ -124,7 +127,7 @@ sub handler {
 		delete $cookies->{user};
 		setCookie('user', '');
 
-	} elsif ($cookies->{user}) {
+	} elsif ($cookies->{user} and $cookies->{user}->value) {
 		my($tmpuid, $password) = eatUserCookie($cookies->{user}->value);
 		($uid, my($cookpasswd)) =
 			$slashdb->getUserAuthenticate($tmpuid, $password);
@@ -142,6 +145,9 @@ sub handler {
 		}
 	} 
 
+	# This has happened to me a couple of times.
+	delete $cookies->{user} if($cookies->{user} and !($cookies->{user}->value));
+
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
 	# Ok, yes we could use %ENV here, but if we did and 
@@ -156,6 +162,7 @@ sub handler {
 
 	createCurrentUser(prepareUser($uid, $form, $uri, $cookies));
 	createCurrentForm($form);
+	createCurrentCookie($cookies);
 	createEnv($r) if $cfg->{env};
 	authors($r) if $form->{'slashcode_authors'};
 
