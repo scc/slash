@@ -3704,9 +3704,11 @@ sub getStoryList {
 		. "time, name, $story_table.section, displaystatus, $story_table.writestatus";
 	my $tables = "$story_table, discussions, topics";
 	my $where = "$story_table.tid=topics.tid AND $story_table.discussion=discussions.id";
-	$where .= " AND section='$user->{section}'" if $user->{section};
-	$where .= " AND section='$form->{section}'" if $form->{section} && !$user->{section};
-	$where .= " AND time < DATE_ADD(NOW(), INTERVAL 72 HOUR) " if $form->{section} eq "";
+	$where .= " AND $story_table.section='$user->{section}'" if $user->{section};
+	$where .= " AND $story_table.section='$form->{section}'"
+		if $form->{section} && !$user->{section};
+	$where .= " AND time < DATE_ADD(NOW(), INTERVAL 72 HOUR) "
+		if $form->{section} eq "";
 	my $other = "ORDER BY time DESC LIMIT $first_story, $num_stories";
 
 	my $count = $self->sqlSelect("COUNT(*)", $tables, $where);
