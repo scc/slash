@@ -1671,7 +1671,7 @@ sub createFormkey {
 	$form->{formkey} = getFormkey();
 
 	my $now = time();
-	print STDERR "createFormkey time() $now\n";
+	# print STDERR "createFormkey time() $now\n";
 	# insert the fact that the form has been displayed, but not submitted at this point
 	$self->sqlInsert('formkeys', {
 		formkey		=> $form->{formkey},
@@ -1795,6 +1795,7 @@ sub checkPostInterval {
 	my $where = $self->_whereFormkey($id);
 	my $speedlimit = {
 		comments 	=> $constants->{comments_speed_limit},
+		discussions	=> $constants->{discussions_speed_limit},
 		submit		=> $constants->{submission_speed_limit},
 		users		=> $constants->{userchange_speed_limit},
 	};
@@ -1842,6 +1843,7 @@ sub checkMaxPosts {
 
 	my $maxposts = {
 		comments 	=> $constants->{max_comments_allowed},
+		discussions	=> $constants->{max_discussions_allowed},
 		submit		=> $constants->{max_submissions_allowed},
 		users		=> $constants->{max_userchanges_allowed},
 	};

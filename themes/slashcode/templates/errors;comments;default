@@ -50,9 +50,14 @@ comment ... like the body or the subject!)
 CASE "no points" %]
 You don't have any moderator points.<BR>
 
-[% # MAX POSTS.
-CASE "max posts" %]
+[% # COMMENTS MAX POSTS.
+CASE "comments max posts" %]
 <BR><P><B>You've reached your maximum number of comments you can post: [% max_posts %] comments over [% timeframe %].
+</B></P>
+
+[% # COMMENTS MAX POSTS.
+CASE "discussions max posts" %]
+<BR><P><B>You've reached your maximum number of discussions you can submit: [% max_posts %] discussions over [% timeframe %].
 </B></P>
 
 [% # INVALID FORMKEY
@@ -61,19 +66,26 @@ CASE "invalid formkey" %]
 <BR><P><B>form key: [% formkey %] !</B></P>
  
 [% # RESPONSE LIMIT 
-CASE "response limit" %]
+CASE "comments response limit" %]
 [% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
 <P>[% constants.sitename %] requires you to wait [% limit %] between
 hitting 'reply' and submitting a comment.</P>
 <P>It's been [% response %] since you hit 'reply'!</P>
 
 [% # POST LIMIT
-CASE "post limit" %]
+CASE "comments post limit" %]
 [% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
 <P>[% constants.sitename %] requires you to wait [% limit %] between
 each successful posting of a comment to allow everyone a fair chance
 at posting a comment.</P>
 <P>It's been [% interval %] since you last successfully posted a comment</P>
+
+[% # POST LIMIT
+CASE "discussions post limit" %]
+[% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
+<P>[% constants.sitename %] requires you to wait [% limit %] between
+each successful creation of a discussion .</P>
+<P>It's been [% interval %] since you last successfully created a discussion</P>
 
 [% # USED FORM
 CASE "used form" %]
@@ -142,15 +154,15 @@ Something is wrong: parent=[% form.pid %] dups=[% dups %] discussion=[% form.sid
 
 [% # FORMABUSE MAX POSTS 
 CASE "formabuse_maxposts" %]
-maxposts [% maxposts %] reached!
+maxposts [% formname %] [% maxposts %] reached!
 
 [% # FORMABUSE INVALID FORMKEY
 CASE "formabuse_invalidformkey" %]
-invalid formkey [% formkey %]
+invalid formkey [% formname %] [% formkey %] 
 
 [% # FORMABUSE USED FORM
 CASE "formabuse_usedform" %]
-form [% formkey %] already submitted
+form [% formname %] [% formkey %] already submitted 
 
 [% CASE %]
 An unexpected error has occured.<BR><B>[% value %]</B><BR>

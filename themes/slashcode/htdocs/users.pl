@@ -1402,7 +1402,8 @@ sub displayForm {
 		mailpasswdform 	=> 'sendPasswdForm',
 		newuserform	=> 'newUserForm',
 		userclose	=> 'loginForm',
-		userlogin	=> 'loginForm'
+		userlogin	=> 'loginForm',
+		default		=> 'loginForm'
 	};
 
 	my($title, $title2, $msg1, $msg2) = ('', '', '', '');

@@ -24,23 +24,71 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
-	my $id = getFormkeyId($user->{uid});
+	my $formkeyid = getFormkeyId($user->{uid});
+	my $error_flag = 0;
 
+	# post and edit don't look like they're used anywhere
 	my %ops = (
 		default			=> \&displayComments,
 		index			=> \&commentIndex,
 		moderate		=> \&moderate,
-		reply			=> \&reply,
-		Reply			=> \&reply,
-		Edit			=> \&edit,
-		edit			=> \&edit,
-		post			=> \&edit,
+		reply			=> \&editComment,
+		Reply			=> \&editComment,
+		Edit			=> \&editComment,
+		edit			=> \&editComment,
+		post			=> \&editComment,
 		creatediscussion	=> \&createDiscussion,
-		Preview			=> \&edit,
-		preview			=> \&edit,
+		Preview			=> \&editComment,
+		preview			=> \&editComment,
 		submit			=> \&submitComment,
 		Submit			=> \&submitComment,
 	);
+
+	my $formkey_form = { 
+		edit		=> 1, 
+		default		=> 1,
+		index		=> 1,
+		reply		=> 1,
+	};
+
+	my $formname = {
+		edit			=> 'comments',
+		post			=> 'comments',
+		reply			=> 'comments',
+		submit 			=> 'comments',
+		creatediscussion 	=> 'discussions',
+		index			=> 'discussions',
+		default			=> 'discussions',
+	};
+
+
+	my $max_post_check = {
+		edit			=> 1,
+		reply			=> 1,
+		submit 			=> 1,
+		creatediscussion	=> 1,
+	};
+
+	my $formkey_check = { 
+		submit 			=> 1,
+		creatediscussion	=> 1,
+	};
+
+	my $interval_check = {
+		submit 			=> 1,
+		creatediscussion	=> 1,
+	};
+
+	my $response_check = { 
+		submit 			=> 1,
+	};
+	
+	my $updateFormkeyID = {
+		edit		=> 1,
+		post		=> 1,
+		preview		=> 1,
+	};
+
 
 	# maybe do an $op = lc($form->{'op'}) to make it simpler?
 	# just a thought.  -- pudge
@@ -48,6 +96,7 @@ sub main {
 	# why's that? The ops are already lowercase, and should be. --Patrick
 	# there are four ops above that are just upper
 	# case aliases to the lower case versions -- pudge
+	# yeah, I missed that - I'm so used to users
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -66,9 +115,143 @@ sub main {
 		print getError('login error');
 		$form->{op} = "Preview";
 	}
-	my $op = $form->{'op'};
+	my $op = lc($form->{'op'});
 	$op = 'default' unless $ops{$op};
-	$ops{$op}->($form, $slashdb, $user, $constants, $id);
+
+	# authors shouldn't jump thourh formkey hoops? right?	
+	if ($user->{seclev} < 100) {
+		if ($max_post_check->{$op} ) { 
+			if ( my $maxposts = $slashdb->checkMaxPosts($formname->{$op}, $formkeyid)) {
+
+				$slashdb->createAbuse( ( getError('formabuse_maxposts', {
+									no_error_comment 	=> 1,
+									type 			=> 'formabuse_maxposts', 
+									formname		=> $formname->{$op},
+									maxposts 		=> $maxposts, 
+									}, 1)),
+								$formname->{$op},
+								$ENV{QUERY_STRING},
+								$user->{uid},
+								$user->{ipid},
+								$user->{subnetid} 
+					) if $formkey_check->{$op} ;
+
+				my $timeframe_string = intervalString($constants->{formkey_timeframe});
+
+				print getError("$formname->{$op} max posts", {
+							max_posts => $maxposts,
+							timeframe => $timeframe_string 
+				});
+	
+				$error_flag++;
+			}
+		}
+
+		if ($formkey_check->{$op} && ! $error_flag) {
+			if (! $slashdb->validFormkey($formname->{$op}, $formkeyid)) {	
+				$slashdb->createAbuse( getError('formabuse_invalidformkey', {
+									no_error_comment	=> 1,
+									formname		=> $formname->{$op},
+									formkey 		=> $form->{formkey},
+									}, 1),
+						$formname->{$op},
+						$ENV{QUERY_STRING},
+						$user->{uid},
+						$user->{ipid},
+						$user->{subnetid} 
+				);
+
+				print getError('invalid formkey', {
+						formkey => $form->{formkey}
+				});
+
+				$error_flag++;
+			}
+		}
+
+		if ($interval_check->{$op} && ! $error_flag) {
+			# check interval from this attempt to last successful post
+			if ( my $interval = $slashdb->checkPostInterval($formname->{$op}, $formkeyid)) {	
+				my $speed_limit_key = $formname->{$op} . '_speed_limit';
+				my $limit_string = intervalString($constants->{$speed_limit_key});
+				my $interval_string = intervalString($interval);
+
+				print getError("$formname->{$op} post limit", {
+					limit 		=> 	$limit_string,
+					interval 	=> 	$interval_string
+				});
+				$error_flag++;
+			}
+		}
+			
+		if ($response_check->{$op} && ! $error_flag) {
+			# check response time
+			if ( my $response_time = $slashdb->checkResponseTime($formname->{$op}, $formkeyid)) {
+				my $response_limit_key = $formname->{$op} . '_response_limit';
+				my $limit_string = intervalString($constants->{$response_limit_key});
+				my $response_string = intervalString($response_time);
+				# make sure you have the error message for the form
+				print getError("$formname->{$op} response limit", {
+					limit		=> 	$limit_string,
+					response 	=> 	$response_string
+				});
+				$error_flag++;
+			}
+		}
+		if ($formkey_check->{$op} && ! $error_flag) {
+			# check if form already used
+			unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
+				my $interval_string = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
+		
+				print getError('used form', {
+					interval	=>	$interval_string
+				});
+		
+				$slashdb->createAbuse( getError('formabuse_usedform', {
+							no_error_comment 	=> 1,
+							formname		=> $formname->{$op},
+							formkey 		=> $form->{formkey}
+							}, 1),
+					$formname->{$op},
+					$ENV{QUERY_STRING},
+					$user->{uid},
+					$user->{ipid},
+					$user->{subnetid} 
+				);
+				$error_flag++;
+			}
+		}
+
+		if ($updateFormkeyID->{$op}) {
+			$slashdb->updateFormkeyId($formname->{$op},
+				$form->{formkey},
+				$constants->{anonymous_coward_uid},
+				$user->{uid},
+				$form->{'rlogin'},
+				$form->{upasswd}
+			);
+		}
+
+		if ($formkey_form->{$op}) {
+			my $sid = $form->{sid};
+			$sid ||= 'discussions'; 
+			$slashdb->createFormkey($formname->{$op}, $formkeyid, $sid);
+		}
+	} 
+	
+
+	if (! $error_flag) {
+		$ops{$op}->($form, $slashdb, $user, $constants, $formkeyid);
+		# do something with updated? ummm.
+
+		if ( $formkey_check->{$op}) {
+			if ($formname->{$op} eq 'comments')  { 
+				my $updated = $slashdb->updateFormkey($form->{formkey}, $form->{maxCid}, length($form->{postercomment})); 
+			} else {
+				my $updated = $slashdb->updateFormkey($form->{formkey}, '', length($form->{title})); 
+			}
+		}
+	}
 
 	writeLog($form->{sid});
 
@@ -87,33 +270,8 @@ sub getError {
 }
 
 ##################################################################
-sub edit {
-	my($form, $slashdb, $user, $constants, $id) = @_;
-
-	$slashdb->updateFormkeyId('comments',
-		$form->{formkey},
-		$constants->{anonymous_coward_uid},
-		$user->{uid},
-		$form->{'rlogin'},
-		$form->{upasswd}
-	);
-	editComment($id);
-}
-
-##################################################################
-sub reply {
-	my($form, $slashdb, $user, $constants, $id) = @_;
-
-	# arghg - you don't need to do this - it's in 'createFormkey' --Patrick
-	# $form->{formkey} = getFormkey();
-
-	$slashdb->createFormkey("comments", $id, $form->{sid});
-	editComment($id);
-}
-
-##################################################################
 sub delete {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	titlebar("99%", "Delete $form->{cid}");
 
@@ -126,7 +284,7 @@ sub delete {
 
 ##################################################################
 sub change {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	if (defined $form->{'savechanges'} && !$user->{is_anon}) {
 		$slashdb->setUser($user->{uid}, {
@@ -140,7 +298,7 @@ sub change {
 
 ##################################################################
 sub displayComments {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	if ($form->{cid}) {
 		printComments($form->{sid}, $form->{cid}, $form->{cid});
@@ -156,7 +314,7 @@ sub displayComments {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	titlebar("90%", "Several Active Discussions");
 	if ($form->{all}) {
@@ -177,7 +335,7 @@ sub commentIndex {
 # "The Slash job, keeping trolls on their toes"
 # -Brian
 sub createDiscussion {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		$form->{url} ||= $ENV{HTTP_REFERER};
@@ -193,7 +351,7 @@ sub createDiscussion {
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($id, $error_message) = @_;
+	my($formkeyid, $error_message) = @_;
 
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
@@ -212,16 +370,7 @@ sub editComment {
 		return;
 	}
 
-	# check if user has  max comments successfully posted
-	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
-                my $timeframe_string = intervalString($constants->{formkey_timeframe});
-		print getError('max posts', {
-				max_posts => $maxposts,
-				timeframe => $timeframe_string 
-		});
-                return;
-
-	} elsif ($form->{postercomment}) {
+	if ($form->{postercomment}) {
 		$preview = previewForm(\$error_message);
 	}
 
@@ -409,94 +558,9 @@ sub previewForm {
 # A note, right now form->{sid} is a discussion id, not a
 # story id.
 sub submitComment {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	my $error_message;
-
-	# check the max posts
-	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
-                $slashdb->createAbuse( ( getError('formabuse_maxposts', {
-				no_error_comment 	=> 	1,
-				type 			=> 	'formabuse_maxposts', 
-				maxposts 		=> 	$maxposts 
-				}, 1)),
-			'comments',
-			$ENV{QUERY_STRING},
-			$user->{uid},
-			$user->{ipid},
-			$user->{subnetid} 
-		);
-                        
-                my $timeframe_string = intervalString($constants->{formkey_timeframe});
-		print getError('max posts', {
-				timeframe => $timeframe_string 
-		});
-                return;
-        }
-
-	# verify a valid formkey
-	if (! $slashdb->validFormkey('comments', $id)) {	
-		$slashdb->createAbuse( getError('formabuse_invalidformkey', {
-					no_error_comment	=> 1,
-					formkey 		=> $form->{formkey},
-					}, 1),
-				'comments',
-				$ENV{QUERY_STRING},
-				$user->{uid},
-				$user->{ipid},
-				$user->{subnetid} 
-		);
-
-		print getError('invalid formkey', {
-			formkey => $form->{formkey}
-		});
-
-		return;
-	}
-	
-	# check response time
-	if ( my $response_time = $slashdb->checkResponseTime('comments', $id)) {
-		my $limit_string = intervalString($constants->{comments_response_limit});
-		my $response_string = intervalString($response_time);
-		print getError('response limit', {
-			limit		=> 	$limit_string,
-			response 	=> 	$response_string
-		});
-		return;
-	}
-
-	# check interval from this attempt to last successful post
-	if ( my $interval = $slashdb->checkPostInterval('comments', $id)) {	
-		my $limit_string = intervalString($constants->{comments_speed_limit});
-		my $interval_string = intervalString($interval);
-
-		print getError('post limit', {
-			limit 		=> 	$limit_string,
-			interval 	=> 	$interval_string
-		});
-		return;
-	}
-
-	# check if form already used
-	unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
-		my $interval_string = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
-
-		print getError('used form', {
-			interval	=>	$interval_string
-		});
-
-		$slashdb->createAbuse( getError('formabuse_usedform', {
-					no_error_comment 	=> 1,
-					formkey 		=> $form->{formkey}
-					}, 1),
-			'comments',
-			$ENV{QUERY_STRING},
-			$user->{uid},
-			$user->{ipid},
-			$user->{subnetid} 
-		);
-		return;
-	}
 
 	$form->{postersubj} = strip_nohtml($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
@@ -531,6 +595,9 @@ sub submitComment {
 		$constants->{anonymous_coward_uid}
 	);
 
+	# make the formkeys happy
+	$form->{maxCid} = $maxCid;
+
 	$slashdb->setUser($user->{uid}, {
 		'-expiry_comm'	=> 'expiry_comm-1',
 	}) if allowExpiry();
@@ -560,7 +627,7 @@ sub submitComment {
 		});
 
 		# successful submission		
-		my $updated = $slashdb->updateFormkey($form->{formkey}, $maxCid, length($form->{postercomment})); 
+		# my $updated = $slashdb->updateFormkey($form->{formkey}, $maxCid, length($form->{postercomment})); 
 		# yeah, ok, I should do something with $updated
 
 		my $messages = getObject('Slash::Messages') if $form->{pid};
@@ -589,7 +656,7 @@ sub submitComment {
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
-	my($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	my $sid = $form->{sid};
 	my $was_touched = 0;
