@@ -492,9 +492,12 @@ document, too.
 
 =item Slash vs. slash vs. slashcode
 
-Slash is the name of the project.  slash is, optionally, the specific
-name for the actual file distribution.  That's it.  slashcode.com or
-Slashcode is the name of the site.
+"Slash" is the name of the project.  "slash" is, optionally, the
+specific name for the actual file distribution.  That's it. 
+"slashcode.com" or "Slashcode" or "/code" is the name of the site.
+
+There is no "Slash1" or "Slash2".  The name of the project is "Slash".
+To specify a version, use "Slash 2.0".
 
 =item function vs. sub(routine) vs. method
 
@@ -962,6 +965,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.4  2001/04/13 18:12:18  pudge
+	getData() fix for Slash.pm calls, doc updates
+	
 	Revision 1.1.2.3  2001/03/30 14:40:15  pudge
 	Add information about POD and exporting, add notice about document
 	subject to change
