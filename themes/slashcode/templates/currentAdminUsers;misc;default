@@ -25,11 +25,8 @@ __template__
 	%]
 
 	<TR><TD BGCOLOR="[% user.bg.3 %]">
-		[% IF can_edit_admins %]<A 
-		HREF="[% constants.rootdir %]/users.pl?op=edituser&amp;uid=[% 
-		uid %]">[% END %]<FONT COLOR="[% user.fg.3 %]" 
-		SIZE="2"><B>[% id %]</B></FONT>[% IF can_edit_admins 
-		%]</A>[% END %]
+		<A HREF="[% constants.rootdir %]/~[% id | fixparam %]"><FONT COLOR="[% user.fg.3 %]" 
+		SIZE="2"><B>[% id %]</B></FONT></A>
 	</TD><TD BGCOLOR="[% user.bg.2 %]">
 		<FONT COLOR="[% user.fg.1 %]" SIZE="2">[% lastsecs %]
 		[% IF lastsecs and lasttitle %]&nbsp;/&nbsp;[% lasttitle %]
