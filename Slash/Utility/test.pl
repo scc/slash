@@ -13,8 +13,9 @@ $loaded = 1;
 print "ok 1\n";
 apacheLog('Creating an error');
 print "ok 2\n";
-printf('Dumping the stack');
-stackTrace(2);
+setCurrentUser({ uid => '1', nickname => 'joe'});
+my $user = getCurrentUser('uid');
+print "UID $user \n";
 print "ok 3\n";
 
 ######################### End of black magic.

@@ -35,8 +35,8 @@ while(my ($key, $val) = each %$user) {
 }
 print "ok 5\n";
 ########################################################################
-print "Testing getStoryBySid()\n";
-my $story = $object->getStoryBySid('00/01/25/1236215');
+print "Testing getStory()\n";
+my $story = $object->getStory('00/01/25/1236215');
 print "Should dump the data for a story now\n";
 while(my ($key, $val) = each %$story) {
 	print "\t$key = $val \n";
@@ -51,9 +51,9 @@ while(my ($key, $val) = each %$author) {
 }
 print "ok 7\n";
 ########################################################################
-print "Testing setStoryBySid()\n";
-$object->setStoryBySid('00/01/25/1236215', 'nuts', 'flavored');
-$story = $object->getStoryBySid('00/01/25/1236215');
+print "Testing setStory()\n";
+$object->setStory('00/01/25/1236215', 'nuts', 'flavored');
+$story = $object->getStory('00/01/25/1236215');
 print "Should dump the data for the story now\n";
 while(my ($key, $val) = each %$story) {
 	print "\t$key = $val \n";
@@ -62,7 +62,7 @@ print "ok 8\n";
 ########################################################################
 print "Testing clearStory()\n";
 $object->clearStory();
-$story = $object->getStoryBySid('00/01/25/1236215');
+$story = $object->getStory('00/01/25/1236215');
 print "Should dump the data for the story now\n";
 while(my ($key, $val) = each %$story) {
 	print "\t$key = $val \n";

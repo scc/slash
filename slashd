@@ -41,8 +41,14 @@ use Slash::Utility;
 
 
 #*I = getSlashConf();
-my $slashdb = Slash::DB->new('slash');
-$I = $slashdb->getSlashConf();
+my $virtual_user = @ARGV ? $ARGV[0] : 'slash';
+my $slashdb = Slash::DB->new($virtual_user);
+$constants = $slashdb->getSlashConf();
+$I = $constants;
+# Now kiddies, let make playland safe to use	-Brian
+setCurrentDB($slashdb);
+setCurrentStatic($constants);
+
 my $totalChangedStories = 1;
 
 sub END { Carp::cluck("why am I here?") }

@@ -16,11 +16,27 @@ require Exporter;
 	getCurrentStatic
 	getCurrentDB
 	getCurrentAnonymousCoward
+<<<<<<< Utility.pm
+	setCurrentUser
+	setCurrentForm
+	setCurrentStatic
+	setCurrentDB
+	setCurrentAnonymousCoward
+	isAnon
+=======
 	getAnonId
 	getFormkey
+>>>>>>> 1.1.2.14
 );
 $Slash::Utility::VERSION = '0.01';
 
+# These are package variables that are used when you need to use the
+# set methods when not running under mod_perl
+my $static_user;
+my $static_form;
+my $static_constants;
+my $static_db;
+my $static_anonymous_coward;
 
 ########################################################
 sub getAnonId {
@@ -36,13 +52,17 @@ sub getFormkey {
 ########################################################
 # writes error message to apache's error_log if we're running under mod_perl
 # Called wherever we have errors.
+# This needs to be renamed since it works both in and outside of Apache
 sub apacheLog {
 	# ummm ... won't this fail if called while not running under
 	# Apache?
+	# Nope.... 	-Brian
 	my($package, $filename, $line) = caller(1);
-	if ($ENV{SCRIPT_NAME}) {
+	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
+		($package, $filename, $line) = caller(2);
+		$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
 	} else {
 		print STDERR ("Error in library:$package:$filename:$line:@_\n");
 		($package, $filename, $line) = caller(2);
@@ -77,6 +97,7 @@ sub getDateFormat {
 	return ' CONCAT(DATE_FORMAT(' . getDateOffset($col) .
 		qq!,"$user->{'format'}")," $user->{tzcode}") as $as !;
 }
+
 #################################################################
 # This may get moved
 sub changePassword {
@@ -87,9 +108,15 @@ sub changePassword {
 #################################################################
 sub getCurrentUser {
 	my($value) = @_;
-	my $r = Apache->request;
-	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-	my $user = $user_cfg->{'user'};
+	my $user;
+
+	if($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+		$user = $user_cfg->{'user'};
+	} else {
+		$user = $static_user;
+	}
 
 	# i think we want to test defined($foo), not just $foo, right?
 	if ($value) {
@@ -100,12 +127,24 @@ sub getCurrentUser {
 		return $user;
 	}
 }
+
+#################################################################
+sub setCurrentUser {
+	($static_user) = @_;
+}
+
 #################################################################
 sub getCurrentForm {
 	my($value) = @_;
-	my $r = Apache->request;
-	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-	my $form = $user_cfg->{'form'};
+	my $form;
+
+	if($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
+		$form = $user_cfg->{'form'};
+	} else {
+		$form = $static_form;
+	}
 
 	if ($value) {
 		return defined($form->{$value})
@@ -117,11 +156,22 @@ sub getCurrentForm {
 }
 
 #################################################################
+sub setCurrentForm {
+	($static_form) = @_;
+}
+
+#################################################################
 sub getCurrentStatic {
 	my($value) = @_;
+	my $constants;
+
+	if($ENV{GATEWAY_INTERFACE}) {
 	my $r = Apache->request;
 	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $constants = $const_cfg->{'constants'};
+	$constants = $const_cfg->{'constants'};
+	} else {
+		$constants = $static_constants;
+	}
 
 	if ($value) {
 		return defined($constants->{$value})
@@ -133,21 +183,64 @@ sub getCurrentStatic {
 }
 
 #################################################################
+sub setCurrentStatic {
+	($static_constants) = @_;
+}
+
+#################################################################
 sub getCurrentAnonymousCoward {
-	my $r = $_[0] || Apache->request;
-	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $slashdb = $const_cfg->{'anonymous_coward'};
+	my $anonymous_coward;
+
+	if($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$anonymous_coward = $const_cfg->{'anonymous_coward'};
+	} else {
+		$anonymous_coward = $static_anonymous_coward;
+	}
+
+	return $anonymous_coward;
+}
+
+#################################################################
+sub setCurrentAnonymousCoward {
+	($static_anonymous_coward) = @_;
+}
+
+#################################################################
+sub getCurrentDB {
+	my $slashdb;
+
+	if($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		my $slashdb = $const_cfg->{'dbslash'};
+	} else {
+		$slashdb = $static_db;
+	}
 
 	return $slashdb;
 }
 
 #################################################################
-sub getCurrentDB {
-	my $r = Apache->request;
-	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	my $slashdb = $const_cfg->{'dbslash'};
+sub setCurrentDB {
+	($static_db) = @_;
+}
 
-	return $slashdb;
+#################################################################
+# This is the Chris method, since I bet he won't want to call
+# all of the other methods independtly :)
+sub setCurrentAll {
+	($static_user, $static_form, $static_constants, $static_db, $static_anonymous_coward) 
+		= @_;
+}
+
+#################################################################
+sub isAnon {
+	my ($uid) = @_;
+	my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
+
+	return $anonymous_coward_uid == $uid ? 1 : 0;
 }
 
 1;

@@ -347,7 +347,7 @@ EOT
 <FONT SIZE="${\( $I{fontbase} + 2 )}">
 EOT
 		# This is ok, since with all luck we will not be hitting the DB
-		my $story = $I{dbobject}->getStoryBySid($sid);
+		my $story = $I{dbobject}->getStory($sid);
 
 		if ($story) {
 			my $href = $story->{writestatus} == 10

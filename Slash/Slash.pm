@@ -944,7 +944,7 @@ sub selectComments {
 	$sql .= "	    AND comments.cid >= $I{F}{pid} " if $I{F}{pid} && $I{shit}; # BAD
 	$sql .= "	    AND comments.cid >= $cid " if $cid && $I{shit}; # BAD
 	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$I{U}{uid} OR " if $I{U}{uid} != $I{anonymous_coward_uid};
+	$sql .= "		comments.uid=$I{U}{uid} OR " unless $I{U}{is_anon};
 	$sql .= "		cid=$cid OR " if $cid;
 	$sql .= "		comments.points >= " . $I{dbh}->quote($I{U}{threshold}) . " OR " if $I{U}{hardthresh};
 	$sql .= "		  1=1 )   ";
@@ -1114,9 +1114,9 @@ sub printComments {
 
 		my($title, $section);
 		# Print Story Name if Applicable
-		if ($I{dbobject}->getStoryBySid($sid)) {
-			$title = $I{dbobject}->getStoryBySid($sid, 'title');
-			$section = $I{dbobject}->getStoryBySid($sid, 'section');
+		if ($I{dbobject}->getStory($sid)) {
+			$title = $I{dbobject}->getStory($sid, 'title');
+			$section = $I{dbobject}->getStory($sid, 'section');
 		} else {
 			my $story = $I{dbobject}->getNewStory($sid, 'title', 'section');
 			$title = $story->{'title'};
@@ -1138,10 +1138,10 @@ sub printComments {
 
 		print ' | ';
 
-		if ($I{U}{uid} == $I{anonymous_coward_uid}) {
+		if ($I{U}{is_anon}) {
 			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
-		} elsif ($I{U}{uid} != $I{anonymous_coward_uid}) {
+		} elsif (!$I{U}{is_anon}) {
 			print qq!<A HREF="$I{rootdir}/users.pl?op=edituser">!,
 				qq!<FONT COLOR="$I{fg}[3]">Preferences</FONT></A> !
 		}
@@ -1180,7 +1180,7 @@ EOT
 
 
 		print qq!\t\tSave:<INPUT TYPE="CHECKBOX" NAME="savechanges">!
-			if $I{U}{uid} != $I{anonymous_coward_uid};
+			unless $I{U}{is_anon};
 
 		print <<EOT;
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
@@ -1399,7 +1399,7 @@ sub displayThread {
 		$I{F}{startat} = 0; # Once We Finish Skipping... STOP
 
 		if ($C->{points} < $I{U}{threshold}) {
-			if ($I{U}{uid} == $I{anonymous_coward_uid} || $I{U}{uid} != $C->{uid})  {
+			if ($I{U}{is_anon} || $I{U}{uid} != $C->{uid})  {
 				$hidden++;
 				next;
 			}
@@ -1508,7 +1508,7 @@ EOT
 			&& $C->{uid} ne $I{U}{uid}
 			&& $C->{lastmod} ne $I{U}{uid})
 		    || ($I{U}{aseclev} > 99 && $I{authors_unlimited}))
-		    	&& $I{U}{uid} != $I{anonymous_coward_uid}) {
+		    	&& !$I{U}{is_anon}) {
 
 			my $o;
 			foreach (0 .. @{$I{reasons}} - 1) {
@@ -1631,14 +1631,14 @@ sub displayStory {
 	# StoryCount if it's not already defined and the calling page is
 	# index.pl
 
-	$I{dbobject}->setStoryBySid($sid, 'story_order',$I{StoryCount})
-	    if !$I{dbobject}->getStoryBySid($sid, 'story_order') && $caller eq 'index';
+	$I{dbobject}->setStory($sid, 'story_order',$I{StoryCount})
+	    if !$I{dbobject}->getStory($sid, 'story_order') && $caller eq 'index';
 
 
 	# increment if the calling page was index.pl 
 	$I{StoryCount}++ if $caller eq 'index';
 
-	my $S = $I{dbobject}->getStoryBySid($sid);
+	my $S = $I{dbobject}->getStory($sid);
 	
 
 	# convert the time of the story (this is mysql format) 

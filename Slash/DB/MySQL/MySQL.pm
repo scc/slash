@@ -1271,7 +1271,7 @@ sub getBackendStories {
 ########################################################
 # This needs to be made to look like other methods so
 # you can request multiple objects
-sub getStoryBySid {
+sub getStory{
 	my($self, $sid, $member) = @_;
 
 	if ($member) {
@@ -1301,11 +1301,17 @@ sub clearStory {
 }
 
 ########################################################
-sub setStoryBySid {
+sub setStory{
 	my($self, $sid, $key, $value, $perm) = @_;
 	# The idea with $perm, is that at some point, if you set it
 	# it will update the database with the change you requested
 	$self->{_storyBank}{$sid}{$key} = $value;
+	$self->sqlUpdate(
+		"discussions",
+		{ $key => $value },
+			"sid=" . $self->{dbh}->quote($sid)
+		) if $perm;
+
 }
 
 ########################################################
@@ -1974,33 +1980,34 @@ sub getComments {
 }
 
 ########################################################
+# Do we need to bother passing in User and Form?
 sub getStories {
-	my($self, $U, $F, $SECT, $currentSection, $limit, $tid) = @_;
+	my($self, $user, $form, $SECT, $currentSection, $limit, $tid) = @_;
 
-	my $limit ||= $U->{maxstories};
+	my $limit ||= $user->{maxstories};
 
 	my $tables = "newstories";
 	my $columns = "sid, section, title, date_format(" .  
-		getDateOffset('time', $U) . 
+		getDateOffset('time', $user) . 
 		',"%W %M %d %h %i %p"), commentcount, to_days(' .  
-		getDateOffset('time', $U) . "), hitparade";
+		getDateOffset('time', $user) . "), hitparade";
 
 	my $where = "1=1 "; # Mysql's Optimize gets this.";
 
-	$where .= "AND displaystatus=0 " unless $F->{section};
+	$where .= "AND displaystatus=0 " unless $form->{section};
 
-	$where .= "AND time < now() "; # unless $U->{aseclev};
-	$where .= "AND (displaystatus>=0 AND '$SECT->{section}'=section) " if $F->{section};
+	$where .= "AND time < now() "; # unless $user->{aseclev};
+	$where .= "AND (displaystatus>=0 AND '$SECT->{section}'=section) " if $form->{section};
 
-	$F->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
+	$form->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
 
-	$where .= "AND $F->{issue} >= to_days(" . getDateOffset("time", $U) . ") " if $F->{issue};
+	$where .= "AND $form->{issue} >= to_days(" . getDateOffset("time", $user) . ") " if $form->{issue};
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
-	$where .= "AND tid not in ($U->{extid}) " if $U->{extid};
-	$where .= "AND aid not in ($U->{exaid}) " if $U->{exaid};
-	$where .= "AND section not in ($U->{exsect}) "	if $U->{exsect};
+	$where .= "AND tid not in ($user->{extid}) " if $user->{extid};
+	$where .= "AND aid not in ($user->{exaid}) " if $user->{exaid};
+	$where .= "AND section not in ($user->{exsect}) "	if $user->{exsect};
 
 	# Order
 	my $other .= "ORDER BY time DESC ";
@@ -2008,7 +2015,7 @@ sub getStories {
 	if ($limit) {
 		$other .= "LIMIT $limit ";
 	} elsif ($currentSection eq 'index') {
-		$other .= "LIMIT $U->{maxstories} ";
+		$other .= "LIMIT $user->{maxstories} ";
 	} else {
 		$other .= "LIMIT $SECT->{artcount} ";
 	}

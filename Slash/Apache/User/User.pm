@@ -28,7 +28,9 @@ sub SlashUserInit ($$) {
 # handler method
 sub handler {
 	my($r) = @_;
-	return OK unless $r->uri =~ /\.pl$/;
+	# I changed this back to filename, just in case $r->uri had
+	# not tranlated "/" to "/index.pl"
+	return OK unless $r->filename =~ /\.pl$/;
 
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
@@ -78,6 +80,15 @@ sub handler {
 		}
 	} 
 
+	# This is just here for testing. This should actually occur way before this
+	# It does work, but unless you have a shtml (and that means I get
+	# other things fixed) don't comment this in
+#	if (($r->filename =~ /\index.pl$/) && ($uid == $constants->{anonymous_coward_uid})) {
+#		$r->uri('/index.shtml');
+#		# We need to log this
+#		return OK;
+#	} 
+
 	# Ok, yes we could use %ENV here, but if we did and 
 	# if someone ever wrote a module in another language
 	# or just a cheesy CGI, they would never see it.
@@ -85,14 +96,6 @@ sub handler {
 	$cfg->{user} = getUser($r, $constants, $dbslash, $form, $cookies, $uid);
 	$cfg->{form} = $form;
 
-	# This is just here for testing. This should actually occur way before this
-	# It does work, but unless you have a shtml (and that means I get
-	# other things fixed) don't comment this in
-#	if (($filename =~ /\index.pl$/) && ($uid == $constants->{anonymous_coward_uid})) {
-#		$r->uri('/index.shtml');
-#		# We need to log this
-#		return OK;
-#	} 
 	print STDERR "UID: $uid\n";
 
 	setCookie($r, $constants, 'test1', 3);
@@ -198,9 +201,7 @@ sub getUser {
 			$user->{anon_id} = getAnonId();
 		}
 
-		# sigh, why do i need to pass $r?  something ain't right.
-		# -- pudge
-		my $coward = getCurrentAnonymousCoward($r);
+		my $coward = getCurrentAnonymousCoward();
 		setCookie($r, $constants, 'anon', $user->{anon_id}, 1);
 
 		@{$user}{ keys %$coward } = values %$coward;	
@@ -338,8 +339,6 @@ sub testExStr {
 	return $_;
 }
 
-# dummy sub, remove later
-sub isAnon { return $_[0] == -1 }
 
 1;
 

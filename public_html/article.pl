@@ -44,9 +44,10 @@ sub main {
 
 	# Worst case condition here is that the first lookup will cause
 	# a hit to the database. -Brian
-	$sect  = $I{dbobject}->getStoryBySid($I{F}{sid}, 'section');
-	$title  = $I{dbobject}->getStoryBySid($I{F}{sid}, 'title');
-	$ws  = $I{dbobject}->getStoryBySid($I{F}{sid}, 'writestatus');
+	
+	$sect  = $I{dbobject}->getStory($I{F}{sid}, 'section');
+	$title  = $I{dbobject}->getStory($I{F}{sid}, 'title');
+	$ws  = $I{dbobject}->getStory($I{F}{sid}, 'writestatus');
 
 
 	if ($ws == 10) {
@@ -172,7 +173,7 @@ sub nextStory {
 	my $order = $sign eq '<' ? 'DESC' : 'ASC';
 
 	# find out what sequence this is in from the storyBank
-	$array_place = $I{dbobject}->getStoryBySid($I{F}{sid}, 'story_order');
+	$array_place = $I{dbobject}->getStory($I{F}{sid}, 'story_order');
 
 	# next article, previous article	
 	$array_place += $sign eq '<' ? 1 : -1;
@@ -181,17 +182,17 @@ sub nextStory {
 	# then get title,sid, and section from storyBank
 	if (	$I{sid_array}[$array_place]
 			&&
-		$I{dbobject}->getStoryBySid($I{sid_array}, $array_place )
+		$I{dbobject}->getStory($I{sid_array}, $array_place )
 			&& 
-		$I{dbobject}->getStoryBySid($I{F}{sid}, 'story_order') != ($I{StoryCount} - 1)
+		$I{dbobject}->getStory($I{F}{sid}, 'story_order') != ($I{StoryCount} - 1)
 			&&
 		$array_place != -1
 			&&
 		$I{U}{uid} == $I{anonymous_coward_uid}
 	) {
-		my $title   = $I{dbobject}->getStoryBySid($I{sid_array}[$array_place], 'title');
+		my $title   = $I{dbobject}->getStory($I{sid_array}[$array_place], 'title');
 		my $psid    = $I{sid_array}[$array_place];
-		my $section = $I{dbobject}->getStoryBySid($I{sid_array}[$array_place], 'section');
+		my $section = $I{dbobject}->getStory($I{sid_array}[$array_place], 'section');
 		return linkStory({ 'link' => $title, sid => $psid, section => $section });
 
 	} elsif (my($title, $psid, $section) = $I{dbobject}->getStoryByTime($sign, $story->{sqltime}, $SECT->{isolate}, $story->{section}, $I{U}{extid}, $I{U}{exaid}, $I{U}{exsect} )) {

@@ -1046,7 +1046,7 @@ EOT
 	} elsif (defined $sid) { # Loading an Old SID
 		print '<TABLE><TR><TD>';
 		my $tmp = $I{currentSection};
-		($I{currentSection}) = $I{dbobject}->getStoryBySid($sid, 'section');
+		($I{currentSection}) = $I{dbobject}->getStory($sid, 'section');
 		($S, $A, $T) = displayStory($sid, 'Full');
 		$I{currentSection} = $tmp;
 		print '</TD><TD WIDTH="220" VALIGN="TOP">';
@@ -1395,7 +1395,7 @@ sub updateStory {
 
 	$I{F}{dept} =~ s/ /-/g;
 
-	($I{F}{aid}) = $I{dbobject}->getStoryBySid($I{F}{sid}, 'aid')
+	($I{F}{aid}) = $I{dbobject}->getStory($I{F}{sid}, 'aid')
 		unless $I{F}{aid};
 	$I{F}{relatedtext} = getRelated("$I{F}{title} $I{F}{bodytext} $I{F}{introtext}")
 		. otherLinks($I{F}{aid}, $I{F}{tid});
