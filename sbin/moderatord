@@ -27,9 +27,11 @@
 use strict;
 use Slash;
 
-createEnvironment();
+my $virtual_user = $ARGV[0];
+createEnvironment($ARGV[0]);
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
+
 
 sub moderatordLog {
 	local *LOG;

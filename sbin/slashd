@@ -37,8 +37,8 @@ use XML::RSS;
 use Slash;
 use Slash::Utility;
 
-createEnvironment();
 my $virtual_user = $ARGV[0];
+createEnvironment($ARGV[0]);
 my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 
@@ -112,7 +112,9 @@ sub geturl {
 
 sub prog2file {
 	my($command, $arguments, $f) = @_;
-	my $d = `$command $virtual_user $arguments`;
+	my $exec = "$command virtual_user=$virtual_user $arguments";
+	my $d = `$exec`;
+	print "$exec\n";
 	my $dir = dirname($f);
 	mkpath($dir, 0, 0755) unless -e $dir;
 	if (length($d) > 0) {
@@ -191,7 +193,7 @@ sub newmotd {
 
 #################################
 sub sectionHeaders {
-	my $section = shift;
+	my ($section) = @_;
 	local *FH;
 
 	$constants->{F}{ssi} = 1;
@@ -241,7 +243,7 @@ sub newfooter {
 
 #################################
 sub newrdf {
-	my $section = shift;
+	my ($section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '0.9',
@@ -283,7 +285,7 @@ sub newrdf {
 
 #################################
 sub newwml {
-	my $section = shift;
+	my ($section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
@@ -324,7 +326,7 @@ EOT
 
 #################################
 sub newxml {
-	my $section = shift;
+	my ($section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
@@ -384,7 +386,6 @@ sub makeDir {
 # This is the normal, every 60 seconds stuff
 sub freshenup {
 	moveImages();
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 
 	my %updates;
 	my $stories = $slashdb->getStoriesForSlashdb();
@@ -397,11 +398,11 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 		makeDir($section, $sid);
 		$totalChangedStories++;
 
-		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid\\\&ssi=yes\\\&mode=thread",
+		if (prog2file("$constants->{basedir}/article.pl", "sid=$sid ssi=yes mode=thread",
 			"$constants->{basedir}/$section/$sid.shtml")) {
 
 			# Don't need this any more.
-			#prog2file("$constants->{basedir}/article.pl sid=$sid\\\&ssi=yes\\\&mode=flat",
+			#prog2file("$constants->{basedir}/article.pl sid=$sid ssi=yes mode=flat",
 			#	"$constants->{basedir}/$section/$sid"."_F.shtml");
 
 			push @updatedsids, $sid;
@@ -430,19 +431,16 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	my $w  = $slashdb->getVar('writestatus', 'value');
 
 #	if ($updates{articles} ne "" || $w ne "0") {
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 		$slashdb->setVar("writestatus", "0");
 		prog2file("$constants->{basedir}/index.pl", "ssi=yes", "$constants->{basedir}/index.shtml");
-		print("$constants->{basedir}/index.pl ssi=yes", "$constants->{basedir}/index.shtml");
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
-		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat","$constants->{basedir}/index_F.shtml");
+		# prog2file("$constants->{basedir}/index.pl ssi=yes mode=flat","$constants->{basedir}/index_F.shtml");
 #	}
 
 	foreach my $key (keys %updates) {
 		next unless $key;
-		prog2file("$constants->{basedir}/index.pl", "ssi=yes\\\&section=$key",
+		prog2file("$constants->{basedir}/index.pl", "ssi=yes section=$key",
 			"$constants->{basedir}/$key/index.shtml");
-		# prog2file("$constants->{basedir}/index.pl ssi=yes\\\&mode=flat\\\&section=$key","$constants->{basedir}/$key/index_F.shtml");
+		# prog2file("$constants->{basedir}/index.pl ssi=yes mode=flat section=$key","$constants->{basedir}/$key/index_F.shtml");
 	}
 }
 
@@ -471,14 +469,9 @@ sub main {
 		freshenup();
 		if ((time - $last) > 60 * 60 ) { # Every Hour
 			slashdLog("Doing Hourly Update");
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			newfooter();
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			setheadertopics();
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			openBackend();
-print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
-
 
 			newmotd();
 			system("$constants->{sbindir}/portald $virtual_user&");

@@ -1017,7 +1017,7 @@ sub writeLog {
 
 #========================================================================
 
-=item createEnvironment(DBIx::Password_virtual_user)
+=item createEnvironment(LIST|DBIx::Password_virtual_user)
 
 Places data into the request records notes table. The two keys
 it uses are SLASH_LOG_OPERATION and SLASH_LOG_DATA. 
@@ -1036,7 +1036,16 @@ Return value
 sub createEnvironment {
 	return if ($ENV{GATEWAY_INTERFACE});
 	my ($virtual_user) = @_;
-	$virtual_user = $ARGV[0] unless $virtual_user;
+	my %form;
+	unless($virtual_user) {
+		for(@ARGV) {
+			my ($key, $val) = split /=/;
+			$form{$key} = $val;
+		}
+		$virtual_user = $form{'virtual_user'};
+	}
+	createCurrentForm(\%form);
+
 	my $slashdb = Slash::DB->new($virtual_user);
 	my $constants = $slashdb->getSlashConf();
 
