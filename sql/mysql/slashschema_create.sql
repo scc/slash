@@ -37,26 +37,6 @@ CREATE TABLE accesslog (
 );
 
 #
-# Table structure for table 'authors'
-#
-
-CREATE TABLE authors (
-  aid char(30) DEFAULT '' NOT NULL,
-  name char(50),
-  url char(50),
-  email char(50),
-  quote char(50),
-  copy char(255),
-  pwd char(8),
-  lasttitle char(20),
-  section char(20),
-  deletedsubmissions int(11) DEFAULT '0',
-  matchname char(30),
-  display tinyint(4) DEFAULT '0',
-  PRIMARY KEY (aid)
-);
-
-#
 # Table structure for table 'backup_blocks'
 #
 
