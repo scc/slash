@@ -1,2 +1,3 @@
 * In authors, copy became description
 * In tzcodes, offset became value
+	- value changed to int4
