@@ -25,6 +25,7 @@ if($opts{'d'}) {
 }
 
 usage() unless($ARGV[0] || $opts{'d'});
+$opts{'d'} ||= '';
 
 print "@ARGV\n";
 
