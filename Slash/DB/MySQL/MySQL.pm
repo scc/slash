@@ -226,7 +226,7 @@ sub createComment {
 	my $uid = $comment->{postanon} ? $default_user : $user->{uid};
 	# Basically, this makes sure that the thread is not
 	# been set read only -Brian
-	return -1 if ($self->getDiscussion($header, 'type') == 'archived');
+	return -1 if $self->getDiscussion($header, 'type') eq 'archived';
 
 	my $insline = "INSERT into comments (sid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header," .
 		$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .

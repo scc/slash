@@ -453,7 +453,7 @@ sub editComment {
 		return;
 	}
 
-	if ($discussion->{type} == 'archived') {
+	if ($discussion->{type} eq 'archived') {
 		print getError('archive_error');
 		return;
 	}
@@ -767,7 +767,7 @@ sub moderate {
 	my $sid = $form->{sid};
 	my $was_touched = 0;
 
-	if ($discussion->{type} == 'archived') {
+	if ($discussion->{type} eq 'archived') {
 		print getData('archive_error');
 		return;
 	}

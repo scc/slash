@@ -284,7 +284,7 @@ sub printComments {
 		&& ( $user->{commentlimit} > $cc ||
 		     $user->{commentlimit} > $user->{commentspill} );
 
-	if ($discussion->{type} == 'archived') {
+	if ($discussion->{type} eq 'archived') {
 		$user->{state}{comment_read_only} = 1;
 		slashDisplay('printCommNoArchive');
 	}
