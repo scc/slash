@@ -2238,7 +2238,11 @@ sub createMenu {
 		};
 	}
 
-	return slashDisplay("menu-$menu", { items => $items }, 1);
+	if (@$menu_items) {
+		return slashDisplay("menu-$menu", { items => $items }, 1);
+	} else {
+		return;
+	}
 }
 
 
