@@ -147,13 +147,14 @@ sub displayStandardBlocks {
 			if ref $sectionBoxes->{$getblocks};
 	}
 
+# Yes, this is a hack for the moment -Brian
 #	if($user->{is_anon}) {
 #			$return .= portalbox(
 #				$constants->{fancyboxwidth},
-#				$boxBank->{$bid}{title},
+#				"User Login",
 #				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
-#				$boxBank->{$bid}{bid},
-#				$boxBank->{$bid}{url}
+#				'',
+#				'');
 #	}
 
 	for my $bid (@boxes) {

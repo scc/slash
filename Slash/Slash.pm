@@ -2327,4 +2327,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+Brian Aker E<lt>brian@tangent.org<gt>, http://tangent.org/
+Patrick Galbraith E<lt>capttofu@slashdot.org<gt>
 Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
+Cliff Wood E<lt>cliff@slashdot.org<gt>, http://exit118.com/
