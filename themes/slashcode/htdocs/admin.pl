@@ -168,13 +168,13 @@ sub main {
 		authorEdit($form->{thisaid});
 
 	} elsif ($form->{authoredit}) {
-		authorEdit($form->{myaid});
+		authorEdit($form->{myuid});
 
 	} elsif ($form->{authornew}) {
 		authorEdit();
 
 	} elsif ($form->{authordelete}) {
-		authorDelete($form->{myaid});
+		authorDelete($form->{myuid});
 
 	} elsif ($form->{authordelete_confirm} || $form->{authordelete_cancel}) {
 		authorDelete($form->{thisaid});
@@ -182,7 +182,7 @@ sub main {
 
 	} elsif ($form->{authorsave}) {
 		authorSave();
-		authorEdit($form->{myaid});
+		authorEdit($form->{myuid});
 
 	} elsif ($op eq 'vars') {
 		varEdit($form->{name});	
@@ -281,7 +281,7 @@ sub authorEdit {
 	my $authors = $slashdb->getDescriptions('authors');
 	my $author = $slashdb->getAuthor($aid) if $aid;
 
-	$author_select = createSelect('myaid', $authors, $aid, 1);
+	$author_select = createSelect('myuid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;
 	$deletebutton_flag = 1 if (! $authornew && $aid ne $user->{uid}) ;
 
@@ -987,10 +987,10 @@ sub editStory {
 
 	$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
 
-	if ($user->{seclev} > 100 and $storyref->{aid}) {
+	if ($user->{seclev} > 100) {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
-		$author_select = createSelect('aid', $authors, $storyref->{aid},1);
+		$author_select = createSelect('uid', $authors, $storyref->{aid},1);
 	} 
 
 	$storyref->{dept} =~ s/ /-/gi;
@@ -1247,7 +1247,7 @@ sub updateStory {
 	$form->{aid} = $slashdb->getStory($form->{sid}, 'aid')
 		unless $form->{aid};
 	$form->{relatedtext} = getRelated("$form->{title} $form->{bodytext} $form->{introtext}")
-		. otherLinks($slashdb->getAuthor($form->{aid}, 'nickname'), $form->{tid});
+		. otherLinks($slashdb->getAuthor($form->{uid}, 'nickname'), $form->{tid});
 
 	$slashdb->updateStory();
 	titlebar('100%', getTitle('updateStory-title'));

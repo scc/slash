@@ -2178,7 +2178,7 @@ sub saveStory {
 
 	$self->sqlInsert('stories',{
 		sid		=> $form->{sid},
-		uid		=> $form->{aid},
+		uid		=> $form->{uid},
 		tid		=> $form->{tid},
 		dept		=> $form->{dept},
 		'time'		=> $form->{'time'},
