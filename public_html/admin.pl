@@ -801,8 +801,9 @@ sub colorSave {
 # Topic Editor
 sub topicEd {
 	return if $I{U}{aseclev} < 1;
-	my ($tid, $width, $height, $alttext, $image, @available_images);
+	my($tid, $width, $height, $alttext, $image, @available_images);
 
+	local *DIR;
 	opendir(DIR,"$I{basedir}/public_html/images/topics");
 	@available_images = grep(!/^\./, readdir(DIR)); 
 	closedir(DIR);
@@ -840,10 +841,10 @@ EOT
 		<SELECT name="image">
 EOT
 
-		if (!available_images) {
+		if (@available_images) {
 			print qq|<SELECT name="image">|;
 			print qq|<OPTION value="">Select an image</OPTION>| if $I{F}{topicnew};
-			for(@available_images) {
+			for (@available_images) {
 				my ($selected);
 				$selected = "SELECTED" if ($_ eq $image);
 				print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
@@ -855,7 +856,7 @@ EOT
 			# and use a regular text input field.
 			print <<EOT;
 <P>No images were found in the topic images directory (&lt;basedir&gt;/images/topics).<BR>
-<IMPUT TYPE="TEXT" NAME="image" VALUE="$image"><BR><BR>
+<INPUT TYPE="TEXT" NAME="image" VALUE="$image"><BR><BR>
 EOT
 		}
 

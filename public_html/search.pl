@@ -49,14 +49,14 @@ sub main {
 
 	searchForm();
 
-	if		($I{F}{op} eq 'comments')	{ commentSearch()	}
+	if	($I{F}{op} eq 'comments')	{ commentSearch()	}
 	elsif	($I{F}{op} eq 'users')		{ userSearch()		}
-	else	($I{F}{op} eq 'stories')	{ storySearch()		}
+	elsif	($I{F}{op} eq 'stories')	{ storySearch()		}
 	else	{
 		print "Invalid operation!<BR>";
 	}
 	$I{dbobject}->writelog($I{U}{uid}, "search", $I{F}{query})
-		if $I{F}{op} =~ /^(comments|stories|users)$/;
+		if $I{F}{op} =~ /^(?:comments|stories|users)$/;
 	footer();	
 }
 
@@ -184,7 +184,7 @@ EOT
 	print "<P>", linkSearch({
 		'link'	=> "<B>More matches...</B>",
 		min	=> $x
-	}) unless !$X || $x < $I{F}{max};
+	}) unless !$x || $x < $I{F}{max};
 }
 
 #################################################################
