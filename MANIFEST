@@ -137,13 +137,14 @@ plugins/BunchaBlocks/PLUGIN
 plugins/BunchaBlocks/blocks
 plugins/CheesyPortal/PLUGIN
 plugins/CheesyPortal/cheesyportal.pl
+plugins/CheesyPortal/templates/data;cheesyportal;default
+plugins/CheesyPortal/templates/main;cheesyportal;default
 plugins/Journal/Changes
 plugins/Journal/Journal.pm
 plugins/Journal/MANIFEST
 plugins/Journal/Makefile.PL
 plugins/Journal/PLUGIN
 plugins/Journal/dump
-plugins/Journal/install
 plugins/Journal/journal.pl
 plugins/Journal/mysql_schema
 plugins/Journal/templates/bluebox;journal;default
@@ -151,7 +152,6 @@ plugins/Journal/templates/generic;journal;default
 plugins/Journal/templates/greypage;journal;default
 plugins/Journal/templates/journal;menu;default
 plugins/Journal/templates/journaledit;journal;default
-plugins/Journal/templates/journalentry;journal;default
 plugins/Journal/templates/journalfriends;journal;default
 plugins/Journal/templates/journalitem;journal;default
 plugins/Journal/templates/journallist;journal;default
@@ -173,6 +173,7 @@ plugins/Ladybug/templates/reports;bugs;default
 plugins/Ladybug/templates/submit_box;bugs;default
 plugins/Ladybug/templates/update_bug;bugs;default
 plugins/Ladybug/test.pl
+plugins/Makefile
 plugins/Search/Changes
 plugins/Search/MANIFEST
 plugins/Search/Makefile.PL
@@ -195,9 +196,11 @@ sql/oracle/slashschema_create.sql
 sql/postgresql/slashschema_create.sql
 sql/updates/MAIN2bender
 themes/slashcode/htdocs/404.pl
+themes/slashcode/htdocs/about.shtml
 themes/slashcode/htdocs/article.pl
 themes/slashcode/htdocs/authors.pl
 themes/slashcode/htdocs/comments.pl
+themes/slashcode/htdocs/faq.shtml
 themes/slashcode/htdocs/getting_started.shtml
 themes/slashcode/htdocs/hof.pl
 themes/slashcode/htdocs/images/660000.gif
@@ -252,7 +255,6 @@ themes/slashcode/sql/postgresql/prep.sql
 themes/slashcode/templates/admin;menu;default
 themes/slashcode/templates/comment_submit;comments;default
 themes/slashcode/templates/currentAdminUsers;misc;default
-themes/slashcode/templates/data;cheesyportal;default
 themes/slashcode/templates/data;hof;default
 themes/slashcode/templates/data;index;default
 themes/slashcode/templates/data;metamod;default
@@ -310,7 +312,6 @@ themes/slashcode/templates/listpolls;pollBooth;default
 themes/slashcode/templates/lockTest;misc;default
 themes/slashcode/templates/main;404;default
 themes/slashcode/templates/main;authors;default
-themes/slashcode/templates/main;cheesyportal;default
 themes/slashcode/templates/main;hof;default
 themes/slashcode/templates/mainmenu;misc;default
 themes/slashcode/templates/messages;users;default
