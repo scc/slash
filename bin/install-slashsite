@@ -9,6 +9,7 @@ use File::Find;
 use File::Path;
 use Slash::DB;
 use Getopt::Std;
+use Slash::Install;
 
 # This is the uber install script.
 # -Brian (brian@tangent.org)
@@ -42,6 +43,7 @@ unless (DBIx::Password::checkVirtualUser($ARGV[0])) {
 }
 
 $driver = $drivers{DBIx::Password::getDriver($ARGV[0])};
+my $install = Slash::Install->new($ARGV[0]);
 
 
 eval { require DBIx::Password };
@@ -184,8 +186,9 @@ while($select ne 'q'){
 		last;	
 	}
 	elsif($select eq 'a') {
-		@answers = ();
-		push @answers, $select;
+		for(keys %plugins) {
+			push @answers, $_;
+		}
 		last;
 	} elsif($select ne 'q') {
 		push @answers, $select;
@@ -277,6 +280,23 @@ find(sub {
 		chmod((stat(_))[2], $f2);
 	}
 }, "$theme/htdocs/");
+$install->create({ name => 'admin', value => $username});
+$install->create({ name => 'adminmail', value => $email});
+$install->create({ name => 'theme', value => $theme});
+$install->create({ name => 'owner', value => $owner});
+$install->create({ name => 'owner_id', value => $owner_id});
+$install->create({ name => 'group', value => $group});
+$install->create({ name => 'group_id', value => $group_id});
+$install->create({ name => 'siteid', value => $sitename});
+$install->create({ name => 'basedomain', value => $hostname});
+$install->create({ name => 'driver', value => $driver});
+$install->create({ name => 'base_install_directory', value => $prefix});
+$install->create({ name => 'site_install_directory', value => "$prefix_site/$sitename"});
+my $time = localtime();
+$install->create({ name => 'installed', value => $time});
+for(@answers) {
+	$install->create({ name => 'plugin', value => $_});
+}
 
 install_plugin(\@answers, \%plugins);
 
@@ -398,19 +418,12 @@ sub install {
 
 sub install_plugin {
 	my ($answers, $plugins) = @_;
-	if($answers->[0] eq 'a') {
+	for(@$answers) {
+		my $answer = $_;
 		for(keys %$plugins) {
-			print "installing plugin $_\n";
-			install($plugins->{$_});
-		}
-	} else {
-		for(@$answers) {
-			my $i = $_;
-			for(keys %$plugins) {
-				if($i == $plugins->{$_}{order}) {
-					print "installing plugin $_\n";
-					install($plugins->{$_});
-				}
+			if($answer eq $plugins->{$_}{order}) {
+				print "installing plugin $_\n";
+				install($plugins->{$_});
 			}
 		}
 	}
@@ -457,6 +470,8 @@ To restart apache do:
 	apachectl start
 
 Have fun with your new site.
+You should also consider registering it at
+http://slashcode.com/sites.shtml
 
 
 |;

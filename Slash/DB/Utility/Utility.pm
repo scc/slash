@@ -133,14 +133,15 @@ sub sqlSelectHash {
 # returns: via ref from input
 # Simple little function to get the count of a table
 ##########################################################
-sub selectCount  {
+sub sqlCount {
 	my($self, $table, $where) = @_;
 
-	my $sql = "SELECT count(*) AS count FROM $table $where";
+	my $sql = "SELECT count(*) AS count FROM $table";
+	$sql .= " WHERE $where" if  $where;
 	# we just need one stinkin value - count
 	$self->sqlConnect();
-	my $sth = $self->{_dbh}->selectall_arrayref($sql);
-	return $sth->[0][0];  # count
+	my $sth = $self->{_dbh}->selectcol_arrayref($sql);
+	return $sth->[0];  # count
 }
 
 ########################################################
@@ -195,6 +196,39 @@ sub sqlSelectAll {
 		return;
 	}
 	return $H;
+}
+
+########################################################
+# sqlSelectAllHashref - this function returns the entire 
+# set of rows in a hash.
+# 
+# inputs: 
+# id -  column to use as the hash key
+# select - columns selected 
+# from - tables 
+# where - where clause 
+# other - limit, asc ...
+#
+# returns: 
+# array ref of all records
+sub sqlSelectAllHashref {
+	my($self, $id , $select, $from, $where, $other) = @_;
+
+	# Yes, if ID is not in $select things will be bad
+	my $sql = "SELECT $select ";
+	$sql .= "FROM $from " if $from;
+	$sql .= "WHERE $where " if $where;
+	$sql .= "$other" if $other;
+
+	my $sth = $self->sqlSelectMany($select, $from, $where, $other);
+	my $returnable;
+	while (my $row = $sth->fetchrow_hashref) {
+		$returnable->{$row->{$id}} = $row;
+	}
+	$sth->finish;
+	
+	
+	return $returnable;
 }
 
 ########################################################
