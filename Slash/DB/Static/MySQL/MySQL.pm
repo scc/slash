@@ -60,6 +60,12 @@ sub updateCommentTotals {
 			commentcount	=> $comments->[0]{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
+	$self->sqlUpdate("newstories", {
+			hitparade	=> $hp,
+			writestatus	=> 0,
+			commentcount	=> $comments->[0]{totals}[0]
+		}, 'sid=' . $self->{_dbh}->quote($sid)
+	);
 }
 
 ########################################################
