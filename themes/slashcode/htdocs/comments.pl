@@ -34,7 +34,7 @@ sub main {
 
 	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
 
-	if ($user->{uid} < 1 && length($form->{upasswd}) > 1) {
+	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
 		slashDisplay('errors', {
 			type	=> 'login error',
 		});
@@ -70,7 +70,10 @@ sub main {
 		titlebar("99%", "Delete $form->{cid}");
 
 		my $delCount = deleteThread($form->{sid}, $form->{cid});
-		$slashdb->createCommentCount($delCount);
+		# This does not exist in the API. Once
+		# I know what it was supposed to do I can
+		# create it. -Brian
+		$slashdb->setStoryCount($delCount);
 
 	} elsif ($form->{op} eq "moderate") {
 		titlebar("99%", "Moderating $form->{sid}");
@@ -197,7 +200,7 @@ sub validateComment {
 		return;
 	}
 
-	if (!$constants->{allow_anonymous} && ($user->{uid} < 1 || $form->{postanon})) {
+	if (!$constants->{allow_anonymous} && ($user->{is_anon} || $form->{postanon})) {
 		$$error_message = slashDisplay('errors', {
 			type	=> 'anonymous disallowed',
 		}, 1);
@@ -516,7 +519,7 @@ sub moderate {
 		if (/^del_(\d+)$/) { # && $user->{points}) {
 			my $delCount = deleteThread($form->{sid}, $1);
 			$total_deleted += $delCount;
-			$slashdb->setStoriesCount($form->{sid}, $delCount);
+			$slashdb->setStoryCount($form->{sid}, $delCount);
 
 		} elsif (!$hasPosted && /^reason_(\d+)$/) {
 			moderateCid($form->{sid}, $1, $form->{$_});
