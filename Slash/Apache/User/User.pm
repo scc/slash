@@ -185,7 +185,9 @@ sub createEnv {
 # These are very import, do not delete these
 sub random {
 	my($r) = @_;
-	$r->header_out('X-Bender' => $QUOTES[int(rand(@QUOTES))]);
+	my $quote = $QUOTES[int(rand(@QUOTES))];
+	(my($who), $quote) = split(/: */, $quote, 2);
+	$r->header_out("X-$who" => $quote);
 }
 
 sub authors {
@@ -243,29 +245,46 @@ sub userdir_handler {
 #
 sub DESTROY { }
 
-@QUOTES = (
-	'Fry, of all the friends I\'ve had ... you\'re the first.',
-	'I hate people who love me.  And they hate me.',
-	'Oh no! Not the magnet!',
-	'Bender\'s a genius!',
-	'Well I don\'t have anything else planned for today, let\'s get drunk!',
-	'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!',
-	'Oh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.',
-	'Oh, so, just \'cause a robot wants to kill humans that makes him a radical?',
-	'There\'s nothing wrong with murder, just as long as you let Bender whet his beak.',
-	'Bite my shiny, metal ass!',
-	'The laws of science be a harsh mistress.',
-	'In the event of an emergency, my ass can be used as a flotation device.',
-	'Like most of life\'s problems, this one can be solved with bending.',
-	'Honey, I wouldn\'t talk about taste if I was wearing a lime green tank top.',
-	'A woman like that you gotta romance first!',
-	'OK, but I don\'t want anyone thinking we\'re robosexuals.',
-	'Hey Fry, I\'m steering with my ass!',
-	'Care to contribute to the Anti-Mugging-You Fund?',
-	'Want me to smack the corpse around a little?',
-	'My full name is Bender Bending Rodriguez.',
-);
-
+@QUOTES = split(/\n/, <<'EOT');
+Bender:Fry, of all the friends I've had ... you're the first.
+Bender:I hate people who love me.  And they hate me.
+Bender:Oh no! Not the magnet!
+Bender:Bender's a genius!
+Bender:Well I don't have anything else planned for today, let's get drunk!
+Bender:Forget your stupid theme park!  I'm gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!
+Bender:Oh, no room for Bender, huh?  Fine.  I'll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.
+Bender:Oh, so, just 'cause a robot wants to kill humans that makes him a radical?
+Bender:There's nothing wrong with murder, just as long as you let Bender whet his beak.
+Bender:Bite my shiny, metal ass!
+Bender:The laws of science be a harsh mistress.
+Bender:In the event of an emergency, my ass can be used as a flotation device.
+Bender:Like most of life's problems, this one can be solved with bending.
+Bender:Honey, I wouldn't talk about taste if I was wearing a lime green tank top.
+Bender:A woman like that you gotta romance first!
+Bender:OK, but I don't want anyone thinking we're robosexuals.
+Bender:Hey Fry, I'm steering with my ass!
+Bender:Care to contribute to the Anti-Mugging-You Fund?
+Bender:Want me to smack the corpse around a little?
+Bender:My full name is Bender Bending Rodriguez.
+Bender:My life, and by extension everyone else's, is meaningless.
+Fry:Why couldn't she be the other kind of mermaid, with the fish part on the top and the human part on the bottom?
+Fry:There's a lot about my face you don't know.
+Fry:Drugs are for losers.  And hypnosis is for losers with big weird eyebrows.
+Fry:These new hands are great.  I'm gonna break them in tonight.
+Fry:I refuse to testify on the grounds that my organs will be chopped up into a patty.
+Fry:Leela, there's nothing wrong with anything.
+Fry:Augh, I am so unlucky. I've run over black cats that were luckier than me.
+Fry:That's it! You can only take my money for so long before you take it all and I say enough! 
+Fry:Leela, Bender, we're going grave-robbing.
+Fry:Where's Captain Bender? Off catastrophizing some other planet?
+Fry:People said I was dumb but I proved them!
+Fry:It's like a party in my mouth and everyone's throwing up.
+Fry:Nowadays people aren't interested in art that's not tattooed on fat guys.
+Fry:I don't regret this, but I both rue and lament it.
+Fry:I'm gonna be a famous hero just like Neil Armstrong and those other brave guys no one ever heard of.
+Fry:Fix it, fix it, fix it, fix it, fix it, fix it ... fix it, fix it, fix it!
+Fry:Well, thanks to the internet I'm now bored with sex.  Is there a place on the web that panders to my lust for violence?
+EOT
 
 1;
 
