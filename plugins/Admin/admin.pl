@@ -1178,16 +1178,14 @@ sub listStories {
 	my($i, $canedit) = (0, 0);
 
 	for (@$storylist) {
-		my($hits, $comments, $sid, $title, $aid, $time_plain, $topic_alttext, $section,
+		my($hits, $comments, $sid, $title, $aid, $time_plain, $topic, $section,
 			$displaystatus, $writestatus) = @$_;
 		my $time = timeCalc($time_plain, '%H:%M', 0);
 		my $td   = timeCalc($time_plain, '%A %B %d', 0);
 		my $td2  = timeCalc($time_plain, '%m/%d', 0);
 
-		my $substrtopic = $topic_alttext;
-		$substrtopic =~ s/^the//i;
-		$substrtopic =~ s/\W+//g;
-		$substrtopic = substr($substrtopic, 0, 5);
+		$topic =~ s/^the//i;
+		$topic =~ s/\W+//g;
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
 		my $tbtitle = fixparam($title);
 		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {
@@ -1207,9 +1205,8 @@ sub listStories {
 			aid		=> $slashdb->getAuthor($aid, 'nickname'),
 			'time'		=> $time,
 			canedit		=> $canedit,
-			substrtopic	=> $substrtopic,
+			topic		=> $topic,
 			section		=> $section,
-			substrsection	=> substr($section, 0, 5),
 			td		=> $td,
 			td2		=> $td2,
 			writestatus	=> $writestatus,
