@@ -58,7 +58,7 @@ __template__
 		Posts without proper registration are posted as
 		<B>[% user.nickname %]</B>
 	</TD></TR>
-	<INPUT TYPE="HIDDEN" NAME="op" VALUE="rlogin">
+	<INPUT TYPE="HIDDEN" NAME="rlogin" VALUE="1">
 
 	<TR><TD ALIGN="RIGHT">Nick</TD><TD>
 		<INPUT TYPE="TEXT" NAME="unickname" VALUE="[% form.nickname %]">

@@ -56,6 +56,7 @@ use vars qw($VERSION @EXPORT);
 	createEnvironment
 	getObject
 	getAnonId
+	getAnonCookie
 	isAnon
 	prepareUser
 	filter_params
