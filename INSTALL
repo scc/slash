@@ -17,14 +17,14 @@ SYNOPSIS
 
     PostgreSQL support in Slash 2 is currently alpha-quality.
 
-    Slash can always be downloaded from SourceForge, from the FTP site, and
-    via CVS.
+    Slash can always be downloaded from SourceForge.net, from the FTP site,
+    and via CVS.
 
             http://sf.net/projects/slashcode/
             ftp://ftp.slashcode.com//pub/slashcode/
             http://cvs.slashcode.com/
 
-    See the SourceForge page for patches and bug reports.
+    See the SourceForge.net page for patches and bug reports.
 
   Important Note
 
@@ -77,7 +77,9 @@ INSTALLATION
 
         Create a username/password that can access that database (by
         default, we normally set the user to have all permissions, but that
-        might not be appropriate for your site).
+        might not be appropriate for your site; make sure that you have at
+        least privileges to select, insert, update, delete, create, drop,
+        and index).
 
     2.  Install perl.
 
@@ -338,6 +340,9 @@ UPGRADING
 
   Slash 2.0 -> Slash 2.2
 
+    Slash 2.2 is a major upgrade from Slash 2.0. It takes a little bit of
+    work to get it going.
+
     1.  BACK EVERYTHING UP ON THE EXISTING SITE.
 
     2.  Install Bundle::Slash. If you have done so previously, follow the
@@ -580,7 +585,7 @@ REQUIREMENTS
         ApacheDBI
         libapreq
         AppConfig
-        Template-Toolkit
+        Template-Toolkit (version 2)
         Mail-Sendmail
         MailTools
         Email-Valid

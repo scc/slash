@@ -1,3 +1,66 @@
+slash-2.1.1, 2001.10.31
+-----------------------
+
+*	Some slash2toslash2.2 tweaks
+
+*	Make utils/slash use the REAL slashd pid files
+
+*	Bunches of Search fixes
+
+*	Fix attaching polls to stories
+
+*	Bunches of IPID/ban/troll modifications
+
+*	Make plugins return false for getObject if not installed
+	properly
+
+*	Delete web messages after (default) 31 days, queued
+	messages after (default) 7 days
+
+*	Messaging fixes (hashref passed cannot be used again)
+
+*	Add install-theme
+
+*	Make ForumZilla support work again; still needs some polishing up
+
+*	Add feature to not set all AC posts at -1, and another
+	to prefix all sigs with "--", and another to show
+	stories from all sections on homepage, instead of just
+	ones set to show on home page
+
+*	Normalize some seclevs
+
+*	Fix up archiving stories
+
+*	Add basic support for multiple form values (many values to
+	one name)
+
+*	Add support to override constants and form elements via
+	Apache configuration
+
+*	Add LINK REL support (chromatic)
+
+*	Add PNG to topic image types
+
+*	Fix formkeys to not produce duplicate formkeys; add rand
+	seeding to Slash::Apache::User to prevent duplicating seed
+
+*	Tweaking of compression and content filters
+
+*	Lots of small bugfixes (if you don't see it here, we didn't
+	deem it very important ;)
+
+*	Lots of minor fixes to text, markup, filters, formatting,
+	etc. ad nasueam
+
+slash-2.1.0, 2001.10.12
+-----------------------
+
+*	Tons of things.  Too numerous to mention any of it.  We
+	completely rewrote major portions of the code, and changed
+	every file, just about.  That's why it was five months
+	between releases.
+
 slash-2.0.0, 2001.05.09
 -----------------------
 

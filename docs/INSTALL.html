@@ -78,13 +78,13 @@ We've had reports of the 1.0.x version of Slash running on Windows,
 but have done no testing and have no further information, and have no
 information about Slash 2 running on Windows.</P>
 <P>PostgreSQL support in Slash 2 is currently alpha-quality.</P>
-<P>Slash can always be downloaded from SourceForge, from the FTP site,
+<P>Slash can always be downloaded from SourceForge.net, from the FTP site,
 and via CVS.</P>
 <PRE>
         <A HREF="http://sf.net/projects/slashcode/">http://sf.net/projects/slashcode/</A>
         <A HREF="ftp://ftp.slashcode.com//pub/slashcode/">ftp://ftp.slashcode.com//pub/slashcode/</A>
         <A HREF="http://cvs.slashcode.com/">http://cvs.slashcode.com/</A></PRE>
-<P>See the SourceForge page for patches and bug reports.</P>
+<P>See the SourceForge.net page for patches and bug reports.</P>
 <P>
 <H2><A NAME="important_note">Important Note</A></H2>
 <P>The software and hardware requirements are listed at the end of the
@@ -137,7 +137,9 @@ and Slash).</P>
 <P>Create a database to be used by Slash.</P>
 <P>Create a username/password that can access that database (by
 default, we normally set the user to have all permissions, but that
-might not be appropriate for your site).</P>
+might not be appropriate for your site; make sure that you have
+at least privileges to select, insert, update, delete, create,
+drop, and index).</P>
 <P></P>
 <LI>
 <STRONG>Install perl.</STRONG>
@@ -382,6 +384,8 @@ entirely before beginning.  We are not responsible for any loss of
 data or functionality.</STRONG></P>
 <P>
 <H2><A NAME="slash_2.0___slash_2.2">Slash 2.0 -&gt; Slash 2.2</A></H2>
+<P>Slash 2.2 is a major upgrade from Slash 2.0.  It takes a little bit
+of work to get it going.</P>
 <OL>
 <LI>
 BACK EVERYTHING UP ON THE EXISTING SITE.
@@ -666,7 +670,7 @@ the Bundle::Slash distribution.</P>
 <DD>
 <DT><STRONG><A NAME="item_AppConfig">AppConfig</A></STRONG><BR>
 <DD>
-<DT><STRONG><A NAME="item_Template%2DToolkit">Template-Toolkit</A></STRONG><BR>
+<DT><STRONG><A NAME="item_Toolkit">Template-Toolkit (version 2)</A></STRONG><BR>
 <DD>
 <DT><STRONG><A NAME="item_Mail%2DSendmail">Mail-Sendmail</A></STRONG><BR>
 <DD>
