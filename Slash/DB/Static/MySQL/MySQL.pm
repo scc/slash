@@ -129,10 +129,11 @@ sub deleteDaily {
 			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
 			or (to_days(now()) - to_days(time) > $delay2)");
 
-	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
+#	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
+# why are these commented out?
 #	$self->sqlDo("DELETE from moderatorlog WHERE
 #	  to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
 #	$self->sqlDo("DELETE from metamodlog WHERE
