@@ -2599,7 +2599,7 @@ sub setUser {
 	# What is worse, a select+update or a replace?
 	# I should look into that.
 	for (@param)  {
-		$self->sqlDo("REPLACE INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
+		$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]});
 	}
 }
 
@@ -2725,10 +2725,9 @@ sub _genericSet {
 		# What is worse, a select+update or a replace?
 		# I should look into that. if EXISTS() the
 		# need for a fully sql92 database.
+		# transactions baby, transactions... -Brian
 		for (@param)  {
-			$self->sqlDo("REPLACE INTO $param_table values ('', " 
-				. $self->{_dbh}->quote($id) 
-				. ", '$_->[0]', '$_->[1]')");
+			$self->sqlReplace($param_table, { $table_prime => $self->sqlQuote($id), name => $_->[0], value => $_->[1]});
 		}
 	} else {
 		$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
