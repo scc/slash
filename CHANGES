@@ -1,3 +1,16 @@
+slash-2.2.4, 2002.01.14
+-----------------------
+
+*	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.4 from
+	versions 2.2.0 through 2.2.3.  If you cannot upgrade immediately,
+	advise all your authors/admins to turn off Javascript -- this
+	update fixes a bug which allows scripting attacks to admin.pl.
+
+*	Fix for rare karma-related mishaps.
+
+*	Fix to more carefully disallow posting to discussions that are
+	archived or timestamped in the future.
+
 slash-2.2.3, 2002.01.05
 -----------------------
 
