@@ -127,8 +127,22 @@ sub mailingList {
 	my @h_email = map { $_->[2] } @$h_users;
 	my @n_email = map { $_->[2] } @$n_users;
 
+	messagedLog("Daily Headlines begin\n");
 	$messages->bulksend(\@h_email, "Daily Headlines", $headlines,  1);
+	messagedLog("Daily Headlines end\n");
+	messagedLog("Daily Newsletter begin\n");
 	$messages->bulksend(\@n_email, "Daily Stories",   $newsletter, 0);
+	messagedLog("Daily Newsletter end\n");
+}
+
+sub messagedLog {
+	chomp @_;
+	my $fh = gensym();
+	my $file = catfile(getCurrentStatic('logdir'), "messaged.log");
+	my $log_msg = scalar(localtime) . "\t@_\n";
+	open $fh, ">> $file\0" or die "Can't append to $log: $!\nmsg: @_\n";
+	print $fh $log_msg;
+	close $fh;
 }
 
 sub urlize {

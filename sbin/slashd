@@ -24,6 +24,7 @@ use Carp;
 # use Date::Manip;
 use File::Basename;
 use File::Path;
+use File::Spec::Functions;
 use LWP::UserAgent;
 use HTTP::Request;
 use Time::Local;
@@ -59,9 +60,9 @@ exit 0;
 sub slashdLog {
 	chomp @_;
 	my $fh = gensym();
-	my $file = "$constants->{logdir}/slashd.log";
-	open($fh, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
+	my $file = catfile($constants->{logdir}, "slashd.log");
 	my $log_msg = scalar(localtime) . "\t@_\n";
+	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @_\n";
 	print $fh $log_msg;
 	close $fh;
 }
@@ -101,7 +102,7 @@ sub prog2file {
 		$err_str .= " no data";
 	} else {
 		my $fh = gensym();
-		if (!open $fh, ">$f") {
+		if (!open $fh, ">$f\0") {
 			$err_str .= " could not write to '$f': '$!'";
 		} else {
 			print $fh $data;
@@ -177,22 +178,21 @@ sub verbosity {
 
 sub slashdPid {
 	my $fh = gensym();
-	my $file = "$constants->{logdir}/slashd.pid";
+	my $file = catfile($constants->{logdir}, "slashd.pid");
 	if (-e $file) {
-		die "$constants->{logdir}/slashd.pid already exists; you will"
+		die "$file already exists; you will"
 			. " need to remove it before slashd can start";
 	}
-	open $fh, ">$file"
-		or die "Can't open $constants->{logdir}/slashd.pid: $!";
+	open $fh, ">$file\0" or die "Can't open $file: $!";
 	print $fh $$;
 	close $fh;
 }
 
 sub slashdLogInit {
 	my $ld = $constants->{logdir};
-	mkpath "$ld/", 0, 0775;
-	my $file = "$ld/slashd.log";
-	open(STDERR, ">>$file") or die "Can't append STDERR to $file: $!";
+	mkpath $ld, 0, 0775;
+	my $file = catfile($ld, "slashd.log");
+	open(STDERR, ">>$file\0") or die "Can't append STDERR to $file: $!";
 	my $oldfh = select(STDERR); $| = 1; select($oldfh);
 }
 
@@ -209,7 +209,7 @@ sub process_tasks {
 	# "require" all the task files -- each will put its info into
 	# $task{"filename.pl"}
 	my %success = my %failure = ( );
-	my $dir = "$constants->{datadir}/tasks";
+	my $dir = catdir($constants->{datadir}, "tasks");
 	if (!-e $dir or !-d _ or !-r _) {
 		slashdLogDie(<<EOT);
 could not process task files in $dir, missing or not readable to $>
@@ -406,7 +406,7 @@ sub main {
 	}
 	local $SIG{TERM} = local $SIG{STOP} = sub {
 		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
-		unlink("$constants->{logdir}/slashd.pid");
+		unlink(catfile($constants->{logdir}, "slashd.pid"));
 		exit 0;
 	};
 

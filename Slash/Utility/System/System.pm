@@ -26,6 +26,7 @@ LONG DESCRIPTION.
 
 use strict;
 use Email::Valid;
+use File::Spec::Functions;
 use Mail::Bulkmail;
 use Mail::Sendmail;
 use Slash::Utility::Environment;
@@ -123,16 +124,41 @@ sub bulkEmail {
 	my $constants = getCurrentStatic();
 
 	my $valid = Email::Valid->new();
-	my @good = grep { $valid->rfc822($_) } @$addrs;
+	my @list = grep { $valid->rfc822($_) } @$addrs;
+
+	my $goodfile = catfile($constants->{logdir}, 'bulk-good.log');
+	my $badfile  = catfile($constants->{logdir}, 'bulk-bad.log');
+	my $errfile  = catfile($constants->{logdir}, 'bulk-error.log');
+
+	# start logging
+	for my $file ($goodfile, $badfile, $errfile) {
+		my $fh = gensym();
+		open $fh, ">> $file\0" or errorLog("Can't open $file: $!"), return;
+		printf $fh "Starting bulkmail '%s': %s\n",
+			$subject, scalar localtime;
+		close $fh;
+	}
 
 	my $bulk = Mail::Bulkmail->new(
 		From    => $constants->{mailfrom},
 		Smtp	=> $constants->{smtp_server},
 		Subject => $subject,
 		Message => $content,
-		'LIST'  => \@good,
+		LIST	=> \@list,
+		GOOD	=> $goodfile,
+		BAD	=> $badfile,
+		ERRFILE	=> $errfile,
 	);
-	$bulk->bulkmail;
+	my $return = $bulk->bulkmail;
+
+	# end logging
+	for my $file ($goodfile, $badfile, $errfile) {
+		my $fh = gensym();
+		open $fh, ">> $file\0" or errorLog("Can't open $file: $!"), return;
+		printf $fh "Ending bulkmail '%s': %s\n\n",
+			$subject, scalar localtime;
+		close $fh;
+	}
 }
 
 sub doEmail {
