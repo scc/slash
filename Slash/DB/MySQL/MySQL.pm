@@ -848,14 +848,9 @@ sub setVar {
 }
 
 ########################################################
-sub setSessionByAid {
+sub setSession {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('sessions', $value, 'uid=' . $self->{_dbh}->quote($name));
-}
-
-########################################################
-sub setAuthor {
-	_genericSet('authors', 'aid', @_);
 }
 
 ########################################################
@@ -872,12 +867,6 @@ sub setTemplate {
 sub newVar {
 	my($self, $name, $value, $desc) = @_;
 	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
-}
-
-########################################################
-sub createAuthor {
-	my($self, $aid) = @_;
-	$self->sqlInsert('authors', { aid => $aid});
 }
 
 ########################################################
@@ -2592,8 +2581,8 @@ sub getAuthor {
 	# On a side note, I hate grabbing "*" from a database
 	# -Brian
 	$self->{$table_cache}{$id} = {};
-	my $answer = $self->sqlSelectHashref('uid,nickname,fakeemail', 
-			'users', 'uid=' . $self->{_dbh}->quote($id));
+	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,bio', 
+			'users,users_info', 'uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -2616,7 +2605,7 @@ sub getAuthors {
 	my($self, $cache_flag) = @_;
 	unless (getCurrentStatic('cache_enabled')) {
 		my %authors;
-		my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 99');
+		my $sth = $self->sqlSelectMany('users.uid as uid,nickname,fakeemail,bio', 'users,users_info', 'users.seclev >= 99 AND users.uid = users_info.uid');
 		while (my $row = $sth->fetchrow_hashref) {
 			$authors{ $row->{'uid'} } = $row;
 		}
