@@ -28,6 +28,7 @@ sendAdminMail();
 mailingList();
 
 # Now lets clean up the database
+$slashdb->archiveComments();
 $slashdb->deleteDaily();
 
 exit;

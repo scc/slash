@@ -414,12 +414,25 @@ sub createSubmission {
 }
 
 #################################################################
-sub getDiscussions {
+sub getStoryDiscussions {
 	my($self) = @_;
 	my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url",
 		"discussions,stories ",
 		"displaystatus > -1 and discussions.sid=stories.sid and time <= now() and type = 0 ",
 		"order by time desc LIMIT 50"
+	);
+
+	return $discussion;
+}
+
+#################################################################
+# Less then 2, ince 2 would be a read only discussion
+sub getDiscussions {
+	my($self) = @_;
+	my $discussion = $self->sqlSelectAll("id,title,url",
+		"discussions",
+		"type < 2 AND ts <= now()",
+		"order by ts desc LIMIT 50"
 	);
 
 	return $discussion;
@@ -945,8 +958,11 @@ sub getCommentCid {
 sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	if ($cid) {
-		$self->sqlDo("delete from comments WHERE cid=" . $self->sqlQuote($cid));
-		$self->sqlDo("delete from comment_text WHERE id=" . $self->sqlQuote($cid));
+		$self->sqlDo("DELETE FROM comments WHERE cid=$cid");
+		$self->sqlDo("DELETE FROM comment_text WHERE cid=$cid");
+		if (getCurrentStatic('mysql_heap_table')) {
+			$self->sqlDo("DELETE FROM comment_heap WHERE cid=$cid");
+		}
 	} else {
 		my $table = "comments";
 		if (getCurrentStatic('mysql_heap_table')) {

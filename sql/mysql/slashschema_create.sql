@@ -597,7 +597,7 @@ CREATE TABLE users_acl (
   id int(11) NOT NULL auto_increment,
   uid int(11) NOT NULL,
   name varchar(32) NOT NULL,
-  value varchar(254) NOT NULL,
+  value varchar(254),
   UNIQUE uid_key (uid,name),
   KEY uid (uid),
   PRIMARY KEY (id)

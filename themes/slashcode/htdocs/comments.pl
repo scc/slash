@@ -32,7 +32,6 @@ sub main {
 		edit			=> \&edit,
 		post			=> \&edit,
 		creatediscussion	=> \&createDiscussion,
-		creatediscussionPage	=> \&createDiscussionPage,
 		Preview			=> \&edit,
 		preview			=> \&edit,
 		submit			=> \&submitComment,
@@ -141,10 +140,21 @@ sub commentIndex {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	titlebar("90%", "Several Active Discussions");
-	my $discussions = $slashdb->getDiscussions();
-	slashDisplay('discuss_list', {
-		discussions	=> $discussions,
-	});
+	if($form->{all}) {
+		my $discussions = $slashdb->getDiscussions();
+		slashDisplay('discuss_list', {
+			discussions	=> $discussions,
+		});
+	} else {
+		my $discussions = $slashdb->getStoryDiscussions();
+		slashDisplay('discuss_list', {
+			discussions	=> $discussions,
+		});
+	}
+
+	if($user->{seclev} >= $constants->{discussion_create_seclev}) {
+		slashDisplay('discussioncreate');
+	}
 }
 
 ##################################################################
@@ -162,19 +172,6 @@ sub createDiscussion {
 	}
 
 	commentIndex(@_);
-}
-
-##################################################################
-# Yep, I changed the l33t method of adding discussions.
-# "The Slash job, keeping trolls on their toes"
-# -Brian
-sub createDiscussionPage {
-	my($form, $slashdb, $user, $constants, $id) = @_;
-
-	commentIndex(@_);
-	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-		slashDisplay('discussioncreate');
-	}
 }
 
 ##################################################################
