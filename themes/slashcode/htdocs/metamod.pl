@@ -27,19 +27,19 @@ sub main {
 	} elsif ($ineligible) {
 		print getData('not-eligible');
 	} else {
-		my $last =
-			($slashdb->getModeratorLast($user->{uid}))->{lastmmid};
-		unless ($last) {
-			$last = $slashdb->getModeratorLogRandom();
-			$slashdb->setUser($user->{uid}, {
-				lastmmid => $last,
-			});
-		}
+		#my $last =
+		#	($slashdb->getModeratorLast($user->{uid}))->{lastmmid};
+		#unless ($last) {
+			#$last = $slashdb->getModeratorLogRandom($uid);
+			#$slashdb->setUser($user->{uid}, {
+			#	lastmmid => $last,
+			#});
+		#}
 
 		if ($op eq 'MetaModerate') {
-			metaModerate($last);
+			metaModerate();
 		} else {
-			displayTheComments($last);
+			displayTheComments();
 		}
 	}
 
@@ -121,7 +121,7 @@ sub displayTheComments {
 
 	$user->{points} = 0;
 	my $comments = $slashdb->getMetamodComments(
-		$id, $user->{uid}, $constants->{m2_comments}
+		$user->{uid}, $constants->{m2_comments}
 	);
 
 	slashDisplay('dispTheComments', {

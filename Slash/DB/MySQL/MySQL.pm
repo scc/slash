@@ -287,29 +287,30 @@ sub setModeratorLog {
 #
 # Work, dammit! - Cliff
 sub getMetamodComments {
-	my($self, $id, $uid, $num_comments) = @_;
+	my($self, $uid, $num_comments) = @_;
 
 	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	# Removed extraneous "users.uid!=$uid" from WHERE clause.
 	# Also removed "sig" from field list as we anonymize it below.
+	my $thresh = $self->getVar('m2_consensus', 'value');
 	my $sth = $self->sqlSelectMany(
 		"$comment_table.cid, $comment_table.sid as sid, date, subject, comment,
 		users.uid as uid, pid, moderatorlog.id as id,
 		moderatorlog.reason as modreason, $comment_table.reason,
 		title, url",
 
-		"$comment_table, comment_text, users, users_info, moderatorlog, discussions",
+		"$comment_table, comment_text, users, users_info, moderatorlog,
+		discussions",
 
 		"moderatorlog.cid = $comment_table.cid
-		AND moderatorlog.id > $id
 		AND $comment_table.uid != $uid AND moderatorlog.uid != $uid
 		AND users.uid = $comment_table.uid AND users_info.uid = $comment_table.uid
 		AND moderatorlog.sid = discussions.id
 		AND comment_text.cid = $comment_table.cid
-		AND moderatorlog.reason < 8",
+		AND moderatorlog.reason < 8 AND moderatorlog.m2count < $thresh",
 
-		"LIMIT $num_comments"
+		"ORDER BY moderatorlog.id LIMIT $num_comments"
 	);
 
 	my $comments = [];
@@ -2555,7 +2556,7 @@ sub setMetaMod {
 
 	# Update $muid's Karma
 	$self->sqlTransactionStart(qq(
-LOCK TABLES users_info WRITE, metamodlog WRITE
+LOCK TABLES users_info WRITE, metamodlog WRITE, moderatorlog WRITE
 	));
 	for (keys %{$m2victims}) {
 		my $muid = $m2victims->{$_}[0];
@@ -2597,6 +2598,9 @@ LOCK TABLES users_info WRITE, metamodlog WRITE
 			-ts   => "from_unixtime($ts)",
 			-flag => $flag
 		});
+		$self->sqlUpdate('moderatorlog', {
+			-m2count => 'm2count+1',
+		}, "id=$mmid");
 	}
 	$self->sqlTransactionFinish();
 

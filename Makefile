@@ -44,7 +44,7 @@ PLUGINFILES = `find plugins -name CVS -prune -o -name [a-zA-Z]\*.pl -print`
 REPLACEWITH = `$(PERL) -MConfig -e 'print $$Config{startperl}' | sed 's/@/\\@/g'`
 
 # Scripts that need special treatment for $(SLASH_PREFIX)
-PREFIX_REPLACE_FILES = utils/slash httpd/slash.conf
+PREFIX_REPLACE_FILES = utils/slash httpd/slash.conf bin/runtask
 
 # Used by the RPM build.
 BUILDROOT=/var/tmp/slash-buildroot

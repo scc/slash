@@ -305,6 +305,7 @@ CREATE TABLE metamodlog (
 	ts datetime,
 	id mediumint UNSIGNED NOT NULL auto_increment,
 	flag mediumint DEFAULT '0' NOT NULL,
+	INDEX byuser (uid),
 	PRIMARY KEY (id)
 ) TYPE = myisam;
 
@@ -322,9 +323,10 @@ CREATE TABLE moderatorlog (
 	cid mediumint UNSIGNED NOT NULL,
 	reason tinyint UNSIGNED DEFAULT '0',
 	active tinyint DEFAULT '1' NOT NULL,
+	m2count mediumint UNSIGNED DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	KEY sid (sid,cid),
-	KEY sid_2 (sid,uid,cid)
+	KEY sid_2 (cid,uid,sid,reason,m2count)
 ) TYPE = myisam;
 
 

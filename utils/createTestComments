@@ -33,13 +33,10 @@ usage('Options used incorrectly') unless getopts('hI:RTJu:U:v', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 if ($opts{R}) {
-	if ($opts{I} or $opts{U}) {
-		usage("Can't specify -U or -I when using -R");
-	}
+	usage("Can't specify -U when using -R") if exists $opts{U};
 } else {
-	if (!$opts{I} or !$opts{U}) {
-		usage("Must specify either -R, or both -U and -I");
-	}
+	usage("Must specify either -R, or both -U and -I")
+		if ! exists $opts{U};
 	usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
 }
 $junk = $opts{'J'} ? 1 : 0;

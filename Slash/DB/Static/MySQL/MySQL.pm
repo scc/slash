@@ -565,17 +565,17 @@ sub updateTokens {
 
 	my $num_empty_uids = 0;
 	for my $uid (@{$modlist}) {
-		if ($uid) {
-			++$num_empty_uids;
-			next;
-		}
+		#if ($uid) {
+		#	++$num_empty_uids;
+		#	next;
+		#}
 		$self->setUser($uid, {
 			-tokens	=> "tokens+1",
 		});
 	}
-	if ($num_empty_uids) {
-		errorLog("$num_empty_uids empty uids in updateTokens");
-	}
+	# if ($num_empty_uids) {
+	#	errorLog("$num_empty_uids empty uids in updateTokens");
+	#}
 }
 
 ########################################################
@@ -619,33 +619,17 @@ sub checkUserExpiry {
 
 ########################################################
 # For moderation scripts.
-#	This sub returns the mmids of M2 votes
-#	that are eligible for processing M1s that are
-#	about the age of the archive delay.
+#	This sub returns the moderatorlog IDs
+#	that are eligible for consensus metamoderation.
 #
 sub getMetamodIDs {
 	my($self) = @_;
 
-	my $constants = getCurrentStatic();
-
-	# The previous code was shite because I let myself get distracted
-	# due to a silly logic error. The way to REALLY do this is to wait a
-	# day LATER than the life of a discussion. This way, YOU KNOW that
-	# no further M2 records will show up in the database after
-	# reconciliation.
-	#
-	# Cliff == B4K4!
-	#
-	# We could even change the increment to a specific var if someone
-	# finds a need to add more "lag time" into the system.
-	#					- Cliff 7/12/01
-	my $num_days = $constants->{archive_delay} + 1;
-	my $list = $self->sqlSelectAllHashrefArray(
-		'metamodlog.id as id, mmid', 'metamodlog,moderatorlog',
-		"TO_DAYS(CURDATE())-TO_DAYS(metamodlog.ts) >= $num_days AND
-		flag=10 AND moderatorlog.id=metamodlog.mmid",
-		"order by id LIMIT $constants->{m2_batchsize}"
+	my($thresh, $num) = getCurrentStatic([qw(m2_consensus m2_batchsize)]);
+	my $list = $self->sqlSelectAll(
+		'id', 'moderatorlog', "m2count > $thresh", "LIMIT $num"
 	);
+	$_ = $_->[0] for @{$list};
 
 	return $list;
 }
@@ -681,7 +665,7 @@ sub updateM2Flag {
 ########################################################
 # For moderation scripts.
 #
-#
+# Clears metamod flag for a given MMID.
 sub clearM2Flag {
 	my($self, $id) = @_;
 
@@ -690,7 +674,7 @@ sub clearM2Flag {
 	# state.
 	$self->sqlUpdate('metamodlog', {
 		-flag => '0',
-	}, "flag=10 and id=$id");
+	}, "flag=10 and mmid=$id");
 }
 
 ########################################################

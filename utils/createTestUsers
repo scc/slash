@@ -243,11 +243,11 @@ sub usage {
 	# Remember to doublecheck these match getopts()!
 	print <<EOT;
 
-Usage: $PROGNAME [OPTIONS] [#comments]
+Usage: $PROGNAME [OPTIONS] [#users]
 
-This utility creates test comments for a given Slash site. This program is for
+This utility creates test users for a given Slash site. This program is for
 testing purposes, only, particularly for those ambitious Slash users out there
-who want to try their hand at modifying the comment or moderation systems.
+who want to try their hand at modifying the code.
 
 Main options:
 	-h	Help (this message)
