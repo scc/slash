@@ -848,8 +848,8 @@ sub moderate {
 		# in it then it belongs to stories and we should
 		# update to help with stories/hitparade.
 		# -Brian
-		if ($form->{sid} !~ /^\d+$/) {
-			$slashdb->setStory($form->{sid}, { writestatus => 'dirty' });
+		if ($discussion->{sid}) {
+			$slashdb->setStory($discussion->{sid}, { writestatus => 'dirty' });
 		}
 	}
 }
