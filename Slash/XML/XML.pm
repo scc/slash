@@ -89,7 +89,8 @@ sub xmlDisplay {
 	my($type, $param, $opt) = @_;
 
 	my $class = "Slash::XML::\U$type";
-	unless (eval "require $class") {
+	my $file  = "Slash/XML/\U$type\E.pm";
+	if (!exists($INC{$file}) && !eval("require $class")) {
 		errorLog($@);
 		return;
 	}
