@@ -111,6 +111,7 @@ sub SlashCompileTemplates ($$$) {
 sub IndexHandler {
 	my($r) = @_;
 
+	return DECLINED unless $r->is_main;
 	my $constants = getCurrentStatic();
 	my $uri = $r->uri;
 	if ($constants->{rootdir}) {
