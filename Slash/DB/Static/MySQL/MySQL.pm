@@ -791,12 +791,16 @@ sub getStoriesWithFlag {
 	# Currently only used by two tasks and we do NOT want stories
 	# that are marked as "Never Display". If this changes, 
 	# another method will be required. If such is created, I would
-	# suggest getAllStoriesWithFlag() as the method name.
+	# suggest getAllStoriesWithFlag() as the method name. We ALSO
+	# don't want to mess with stories that haven't been displayed
+	# yet!
+	#
 	# - Cliff 14-Oct-2001
 	my $returnable = $self->sqlSelectAll(
 		"sid,title,section",
 		"stories", 
-		"writestatus='$writestatus' AND displaystatus > -1",
+		"time < now() AND 
+		writestatus='$writestatus' AND displaystatus > -1",
 		$sqlorder
 	);
 
