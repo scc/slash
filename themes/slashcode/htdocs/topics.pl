@@ -47,7 +47,7 @@ EOT
 		listTopics();
 	}
 
-	writelog("topics");
+	$I{dbobject}->writelog($I{U}{uid}, "topics");
 	footer($I{F}{ssi});
 }
 
@@ -103,7 +103,7 @@ EOT
 <BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
 EOT
 
-	writelog("topics");
+	$I{dbobject}->writelog($I{U}{uid}, "topics");
 }
 
 #################################################################

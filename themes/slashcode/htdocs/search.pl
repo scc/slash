@@ -51,7 +51,7 @@ sub main {
 	if	($I{F}{op} eq "comments")	{ commentSearch()	}
 	elsif	($I{F}{op} eq "users")		{ userSearch()		}
 	else					{ storySearch()		}
-	writelog("search", $I{F}{query});
+	$I{dbobject}->writelog($I{U}{uid}, "search", $I{F}{query});
 	footer();	
 }
 

@@ -49,7 +49,7 @@ EOT
 		displayTheComments($id);
 	}
 
-	writelog("metamod", $I{F}{op});
+	$I{dbobject}->writelog($I{U}{uid}, "metamod", $I{F}{op});
 	footer();
 }
 

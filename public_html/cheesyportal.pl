@@ -70,7 +70,7 @@ sub main {
 
 	footer();
 
-	writelog("cheesyportal") unless $I{F}{ssi};
+	$I{dbobject}->writelog($I{U}{uid}, "cheesyportal") unless $I{F}{ssi};
 }
 
 main();

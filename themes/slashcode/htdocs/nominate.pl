@@ -54,7 +54,7 @@ sub main {
 		displayForm();
 	}
 
-	writelog("nominate", $I{U}{nickname});
+	$I{dbobject}->writelog($I{U}{uid}, "nominate", $I{U}{nickname});
 	footer();
 }
 

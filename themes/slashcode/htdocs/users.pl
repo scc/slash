@@ -136,7 +136,7 @@ EOT
 	}
 
 	miniAdminMenu() if $I{U}{aseclev} > 100;
-	writelog("users", $I{U}{nickname});
+	$I{dbobject}->writelog($I{U}{uid}, "users", $I{U}{nickname});
 	footer();
 }
 

@@ -67,7 +67,7 @@ sub main {
 		printComments($I{F}{qid}) unless getvar("nocomment");
 	}
 
-	writelog("pollbooth", $I{F}{qid});
+	$I{dbobject}->writelog($I{U}{uid}, "pollbooth", $I{F}{qid});
 	footer();
 }
 

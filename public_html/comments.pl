@@ -262,7 +262,7 @@ EOT
 		commentIndex();
 	}
 
-	writelog("comments", $I{F}{sid});
+	$I{dbobject}->writelog($I{U}{uid}, "comments", $I{F}{sid});
 
 	footer();
 }

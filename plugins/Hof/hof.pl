@@ -109,7 +109,7 @@ EOT
 <BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
 EOT
 
-	writelog("hof");
+	$I{dbobject}->writelog($I{U}{uid}, "hof");
 	footer($I{F}{ssi});
 }
 

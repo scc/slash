@@ -64,7 +64,7 @@ EOT
 <P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
 EOT
 
-	writelog("authors");
+	$I{dbobject}->writelog($I{U}{uid}, "authors");
 	footer($I{F}{ssi});
 }
 

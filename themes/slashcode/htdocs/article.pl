@@ -87,7 +87,7 @@ sub main {
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 
 	printComments($I{F}{sid});
-	writelog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
+	$I{dbobject}->writelog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
 	footer();
 
 	# zero the refresh flag 
