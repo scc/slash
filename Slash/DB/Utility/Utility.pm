@@ -151,8 +151,8 @@ sub create {
 	$val->{$prime} = $id if $id;
 	$self->sqlInsert($table, $val);
 
-	# We need if/else in here for different DB
-	my($rid) = $self->sqlSelect("LAST_INSERT_ID()");
+	# what should $prime really be?  add a new var to $self? -- pudge
+	my($rid) = $self->getLastInsertId($table, $prime);
 
 	return $rid;
 }

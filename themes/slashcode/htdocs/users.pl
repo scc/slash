@@ -856,7 +856,6 @@ sub saveUserAdmin {
 
 	if (!$user->{nonuid}) {
 		if ($form->{expired} eq 'on') {
-
 			$slashdb->setExpired($user->{uid});
 
 		} else {

@@ -85,7 +85,7 @@ sub create {
 		posttype	=> $posttype,
 	});
 
-	my($id) = $self->sqlSelect("LAST_INSERT_ID()");
+	my($id) = $self->getLastInsertId('journals','id');
 	$self->sqlInsert("journals_text", {
 		id		=> $id,
 		article 	=> $article,

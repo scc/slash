@@ -33,7 +33,7 @@ sub main {
 		visited		=> $slashdb->countStoriesTopHits(),
 		activea		=> $slashdb->countStoriesAuthors(),
 		activep		=> $slashdb->countPollquestions(),
-		currtime	=> scalar localtime,
+		currtime	=> timeCalc(scalar localtime),
 		topcomments	=> \@topcomments,
 	});
 

@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '1.13';
+$Bundle::Slash::VERSION = '1.14';
 
 1;
 
@@ -44,6 +44,10 @@ Apache::DBI
 Apache::Cookie
 
 Image::Size
+
+Storable
+
+AppConfig		- Should be installed with TT, but sometimes not?
 
 Template		- Template Toolkit
 

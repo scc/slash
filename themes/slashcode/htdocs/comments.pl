@@ -16,7 +16,7 @@ use constant MSG_CODE_COMMENT_REPLY	=> 4;
 
 use constant COMMENTS_OPEN 	=> 0;
 use constant COMMENTS_RECYCLE 	=> 1;
-use constant COMMENTS_READ_ONLY 	=> 2;
+use constant COMMENTS_READ_ONLY => 2;
 
 ##################################################################
 sub main {
@@ -217,7 +217,7 @@ sub editComment {
 	}
 
 	if ($form->{pid} && !$form->{postersubj}) {
-		$form->{postersubj} = $reply->{subject};
+		$form->{postersubj} = decode_entities($reply->{subject});
 		$form->{postersubj} =~ s/^Re://i;
 		$form->{postersubj} =~ s/\s\s/ /g;
 		$form->{postersubj} = "Re:$form->{postersubj}";

@@ -747,7 +747,7 @@ DROP TABLE IF EXISTS vars;
 CREATE TABLE vars (
 	name varchar(32) DEFAULT '' NOT NULL,
 	value text,
-	description varchar(127),
+	description varchar(255),
 	PRIMARY KEY (name)
 );
 

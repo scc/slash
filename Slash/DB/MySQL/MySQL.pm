@@ -1630,7 +1630,7 @@ sub createAbuse {
 sub setExpired {
 	my($self, $uid) = @_;
 
-	if  (!($self->checkExpired($uid))) {
+	if  (! $self->checkExpired($uid)) {
 		$self->setUser($uid, { expired => 1});
 		$self->sqlInsert('accesslist', {
 			-uid		=> $uid,
@@ -1646,7 +1646,7 @@ sub setExpired {
 sub setUnexpired {
 	my($self, $uid) = @_;
 
-	if (($self->checkExpired($uid))) {
+	if ($self->checkExpired($uid)) {
 		$self->setUser($uid, { expired => 0});
 		my $sql = "WHERE uid = $uid AND reason = 'expired' AND formname = 'comments'";
 		$self->sqlDo("DELETE from accesslist $sql") if $uid;

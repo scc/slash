@@ -82,7 +82,7 @@ sub main {
 		editStory($form->{sid});
 
 	} elsif ($op eq 'listtopics') {
-		listTopics($user->{seclev});
+		listTopics();
 
 	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
 		colorEdit($user->{seclev});
@@ -775,8 +775,6 @@ sub topicSave {
 
 ##################################################################
 sub listTopics {
-	my($seclev) = @_;
-
 	my $slashdb = getCurrentDB();
 	my $imagedir = getCurrentStatic('imagedir');
 
@@ -789,19 +787,11 @@ sub listTopics {
 	for my $topic (values %$topics) {
 
 		$topicref->{$topic->{tid}} = {
-			alttext  	=> $topic->{altext},
+			alttext  	=> $topic->{alttext},
 			image 		=> $topic->{image},
 			height 		=> $topic->{height},
 			width 		=> $topic->{width},
 		};
-
-		if ($x++ % 6) {
-			$topicref->{$topic->{tid}}{trflag} = 1;
-		}
-
-		if ($seclev >= 500) {
-			$topicref->{$topic->{tid}}{topicedflag} = 1;
-		}
 	}
 
 	slashDisplay('listTopics', {

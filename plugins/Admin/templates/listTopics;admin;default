@@ -15,20 +15,17 @@ __template__
 <TABLE WIDTH="600" ALIGN="CENTER">
 <TR>
 
+[% x = 0 %]
 [% FOREACH tid = topicref.keys %]
-	[% IF topicref.$tid.trflag %]
-	</TR><TR>
-	[% END %]
-
+	[% x = x + 1; "</TR><TR>" IF (x mod 6) == 1 %]
 		<TD ALIGN="CENTER">
-
-	[% IF topicref.$tid.topicedflag %]
+	[% IF user.seclev >= 500 %]
 		<A HREF="[% env.script_name %]?topiced=1&nexttid=[% tid %]">
 	[% ELSE %]
 		<A NAME="">
 	[% END %]
-
-		<IMG SRC="[% constants.imagedir %]/topics/[% topicref.$tid.image %]" ALT="[% topicref.$tid.alttext %]" WIDTH="[% topicref.$tid.width %]" HEIGHT="[% topicref.$tid.height %]" BORDER="0"><BR>[% topicref.$tid.alttext %]</A>
+		<IMG SRC="[% constants.imagedir %]/topics/[% topicref.$tid.image %]" ALT="[% topicref.$tid.alttext %]" WIDTH="[% topicref.$tid.width %]" HEIGHT="[% topicref.$tid.height %]" BORDER="0">
+		<BR>[% tid %] / [% topicref.$tid.alttext %]</A>
 		</TD>
 [% END %]
 

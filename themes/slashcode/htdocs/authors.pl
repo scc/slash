@@ -24,7 +24,7 @@ sub main {
 		authors	=> $authors,
 		title	=> "The Authors",
 		admin	=> getCurrentUser('seclev') >= 1000,
-		'time'	=> scalar localtime,
+		'time'	=> timeCalc(scalar localtime),
 	});
 
 	footer($form->{ssi});

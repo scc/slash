@@ -33,9 +33,11 @@ sub main {
 		$form->{section}, $form->{op});
 	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
 
-	$form->{from}	= strip_nohtml($form->{from})  if $form->{from};
-	$form->{subj}	= strip_nohtml($form->{subj})  if $form->{subj};
-	$form->{email}	= strip_nohtml($form->{email}) if $form->{email};
+	# this really should not be done now, but later, it causes
+	# a lot of problems -- pudge
+	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
+	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
+	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	# Show submission title on browser's titlebar.
 	my($tbtitle) = $form->{title};

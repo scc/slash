@@ -29,7 +29,7 @@ __template__
 			pid	=> pid,
 			cid	=> cid,
 			subject	=> p,
-			startat	=> x
+			startat	=> startat
 		}) %][% IF start == form.startat %])</B>[% END %]
 	[% END %]
 

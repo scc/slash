@@ -57,7 +57,7 @@ sub topTopics {
 		title		=> 'Recent Topics',
 		width		=> '90%',
 		topics		=> \@topics,
-		currtime	=> scalar localtime,
+		currtime	=> timeCalc(scalar localtime),
 	});
 }
 

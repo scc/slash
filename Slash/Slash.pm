@@ -35,7 +35,7 @@ use vars qw($VERSION @EXPORT);
 
 use constant COMMENTS_OPEN 	=> 0;
 use constant COMMENTS_RECYCLE 	=> 1;
-use constant COMMENTS_READ_ONLY 	=> 2;
+use constant COMMENTS_READ_ONLY => 2;
 
 $VERSION   = '2.001000';  # v2.1.0
 # note: those last two lines of functions will be moved elsewhere
@@ -280,7 +280,7 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
 
 
-	if($discussion->{type} == COMMENTS_READ_ONLY) {
+	if ($discussion->{type} == COMMENTS_READ_ONLY) {
 		$user->{state}{comment_read_only} = 1;
 		slashDisplay('printCommNoArchive');
 	}

@@ -627,9 +627,13 @@ distribution.
 
 =item Image-Size
 
+=item Apache::Cookie
+
 =item Storable
 
 =item Template
+
+=item AppConfig
 
 =back
 

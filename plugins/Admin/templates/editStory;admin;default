@@ -141,7 +141,7 @@ __template__
 		<B>[% extracolref.$val.col %]</B> </FONT>
 		</TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="[% val %]" VALUE="[% FILTER strip_attribute; storyref.val; END %]" SIZE="64">
+		<INPUT TYPE="TEXT" NAME="[% val %]" VALUE="[% FILTER strip_attribute; storyref.$val; END %]" SIZE="64">
 		</TD>
 	</TR>
 	[% END %]
