@@ -527,11 +527,16 @@ sub showInfo {
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 
+		# This works since $sid is numeric.
 		my $replies = $slashdb->countCommentsBySidPid($sid, $cid);
 
 		# This is ok, since with all luck we will not be hitting the DB
-		my $story = $slashdb->getStory($sid);
-		my $question = $slashdb->getPollQuestion($sid, 'question');
+		# ...however, the "sid" parameter here must be the string
+		# based SID from either the "stories" table or from 
+		# pollquestions.
+		my $story_sid = ($slashdb->getDiscussion($sid))->{sid};
+		my $story = $slashdb->getStory($story_sid);
+		my $question = $slashdb->getPollQuestion($story_sid, 'question');
 
 		push @$commentstruct, {
 			pid 		=> $pid,

@@ -22,6 +22,6 @@ __template__
 [% count %] moderations have been meta moderated.  Thanks for participating.
 You may wanna go back <A HREF="[% constants.rootdir %]/">home</A> or perhaps to
 <A HREF="[% constants.rootdir %]/users.pl">your user page</A>.
-[% IF user.seclev > 10 %]<BR>Total unfairs is [% metamod.unfair %][% END %]
+[% IF user.seclev > 10 %]<P>Total unfairs is [% metamod.unfair %][% END %]
 __seclev__
 1000

@@ -86,18 +86,18 @@ Last Journal Entry was [% journal_date %]</A>
 	[% n = n + 1 %]
 	[% replies = comment.replies ? " Replies: $comment.replies" : "" %]
 	[% IF comment.story;
-		href    = "$constants.rootdir/article.pl?sid=$comment.sid";
+		href    = "$constants.rootdir/article.pl?sid=$comment.story.sid";
 		label    = comment.story.title;
 	ELSE;
-		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.sid";
+		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.question.sid";
 		label   = question.question;
         END %]
-<B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">
+<P><B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">
    [% comment.subj %]</A> posted on [% comment.cdate %]
         (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
-           <BR>attached to <A HREF="[% href %]">[% label %]</A>
-      </FONT><BR>
+           <BR>attached to <A HREF="[% href %]">[% title %]</A>
+      </FONT>
 [% END %]
 
 [% IF stories %]

@@ -105,7 +105,7 @@ sub metaModerate {
 
 	slashDisplay('metaModerate', {
 		changes	=> $changes,
-		count	=> $constants->{metamod_comments} - $y,
+		count	=> $constants->{m2_comments} - $y,
 		metamod	=> \%metamod,
 	});
 

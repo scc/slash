@@ -11,18 +11,19 @@ $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	my $sth = $slashdb->getNewStoryTopic();
-	my($cur_tid, $last_tid) = ('', '_not_a_topic_');
-	my $num_stories = 0;
-	my $html = '';
+	my ($html, $num_stories, $cur_tid) = ('', 0);
 
+	my(%tid_list);
 	while (my $cur_story = $sth->fetchrow_hashref) {
 		my $cur_tid = $cur_story->{tid};
+		# We only want unique topics to be shown.
+		next if exists $tid_list{$cur_story->{tid}}++;
 		if ($cur_story->{image} =~ /^\w+\.\w+$/) {
-			$cur_story->{image} = "$constants->{imagedir}/topics/$cur_story->{image}";
+			$cur_story->{image} =
+			"$constants->{imagedir}/topics/$cur_story->{image}";
 		}
-		next if $cur_tid eq $last_tid; # don't show two in a row
 
-# This really should be in a template.
+# This really shoud be in a template.
 		$html .= <<EOT;
 	<TD><A HREF="$constants->{rootdir}/search.pl?topic=$cur_tid"><IMG
 		SRC="$cur_story->{image}"
@@ -30,8 +31,9 @@ $task{$me}{code} = sub {
 		BORDER="0" ALT="$cur_story->{alttext}"></A>
 	</TD>
 EOT
+
+		# 5 == Var?
 		last if ++$num_stories >= 5;
-		$last_tid = $cur_tid;
 	}
 	$sth->finish();
 	my($tpid) = $slashdb->getTemplateByName('recentTopics', 'tpid');

@@ -162,12 +162,14 @@ sub reconcileM2 {
 				$modlog->{sid}
 			);
 
+			$m2_results{$modlog->{uid}}->{change} ||= 0;
+			$m2_results{$modlog->{uid}}->{change} += $change;
+
 			push @{$m2_results{$modlog->{uid}}->{m2}}, {
 				title	=> $discuss->{title},
 				url	=> $discuss->{url},
 				subj	=> $comment->{subj},
 				vote	=> $rank[0],
-				change	=> $change,
 				reason  =>
 					$constants->{reasons}[$modlog->{reason}]
 			};
@@ -200,6 +202,7 @@ sub reconcileM2 {
 				$messages->checkMessageCodes(MSG_CODE_M2, $_);
 			if (@{$msg_user}) {
 				$data->{m2} = $m2_results{$_}->{m2};
+				$data->{change} = $m2_results{$_}->{change};
 				$data->{num_metamoderators} =
 					scalar
 					keys %{$m2_results{$_}->{m2_count}};

@@ -202,8 +202,12 @@ while ($bigscalar =~ /$en_regexp/sg) {
 
 		next if !$cid;
 
-		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n"
-			if $debug;
+		printf 	STDERR
+			"EXTRACTED: %d, %d, %d, %d, %d, %d, %d, %d, %d\n",
+			map { ($_) ? $_ : ''; 1 }
+			($cid, $subj, $score_ind, $username, $ts, $url,
+			 $url_name, $comment, $sig)
+		if $debug;
 
 		# Copy $username.
 		$uname = $username;

@@ -763,7 +763,8 @@ sub moderate {
 	my $total_deleted = 0;
 	my $hasPosted;
 
-	titlebar("99%", "Moderating $sid");
+	# The content here should also probably go into a template.
+	titlebar("99%", "Moderating...");
 
 	$hasPosted = $slashdb->countCommentsBySidUID($sid, $user->{uid})
 		unless $user->{seclev} > 99 && $constants->{authors_unlimited};
@@ -917,7 +918,8 @@ sub moderateCid {
 
 		# Make sure our changes get propagated back to the comment.
 		# Note that we use the ADJUSTED reason value, $reason.
-		$comment_changed = $slashdb->setCommentCleanup($cid, $val, $reason);
+		$comment_changed =
+			$slashdb->setCommentCleanup($cid, $val, $reason);
 		if (!$comment_changed) {
 			# This shouldn't happen;  the only way we believe it
 			# could is if $val is 0, the comment is already at
@@ -968,6 +970,7 @@ sub moderateCid {
 
 	# Now display the template with the moderation results.
 	slashDisplay('moderation', $dispArgs);
+
 	return $comment_changed;
 }
 
