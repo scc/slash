@@ -325,6 +325,12 @@ sub _install {
 		}
 	}
 
+	if ($hash->{'plugin'}) {
+		for (keys %{$hash->{'plugin'}}) {
+			$self->installPlugin($_, 0, $symlink);
+		}
+	}
+
 	if ($hash->{'template'}) {
 		for (@{$hash->{'template'}}) {
 			my $id;
@@ -334,12 +340,6 @@ sub _install {
 			} else {
 				$self->{slashdb}->createTemplate($template);
 			}
-		}
-	}
-
-	if ($hash->{'plugin'}) {
-		for (keys %{$hash->{'plugin'}}) {
-			$self->installPlugin($_, 0, $symlink);
 		}
 	}
 
