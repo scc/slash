@@ -59,7 +59,6 @@ sub main {
 		adminLoginForm();
 
 	} elsif ($op eq 'logout') {
-		$slashdb->deleteSession();
 		titlebar('100%', getTitle('adminLogout-title'));
 		adminLoginForm();
 

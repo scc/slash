@@ -65,7 +65,10 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', seclev => 99) },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev => 99') },
+
+	'users'
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users') },
 
 	'templates'
 		=> sub { $_[0]->sqlSelectMany('tpid,title', 'templates') },
@@ -414,35 +417,44 @@ sub getDiscussions {
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
-#sub getAuthorInfo {
-#	my($self, $session, $admin_timeout, $user) = @_;
-#
-#	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
-#
-#	my($uid, $seclev, $section, $url) = $self->sqlSelect(
-#		'sessions.uid, authors.seclev, section, url',
-#		'sessions, authors',
-#		'sessions.uid=authors.uid AND session=' . $self->{_dbh}->quote($session)
-#	);
-#
-#	unless ($aid) {
-#		return;
-#	} else {
-#		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
-#			$self->{_dbh}->quote($session)
-#		);
-#		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-#			'session=' . $self->{_dbh}->quote($session)
-#		);
-#		$user->{aid} = $aid;
-#		$user->{seclev} = $seclev;
-#		$user->{asection} = $section;
-#		$user->{url} = $url;
-#		$user->{is_admin} = 1;
-#		
-#		return $seclev;
-#	}
-#}
+sub getSessionInstance {
+	my($self, $uid, $session) = @_;
+	my $admin_timeout = getCurrentStatic('admin_timeout');
+
+	if (length($session) > 3) {
+		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
+
+		my($uid) = $self->sqlSelect(
+			'uid',
+			'sessions',
+			'session=' . $self->{_dbh}->quote($session)
+		);
+
+		if ($uid) {
+			$self->sqlDo("DELETE from sessions WHERE uid = '$uid' AND session != " .
+				$self->{_dbh}->quote($session)
+			);
+			$self->sqlUpdate('sessions', {-lasttime => 'now()'},
+				'session=' . $self->{_dbh}->quote($session)
+			);
+		}
+	} else {
+		my($title) = $self->sqlSelect('lasttitle', 'sessions',
+			"uid=$uid"
+		);
+
+		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
+
+		my $sid = $self->generatesession($uid);
+		$self->sqlInsert('sessions', { session => $sid, -uid => $uid,
+			-logintime => 'now()', -lasttime => 'now()',
+			lasttitle => $title }
+		);
+
+		return $sid;
+	}
+	return;
+}
 
 ########################################################
 sub setContentFilter {
@@ -475,38 +487,6 @@ sub setSectionExtra {
 
 }
 
-########################################################
-# Initial Administrator Login.
-#sub getAuthorAuthenticate {
-#	my($self, $aid, $pwd, $user) = @_;
-#
-#	my $db_aid = $self->{_dbh}->quote($aid);
-#	if (my($seclev) = $self->sqlSelect('seclev', 'authors',
-#			"aid=$db_aid" .
-#			' AND pwd=' . $self->{_dbh}->quote($pwd) ) ) {
-#		$user->{seclev} = $seclev;
-#		$user->{aid} = $aid;
-#		$user->{is_admin} = 1;
-#
-#		my($title) = $self->sqlSelect('lasttitle', 'sessions',
-#			"aid=$db_aid"
-#		);
-#
-#		$self->sqlDo("DELETE FROM sessions WHERE aid=$db_aid");
-#
-#		my $sid = $self->generatesession($aid);
-#		$self->sqlInsert('sessions', { session => $sid, -aid => $db_aid,
-#			-logintime => 'now()', -lasttime => 'now()',
-#			lasttitle => $title }
-#		);
-#
-#		return $sid;
-#	} else {
-#		return;
-#	}
-#}
-#
-#
 ########################################################
 # This creates an entry in the accesslog
 sub createAccessLog {
@@ -2493,7 +2473,7 @@ sub updateStory {
 	);
 
 	$self->sqlUpdate('stories', {
-			aid		=> $form->{aid},
+			uid		=> $form->{uid},
 			tid		=> $form->{tid},
 			dept		=> $form->{dept},
 			'time'		=> $form->{'time'},

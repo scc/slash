@@ -80,6 +80,8 @@ sub handler {
 		}
 
 	} elsif ($op eq 'userclose' ) {
+		# It may be faster to just let the delete fail then test -Brian
+		$slashdb->deleteSession() if ($slashdb->getUser($uid, 'seclev') >= 99);
 		delete $cookies->{user};
 		setCookie('user', '');
 
@@ -227,6 +229,13 @@ sub getUser {
 	if ($user->{seclev} >= 99) {
 		$user->{is_admin} = 1;
 		$user->{aid} = $user->{nickname}; # Just here for the moment
+		my $sid;
+		if($cookies->{session}) {
+			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
+		} else {
+			$sid = $slashdb->getSessionInstance($uid);
+		}
+		setCookie('session', $sid) if $sid;
 	}
 
 #	if ($form->{op} eq 'adminlogin') {
