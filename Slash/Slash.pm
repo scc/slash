@@ -63,12 +63,14 @@ sub selectComments {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
-	my $num_scores = $max-$min+1;
+	my($min, $max) = ($constants->{comment_minscore}, 
+			  $constants->{comment_maxscore});
+	my $num_scores = $max - $min + 1;
 
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..$num_scores-1) {
-		$comments->{0}{totals}[$x] = $comments->{0}{natural_totals}[$x] = 0
+		$comments->{0}{totals}[$x] = 
+		$comments->{0}{natural_totals}[$x] = 0;
 	}
 
 	# When we pull comment text from the DB, we only want to cache it if
@@ -78,7 +80,11 @@ sub selectComments {
 	$cache_read_only = 1 if timeCalc($header->{ts}, '%s') <
 		time - 3600 * $constants->{comment_cache_max_hours};
 
-	my $thisComment = $slashdb->getCommentsForUser($header->{id}, $cid, $cache_read_only);
+	my $thisComment = $slashdb->getCommentsForUser(
+		$header->{id}, 
+		$cid, 
+		$cache_read_only
+	);
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# is in the index of the hash (based on its cid).
@@ -89,17 +95,15 @@ sub selectComments {
 
 		# User can setup to give points based on size.
 		$C->{points}++ if length($C->{comment}) > $user->{clbig}
-			&& $C->{points} < $constants->{comment_maxscore} && $user->{clbig} != 0;
+			&& $C->{points} < $max && $user->{clbig} != 0;
 
 		# User can setup to give points based on size.
 		$C->{points}-- if length($C->{comment}) < $user->{clsmall}
-			&& $C->{points} > $constants->{comment_minscore} && $user->{clsmall};
+			&& $C->{points} > $min && $user->{clsmall};
 
 		# fix points in case they are out of bounds
-		$C->{points} = $constants->{comment_minscore}
-			if $C->{points} < $constants->{comment_minscore};
-		$C->{points} = $constants->{comment_maxscore}
-			if $C->{points} > $constants->{comment_maxscore};
+		$C->{points} = $min if $C->{points} < $min;
+		$C->{points} = $max if $C->{points} > $max;
 
 		# So we save information. This will only have data if we have 
 		# happened through this cid while it was a pid for another
@@ -120,11 +124,11 @@ sub selectComments {
 		push @{$comments->{$C->{pid}}{kids}}, $C->{cid};
 
 		# The next line deals with hitparade -Brian
-		$comments->{0}{totals}[$C->{points} - $constants->{comment_minscore}]++;  # invert minscore
+		$comments->{0}{totals}[$C->{points} - $min]++;  # invert minscore
 
 		# This deals with what will appear.
 		$comments->{$C->{pid}}{visiblekids}++
-			if $C->{points} >= ($user->{threshold} || $constants->{comment_minscore});
+			if $C->{points} >= ($user->{threshold} || $min);
 
 		# Can't mod in a discussion that you've posted in.
 		# Just a point rule -Brian
@@ -136,21 +140,21 @@ sub selectComments {
 	# Cascade comment point totals down to the lowest score, so
 	# (2, 1, 3, 5, 4, 2, 1) becomes (18, 16, 15, 12, 7, 3, 1).
 	for my $x (reverse(0..$num_scores-2)) {
-		$comments->{0}{totals}[$x]		+= $comments->{0}{totals}[$x+1];
-		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
+		$comments->{0}{totals}[$x] += $comments->{0}{totals}[$x + 1];
+		$comments->{0}{natural_totals}[$x]+=
+			$comments->{0}{natural_totals}[$x + 1];
 	}
 
-	$slashdb->updateCommentTotals($header->{sid}, $comments) if $form->{ssi} && $header->{sid};
-
-	my $hp = join ',', @{$comments->{0}{totals}};
-
-	$slashdb->setStory($header->{sid}, {
-			hitparade => $hp,
-			writestatus => "ok",
-			commentcount  => $count,
-		}
-	) if $form->{ssi} && $header->{sid};
-
+	if ($form->{ssi} && $header->{sid}) {
+	# DEPRECATED!
+	#	$slashdb->updateCommentTotals($header->{sid}, $comments)
+	#		if $form->{mode} ne 'archive';
+	
+		# If we are refreshing, PRINT the totals so freshenup/archive 
+		# tasks can update without having to redo all of the work.
+		my $hp = join ',', @{$comments->{0}{totals}};
+		print STDERR "count $count, hitparade $hp\n";
+	}
 
 	reparentComments($comments, $header);
 	return($comments, $count);
@@ -301,7 +305,7 @@ sub printComments {
 	slashDisplay('printCommentsMain', {
 		comments	=> $comments,
 		title		=> $discussion->{title},
-		link		=> $discussion->{url},
+		'link'		=> $discussion->{url},
 		count		=> $count,
 		sid		=> $discussion->{id},
 		cid		=> $cid,
@@ -471,6 +475,10 @@ sub displayThread {
 	my $return = '';
 
 	# Archive really doesn't exist anymore -Brian 
+	# Yes it does! - Cliff 9/18/01
+	# 
+	# FYI: 'archive' means we're to write the story to .shtml at the close
+	# of the discussion without page breaks.
 	if ($user->{mode} eq 'flat' || $user->{mode} eq 'archive') {
 		$indent = 0;
 		$full = 1;
@@ -539,7 +547,9 @@ sub displayThread {
 			sid		=> $sid,
 			threshold	=> $constants->{comment_minscore},
 			pid		=> $pid,
-			subject		=> getData('displayThreadLink', { hidden => $hidden }, '')
+			subject		=> getData('displayThreadLink', { 
+						hidden => $hidden 
+					   }, ''),
 		});
 		$return .= slashDisplay('displayThread', { 'link' => $link },
 			{ Return => 1, Nocomm => 1 });
@@ -589,8 +599,10 @@ sub dispComment {
 
 	my($comment_shrunk, %reasons);
 
-	if ($form->{mode} ne 'archive' && length($comment->{comment}) > $user->{maxcommentsize}
-		&& $form->{cid} ne $comment->{cid}) {
+	if ($form->{mode} ne 'archive' &&
+	    length($comment->{comment}) > $user->{maxcommentsize} &&
+	    $form->{cid} ne $comment->{cid})
+	{
 		# We remove the domain tags so that strip_html will not
 		# consider </a blah> to be a non-approved tag.  We'll
 		# add them back at the last step.  In-between, we chop

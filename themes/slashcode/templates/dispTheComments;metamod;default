@@ -63,6 +63,7 @@ to do this unless you need more context to fairly meta moderate.<BR><BR></LI>
 [% FOR C = comments %]
 [%
 	Slash.dispComment(C);
+	context_url="$constants.rootdir/comments.pl?sid=$C.sid&cid=$C.pid&threshold=-1&mode=nested"
 %]
 	<TR><TD>
 		Original Discussion: <B><A HREF="[% C.url %]">[% C.title %]</A></B><BR>
@@ -71,7 +72,8 @@ to do this unless you need more context to fairly meta moderate.<BR><BR></LI>
 			<INPUT TYPE="RADIO" NAME="mm[% C.id %]" VALUE="-">
 			<INPUT TYPE="RADIO" NAME="mm[% C.id %]" VALUE="0" CHECKED>
 			<INPUT TYPE="RADIO" NAME="mm[% C.id %]" VALUE="+">
-		Fair</B><HR>
+		Fair</B>&nbsp;&nbsp|&nbsp;
+		<A HREF="[% context_url %]">See Context</A><HR>
 	</TD></TR>
 [% END %]
 </TABLE>

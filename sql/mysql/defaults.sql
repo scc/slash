@@ -335,6 +335,7 @@ INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid', '1',
 INSERT INTO vars (name, value, description) VALUES ('apache_cache', '3600', 'Default times for the getCurrentCache().');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|OL|UL|EM|BR|TT|STRONG|BLOCKQUOTE|DIV','Tags that you can use');
 INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
+INSERT INTO vars (name, value, description) VALUES ('archive_use_backup_db', '0', 'Should the archival process retrieve data from the backup database?');
 INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show only Articles in submission count in admin menu');
 INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','1','Authors have unlimited moderation');
 INSERT INTO vars (name, value, description) VALUES ('backup_db_user','','The virtual user of the database that the code should use for intensive database access that may bring down the live site. If you don\'t know what this is for, you should leave it blank.');
@@ -344,7 +345,7 @@ INSERT INTO vars (name, value, description) VALUES ('basedir','/usr/local/slash/
 INSERT INTO vars (name, value, description) VALUES ('basedomain','www.example.com','The URL for the site');
 INSERT INTO vars (name, value, description) VALUES ('block_expire','3600','Default expiration time for the block cache');
 INSERT INTO vars (name, value, description) VALUES ('banlist_expire','900','Default expiration time for the banlist cache');
-INSERT INTO vars (name, value, description) VALUES ('breaking','100','Undefined');
+INSERT INTO vars (name, value, description) VALUES ('breaking','100','Establishes the maximum number of comments the system will display when reading comments from a "live" discussion. For stories that exceed this number of comments, there will be "page breaks" printed at the bottom. This setting does not affect "archive" mode.');
 INSERT INTO vars (name, value, description) VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not');
 INSERT INTO vars (name, value, description) VALUES ('commentsPerPoint','1000','For every X comments, valid users get a Moderator Point');
 INSERT INTO vars (name, value, description) VALUES ('commentstatus','0','default comment code');

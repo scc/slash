@@ -45,48 +45,6 @@ sub slashdLogDie {
 	die $err;
 }
 
-sub prog2file {
-	my($command, $arguments, $f) = @_;
-	return 0 unless -e $command and -r _ and -x _;
-	my $success = 0;
-	my $err_str = "";
-
-	my $exec = "$command virtual_user=$virtual_user $arguments";
-	my $data = `$exec`;
-	my $bytes = length $data;
-
-	my $dir = dirname($f);
-	my @created = mkpath($dir, 0, 0775) unless -e $dir;
-	if (!-e $dir or !-d _ or !-w _) {
-		$err_str .= " mkpath($dir) failed '"
-			. (-e _) . (-d _) . (-w _)
-			. " '@created'";
-	} elsif ($bytes == 0) {
-		$err_str .= " no data";
-	} else {
-		my $fh = gensym();
-		if (!open $fh, "> $f\0") {
-			$err_str .= " could not write to '$f': '$!'";
-		} else {
-			print $fh $data;
-			close $fh;
-			$success = 1;
-		}
-	}
-
-	my($command_base) = $command =~ m{([^/]+)$};
-	$command_base ||= $command;
-	my $success_str = $success ? "" : " FAILED:$err_str";
-	$success_str =~ s/\s+/ /g; chomp $success_str;
-	slashdLog(join(" ",
-		$command_base,
-		"virtual_user=$virtual_user",
-		$arguments,
-		"bytes=$bytes$success_str"
-	)) if verbosity() >= 2;
-
-	return $success;
-}
 
 { my($last_db_time_offset, $last_db_time_confirm) = (undef, undef);
 sub db_time {
@@ -188,7 +146,10 @@ EOT
 			last ;
 		}
 	}
-	die "No task '$task_name' found in $dir" if !$subref;
+	if (! $subref) {
+		print "No task '$task_name' found in $dir\n";
+		die "No task '$task_name' found in $dir\n";
+	}
 	return $subref;
 }
 
@@ -281,6 +242,10 @@ Main options:
 	-h	Help (this message)
 	-v	Version
 	-u	Virtual user (must exist in /usr/local/slash/slash.sites)
+
+	-o	String of comma separated list of key=value pairs. Each 
+		task can define it's own set of options, see task specific
+		documentation for more details.
 
 task_name	Name of the task in DATADIR/tasks to run
 		(i.e. /usr/local/slash/site/SITENAME/tasks)

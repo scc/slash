@@ -25,7 +25,9 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
+use IPC::Open3 'open3';
 use Email::Valid;
+use File::Basename;
 use File::Path;
 use File::Spec::Functions;
 use Slash::Custom::Bulkmail;	# Mail::Bulkmail
@@ -45,6 +47,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	doLogInit
 	doLogPid
 	doLogExit
+	prog2file
 );
 @EXPORT_OK = qw();
 
@@ -247,6 +250,82 @@ sub doLog {
 	print     $log_msg if $stdout;
 	close $fh;
 }
+
+# Originally from slashd/runtask
+#
+# prog2file executes a command (as the unix user specified in your
+# /usr/local/slash/slash.sites file, of course, since that's how
+# slashd should be running) and puts its output into a file whose
+# name is specified.
+# 
+# Extended: If you are looking for specific data to be returned from the
+# program called, prog2file will return a scalar with all data returned from
+# STDERR
+#
+# Of course the params are beginning to get out of hand, but were necessary
+# for the move from slashd/runtask.
+
+sub prog2file {
+	my($command, $arguments, $f, $verbosity, $handle_err) = @_;
+	return 0 unless -e $command and -r _ and -x _;
+	$verbosity ||= 0;
+	$handle_err ||= 0;
+	my $success = 0;
+	my $err_str = "";
+
+	my $exec = "$command $arguments";
+	my ($data, $err);
+
+	# Two ways of handling data from child programs yet we maintain
+	# backwards compatibility.
+	if (! $handle_err) {
+		$data = `$exec`;
+	} else {
+		# Yes, we KNOW *IN is used only once. That's what dummy params
+		# are for. (it would be nice if we could use the 5.6-ism, below)
+		#no warnings 'once';
+		$^W = 0; my $pid = open3(*IN, *OUT, *ERR, $exec); $^W = 1;
+		{
+			undef $/;
+			$data = <OUT>;
+			$err = <ERR>;
+		};
+	}
+	my $bytes = length $data;
+
+	my $dir = dirname($f);
+	my @created = mkpath($dir, 0, 0775) unless -e $dir;
+	if (!-e $dir or !-d _ or !-w _) {
+		$err_str .= " mkpath($dir) failed '"
+			. (-e _) . (-d _) . (-w _)
+			. " '@created'";
+	} elsif ($bytes == 0) {
+		$err_str .= " no data";
+	} else {
+		my $fh = gensym();
+		if (!open $fh, "> $f\0") {
+			$err_str .= " could not write to '$f': '$!'";
+		} else {
+			print $fh $data;
+			close $fh;
+			$success = 1;
+		}
+	}
+
+	my($command_base) = $command =~ m{([^/]+)$};
+	$command_base ||= $command;
+	my $success_str = $success ? "" : " FAILED:$err_str";
+	$success_str =~ s/\s+/ /g; chomp $success_str;
+	doLog('slashd', [
+		join(" ", $command_base, $arguments, "bytes=$bytes$success_str")
+	]) if $verbosity >= 2;
+
+	# Old way.
+	return $success if ! $handle_err;
+	# New way.
+	return ($success, $err);
+}
+
 
 1;
 

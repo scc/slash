@@ -30,6 +30,7 @@ $task{$me}{code} = sub {
 	my $stories = $slashdb->getStoriesWithFlag('dirty');
 	my @updatedsids;
 	my $totalChangedStories = 0;
+	my $vu = "virtual_user=$virtual_user";
 
 	for (@$stories) {
 		my($sid, $title, $section) = @$_;
@@ -37,35 +38,66 @@ $task{$me}{code} = sub {
 		$updates{$section} = 1;
 		$totalChangedStories++;
 		push @updatedsids, $sid;
+
+		my @rc;
 		if ($section) {
 			makeDir($constants->{basedir}, $section, $sid);
-			prog2file("$constants->{basedir}/article.pl",
-			"ssi=yes sid='$sid' section='$section'",
-			"$constants->{basedir}/$section/$sid.shtml");
-			slashdLog("$me updated $section:$sid ($title)") if verbosity() >= 2;
+			@rc = prog2file(
+				"$constants->{basedir}/article.pl",
+				"$vu ssi=yes sid='$sid' section='$section'",
+				"$constants->{basedir}/$section/$sid.shtml",
+				verbosity(), 1
+			);
+			slashdLog("$me updated $section:$sid ($title)")
+				if verbosity() >= 2;
 		} else {
-			prog2file("$constants->{basedir}/article.pl",
-			"ssi=yes sid='$sid'",
-			"$constants->{basedir}/$sid.shtml");
-			slashdLog("$me updated $sid ($title)") if verbosity() >= 2;
+			@rc = prog2file(
+				"$constants->{basedir}/article.pl",
+				"$vu ssi=yes sid='$sid'",
+				"$constants->{basedir}/$sid.shtml",
+				verbosity(), 1
+			);
+			slashdLog("$me updated $sid ($title)")
+				if verbosity() >= 2;
 		}
-		$slashdb->setStory($sid, { writestatus => 'ok'});
+
+		# Now we extract what we need from the error channel.
+		slashdLog("$me *** Update data not in error channel!")
+			unless $rc[1] =~ /count (\d+), hitparade (.+)$/;
+
+		my $cc = $1 || 0;
+		my $hp = $2 || 0;
+		$slashdb->setStory($sid, { 
+			writestatus  => 'ok',
+			commentcount => $cc,
+			hitparade    => $hp,
+		});
 	}
 
 	my $w  = $slashdb->getVar('writestatus', 'value');
 
 	if ($updates{$constants->{defaultsection}} ne "" || $w ne "ok") {
 		$slashdb->setVar("writestatus", "ok");
-		prog2file("$constants->{basedir}/index.pl", "ssi=yes", "$constants->{basedir}/index.shtml");
+		prog2file(
+			"$constants->{basedir}/index.pl", 
+			"$vu ssi=yes", 
+			"$constants->{basedir}/index.shtml",
+			verbosity()
+		);
 	}
 
 	foreach my $key (keys %updates) {
 		next unless $key;
-		prog2file("$constants->{basedir}/index.pl", "ssi=yes section=$key",
-			"$constants->{basedir}/$key/index.shtml");
+		prog2file(
+			"$constants->{basedir}/index.pl", 
+			"$vu ssi=yes section=$key",
+			"$constants->{basedir}/$key/index.shtml",
+			verbosity()
+		);
 	}
 
-	return $totalChangedStories ? "totalChangedStories $totalChangedStories" : "";
+	return $totalChangedStories ?
+		"totalChangedStories $totalChangedStories" : '';
 };
 
 sub makeDir {

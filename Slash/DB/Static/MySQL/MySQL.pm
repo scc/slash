@@ -84,6 +84,9 @@ sub getBackendStories {
 
 ########################################################
 # This is only called if ssi is set
+# 
+# Deprecated code as this is now handled in the tasks!
+# - Cliff 10/11/01
 sub updateCommentTotals {
 	my($self, $sid, $comments) = @_;
 	my $hp = join ',', @{$comments->{0}{totals}};
@@ -120,7 +123,20 @@ sub archiveComments {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
-	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
+	my $days_to_archive = $constants->{discussion_archive};
+	# Close discussions.
+	$self->sqlDo(
+		"UPDATE discussions SET type='archived'
+		 WHERE to_days(now()) - to_days(ts) > $days_to_archive AND 
+		       type='open' OR type='dirty'"
+	);
+	# Close associated story so that final archival .shtml is written
+	# to disk. This is accomplished by the archive.pl task.
+	$self->sqlDo(
+		"UPDATE stories SET writestatus='archived'
+		 WHERE to_days(now()) - to_days(time) > $days_to_archive AND
+		       writestatus='ok' OR type='dirty'"
+	);
 
 	# Dirty stories would live for an extra day, but we don't pay much 
 	# attention to archived stories so this is ok.
@@ -130,15 +146,16 @@ sub archiveComments {
 	my $comments = $self->sqlSelectAll(
 		'cid, discussions.id',
 		'comments,discussions',
-		"to_days(now()) - to_days(date) > $constants->{discussion_archive} AND " .
-		"discussions.id = comments.sid AND discussions.type = 'recycle' AND comments.pid = 0"
+		"to_days(now()) - to_days(date) > $days_to_archive AND 
+		discussions.id = comments.sid AND
+		discussions.type = 'recycle' AND 
+		comments.pid = 0"
 	);
-
 	for my $comment (@$comments) {
 		next if !$comment or ref($comment) ne 'ARRAY' or !@$comment;
 		my $local_count = $self->_deleteThread($comment->[0]);
 		$self->setDiscussionDelCount($comment->[1], $local_count);
-	}  
+	}
 }
 
 sub _deleteThread {
@@ -200,9 +217,9 @@ sub deleteDaily {
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
 	$self->sqlDo("DELETE from moderatorlog WHERE
-		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+		to_days(now()) - to_days(ts) > $constants->{archive_delay}");
 	$self->sqlDo("DELETE from metamodlog WHERE
-		to_days(now()) - to_days(ts) > $constants->{archive_delay} ");
+		to_days(now()) - to_days(ts) > $constants->{archive_delay}");
 	# Formkeys
 	my $delete_time = time() - $constants->{'formkey_timeframe'};
 	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
@@ -707,9 +724,9 @@ sub getMetamodIDs {
 	my $list = $self->sqlSelectAll(
 		'distinct moderatorlog.id', 'moderatorlog, metamodlog',
 		"m2count >= $thresh
-		AND flag = 10
 		AND moderatorlog.id=metamodlog.mmid
-		AND cuid IS NOT NULL",
+		AND cuid IS NOT NULL
+		AND flag = 10",
 		($num) ? "LIMIT $num" : ''
 	);
 	$_ = $_->[0] for @{$list};
@@ -761,14 +778,21 @@ sub clearM2Flag {
 }
 
 ########################################################
-# For freshenup.pl
+# For freshenup.pl,archive.pl
 #
 #
 sub getStoriesWithFlag {
-	my($self, $writestatus) = @_;
-
-	my $returnable = $self->sqlSelectAll("sid,title,section",
-		"stories", "writestatus='$writestatus'");
+	my($self, $writestatus, $order, $limit) = @_;
+	
+	my $sqlorder;
+	$sqlorder = "ORDER BY sid $order " if $order;
+	$sqlorder .= "LIMIT $limit" if $limit;
+	my $returnable = $self->sqlSelectAll(
+		"sid,title,section",
+		"stories", 
+		"writestatus='$writestatus'",
+		$sqlorder
+	);
 
 	return $returnable;
 }

@@ -78,49 +78,11 @@ sub slashdLogDie {
 # /usr/local/slash/slash.sites file, of course, since that's how
 # slashd should be running) and puts its output into a file whose
 # name is specified.
+# 
+# Extended: If you are looking for specific data to be returned from the
+# program called, prog2file will return a scalar with all data returned from
+# STDERR
 
-sub prog2file {
-	my($command, $arguments, $f) = @_;
-	return 0 unless -e $command and -r _ and -x _;
-	my $success = 0;
-	my $err_str = "";
-
-	my $exec = "$command virtual_user=$virtual_user $arguments";
-	my $data = `$exec`;
-	my $bytes = length $data;
-
-	my $dir = dirname($f);
-	my @created = mkpath($dir, 0, 0775) unless -e $dir;
-	if (!-e $dir or !-d _ or !-w _) {
-		$err_str .= " mkpath($dir) failed '"
-			. (-e _) . (-d _) . (-w _)
-			. " '@created'";
-	} elsif ($bytes == 0) {
-		$err_str .= " no data";
-	} else {
-		my $fh = gensym();
-		if (!open $fh, "> $f\0") {
-			$err_str .= " could not write to '$f': '$!'";
-		} else {
-			print $fh $data;
-			close $fh;
-			$success = 1;
-		}
-	}
-
-	my($command_base) = $command =~ m{([^/]+)$};
-	$command_base ||= $command;
-	my $success_str = $success ? "" : " FAILED:$err_str";
-	$success_str =~ s/\s+/ /g; chomp $success_str;
-	slashdLog(join(" ",
-		$command_base,
-		"virtual_user=$virtual_user",
-		$arguments,
-		"bytes=$bytes$success_str"
-	)) if verbosity() >= 2;
-
-	return $success;
-}
 
 # What time does the database think it is?  Our tasks are synched to
 # that time, which may be different from the time that the machine
