@@ -50,7 +50,7 @@ sub handler {
 	my $slashdb = $dbcfg->{slashdb};
 
 	# let pass unless / or .pl
-	unless ($cfg->{auth}){
+	unless ($cfg->{auth}) {
 		unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			return OK;

@@ -22,9 +22,11 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{VirtualUser} = $user;
 	$cfg->{slashdb} = Slash::DB->new($user);
 	$cfg->{constants} = $cfg->{slashdb}->getSlashConf($user);
-	$cfg->{user} = '';
-	$cfg->{form} = '';
-	$cfg->{themes} = '';
+
+	# placeholders ... store extra placeholders in DB?  :)
+	for (qw[user form themes template]) {
+		$cfg->{$_} = '';
+	}
 
 	# Backwards compatibility
 	my $anonymous_coward = $cfg->{slashdb}->getUser(

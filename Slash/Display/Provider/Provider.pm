@@ -32,34 +32,35 @@ sub _get_anon_name {
 
 sub fetch {
 	my($self, $text) = @_;
-	my($name, $siteid, $savename, $data, $error, $slot);
-	$siteid = getCurrentStatic('siteid');
+	my($name, $data, $error, $slot, $size);
+	$size = $self->{ SIZE };
 
 	if (ref $text eq 'SCALAR') {
-		$savename = $name = _get_anon_name($text);
+		$text = $$text;
+		$name = _get_anon_name($text);
 	} else {
 		$name = $text;
 		undef $text;
-
-		# $; is multidimensional array emulation separator
-		$savename = $siteid . $; . $name;
 	}
 
-	print STDERR "fetch($name [$savename])\n" if $DEBUG;
+	print STDERR "fetch($name)\n" if $DEBUG;
 
-	if ($slot = $self->{ LOOKUP }{ $savename }) {
+	if (defined $size && !$size) {
+		# caching disabled so load and compile but don't cache
+		($data, $error) = $self->_load($name, $text);
+		($data, $error) = $self->_compile($data) unless $error; # , $compfile
+		$data = $data->{ data } unless $error;
+
+	} elsif ($name && ($slot = $self->{ LOOKUP }{ $name })) {
 		# cached entry exists, so refresh slot and extract data
 		($data, $error) = $self->_refresh($slot);
 		$data = $slot->[ DATA ] unless $error;
 
 	} else {
-		# hm ... don't need to compile to disk unless we want
-		# a persistent cache ... so forget it for now
-
 		# nothing in cache so try to load, compile and cache
 		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless $error; # , $compfile
-		$data = $self->_store($savename, $data) unless $error;
+		$data = $self->_store($name, $data) unless $error;
 	}
 
 	return($data, $error);
@@ -67,29 +68,23 @@ sub fetch {
 
 sub _load {
 	my($self, $name, $text) = @_;
-	my($data, $error, $now, $slashdb, $siteid, $savename);
+	my($data, $error, $now, $time, $slashdb);
 	$now = time;
-	$siteid = getCurrentStatic('siteid');
-	# $; is multidimensional array emulation separator
-	$savename = $siteid . $; . $name;
+	$time = 0;
 
-	if (defined $text) {
-		$text = $$text;
-	} else {
+	if (! defined $text) {
 		$slashdb = getCurrentDB();
-		$text = $slashdb->getTemplate($name, 'template');
+		my $temp = $slashdb->getTemplate($name, [qw[template _modtime]]);
+		$text = $temp->{template};
+		$time = $temp->{_modtime};
 	}
 
-	print STDERR "_load($name [$savename])\n" if $DEBUG;
-
-	if ($text) {
-		$data = {
-			name	=> $savename,
-			text	=> $text,
-			'time'	=> $now,   # get cache timestamp!
-			load	=> $now,
-		};
-	}
+	$data = {
+		name	=> $name,
+		text	=> $text,
+		'time'	=> $time,
+		load	=> $now,
+	};
 
 	return($data, $error);
 }
@@ -99,15 +94,15 @@ sub _load {
 # without reimplementing the whole method?
 sub _refresh {
 	my($self, $slot) = @_;
-	my($head, $file, $data, $error);
+	my($head, $file, $data, $error, $slashdb);
+	$slashdb = getCurrentDB();
 
 	print STDERR "_refresh([ @$slot ])\n" if $DEBUG;
 
-	# compare load time with current file modification time to see if
+	# compare load time with current _modtime from API to see if
 	# its modified and we need to reload it
-
-	# get cache timestamp!  don't refresh until we get it ... somehow ...
-	if (0) {
+	if ($slot->[ DATA ]->{modtime} && $slot->[ DATA ]->{modtime}
+		< $slashdb->getTemplate($slot->[ NAME ], '_modtime')) {
 		print STDERR "refreshing cache file ", $slot->[ NAME ], "\n"
 			if $DEBUG;
 
@@ -115,6 +110,10 @@ sub _refresh {
 		($data, $error) = $self->_compile($data) unless $error;
 		$slot->[ DATA ] = $data->{ data } unless $error;
 	}
+
+	# i know it is not a huge amount of cycles, but i wish
+	# we didn't have to bother with LRU stuff if SIZE is undef,
+	# but we don't want to break other methods that also use it
 
 	# remove existing slot from usage chain...
 	if ($slot->[ PREV ]) {
@@ -128,7 +127,7 @@ sub _refresh {
 	} else {
 		$self->{ TAIL } = $slot->[ PREV ];
 	}
-    
+
 	# ... and add to start of list
 	$head = $self->{ HEAD };
 	$head->[ PREV ] = $slot if $head;

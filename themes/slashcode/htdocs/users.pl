@@ -827,9 +827,9 @@ sub getUserAdmin {
 
 	my $user = $slashdb->getUser($uid);
 
-	my ($uid_checked,$nickname_checked);
+	my($uid_checked,$nickname_checked);
 
-	if($form->{userfield_flag} eq 'userid') {
+	if ($form->{userfield_flag} eq 'userid') {
 		$uid_checked = 'CHECKED';
 	} else {
 		$nickname_checked = 'CHECKED';

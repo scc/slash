@@ -1899,6 +1899,7 @@ sub displayStory {
 	# get extra data from section table for this story
 	# (if exists)
 	# this only needs to run for slashdot
+	# why is this commented out?  -- pudge
 	#$slashdb->setSectionExtra($full, $story);
 
 	my $return = dispStory($story, $author, $topic, $full);

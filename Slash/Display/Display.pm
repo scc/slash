@@ -257,15 +257,6 @@ my $filters = Template::Filters->new({
 	}
 });
 
-my $template = Template->new(
-	TRIM		=> 1,
-	PRE_CHOMP	=> 1,
-	POST_CHOMP	=> 1,
-	LOAD_FILTERS	=> $filters,
-	LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
-	PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
-);
-
 
 # damn, why is it bad to reuse the same object ... ?
 # i can't remember, it was almost two months ago.  sigh.
@@ -273,7 +264,26 @@ my $template = Template->new(
 # i don't think so, but cannot recall.
 # -- pudge
 sub _template {
-	$template;
+	my $r = Apache->request;
+	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	return $cfg->{template} if $cfg->{template};
+
+	my $constants = getCurrentStatic();
+	my $cache_size = $constants->{cache_enabled}
+		? $constants->{template_cache_size}
+			? $constants->{template_cache_size}	# defined cache
+			: undef					# unlimited cache
+		: 0;						# cache off
+
+	return $cfg->{template} = Template->new(
+		TRIM		=> 1,
+		PRE_CHOMP	=> 1,
+		POST_CHOMP	=> 1,
+		LOAD_FILTERS	=> $filters,
+		CACHE_SIZE	=> $cache_size,
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
+		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
+	);
 }
 
 =back

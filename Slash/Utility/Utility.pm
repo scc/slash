@@ -441,7 +441,7 @@ menu for "users.pl").
 
 =item Return value
 
-A reference to an array with the menu in it, is returned.
+A reference to an array with the menu in it is returned.
 
 =back
 
@@ -459,12 +459,14 @@ sub getCurrentMenu {
 	my $r = Apache->request;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 
-	for(@{$cfg->{menus}{$menu}}) {
-		if($user->{seclev} >= $_->{seclev}) {
-			push @menus , $_;
+	# why is this here?  i'd think we could take care of
+	# this in the caller instead, as we do already in Slash.pm
+	# -- pudge
+	for (@{$cfg->{menus}{$menu}}) {
+		if ($user->{seclev} >= $_->{seclev}) {
+			push @menus, $_;
 		}
-	}
-		
+	}		
 
 	if (my $user_menu = $user->{menus}{$menu}) {
 		push @menus, values %$user_menu;

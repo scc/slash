@@ -243,7 +243,7 @@ sub varSave {
 
 	if ($form->{thisname}) {
 		my $value = $slashdb->getVar($form->{thisname});
-		if($value) {
+		if ($value) {
 			$slashdb->setVar($form->{thisname}, {
 				value   => $form->{value},
 				description => $form->{desc}

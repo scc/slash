@@ -786,8 +786,6 @@ sub setTemplate {
 }
 
 ########################################################
-
-########################################################
 sub updateCommentTotals {
 	my($self, $sid, $comments) = @_;
 	my $hp = join ',', @{$comments->[0]{totals}};
@@ -1861,7 +1859,6 @@ sub getComments {
 }
 
 ########################################################
-# 
 sub getStories {
 	my($self, $section, $limit, $tid) = @_;
 
@@ -2098,35 +2095,33 @@ sub updateStory {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 	$self->sqlUpdate('discussions',{
-			sid	=> $form->{sid},
-			title	=> $form->{title},
-			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
-			ts	=> $form->{'time'},
-		},
-		'sid = ' . $self->{_dbh}->quote($form->{sid})
-	);
+		sid	=> $form->{sid},
+		title	=> $form->{title},
+		url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
+		ts	=> $form->{'time'},
+	}, 'sid = ' . $self->{_dbh}->quote($form->{sid}));
 
 	$self->sqlUpdate('stories', {
-			uid		=> $form->{uid},
-			tid		=> $form->{tid},
-			dept		=> $form->{dept},
-			'time'		=> $form->{'time'},
-			title		=> $form->{title},
-			section		=> $form->{section},
-			bodytext	=> $form->{bodytext},
-			introtext	=> $form->{introtext},
-			writestatus	=> $form->{writestatus},
-			relatedtext	=> $form->{relatedtext},
-			displaystatus	=> $form->{displaystatus},
-			commentstatus	=> $form->{commentstatus}
-		}, 'sid=' . $self->{_dbh}->quote($form->{sid})
-	);
+		uid		=> $form->{uid},
+		tid		=> $form->{tid},
+		dept		=> $form->{dept},
+		'time'		=> $form->{'time'},
+		title		=> $form->{title},
+		section		=> $form->{section},
+		bodytext	=> $form->{bodytext},
+		introtext	=> $form->{introtext},
+		writestatus	=> $form->{writestatus},
+		relatedtext	=> $form->{relatedtext},
+		displaystatus	=> $form->{displaystatus},
+		commentstatus	=> $form->{commentstatus}
+	}, 'sid=' . $self->{_dbh}->quote($form->{sid}));
 
 	$self->sqlDo('UPDATE stories SET time=now() WHERE sid='
 		. $self->{_dbh}->quote($form->{sid})
 	) if $form->{fastforward} eq 'on';
 	$self->_saveExtras($form);
 }
+
 ########################################################
 # Now, the idea is to not cache here, since we actually
 # cache elsewhere (namely in %Slash::Apache::constants)
@@ -2380,7 +2375,6 @@ sub getStoryList {
 
 	return $list;
 }
-
 
 ##################################################################
 sub getPollVotesMax {
