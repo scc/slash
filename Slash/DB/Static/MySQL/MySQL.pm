@@ -244,7 +244,7 @@ sub countDaily {
 	$c->finish;
 
 	$c = $self->sqlSelectMany("count(*)", "accesslog",
-		"op='journal' AND to_days(now()) - to_days(ts)=1 GROUP BY uid");
+		"op='journal' AND to_days(now()) - to_days(ts)=1 GROUP BY op");
 	$returnable{'journals'} = $c->rows;
 	$c->finish;
 
