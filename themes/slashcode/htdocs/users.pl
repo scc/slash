@@ -86,24 +86,24 @@ EOT
 
 	} elsif ($op eq "userinfo" || !$op) {
 		if ($I{F}{nick}) {
-			userInfo($I{F}{nick});
+			userInfo($I{dbobject}->getUserUID($I{F}{nick}), $I{F}{nick});
 		} elsif ($user->{is_anon}) {
 			displayForm();
 		} else {
-			userInfo($I{U}{nickname});
+			userInfo($I{U}{uid}, $I{U}{nickname});
 		}
 
 	} elsif ($op eq "saveuser") {
 		saveUser($I{U}{uid});
-		userInfo($I{U}{nickname});
+		userInfo($I{U}{uid}, $I{U}{nickname});
 
 	} elsif ($op eq "savecomm") {
 		saveComm($I{U}{uid});
-		userInfo($I{U}{nickname});
+		userInfo($I{U}{uid}, $I{U}{nickname});
 
 	} elsif ($op eq "savehome") {
 		saveHome($I{U}{uid});
-		userInfo($I{U}{nickname});
+		userInfo($I{U}{uid}, $I{U}{nickname});
 
 	} elsif ($op eq "sendpw") {
 		mailPassword($I{U}{uid});
@@ -125,13 +125,13 @@ EOT
 		displayForm();
 
 	} elsif ($op eq "userlogin" && !$user->{is_anon}) {
-		userInfo($I{U}{nickname});
+		userInfo($I{U}{uid}, $I{U}{nickname});
 
 	} elsif ($op eq "preview") {
 		previewSlashbox();
 
 	} elsif (!$user->{is_anon}) {
-		userInfo($I{F}{nick});
+		userInfo($I{dbobject}->getUserUID($I{F}{nick}), $I{F}{nick});
 
 	} else {
 		displayForm();
@@ -259,87 +259,87 @@ sub mailPassword {
 
 #################################################################
 sub userInfo {
-	my($nick) = @_;
+  my($uid, $nick) = @_;
+	unless ($uid) {
+		print "$nick not found.";
+		return;
+	}
 
-	my $userbio = $I{dbobject}->getUserBio($nick);
+	my @values = qw(homepage fakeemail bio seclev karma nickname);
+	my $userbio = $I{dbobject}->getUserBio($uid);
 
-	if (my($home, $email, $uid, $bio, $useclev, $karma) = @$userbio) {
-		$bio = stripByMode($bio, "html");
-		if ($I{U}{nickname} eq $nick) {
-			my $points = $I{dbobject}->getUser($uid, 'points');
+	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
+	if ($I{U}{nickname} eq $nick) {
+		my $points = $I{dbobject}->getUser($uid, 'points');
 
-			titlebar("95%", "Welcome back $nick ($uid)");
-			print <<EOT;
+		titlebar("95%", "Welcome back $nick ($uid)");
+		print <<EOT;
 <P>This is <B>your</B> User Info page.  There are thousands more, but this one is yours.
 You most likely are not so interested in you, and probably would be most interested in
 clicking the "Edit User Info" and "Customize..." links you see up top there so you can
 customize $I{sitename}, change your password, or just click pretty widgets to kill time.
 EOT
 
-			# Users should be able to see their own points.
-			if ($I{U}{uid} == $uid && $points > 0) {
-				print <<EOT;
+		# Users should be able to see their own points.
+		if ($I{U}{uid} == $uid && $points > 0) {
+			print <<EOT;
 <P>You're a moderator with $points points. Please read the
 <A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A> before you do any moderation.
 <BR><P>
 EOT
-			}
-			print <<EOT;
+		}
+		print <<EOT;
 <CENTER><IMG SRC="$I{imagedir}/greendot.gif" WIDTH="75%" HEIGHT="1" ALIGN="CENTER"><BR></CENTER>
 EOT
 
-		} else {
-			titlebar("95%", "User Info for $nick ($uid)");
-		}
+	} else {
+		titlebar("95%", "User Info for $nick ($uid)");
+	}
 
-		print qq!<A HREF="$home">$home</A><BR><A HREF="mailto:$email">$email</A><BR>!;
-		print "<B>Karma</B> $karma (mostly the sum of moderation done to users comments)<BR>"
-			if $I{U}{aseclev} || $I{U}{uid} == $uid;
-		print "<B>User Bio</B><BR>$bio<P>" if $bio;
+	print qq!<A HREF="$userbio->{'homepage'}">$userbio->{'homepage'}</A><BR><A HREF="mailto:$userbio->{'fakeemail'}">$userbio->{'fakeemail'}</A><BR>!;
+	print "<B>Karma</B> $userbio->{'karma'} (mostly the sum of moderation done to users comments)<BR>"
+		if $I{U}{aseclev} || $I{U}{uid} == $uid;
+	print "<B>User Bio</B><BR>$userbio->{'bio'}<P>" if $userbio->{'bio'};
 
-		my($k) = $I{dbobject}->getUser($uid, 'pubkey');
-		$k = stripByMode($k, "html");
-		print "<B>Public Key</B><BR><PRE>\n$k</PRE><P>" if $k;
+	my($k) = $I{dbobject}->getUser($uid, 'pubkey');
+	$k = stripByMode($k, "html");
+	print "<B>Public Key</B><BR><PRE>\n$k</PRE><P>" if $k;
 
-		$I{F}{min} = 0 unless $I{F}{min};
+	$I{F}{min} = 0 unless $I{F}{min};
 
-		my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
+	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
 
-		my $rows = @$comments;
-		print "<B>$nick has posted $rows" 
-			. " comments</B> (this only counts the last few weeks)<BR><P>";
+	my $rows = @$comments;
+	print "<B>$nick has posted $rows" 
+		. " comments</B> (this only counts the last few weeks)<BR><P>";
 
-		my $x;
-		for (@$comments) {
-			my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
-			$x++;
-			my $r = $I{dbobject}->countComments($sid, $cid);
-			my $replies = " Replies:$r" if $r;
+	my $x;
+	for (@$comments) {
+		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
+		$x++;
+		my $r = $I{dbobject}->countComments($sid, $cid);
+		my $replies = " Replies:$r" if $r;
 
-			print <<EOT;
+		print <<EOT;
 <BR><B>$x</B> <A HREF="$I{rootdir}/comments.pl?sid=$sid&cid=$cid">$subj</A> posted on $cdate (Score:$pts$replies)
 <FONT SIZE="${\( $I{fontbase} + 2 )}">
 EOT
-			# This is ok, since with all luck we will not be hitting the DB
-			my $story = $I{dbobject}->getStoryBySid($sid);
+		# This is ok, since with all luck we will not be hitting the DB
+		my $story = $I{dbobject}->getStoryBySid($sid);
 
-			if ($story) {
-				my $href = $story->{writestatus} == 10
-					? "$I{rootdir}/$story->{section}/$sid.shtml"
-					: "$I{rootdir}/article.pl?sid=$sid";
+		if ($story) {
+			my $href = $story->{writestatus} == 10
+				? "$I{rootdir}/$story->{section}/$sid.shtml"
+				: "$I{rootdir}/article.pl?sid=$sid";
 
-				print qq!<BR>attached to <A HREF="$href">$story->{title}</A>!;
+			print qq!<BR>attached to <A HREF="$href">$story->{title}</A>!;
 # $S->{section}/$sid.shtml
-			} else {
-				my $question = $I{dbobject}->getPollQuestionBySID($sid);
-				print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $question</A>!
-					if $question;
-			}
-			print "</FONT>";
+		} else {
+			my $question = $I{dbobject}->getPollQuestionBySID($sid);
+			print qq!<BR>attached to <A HREF="$I{rootdir}/pollBooth.pl?qid=$sid"> $question</A>!
+				if $question;
 		}
-
-	} else {
-		print "$nick not found.";
+		print "</FONT>";
 	}
 }
 
