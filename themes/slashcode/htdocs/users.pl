@@ -29,6 +29,11 @@ sub main {
 	my $op = lc($form->{op});
 	print STDERR "1 OP $op\n";
 	$op ||= isAnon($curuser->{uid}) ? 'userlogin' : 'userinfo';
+	# arhghg
+	$op = 'userinfo' if $form->{nick} || $form->{uid};
+	$form->{userfield} ||= $form->{nick};
+	$form->{userfield} ||= $form->{uid};
+
 	print STDERR "2 OP $op\n";
 	# savepasswd is a special case, because once it's called, you
 	# have to reload the form, and you don't want to do any checks if
@@ -201,6 +206,12 @@ sub main {
 			formname	=> $formname,
 			checks		=> 
 			[ qw (max_reads_check max_post_check generate_formkey) ],
+		},
+		listabuses 	=> {
+			function	=> \&listAbuses,
+			seclev		=> 100,
+			formname	=> $formname,
+			checks		=> [],
 		},
 		default		=> { 
 			function	=> \&displayForm,
@@ -453,12 +464,6 @@ sub showInfo {
 		$requested_user->{nonuid} = 1;
 		$id ||= $1;
 		$requested_user->{ipid} = md5_hex($1);
-
-	} elsif ($form->{nick}) {
-		$fieldkey = 'nickname';
-		$id = $slashdb->getUser($form->{nick});
-		$uid = $slashdb->getUserUID($id);
-		$requested_user = $slashdb->getUser($uid);
 
 	} else {
 		$fieldkey = 'nickname';
@@ -1470,6 +1475,21 @@ sub saveHome {
 }
 
 #################################################################
+sub listAbuses {
+	my $curuser = getCurrentUser();
+	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	my $abuses = $slashdb->getAbuses($form->{key},$form->{abuseid});
+	
+	slashDisplay('listAbuses', {
+		abuseid	=> $form->{abuseid},
+		abuses	=> $abuses,
+	});
+}
+
+#################################################################
 sub displayForm {
 	my $curuser = getCurrentUser();
 	my $form = getCurrentForm();
@@ -1582,7 +1602,7 @@ sub getUserAdmin {
 	my $constants	= getCurrentStatic();
 
 	my($checked, $uidstruct, $readonly, $readonly_reasons);
-	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select);
+	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select, $topabusers);
 	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
 
@@ -1628,6 +1648,12 @@ sub getUserAdmin {
 		$iplist = $slashdb->getNetIDList($user->{uid});
 	}
 
+	$topabusers = $slashdb->getTopAbusers();
+
+	for(@$topabusers) {
+		print STDERR "abusers $_->[0], $_->[1], $_->[2], $_->[3]\n";
+	}
+
 	$authors = $slashdb->getDescriptions('authors');
 
 	$author_select = $authoredit_flag
@@ -1655,6 +1681,7 @@ sub getUserAdmin {
 		uidstruct		=> $uidstruct,
 		seclev_field		=> $seclev_field,
 		checked 		=> $checked,
+		topabusers		=> $topabusers,
 		author_select		=> $author_select,
 		form_flag		=> $form_flag,
 		readonly		=> $readonly,
