@@ -21,13 +21,15 @@ use Getopt::Std;
 use Cwd;
 
 my $VERSION = '0.9';
-my $COPYRIGHT = 
-'This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
- released under the GPL.  See README and COPYING for more information.';
-
+chomp(my $COPYRIGHT = <<'EOT');
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+EOT
 
 my %opts;
-usage('no options supplied to program') unless getopts('cdilrsvD:O:P:S:p:f:u:?', \%opts);
+getopts('cdilrsvD:O:P:S:p:f:u:?', \%opts);
+usage('no options supplied to program') unless keys %opts;
 usage('help requested') if $opts{'?'};
 
 # if deleting, then there should be no other operation or file flags
@@ -51,7 +53,7 @@ my ($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0,0,0,0);
 ##################################
 # version
 if ($opts{'v'}) {
-	print "$0, Version $VERSION, $COPYRIGHT\n";
+	print "$0, version $VERSION\n$COPYRIGHT\n";
 	exit();
 }
 
@@ -311,6 +313,8 @@ sub dump_templates {
 sub list_templates {
 	my ($templatelist, $file) = @_;
 
+	# all path creation should use File::Spec::Functions,
+	# File::Basename, etc. -- pudge
 	if($file) {	
 		$file .= $file . '/templatelist.txt' if -d $file;
 
@@ -441,6 +445,8 @@ Usage: template-tool [OPTIONS] <template templateN>
 
 OPTIONS
 
+	-u virtual user to use (default is "slash")
+
 	-d dump templates
 	-i use tpid (template id) instead of template name
 
@@ -468,7 +474,6 @@ OPTIONS
 	don't provide these arguments.
 
 	-r deletes template(s) (don't shoot yourself in the foot!)
-	-u virtual user to use(default is slash)
 	-? this message
 
 Section, page, and template args logic:

@@ -58,8 +58,11 @@ if ($@) {
 eval { require Template };
 
 if ($@) {
-	print "Doesn't look like you have Bundle::Slash installed.\n";
-	print "Run the CPAN tool and install Bundle::Slash.\n";
+	print <<'EOT';
+Doesn't look like you have Bundle::Slash installed.
+Run the CPAN tool and install Bundle::Slash.  See
+INSTALL for more information.
+EOT
 	exit;
 }
 
