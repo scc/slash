@@ -59,16 +59,16 @@ slash:
 	fi
 
 plugins: 
-	(cd plugins;
+	(cd plugins; \
 	 for a in $(PLUGINS); do \
-	 	(cd $$a;
-		if [ -F Makefile.PL ]; then ]
+	 	(cd $$a; \
+		 if [ -f Makefile.PL ]; then \
 		 	if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; make;\
 			else \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB); make; \
 			fi
-		fi);
+		 fi);
 	fi)
 
 all: install
@@ -85,10 +85,10 @@ install: slash plugins
 	# Makefile? - Cliff
 	(cd plugins; \
 	 for a in $(PLUGINS); do \
-	 	(cd $$a;
+	 	(cd $$a; \
 	 	if [ -f Makefile ]; then \
 			make install; \
-		elif [ -F Makefile.PL ]; then
+		elif [ -F Makefile.PL ]; then \
 			if ! [ $(RPM) ] ; then \
 				$(PERL) Makefile.PL; \
 			else \
@@ -96,7 +96,7 @@ install: slash plugins
 			fi; \
 			make install; \
 		fi); \
-	fi)
+	done)
 
 	# Create all necessary directories.
 	install -d $(SLASH_PREFIX)/bin/ $(SLASH_PREFIX)/sbin $(SLASH_PREFIX)/sql/ $(SLASH_PREFIX)/sql/mysql/ $(SLASH_PREFIX)/sql/postgresql $(SLASH_PREFIX)/themes/ $(SLASH_PREFIX)/themes/slashcode/htdocs/ $(SLASH_PREFIX)/themes/slashcode/sql/ $(SLASH_PREFIX)/themes/slashcode/sql/postgresql $(SLASH_PREFIX)/themes/slashcode/sql/mysql $(SLASH_PREFIX)/themes/slashcode/backup $(SLASH_PREFIX)/themes/slashcode/logs/ $(SLASH_PREFIX)/plugins/ $(SLASH_PREFIX)/httpd/
@@ -144,7 +144,8 @@ install: slash plugins
 	# into place!
 
 	# Now for the plugins.
-	(cd plugins; make clean; cp -ruv plugins/* $(SLASH_PREFIX)/plugins/)
+	(cd plugins; make clean) 
+	cp -ruv plugins/* $(SLASH_PREFIX)/plugins/
 	# Now all other themes
 	cp -ruv themes/* $(SLASH_PREFIX)/themes
 
@@ -175,7 +176,7 @@ install: slash plugins
 	echo "| If you want to let Slash handle your httpd.conf file   |"; \
 	echo "| go add:                                                |"; \
 	echo "|                                                        |"; \
-	echo "| Include $(SLASH_PREFIX)/httpd/slash.conf              |"; \
+	echo "| Include $(SLASH_PREFIX)/httpd/slash.conf             |"; \
 	echo "|                                                        |"; \
 	echo "| to your httpd.conf for apache.                         |"; \
 	echo "| If not, cat its content into your httpd.conf file.     |"; \
