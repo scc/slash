@@ -4,7 +4,6 @@ __description__
 Display a story (normally called from within displayStory())
 
 * width = width for titlebar
-* title = title for titlebar
 * story = story data structure
 * section = section data structure
 * topic = topic data structure
@@ -21,7 +20,12 @@ __name__
 dispStory
 __template__
 [% IF magic;
-	title = "<A HREF=\"$constants.rootdir/$story.section/\"><FONT COLOR=\"$user.fg.3\">$section.title</FONT></A>: $story.title";
+	IF user.is_anon;
+		title = "<A HREF=\"$constants.rootdir/$story.section/\">";
+	ELSE;
+		title = "<A HREF=\"$constants.rootdir/index.pl?section=$story.section\">";
+	END;
+	title = "$title<FONT COLOR=\"$user.fg.3\">$section.title</FONT></A>: $story.title";
 ELSE;
 	title = story.title;
 END %]
