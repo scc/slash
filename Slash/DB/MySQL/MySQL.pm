@@ -281,7 +281,7 @@ sub getDescriptions {
   my $self = shift; # Shit off to keep things clean
   my $codetype = shift; # Shit off to keep things clean
 	my $codeBank_hash_ref={};
-	my $sth = $descriptions{$codetype}($self);
+	my $sth = &{$descriptions{$codetype}}($self);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
