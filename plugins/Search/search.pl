@@ -55,12 +55,12 @@ sub main {
 		titlebar("99%", "Searching $form->{query}");
 
 		$form->{op} ||= 'stories';
-		my $authors = _authors();
 		slashDisplay('searchform', {
-			section		=> $slashdb->getSection($form->{section}),
+			sections		=> _sections(),
+			topics		=> _topics(),
 			tref		=> $slashdb->getTopic($form->{topic}),
 			op		=> $form->{op},
-			authors		=> $authors
+			authors		=> _authors(),
 		});
 
 		if ($ops{$form->{op}}) {
@@ -82,6 +82,26 @@ sub _authors {
 	$authors->{''} = 'All Authors';
 
 	return $authors;
+}
+
+#################################################################
+# Ugly isn't it?
+sub _topics {
+	my $slashdb = getCurrentDB();
+	my $topics = $slashdb->getDescriptions('topics');
+	$topics->{''} = 'All Topics';
+
+	return $topics;
+}
+
+#################################################################
+# Ugly isn't it?
+sub _sections {
+	my $slashdb = getCurrentDB();
+	my $sections = $slashdb->getDescriptions('sections');
+	$sections->{''} = 'All Sections';
+
+	return $sections;
 }
 
 #################################################################

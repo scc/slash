@@ -68,11 +68,15 @@ sub findComments {
 
 	my $key = $self->_keysearch($form->{query}, ['subject', 'comment']);
 
+	# Welcome to the join from hell -Brian
 	$sql = "SELECT section, stories.sid,";
-	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid ";
+	$sql .= " stories.uid as author, discussions.title as title, pid, subject, writestatus, time, date, comments.uid as uid, comments.cid as cid ";
 
-	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
+	$sql .= "	  FROM stories, comments, comment_text, discussions WHERE ";
 
+	$sql .= " stories.sid = discussions.sid ";
+	$sql .= " AND comments.sid = discussions.id ";
+	$sql .= " AND comments.cid = comment_text.cid ";
 	$sql .= "	  AND $key "
 			if $form->{query};
 
@@ -135,10 +139,11 @@ sub findStory {
 	$limit = " LIMIT $start, $limit" if $limit;
 	my $key = $self->_keysearch($form->{query}, ['title', 'introtext']);
 
-	$sql .= "SELECT nickname,title,sid, time, commentcount,section ";
+	$sql .= "SELECT nickname,title,stories.sid as sid, time, commentcount,section ";
 
-	$sql .= " FROM stories, users WHERE displaystatus>=0 ";
+	$sql .= " FROM stories, story_text, users WHERE displaystatus>=0 ";
 
+	$sql .= " AND stories.sid=story_text.sid ";
 	$sql .= " AND $key " if $form->{query};
 
 	if ($form->{section}) {
