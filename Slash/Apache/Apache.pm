@@ -33,10 +33,12 @@ bootstrap Slash::Apache $VERSION;
 
 sub SlashVirtualUser ($$$) {
 	my($cfg, $params, $user) = @_;
+
+	# In case someone calls SlashSetVar before we have done the big mojo -Brian
+	my $overrides = $cfg->{constants};
+
 	createCurrentVirtualUser($cfg->{VirtualUser} = $user);
 	createCurrentDB		($cfg->{slashdb} = Slash::DB->new($user));
-# In case someone calls SlashSetVar before we have done the big mojo -Brian
-	my $overrides = $cfg->{constants};
 	createCurrentStatic	($cfg->{constants} = $cfg->{slashdb}->getSlashConf($user));
 
 	# placeholders ... store extra placeholders in DB?  :)
@@ -44,13 +46,10 @@ sub SlashVirtualUser ($$$) {
 		$cfg->{$_} = '';
 	}
 
-	$cfg->{constants}{form_override} = {}
-		unless $cfg->{constants}{form_override};
+	$cfg->{constants}{form_override} ||= {};
 
-	if ($overrides && keys(%$overrides)) {
-		for (keys(%$overrides)) {
-			$cfg->{constants}{$_} = $overrides->{$_};
-		}
+	if ($overrides) {
+		@{$cfg->{constants}}{keys %$overrides} = values %$overrides;
 	}
 
 	my $anonymous_coward = $cfg->{slashdb}->getUser(

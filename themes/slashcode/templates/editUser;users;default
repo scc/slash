@@ -39,7 +39,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
         <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
 [% END %]
 
-<BR>
+<BR>[%# is realname ever used for anything? -- pudge %]
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% useredit.realname | strip_attribute %]" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="formname" VALUE="edituser">

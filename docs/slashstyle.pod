@@ -397,16 +397,18 @@ These are basic encodings to be used to filter certain kinds of text.
 =item strip_nohtml
 
 This strips out all HTML, and adds extra whitespace into long
-strings of non-whitespace characters.
+strings of non-whitespace characters.  It removes E<lt> and E<gt> and
+converts & to &amp;.
 
 It is to be used when you have text where HTML is not allowed.  This
 could be, for example, a comment subject.  It must be used whenever
-user-supplied text is to be printed where HTML needs to be sripped out.
+user-supplied text is to be printed where HTML needs to be stripped out.
 
 =item strip_notags
 
 This strips out all HTML tags, and adds extra whitespace into long
-strings of non-whitespace characters.
+strings of non-whitespace characters.  It removes E<lt> and E<gt> and
+converts & to &amp; unless the & is part of an HTML entity.
 
 It is to be used when you have text where HTML tags are not allowed,
 but HTML encoding is (for example, in TITLE tags).
@@ -1034,6 +1036,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.13  2001/10/23 20:15:55  pudge
+	Fix filtering user bio; move srand to User.pm; change checkEmail to existsEmail (I thought checkEmail would return true if the address was OK to use!); moved "adding back" of domain tags to parseDomainTags in Data.pm; changed some calls to strip_nohtml to strip_notags (and updated docs); other minor fixes
+	
 	Revision 1.1.2.12  2001/10/10 16:06:26  pudge
 	Doc updates
 	

@@ -619,23 +619,8 @@ sub dispComment {
 		$comment_shrunk = addDomainTags($comment_shrunk);
 	}
 
-	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 2;	# default is 2 # XXX Jamie I think should be 1
-	$udt =~ /^(\d+)$/; $udt = 2 if !length($1);	# make sure it's numeric, sigh
-	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
-	$want_tags = 0 if				# but, don't display them if...
-		$udt == 0				# the user has said they never want the tags
-		or (					# or
-			$udt == 1			# the user leaves it up to us
-			and $comment->{fakeemail}	# and we think the poster has earned tagless posting
-		);
-	if ($want_tags) {
-		$comment->{comment} =~ s{</A ([^>]+)>}{</A> [$1]}gi;
-		$comment->{sig} =~ s{</A ([^>]+)>}{</A> [$1]}gi;
-		$comment_shrunk =~ s{</A ([^>]+)>}{</A> [$1]}gi if $comment_shrunk;
-	} else {
-		$comment->{comment} =~ s{</A[^>]+>}{</A>}gi;
-		$comment->{sig} =~ s{</A[^>]+>}{</A>}gi;
-		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
+	for my $html ($comment->{comment}, $comment->{sig}, $comment_shrunk) {
+		$html = parseDomainTags($html, $comment->{fakeemail});
 	}
 
 	if ($user->{sigdash} && $comment->{sig} && !isAnon($comment->{uid})) {

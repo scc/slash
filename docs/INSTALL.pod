@@ -754,7 +754,7 @@ the Bundle::Slash distribution.
 
 =item AppConfig
 
-=item Template-Toolkit
+=item Template-Toolkit (version 2)
 
 =item Mail-Sendmail
 

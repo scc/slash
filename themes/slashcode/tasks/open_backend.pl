@@ -109,7 +109,7 @@ EOT
 	my $body;
 	for my $sect (@$stories) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$sect->{sid}">| .
-			xmlencode(strip_nohtml($sect->{title})) .
+			xmlencode(strip_notags($sect->{title})) .
 			"</option>\n";
 		$z++;
 	}

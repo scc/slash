@@ -74,7 +74,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 [% END %]
 
 [% IF useredit.bio %]
- <B>User Bio</B><BR>[% useredit.bio | strip_html %]<P>
+ <B>User Bio</B><BR>[% Slash.parseDomainTags(useredit.bio, useredit.fakeemail) | strip_html %]<P>
 [% END %]
 
 [% IF useredit.pubkey %]

@@ -55,7 +55,7 @@ DBIx::Password
 
 Apache::DBI
 
-Apache::Cookie
+Apache::Cookie		- libapreq; also includes Apache::Request
 
 Apache::Request
 

@@ -1082,7 +1082,7 @@ sub createContentFilter {
 	return $filter_id;
 }
 
-sub checkEmail {
+sub existsEmail {
 	my($self, $email) = @_;
 
 	# Returns count of users matching $email.
@@ -1099,7 +1099,7 @@ sub createUser {
 	return if ($self->sqlSelect(
 		"uid", "users",
 		"matchname=" . $self->sqlQuote($matchname)
-	))[0] || $self->checkEmail($email);
+	))[0] || $self->existsEmail($email);
 
 	$self->sqlInsert("users", {
 		uid		=> '',

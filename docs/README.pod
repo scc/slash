@@ -69,7 +69,7 @@ and a lot more.
 http://slashcode.com/faq.shtml
 
 
-=item Template Toolkit
+=item Template Toolkit (version 2)
 
 For more information on how to write templates, see the Template
 Toolkit site.

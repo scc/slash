@@ -364,7 +364,7 @@ sub listArticle {
 
 sub saveArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
-	my $description = strip_nohtml($form->{description});
+	my $description = strip_notags($form->{description});
 
 	unless ($description ne "" && $form->{article} ne "") {
 		_printHead("mainhead");
@@ -528,7 +528,7 @@ sub editArticle {
 
 	if ($article->{article}) {
 		my $strip_art = strip_mode($article->{article}, $posttype);
-		my $strip_desc = strip_nohtml($article->{description});
+		my $strip_desc = strip_notags($article->{description});
 
 		my $commentcount = $article->{discussion}
 			? $slashdb->getDiscussion($article->{discussion}, 'commentcount')

@@ -251,7 +251,9 @@ sub main {
 		my $refer = URI->new_abs($constants->{rootdir},
 			$constants->{absolutedir});
 		# Tolerate redirection with or without a "www.", this is a little
-		# sloppy but it may help avoid a subtle misbehavior someday.
+		# sloppy but it may help avoid a subtle misbehavior someday. -- anonymous
+		# What misbehavior? It looks to me like it could break a site.
+		# www.foo.com is not necessarily the same as foo.com.  Please explain. -- pudge
 		my $site_domain = $constants->{basedomain}; $site_domain =~ s/^www\.//;
 		my $refer_host = $refer->host(); $refer_host =~ s/^www\.//;
 		if ($site_domain eq $refer_host) {
@@ -400,7 +402,11 @@ sub newUser {
 	$form->{newusernick} = fixNickname($form->{newusernick});
 	(my $matchname = lc $form->{newusernick}) =~ s/[^a-zA-Z0-9]//g;
 
-	if ($matchname ne '' && $form->{newusernick} ne '' && $form->{email} =~ /\@/) {
+	if (!$form->{email} || $form->{email} !~ /\@/ || $slashdb->checkEmail($form->{email})) {
+		print getError('emailexists_err', 0, 1);
+		return;
+
+	} elsif ($matchname ne '' && $form->{newusernick} ne '') {
 		my $uid;
 		my $rootdir = getCurrentStatic('rootdir', 'value');
 
@@ -422,6 +428,7 @@ sub newUser {
 			print getError('duplicate_user', { nick => $form->{usernick} });
 			return;
 		}
+
 	} else {
 		print getError('duplicate_user', { nick => $form->{usernick} });
 			return;
@@ -1347,7 +1354,7 @@ sub saveUser {
 	# Check to ensure that if a user is changing his email address, that
 	# it doesn't already exist in the userbase.
 	if ($user_edit->{realemail} ne $form->{realemail}) {
-		if ($slashdb->checkEmail($form->{realemail})) {
+		if ($slashdb->existsEmail($form->{realemail})) {
 			$note = getError('emailexists_err', 0, 1);
 			return $note;
 		}
@@ -1358,12 +1365,32 @@ sub saveUser {
 	# string expansion and tag balancing can too), warn the user to
 	# use shorter domain names and don't save their change.
 	my $sig = chopEntity($form->{sig}, 120);
-	$sig = strip_html($sig);
-	$sig = balanceTags($sig, 1); # only 1 nesting tag (UL, OL, BLOCKQUOTE) allowed
-	$sig = addDomainTags($sig) if $sig;
-	if (defined($sig) and length($sig) > 160) {
+	my $bio = $form->{bio};
+
+	for my $dat ($sig, $bio) {
+		$dat = strip_html($dat);
+		$dat = balanceTags($dat, 1); # only 1 nesting tag (UL, OL, BLOCKQUOTE) allowed
+		$dat = addDomainTags($dat) if $dat;
+	}
+
+	if (defined($sig) && length($sig) > 160) {
 		print getError('sig_too_long_err');
 		$sig = undef;
+	}
+
+	my($err_message);
+	if (! filterOk('comments', 'postersubj', $bio, \$err_message)) {
+		print getError('filter message', {
+			err_message	=> $err_message,
+			item		=> 'bio',
+		});
+		$bio = undef;
+	} elsif (! compressOk('comments', 'postersubj', $bio)) {
+		print getError('compress filter', {
+			ratio	=> 'postersubj',
+			item		=> 'bio',
+		});
+		$bio = undef;
 	}
 
 	# We should do some conformance checking on a user's pubkey,
@@ -1383,12 +1410,12 @@ sub saveUser {
 	my $user_edits_table = {
 		homepage	=> $homepage,
 		realname	=> $form->{realname},
-		bio		=> $form->{bio},
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
 	};
 	$user_edits_table->{sig} = $sig if defined $sig;
+	$user_edits_table->{bio} = $bio if defined $bio;
 
 	# don't want undef, want to be empty string so they
 	# will overwrite the existing record

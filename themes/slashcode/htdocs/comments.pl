@@ -344,7 +344,7 @@ sub createDiscussion {
 				? ""
 				: $ENV{HTTP_REFERER};
 		$form->{url}	= fudgeurl($newurl);
-		$form->{title}	= strip_nohtml($form->{title});
+		$form->{title}	= strip_notags($form->{title});
 
 
 		# for now, use the postersubj filters; problem is,
@@ -574,7 +574,6 @@ sub validateComment {
 			$form_success = 0;
 			last;
 		}
-
 	}
 
 
@@ -599,7 +598,7 @@ sub previewForm {
 	$user->{sig} = "" if $form->{postanon};
 
 	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
-	my $tempSubject = strip_nohtml($form->{postersubj});
+	my $tempSubject = strip_notags($form->{postersubj});
 
 	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return;
 
@@ -642,7 +641,7 @@ sub submitComment {
 
 	my $error_message;
 
-	$form->{postersubj} = strip_nohtml($form->{postersubj});
+	$form->{postersubj} = strip_notags($form->{postersubj});
 	$form->{postercomment} = strip_mode($form->{postercomment}, $form->{posttype});
 
 	unless (validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message)) {

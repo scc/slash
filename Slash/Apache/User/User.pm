@@ -39,6 +39,9 @@ sub SlashAuthAll ($$$) {
 	$cfg->{auth} = $flag;
 }
 
+# see below for more info on this var
+my $srand_called;
+
 # handler method
 sub handler {
 	my($r) = @_;
@@ -83,9 +86,8 @@ sub handler {
 # 	$r->method_number(M_GET);
 
 	my $form = filter_params($r->args, $r->content);
-	for (keys %{$constants->{form_override}}) {
-		$form->{$_} = $constants->{form_override}{$_};
-	}
+	@{$form}{keys  %{$constants->{form_override}}} =
+		values %{$constants->{form_override}};
 	my $cookies = Apache::Cookie->fetch;
 
 	# So we are either going to pick the user up from
@@ -167,6 +169,10 @@ sub handler {
 	# to disallow logins to your site.
 	# I need to complete this as a feature. -Brian
 	return DECLINED if $cfg->{auth} && isAnon($uid);
+
+	# this needs to get called once per child ... might as well
+	# have it called here. -- pudge
+	srand(time ^ ($$ + ($$ << 15))) unless $srand_called ||= 1;
 
 	createCurrentUser(prepareUser($uid, $form, $uri, $cookies, $method));
 	createCurrentForm($form);

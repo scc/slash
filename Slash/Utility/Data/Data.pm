@@ -43,6 +43,7 @@ use vars qw($VERSION @EXPORT);
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
 	addDomainTags
+	parseDomainTags
 	balanceTags
 	changePassword
 	chopEntity
@@ -1287,6 +1288,69 @@ sub balanceTags {
 
 #========================================================================
 
+=head2 parseDomainTags(HTML, RECOMMENDED)
+
+To be called before sending the HTML to the user for display.  Takes
+HTML with domain tags (see addDomainTags()) and parses out the tags,
+if necessary.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item HTML
+
+The HTML with tagged with domains.
+
+=item RECOMMENDED
+
+Boolean for whether or not domain tags are recommended.  They are not
+required, the user can choose to leave it up to us.
+
+=back
+
+=item Return value
+
+The parsed HTML.
+
+=back
+
+=cut
+
+sub parseDomainTags {
+	my($html, $recommended) = @_;
+	return "" if !defined($html) || $html eq "";
+
+	my $user = getCurrentUser();
+
+	# default is 2 # XXX Jamie I think should be 1
+	my $udt = exists($user->{domaintags}) ? $user->{domaintags} : 2;
+
+	$udt =~ /^(\d+)$/;			# make sure it's numeric, sigh
+	$udt = 2 if !length($1);
+
+	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
+	$want_tags = 0 if				# but, don't display them if...
+		$udt == 0				# the user has said they never want the tags
+		|| (					# or
+			$udt == 1			# the user leaves it up to us
+			and $recommended	# and we think the poster has earned tagless posting
+		);
+
+	if ($want_tags) {
+		$html =~ s{</A ([^>]+)>}{</A> [$1]}gi;
+	} else {
+		$html =~ s{</A[^>]+>}{</A>}gi;
+	}
+
+	return $html;
+}
+
+
+#========================================================================
+
 =head2 addDomainTags(HTML)
 
 To be called only after C<balanceTags>, or results are not guaranteed.
@@ -1310,10 +1374,6 @@ The HTML to tag with domains.
 =item Return value
 
 The tagged HTML.
-
-=item Dependencies
-
-Don't know, ask again later.
 
 =back
 

@@ -90,11 +90,25 @@ __template__
 	to re-register, then please log in as that user, first.<BR>
 
 [% CASE 'emailexists_err' %]
-	Sorry, [% form.realemail | strip_literal %] already exists in our userbase.<BR>
+	Sorry, the email address "[% form.realemail | strip_literal %]" already
+	exists in our user database, or is invalid.<BR>
 
 [% CASE 'sig_too_long_err' %]
 	Sorry, adding domain tags to your sig made it too long. Please try again,
 	using fewer links or shorter domain names.<BR>
+
+[% CASE "filter message" %]
+[% PROCESS titlebar width="95%" title="Content filter encountered for $item" %]
+[% IF err_message %]
+<B>Reason: [% err_message %]</B><BR>
+[% END %]
+<B>Saving [% item %] aborted.</B>
+
+[% CASE "compress filter" %]
+[% PROCESS titlebar width="95%" title="Compression filter encountered" %]
+Your [% item %] violated the "[% ratio %]" compression filter. Try less
+whitespace and/or less repetition.
+<B>Saving [% item %] aborted.</B>
 
 [% CASE DEFAULT %]
 	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>

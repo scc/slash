@@ -26,7 +26,7 @@ __template__
 			SRC="[% topic.imageclean %]"
 			ALT="[% topic.alttext %]" WIDTH="[% topic.width %]"
 			HEIGHT="[% topic.height %]" BORDER="0">[% IF topic_admin %]</A>
-			<A HREF="[% constants.rootdir %]/admin.pl?op=topics&nexttid=[% topic.tid %]"
+			<A HREF="[% constants.rootdir %]/admin.pl?op=topics&amp;nexttid=[% topic.tid %]"
 			>[% END %]<BR>[% topic.alttext %]</A>
 	</TD>
 [% END %]

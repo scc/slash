@@ -30,8 +30,6 @@ sub handler {
 	my $slashdb = getCurrentDB();
 	$slashdb->sqlConnect();
 	
-	# what is the point of "isBanned()"?  why not just get
-	# the reference and check for existence here? -- pudge
 	my $banlist = $slashdb->getBanList();
 
 	if ($banlist->{$cur_ipid} || $banlist->{$cur_subnet}) {
