@@ -945,6 +945,7 @@ sub deleteBlock {
 	my($self, $bid) = @_;
 	$self->sqlDo('DELETE FROM blocks WHERE bid =' . $self->{_dbh}->quote($bid));
 }
+
 ########################################################
 sub deleteTemplate {
 	my($self, $tpid) = @_;
@@ -2293,7 +2294,7 @@ sub _saveExtras {
 	my $extras = $self->sqlSelectColumns($form->{section});
 	my $E;
 
-	for(@$extras) { $E->{$_} = $form->{$_} }
+	for (@$extras) { $E->{$_} = $form->{$_} }
 
 	if ($self->sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
 		$self->sqlInsert($form->{section}, $E);

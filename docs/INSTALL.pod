@@ -164,6 +164,10 @@ module:
 When asked, give the info for accessing the Slash database created
 in step 1.
 
+Feel free to re-run "install Bundle::Slash" if you get errors, or just
+aren't sure what's been installed, etc.  It will safely skip anything
+already installed.
+
 B<Note>: If running BSD, also install the BSD::Resource module.
 
 
@@ -176,6 +180,12 @@ creates, and type:
 
 	make
 	make install
+
+B<Note>: this depends on a relatively new version of the B<install>
+program that comes with GNU fileutils distribution.  Version 4.0 is
+recommended.  Some older versions of SuSE, for example, come with
+version 3; just install the latest fileutils package, or version 4.0
+of install.
 
 There are a few options to C<make> and C<make install> you may
 want to change.

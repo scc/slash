@@ -32,6 +32,8 @@ sub main {
 		# will have to get this information from the database anyways.
 		undef $form->{title} if ($form->{sid} && $form->{op} eq 'edit');
 	}
+
+	# "backSlash" needs to be in a template or something -- pudge
 	my $slashdb = getCurrentDB();
 	my $gmt_now_secs = UnixDate(ParseDate($slashdb->getTime()), "%s");
 	my $gmt_ts = UnixDate("epoch $gmt_now_secs", "%T");

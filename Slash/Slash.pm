@@ -787,6 +787,7 @@ sub redirect {
 	$r->header_out(Location => $url);
 	$r->status(302);
 	$r->send_http_header;
+
 	slashDisplay('html-redirect', { url => $url });
 }
 
@@ -848,7 +849,9 @@ sub header {
 # This is here as a reminder -Brian
 #		$params{-status} = $status if $status;
 
-		unless($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
+# we need to doublecheck that Pragma header is not required -- pudge
+
+		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
 			$r->header_out('Cache-Control', 'no-cache')
 		} else {
 			$r->header_out('Cache-Control', 'private')
@@ -1881,8 +1884,6 @@ hashref of author data, and hashref of topic data.
 sub displayStory {
 	# caller is the pagename of the calling script
 	my($sid, $full) = @_;	# , $caller  no longer needed?  -- pudge
-												# caller was used by storycount (which we
-												# no longer need). -Brian
 
 	my $slashdb = getCurrentDB();
 	my $story = $slashdb->getStory($sid);
