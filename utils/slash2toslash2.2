@@ -118,7 +118,13 @@ my (%conversions) = (
 	'vars'			=> undef,
 
 	# Plugin tables.
-	'journals'		=> undef,
+	'journals'		=> sub {
+		my($data) = @_;
+		
+		# Why this schema change was made, I do NOT know.
+		$data->{discussion} = $data->{comment_header};
+		delete $data->{comment_header};
+	},
 	'journals_text'		=> undef,
 	'journal_friends'	=> undef,
 	'journal_themes'	=> undef,
