@@ -2855,8 +2855,9 @@ sub _getCommentText {
 	# If this is the first time this is called, create an empty comment text
 	# cache (a hashref).
 	$self->{_comment_text} ||= { };
-	if (scalar(keys %{$self->{_comment_text}}) > 8_000) {
+	if (scalar(keys %{$self->{_comment_text}}) > 5_000) {
 		# Cache too big. Big cache bad. Kill cache. Kludge.
+print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " purged\n";
 		undef $self->{_comment_text};
 		$self->{_comment_text} = { };
 	}
@@ -2868,6 +2869,8 @@ sub _getCommentText {
 		# We need a list of comments' text.  First, eliminate the ones we
 		# already have in cache.
 		my @needed = grep { !exists($self->{_comment_text}{$_}) } @$cid;
+		my $num_cache_misses = scalar(@needed);
+		my $num_cache_hits = scalar(@$cid) - $num_cache_misses;
 		if (@needed) {
 			my $in_list = join(",", @needed);
 			my $comment_array = $self->sqlSelectAll(
@@ -2880,16 +2883,23 @@ sub _getCommentText {
 				$self->{_comment_text}{$comment_hr->[0]} = $comment_hr->[1];
 			}
 		}
+print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " hits $num_cache_hits misses $num_cache_misses\n";
 		# Now, all the comment texts we need are in cache, return them.
 		return $self->{_comment_text};
 
 	} else {
+		my $num_cache_misses = 0;
+		my $num_cache_hits = 0;
 		# We just need a single comment's text.
 		if (!$self->{_comment_text}{$cid}) {
 			# If it's not already in cache, load it in.
+			$num_cache_misses = 1;
 			$self->{_comment_text}{$cid} =
 				$self->sqlSelect("comment", "comment_text", "cid=$cid");
+		} else {
+			$num_cache_hits = 1;
 		}
+print STDERR "_getCommentText time " . time . " pid $$ cache_size " . scalar(keys %{$self->{_comment_text}}) . " hits $num_cache_hits misses $num_cache_misses\n";
 		# Now it's in cache.  Return it.
 		return $self->{_comment_text}{$cid};
 	}

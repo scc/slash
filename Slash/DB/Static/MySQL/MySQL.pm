@@ -558,10 +558,18 @@ sub fetchEligibleModerators {
 sub updateTokens {
 	my($self, $modlist) = @_;
 
-	for (@{$modlist}) {
-		$self->setUser($_, {
+	my $num_empty_uids = 0;
+	for my $uid (@{$modlist}) {
+		if ($uid) {
+			++$num_empty_uids;
+			next;
+		}
+		$self->setUser($uid, {
 			-tokens	=> "tokens+1",
 		});
+	}
+	if ($num_empty_uids) {
+		errorLog("$num_empty_uids empty uids in updateTokens");
 	}
 }
 

@@ -48,7 +48,11 @@ sub main {
 	}
 
 	footer();
-	writeLog($story->{sid} || $form->{sid});
+	if ($story) {
+		writeLog($story->{sid} || $form->{sid});
+	} else {
+		writeLog($form->{sid});
+	}
 }
 
 createEnvironment();
