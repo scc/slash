@@ -53,51 +53,44 @@ EOT
 
 #################################################################
 sub topTopics {
-	my $SECT=shift;
+	my ($SECT) = @_;
 
 	titlebar("90%", "Recent Topics");
 
-	my $when = "AND to_days(now()) - to_days(time) < 14" unless $I{F}{all};
-	my $order = $I{F}{all} ? "ORDER BY alttext" : "ORDER BY cnt DESC";
-	my $c=sqlSelectMany("*, count(*) as cnt","topics,newstories",
-				"topics.tid=newstories.tid
-				 $when
-				 GROUP BY topics.tid
-				 $order");
-
-	my $T;
+	my $topics = $I{dbobject}->getTopNewsstoryTopics($I{F}{all});
 	my $col=0;
-
-	print <<EOT;
+	printf <<EOT;
 
 <TABLE WIDTH="90%" BORDER="0" CELLPADDING="3">
 EOT
 
-	while ($T = $c->fetchrow_hashref) {
-		printf <<EOT, sqlSelect("count(*)", "stories", "tid=" . $I{dbh}->quote($T->{tid}));
+	for my $topic (@$topics) {
+	my ($tid, $alttext, $image, $width, $height, $cnt) = @$_;
+		print $I{dbobject}->countStory($tid);
+		print <<EOT;
+
 	<TR><TD ALIGN="RIGHT" VALIGN="TOP>
-		<FONT SIZE="6" COLOR="$I{bg}[3]">$T->{alttext}</FONT>
+		<FONT SIZE="6" COLOR="$I{bg}[3]">$alttext</FONT>
 		<BR>( %s )
-		<A HREF="$I{rootdir}/search.pl?topic=$T->{tid}"><IMG
-			SRC="$I{imagedir}/topics/$T->{image}"
-			BORDER="0" ALT="$T->{alttext}" ALIGN="RIGHT"
-			HSPACE="0" VSPACE="10" WIDTH="$T->{width}"
-			HEIGHT="$T->{height}"></A>
+		<A HREF="$I{rootdir}/search.pl?topic=$tid"><IMG
+			SRC="$I{imagedir}/topics/$image"
+			BORDER="0" ALT="$alttext" ALIGN="RIGHT"
+			HSPACE="0" VSPACE="10" WIDTH="$width"
+			HEIGHT="$height"></A>
 	</TD><TD BGCOLOR="$I{bg}[2]" VALIGN="TOP">
 EOT
 
-		my $limit = $T->{cnt};
+		my $limit = $cnt;
 		$limit = 10 if $limit > 10;
 		$limit = 3  if $limit < 3 or $I{F}{all};
 		$SECT->{issue} = 0;
 
-		my $stories = selectStories($SECT, $limit, $T->{tid});
+		my $stories = selectStories($SECT, $limit, $tid);
 		print getOlderStories($stories, $SECT);
 		$stories->finish;
 		print "\n\t</TD></TR>\n";
 	} 
 	print "</TABLE>\n\n";
-	$c->finish;
 
 	printf <<EOT, scalar localtime;
 <BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
@@ -142,4 +135,5 @@ EOT
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+# Don't kick the baby!
+#$I{dbh}->disconnect if $I{dbh};

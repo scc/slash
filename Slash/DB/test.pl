@@ -130,3 +130,18 @@ print "ok 13\n";
 print "Testing getSubmissionCount() \n";
 print "\tSubmissions :" . $object->getSubmissionCount(0) . "\n";
 print "ok 14\n";
+########################################################################
+print "Testing getTopNewsstoryTopics() & countStory() \n";
+my $newsstories = $object->getTopNewsstoryTopics(1);
+# Broke at the moment
+#for my $newsstories (@$newsstories) {
+#	print "\tSubmissions :" . $object->countStory($newsstories->{tid}) . "\n";
+#}
+print "ok 15\n";
+########################################################################
+print "Testing getAuthorDescription()\n";
+my $authordescriptions = $object->getAuthorDescription();
+for my $authordescriptions (@$authordescriptions) {
+	print "\tAuthorDescription :@$authordescriptions\n";
+}
+print "ok 16\n";

@@ -42,23 +42,20 @@ authors here, along with the number of articles that they
 have posted.
 EOT
 
-	my $c = sqlSelectMany("count(*) as c, stories.aid as aid, url, copy",
-		"stories, authors",
-		"authors.aid=stories.aid", "
-		GROUP BY aid ORDER BY c DESC");
+	my $authors = $I{dbobject}->getAuthorDescription();
 
-	while(my $A = $c->fetchrow_hashref) {
-		next if $A->{c} < 1; 
+	for (@$authors) {
+		my ($count, $aid, $url, $copy) = @$_;
+		next if $count < 1; 
 		print <<EOT;
-<H2><B><A HREF="$I{rootdir}/search.pl?author=$A->{aid}">$A->{c}</A></B>
-	<A HREF="$A->{url}">$A->{aid}</A></H2>
+<H2><B><A HREF="$I{rootdir}/search.pl?author=$aid">$count</A></B>
+	<A HREF="$url">$aid</A></H2>
 EOT
-		print qq![ <A HREF="$I{rootdir}/admin.pl?op=authors&aid=$A->{aid}">edit</A> ] !
+		print qq![ <A HREF="$I{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
 			if $I{U}{aseclev} > 1000;
-		print $A->{copy};
+		print $copy;
 	}
 
-	$c->finish;
 	
 	printf <<EOT, scalar localtime;
 <P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>

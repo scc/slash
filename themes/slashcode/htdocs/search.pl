@@ -130,7 +130,7 @@ EOT
 EOT
 
 	if ($I{F}{op} eq "stories") {
-	my $authors = $I{dbobject}->getAuthorNameByAid();
+		my $authors = $I{dbobject}->getAuthorNameByAid();
 		createSelect('author', $authors, $I{F}{author});
 	} elsif ($I{F}{op} eq "comments") {
 		print <<EOT;

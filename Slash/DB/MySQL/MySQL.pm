@@ -391,6 +391,18 @@ sub getAuthor {
 	$sth->finish;
 	return $authorBank{$aid};
 }
+########################################################
+sub getAuthorDescription {
+  my ($self) = @_;
+	my $sth = $self->sqlSelectMany("count(*) as c, stories.aid as aid, url, copy",
+		"stories, authors",
+		"authors.aid=stories.aid", "
+		GROUP BY aid ORDER BY c DESC"
+		);
+	my $authors = $sth->fetchall_arrayref;
+
+	return $authors;
+}
 
 ########################################################
 sub getAuthorNameByAid {
@@ -684,6 +696,25 @@ sub getTopic {
 		return \%topicBank;
 	}
 }
+
+########################################################
+# Need to change this method at some point... I hate
+# useing a push
+sub getTopNewsstoryTopics {
+  my ($self, $all) = @_;
+	my $when = "AND to_days(now()) - to_days(time) < 14" unless $all;
+	my $order = $all ? "ORDER BY alttext" : "ORDER BY cnt DESC";
+	my $sth=$self->sqlSelectMany("topics.tid, alttext, image, width, height, count(*) as cnt","topics,newstories",
+			"topics.tid=newstories.tid
+			$when
+			GROUP BY topics.tid
+			$order"
+			);
+	my $topics = $sth->fetchall_arrayref;
+
+	return $topics;
+}
+
 ########################################################
 # This was added to replace latestpoll() except I
 # don't think anything is using it anymore
@@ -752,6 +783,14 @@ sub getPortals {
 
 	my $portals = $sth->fetchall_arrayref;
 	return $portals;
+}
+##################################################################
+# counts the number of stories
+sub countStory {
+	my ($self, $tid) = @_;
+	my ($value) = $self->sqlSelect("count(*)", "stories", "tid=" . $self->{dbh}->quote($tid));
+
+	return $value;
 }
 
 1;
