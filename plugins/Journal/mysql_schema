@@ -9,9 +9,16 @@ CREATE TABLE journals (
 	KEY uidarticle (uid),
 	KEY IDandUID (id,uid)
 );
+
 DROP TABLE IF EXISTS journal_friends;
 CREATE TABLE journal_friends (
 	uid int(11) DEFAULT '0' NOT NULL,
 	friend int(11) DEFAULT '0' NOT NULL,
 	unique jackandjill (uid,friend)
+);
+
+DROP TABLE IF EXISTS journal_themes;
+CREATE TABLE journal_themes (
+	name varchar(30) NOT NULL,
+	PRIMARY KEY (name)
 );

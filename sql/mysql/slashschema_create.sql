@@ -459,7 +459,7 @@ CREATE TABLE submissions (
 DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
   tpid int(11) NOT NULL auto_increment,
-  name varchar(30) DEFAULT '' NOT NULL,
+  name varchar(30) NOT NULL,
   page varchar(20) DEFAULT 'misc' NOT NULL,
   section varchar(30) DEFAULT 'default' NOT NULL,
   lang char(3) DEFAULT 'eng' NOT NULL,
@@ -476,7 +476,7 @@ CREATE TABLE templates (
 
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
-  tid char(20) DEFAULT '' NOT NULL,
+  tid char(20) NOT NULL,
   image char(30),
   alttext char(40),
   width int(11),

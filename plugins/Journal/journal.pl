@@ -111,7 +111,7 @@ sub displayArticle {
 		print STDERR "$_->{day}\n";
 	}
 	my $theme = $slashdb->getUser($uid, 'journal-theme');
-	$theme ||= 'journalpage-grey';
+	$theme ||= 'generic';
 	slashDisplay($theme, {
 		articles => \@sorted_articles,
 		uid => $form->{uid},

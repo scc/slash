@@ -11,6 +11,8 @@ use Slash::DB::Utility;
 @Slash::Journal::EXPORT = qw();
 $Slash::Journal::VERSION = '0.01';
 
+# On a side note, I am not sure if I liked the way I named the methods either.
+# -Brian
 sub new {
 	my ($class, $user) = @_;
 	my $self = {};
@@ -102,10 +104,9 @@ sub themes {
 	my ($self) = @_;
 	my $uid = $ENV{SLASH_USER};
 	my $sql;
-	$sql .= "SELECT tpid,description from templates ";
-	$sql .= "where tpid like 'journalpage-%'";
+	$sql .= "SELECT name from jounral_themes";
 	$self->sqlConnect;
-	my $themes = $self->{_dbh}->selectall_arrayref($sql);
+	my $themes = $self->{_dbh}->selectcol_arrayref($sql);
 
 	return $themes;
 }
