@@ -1155,8 +1155,7 @@ sub listStories {
 		$i++;
 	}
 
-	$sectionflag =  unless ($user->{section} || $form->{section});
-
+	$sectionflag = 1 unless ($user->{section} || $form->{section});
 
 	$count = @$storylist;
 	$left = $count - $x;
