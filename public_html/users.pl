@@ -42,11 +42,22 @@ print STDERR "OP $I{F}{op}\n";
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
+	} elsif ($op eq "saveuser") {
+		my $note = saveUser($I{U}{uid});
+		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
+		return;
+	}
+
+	my $note;
+	if ($I{F}{note}) {
+		for (split /\n+/, $I{F}{note}) {
+			$note .= sprintf "<H2>%s</H2>\n", stripByMode($_, 'literal');
+		}
 	}
 
 	header("$I{sitename} Users");
 	print <<EOT if !$user->{is_anon} && $op ne "userclose";
- [
+$note [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
 	<A HREF="$ENV{SCRIPT_NAME}?op=edituser">Edit User Info</A> |
 	<A HREF="$ENV{SCRIPT_NAME}?op=edithome">Customize Homepage</A> |
@@ -92,10 +103,6 @@ EOT
 		} else {
 			userInfo($I{U}{uid}, $I{U}{nickname});
 		}
-
-	} elsif ($op eq "saveuser") {
-		saveUser($I{U}{uid});
-		userInfo($I{U}{uid}, $I{U}{nickname});
 
 	} elsif ($op eq "savecomm") {
 		saveComm($I{U}{uid});
@@ -247,20 +254,39 @@ sub mailPassword {
 		print "Nickname was not found. No Password was mailed.<BR>\n"; 
 		return;
 	}
-	my $user_email = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
 
-	my $msg = $I{dbobject}->getBlock("newusermsg");
-	$msg = prepBlock($msg);
-	$msg = eval $msg;
+	my $user_email = $I{dbobject}->getUser($uid, qw(nickname realemail));
+	my $newpasswd = $I{dbobject}->getNewPasswd($uid);
+	my $tempnick = fixparam($user_email->{nickname});
 
-	sendEmail($user_email->{realemail}, "$I{sitename} user password for $user_email->{nickname}", $msg) if $user_email->{nickname};
+# temporarily make a message here
+#	my $msg = $I{dbobject}->getBlock("newusermsg");
+#	$msg = prepBlock($msg);
+#	$msg = eval $msg;
+
+	my $msg = <<EOT;
+Your new password is $newpasswd.  Your old password will still work until
+this password is used.  Go to the URL below to log in:
+
+  $I{absolutedir}/index.pl?op=userlogin&upasswd=$newpasswd&unickname=$tempnick
+
+Make sure you then CHANGE YOUR PASSWORD!
+
+Thanks.
+EOT
+
+	sendEmail(
+		$user_email->{realemail},
+		"$I{sitename} user password for $user_email->{nickname}",
+		$msg
+	) if $user_email->{nickname};
 	print "Passwd for $user_email->{nickname} was just emailed.<BR>\n";
 }
 
 #################################################################
 sub userInfo {
-  my($uid, $nick) = @_;
-	unless ($uid) {
+	my($uid, $nick) = @_;
+	unless (defined $uid) {
 		print "$nick not found.";
 		return;
 	}
@@ -356,7 +382,10 @@ sub editKey {
 sub editUser {
 	my($uid) = @_;
 
-	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
+	my @values = qw(
+		realname realemail fakeemail homepage nickname
+		passwd sig seclev bio maillist
+	);
 	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
@@ -367,12 +396,12 @@ sub editUser {
 
 	$user_edit->{homepage} ||= "http://";
  
-	my $tempnick = $user_edit->{nickname};
-	$tempnick =~ s/ /+/g;
+	my $tempnick = fixparam($user_edit->{nickname});
+	my $temppass = fixparam($user_edit->{passwd});
  
 	print <<EOT;
 You can automatically login by clicking
-<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$user_edit->{passwd}&unickname=$tempnick">This Link</A>
+<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$temppass&unickname=$tempnick">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
@@ -380,7 +409,6 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="$user_edit->{realname}" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$user_edit->{uid}">
-		<INPUT TYPE="HIDDEN" NAME="passwd" VALUE="$user_edit->{passwd}">
 		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$user_edit->{nickname}">
 
 	<B>Real Email</B> (required but never displayed publicly. 
@@ -416,9 +444,9 @@ EOT
 
   	print <<EOT;
 	<P><B>Password</B> Enter new passwd twice to change it.
-		(must be 6-20 chars long)<BR>
-		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="20" MAXLENGTH="20">
-		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="20" MAXLENGTH="20"><P>
+		(must be 6-32 chars long)<BR>
+		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="32" MAXLENGTH="32">
+		<INPUT TYPE="PASSWORD" NAME="pass2" SIZE="32" MAXLENGTH="32"><P>
 
 </TD></TR></TABLE><P>
 
@@ -589,7 +617,10 @@ EOT
 	</TD></TR></TABLE><P>
 EOT
 
-	tildeEd($user_edit->{extid}, $user_edit->{exsect}, $user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks});
+	tildeEd(
+		$user_edit->{extid}, $user_edit->{exsect},
+		$user_edit->{exaid}, $user_edit->{exboxes}, $user_edit->{mylinks}
+	);
 
 	print qq!\t<INPUT TYPE="SUBMIT" NAME="op" VALUE="savehome">\n!;
 	print "\t</FORM>\n\n";
@@ -638,9 +669,9 @@ EOT
 	print " <BR>(comments scoring this are displayed even after an article spills into index mode)";
 
 	my $h_check = $user_edit->{hardthresh}	? " CHECKED" : "";
-	my $r_check = $user_edit->{reparent}		? " CHECKED" : "";
-	my $n_check = $user_edit->{noscores}		? " CHECKED" : "";
-	my $s_check = $user_edit->{nosigs}		? " CHECKED" : "";
+	my $r_check = $user_edit->{reparent}	? " CHECKED" : "";
+	my $n_check = $user_edit->{noscores}	? " CHECKED" : "";
+	my $s_check = $user_edit->{nosigs}	? " CHECKED" : "";
 
 	print <<EOT;
 	<P><B>Hard Thresholds</B> (Hides 'X Replies Below
@@ -700,13 +731,14 @@ EOT
 sub saveUser {
 	my $uid = $I{U}{aseclev} ? shift : $I{U}{uid};
 	my $user_email  = $I{dbobject}->getUser($uid, 'nickname', 'realemail');
+	my $note;
 
 	$user_email->{nickname} = substr($user_email->{nickname}, 0, 20);
 	return if $uid == $I{anonymous_coward_uid};
 
-	print "<P>Saving $user_email->{nickname}<BR><P>";
-	print <<EOT if $uid == $I{anonymous_coward_uid} || !$user_email->{nickname};
-<P>Your browser didn't save a cookie properly.  This could mean you are behind a filter that
+	$note = "Saving $user_email->{nickname}.\n";
+	$note .= <<EOT if !$user_email->{nickname};
+Your browser didn't save a cookie properly.  This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
 
@@ -733,7 +765,7 @@ EOT
 
 	if ($user_email->{realemail} ne $I{F}{realemail}) {
 		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
-		print "\nNotifying $user_email->{realemail} of the change to their account.<BR>\n";
+		$note .= "Notifying $user_email->{realemail} of the change to their account.\n";
 
 		sendEmail($user_email->{realemail}, "$I{sitename} user email change for $user_email->{nickname}", <<EOT);
 The user account $user_email->{nickname} on $I{sitename} had this email
@@ -749,15 +781,19 @@ or something.
 EOT
 	}
 
+	delete $H->{passwd};
 	if ($I{F}{pass1} eq $I{F}{pass2} && length($I{F}{pass1}) > 5) {
+		$note .= "Password changed.";
 		$H->{passwd} = $I{F}{pass1};
-		print qq!Password Changed  (You'll need to <A HREF="$ENV{SCRIPT_NAME}">log back in</A> now.)<BR>!;
+		my $cookie = $uid . '::' . $H->{passwd};
+		# check for DB error first?  -- pudge
+		$I{SETCOOKIE} = Slash::setCookie('user', $cookie);
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
-		print "Passwords don't match. Password not changed.<BR>";
+		$note .= "Passwords don't match. Password not changed.";
 
 	} elsif (length $I{F}{pass1} < 6 && $I{F}{pass1}) {
-		print "Password is too short and was not changed.<BR>";
+		$note .= "Password is too short and was not changed.";
 	}
 
 	# update the public key
@@ -767,8 +803,10 @@ EOT
 	# Update users with the $H thing we've been playing with for this whole damn sub
 	$I{dbobject}->setUsers($uid, $H) if $uid != $I{anonymous_coward_uid};
 
-	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H2) if $uid != $I{anonymous_coward_uid};
+	# Update users with the $H2 thing we've been playing with for this whole damn sub
+	$I{dbobject}->setUsersInfo($uid, $H2) if $uid != $I{anonymous_coward_uid};
+
+	return fixparam($note);
 }
 
 #################################################################

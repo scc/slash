@@ -383,19 +383,17 @@ sub getUser {
 # is this in User.pm now, or here, or both?
 sub setCookie {
 	my($name, $val, $session) = @_;
-
 	return unless $name;
-	# Can't we set a cookie with no value?  or is that not allowed?
-	return unless $val;
+
 	# domain must start with a . and have one more .
 	# embedded in it, else we ignore it
 	my $domain = $I{cookiedomain} &&
 		$I{cookiedomain} =~ /^\..+\./ ? $I{cookiedomain} : '';
 
 	my %cookie = (
-		-name		=> $name,
-		-path		=> $I{cookiepath},
-		-value		=> $val || '',
+		-name	=> $name,
+		-path	=> $I{cookiepath},
+		-value	=> $val || '',
 	);
 
 	$cookie{-expires} = '+1y' unless $session;

@@ -43,7 +43,7 @@ sub main {
 	my $stories;
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
-	if($I{F}{sid}) {
+	if ($I{F}{sid}) {
 		$stories = $I{dbobject}->getNewStory($I{F}{sid}, 'section','title','commentstatus')
 	} else {
 		$stories->{'title'} = "Comments";
@@ -113,7 +113,7 @@ sub main {
 	} elsif ($I{F}{cid}) {
 		printComments($I{F}{sid}, $I{F}{cid},$I{F}{cid}, $stories->{'commentstatus'});
 
-	} elsif($I{F}{sid}) {
+	} elsif ($I{F}{sid}) {
 		printComments($I{F}{sid}, $I{F}{pid}, "", $stories->{'commentstatus'});
 
 	} else {

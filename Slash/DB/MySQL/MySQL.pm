@@ -5,9 +5,11 @@ package Slash::DB::MySQL;
 # this.  -Brian
 
 use strict;
+use Digest::MD5 'md5_hex';
 use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
+use URI ();
 
 @Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -164,11 +166,14 @@ sub sqlConnect {
 # Lets say views? How about a better update?
 # This is here because MySQL can suck
 sub init {
-	my ($self) = @_;
-	my @user_tables = qw(users users_comments users_index users_info users_key users_prefs); 
+	my($self) = @_;
+	my @user_tables = qw(
+		users users_comments users_index
+		users_info users_key users_prefs
+	);
 	for my $table (@user_tables) {
 		my $keys = $self->getKeys($table);
-		for(@$keys) {
+		for (@$keys) {
 			$self->{'_all_user_keys'}->{$_} = $table;
 		}
 	}
@@ -594,15 +599,69 @@ sub getUserInstance {
 ########################################################
 # Get user info from the users table.
 sub getUserAuthenticate {
-	my($self, $name, $passwd) = @_;
+	my($self, $user, $passwd, $kind) = @_;
+	my($uid, $cookpasswd, $newpass);
 
-	# are we really supposed to see if uid = $name? -- pudge
-	my($uid) = $self->sqlSelect('uid', 'users',
-		'passwd=' . $self->{dbh}->quote($passwd) .
-		' AND uid=' . $self->{dbh}->quote($name)
-	);
-	return $uid;
+	# if $kind is 1, then only try to auth password as plaintext
+	# if $kind is 2, then only try to auth password as MD5
+	# if $kind is undef or 0, try as MD5 (the most common case),
+	#     then as plaintext
+	my($EITHER, $PLAIN, $MD5) = (0, 1, 2);
+	$kind ||= 0;
+
+	my $dbh = $self->{dbh};
+	my $user_db = $dbh->quote($user);
+	my $pass_db = $dbh->quote($passwd);
+
+	# try MD5 -> MD5
+	if ($kind == $EITHER || $kind == $MD5) {
+		($uid) = $self->sqlSelect('uid', 'users',
+			"passwd=$pass_db AND uid=$user_db"
+		);
+		$cookpasswd = $passwd if defined $uid;
+	}
+
+	# try plaintext -> MD5
+	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
+		my $hexpasswd = md5_hex($passwd);
+		($uid) = $self->sqlSelect('uid', 'users',
+			'passwd=' . $dbh->quote($hexpasswd) .
+			" AND uid=$user_db"
+		);
+		$cookpasswd = $hexpasswd if defined $uid;
+	}
+
+	# try newpass?
+	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
+		($uid) = $self->sqlSelect('uid', 'users',
+			"newpasswd=$pass_db AND uid=$user_db"
+		);
+
+		if (defined $uid) {
+			my $hexpasswd = md5_hex($passwd);
+			$self->sqlUpdate('users', {
+				newpasswd	=> '',
+				passwd		=> $hexpasswd
+			}, "uid=$user_db");
+			$cookpasswd = $hexpasswd;
+			$newpass = 1;
+		}
+	}
+
+	return wantarray ? ($uid, $cookpasswd, $newpass) : $uid;
 }
+
+########################################################
+# Make a new password, save it in the DB, and return it.
+sub getNewPasswd {
+	my($self, $uid) = @_;
+	my $newpasswd = changePassword();
+	$self->sqlUpdate('users', {
+		newpasswd => $newpasswd
+	}, 'uid=' . $self->{dbh}->quote($uid));
+	return $newpasswd;
+}
+
 
 ########################################################
 # Get user info from the users table.
@@ -1858,15 +1917,26 @@ sub setUsersKey {
 }
 
 ########################################################
-sub setUsersComments {
+sub setUsers {
 	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid, 1);
+	if (exists $hashref->{passwd}) {
+		# get rid of newpasswd if defined in DB
+		$hashref->{newpasswd} = '';
+		$hashref->{passwd} = md5_hex($hashref->{passwd});
+	}
+	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
 }
 
 ########################################################
-sub setUsers {
+sub setUsersComments {
 	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
+	$self->sqlUpdate("users_comments", $hashref, "uid=" . $uid, 1);
+}
+
+########################################################
+sub setUsersInfo {
+	my($self, $uid, $hashref) = @_;
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid, 1);
 }
 
 ########################################################
@@ -2401,102 +2471,79 @@ sub getSlashConf {
 	my($self) = @_;
 	my %conf; # We are going to populate this and return a reference
 	my @keys = qw(
-		anonymous_coward_uid
-		adminmail
-		mailfrom
-		siteowner
-		datadir
-		basedomain
-		cookiedomain
-		siteadmin
-		siteadmin_name
-		smtp_server
-		sitename
-		slogan
-		breaking
-		shit
-		mainfontface
-		fontbase
-		updatemin
-		archive_delay
-		submiss_view
-		submiss_ts
-		articles_only
+		absolutedir
 		admin_timeout
+		adminmail
 		allow_anonymous
-		use_dept
-		max_depth
-		defaultsection
-		http_proxy
-		story_expire
-		titlebar_width
-		send_mail
+		anonymous_coward_uid
+		approvedtags
+		archive_delay
+		articles_only
 		authors_unlimited
-		metamod_sum
-		maxtokens
-		tokensperpoint
-		maxpoints
-		stir
-		tokenspercomment
-		down_moderations
-		post_limit
-		max_posts_allowed
-		max_submissions_allowed
-		submission_speed_limit
-		formkey_timeframe
-		rdfimg
 		badkarma	
+		basedir
+		basedomain
+		breaking
 		comment_maxscore	
 		comment_minscore	
+		cookiedomain
+		cookiepath
+		datadir
+		defaultsection
+		down_moderations
 		fancyboxwidth
+		fontbase
+		formkey_timeframe
 		goodkarma	
+		http_proxy
+		imagedir
 		m2_bonus	
 		m2_comments	
+		m2_maxbonus
 		m2_maxunfair	
+		m2_mincheck
 		m2_penalty	
 		m2_toomanyunfair	
 		m2_userpercentage
+		mailfrom
+		mainfontface
+		max_depth
+		max_posts_allowed
+		max_submissions_allowed
 		maxkarma
+		maxkarma
+		maxpoints
+		maxtokens
+		metamod_sum
+		post_limit
 		rdfencoding	
+		rdfimg
+		rdfimg
 		rdflanguage	
+		rootdir
 		run_ads	
+		send_mail
+		shit
+		siteadmin
+		siteadmin_name
+		sitename
+		siteowner
+		slogan
+		smtp_server
+		stats_reports
+		stir
+		story_expire
+		submiss_ts
+		submiss_view
 		submission_bonus
-		imagedir
+		submission_speed_limit
+		submit_categories
+		titlebar_width
+		tokenspercomment
+		tokensperpoint
+		updatemin
+		use_dept
 	);
-
-=pod
-
-should these be added, too?
-adfu is gone I believe, same with dbpass and dbuser.
-Yes thought with the others. I would assume Pat is
-doing this part. -Brian
-
-adfu_dbpass	
-adfu_dbuser	
-adfu_dsn	
-badkarma	
-comment_maxscore	
-comment_minscore	
-dbpass	
-dbuser	
-dsn	
-fancyboxwidth
-goodkarma	
-m2_bonus	
-m2_comments	
-m2_maxunfair	
-m2_penalty	
-m2_toomanyunfair	
-m2_userpercentage
-maxkarma
-rdfencoding	
-rdfimg	
-rdflanguage	
-run_ads	
-submission_bonus
-
-=cut
-
 
 	# This should be optimized.  
 	for (@keys) {
@@ -2504,28 +2551,32 @@ submission_bonus
 		$conf{$_} = $value;
 	}
 
+	$conf{rootdir}		||= "http://$conf{basedomain}";
+	$conf{absolutedir}	||= $conf{rootdir};
+	$conf{basedir}		||= $conf{datadir} . "/public_html";
+	$conf{imagedir}		||= "$conf{rootdir}/images";
+	$conf{rdfimg}		||= "$conf{imagedir}/topics/topicslash.gif";
+	$conf{cookiepath}	||= URI->new($conf{rootdir})->path . '/';
+	$conf{maxkarma}		||= 999;
 
-	$conf{rootdir} = "http://$conf{basedomain}";
-	$conf{absolutedir} = $conf{rootdir};
-	$conf{basedir} = $conf{datadir} . "/public_html";
-	$conf{imagedir}  = "$conf{rootdir}/images"  unless $conf{imagedir};
-	$conf{rdfimg}  = "$conf{imagedir}/topics/topicslash.gif";
-	$conf{cookiepath}  = URI->new($conf{rootdir})->path . '/';
-	$conf{m2_mincheck}   = int $conf{m2_comments} / 3;
-	$conf{m2_maxbonus}   = int $conf{goodkarma} / 2;
+	$conf{m2_mincheck} = defined($conf{m2_mincheck})
+				? $conf{m2_mincheck}
+				: int $conf{m2_comments} / 3;
 
-	$conf{maxkarma} = 999 unless defined $conf{maxkarma};
-	$conf{m2_maxbonus} = $conf{maxkarma}
-		if !$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma};
+	if (!$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma}) {
+		$conf{m2_maxbonus} = int $conf{goodkarma} / 2;
+	}
 
-	$conf{submit_categories} = ['Back'];
-	$conf{fixhrefs} = []; 
-	$conf{approvedtags} = [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
+	$conf{fixhrefs} = [];  # fix later
 
-	# who to send daily stats reports to (email => subject)
-	$conf{stats_reports} = {
-		$conf{adminmail}	=> "$conf{sitename} Stats Report",
-	};
+	$conf{stats_reports} = eval $conf{stats_reports}
+		|| { $conf{adminmail} => "$conf{sitename} Stats Report" };
+
+	$conf{submit_categories} = eval $conf{submit_categories}
+		|| [];
+
+	$conf{approvedtags} = eval $conf{approvedtags}
+		|| [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
 	$conf{reasons} = [
 		'Normal',	# "Normal"
@@ -2759,6 +2810,7 @@ sub getModeratorLog {
 	my $answer = _genericGet('moderatorlog', 'id', @_);
 	return $answer;
 }
+
 ########################################################
 sub getNewStory {
 	my $answer = _genericGet('newstories', 'sid', @_);
@@ -2770,11 +2822,13 @@ sub getVar {
 	my $answer = _genericGet('vars', 'name', @_);
 	return $answer;
 }
+
 ########################################################
 sub getUserInfo {
 	my $answer = _genericGet('vars', 'name', @_);
 	return $answer;
 }
+
 ########################################################
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
@@ -2815,6 +2869,7 @@ sub getUser {
 
 	return $answer;
 }
+
 ########################################################
 # For slashdb
 sub setStoryIndex {

@@ -3,7 +3,7 @@ package Slash::Apache::User;
 use strict;
 
 use Apache; 
-use Apache::Constants qw(:common);
+use Apache::Constants qw(:common REDIRECT);
 use Apache::ModuleConfig;
 use Slash::DB;
 use CGI::Cookie;
@@ -35,6 +35,7 @@ sub handler {
 	}
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $constants = $dbcfg->{constants};
 	# Lets do this to make it a bit easier to handle
 	my $dbslash = $dbcfg->{'dbslash'};
 	$dbslash->sqlConnect;
@@ -95,25 +96,29 @@ sub handler {
 	if (($op eq 'userlogin' || $form{'rlogin'} ) && length($form{upasswd}) > 1) {
 		my $user = $dbslash->getUserUID($form{unickname});
 		print STDERR "FORM_AUTH: $user:$form{upasswd}\n";
-		$uid = userLogin($dbcfg, $user, $form{upasswd});
+		($uid, my($newpass)) = userLogin($r, $dbcfg, $user, $form{upasswd});
+		if ($newpass) {
+			$r->err_header_out(Location => "$constants->{absolutedir}/users.pl?op=edituser&note=Please+change+your+password+now!");
+			return REDIRECT;
+		}
 
 	} elsif ($op eq 'userclose' ) {
-		setCookie('user', '');
+		setCookie($r, $constants, 'user', '');
 
 	} elsif ($op eq 'adminclose') {
-		setCookie('session', ' ');
+		setCookie($r, $constants, 'session', ' ');
 
 	#This is icky, should be simplified
 	} elsif ($cookies{'user'}) {
-		my($user, $password) = userCheckCookie($dbcfg, $cookies{'user'}->value);
+		my($user, $password) = userCheckCookie($constants, $cookies{'user'}->value);
 		print STDERR "COOKIE_AUTH: $user:$password\n";
 		unless ($uid = $dbslash->getUserAuthenticate($user, $password)) {
-			$uid = $dbcfg->{constants}{'anonymous_coward_uid'}; 
-			setCookie('user', ' ');
+			$uid = $constants->{'anonymous_coward_uid'}; 
+			setCookie($r, $constants, 'user', '');
 		}
 	} 
 
-	$uid = $dbcfg->{constants}{'anonymous_coward_uid'} unless defined($uid);
+	$uid = $constants->{'anonymous_coward_uid'} unless defined $uid;
 
 	#Ok, yes we could use %ENV here, but if we did and 
 	#if someone ever wrote a module in another language
@@ -140,10 +145,10 @@ sub fixint {
 # in standard URL format.  This converts it back.  then it is split
 # on '::' to get the users info.
 sub userCheckCookie {
-	my($cfg, $cookie) = @_;
+	my($constants, $cookie) = @_;
 	$cookie =~ s/%([a-fA-F0-9][a-fA-F0-9])/pack('C', hex($1))/eg;
 	my($uid, $passwd) = split('::', $cookie);
-	return($cfg->{constants}->{'anonymous_coward_uid'}, '') unless $uid && $passwd;
+	return($constants->{'anonymous_coward_uid'}, '') unless $uid && $passwd;
 	return($uid, $passwd);
 }
 
@@ -151,16 +156,17 @@ sub userCheckCookie {
 
 ########################################################
 sub userLogin {
-	my($cfg, $name, $passwd) = @_;
+	my($r, $cfg, $name, $passwd) = @_;
 
 	$passwd = substr $passwd, 0, 20;
-	my $uid = $cfg->{'dbslash'}->getUserAuthenticate($name, $passwd);
+	my($uid, $cookpasswd, $newpass) =
+		$cfg->{'dbslash'}->getUserAuthenticate($name, $passwd, 1);
 
 	if ($uid != $cfg->{constants}{anonymous_coward_uid}) {
-		my $cookie = $uid . '::' . $passwd;
+		my $cookie = $uid . '::' . $cookpasswd;
 		#$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
-		setCookie('user', $cookie);
-		return $uid ;
+		setCookie($r, $cfg->{constants}, 'user', $cookie);
+		return($uid, $newpass);
 	} else {
 		return $cfg->{constants}{'anonymous_coward_uid'};
 	}
@@ -170,32 +176,36 @@ sub userLogin {
 # In the future a secure flag should be set on 
 # the cookie for admin users.
 sub setCookie {
-	my($name, $val, $session) = @_;
-	my $servername = Apache->server->server_hostname;
+# for some reason, we need to pass in $r, because Apache->request
+# was returning undef!  ack!  -- pudge
+	my($r, $constants, $name, $val, $session) = @_;
+	return unless $name;
 
-	# this goes back in as soon as vars / slashdotrc
-	# stuff is done -- pudge
-# 	my $domain = ($I{cookiedomain} && $I{cookiedomain} =~ /^\..+\./)
-# 		? $I{cookiedomain}
-# 		: '';
+# We need to actually determine domain from preferences,
+# not from the server.  ask me why. -- pudge
+#	my $servername = Apache->server->server_hostname;
+
+	my $cookiedomain = $constants->{cookiedomain};
+	my $cookiepath = $constants->{cookiepath};
+
+	# domain must start with a . and have one more .
+	# embedded in it, else we ignore it
+ 	my $domain = ($cookiedomain && $cookiedomain =~ /^\..+\./)
+ 		? $cookiedomain
+ 		: '';
 
 	my %cookie = (
-			-name   => $name,
-# Add path back in when slashdotrc.pl is completed
-# there may be another way to determine this
-#			-path   => $I{cookiepath},
-			-value    => $val || '',
+		-name	=> $name,
+		-path	=> $cookiepath,
+		-value	=> $val || '',
 	);
-	$cookie{-expires} = '+1y' unless $session;
 
-	# this goes back in as soon as vars / slashdotrc
-	# stuff is done -- pudge
-# 	$cookie{-domain}  = $domain if $domain;
+	$cookie{-expires} = '+1y' unless $session;
+ 	$cookie{-domain}  = $domain if $domain;
 
 	my $bakedcookie = CGI::Cookie->new(\%cookie);
-	my $r = Apache->request;
 
-	# huh? what is err_header?
+	# huh? what is err_header? -- pudge
 #	$r->header_out('Set-Cookie' => $bakedcookie);
 	$r->err_header_out('Set-Cookie' => $bakedcookie);
 }
