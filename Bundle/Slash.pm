@@ -57,6 +57,8 @@ Apache::DBI
 
 Apache::Cookie
 
+Apache::Request
+
 AppConfig		- Should be installed with TT, but sometimes not?
 
 Template		- Template Toolkit
