@@ -1,0 +1,57 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+list_messages
+__template__
+[% USE Slash %]
+[% INCLUDE titlebar title => "$constants.sitename Messages for $user.nickname", width => "100%" %]
+
+[% IF note %]<H2>[% note %]</H2>[% END %]
+
+[% IF message_list.size %]
+<TABLE BORDER="0" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
+	<TR BGCOLOR="[% user.bg.2 %]">
+		<TD><B>New</B></TD><TD WIDTH="20">&nbsp;</TD>
+		<TD><B>Date</B></TD><TD WIDTH="20">&nbsp;</TD>
+		<TD><B>Subject</B></TD>
+	</TR>
+[% x = 0;
+	FOREACH message = message_list;
+		IF x % 2;
+			color = user.bg.2;
+		ELSE;
+			color = user.bg.1;
+		END %]
+	<TR VALIGN="TOP" BGCOLOR="[% color %]">
+		<TH>[% IF ! message.readed %]<FONT COLOR="[% user.bg.3 %]">*</FONT>[%
+			ELSE
+		%]&nbsp;[% END %]</TH><TD WIDTH="20">&nbsp;</TD>
+		<TD>[% Slash.timeCalc(message.date) %]</TD><TD WIDTH="20">&nbsp;</TD>
+		<TD><A HREF="[% constants.rootdir %]/messages.pl?op=display&amp;id=[%
+			message.id
+		%]">[% FILTER strip_literal; # think more on this filter here!
+			message.subject; END %]</A></TD>
+	</TR>
+
+[% x = x + 1; END %]
+</TABLE>
+[% ELSE %]
+
+<P>
+You have no messages waiting on the system.  Either none
+have been sent, or they have been deleted or purged from
+the system, or they have been sent via another delivery
+method.
+</P>
+
+[% END %]
+__seclev__
+500

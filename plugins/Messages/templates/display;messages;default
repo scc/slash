@@ -1,0 +1,42 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+display
+__template__
+[% USE Slash %]
+[% INCLUDE titlebar title => "$constants.sitename Message for $user.nickname", width => "100%" %]
+
+[% IF message && message.user.uid == user.uid %]
+
+<P><B>Subject</B>: [% message.subject %]
+
+<P><HR></P>
+
+[% message.message %]
+
+<FORM ACTION="[%constants.rootdir %]/messages.pl">
+<INPUT TYPE="hidden" NAME="id" VALUE="[% message.id %]">
+<P><INPUT TYPE="submit" NAME="op" VALUE="delete"></P>
+</FORM>
+
+
+[% ELSE %]
+
+<P>
+This message was not found on the system.  Either this message
+has been deleted or purged from the system, or it has been sent
+via another delivery method, or it was not sent to you, but
+to another user.
+</P>
+
+[% END %]
+__seclev__
+500

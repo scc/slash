@@ -1,0 +1,19 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+en_US
+__name__
+messagenew
+__template__
+[% journal.nickname %] has posted a new journal entry on [% constants.sitename %].
+
+    [% journal.description %]
+    [% constants.absolutedir %]/journal.pl?op=display&uid=[% journal.uid %]&id=[% journal.id %]
+__seclev__
+100

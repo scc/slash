@@ -327,6 +327,7 @@ sub quicksend {
 		code		=> $code,
 		type		=> $type,
 		date		=> time(),
+		mode		=> MSG_MODE_EMAIL,
 	});
 }
 
