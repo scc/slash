@@ -238,7 +238,7 @@ sub getUser {
 				$constants->{admin_timeout},
 				$user
 			);
-			print STDERR "VALUE $value \n";
+			print STDERR "Slash::Apache::User::getUser VALUE $value \n";
 	}
 
 	return $user;

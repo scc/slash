@@ -36,8 +36,6 @@ sub main {
 	my $constants = getCurrentStatic();
 	$dbslash->refreshStories($form->{sid}) if $form->{refresh};
 
-	print STDERR "Threshold: $form->{threshold}|$user->{threshold}\n";
-
 	# Let's make ONE call to getStory() and fetch all we need.
 	# - Cliff
 	my $story = $dbslash->getStory($form->{sid});

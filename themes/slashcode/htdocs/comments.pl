@@ -29,7 +29,6 @@ use Compress::Zlib;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
-use CGI ();
 
 
 ##################################################################
@@ -193,7 +192,6 @@ sub editComment {
 
 	# Consider passing $c.
 	slashDisplay('comments-edit-comment', {
-		cgi => new CGI,
 		approved_tags => $approvedtags,
 		error_message => $error_message,
 		format_select => $formatSelect,
