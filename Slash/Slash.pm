@@ -108,6 +108,8 @@ If RETURN is true, the text of the list is returned.
 Otherwise, list is just printed, and returns
 true/false if operation is successful.
 
+If there are no elements in DATA, just returns/prints nothing.
+
 =item Dependencies
 
 The 'select' template block.
@@ -118,6 +120,9 @@ The 'select' template block.
 
 sub createSelect {
 	my($label, $hashref, $default, $return, $nsort, $ordered) = @_;
+
+	return unless keys %$hashref;
+
 	my $display = {
 		label	=> $label,
 		items	=> $hashref,

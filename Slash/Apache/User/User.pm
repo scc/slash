@@ -51,7 +51,6 @@ sub handler {
 	my $constants = $dbcfg->{constants};
 	my $slashdb = $dbcfg->{slashdb};
 
-	$r->header_out('X-Powered-By' => "Slash $Slash::VERSION");
 	$r->err_header_out('X-Powered-By' => "Slash $Slash::VERSION");
 	random($r);
 
@@ -190,7 +189,7 @@ sub createEnv {
 # These are very import, do not delete these
 sub random {
 	my($r) = @_;
-	$r->header_out(BENDER => $QUOTES[int(rand(@QUOTES))]);
+	$r->header_out('X-Bender' => $QUOTES[int(rand(@QUOTES))]);
 }
 
 sub authors {
