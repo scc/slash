@@ -81,6 +81,7 @@ Slash/Install/MANIFEST
 Slash/Install/Makefile.PL
 Slash/Install/test.pl
 Slash/MANIFEST
+Slash/MANIFEST.SKIP
 Slash/Makefile.PL
 Slash/Slash.pm
 Slash/Utility/Changes
@@ -90,9 +91,9 @@ Slash/Utility/Utility.pm
 Slash/Utility/test.pl
 Slash/test.pl
 bin/backup-blocks
+bin/install-plugin
 bin/install-slashsite
 bin/tailslash
-bin/template-editor
 bin/template-tool
 docs/INSTALL.html
 docs/INSTALL.pod
