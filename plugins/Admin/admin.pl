@@ -1289,8 +1289,9 @@ sub updateStory {
 sub saveStory {
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	# my $user = getCurrentUser();
+	my $user = $slashdb->getUser($form->{uid});
 	my $rootdir = getCurrentStatic('rootdir');
 
 	$form->{displaystatus} ||= 1 if $user->{section};
