@@ -153,7 +153,7 @@ sub slashDisplay {
 	if ($opt->{Section} eq 'NONE') {
 		$user->{currentSection} = 'default';
 	# admin and light are special cases
-	} elsif $user->{currentSection} eq 'admin') {
+	} elsif ($user->{currentSection} eq 'admin') {
 		$user->{currentSection} = 'admin';
 	} elsif ($user->{light}) {
 		$user->{currentSection} = 'light';
