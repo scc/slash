@@ -1917,7 +1917,7 @@ EOT
 			}
 		}
 		print qq!\t</TD></TR>\n\t<TR><TD BGCOLOR="$I{bg}[2]" ALIGN="CENTER">\n!;
-		print "\t\t&lt;&lt", linkComment($comments->[$p], 1) if $p;
+		print "\t\t&lt;&lt;", linkComment($comments->[$p], 1) if $p;
 		print ' | ', linkComment($comments->[$pid], 1) if $C->{pid};
 		print ' | ', linkComment($comments->[$n], 1), "&gt;&gt;\n" if $n;
 		print qq!\t</TD></TR>\n\t<TR><TD ALIGN="CENTER">!;
