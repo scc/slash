@@ -448,7 +448,7 @@ sub getAuthorInfo {
 	);
 
 	unless ($aid) {
-		return(0);
+		return;
 	} else {
 		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
 			$self->{_dbh}->quote($session)
@@ -462,7 +462,7 @@ sub getAuthorInfo {
 		$user->{url} = $url;
 		$user->{is_admin} = 1;
 		
-		return($seclev);
+		return $seclev;
 	}
 }
 
@@ -522,9 +522,9 @@ sub getAuthorAuthenticate {
 			lasttitle => $title }
 		);
 
-		return($sid);
+		return $sid;
 	} else {
-		return(0);
+		return;
 	}
 }
 
@@ -1935,10 +1935,10 @@ sub saveVars {
 #this is almost copied verbatium. Needs to be cleaned up
 	my($self) = @_;
 	my $form = getCurrentForm();
-	my $name = $form->{thisname};
+	my $name = $self->{_dbh}->quote($form->{thisname});
 	if ($form->{desc}) {
 		my($exists) = $self->sqlSelect('count(*)', 'vars',
-			"name='$name'"
+			"name=$name"
 		);
 		if ($exists == 0) {
 			$self->sqlInsert('vars', { name => $form->{thisname} });
@@ -1948,7 +1948,7 @@ sub saveVars {
 				description	=> $form->{desc},
 				datatype	=> $form->{datatype},
 				dataop		=> $form->{dataop}
-			}, "name='$name'"
+			}, "name=$name"
 		);
 	} else {
 		$self->sqlDo("DELETE from vars WHERE name=$name");
@@ -2737,7 +2737,6 @@ sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', @_);
 	return $answer;
 }
-
 
 ########################################################
 sub getBlock {

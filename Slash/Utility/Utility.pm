@@ -1021,6 +1021,7 @@ Return value
 =cut
 
 sub writeLog {
+	return unless $ENV{GATEWAY_INTERFACE};
 	my $op = shift;
 	my $dat = join("\t", @_);
 

@@ -25,7 +25,6 @@
 ###############################################################################
 use strict;
 use Slash;
-use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 

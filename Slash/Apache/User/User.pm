@@ -229,14 +229,14 @@ sub getUser {
 	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
 
 	if ($form->{op} eq 'adminlogin') {
-		if(my $sid = $slashdb->getAuthorAuthenticate($form->{aaid}, $form->{apasswd}, $user)) {
-			setCookie('session', $sid);
-		} 
+		my $sid = $slashdb->getAuthorAuthenticate($form->{aaid},
+			$form->{apasswd}, $user);
+		setCookie('session', $sid) if $sid;
 	} elsif ($cookies->{session} && length($cookies->{session}->value) > 3) {
 			my $value = $slashdb->getAuthorInfo(
-					$cookies->{session}->value,
-					$constants->{admin_timeout},
-					$user
+				$cookies->{session}->value,
+				$constants->{admin_timeout},
+				$user
 			);
 			print STDERR "VALUE $value \n";
 	}
