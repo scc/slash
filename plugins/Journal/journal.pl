@@ -120,7 +120,7 @@ sub displayRSS {
 
 	$rss->channel(
 		title   => xmlencode($constants->{sitename} . " Journals"),
-		'link'    => $constants->{absolutedir} . "/journal.pl?op=display&uid=$uid",
+		'link'    => xmlencode($constants->{absolutedir} . "/journal.pl?op=display&uid=$uid"),
 		description => xmlencode("${nickname}'s Journal"),
 	);
 
@@ -135,7 +135,7 @@ sub displayRSS {
 	for my $article (@$articles) {
 			$rss->add_item(
 				title => xmlencode($article->[2]),
-				link  => "$constants->{absolutedir}/journal.pl?op=get&id=$article->[0]",
+				link  => xmlencode("$constants->{absolutedir}/journal.pl?op=get&id=$article->[0]"),
 				description => xmlencode("$nickname wrote: " . $article->[1])
 		);
 	}
