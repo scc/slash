@@ -51,12 +51,12 @@ sub reconcileM2 {
 		# highest is the consensus.
 		my @rank = sort {
 			$m2_votes{$a} <=> $m2_votes{$b}
-		} keys $m2_votes;
+		} keys %m2_votes;
 		my($con, $dis) = @{%m2_votes}{@rank};
 
 		# Try to penalize suspicious M2 behavior.
 		if ( $dis &&
-		   (($dis/($cons+$dis)) < $constants->{m2_minority_trigger}) )
+		   (($dis/($con+$dis)) < $constants->{m2_minority_trigger}) )
 		{
 			for (@{$m2_list}) {
 				next if $_->{val} == $rank[0];
