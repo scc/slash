@@ -86,7 +86,7 @@ EOT
 	} elsif ($op eq "userinfo" || !$op) {
 		if ($I{F}{nick}) {
 			userInfo($I{F}{nick});
-		} elsif ($I{U}{uid} < 1) {
+		} elsif ($I{U}{uid} == $I{anonymous_coward}) {
 			displayForm();
 		} else {
 			userInfo($I{U}{nickname});
@@ -353,7 +353,7 @@ sub editUser {
 	my($name) = @_;
 	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $user->{uid} < 1;
+	return if $user->{uid} == $I{anonymous_coward};
 
 	titlebar("100%", "Editing $name ($user->{uid}) $user->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
@@ -528,7 +528,7 @@ sub editHome {
 
 	my $user = $I{dbobject}->getUserEditInfo($name);
 
-	return if $user->{uid} < 1;
+	return if $user->{uid} == $I{anonymous_coward};
 
 	titlebar("100%", "Customize $I{sitename}'s Display");
 
@@ -689,10 +689,10 @@ sub saveUser {
 	my $user  = $I{dbobject}->getUserInfoByUID($uid);
 
 	$user->{nickname} = substr($user->{nickname}, 0, 20);
-	return unless $uid != $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward};
 
 	print "<P>Saving $user->{nickname}<BR><P>";
-	print <<EOT if $uid < 1 || !$user->{nickname};
+	print <<EOT if $uid == $I{anonymous_coward} || !$user->{nickname};
 <P>Your browser didn't save a cookie properly.  This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -764,10 +764,10 @@ sub saveComm {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return unless $uid != $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward};
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid < 1 || !$name;
+	print <<EOT if $uid == $I{anonymous_coward} || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -789,10 +789,10 @@ EOT
 		commentspill	=> $I{F}{commentspill},
 		maxcommentsize	=> $I{F}{maxcommentsize},
 		highlightthresh	=> $I{F}{highlightthresh},
-		nosigs		=> ($I{F}{nosigs}     ? "1" : "0"),
-		reparent	=> ($I{F}{reparent}   ? "1" : "0"),
-		noscores	=> ($I{F}{noscores}   ? "1" : "0"),
-		hardthresh	=> ($I{F}{hardthresh} ? "1" : "0"),
+		nosigs		=> ($I{F}{nosigs}     ? 1 : 0),
+		reparent	=> ($I{F}{reparent}   ? 1 : 0),
+		noscores	=> ($I{F}{noscores}   ? 1 : 0),
+		hardthresh	=> ($I{F}{hardthresh} ? 1 : 0),
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
@@ -805,10 +805,10 @@ sub saveHome {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return unless $uid != $I{anonymous_coward};
+	return if $uid == $I{anonymous_coward};
 
 	print "<P>Saving $name<BR><P>";
-	print <<EOT if $uid < 1 || !$name;
+	print <<EOT if $uid == $I{anonymous_coward} || !$name;
 <P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 eliminates them, you are using a browser that doesn't support them, or you rejected it.
 EOT
@@ -849,14 +849,14 @@ EOT
 		exsect		=> checkList($exsect),
 		exboxes		=> checkList($exboxes),
 		maxstories	=> $I{F}{maxstories},
-		noboxes		=> ($I{F}{noboxes} ? "1" : "0"),
+		noboxes		=> ($I{F}{noboxes} ? 1 : 0),
 	};
 
 	# for users_prefs
 	my $H2 = {
-		light		=> ($I{F}{light} ? "1" : "0"),
-		noicons		=> ($I{F}{noicons} ? "1" : "0"),
-		willing		=> ($I{F}{willing} ? "1" : "0"),
+		light		=> ($I{F}{light} ? 1 : 0),
+		noicons		=> ($I{F}{noicons} ? 1 : 0),
+		willing		=> ($I{F}{willing} ? 1 : 0),
 	}; 
 
 	
