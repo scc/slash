@@ -3847,7 +3847,6 @@ sub autoUrl {
 	my $form = getCurrentForm();
 
 	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $form->{fixquotes};
-#	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
 	s/\[([^\]]+)\]/linkNode($1)/ge if $form->{autonode};
 
 	my $initials = substr $user->{nickname}, 0, 1;
@@ -3861,7 +3860,10 @@ sub autoUrl {
 	s|<update>|<B>Update: <date></B> by <author>|ig;
 	s|<date>|$now|g;
 	s|<author>|<B><A HREF="$user->{homepage}">$initials</A></B>:|ig;
-	s/\[%(.*?)%\]/$self->getUrlFromTitle($1)/exg;
+
+	# The delimeters below were once "[%...%]" but that's legacy code from before
+	# Template and we've since changed it to what you see, below.
+	s/\{%(.*?)%\}/$self->getUrlFromTitle($1)/exg if $form->{shortcuts};
 
 	# Assorted ways to add files:
 	s|<import>|importText()|ex;
