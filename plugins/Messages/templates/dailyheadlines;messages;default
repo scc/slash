@@ -15,10 +15,13 @@ __template__
 [% topics = Slash.db.getTopics(); # sigh %]
 [% constants.sitename %] Daily Headline Mailer
 
+[% sponsor = PROCESS emailsponsor; IF sponsor -%]
 ======================================================================
-[% PROCESS emailsponsor %]
+[% sponsor %]
 ======================================================================
 
+
+[%- END -%]
 [% FOR story = stories.reverse; topicname = topics.${story.tid}.name
 %][% story.title %][% IF constants.use_dept %]
     from the [% story.dept %] dept.[% END %]

@@ -117,11 +117,11 @@ sub savepoll {
 	my $qid = $slashdb->savePollQuestion($form);
 
 	if ($constants->{poll_discussions}) {
-		my $discussion = $slashdb->createDiscussion( {
-			title => $form->{question},
-			topic => $form->{topic},
-			url => "$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid",
-			});
+		my $discussion = $slashdb->createDiscussion({
+			title	=> $form->{question},
+			topic	=> $form->{topic},
+			url	=> "$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid",
+		});
 		$slashdb->setPollQuestion($qid, { discussion => $discussion });
 	}
 	$slashdb->setStory($form->{sid}, { qid => $qid }) if $form->{sid};

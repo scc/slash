@@ -6,7 +6,7 @@
 
 use strict;
 use Image::Size;
-use POSIX;
+use POSIX qw(O_RDWR O_CREAT O_EXCL);
 
 use Slash;
 use Slash::Display;
@@ -301,7 +301,7 @@ sub templateEdit {
 
 		if ($form->{templatesection}) {
 			if ($section eq 'All') {
-				$templates = $slashdb->getTemplateList('',$page);
+				$templates = $slashdb->getTemplateList('', $page);
 			} else {
 				$templates = $slashdb->getTemplateList($section);
 			}
@@ -309,7 +309,7 @@ sub templateEdit {
 			if ($page eq 'All') {
 				$templates = $slashdb->getTemplateList();
 			} else {
-				$templates = $slashdb->getTemplateList('',$page);
+				$templates = $slashdb->getTemplateList('', $page);
 			}
 		}
 
@@ -398,13 +398,13 @@ sub templateSave {
 	} else {
 
 		$slashdb->setTemplate($tpid, {
-				name		=> $name,
-				template 	=> $form->{template},
-				description	=> $form->{description},
-				title		=> $form->{title},
-				seclev		=> $form->{seclev},
-				page		=> $page,
-				section		=> $section
+			name		=> $name,
+			template 	=> $form->{template},
+			description	=> $form->{description},
+			title		=> $form->{title},
+			seclev		=> $form->{seclev},
+			page		=> $page,
+			section		=> $section
 		});
 		print getData('templateSave-saved-message', { tpid => $tpid, name => $name });
 	}
@@ -649,7 +649,7 @@ sub saveKeyword {
 sub topicEdit {
 	my($form, $slashdb, $user, $constants) = @_;
 	my $basedir = $constants->{basedir};
-	my ($image,$image2);
+	my($image, $image2);
 
 	my($topic, $topics_menu, $topics_select);
 	my $available_images = {};
@@ -993,7 +993,7 @@ sub editStory {
 
 	if ($user->{seclev} >= 100) {
 		$authoredit_flag = 1;
-		my $authors = $slashdb->getDescriptions('authors','',1);
+		my $authors = $slashdb->getDescriptions('authors', '', 1);
 		$author_select = createSelect('uid', $authors, $storyref->{uid}, 1);
 	}
 
@@ -1287,13 +1287,13 @@ sub saveStory {
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {
 		my $id = $slashdb->createDiscussion( {
-																					title => $form->{title},
-																					section => $form->{section},
-																					topic => $form->{tid},
-																					url => "$rootdir/article.pl?sid=$sid",
-																					sid => $sid,
-																					ts => $form->{'time'}
-																					});
+			title	=> $form->{title},
+			section	=> $form->{section},
+			topic	=> $form->{tid},
+			url	=> "$rootdir/article.pl?sid=$sid",
+			sid	=> $sid,
+			ts	=> $form->{'time'}
+		});
 		if ($id) {
 			$slashdb->setStory($sid, { discussion => $id });
 		} else {
@@ -1309,13 +1309,15 @@ sub saveStory {
 
 	my $newestthree = $slashdb->getNewestThree();
 	my $newstories = {};
-	for(@$newestthree) {
+	for (@$newestthree) {
 		my $tmpstory = $slashdb->getStory($_->[0], ['title', 'uid', 'time']);
-		$newstories->{$_->[0]}{author} = $slashdb->getUser($tmpstory->{uid},'nickname');
+		$newstories->{$_->[0]}{author} = $slashdb->getUser($tmpstory->{uid}, 'nickname');
 		$newstories->{$_->[0]}{title} = $tmpstory->{title};
 		$newstories->{$_->[0]}{time} = $tmpstory->{time};
 	}
-	my $newblock = slashDisplay('three', { stories => $newstories }, { Return => 1, Page => 'misc', Section => 'default'});
+	my $newblock = slashDisplay('three', { stories => $newstories },
+		{ Return => 1, Page => 'misc', Section => 'default' }
+	);
 	$slashdb->sqlUpdate('blocks', {
                         block => $newblock,
     		}, "bid='newestthree'"

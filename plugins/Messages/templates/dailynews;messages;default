@@ -17,10 +17,13 @@ __template__
 [% topics = Slash.db.getTopics(); # sigh %]
 [% constants.sitename %] Daily Newsletter
 
+[% sponsor = PROCESS emailsponsor; IF sponsor -%]
 ======================================================================
-[% PROCESS emailsponsor %]
+[% sponsor %]
 ======================================================================
 
+
+[%- END -%]
 In this issue:[% FOR story = stories.reverse %]
     * [% story.title %][% END %]
 

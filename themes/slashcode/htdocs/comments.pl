@@ -361,12 +361,12 @@ sub createDiscussion {
 		} else {
 			# BTW we are not setting section since at this point we wouldn't
 			# trust users to set it correctly -Brian
-			my $id = $slashdb->createDiscussion( {
-				title => $form->{title},
-				topic => $form->{topic},
-				url => $form->{url},
-				type => "recycle"
-				});
+			my $id = $slashdb->createDiscussion({
+				title	=> $form->{title},
+				topic	=> $form->{topic},
+				url	=> $form->{url},
+				type	=> "recycle"
+			});
 
 			# fix URL to point to discussion if no referer
 			if ($form->{url} eq "") {
