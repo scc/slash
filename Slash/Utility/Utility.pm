@@ -71,6 +71,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	getCurrentStatic
 	getCurrentUser
 	getFormkey
+	getObject
 	isAnon
 	prepareUser
 	root2abs
@@ -2550,6 +2551,59 @@ sub createEnvironment {
 	my $user = prepareUser($constants->{anonymous_coward_uid}, $form, $0);
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
+}
+
+#========================================================================
+
+=head2 getObject(CLASS_NAME [VIRTUAL_NAME])
+
+Returns a object
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item CLASS_NAME
+
+A class name to use in creating a object
+
+=item VIRTUAL_NAME
+
+Optional name for DBIx::Password
+
+=back
+
+=item Return value
+
+An object.
+
+=back
+
+=cut
+
+sub getObject {
+	my($value, $user, $args) = @_;
+	my $objects;
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$objects = $cfg->{'objects'};
+		$user ||=	$cfg->{VirtualUser};
+	} else {
+		$objects = {};
+	}
+	return unless $user;
+
+	if ($objects->{$value}) {
+		return $objects->{$value};
+	} else {
+		eval "require $value";
+		$objects->{$value} = $value->new($value, $args);
+		return $objects->{$value};
+	}
 }
 
 1;
