@@ -3631,7 +3631,7 @@ print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " subnet downmods $
 		AND moderatorlog.active=1
 		AND TO_DAYS(NOW()) - TO_DAYS(ts) <= $days_back_user"
 	);
-print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " user downmods $downmods trollpoint $trollpoint\n";
+print STDERR "gIT $time " . ($downmods <= $trollpoint?1:0) . " user downmods $downmods trollpoint $trollpoint uid '$user->{uid}'\n";
 	return 1 if $downmods <= $trollpoint;
 
 	# All tests passed, user is not a troll.
