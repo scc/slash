@@ -12,6 +12,7 @@ __name__
 authorEdit
 __template__
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
+<INPUT TYPE="hidden" NAME="op" VALUE="authors">
 [% author_select %]
 <INPUT TYPE="submit" VALUE="Select Author" NAME="authoredit"><BR>
 <TABLE BORDER="0">

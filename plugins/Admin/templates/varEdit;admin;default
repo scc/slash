@@ -12,10 +12,11 @@ __name__
 varEdit
 __template__
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="vars">
 <TABLE>
 	<TR>
 		<TD>Select Variable Name</TD><TD>[% vars_select %]
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="vars"></TD>
+		<INPUT TYPE="SUBMIT" NAME="varedit" VALUE="Select Var"></TD>
 	</TR>
 	<TR>
 		<TD>Variable Name</TD>
@@ -29,7 +30,7 @@ __template__
 	<INPUT TYPE="TEXT" NAME="desc" VALUE="[% FILTER strip_attribute %][% varsref.description %][% END %]" size="60"></TD>
 	</TR>
 	<TR>
-		<TD COLSPAN="2"><INPUT TYPE="SUBMIT" VALUE="varsave" NAME="op"></TD>
+		<TD COLSPAN="2"><INPUT TYPE="SUBMIT" NAME="varsave" VALUE="Save"></TD>
 	<TR>
 </TABLE>
 </FORM>

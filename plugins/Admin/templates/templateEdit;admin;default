@@ -29,7 +29,7 @@ __template__
 [% INCLUDE titlebar width='100%' %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
-
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="templates">
 
 [% IF templatedelete_flag %]
 

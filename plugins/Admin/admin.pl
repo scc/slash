@@ -17,14 +17,118 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $postflag = $user->{state}{post};
+	# lc just in case
+	my $op = lc($form->{op});
 
-	if ($user->{seclev} < 100) {
+	my ($tbtitle);
+
+	my $ops = {
+		authors		=> { 	# authorsave,authordelete,
+					# authornew,authoredit,
+
+			function 	=> \&authorEdit, 
+			seclev 		=> 10000,
+		},
+		save_keyword 	=> {
+			function 	=> \&saveKeyword, 
+			seclev		=> 100,
+		},
+		edit_keyword	=> {
+			function	=> \&editKeyword,
+			seclev		=> 100,
+		},
+		delete_keyword	=> {
+			function	=> \&deleteKeyword,
+			seclev		=> 100,
+		},
+		save		=> {
+			function	=> \&saveStory,
+			seclev		=> 100,
+		},
+		update		=> {
+			function	=> \&updateStory,
+			seclev		=> 100,
+		},
+		list		=> { 
+			function	=> \&listStories,
+			seclev		=> 100,
+		},
+		delete		=> {
+			function 	=> \&listStories,
+			seclev		=> 100,
+		},
+		preview		=> {
+			function 	=> \&editStory,
+			seclev		=> 100,
+		},
+		edit		=> {
+			function 	=> \&editStory,
+			seclev		=> 100,
+		},
+		listtopics	=> {
+			function 	=> \&listTopics,	
+			seclev		=> 10000,
+		},
+		blocks 		=> {	# blockdelete_cancel,blockdelete_confirm,
+					# blockdelete1,blockdelete2,blocksave,
+					# blockrevert,blocksavedef,blockdelete,blocknew,
+
+			function 	=> \&blockEdit, 
+
+			seclev		=> 10000,
+		},
+		colors 		=> {	# colored,colorpreview,colorsave,colorrevert,
+					# colororig,colorsavedef,
+
+			function 	=> \&colorEdit, 
+			seclev		=> 10000,
+		},
+		listfilters 	=> {
+			function 	=> \&listFilters, # listfilters 
+			seclev		=> 100,
+		},
+		editfilter	=> {
+			function 	=> \&editFilter, # newfilter,updatefilter,deletefilter,
+			seclev		=> 100,
+		},
+		siteinfo	=> {
+			function 	=> \&siteInfo,
+			seclev		=> 10000,
+		},
+
+		templates 	=> { 	# templatedelete_confirm,templatesection,
+					# templatedelete_cancel,
+					# templatepage,templateed,templatedelete,
+					# templatenew,templatesave,
+
+			function 	=> \&templateEdit, 
+			seclev		=> 10000,
+		},
+
+		topics 		=> {	# topiced,topicnew,topicsave,topicdelete
+
+			function 	=>  \&topicEdit, 
+			seclev		=> 10000,
+		},
+		vars 		=> {	# varsave, varedit
+
+			function 	=> \&varEdit, 
+			seclev		=> 10000,
+		},
+	};
+
+	# admin.pl is not for regular users
+	if ( $user->{seclev} < 100) {
 		my $rootdir = getCurrentStatic('rootdir');
 		redirect("$rootdir/users.pl");
 		return;
 	}
+	# non suadmin users can't perform suadmin ops
+	$op = 'list' if $user->{seclev} < $ops->{$op}{seclev};
+	$op ||= 'list';
 
-	my($tbtitle);
 	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
 		# Show submission/article title on browser's titlebar.
 		$tbtitle = $form->{title};
@@ -44,182 +148,11 @@ sub main {
 		: " $local_ts $user->{tzcode} = $gmt_ts GMT";
 	header("backSlash$time_remark$tbtitle", 'admin');
 
-
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $user->{seclev};
 
-	my $op = $form->{op};
-
-	if ($form->{topicdelete}) {
-		topicDelete();
-		topicEdit();
-
-	} elsif ($form->{topicsave}) {
-		topicSave();
-		topicEdit();
-
-	} elsif ($form->{topiced} || $form->{topicnew}) {
-		topicEdit();
-
-	} elsif ($op eq 'save-keyword') {
-		saveKeyword();
-
-	} elsif ($op eq 'edit-keyword') {
-		editKeyword();
-
-	} elsif ($op eq 'delete-keyword') {
-		deleteKeyword();
-
-	} elsif ($op eq 'save') {
-		saveStory();
-
-	} elsif ($op eq 'update') {
-		updateStory();
-
-	} elsif ($op eq 'list') {
-		titlebar('100%', getTitle('listStories-title'));
-		listStories();
-
-	} elsif ($op eq 'delete') {
-		rmStory($form->{sid});
-		listStories();
-
-	} elsif ($op eq 'preview') {
-		editStory();
-
-	} elsif ($op eq 'edit') {
-		editStory($form->{sid});
-
-	} elsif ($op eq 'listtopics') {
-		listTopics();
-
-	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
-		colorEdit($user->{seclev});
-		$op = 'colored';
-
-	} elsif ($form->{colorsave} || $form->{colorsavedef} || $form->{colororig}) {
-		colorSave();
-		colorEdit($user->{seclev});
-
-	} elsif ($form->{blockdelete_cancel} || $op eq 'blocked') {
-		blockEdit($user->{seclev}, $form->{bid});
-
-	} elsif ($form->{blocknew}) {
-		blockEdit($user->{seclev});
-
-	} elsif ($form->{blocked1}) {
-		blockEdit($user->{seclev}, $form->{bid1});
-
-	} elsif ($form->{blocked2}) {
-		blockEdit($user->{seclev}, $form->{bid2});
-
-	} elsif ($form->{blocksave} || $form->{blocksavedef}) {
-		blockSave($form->{thisbid});
-		blockEdit($user->{seclev}, $form->{thisbid});
-
-	} elsif ($form->{blockrevert}) {
-		$slashdb->revertBlock($form->{thisbid}) if $user->{seclev} < 500;
-		blockEdit($user->{seclev}, $form->{thisbid});
-
-	} elsif ($form->{blockdelete}) {
-		blockEdit($user->{seclev}, $form->{thisbid});
-
-	} elsif ($form->{blockdelete1}) {
-		blockEdit($user->{seclev}, $form->{bid1});
-
-	} elsif ($form->{blockdelete2}) {
-		blockEdit($user->{seclev}, $form->{bid2});
-
-	} elsif ($form->{blockdelete_confirm}) {
-		blockDelete($form->{deletebid});
-		blockEdit($user->{seclev});
-
-	} elsif ($form->{templatedelete_cancel}) {
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
-
-	} elsif ($form->{templatenew} || $form->{templatepage} || $form->{templatesection}) {
-		templateEdit($user->{seclev}, '', $form->{page}, $form->{section});
-
-	} elsif ($form->{templateed}) {
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
-
-	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
-		my($page, $section);
-		if ($form->{save_new}) {
-			$section = $form->{newS} ? $form->{newsection} : $form->{section};
-			$page = $form->{newP} ? $form->{newpage} : $form->{page};
-		} else {
-			$section = $form->{newS} ? $form->{newsection} : $form->{savesection};
-			$page = $form->{newP} ? $form->{newpage} : $form->{savepage};
-		}
-
-		templateSave($form->{thistpid}, $form->{name},  $page, $section);
-		templateEdit($user->{seclev}, $form->{thistpid}, $page, $section);
-
-	} elsif ($form->{templaterevert}) {
-		#Fuck! This is not right at all. Blocks is for blocks
-		#not templates! -Brian
-		$slashdb->revertBlock($form->{thistpid}) if $user->{seclev} < 500;
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
-
-	} elsif ($form->{templatedelete}) {
-		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
-
-	} elsif ($form->{templatedelete_confirm}) {
-		templateDelete($form->{deletename}, $form->{deletetpid});
-		templateEdit($user->{seclev});
-
-	} elsif ($op eq 'authors') {
-		authorEdit($form->{thisaid});
-
-	} elsif ($form->{authoredit}) {
-		authorEdit($form->{myuid});
-
-	} elsif ($form->{authornew}) {
-		authorEdit();
-
-	} elsif ($form->{authordelete}) {
-		authorDelete($form->{myuid});
-
-	} elsif ($form->{authordelete_confirm} || $form->{authordelete_cancel}) {
-		authorDelete($form->{thisaid});
-		authorEdit();
-
-	} elsif ($form->{authorsave}) {
-		authorSave();
-		authorEdit($form->{myuid});
-
-	} elsif ($op eq 'vars') {
-		varEdit($form->{name});
-
-	} elsif ($op eq 'varsave') {
-		varSave();
-		varEdit($form->{name});
-
-	} elsif ($form->{listfilters}) {
-		listFilters($form->{formname});
-
-	} elsif ($form->{editfilter}) {
-		titlebar("100%", getTitle('editFilter-title'));
-		editFilter($form->{filter_id});
-
-	} elsif ($form->{newfilter}) {
-		updateFilter(1);
-
-	} elsif ($form->{updatefilter}) {
-		updateFilter(2);
-
-	} elsif ($form->{deletefilter}) {
-		updateFilter(3);
-
-	} elsif ($form->{siteinfo}) {
-		siteInfo();
-
-	} else {
-		titlebar('100%', getTitle('listStories-title'));
-		listStories();
-	}
-
+	# it'd be nice to have a legit retval
+	my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants);
 
 	# Display who is logged in right now.
 	footer();
@@ -230,9 +163,13 @@ sub main {
 ##################################################################
 #  Variables Editor
 sub varEdit {
-	my($name) = @_;
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	my $slashdb = getCurrentDB();
+	if ($form->{varsave}) {
+		varSave(@_);
+	}
+
+	my $name = $form->{name};
 	my $varsref;
 
 	my $vars = $slashdb->getDescriptions('vars', '', 1);
@@ -251,9 +188,7 @@ sub varEdit {
 
 ##################################################################
 sub varSave {
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
+	my ($form,$slashdb,$user,$constants) = @_;
 
 	if ($form->{thisname}) {
 		my $value = $slashdb->getVar($form->{thisname});
@@ -280,26 +215,38 @@ sub varSave {
 ##################################################################
 # Author Editor
 sub authorEdit {
-	my($aid) = @_;
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $authornew = getCurrentForm('authornew');
+	my($aid);
 
-	return if $user->{seclev} < 500;
+	if ($form->{authordelete}) {
+		authorDelete($form->{myuid});
+		return();
+	}
+
+	if ($form->{authoredit}) {
+		$aid = $form->{myuid};
+
+	} elsif ($form->{authordelete_confirm} || $form->{authordelete_cancel}) {
+		authorDelete($form->{thisaid});
+
+	} elsif ($form->{authorsave}) {
+		authorSave();
+		$aid = $form->{myuid};
+	}
 
 	my($section_select, $author_select);
 	my $deletebutton_flag = 0;
 
 	$aid ||= $user->{uid};
-	$aid = '' if $authornew;
+	$aid = '' if $form->{authornew};
 
 	my $authors = $slashdb->getDescriptions('authors');
 	my $author = $slashdb->getAuthor($aid) if $aid;
 
 	$author_select = createSelect('myuid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1, 1);
-	$deletebutton_flag = 1 if !$authornew && $aid ne $user->{uid};
+	$deletebutton_flag = 1 if !$form->{authornew} && $aid ne $user->{uid};
 
 	for ($author->{email}, $author->{copy}) {
 		$_ = strip_literal($_);
@@ -316,9 +263,8 @@ sub authorEdit {
 
 ##################################################################
 sub siteInfo {
-	return if getCurrentUser('seclev') < 100;
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	my $slashdb = getCurrentDB();
 	my $plugins = $slashdb->getDescriptions('plugins');
 	my $site_info = $slashdb->getDescriptions('site_info');
 
@@ -331,11 +277,8 @@ sub siteInfo {
 
 ##################################################################
 sub authorSave {
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-
-	return if getCurrentUser('seclev') < 500;
 	if ($form->{thisaid}) {
 		# And just why do we take two calls to do
 		# a new user?
@@ -400,23 +343,48 @@ sub pageEdit {
 # OK, here's the template editor
 # @my_names = grep /^$foo-/, @all_names;
 sub templateEdit {
-	my($seclev, $tpid, $page, $section) = @_;
-	my($slashdb, $form, $pagehashref, $title, $templateref,
-		$template_select, $page_select, $section_select,
-		$savepage_select, $savesection_select,
-		$templatedelete_flag, $templateedit_flag, $templateform_flag);
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	return if $seclev < 100;
+	my ($seclev, $tpid, $page, $section) ; 
+
+	my($title, $templateref, $template_select, $page_select, 
+		$section_select, $savepage_select, $savesection_select);
+
+	my ($templatedelete_flag, $templateedit_flag, $templateform_flag) = 0;
+	my $pagehashref = {};
+	$title = getTitle('templateEdit-title', {}, 1);
+
+	if ($form->{templatenew} || $form->{templatepage} || $form->{templatesection}) {
+		$tpid = '';
+		$page = $form->{page};
+		$section = $form->{section};
+
+	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
+		if ($form->{save_new}) {
+			$section = $form->{newS} ? $form->{newsection} : $form->{section};
+			$page = $form->{newP} ? $form->{newpage} : $form->{page};
+		} else {
+			$section = $form->{newS} ? $form->{newsection} : $form->{savesection};
+			$page = $form->{newP} ? $form->{newpage} : $form->{savepage};
+		}
+
+		templateSave($form->{thistpid}, $form->{name},  $page, $section);
+		$tpid = $form->{thistpid};
+
+	} elsif ($form->{templatedelete_confirm}) {
+		templateDelete($form->{deletename}, $form->{deletetpid});
+		print getMessage('templateDelete-message', { name => $form->{deletename}, tpid => $form->{deletepid} });
+
+	} else {
+		$tpid = $form->{tpid};
+		$page = $form->{page};
+		$section = $form->{section};
+	}
+
 	$page ||= 'misc';
 	$section ||= 'default';
 
-	$slashdb = getCurrentDB();
-	$form = getCurrentForm();
-	$pagehashref = {};
-	$templatedelete_flag = $templateedit_flag = $templateform_flag = 0;
-
 	$templateref = $slashdb->getTemplate($tpid, '', 1) if $tpid;
-	$title = getTitle('templateEdit-title', {}, 1);
 
 	if ($form->{templatedelete}) {
 		$templatedelete_flag = 1;
@@ -482,12 +450,12 @@ sub templateEdit {
 
 ##################################################################
 sub templateSave {
-	my($tpid, $name, $page, $section) = @_;
+	my ($tpid, $name, $page, $section) = @_; 
 
-	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-
-	return if getCurrentUser('seclev') < 500;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 
 	$form->{seclev} ||= 500;
 
@@ -540,25 +508,36 @@ sub templateDelete {
 
 	return if getCurrentUser('seclev') < 500;
 	$slashdb->deleteTemplate($tpid);
-	print getMessage('templateDelete-message', { name => $name, tpid => $tpid });
 }
 
 ##################################################################
-# Block Editing and Saving
-# 020300 PMG modified the heck out of this code to allow editing
-# of sectionblock values retrieve, title, url, rdf, section
-# to display a different form according to the type of block we're dealing with
-# based on value of new column in blocks "type". Added description field to use
-# as information on the block to help the site editor get a feel for what the block
-# is for, etc...
-# Why bother passing seclev? Just pull it from the user object.
 sub blockEdit {
-	my($seclev, $bid) = @_;
+	my ($form,$slashdb,$user,$constants) = @_;
 
-	return if $seclev < 500;
+	my ($bid);
 
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
+	if ($form->{blocksave} || $form->{blocksavedef}) {
+		blockSave($form->{thisbid});
+		$bid = $form->{thisbid};
+		print getMessage('blockSave-saved-message', { bid => $bid });
+
+	} elsif ($form->{blockrevert}) {
+		$slashdb->revertBlock($form->{thisbid}); 
+		$bid = $form->{thisbid};
+
+	} elsif ($form->{blockdelete}) {
+		$bid = $form->{thisbid};
+
+	} elsif ($form->{blockdelete1} || $form->{blocked1}) {
+		$bid = $form->{bid1};
+
+	} elsif ($form->{blockdelete2} || $form->{blocked2}) {
+		$bid = $form->{bid2};
+
+	} elsif ($form->{blockdelete_confirm}) {
+		blockDelete($form->{deletebid});
+		print getMessage('blockDelete-message', { bid => $form->{deletebid} });
+	} 
 
 	my($blockref, $saveflag, $block_select, $retrieve_checked,
 		$portal_checked, $block_select1, $block_select2);
@@ -573,10 +552,10 @@ sub blockEdit {
 		$blockdelete_flag = 1;
 	} else {
 		# get the static blocks
-		my $blocks = $slashdb->getDescriptions('static_block', $seclev, 1);
+		my $blocks = $slashdb->getDescriptions('static_block', $user->{seclev}, 1);
 		$block_select1 = createSelect('bid1', $blocks, $bid, 1);
 
-		$blocks = $slashdb->getDescriptions('portald_block', $seclev, 1);
+		$blocks = $slashdb->getDescriptions('portald_block', $user->{seclev}, 1);
 		$block_select2 = createSelect('bid2', $blocks, $bid, 1);
 
 	}
@@ -617,9 +596,8 @@ sub blockSave {
 	my($bid) = @_;
 
 	my $slashdb = getCurrentDB();
-
-	return if getCurrentUser('seclev') < 500;
 	return unless $bid;
+
 	my $saved = $slashdb->saveBlock($bid);
 
 	if (getCurrentForm('save_new') && $saved > 0) {
@@ -630,7 +608,6 @@ sub blockSave {
 	if ($saved == 0) {
 		print getMessage('blockSave-inserted-message', { bid => $bid });
 	}
-	print getMessage('blockSave-saved-message', { bid => $bid });
 }
 
 ##################################################################
@@ -638,21 +615,19 @@ sub blockDelete {
 	my($bid) = @_;
 
 	my $slashdb = getCurrentDB();
-
-	return if getCurrentUser('seclev') < 500;
 	$slashdb->deleteBlock($bid);
-	print getMessage('blockDelete-message', { bid => $bid });
 }
 
 ##################################################################
 sub colorEdit {
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
+	my ($form, $slashdb, $user, $constants) = @_;
 
 	my($color_select, $block, $colorblock_clean, $title, @colors);
-	return if $user->{'seclev'} < 500;
+
+	# return if $user->{'seclev'} < 500;
+	if ($form->{colorsave} || $form->{colorsavedef} || $form->{colororig}) {
+		colorSave();
+	}
 
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
@@ -691,7 +666,6 @@ sub colorSave {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	return if getCurrentUser('seclev') < 500;
 	my $colorblock = join ',', @{$form}{qw[fg0 fg1 fg2 fg3 fg4 bg0 bg1 bg2 bg3 bg4]};
 
 	$slashdb->saveColorBlock($colorblock);
@@ -703,7 +677,6 @@ sub keywordEdit {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	return if getCurrentUser('seclev') < 500;
 	my($keywords_menu, $keywords_select);
 
 	$keywords_menu = $slashdb->getDescriptions('keywords', '', 1);
@@ -718,8 +691,6 @@ sub keywordEdit {
 sub keywordDelete {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
-
-	return if getCurrentUser('seclev') < 500;
 
 	print getData('keywordDelete-message');
 	$slashdb->deleteKeyword($form->{id});
@@ -748,17 +719,23 @@ sub keywordSave {
 ##################################################################
 # Topic Editor
 sub topicEdit {
-	my $constants = getCurrentStatic();
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $basedir = getCurrentStatic('basedir');
+	my ($form, $slashdb, $user, $constants) = @_;
+	my $basedir = $constants->{basedir};
 
-	return if getCurrentUser('seclev') < 500;
 	my($topic, $topics_menu, $topics_select);
 	my $available_images = {};
 	my $image_select = "";
 
-	my($imageseen_flag, $images_flag) = (0, 0);
+	if ($form->{topicdelete}) {
+		topicDelete($form->{tid});
+		print getMessage('topicDelete-message', { tid => $form->{tid} });
+
+	} elsif ($form->{topicsave}) {
+		topicSave(@_);
+		print getMessage('topicSave-message');
+	}
+
+	my ($imageseen_flag, $images_flag) = (0, 0);
 
 	local *DIR;
 	opendir(DIR, "$basedir/images/topics");
@@ -806,14 +783,12 @@ sub topicEdit {
 ##################################################################
 sub topicDelete {
 	my($tid) = @_;
+
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	return if getCurrentUser('seclev') < 500;
-
 	$tid ||= $form->{tid};
 
-	print getMessage('topicDelete-message', { tid => $tid });
 	$slashdb->deleteTopic($tid);
 	$slashdb->deleteSectionTopicsByTopic($form->{tid});
 	$form->{tid} = '';
@@ -821,11 +796,8 @@ sub topicDelete {
 
 ##################################################################
 sub topicSave {
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $basedir = getCurrentStatic('basedir');
-
-	return if getCurrentUser('seclev') < 500;
+	my ($form, $slashdb, $user, $constants) = @_;
+	my $basedir = $constants->{basedir};
 
 	if (!$form->{width} && !$form->{height}) {
 		@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
@@ -840,14 +812,12 @@ sub topicSave {
 	}
 
 	$form->{nexttid} = $form->{tid};
-
-	print getMessage('topicSave-message');
 }
 
 ##################################################################
 sub listTopics {
-	my $slashdb = getCurrentDB();
-	my $imagedir = getCurrentStatic('imagedir');
+	my ($form, $slashdb, $user, $constants) = @_;
+	my $imagedir = $constants->{imagedir};
 
 	my $topics = $slashdb->getTopics();
 	my $title = getTitle('listTopics-title');
@@ -963,7 +933,6 @@ sub getRelated {
 		$related_text .= "<LI><A$url>$label</A></LI>\n" unless $label eq "[?]";
 	}
 
-	print STDERR "RELATED: $related_text\n";
 	return $related_text;
 }
 
@@ -972,7 +941,6 @@ sub otherLinks {
 	my($aid, $tid, $uid) = @_;
 
 	my $slashdb = getCurrentDB();
-
 
 	my $topic = $slashdb->getTopic($tid);
 
@@ -987,12 +955,13 @@ sub otherLinks {
 ##################################################################
 # Story Editing
 sub editStory {
-	my($sid) = @_;
+	my ($form, $slashdb, $user, $constants) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
+	my($sid);
+
+	if ($form->{op} eq 'edit') {
+		$sid = $form->{sid};
+	}
 
 	my($authoredit_flag, $extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
@@ -1143,6 +1112,7 @@ sub editStory {
 	});
 }
 
+##################################################################
 sub write_to_temp_file {
 	my($data) = @_;
 	local *TMP;
@@ -1157,6 +1127,7 @@ sub write_to_temp_file {
 	$tmp;
 }
 
+##################################################################
 sub get_ispell_comments {
 	my($text) = @_;
 	$text = strip_nohtml($text);
@@ -1208,17 +1179,21 @@ sub get_ispell_comments {
 
 ##################################################################
 sub listStories {
+	my ($form, $slashdb, $user, $constants) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-
-	my($first_story, $num_stories) = ($form->{'next'} || 0, 40);
-	my($count, $storylist) = $slashdb->getStoryList($first_story, $num_stories);
+	my ($first_story, $num_stories) = ($form->{'next'} || 0, 40);
+	my ($count, $storylist) = $slashdb->getStoryList($first_story, $num_stories);
 
 	my $storylistref = [];
-	my($sectionflag);
-	my($i, $canedit) = (0, 0);
+	my ($sectionflag);
+	my ($i, $canedit) = (0, 0);
+	
+	if ($form->{op} eq 'delete') {
+		rmStory($form->{sid});
+		titlebar('100%', getTitle('rmStory-title', {sid => $form->{sid}}));
+	} else {
+		titlebar('100%', getTitle('listStories-title'));
+	}
 
 	for (@$storylist) {
 		my($hits, $comments, $sid, $title, $aid, $time_plain, $topic, $section,
@@ -1271,15 +1246,13 @@ sub rmStory {
 	my $constants = getCurrentStatic();
 
 	$slashdb->deleteStory($sid);
-
-	titlebar('100%', getTitle('rmStory-title', {sid => $sid}));
 }
 
 ##################################################################
 sub listFilters {
-	my($formname) = @_;
+	my ($form, $slashdb, $user, $constants) = @_;
 
-	my $slashdb = getCurrentDB();
+	my $formname = $form->{formname};
 
 	my $title = getTitle('listFilters-title');
 	my $filter_ref = $slashdb->getContentFilters($formname);
@@ -1296,11 +1269,33 @@ sub listFilters {
 
 ##################################################################
 sub editFilter {
-	my($filter_id) = @_;
+	my ($form, $slashdb, $user, $constants) = @_;
 
-	my $slashdb = getCurrentDB();
+	my ($filter_id);
 
-	$filter_id ||= getCurrentForm('filter_id');
+	if ($form->{newfilter}) {
+		$filter_id = $slashdb->createContentFilter($form->{formname});
+		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
+
+	} elsif ($form->{updatefilter}) {
+		if (!$form->{regex}) {
+			print getMessage('updateFilter-message');
+
+		} else {
+			$slashdb->setContentFilter($form->{formname});
+		}
+
+		$filter_id = $form->{filter_id};
+		titlebar("100%", getTitle('updateFilter-update-title'));
+
+	} elsif ($form->{deletefilter}) {
+		$slashdb->deleteContentFilter($form->{filter_id});
+		titlebar("100%", getTitle('updateFilter-delete-title'));
+		listFilters($form->{formname});
+		return();
+	}
+
+	$filter_id ||= $form->{filter_id};
 
 	my @values = qw(regex form modifier field ratio minimum_match
 		minimum_length err_message);
@@ -1320,45 +1315,8 @@ sub editFilter {
 }
 
 ##################################################################
-# updateFilter - 3 possible actions
-# 1 - create new filter
-# 2 - update existing
-# 3 - delete existing
-sub updateFilter {
-	my($filter_action) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-
-	if ($filter_action == 1) {
-		my $filter_id = $slashdb->createContentFilter($form->{formname});
-		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
-		editFilter($filter_id);
-
-	} elsif ($filter_action == 2) {
-		if (!$form->{regex} || !$form->{regex}) {
-			print getMessage('updateFilter-message');
-			editFilter($form->{filter_id});
-
-		} else {
-			$slashdb->setContentFilter($form->{formname});
-		}
-
-		titlebar("100%", getTitle('updateFilter-update-title'));
-		editFilter($form->{filter_id});
-
-	} elsif ($filter_action == 3) {
-		$slashdb->deleteContentFilter($form->{filter_id});
-		titlebar("100%", getTitle('updateFilter-delete-title'));
-		listFilters();
-	}
-}
-
-##################################################################
 sub updateStory {
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
+	my ($form, $slashdb, $user, $constants) = @_;
 
 	# Some users can only post to a fixed section
 	if (my $section = getCurrentUser('section')) {
@@ -1375,24 +1333,23 @@ sub updateStory {
 
 	$slashdb->updateStory();
 	titlebar('100%', getTitle('updateStory-title'));
-	listStories();
+	# make sure you pass it the goods
+	listStories(@_);
 }
 
 ##################################################################
 sub saveStory {
+	my ($form, $slashdb, $user, $constants) = @_;
 
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	# my $user = getCurrentUser();
-	my $user = $slashdb->getUser($form->{uid});
+	my $edituser = $slashdb->getUser($form->{uid});
 	my $rootdir = getCurrentStatic('rootdir');
 
-	$form->{displaystatus} ||= 1 if $user->{section};
-	$form->{section} = $user->{section} if $user->{section};
+	$form->{displaystatus} ||= 1 if $edituser->{section};
+	$form->{section} = $edituser->{section} if $edituser->{section};
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
-	) . otherLinks($user->{nickname}, $form->{tid}, $user->{uid});
+	) . otherLinks($edituser->{nickname}, $form->{tid}, $edituser->{uid});
 
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {
@@ -1409,12 +1366,12 @@ sub saveStory {
 		}
 	} else {
 		titlebar('100%', getData('story_creation_failed'));
-		listStories();
+		listStories(@_);
 		return;
 	}
 
 	titlebar('100%', getTitle('saveStory-title'));
-	listStories();
+	listStories(@_);
 }
 
 #################################################################
@@ -1438,6 +1395,7 @@ sub getTitle {
 
 ##################################################################
 sub getLinks {
+# huh? who did this?
 }
 
 createEnvironment();

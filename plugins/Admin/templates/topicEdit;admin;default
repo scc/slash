@@ -15,6 +15,7 @@ __template__
 <TABLE>
 	<TR>
 		<FORM ACTION="[% env.script_name %]" METHOD="POST">
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="topics">
 		<TD VALIGN="TOP">
 			[% INCLUDE formLabel value => "Select a topic" comment => "hit the create button if you wish to create a new topic" %]
 			[% topics_select %]

@@ -26,6 +26,7 @@ see your changes.</P>
 [% INCLUDE titlebar %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
+<INPUT TYPE="hidden" name="op" value="colors">
 <P>Shown are the site colors. If you make a change to any one of them,
 you will need to restart the webserver for the change(s) to show up.</P>
 <P>Note: make sure you use a valid color value, or the color will not

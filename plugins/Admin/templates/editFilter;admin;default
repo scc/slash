@@ -12,6 +12,7 @@ __name__
 editFilter
 __template__
 <FORM action="[% env.script_name %]" method="POST">
+<INPUT TYPE="hidden" NAME="op" VALUE="listfilters">
 
 <TABLE BORDER="0">
 	<TR>
@@ -20,11 +21,18 @@ __template__
 	</TR>
 	<TR>
 		<TD><B>List Filters</B></TD>
-		<TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List"></TD>
+		<TD>
+		<INPUT TYPE="SUBMIT" NAME="listfilters" VALUE="List">
+		</FORM>
+		</TD>
 	</TR>
 	<TR>
 		<TD><B>Create a new filter</B></TD>
-		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create"></TD>
+		<TD>
+		<FORM action="[% env.script_name %]" method="POST">
+		<INPUT TYPE="hidden" NAME="op" VALUE="editfilter">
+		<INPUT TYPE="SUBMIT" NAME="newfilter" VALUE="Create">
+		</TD>
 	</TR>
 	<TR>
 		<TD VALIGN="top" WIDTH="40"><B>Filter id</B><BR>This is not editable<BR><BR></TD>
@@ -96,10 +104,10 @@ __template__
 </TABLE>
 <TABLE BORDER="0">
 	<TR>
-		<TD><INPUT TYPE="submit" NAME="updatefilter" VALUE="Save filter"></TD>
-		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create a new filter"></TD>
-		<TD><INPUT TYPE="submit" NAME="deletefilter" VALUE="Delete filter"></TD>
-		<TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List Filters"></TD>
+		<TD><INPUT TYPE="SUBMIT" NAME="updatefilter" VALUE="Save filter"></TD>
+		<TD><INPUT TYPE="SUBMIT" NAME="newfilter" VALUE="Create a new filter"></TD>
+		<TD><INPUT TYPE="SUBMIT" NAME="deletefilter" VALUE="Delete filter"></TD>
+		<TD><INPUT TYPE="SUBMIT" NAME="listfilters" VALUE="List Filters"></TD>
 	</TR>
 	</TR>
 </TABLE>

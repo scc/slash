@@ -14,6 +14,7 @@ __template__
 [% INCLUDE titlebar width='100%' %]
 
 <FORM action="[% env.script_name %]" method="POST">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="listfilters">
 <TABLE>
 	<TR>
 		<TD>Select form</TD><TD>[% form_select %]</TD>
@@ -21,6 +22,9 @@ __template__
 	<TR>
 		<TD>List Filters</TD><TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List"></TD>
 	</TR>
+</FORM>
+<FORM action="[% env.script_name %]" method="POST">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="editfilter">
 	<TR>
 		<TD>Create a new Filter</TD><TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create"></TD>
 	</TR>
@@ -46,7 +50,7 @@ __template__
 
 	[% FOREACH i = filter_ref %]
 	<TR>
-		<TD>[<A HREF="[% env.script_name %]?editfilter=1&filter_id=[% i.0 %]">[% i.0 %]</A>]</TD>
+		<TD>[<A HREF="[% env.script_name %]?op=editfilter&filter_id=[% i.0 %]">[% i.0 %]</A>]</TD>
 		<TD><FONT FACE="courier" size="+1">[% i.1 %]</FONT></TD>
 		<TD> [% i.2 %] </TD>
 		<TD> [% i.3 %] </TD>
