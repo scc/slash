@@ -2066,7 +2066,7 @@ sub createStory {
 		);
 	}
 
-	$self->sqlInsert('stories',{
+	my $data = {
 		sid		=> $sid,
 		uid		=> $story->{uid},
 		tid		=> $story->{tid},
@@ -2080,7 +2080,10 @@ sub createStory {
 		relatedtext	=> $story->{relatedtext},
 		displaystatus	=> $story->{displaystatus},
 		commentstatus	=> $story->{commentstatus}
-	});
+	};
+
+	$self->sqlInsert('stories', $data);
+	$self->sqlInsert('newstories', $data);
 	$self->_saveExtras($story);
 
 	return $sid;
