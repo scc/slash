@@ -79,7 +79,7 @@ Last Journal Entry was [% journal_date %]</A>
  </PRE><P>
 [% END %]
 
-<B>[% nick %] has posted [% commentcount %] comments. [% IF commentcount > constants.user_comment_display_default %]Below are the most recent [% constants.user_comment_display_default %] comments.[% END %]</B><P>
+<BR><B>[% nick %] has posted [% commentcount %] comments. [% IF commentcount > constants.user_comment_display_default %]Below are the most recent [% constants.user_comment_display_default %] comments.[% END %]</B><P>
 
 [% n = 0 %]
 [% FOREACH comment = commentstruct %]
@@ -96,16 +96,16 @@ Last Journal Entry was [% journal_date %]</A>
    [% comment.subj %]</A> posted on [% comment.cdate %]
         (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
-           <BR>attached to <A HREF="[% href %]">[% title %]</A>
+           <BR>attached to <A HREF="[% href %]">[% comment.story.title %]</A>
       </FONT>
 [% END %]
 
 [% IF stories %]
-	<B>[% nick %] has submitted [% storycount %] stories.[% IF storycount > constants.user_submitter_display_default %] Below are the most recent [% form.min %] stories.[% END %]</B><P>
+	<BR><B>[% nick %] has submitted [% storycount %] stories.[% IF storycount > constants.user_submitter_display_default %] Below are the most recent [% form.min %] stories.[% END %]</B><P>
 	[% n = 0 %]
 	[% FOREACH story = stories %]
 		[% n = n + 1 %]
-			<A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</A> on [% Slash.timeCalc(story.date) %]<br>
+			<A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</A> on [% Slash.timeCalc(story.time) %]<br>
 	[% END %]
 [% END %]
 
