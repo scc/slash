@@ -168,7 +168,7 @@ sub message_friends {
 		AND  up1.name = 'deliverymodes'      AND up1.value >= 0
 		AND  up2.name = 'messagecodes_$code' AND up2.value  = 1";
 
-	my $friends  = $self->sqlSelectArrayRef($cols, $table, $where);
+	my $friends  = $self->sqlSelectColArrayref($cols, $table, $where);
 	return $friends;
 }
 
