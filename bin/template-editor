@@ -103,6 +103,7 @@ sub usage {
 	print "\t-s Save template\n";
 	print "\t-l list templates and their descriptions\n";
 	print "\t-p only perform list and get actions if the template matches this pattern\n";
+	print "\t-h This message\n";
 	print "\n\tIf no template name is given a directory has to be specified\n\n";
 	exit();
 }

@@ -1669,10 +1669,10 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 ##################################################################
 sub getAuthorNames {
 	my($self) = @_;
-	my $authors = $self->getAuthors();
+	my $authors = $self->getDescriptions('authors');
 	my @authors;
-	for my $author (@$authors){
-		push @authors, $author->{'nickname'};
+	for (values %$authors){
+		push @authors, $_;
 	}
 
 	return [sort(@authors)];

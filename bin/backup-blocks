@@ -1,0 +1,34 @@
+#!/usr/bin/perl -w 
+# First version by Brian, brian@tanegnt.org
+
+use strict;
+use DBIx::Password;
+use Getopt::Std;
+
+my %opts;
+usage() unless getopts('u:', \%opts);
+
+$opts{'u'} = 'slash' unless $opts{'u'};  
+
+my $dbh = DBIx::Password->connect($opts{'u'});
+
+my $get = $dbh->prepare("SELECT bid,block FROM blocks");
+my $delete = $dbh->prepare("DELETE FROM backup_blocks");
+my $insert  = $dbh->prepare("INSERT INTO backup_blocks (bid,block) VALUES (?,?)");
+
+$get->execute();
+$delete->execute();
+while(my @row = $get->fetchrow_array){
+	$insert->execute(@row);
+}
+
+$dbh->disconnect();
+
+sub usage {
+  print "Usage:backup-blocks  [OPTIONS]\n";
+  print "\t-u Virtual user to use(default is slash)\n";
+  print "\t-h This message\n";
+  print "\n\tThis is just a quick and dirty way to make sure the blocks you revert to are current\n\n";
+  exit();
+}
+

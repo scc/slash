@@ -406,14 +406,12 @@ sub tildeEd {
 	while (my($tid, $alttext) = each %$topics) {
 		$tidref->{$tid}{checked} = ($extid =~ /'$tid'/) ? ' CHECKED' : '';
 		$tidref->{$tid}{alttext} = $alttext;
-		print STDERR "topic checked $tidref->{$tid}{checked}  alttext $tidref->{$tid}{alttext}\n";
 	}
 
 	my $sections = $slashdb->getDescriptions('sections');
 	while (my($section,$title) = each %$sections) {
 		$sectionref->{$section}{checked} = ($exsect =~ /'$section'/) ? ' CHECKED' : '';
 		$sectionref->{$section}{title} = $title;
-		print STDERR "section checked $sectionref->{$section}{checked} title $sectionref->{$section}{title}\n";
 	}
 
 	my $customize_title = getTitle('tildeEd_customize_title');
@@ -428,14 +426,12 @@ sub tildeEd {
 
 	for (@$sections_description) {
 		my($bid, $title, $boldflag) = @$_;
-		print STDERR "bid $bid title $title boldflag $boldflag\n";
 
 		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ? ' CHECKED' : '';
 		$section_descref->{$bid}{srandflag} = $bid eq 'srandblock';
 		$section_descref->{$bid}{boldflag} = $boldflag > 0;
 		$title =~ s/<(.*?)>//g;
 		$section_descref->{$bid}{title} = $title;
-		print STDERR "section_descref check $section_descref->{$bid}{checked} srandflag $section_descref->{$bid}{srandflag} title $section_descref->{$bid}{title} BOLDFLAG $section_descref->{$bid}{boldflag}\n";
 	}
 
 	my $tilded_box_msg = getMessage('tilded_box_msg');
