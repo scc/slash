@@ -689,3 +689,15 @@ CREATE TABLE vars (
   PRIMARY KEY (name)
 );
 
+#
+# Table structure for table 'spamarmors'
+#
+
+CREATE TABLE spamarmors (
+  armor_id int(11) NOT NULL auto_increment,
+  name varchar(40) default NULL,
+  code text,
+  active int(11) default '1',  # reserved for later. Not yet in use.
+  PRIMARY KEY  (armor_id)
+) TYPE=MyISAM;
+
