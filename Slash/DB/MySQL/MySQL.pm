@@ -2724,6 +2724,7 @@ sub _genericSet {
 	for (keys %$value) {
 		$self->{$table_cache}{$id}{$_} = $value->{$_};
 	}
+	$self->{$table_cache}{$id}{'_modtime'} = time();
 }
 
 ########################################################
@@ -2780,6 +2781,7 @@ sub _genericGetCache {
 	# -Brian
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{_dbh}->quote($id));
+	$answer->{'_modtime'} = time();
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -2849,6 +2851,7 @@ sub _genericGetsCache {
 	$self->{$table_cache} = {};
 	my $sth = $self->sqlSelectMany('*', $table);
 	while (my $row = $sth->fetchrow_hashref) {
+		$row->{'_modtime'} = time();
 		$self->{$table_cache}{ $row->{$table_prime} } = $row;
 	}
 	$self->{$table_cache_full} = 1;
