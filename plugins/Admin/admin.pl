@@ -186,8 +186,8 @@ sub main {
 		varSave();
 		varEdit($form->{name});
 
-	} elsif ($op eq 'listfilters') {
-		listFilters();
+	} elsif ($form->{listfilters}) {
+		listFilters($form->{formname});
 
 	} elsif ($form->{editfilter}) {
 		titlebar("100%", getTitle('editFilter-title'));
@@ -1185,15 +1185,19 @@ sub rmStory {
 
 ##################################################################
 sub listFilters {
-	my($header, $footer);
+	my($formname) = @_;
 
 	my $slashdb = getCurrentDB();
 
 	my $title = getTitle('listFilters-title');
-	my $filter_ref = $slashdb->getContentFilters();
+	my $filter_ref = $slashdb->getContentFilters($formname);
+
+	my $form_list = $slashdb->getDescriptions('forms');
+	my $form_select = createSelect('formname', $form_list, $formname,1);
 
 	slashDisplay('listFilters', { 
 		title		=> $title, 
+		form_select	=> $form_select,	
 		filter_ref	=> $filter_ref 
 	});
 }
@@ -1231,7 +1235,7 @@ sub updateFilter {
 	my $form = getCurrentForm();
 	
 	if ($filter_action == 1) {
-		my $filter_id = $slashdb->createContentFilter();
+		my $filter_id = $slashdb->createContentFilter($form->{formname});
 		titlebar("100%", getTitle('updateFilter-new-title', { filter_id => $filter_id }));
 		editFilter($filter_id);
 
@@ -1241,7 +1245,7 @@ sub updateFilter {
 			editFilter($form->{filter_id});
 
 		} else {
-			$slashdb->setContentFilter();
+			$slashdb->setContentFilter($form->{formname});
 		}
 
 		titlebar("100%", getTitle('updateFilter-update-title'));

@@ -13,12 +13,21 @@ listFilters
 __template__
 [% INCLUDE titlebar %]
 
-<FORM ENCTYPE="multipart/form-data" action="[% env.script_name %]" method="POST">
+<FORM action="[% env.script_name %]" method="POST">
 <TABLE>
 	<TR>
-		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create a new filter"></TD>
+		<TD>Select form</TD><TD>[% form_select %]</TD>
+	</TR>
+	<TR>
+		<TD>List Filters</TD><TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List"></TD>
+	</TR>
+	<TR>
+		<TD>Create a new Filter</TD><TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create"></TD>
 	</TR>
 </TABLE>
+
+[% IF filter_ref && form.formname %]
+
 <TABLE BORDER="0">
 	<TR>
 		<TD COLSPAN="9">&nbsp;</TD>
@@ -35,8 +44,8 @@ __template__
 		<TD><B> Error message <B></TD>
 	</TR>
 
-[% FOREACH i = filter_ref %]
-<TR>
+	[% FOREACH i = filter_ref %]
+	<TR>
 		<TD>[<A HREF="[% env.script_name %]?editfilter=1&filter_id=[% i.0 %]">[% i.0 %]</A>]</TD>
 		<TD><FONT FACE="courier" size="+1">[% i.1 %]</FONT></TD>
 		<TD> [% i.2 %] </TD>
@@ -47,7 +56,7 @@ __template__
 		<TD> [% i.8 %] </TD>
 		<TD> [% i.7 %] </TD>
 	</TR>
-[% END %]
+	[% END %]
 
 </TABLE>
 <TABLE>
@@ -55,6 +64,9 @@ __template__
 		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create a new filter"></TD>
 	</TR>
 </TABLE>
+
+[% END %]
+
 </FORM>
 
 __seclev__

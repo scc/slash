@@ -122,6 +122,9 @@ my %descriptions = (
 	'site_info'
 		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") },
 
+	'forms'
+		=> sub { $_[0]->sqlSelectMany('value,value', 'site_info', "name = 'form'") },      
+
 );
 
 sub _whereFormkey {
@@ -318,8 +321,9 @@ sub unsetModeratorlog {
 
 ########################################################
 sub getContentFilters {
-	my($self) = @_;
-	my $filters = $self->sqlSelectAll("*","content_filters","regex != '' and field != ''");
+	my($self,$formname) = @_;
+
+	my $filters = $self->sqlSelectAll("*","content_filters","regex != '' and field != '' and form = '$formname'");  
 	return $filters;
 }
 
@@ -416,10 +420,13 @@ sub getSessionInstance {
 
 ########################################################
 sub setContentFilter {
-	my($self, $form) = @_;
-	$form ||= getCurrentForm();
+	my($self, $formname) = @_;
+
+	my $form = getCurrentForm();
+
 	$self->sqlUpdate("content_filters", {
 			regex		=> $form->{regex},
+			form		=> $formname,
 			modifier	=> $form->{modifier},
 			field		=> $form->{field},
 			ratio		=> $form->{ratio},
@@ -679,10 +686,11 @@ sub getCommentsByUID {
 #################################################################
 # Just create an empty content_filter
 sub createContentFilter {
-	my($self) = @_;
+	my($self,$formname) = @_;
 
 	$self->sqlInsert("content_filters", {
 		regex		=> '',
+		form		=> $formname,
 		modifier	=> '',
 		field		=> '',
 		ratio		=> 0,
