@@ -478,7 +478,10 @@ sub stirPool {
 
 	while (my($p, $u) = $cursor->fetchrow) {
 		$revoked += $p;
-		$self->sqlUpdate("users_comments", { points => '0' }, "uid=$u");
+		$self->sqlUpdate("users_comments", { 
+			points 		=> '0',
+			-lastgranted 	=> 'now()',
+		}, "uid=$u");
 	}
 
 	$self->sqlTransactionFinish();
