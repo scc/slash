@@ -388,12 +388,13 @@ INSERT INTO vars (name, value, description) VALUES ('m2_bonus','+1','Bonus for p
 INSERT INTO vars (name, value, description) VALUES ('m2_comments','10','Number of comments for meta-moderation');
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus', 9, 'Number of M2 votes per M1 before it is reconciled by consensus, best if this is an odd number.')
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus_trigger', '0.75', 'Weighted average of consensus votes to dissentor votes which determines a "clear victory" in M2.');
-INSERT INTO vars (name, value, description) VALUES ('m2_count_slide', '1', 'This value changes over time, but indicates the current count level at which we begin allocating M2 comments. This value will cycle from 1 to {m2_consensus} and back to 1 again.');
 INSERT INTO vars (name, value, description) VALUES ('m2_dissension_penalty', '-1', 'Penalty assessed for each "head" of dissension when M2 penalties are triggered.');
 INSERT INTO vars (name, value, description) VALUES ('m2_maxbonus','12','Usually 1/2 of goodkarma');
 INSERT INTO vars (name, value, description) VALUES ('m2_maxunfair','0.5','Minimum % of unfairs for M2 penalty (deprecated)');
 INSERT INTO vars (name, value, description) VALUES ('m2_mincheck','3','Usually 1/3 of m2_comments (deprecated)');
 INSERT INTO vars (name, value, description) VALUES ('m2_minority_trigger', '0.05', 'If weighted average of dissension votes to consensus votes is less than this value, this will trigger M2 penalties.');
+INSERT INTO vars (name, value, description) VALUES ('m2_modlog_pos', '0', 'Value of ID of last ID processed by a Meta-Moderator. Basically, this an indicator as to where the next set of M2 comments will be.');
+INSERT INTO vars (name, value, description) VALUES ('m2_modlog_cycles', '0', 'Number of times Metamoderation has processed the entire moderation log.');
 INSERT INTO vars (name, value, description) VALUES ('m2_penalty','-1','Penalty for misuse of meta-moderation (deprecated)');
 INSERT INTO vars (name, value, description) VALUES ('m2_reward_pool', '4', 'Amount of point pool to award users participating in M2. Users cannot receive more than 1 point from the point pool.');
 INSERT INTO vars (name, value, description) VALUES ('m2_toomanyunfair','0.3','Minimum % of unfairs for which M2 is ignored (deprecated)');

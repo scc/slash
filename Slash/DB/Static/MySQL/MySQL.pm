@@ -627,9 +627,16 @@ sub checkUserExpiry {
 sub getMetamodIDs {
 	my($self) = @_;
 
-	my($thresh, $num) = getCurrentStatic([qw(m2_consensus m2_batchsize)]);
+	my($thresh, $num) = (
+		getCurrentStatic('m2_consensus'),
+		getCurrentStatic('m2_batchsize')
+	);
 	my $list = $self->sqlSelectAll(
-		'id', 'moderatorlog', "m2count > $thresh", "LIMIT $num"
+		'distinct moderatorlog.id', 'moderatorlog, metamodlog',
+		"m2count >= $thresh
+		AND flag = 10
+		AND moderatorlog.id=metamodlog.mmid",
+		($num) ? "LIMIT $num" : ''
 	);
 	$_ = $_->[0] for @{$list};
 

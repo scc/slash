@@ -48,16 +48,19 @@ sub main {
 }
 
 #################################################################
-sub karmaBonus {
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-
-	my $x = $constants->{m2_maxbonus} - $user->{karma};
-
-	return 0 unless $x > 0;
-	return 1 if rand($constants->{m2_maxbonus}) < $x;
-	return 0;
-}
+# This is deprecated and not used in this scope.
+# 	- Cliff 08/24/01
+#
+#sub karmaBonus {
+#	my $constants = getCurrentStatic();
+#	my $user = getCurrentUser();
+#
+#	my $x = $constants->{m2_maxbonus} - $user->{karma};
+#
+#	return 0 unless $x > 0;
+#	return 1 if rand($constants->{m2_maxbonus}) < $x;
+#	return 0;
+#}
 
 #################################################################
 sub metaModerate {
@@ -119,10 +122,14 @@ sub displayTheComments {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	$user->{points} = 0;
 	my $comments = $slashdb->getMetamodComments(
-		$user->{uid}, $constants->{m2_comments}
+		$user, $constants->{m2_comments}
 	);
+
+	# We set this to prevent the "Reply" and "Parent" links from
+	# showing up. If the metamoderator needs context, they can use
+	# the CID link.
+	$user->{mode} = 'archive';
 
 	slashDisplay('dispTheComments', {
 		comments 	=> $comments,

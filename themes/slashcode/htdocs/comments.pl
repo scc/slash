@@ -798,8 +798,7 @@ sub moderateCid {
 		}
 	}
 
-	my($cuid, $ppid, $subj, $points, $oldreason, $ipid, $subnetid) =
-		$slashdb->getComments($sid, $cid);
+	my $comment = $slashdb->getComment($cid);
 
 	# The user should not have been been presented with the menu
 	# to moderate if any of the following tests trigger, but,
@@ -810,20 +809,20 @@ sub moderateCid {
 	unless ($user->{is_admin}) {
 		# Do not allow moderation of any comments with the same UID as the
 		# current user (duh!).
-		return if $user->{uid} == $cuid;
+		return if $user->{uid} == $comment->{uid};
 		# Do not allow moderation of any comments (anonymous or otherwise)
 		# with the same IP as the current user.
-		return if $user->{ipid} eq $ipid;
+		return if $user->{ipid} eq $comment->{ipid};
 		# If the var forbids it, do not allow moderation of any comments
 		# with the same *subnet* as the current user.
 		return if $constants->{mod_same_subnet_forbid}
-			and $user->{subnetid} == $subnetid;
+			and $user->{subnetid} ne $comment->{subnetid};
 	}
 
 	my $dispArgs = {
 		cid	=> $cid,
 		sid	=> $sid,
-		subject => $subj,
+		subject => $comment->{subject},
 		reason	=> $reason,
 		points	=> $user->{points},
 	};
@@ -841,21 +840,21 @@ sub moderateCid {
 	my $val = "-1";
 	if ($reason == 9) { # Overrated
 		$val = "-1";
-		$reason = $oldreason;
+		$reason = $comment->{reason};
 	} elsif ($reason == 10) { # Underrated
 		$val = "+1";
-		$reason = $oldreason;
+		$reason = $comment->{reason};
 	} elsif ($reason > $constants->{badreasons}) {
 		$val = "+1";
 	}
 	# Add moderation value to display arguments.
 	$dispArgs->{'val'} = $val;
 
-	my $scorecheck = $points + $val;
+	my $scorecheck = $comment->{points} + $val;
 	my $active = 1;
 	# If the resulting score is out of comment score range, no further
 	# actions need be performed.
-  # Should we return here and go no further?
+	# Should we return here and go no further?
 	if (	$scorecheck < $constants->{comment_minscore} ||
 		$scorecheck > $constants->{comment_maxscore})
 	{
@@ -868,14 +867,7 @@ sub moderateCid {
 	}
 
 	# Write the proper records to the moderatorlog.
-	$slashdb->setModeratorLog(
-		$sid,		# So we can undoModeration()
-		$cid, 		# CID to identify the actual comment (UNIQUE!)
-		$user->{uid}, 	# The moderator
-		$val, 		# The value of the moderation.
-		$modreason,	# Unadjusted moderation reason.
-		$active		# Was it valid (since we do M2 invalid mods).
-	);	
+	$slashdb->setModeratorLog($comment, $user->{uid}, $val, $modreason, $active);
 
 	# Increment moderators total mods and deduct their point for playing.
 	# Word of note, if we are HERE, then the user either has points, or
@@ -890,15 +882,15 @@ sub moderateCid {
 
 	if ($active) {
 		# Adjust comment posters karma and moderation stats.
-		if ($cuid != $constants->{anonymous_coward_uid}) {
-			my $cuser = $slashdb->getUser($cuid);
+		if ($comment->{uid} != $constants->{anonymous_coward_uid}) {
+			my $cuser = $slashdb->getUser($comment->{uid});
 			my $newkarma = $cuser->{karma} + $val;
 			$cuser->{downmods}++ if $val < 0;
 			$cuser->{upmods}++ if $val > 0;
 			$cuser->{karma} = $newkarma 
 				if $newkarma <= $constants->{maxkarma} &&
 				   $newkarma >= $constants->{minkarma};
-			$slashdb->setUser($cuid, {
+			$slashdb->setUser($comment->{uid}, {
 				karma		=> $cuser->{karma},
 				upmods		=> $cuser->{upmods},
 				downmods	=> $cuser->{downmods},
@@ -929,7 +921,7 @@ sub moderateCid {
 		# comment if the havey that bit set.
 		my $messages = getObject('Slash::Messages');
 		if ($messages) {
-			my $comment = $slashdb->getCommentReply($sid, $cid);
+			my $comm = $slashdb->getCommentReply($sid, $cid);
 			my $users   = $messages->checkMessageCodes(
 				MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
 			);
@@ -940,7 +932,7 @@ sub moderateCid {
 					subject		=> {
 						template_name => 'mod_msg_subj'
 					},
-					comment		=> $comment,
+					comment		=> $comm,
 					discussion	=> $discussion,
 					moderation	=> {
 						user	=> $user,

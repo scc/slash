@@ -11,6 +11,6 @@ en_US
 __name__
 msg_m2_subj
 __template__
-[ [% constants.sitename %] Message ] Metamoderation Results for [% user.nickname %]
+[ [% constants.sitename %] Message ] Your Moderations Have Been Metamoderated
 __seclev__
 500

@@ -269,14 +269,15 @@ sub createComment {
 
 ########################################################
 sub setModeratorLog {
-	my($self, $sid, $cid, $uid, $val, $reason, $active) = @_;
+	my($self, $comment, $uid, $val, $reason, $active) = @_;
 
 	$active ||= 1;
 	$self->sqlInsert("moderatorlog", {
 		uid	=> $uid,
 		val	=> $val,
-		sid	=> $sid,
-		cid	=> $cid,
+		sid	=> $comment->{sid},
+		cid	=> $comment->{cid},
+		cuid	=> $comment->{uid},
 		reason  => $reason,
 		-ts	=> 'now()',
 		active 	=> $active,
@@ -288,55 +289,103 @@ sub setModeratorLog {
 #
 # Work, dammit! - Cliff
 sub getMetamodComments {
-	my($self, $uid, $num_comments) = @_;
+	my($self, $user, $num_comments) = @_;
 
-	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	#require Benchmark;
+	#my $t0 = new Benchmark;
 
-	# We first check to see if we have any moderator records that need processing
-	# at the current count leve. If not, we then increment the count level and
-	# use that.
-	my $m2cntvar = $self->getVar('m2_count_slide', 'value');
+	my $comment_table = 'comments';
+	#my $comment_table = getCurrentStatic('mysql_heap_table') ? 
+	#	'comment_heap' : 'comments';
+
+	# We first check to see if we have any moderator records that need
+	# processing at the current count level If not, we then increment the
+	# count level and use that.
+	#
+	# If the vars are cached, might we have a race condition here?
 	my $thresh = $self->getVar('m2_consensus', 'value');
-	my($curM2count) =
-		$self->sqlSelect('min(id)','moderatorlog',"m2count<$m2cntvar") || 0;
-	my($maxM2count) = $self->sqlSelect('max(id)', 'moderatorlog');
-	if (!$curM2count || ($maxM2count - $curM2count < $num_comments)) {
-		$m2cntvar = ($m2cntvar <= $thresh) ? $m2cntvar + 1 : 1;
-		$self->setVar('m2_count_slide', $m2cntvar);
-	}
-	# Removed extraneous "users.uid!=$uid" from WHERE clause.
-	# Also removed "sig" from field list as we anonymize it below.
-	my $sth = $self->sqlSelectMany(
-		"$comment_table.cid, $comment_table.sid as sid, date, subject, comment,
-		users.uid as uid, pid, moderatorlog.id as id,
-		moderatorlog.reason as modreason, $comment_table.reason,
-		title, url",
+	$self->sqlTransactionStart('LOCK TABLES moderatorlog READ, vars WRITE');
+	my $modpos = $user->{lastmmid} ||
+		     $self->getVar('m2_modlog_pos', 'value');
+	my $timesthru = $self->getVar('m2_modlog_cycles', 'value');
+	my($minMod, $maxMod) =
+		$self->sqlSelect('min(id), max(id)', 'moderatorlog');
+	$minMod--;
+	$self->setVar('m2_modlog_cycles', $timesthru + 1)
+		if $maxMod - $modpos < $num_comments;
+	$modpos=$minMod
+		if $modpos < $minMod || $maxMod-$modpos < $num_comments;
+	my $M2mods = $self->sqlSelectAllHashrefArray(
+		'id, cid as mcid, reason as modreason',
 
-		"$comment_table, comment_text, users, users_info, moderatorlog,
-		discussions",
+		'moderatorlog',
 
-		"moderatorlog.cid = $comment_table.cid
-		AND $comment_table.uid != $uid AND moderatorlog.uid != $uid
-		AND users.uid = $comment_table.uid AND users_info.uid = $comment_table.uid
-		AND moderatorlog.sid = discussions.id
-		AND comment_text.cid = $comment_table.cid
-		AND moderatorlog.reason < 8 AND moderatorlog.m2count < $m2cntvar",
+		"moderatorlog.uid != $user->{uid}
+		AND moderatorlog.cuid != $user->{uid}
+		AND moderatorlog.reason < 8
+		AND moderatorlog.id > $modpos
+		AND moderatorlog.m2count < $thresh",
 
 		"ORDER BY moderatorlog.id LIMIT $num_comments"
 	);
+	# Only write position change if it changes for the user.
+	$self->setVar('m2_modlog_pos', $M2mods->[-1]{id})
+		if @{$M2mods} && !$user->{lastmmid};
+	$self->sqlTransactionFinish();
 
-	my $comments = [];
-	while (my $comment = $sth->fetchrow_hashref) {
-		# Anonymize comment that is to be metamoderated.
-		@{$comment}{qw(nickname uid points sig)} =
-			('-', getCurrentStatic('anonymous_coward_uid'), 0, '');
-		push @$comments, $comment;
+	# Update user if necessary. Users are STUCK at the same moderations
+	# for M2 until they submit the form (or those comments fall out of 
+	# the moderatorlog.
+	$self->setUser($user->{uid}, { lastmmid => $modpos })
+		if !$user->{lastmmid};
+
+	my(@comments);
+	push @comments, $_->{mcid} for @{$M2mods};
+
+	# Retrieve the remaining data.
+	my $comments;
+	{
+		local $" = ',';
+		$comments = $self->sqlSelectAllHashref(
+			'cid',
+			"$comment_table.cid, $comment_table.sid as sid, date, subject,
+			comment, comments.uid, pid, reason, sig, url, title, nickname",
+	
+			"$comment_table, comment_text, discussions, users",
+
+			"$comment_table.cid in (@comments)
+			AND $comment_table.cid=comment_text.cid
+			AND $comment_table.uid=users.uid
+			AND discussions.id=$comment_table.sid"
+		) if @comments;
 	}
-	$sth->finish;
 
-	formatDate($comments);
-	return $comments;
+	for my $m2Mod (@{$M2mods}) {
+		while (my($key, $val) = each %{$comments->{$m2Mod->{mcid}}}) {
+
+			$m2Mod->{$key} = $val;
+
+			# Anonymize comment identity a bit for fairness.
+			$m2Mod->{$key} = '-' if $key eq 'nickname';
+			$m2Mod->{$key} = getCurrentStatic(
+				'anonymous_coward_uid'
+			) if $key eq 'uid';
+			$m2Mod->{$key} = '0' if $key eq 'points';
+			# No longer anonymizing sig.
+			#$m2Mod->{$key} = '' if $key eq 'sig';
+		}
+		$m2Mod->{no_moderation} = 1;
+
+		delete $m2Mod->{mcid};
+	}
+	#my $t1 = new Benchmark;
+	#printf STDERR "M2 Time: %s\n", 
+	#	Benchmark::timestr(Benchmark::timediff($t1, $t0), 'noc');
+
+	formatDate($M2mods);
+	return $M2mods
 }
+
 
 ########################################################
 sub getModeratorCommentLog {
@@ -2594,7 +2643,8 @@ LOCK TABLES users_info WRITE, metamodlog WRITE, moderatorlog WRITE
 					-m2fair => "m2fair+1"
 				}, "uid=$muid");
 
-				# Karma changes deferred until reconcile time.
+				# Karma changes are now deferred until reconcile time.
+				#
 				#$self->sqlUpdate(
 				#	"users_info", { -karma => "karma+1" },
 				#	"$muid=uid AND
@@ -2604,8 +2654,9 @@ LOCK TABLES users_info WRITE, metamodlog WRITE, moderatorlog WRITE
 				$self->sqlUpdate("users_info", {
 					-m2unfair => "m2unfair+1",
 				}, "uid=$muid");
-				
-				# Karma changes deferrred until reconcile time.
+
+				# Karma changes are now deferred until reconcile time.
+				#
 				#$self->sqlUpdate(
 				#	"users_info", { -karma => "karma-1" },
 				#	"$muid=uid AND
@@ -2943,6 +2994,7 @@ sub _getCommentText {
 		return $self->{_comment_text}{$cid};
 	}
 }
+
 
 ########################################################
 sub getComments {

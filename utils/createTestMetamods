@@ -74,13 +74,21 @@ $constants = getCurrentStatic();
 			$slashdb->sqlUpdate('moderatorlog', {
 				-m2count => 'm2count+1',
 			}, "id=$_->{id}");
+			my $m2_count = $slashdb->sqlSelect(
+				'm2count',
+				'moderatorlog',
+				"id=$_->{id}"
+			);
 
 			$m2count++;
-			printf <<EOT, $curcount-$startcount, $opts{num_closed};
+			printf <<EOT, $m2_count, $constants->{m2_consensus};
 M2($m2count): ID #$_->{id}, M2Mod = $m2user->{uid}, Val = $val, C=%d/%d 
 EOT
 
 		}
+		# This user has now metamoderated. We should clear the 
+		# lastmmid field.
+		$slashdb->setUser($m2user->{uid}, { lastmmid => 0 });
 
 		$curcount = getM2ClosedCount();
 	} while ($curcount - $startcount < $opts{num_closed});

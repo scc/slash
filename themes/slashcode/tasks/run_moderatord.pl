@@ -33,7 +33,7 @@ $me - cannot find $moderatord or not executable
 EOT
 
 		}
-		#reconcileM2($constants, $slashdb);
+		reconcileM2($constants, $slashdb);
 	}
 	return ;
 };
@@ -78,43 +78,46 @@ sub reconcileM2 {
 				if $_->{val} eq $rank[1];
 		}
 
-		# Try to penalize suspicious M2 behavior.
-		my $change;
-		if ($dis && $dis_avg < $constants->{m2_minority_trigger}) {
-			# Penalty cost is the dissension cost per head
-			# of each dissenter. If you want to severly penalize
-			# M2 that doesn't go with the grain, you can uncomment
-			# the optional expression below.
-			$change = abs(int(
-				#($con/$dis) *
-				$constants->{m2_dissension_penalty}
-			));
-			for (@dis) {
-				my $userkarm =
-					$slashdb->getUser($_->[0], 'karma');
-				$slashdb->setUser($_->[0], {
-					-karma => "karma-$change",
-				}) if $userkarm > $constants->{minkarma}; 
-
-				# Also flag these specific M2 instances as 
-				# suspect for later analysis.
-				#
-				# Note use of naked '8' to identify
-				# penalized users at-a-glance.
-				$slashdb->updateM2Flag($_->[1], 8);
-			}
-		}
-		
 		# Ugh-ly.
 		slashdLog(
 			sprintf
-			"$me    mod #%ld: %s CON=%d (%6.4f) DIS=%d (%6.4f)",
-			$m2id, ($rank[0] == 1) ? 'Fair' : 'Unfair',
+			"$me    mod #%ld: %s/%s CON=%d (%6.4f) DIS=%d (%6.4f)",
+			$m2id,
+			$constants->{reasons}[$modlog->{reason}],
+			($rank[0] eq '1') ? 'Fair' : 'Unfair',
 			$con, $con_avg, $dis, $dis_avg
 		) if verbosity() >= 3;
 
+		# We shouldn't need this anymore, should we?
+		# 	- Cliff 8/28/01
+		#if ($dis && $dis_avg < $constants->{m2_minority_trigger}) {
+		#	# Penalty cost is the dissension cost per head
+		#	# of each dissenter. If you want to severly penalize
+		#	# M2 that doesn't go with the grain, you can uncomment
+		#	# the optional expression below.
+		#	$change = abs(int(
+		#		#($con/$dis) *
+		#		$constants->{m2_dissension_penalty}
+		#	));
+		#	for (@dis) {
+		#		my $userkarm =
+		#			$slashdb->getUser($_->[0], 'karma');
+		#		$slashdb->setUser($_->[0], {
+		#			-karma => "karma-$change",
+		#		}) if $userkarm > $constants->{minkarma}; 
+		#
+		#		# Also flag these specific M2 instances as 
+		#		# suspect for later analysis.
+		#		#
+		#		# Note use of naked '8' to identify
+		#		# penalized users at-a-glance.
+		#		$slashdb->updateM2Flag($_->[1], 8);
+		#	}
+		#}
+		
 		# Dole out reward among the consensus if there is a clear
 		# victory.
+		my($change, $update_cond);
 		if ($con_avg > $constants->{m2_consensus_trigger}) {
 			my %slots;
 			my $pool = $constants->{m2_reward_pool};
@@ -140,11 +143,11 @@ sub reconcileM2 {
 			}
 
 			# Adjust moderator karma. 
-			# Reward if we match consensus, penalize if not.
-			$change = ($modlog->{val} eq $rank[0])
-				? 1 : -1;
-			my $mod_karma = $slashdb->getUser($modlog->{uid}, 'karma');
-			my $update_cond = 
+			# Reward if consensus is "fair", penalize if not.
+			$change = ($rank[0] eq '1') ?  1 : -1;
+			my $mod_karma = $slashdb->getUser($modlog->{uid},
+						          'karma');
+			$update_cond = 
 				($change > 0 && $mod_karma < $goodk) ||
 				($change < 0 && $mod_karma > $badk);
 			$slashdb->setUser($modlog->{uid}, {
@@ -155,9 +158,9 @@ sub reconcileM2 {
 		# We only do the following if Messaging has been 
 		# installed.
 		if ($messages) {
-			my $comment = $slashdb->getComments(
+			my $comment_subj = ($slashdb->getComments(
 				$modlog->{sid}, $modlog->{cid}
-			);
+			))[2];
 
 			# Get discussion metadata without caching it.
 			my $discuss = $slashdb->getDiscussion(
@@ -165,12 +168,13 @@ sub reconcileM2 {
 			);
 
 			$m2_results{$modlog->{uid}}->{change} ||= 0;
-			$m2_results{$modlog->{uid}}->{change} += $change;
+			$m2_results{$modlog->{uid}}->{change} += $change
+				if $update_cond;
 
 			push @{$m2_results{$modlog->{uid}}->{m2}}, {
 				title	=> $discuss->{title},
 				url	=> $discuss->{url},
-				subj	=> $comment->{subj},
+				subj	=> $comment_subj,
 				vote	=> $rank[0],
 				reason  =>
 					$constants->{reasons}[$modlog->{reason}]
@@ -205,7 +209,7 @@ sub reconcileM2 {
 			if (@{$msg_user}) {
 				$data->{m2} = $m2_results{$_}->{m2};
 				$data->{change} = $m2_results{$_}->{change};
-				$data->{num_metamoderators} =
+				$data->{num_metamods} =
 					scalar
 					keys %{$m2_results{$_}->{m2_count}};
 				$messages->create($_, MSG_CODE_M2, $data);
