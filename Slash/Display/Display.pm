@@ -311,7 +311,7 @@ sub _template {
 	}
 
 	my $constants = getCurrentStatic();
-	my $cache_size = $constants->{cache_enabled}
+	my $cache_size = $constants->{cache_enabled}		# cache at all?
 		? $constants->{template_cache_size}
 			? $constants->{template_cache_size}	# defined cache
 			: undef					# unlimited cache
@@ -321,9 +321,9 @@ sub _template {
 		LOAD_FILTERS	=> $filters,
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
 		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
-			TRIM		=> 1,
-			PRE_CHOMP	=> 0,
-			POST_CHOMP	=> 0,
+			TRIM		=> $constants->{template_trim},
+			PRE_CHOMP	=> $constants->{template_pre_chomp},
+			POST_CHOMP	=> $constants->{template_post_chomp},
 			CACHE_SIZE	=> $cache_size,
 		})],
 	});
@@ -334,7 +334,13 @@ sub _template {
 =head1 TEMPLATE ENVIRONMENT
 
 The template has the options TRIM, PRE_CHOMP, and POST_CHOMP set by default.
-Its provider is Slash::Display::Provider, and the plugin module
+You can change these in the B<vars> table in your database
+(template_trim, template_pre_chomp, template_post_chomp).  Also
+look at the template_cache_size variable for setting the cache size.
+L<Template> for more information.  The cache will be disabled entirely if
+cache_enabled is false.
+
+The template provider is Slash::Display::Provider, and the plugin module
 Slash::Display::Plugin can be referenced by simply "Slash".
 
 Additional scalar ops (which are global, so they are in effect
@@ -366,7 +372,8 @@ It might seem simpler to just use the functional form:
 	[% Slash.strip_nohtml(form.something) %]
 
 But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>)
-in the future, so it is best to stick with the filter.
+in the future (perhaps only certain seclevs?), so it is best to stick with the filter,
+which is probably faster, too.
 
 =cut
 
