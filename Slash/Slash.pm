@@ -763,8 +763,9 @@ sub header {
 	my $user = getCurrentUser();
 	my $adhtml = '';
 	$title ||= '';
+	my $ssi = getCurrentForm('ssi');
 
-	unless ($I{F}{ssi}) {
+	unless ($ssi) {
 		my %params = (
 			-cache_control => 'private',
 			-type => 'text/html'
@@ -789,7 +790,7 @@ sub header {
 EOT
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
-	if ($I{F}{ssi} eq 'yes') {
+	if ($ssi eq 'yes') {
 		ssiHead($section);
 		return;
 	}
@@ -847,7 +848,7 @@ sub getSectionMenu {
 ########################################################
 sub footer {
 	my $dbslash = getCurrentDB();
-	if ($I{F}{ssi}) {
+	if (getCurrent('ssi')) {
 		ssiFoot();
 		return;
 	}
@@ -981,7 +982,7 @@ sub selectComments {
 	my $count = @$thisComment;
 
 	getCommentTotals($comments);
-	$dbslash->updateCommentTotals($sid, $comments) if $I{F}{ssi};
+	$dbslash->updateCommentTotals($sid, $comments) if getCurrentForm('ssi');
 	reparentComments($comments);
 	return($comments,$count);
 }
@@ -1002,10 +1003,11 @@ sub reparentComments {
 
 	my $user = getCurrentUser();
 	return unless $depth || $user->{reparent};
+	my $form = getCurrentForm();
 
 	# adjust depth for root pid or cid
-	if (my $cid = $I{F}{cid} || $I{F}{pid}) {
-		while ($cid && (my($pid) = getCommentPid($I{F}{sid}, $cid))) {
+	if (my $cid = $form->{cid} || $form->{pid}) {
+		while ($cid && (my($pid) = getCommentPid($form->{sid}, $cid))) {
 			$depth++;
 			$cid = $pid;
 		}
@@ -1025,7 +1027,7 @@ sub reparentComments {
 				$reparent = 1;
 			}
 
-			if ($reparent && $tmppid >= ($I{F}{cid} || $I{F}{pid})) {
+			if ($reparent && $tmppid >= ($form->{cid} || $form->{pid})) {
 				$pid = $tmppid;
 			} else {
 				$reparent = 0;
@@ -1045,7 +1047,7 @@ sub reparentComments {
 
 		if ($reparent) {
 			# remove child from old parent
-			if ($pid >= ($I{F}{cid} || $I{F}{pid})) {
+			if ($pid >= ($form->{cid} || $form->{pid})) {
 				@{$comments->[$comments->[$x]{pid}]{kids}} =
 					grep { $_ != $x }
 					@{$comments->[$comments->[$x]{pid}]{kids}}
@@ -1078,6 +1080,7 @@ EOT
 sub printComments {
 	# return;
 	my($sid, $pid, $cid, $commentstatus) = @_;
+	my $form = getCurrentForm();
 
 	my $user = getCurrentUser();
 
@@ -1152,7 +1155,7 @@ sub printComments {
 		print " (Spill at <B>$user->{commentspill}</B>!)",
 			" | Index Only " if $lvl && $user->{mode} eq 'thread';
 
-		print " | Starting at #$I{F}{startat}" if $I{F}{startat};
+		print " | Starting at #$form->{startat}" if $form->{startat};
 
 		print <<EOT;
  | <A HREF="$I{rootdir}/search.pl?op=comments&sid=$sid">
@@ -1164,7 +1167,7 @@ sub printComments {
 		<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$sid">
 		<INPUT TYPE="HIDDEN" NAME="cid" VALUE="$cid">
 		<INPUT TYPE="HIDDEN" NAME="pid" VALUE="$pid">
-		<INPUT TYPE="HIDDEN" NAME="startat" VALUE="$I{F}{startat}">
+		<INPUT TYPE="HIDDEN" NAME="startat" VALUE="$form->{startat}">
 EOT
 
 		print "Threshold: ", selectThreshold($comments->[0]{totals}),
@@ -1297,15 +1300,16 @@ sub linkCommentPages {
 	my($links, $page);
 	my $user = getCurrentUser();
 	return if $total < $user->{commentlimit} || $user->{commentlimit} < 1;
+	my $form = getCurrentForm();
 
 	for (my $x = 0; $x < $total; $x += $user->{commentlimit}) {
 		$links .= ' | ' if $page++ > 0;
-		$links .= "<B>(" if $I{F}{startat} && $x == $I{F}{startat};
+		$links .= "<B>(" if $form->{startat} && $x == $form->{startat};
 		$links .= linkComment({
 			sid => $sid, pid => $pid, cid => $cid,
 			subject => $page, startat => $x
 		});
-		$links .= ")</B>" if $I{F}{startat} && $x == $I{F}{startat};
+		$links .= ")</B>" if $form->{startat} && $x == $form->{startat};
 	}
 	if ($user->{breaking}) {
 		$links .= " ($I{sitename} Overload: CommentLimit $user->{commentlimit})";
@@ -1370,14 +1374,15 @@ sub displayThread {
 	}
 
 
+	my $startat = getCurrentForm('startat');
 	foreach my $cid (@{$comments->[$pid]{kids}}) {
 		my $C = $comments->[$cid];
 
 		$skipped++;
-		$I{F}{startat} ||= 0;
-		next if $skipped < $I{F}{startat};
+		$startat ||= 0;
+		next if $skipped < $startat;
 
-		$I{F}{startat} = 0; # Once We Finish Skipping... STOP
+		$startat = 0; # Once We Finish Skipping... STOP
 
 		if ($C->{points} < $user->{threshold}) {
 			if ($user->{is_anon} || $user->{uid} != $C->{uid})  {
@@ -1435,6 +1440,7 @@ sub dispComment  {
 	my $username;
 
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 	$username = $C->{fakeemail} ? <<EOT : $C->{nickname};
 <A HREF="mailto:$C->{fakeemail}">$C->{nickname}</A>
 <B><FONT SIZE="${\( $I{fontbase} + 2 )}">($C->{fakeemail})</FONT></B>
@@ -1457,8 +1463,8 @@ EOT
 
 	$C->{comment} .= "<BR>$C->{sig}" unless $user->{nosigs};
 
-	if ($I{F}{mode} ne 'archive' && length($C->{comment}) > $user->{maxcommentsize}
-		&& $I{F}{cid} ne $C->{cid}) {
+	if ($form->{mode} ne 'archive' && length($C->{comment}) > $user->{maxcommentsize}
+		&& $form->{cid} ne $C->{cid}) {
 
 		$C->{comment} = substr $C->{comment}, 0, $user->{maxcommentsize};
 		$C->{comment} .= sprintf '<P><B>%s</B>', linkComment({
@@ -1512,15 +1518,15 @@ EOT
 
 ########################################################
 sub dispStory {
-	my($S, $A, $T, $full) = @_;
-	my $title = $S->{title};
+	my($section, $authors, $topic, $full) = @_;
+	my $title = $section->{title};
 	my $user = getCurrentUser();
-	if (!$full && index($S->{title}, ':') == -1
-		&& $S->{section} ne $I{defaultsection}
-		&& $S->{section} ne $I{F}{section}) {
+	if (!$full && index($section->{title}, ':') == -1
+		&& $section->{section} ne $I{defaultsection}
+		&& $section->{section} ne getCurrentForm('section')) {
 
 		# Need Header
-		my $SECT = getSection($S->{section});
+		my $SECT = getSection($section->{section});
 
 		# Until something better can be done we manually
 		# fix title for the appropriate mode. This is an
@@ -1529,27 +1535,27 @@ sub dispStory {
 		# even uglier hack...but would solve the immediate
 		# problem.
 		$title = $user->{light} ? <<LIGHT : <<NORMAL;
-\t\t\t<A HREF="$I{rootdir}/$S->{section}/">$SECT->{title}</A>: $S->{title}
+\t\t\t<A HREF="$I{rootdir}/$section->{section}/">$SECT->{title}</A>: $section->{title}
 LIGHT
-\t\t\t<A HREF="$I{rootdir}/$S->{section}/"><FONT COLOR="$I{fg}[3]">$SECT->{title}</FONT></A>: $S->{title}
+\t\t\t<A HREF="$I{rootdir}/$section->{section}/"><FONT COLOR="$I{fg}[3]">$SECT->{title}</FONT></A>: $section->{title}
 NORMAL
 	}
 
 	titlebar($I{titlebar_width}, $title);
 
-	my $bt = $full ? "<P>$S->{bodytext}</P>" : '<BR>';
-	my $author = qq!<A HREF="$A->{url}">$S->{aid}</A>!;
+	my $bt = $full ? "<P>$section->{bodytext}</P>" : '<BR>';
+	my $author = qq!<A HREF="$authors->{url}">$section->{aid}</A>!;
 
 	my $topicicon = '';
 	$topicicon .= ' [ ' if $user->{noicons};
-	$topicicon .= qq!<A HREF="$I{rootdir}/search.pl?topic=$T->{tid}">!;
+	$topicicon .= qq!<A HREF="$I{rootdir}/search.pl?topic=$topic->{tid}">!;
 
 	if ($user->{noicons}) {
-		$topicicon .= "<B>$T->{alttext}</B>";
+		$topicicon .= "<B>$topic->{alttext}</B>";
 	} else {
 		$topicicon .= <<EOT;
-<IMG SRC="$I{imagedir}/topics/$T->{image}" WIDTH="$T->{width}" HEIGHT="$T->{height}"
-	BORDER="0" ALIGN="RIGHT" HSPACE="20" VSPACE="10" ALT="$T->{alttext}">
+<IMG SRC="$I{imagedir}/topics/$topic->{image}" WIDTH="$topic->{width}" HEIGHT="$topic->{height}"
+	BORDER="0" ALIGN="RIGHT" HSPACE="20" VSPACE="10" ALT="$topic->{alttext}">
 EOT
 	}
 
@@ -1560,12 +1566,12 @@ EOT
 	print eval $execme;
 	print "\nError:$@\n" if $@;
 
-	if ($full && ($S->{bodytext} || $S->{books_publisher})) {
+	if ($full && ($section->{bodytext} || $section->{books_publisher})) {
 		my $execme = getWidgetBlock('storymore');
 		print eval $execme;
 		print "\nError:$@\n" if $@;
 #	} elsif ($full) {
-#		print $S->{bodytext};
+#		print $section->{bodytext};
 	}
 }
 
@@ -1685,6 +1691,7 @@ sub getOlderStories {
 	my($array_ref, $SECT) = @_;
 	my($today, $stuff);
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 	my $dbslash = getCurrentDB();
 
 	$array_ref ||= $dbslash->getStories($SECT, $I{currentSection});
@@ -1710,13 +1717,13 @@ EOT
 
 	if ($SECT->{issue}) {
 		my $yesterday;
-		unless ($I{F}{issue} > 1 || $I{F}{issue}) {
+		unless ($form->{issue} > 1 || $form->{issue}) {
 			$yesterday = $dbslash->getDay() - 1;
 		} else {
-			$yesterday = int($I{F}{issue}) - 1;
+			$yesterday = int($form->{issue}) - 1;
 		}
 
-		my $min = $SECT->{artcount} + $I{F}{min};
+		my $min = $SECT->{artcount} + $form->{min};
 
 		$stuff .= qq!<P ALIGN="RIGHT">! if $SECT->{issue};
 		$stuff .= <<EOT if $SECT->{issue} == 1 || $SECT->{issue} == 3;
@@ -1808,7 +1815,7 @@ sub getFormkeyId {
 
 	# if user logs in during submission of form, after getting
 	# formkey as AC, check formkey with user as AC
-	if ($user->{uid} > 0 && getCurrentForm('rlogin') && length($I{F}{upasswd}) > 1) {
+	if ($user->{uid} > 0 && getCurrentForm('rlogin') && length(getCurrentForm('upasswd')) > 1) {
 		getAnonCookie($user);
 		$id = $user->{anon_id};
 	} elsif ($uid > 0) {
