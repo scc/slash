@@ -158,9 +158,9 @@ sub selectTopic {
 	my($name, $tid) = @_;
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
-	my $topicbank = $I{dbobject}->getTopic();
+	my $topicbank = $I{dbobject}->getTopics();
 	foreach my $thistid (sort keys %$topicbank) {
-		my $topic = $I{dbobject}->getTopic($thistid);
+		my $topic = $I{dbobject}->getTopics($thistid);
 		my $selected = $topic->{tid} eq $tid ? ' SELECTED' : '';
 		$html_to_display .= qq!\t<OPTION VALUE="$topic->{tid}"$selected>$topic->{alttext}</OPTION>\n!;
 	}
@@ -544,7 +544,6 @@ sub pollbooth {
 	my($qid, $notable) = @_;
 
 	$qid = $I{dbobject}->getVar("currentqid") unless $qid;
-	my $qid_dbi = $I{dbh}->quote($qid);
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	my $polls = $I{dbobject}->getPoll($qid);
@@ -565,7 +564,7 @@ EOT
 		$tablestuff .= qq!<BR><INPUT TYPE="radio" NAME="aid" VALUE="$aid">$answer\n!;
 	}
 
-	my $voters = $I{dbobject}->getPollVoters($qid);
+	my $voters = $I{dbobject}->getPollQuestions($qid, 'voters');
 	my $comments = $I{dbobject}->getPollComments($qid);
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
@@ -1820,7 +1819,7 @@ sub displayStory {
 
 	# No, we do not need this variable, but for readability 
 	# I think it is justified (and it is just a reference....)
-	my $topic = $I{dbobject}->getTopic($S->{tid});
+	my $topic = $I{dbobject}->getTopics($S->{tid});
 	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $topic, $full);
 	return($S, $I{dbobject}->getAuthor($S->{aid}), $topic);
 }

@@ -1206,10 +1206,10 @@ sub getAuthorNameByAid {
 
 
 ########################################################
-sub getPollVoters {
-	my($self, $id, @val) = @_;
-	my $values = join ',', @val;
-	my $voters = $self->sqlSelectHashref($values, 'pollvoters', 
+# This method does not follow basic guidlines
+sub getPollVoter {
+	my($self, $id) = @_;
+	my ($voters) = $self->sqlSelect('id', 'pollvoters', 
 			"qid=" . $self->{dbh}->quote($id) .
 			"AND id=" . $self->{dbh}->($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
 			"AND uid=" . $ENV{REMOTE_USER}
@@ -1593,7 +1593,7 @@ sub currentAdmin {
 }
 
 ########################################################
-# getTopic()
+# getTopics()
 # I'm torn, currently we just dump the entire database
 # into topicBank if we don't find our topic. I am
 # wondering if it wouldn't be better to just grab them
@@ -1602,7 +1602,7 @@ sub currentAdmin {
 # this out.
 #
 # -Brian
-sub getTopic {
+sub getTopics {
 	my($self, $topic) = @_;
 
 	if ($topic) {
@@ -1671,14 +1671,6 @@ sub getPoll {
 	return $polls;
 }
 
-##################################################################
-# Get poll
-sub getPollVoters {
-	my($self, $qid) = @_;
-	my($voters) = $self->sqlSelect('voters', 'pollquestions', " qid=$self-{dbh}->quote($qid)");
-
-	return $voters;
-}
 
 ##################################################################
 sub getPollComments {

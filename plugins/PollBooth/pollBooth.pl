@@ -155,7 +155,7 @@ sub vote {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
 	} elsif ($aid > 0) {
-		my $id  = $I{dbobject}->getPollVoter($qid, 'id', 'pollvoters');
+		my $id  = $I{dbobject}->getPollVoter($qid);
 
 		if ($id) {
 			$notes = "$I{U}{nickname} at $ENV{REMOTE_ADDR} has already voted.";
