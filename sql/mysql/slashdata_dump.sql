@@ -419,18 +419,18 @@ INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus VALUES (1,'user','User Info','$ENV{SCRIPT_NAME}',0,1,'eval');
-INSERT INTO menus VALUES (2,'user','Customize Homepage','$ENV{SCRIPT_NAME}?op=edithome',0,3,'eval');
-INSERT INTO menus VALUES (3,'user','Edit User Info','$ENV{SCRIPT_NAME}?op=edituser',0,2,'eval');
-INSERT INTO menus VALUES (4,'user','Customize Comments','$ENV{SCRIPT_NAME}?op=editcomm',0,4,'eval');
-INSERT INTO menus VALUES (5,'user','Logout','$ENV{SCRIPT_NAME}?op=userclose',0,5,'eval');
-INSERT INTO menus VALUES (6,'admin','Logout $user->{nickname}','/admin.pl?op=adminclose',1,1,'eval');
+INSERT INTO menus VALUES (1,'user','User Info','/users.pl',0,1,'text');
+INSERT INTO menus VALUES (2,'user','Customize Homepage','/users.pl?op=edithome',0,3,'text');
+INSERT INTO menus VALUES (3,'user','Edit User Info','/users.pl?op=edituser',0,2,'text');
+INSERT INTO menus VALUES (4,'user','Customize Comments','/users.pl?op=editcomm',0,4,'text');
+INSERT INTO menus VALUES (5,'user','Logout','/users.pl?op=userclose',0,5,'text');
+INSERT INTO menus VALUES (6,'admin','"Logout $user->{nickname}"','"/admin.pl?op=adminclose"',1,1,'eval');
 INSERT INTO menus VALUES (7,'admin','Home','/',1,2,'text');
 INSERT INTO menus VALUES (8,'admin','Help','/getting_started.shtml',1,3,'text');
 INSERT INTO menus VALUES (9,'admin','Stories','/admin.pl',1,4,'text');
 INSERT INTO menus VALUES (10,'admin','Topics','/topics.pl?op=listtopics',1,5,'text');
 INSERT INTO menus VALUES (11,'admin','New','/admin.pl?op=edit',10,6,'text');
-INSERT INTO menus VALUES (12,'admin','my $cnt = $dbslash->getSubmissionCount($constants->{articles_only}); "$cnt Submissions"','/submit.pl?op=edit',499,7,'eval');
+INSERT INTO menus VALUES (12,'admin','$dbslash->getSubmissionCount($constants->{articles_only}) . " Submissions"','"/submit.pl?op=edit"',499,7,'eval');
 INSERT INTO menus VALUES (13,'admin','Blocks','/admin.pl?op=blocked',499,8,'text');
 INSERT INTO menus VALUES (14,'admin','Site Colors','/admin.pl?op=colored',499,9,'text');
 INSERT INTO menus VALUES (15,'admin','Sections','/sections.pl?op=list',999,10,'text');

@@ -809,8 +809,10 @@ EOT
 
 	print eval $execme;
 	print "\nError:$@\n" if $@;
-	my $adminmenu  = getCurrentMenu('admin');
-	createMenu($adminmenu);
+	if($user->{seclev}) {
+		my $adminmenu  = getCurrentMenu('admin');
+		createMenu($adminmenu);
+	}
 	#adminMenu();
 }
 
@@ -1975,8 +1977,12 @@ sub createMenu {
 	for my $item (@$menu) {
 		my ($value, $label); 
 		if($item->{type} eq 'eval') {
-			$value = eval prepBlock($item->{value}); 
-			$label = eval prepBlock($item->{label}); 
+			$value = eval $item->{value}; 
+			$label = eval $item->{label}; 
+			#$label = eval prepBlock($item->{label}); 
+if($@) {
+print "$@\n";
+}
 		} elsif ($item->{type} eq 'text') {
 			$value = $item->{value}; 
 			$label = $item->{label}; 

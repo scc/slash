@@ -108,7 +108,6 @@ sub sqlSelectHashref {
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
-	print STDERR "SQL: $sql \n" if ($from eq 'stories');
 	unless ($sth->execute) {
 		apacheLog($sql);
 		return;

@@ -1564,6 +1564,7 @@ sub getSubmissionsPending {
 sub getSubmissionCount {
 	my($self, $articles_only) = @_;
 	my($count);
+print "Called getSubmissionCount\n";
 	if ($articles_only) {
 		$count = $self->sqlSelect('count(*)', 'submissions',
 			"(length(note)<1 or isnull(note)) and del=0" .
