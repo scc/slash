@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-
+# Cliff, I recommend use strict here ... -- pudge
 use DBI;
 use Getopt::Std;
-use vars (%dbh);
+use vars qw(%dbh);
 
 $0 =~ /([^\/]+)$/;
 my $PROGNAME = $1;
