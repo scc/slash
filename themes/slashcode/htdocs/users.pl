@@ -1344,12 +1344,17 @@ sub saveUser {
 	# key.  Until then, just make sure it doesn't have HTML.
 	$form->{pubkey} = strip_nohtml($form->{pubkey}, 1);
 
-	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
-	$form->{homepage}	= fudgeurl($form->{homepage});
+	my $homepage = $form->{homepage};
+	$homepage = '' if $homepage eq 'http://';
+	$homepage = fudgeurl($homepage);
+	$homepage = URI->new_abs($homepage, $constants->{absolutedir})
+			->canonical
+			->as_string;
+	$homepage = substr($homepage, 0, 100) if $homepage;
 
 	# for the users table
 	my $user_edits_table = {
-		homepage	=> $form->{homepage},
+		homepage	=> $homepage,
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
 		pubkey		=> $form->{pubkey},

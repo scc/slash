@@ -989,8 +989,13 @@ sub _hard_dispComment {
 
 		$userinfo_to_display = qq|<BR><FONT SIZE="-1">(<A HREF="$constants->{rootdir}/~$nick/">User #$comment->{uid} Info</A>|;
 
-		$userinfo_to_display .= qq[ | <A HREF="$comment->{homepage}">$comment->{homepage}</A>]
-			if length($comment->{homepage}) > 8;
+		my $homepage = $comment->{homepage} || '';
+		$homepage = '' if length($homepage) <= 8;
+		if (length($homepage) > 50) {
+			$homepage = substr($homepage, 0, 20) . "..." . substr($homepage, -20, 20);
+		}
+		$userinfo_to_display .= qq[ | <A HREF="$comment->{homepage}">$homepage</A>]
+			if $homepage;
 
 		$userinfo_to_display .= sprintf(' | Last Journal: <A HREF="%s/~%s/journal/">%s</A>',
 			$constants->{rootdir}, $nick, timeCalc($comment->{journal_last_entry_date})
