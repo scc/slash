@@ -754,10 +754,10 @@ EOT
 	$I{dbobject}->setUsersKey($uid, $public_key);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H);
+	$I{dbobject}->setUsers($uid, $H) if $uid != $I{anonymous_coward};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H2);
+	$I{dbobject}->setUsers($uid, $H2) if $uid != $I{anonymous_coward};
 }
 
 #################################################################
@@ -798,7 +798,7 @@ EOT
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersComments($uid,$H);
+	$I{dbobject}->setUsersComments($uid,$H) if $uid != $I{anonymous_coward};
 }
 
 #################################################################
@@ -872,14 +872,16 @@ EOT
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
-	$I{dbobject}->setUsersComments($uid, $users_comments)
-		unless $I{F}{willing};
+	if ($uid != $I{anonymous_coward}){
+		$I{dbobject}->setUsersComments($uid, $users_comments)
+			unless $I{F}{willing};
+	}
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
 	$I{dbobject}->setUsersIndex($uid, $H);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersPrefrences($uid, $H2);
+	$I{dbobject}->setUsersPrefrences($uid, $H2) if $uid != $I{anonymous_coward};
 }
 
 #################################################################

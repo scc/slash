@@ -110,7 +110,7 @@ sub main {
 					threshold	=> $I{U}{threshold}, 
 					mode		=> $I{U}{mode},
 					commentsort	=> $I{U}{commentsort}
-			});
+			}) if $I{U}{uid} != $I{anonymous_coward};
 		}
 		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $commentstatus);
 
@@ -136,10 +136,6 @@ sub main {
 sub commentIndex {
 	titlebar("90%", "Several Active Discussions");
 	print qq!<MULTICOL COLS="2">\n!;
-
-	my $c = sqlSelectMany("discussions.sid,discussions.title,discussions.url", <<SQL);
-discussions,stories where displaystatus > -1 and discussions.sid=stories.sid and time <= now() order by time desc LIMIT 50
-SQL
 
 	my $discussions = $I{dbobject}->getDiscussions();
 	for(@$discussions) {
@@ -932,35 +928,11 @@ sub hasPosted {
 sub undoModeration {
 	my($sid) = @_;
 	return if $I{U}{uid} == $I{anonymous_coward} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
-	my $c=sqlSelectMany("cid,val,active", "moderatorlog",
-		"uid=$I{U}{uid} and sid=" . $I{dbh}->quote($sid)
-	);
+	my $removed = $I{dbobject}->unsetModeratorlog($I{U}{uid}, $sid, $I{comment_maxscore},$I{comment_minscore});
 
-	while (my($cid, $val, $active) = $c->fetchrow) {
-		# We undo moderation even for inactive records (but silently for
-		# inactive ones...)
-		$I{dbh}->do("delete from moderatorlog where
-			cid=$cid and uid=$I{U}{uid} and sid=" .
-			$I{dbh}->quote($sid)
-		);
-
-		# If moderation wasn't actually performed, we should not change
-		# the score.
-		next if ! $active;
-
-		# Insure scores still fall within the proper boundaries
-		my $scorelogic = $val < 0
-			? "points < $I{comment_maxscore}"
-			: "points > $I{comment_minscore}";
-		sqlUpdate(
-			"comments",
-			{ -points => "points+" . (-1 * $val) },
-			"cid=$cid and sid=" . $I{dbh}->quote($sid) . " AND $scorelogic"
-		);
-
+	for my $cid (@$removed) {
 		print "Undoing moderation to Comment #$cid<BR>";
 	}	
-	$c->finish;
 }
 
 ##################################################################

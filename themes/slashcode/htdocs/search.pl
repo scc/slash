@@ -198,7 +198,7 @@ sub userSearch {
 
 	my($x, $cnt) = 0;
 
-	my $users = $I{dbobject}->getSearchUsers($I{F});
+	my $users = $I{dbobject}->getSearchUsers($I{F}, $I{anonymous_coward});
 	for (@$users) {
 		my($fakeemail, $nickname, $uid) = @$_;
 		my $ln = $nickname;
@@ -250,7 +250,6 @@ sub storySearch {
 		$x++;
 	}
 
-	$cursor->finish;
 
 	print "No Matches Found for your query" if $x < 1;
 

@@ -22,7 +22,6 @@ my $commonportals; # portals on the front page.
 my $boxes;
 my $sectionBoxes;
 my $dbh;
-my $anonymous = -1;
 
 # For the getDecriptionsk() method
 my %descriptions = (
@@ -162,11 +161,38 @@ sub sqlConnect {
 }
 
 ########################################################
-# We should eventually take an array and work out some
-# logic for handling multiple anon id's.
-sub setAnonymous {
-	my ($self, $anon) = @_;
-	$anonymous = $anon;
+sub unsetModeratorlog{
+	my ($self, $uid, $sid, $max, $min) = @_;
+	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
+			"uid=$uid and sid=" . $dbh->quote($sid)
+	);
+	my @removed;
+
+	while(my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
+		# We undo moderation even for inactive records (but silently for
+		# inactive ones...)
+		$dbh->do("delete from moderatorlog where
+			cid=$cid and uid=$uid and sid=" .
+			$dbh->quote($sid)
+		);
+
+		# If moderation wasn't actually performed, we should not change
+		# the score.
+		next if ! $active;
+
+		# Insure scores still fall within the proper boundaries
+		my $scorelogic = $val < 0
+			? "points < $max"
+			: "points > $min";
+		$self->sqlUpdate(
+			"comments",
+			{ -points => "points+" . (-1 * $val) },
+			"cid=$cid and sid=" . $dbh->quote($sid) . " AND $scorelogic"
+		);
+		push(@removed, $cid);
+	}
+
+	return \@removed;
 }
 ########################################################
 sub createDiscussions{
@@ -174,7 +200,7 @@ sub createDiscussions{
 	# Posting from outside discussions...
 	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
 	$sid = $dbh->quote($sid);
-	my ($story_time) = sqlSelect("time", "stories", "sid=$sid");
+	my ($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
 	$story_time ||= "now()";
 	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
 		$self->sqlInsert("discussions", {
@@ -190,9 +216,9 @@ sub createDiscussions{
 sub getDiscussions{
 	my ($self) = @_;
   my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url"
-			. "discussions,stories "
-			. "where displaystatus > -1 and discussions.sid=stories.sid and time <= now() "
-			. "order by time desc LIMIT 50"
+			, "discussions,stories "
+			, "displaystatus > -1 and discussions.sid=stories.sid and time <= now() "
+			, "order by time desc LIMIT 50"
 	);
 	
 	return $discussion;
@@ -516,13 +542,13 @@ sub createUser {
 }
 
 ########################################################
-sub getAC{
-	my ($self) = @_;
+sub getUserAll{
+	my ($self, $uid) = @_;
   my $ac_hash_ref;
 	$ac_hash_ref = $self->sqlSelectHashref('*',
 		'users, users_index, users_comments, users_prefs',
-		'users.uid=-1 AND users_index.uid=-1 AND ' .
-		"users_comments.uid=-1 AND users_prefs.uid=$anonymous"
+		'users.uid=$uid AND users_index.uid=$uid AND ' .
+		"users_comments.uid=$uid AND users_prefs.uid=$uid"
 	);
 	return $ac_hash_ref;
 }
@@ -792,7 +818,7 @@ sub getUserBio {
 			"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
 			FROM users, users_info
 			WHERE users.uid = users_info.uid AND nickname="
-			. $self->{dbh}->quote($nick) . " and users.uid not anonymous"
+			. $self->{dbh}->quote($nick)
 		);
 	$sth->execute;
 	my $bio = $sth->fetchrow_arrayref;
@@ -1278,17 +1304,17 @@ sub setUsersKey{
 ########################################################
 sub setUsersComments{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid, 1);
 }
 ########################################################
 sub setUsers{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
+	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
 }
 ########################################################
 sub setUsersPrefrences{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
+	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid, 1);
 }
 ########################################################
 sub countStories{
@@ -1439,12 +1465,19 @@ sub getNewstoryTitle {
 }
 
 ########################################################
+# Search users, you can also optionally pass it
+# array of users that can be ignored
 sub getSearchUsers {
-	my ($self, $form) = @_;
+	my ($self, $form, @users_to_ignore) = @_;
 	# userSearch REALLY doesn't need to be ordered by keyword since you 
 	# only care if the substring is found.
 	my $sqlquery = "SELECT fakeemail,nickname,uid ";
-	$sqlquery .= " FROM users WHERE uid not $anonymous";
+	$sqlquery .= " FROM users";
+	$sqlquery .= " WHERE uid not $users_to_ignore[1]" if $users_to_ignore[1];
+	shift @users_to_ignore;
+	for my $user (@users_to_ignore) {
+		$sqlquery .= " AND uid not $user";
+	}
 	if ($form->{query}) {
 		my $kw = $keysearch->($form->{query}, 'nickname', 'ifnull(fakeemail,"")');
 		$kw =~ s/as kw$//;
@@ -1465,7 +1498,7 @@ sub getSearchStory {
 my ($self, $form) = @_;
 	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
 		", commentcount,section ";
-	$sqlquery .= "," . keysearch($form->{query}, "title", "introtext") . " "
+	$sqlquery .= "," . $keysearch->($form->{query}, "title", "introtext") . " "
 		if $form->{query};
 	$sqlquery .="	,0 " unless $form->{query};
 

@@ -68,11 +68,6 @@ $I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
 																				# put the info for Apache
 																				# to do this later.
 																				# 	-Brian
-$I{dbobject}->setAnonymous($I{anonymous_coward}); # Code defaults to -1
-																						# currently if this is
-																						# not called. This 
-																						# has to be changed
-																						# when we get Oracle running
 																				
 
 
@@ -166,8 +161,6 @@ sub getSlash {
 	$I{F}{ssi} ||= '';
 	$ENV{SCRIPT_NAME} ||= '';
 
-	# This method will go away when I am done building
-	# the different user methods
 	($I{anon_name}) = $I{dbobject}->getNicknameByUID($I{anonymous_coward}) unless $I{anon_name};
 
 	my $op = $I{query}->param('op') || '';
@@ -431,7 +424,7 @@ sub getUser {
 		unless ($I{AC}) {
 			# Get ourselves an AC if we don't already have one.
 			# (we have to get it /all/ remember!)
-			$I{AC} = $I{dbobject}->getAC($I{anonymous_coward});
+			$I{AC} = $I{dbobject}->getUserAll($I{anonymous_coward});
 
 			# timezone stuff 
 		 	$I{ACTZ} =  $I{dbobject}->getACTz($I{AC}{tzcode}, $I{AC}{dfid});
