@@ -158,7 +158,7 @@ sub _install {
 	});
 
 	for my $subdir (qw( htdoc image task )) {
-		my $subdir_s = "${subdirs}s";
+		my $subdir_s = "${subdir}s";
 		for (@{$plugin->{$subdir}}) {
 			if ($symlink) {
 				symlink "$plugin->{dir}/$_", "$prefix_site/$subdir_s/$_";
