@@ -41,9 +41,26 @@ __template__
 
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
 	<TR>
-		<TD>
+		<TD VALIGN=MIDDLE>
+		[% UNLESS user_edit.emaildisplay.defined;
+			$user_edit.emaildisplay = 0; END %]
+		[% emaildisplay.${user_edit.emaildisplay} = 'CHECKED' %]
+        	<P><B>Email Display</B><BR>
+                &nbsp;&nbsp;&nbsp;
+		<INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.0 %] 
+		VALUE=0>&nbsp;
+        	Do not display an e-mail address.<BR>
+                &nbsp;&nbsp;&nbsp;
+                <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.1 %] 
+		VALUE=1>&nbsp;
+                Show your email with random, SPAM-armoring applied (this
+		changes daily).<BR> &nbsp;&nbsp;&nbsp;
+                <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.2 %] 
+		VALUE=2>&nbsp;
+                Show your real email address without cowering behind childish
+		anonymity or obfuscation<BR>
 
-		<B>Display Mode</B>
+		<P><B>Display Mode</B>
 
 		[% commentmodes_select %]
 
@@ -58,7 +75,8 @@ __template__
 		<BR>(comments scored less than this setting will be ignored.
 		Anonymous posts start at 0, logged in posts start
 		at 1.  Moderators add and subtract points according to
-		the <A HREF="[% constants.rootdir %]/moderation.shtml">Guidelines</A>.
+		the <A 
+		HREF="[% constants.rootdir %]/moderation.shtml">Guidelines</A>.
 
 		<P><B>Highlight Threshold</B>
 
@@ -106,17 +124,20 @@ __template__
 
 		[% posttype_select %]
 
-[% DEFAULT user.domaintags = 1 %]
-[% domaintags.${user.domaintags} = " CHECKED" -%]
+[% UNLESS user_edit.domaintags.defined; user_edit.domaintags=2; END %]
+[% domaintags.${user_edit.domaintags} = 'CHECKED' -%]
 		<P><B>Display Link Domains?</B> (shows the actual domain of any link in brackets)<BR>
 		&nbsp;&nbsp;&nbsp;
-		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="0"[% domaintags.0 %]>
+		<INPUT TYPE="RADIO" NAME="domaintags" [% domaintags.0 %] 
+		VALUE=0>&nbsp;
 		Never show link domains<BR>
 		&nbsp;&nbsp;&nbsp;
-		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="1"[% domaintags.1 %]>
+		<INPUT TYPE="RADIO" NAME="domaintags" [% domaintags.1 %] 
+		VALUE=1>&nbsp;
 		Show the links domain only in recommended situations<BR>
 		&nbsp;&nbsp;&nbsp;
-		<INPUT TYPE="RADIO" NAME="domaintags" VALUE="2"[% domaintags.2 %]>
+		<INPUT TYPE="RADIO" NAME="domaintags" [% domaintags.2 %] 
+		VALUE=2>&nbsp;
 		Always show link domains<BR>
 
 		</TD>

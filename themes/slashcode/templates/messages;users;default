@@ -115,10 +115,10 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	Passwd for [% name %] was just emailed.<BR>
 
 [% CASE 'savename_msg' %]
-	<P>Saving [% name %]<BR><P>
+	<P>Saving [% name.substr(0,20) %]<BR><P>
 
 [% CASE 'savenickname_msg' %]
-	<P>Saving [% nickname %].<BR>
+	<P>Saving [% nickname.substr(0,20) %].<BR>
 
 [% CASE 'changeemail_msg' %]
 	Notifying [% realemail %] of the change to their account.<BR>
