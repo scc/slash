@@ -4,9 +4,15 @@ use File::Copy;
 use File::Find;
 use File::Path;
 use Slash::DB;
+use Getopt::Std;
 
 # This is the uber install script.
 # -Brian (brian@tangent.org)
+
+my %opts;
+usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
+
+usage() if $opts{'?'};
 
 $| = 1;
 
@@ -37,10 +43,7 @@ my @standard_http = qw(
 	PerlSetEnv TZ GMT
 );
 
-unless ($ARGV[0]) {
-	print "You need to give us a DBIx::Password virtual name.\n";
-	exit;
-}
+usage() unless ($ARGV[0]);
 
 unless (DBIx::Password::checkVirtualUser($ARGV[0])) {
 	print "You did not supply a valid DBIx::Password virtual name.\n";
@@ -70,20 +73,32 @@ unless ($dbh) {
 END { $dbh->disconnect if $dbh }
 
 chomp($hostname_f = `hostname -f`);
-print "\nWhat is hostname of your slash site
-(e.g., www.slashdot.org)? [$hostname_f] ";
-chomp($hostname = <STDIN>);
-$hostname ||= $hostname_f;
+unless ($opts{'h'}) {
+	print "\nWhat is hostname of your slash site
+	(e.g., www.slashdot.org)? [$hostname_f] ";
+	chomp($hostname = <STDIN>);
+	$hostname ||= $hostname_f;
+} else {
+	$hostname = $opts{'h'};
+}
 ($host_noport = $hostname) =~ s/:.+$//;
 
-print "\nWhat user would you like to run your slash site as? [nobody] ";
-chomp($owner = <STDIN>);
-$owner ||= 'nobody';
+unless ($opts{'o'}) {
+	print "\nWhat user would you like to run your slash site as? [nobody] ";
+	chomp($owner = <STDIN>);
+	$owner ||= 'nobody';
+} else {
+	$owner = $opts{'o'};
+}
 $owner_id = getpwnam($owner) or die "$owner is not a valid user name.\n";
 
-print "\nWhat group would you like to run your slash site under? [nobody] ";
-chomp($group = <STDIN>);
-$group ||= 'nobody';
+unless ($opts{'g'}) {
+	print "\nWhat group would you like to run your slash site under? [nobody] ";
+	chomp($group = <STDIN>);
+	$group ||= 'nobody';
+} else {
+	$group = $opts{'g'};
+}
 $group_id = getpwnam($group) or die "$group is not a valid group name.\n";
 
 # We also need to really be determining driver here and 
@@ -92,23 +107,43 @@ $group_id = getpwnam($group) or die "$group is not a valid group name.\n";
 print "\nWhich theme do you want to use? (Skipping since we only have one theme.)\n";
 my $theme = "$prefix/themes/slashcode";
 
-print "\nOK, I am planning on user $host_noport as the unique name
-for the slash site.  If this is not ok, you need to fill in
-something else here. [$host_noport] ";
-chomp($sitename = <STDIN>);
-$sitename ||= $host_noport;
+if($opts{'r'}) {
+	$sitename = $host_noport;
+} else {
+	unless ($opts{'s'}) {
+		print "\nOK, I am planning on user $host_noport as the unique name
+		for the slash site.  If this is not ok, you need to fill in
+		something else here. [$host_noport] ";
+		chomp($sitename = <STDIN>);
+		$sitename ||= $host_noport;
+	} else {
+		$sitename = $opts{'s'};
+	}
+}
 
-print "\nOK, we need to create an admin account;
-give us a name (8 characters only please). [$owner] ";
-chomp($username = <STDIN>);
-$username ||= $owner;
+unless ($opts{'a'}) {
+	print "\nOK, we need to create an admin account;
+	give us a name (8 characters only please). [$owner] ";
+	chomp($username = <STDIN>);
+	$username ||= $owner;
+} else {
+	$username = $opts{'a'};
+}
 
-print "\nWhat is the email address of the account? [$username\@$host_noport] ";
-chomp($email = <STDIN>);
-$email ||= "$owner\@$host_noport";
+unless ($opts{'e'}) {
+	print "\nWhat is the email address of the account? [$username\@$host_noport] ";
+	chomp($email = <STDIN>);
+	$email ||= "$owner\@$host_noport";
+} else {
+	$email = $opts{'e'};
+}
 
-print "\nWhat is the password for the account? ";
-chomp($password = <STDIN>);
+unless ($opts{'p'}) {
+	print "\nWhat is the password for the account? ";
+	chomp($password = <STDIN>);
+} else {
+	$password = $opts{'p'};
+}
 die "You need to give us a password.\n" unless $password;
 
 {
@@ -228,6 +263,22 @@ sub standardadd {
 sub siteadd {
 	open(CONF, ">> $httpd");
 	close(CONF);
+}
+
+sub usage {
+usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
+	print "Usage:install-slashsite  [OPTIONS] <DBIx:Password Virtual User>\n";
+	print "\t?: Gives you this list.\n";
+	print "\th: Hostname to use.\n";
+	print "\to: Owner to use.\n";
+	print "\tg: Group to use.\n";
+	print "\ts: Sitename to use.\n";
+	print "\ta: Admin name to use.\n";
+	print "\te: Admin's email.\n";
+	print "\tp: The admin password.\n";
+	print "\tr: Reuse the hostname minus the port as the sitename.\n";
+	print "\n\tIf no virtual user is given the install will not run\n\n";
+	exit();
 }
 
 __END__

@@ -9,7 +9,8 @@ use Slash::DB;
 use Getopt::Std;
 
 my %opts;
-usage() unless getopts('u:d:p:n:f:scl', \%opts);
+usage() unless getopts('u:d:p:n:f:scl?', \%opts);
+usage() if $opts{'?'};
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
 
@@ -131,7 +132,7 @@ sub usage {
 	print "\t-s -f <templatefilename> <templatename> to update a template\n";
 	print "\t-l list templates and their descriptions\n";
 	print "\t-p only perform list and get actions if the template matches this pattern\n";
-	print "\t-h This message\n";
+	print "\t-? This message\n";
 	print "\n\tIf no template name is given a directory has to be specified\n\n";
 	exit();
 }
