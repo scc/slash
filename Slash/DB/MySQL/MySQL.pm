@@ -491,8 +491,12 @@ sub undoModeration {
 		$adjust =~ s/^([^+-])/+$1/;
 
 		# We undo moderation even for inactive records (but silently for
-		# inactive ones...)
-		$self->sqlDo("delete from moderatorlog where cid=$cid and uid=$uid");
+		# inactive ones...).  Leave them in the table but inactive, so
+		# they are still eligible to be metamodded.
+		$self->sqlUpdate("moderatorlog",
+			{ active => 0 },
+			"cid=$cid and uid=$uid"
+		);
 
 		# If moderation wasn't actually performed, we skip ahead one.
 		next if ! $active;

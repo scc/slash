@@ -838,7 +838,7 @@ sub moderateCid {
 		# If the var forbids it, do not allow moderation of any comments
 		# with the same *subnet* as the current user.
 		return if $constants->{mod_same_subnet_forbid}
-			and $user->{subnetid} ne $comment->{subnetid};
+			and $user->{subnetid} eq $comment->{subnetid};
 	}
 
 	my $dispArgs = {
