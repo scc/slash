@@ -27,7 +27,7 @@ if($opts{'d'}) {
 }
 
 usage() unless($ARGV[0] || $opts{'d'});
-$opts{'d'} ||= '';
+$opts{'d'} = '' unless $opts{'d'};
 
 print "@ARGV\n";
 
@@ -68,6 +68,9 @@ if($opts{'s'}) {
 		my $templates = $slash->getDescriptions('templates');
 
 		for my $key (keys %$templates) {
+			if($opts{'p'}) {
+				next unless $key =~ /$opts{'p'}/;
+			}
 			my $template = $slash->getTemplate($key);
 			print "$template->{'tpid'}\n";
 			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
@@ -82,7 +85,11 @@ if($opts{'s'}) {
 				next;
 			}
 			print "$template->{'tpid'}\n";
-			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			if($opts{'d'}) {
+				open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			} else {
+				open(FILE, ">$template->{'tpid'}");
+			}
 			print FILE $template->{'template'};
 			close(FILE);
 		}
@@ -94,6 +101,8 @@ sub usage {
 	print "\t-d directory to dump all templates in\n";
 	print "\t-u Virtual user to use(default is slash)\n";
 	print "\t-s Save template\n";
+	print "\t-l list templates and their descriptions\n";
+	print "\t-p only perform list and get actions if the template matches this pattern\n";
 	print "\n\tIf no template name is given a directory has to be specified\n\n";
 	exit();
 }
