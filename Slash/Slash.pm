@@ -2170,18 +2170,18 @@ sub checkSubmission {
 			undef $formkey unless $formkey =~ /^\w{10}$/;
 
 			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
-				$slashdb->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+				$slashdb->createAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				errorMessage(getData('invalidformkey'));
 				return;
 			}
 
 			if (submittedAlready($formkey, $formname)) {
-				$slashdb->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+				$slashdb->createAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				return;
 			}
 
 		} else {
-			$slashdb->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+			$slashdb->createAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 			errorMessage(getData('maxposts', {
 				max		=> $max,
 				timeframe	=> intervalString($constants->{formkey_timeframe})

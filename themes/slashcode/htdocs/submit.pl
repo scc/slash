@@ -50,7 +50,7 @@ sub main {
 		submissionEd(getData('quickieshead'));
 
 	} elsif ($op eq 'PreviewStory') {
-		$slashdb->insertFormkey('submissions', $id, 'submission');
+		$slashdb->createFormkey('submissions', $id, 'submission');
 		displayForm($form->{from}, $form->{email}, $form->{section},
 			$id, getData('previewhead'));
 

@@ -884,9 +884,11 @@ Fixed KEY.
 
 =back
 
-=head2 setStoriesCount(KEY)
+=head2 setStoryCount(SID, COUNT)
 
-I am the default documentation, short and stout.
+You should call this whenever you delete comments
+belonging to a story with the count of the number
+of comments you deleted. 
 
 =over 4
 
@@ -894,15 +896,19 @@ I am the default documentation, short and stout.
 
 =over 4
 
-=item KEY
+=item SID
 
-Key, as in the KEY
+Valid Story ID
+
+=item COUNT
+
+Count which will be subtracted from a stories comment count
 
 =back
 
 =item Return value
 
-Fixed KEY.
+None Returned.
 
 =back
 

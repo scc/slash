@@ -826,7 +826,7 @@ sub setSection {
 }
 
 ########################################################
-sub setStoriesCount {
+sub setStoryCount {
 	my($self, $sid, $count) = @_;
 	$self->sqlUpdate('stories', {
 		-commentcount	=> "commentcount-$count",
@@ -1236,7 +1236,7 @@ sub updateFormkeyId {
 }
 
 ########################################################
-sub insertFormkey {
+sub createFormkey {
 	my($self, $formname, $id, $sid) = @_;
 	my $form = getCurrentForm();
 
@@ -1244,7 +1244,7 @@ sub insertFormkey {
 	$form->{formkey} = getFormkey();
 
 	# insert the fact that the form has been displayed, but not submitted at this point
-	$self->sqlInsert("formkeys", {
+	$self->sqlInsert('formkeys', {
 		formkey		=> $form->{formkey},
 		formname 	=> $formname,
 		id 		=> $id,
@@ -1282,7 +1282,7 @@ sub checkTimesPosted {
 	my $where = $self->_whereFormkey($id);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
-		"formkeys",
+		'formkeys',
 		"$where AND submit_ts >= $formkey_earliest AND formname = '$formname'");
 
 	return $times_posted >= $max ? 0 : 1;
@@ -1317,7 +1317,7 @@ sub formFailure {
 
 ##################################################################
 # logs attempts to break, fool, flood a particular form
-sub formAbuse {
+sub createAbuse {
 	my($self, $reason, $remote_addr, $script_name, $query_string) = @_;
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {

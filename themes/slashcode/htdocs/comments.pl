@@ -53,7 +53,7 @@ sub main {
 
 		if ($form->{op} eq 'Reply') {
 			$form->{formkey} = $slashdb->getFormkey();
-			$slashdb->insertFormkey("comments", $id, $form->{sid});
+			$slashdb->createFormkey("comments", $id, $form->{sid});
 		} else {
 			$slashdb->updateFormkeyId('comments',
 				$form->{formkey},
