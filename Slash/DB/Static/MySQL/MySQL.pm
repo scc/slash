@@ -135,15 +135,15 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 
-	my @comments = $self->sqlSelectAll(
+	my $comments = $self->sqlSelectAll(
 		'cid, discussions.id',
 		'comments,discussions',
 		"to_days(now()) - to_days(date) > $constants->{discussion_archive} AND " .
 		"discussions.id = comments.sid AND discussions.type = 'recycle' AND comments.pid = 0"
 	);
 
-	for my $comment (@comments) {
-		next if !$comment or !@$comment;
+	for my $comment (@$comments) {
+		next if !$comment or ref($comment) ne 'ARRAY' or !@$comment;
 		my $local_count = $self->_deleteThread($comment->[0]);
 		$self->setDiscussionDelCount($comment->[1], $local_count);
 	}  
