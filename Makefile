@@ -51,6 +51,7 @@ install: slash plugins
 	# Lets go install the plugin's libraries
 	(cd plugins/Slash-Search; $(PERL) Makefile.PL; make install)
 	(cd plugins/Slash-Journal; $(PERL) Makefile.PL; make install)
+	(cd plugins/Ladybug; $(PERL) Makefile.PL; make install)
 
 	# First we do the default sutff
 	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/ $(PREFIX)/httpd/

@@ -373,12 +373,12 @@ sub getDiscussions {
 
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
-# matches).  Called by getSlash
+# matches).  Called during authenication
 sub getSessionInstance {
 	my($self, $uid, $session) = @_;
 	my $admin_timeout = getCurrentStatic('admin_timeout');
 
-	if (length($session) > 3) {
+	if ($session) {
 		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
@@ -393,7 +393,7 @@ sub getSessionInstance {
 				$self->{_dbh}->quote($session)
 			);
 			$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-				'session=' . $self->{_dbh}->quote($session)
+				"session=$session"
 			);
 		}
 	} else {
@@ -403,11 +403,11 @@ sub getSessionInstance {
 
 		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 
-		my $sid = $self->generatesession($uid);
-		$self->sqlInsert('sessions', { session => $sid, -uid => $uid,
+		$self->sqlInsert('sessions', { -uid => $uid,
 			-logintime => 'now()', -lasttime => 'now()',
 			lasttitle => $title }
 		);
+		my($sid) = $self->sqlSelect("LAST_INSERT_ID()");
 
 		return $sid;
 	}
@@ -3122,16 +3122,16 @@ sub sqlSelectColumns {
 
 ########################################################
 # Get a unique string for an admin session
-sub generatesession {
-	# crypt() may be implemented differently so as to
-	# make the field in the db too short ... use the same
-	# MD5 encrypt function?  is this session thing used
-	# at all anymore?
-	my $newsid = crypt(rand(99999), $_[0]);
-	$newsid =~ s/[^A-Za-z0-9]//i;
-
-	return $newsid;
-}
+#sub generatesession {
+#	# crypt() may be implemented differently so as to
+#	# make the field in the db too short ... use the same
+#	# MD5 encrypt function?  is this session thing used
+#	# at all anymore?
+#	my $newsid = crypt(rand(99999), $_[0]);
+#	$newsid =~ s/[^A-Za-z0-9]//i;
+#
+#	return $newsid;
+#}
 
 1;
 

@@ -365,7 +365,7 @@ CREATE TABLE sections (
 
 DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
-  session varchar(20) DEFAULT '' NOT NULL,
+  session int(11) NOT NULL auto_increment,
   uid int(11),
   logintime datetime,
   lasttime datetime,

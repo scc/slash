@@ -293,7 +293,7 @@ CREATE TABLE sections (
 
 
 CREATE TABLE sessions (
-	session varchar(20) DEFAULT '' NOT NULL,
+	session SERIAL,
 	uid int4 DEFAULT '1' NOT NULL,
 	logintime datetime,
 	lasttime datetime,

@@ -2101,8 +2101,9 @@ sub prepareUser {
 
 	if ($user->{seclev} >= 99) {
 		$user->{is_admin} = 1;
-		#$user->{aid} = $user->{nickname}; # Just here for the moment
 		my $sid;
+		#This cookie could go, and we could have session instance
+		#do its own thing without the cookie. -Brian
 		if ($cookies->{session}) {
 			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
 		} else {
