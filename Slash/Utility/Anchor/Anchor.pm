@@ -106,18 +106,22 @@ sub header {
 
 	unless ($form->{ssi}) {
 		my $r = Apache->request;
-# This is here as a reminder -Brian
-#		$params{-status} = $status if $status;
-
-# we need to doublecheck that Pragma header is not required -- pudge
-
-		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
-			$r->header_out('Cache-Control', 'no-cache')
-		} else {
-			$r->header_out('Cache-Control', 'private')
-		}
 
 		$r->content_type('text/html');
+		$r->header_out('Cache-Control', 'private');
+		# Pragma worked before; we need to have a really good
+		# reason to change it if we are to change it at all;
+		# so for now, i revert to the tried-and-true former
+		# directives -- pudge
+		$r->header_out('Pragma', 'no-cache')
+			unless $user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/;
+
+# 		unless ($user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/) {
+# 			$r->header_out('Cache-Control', 'no-cache');
+# 		} else {
+# 			$r->header_out('Cache-Control', 'private');
+# 		}
+
 		$r->send_http_header;
 	}
 
