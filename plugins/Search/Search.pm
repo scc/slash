@@ -127,7 +127,7 @@ sub findUsers {
 
 
 	my $other = " ORDER BY users.uid "
-		if $form->{query;
+		if $form->{query};
 
 	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
 
