@@ -141,10 +141,8 @@ sub reconcileM2 {
 
 			# Adjust moderator karma. 
 			# Reward if we match consensus, penalize if not.
-			if ($modlog->{val} eq $rank[0]) {
-			$change = ($modlog->{val} eq $rank[0])} ?
+			$change = ($modlog->{val} eq $rank[0]) ?
 				1 : -1;
-
 			my $mod_karma = $slashdb->getUser($modlog->{uid},
 						          'karma');
 			my $update_cond = 
