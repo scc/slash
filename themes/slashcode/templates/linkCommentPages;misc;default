@@ -18,19 +18,23 @@ __name__
 linkCommentPages
 __template__
 [% USE Slash %][% UNLESS (total < user.commentlimit) || (user.commentlimit < 1) %]
-	[% pages = (total / user.commentlimit) + 1 %]
+	[% pages = total / user.commentlimit %]
 
 	<TR><TD BGCOLOR="[% user.bg.2 %]" ALIGN="CENTER"><FONT SIZE="2">
-	[% FOREACH p = [1 .. pages] %]
+	[% FOREACH p = [0 .. pages] %]
 		[% start = user.commentlimit * p %]
 		[% IF p != 0 %] | [% END %]
-		[% IF start == form.startat %]<B>([% END %][% Slash.linkComment({
-			sid	=> sid,
-			pid	=> pid,
-			cid	=> cid,
-			subject	=> p,
-			startat	=> start
-		}) %][% IF start == form.startat %])</B>[% END %]
+		[% IF start == form.startat %]
+			<B>([% p + 1 %])</B>
+		[% ELSE %]
+			[% Slash.linkComment({
+				sid	=> sid,
+				pid	=> pid,
+				cid	=> cid,
+				subject	=> (p + 1),
+				startat	=> (start ? start : 0)
+			}) %]
+		[% END %]
 	[% END %]
 
 	[% IF user.breaking %]
