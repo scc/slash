@@ -95,7 +95,7 @@ sub main {
 
 ##################################################################
 sub pleaseLogin {
-	return if $I{U}{uid} != $I{anonymous_coward_uid};
+	return unless getCurrentUser('is_anon');
 	my $block = eval prepBlock $I{dbobject}->getBlock('userlogin');
 	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
 	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
@@ -198,8 +198,4 @@ sub nextStory {
 }
 
 main();
-
-# Why disconnect when what we want to do is cache the database handle?
-#$I{dbh}->disconnect if $I{dbh};
-
 1;

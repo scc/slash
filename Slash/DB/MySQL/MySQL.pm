@@ -460,6 +460,13 @@ sub writelog {
 	my $op = shift;
 	my $dat = join("\t", @_);
 
+	my $uid;
+	if ($ENV{REMOTE_ADDR}) {
+		$uid = getCurrentUser('uid')
+	} else {
+		$self->getVar('anonymous_coward_uid');
+	}
+
 	$self->sqlInsert('accesslog', {
 		host_addr	=> $ENV{REMOTE_ADDR} || '0',
 		dat		=> $dat,
@@ -765,11 +772,6 @@ sub getVars {
 	return @vars;
 }
 
-########################################################
-sub getVar {
-	my($self, $name) = @_;
-	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$name'");
-}
 
 ########################################################
 sub setVar {
@@ -2550,6 +2552,9 @@ sub getSlashConf {
 =pod
 
 should these be added, too?
+adfu is gone I believe, same with dbpass and dbuser.
+Yes thought with the others. I would assume Pat is
+doing this part. -Brian
 
 adfu_dbpass	
 adfu_dbuser	
@@ -2578,8 +2583,9 @@ submission_bonus
 =cut
 
 
+	# This should be optimized.  
 	for (@keys) {
-		my($value, $desc) = $self->getVar($_);
+		my $value = $self->getVar($_, 'value');
 		$conf{$_} = $value;
 	}
 
@@ -2835,6 +2841,11 @@ sub getNewStory {
 	return $answer;
 }
 
+########################################################
+sub getVar {
+	my $answer = _genericGet('vars', 'name', @_);
+	return $answer;
+}
 ########################################################
 # For slashdb
 sub setStoryIndex {

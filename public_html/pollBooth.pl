@@ -61,7 +61,7 @@ sub main {
 		print "<H1>Got here coments :$op:$I{F}{qid}:</H1>\n";
 		my $vote = vote($I{F}{qid}, $I{F}{aid});
 		printComments($I{F}{qid})
-			if $vote && ! $I{dbobject}->getVar("nocomment");
+			if $vote && ! $I{dbobject}->getVar('nocomment', 'values');
 	}
 
 	$I{dbobject}->writelog("pollbooth", $I{F}{qid});
@@ -78,7 +78,7 @@ sub editpoll {
 
 	$question->{'voters'} = 0 if ! defined $question->{'voters'};
 
-	my($currentqid) = $I{dbobject}->getVar("currentqid");
+	my($currentqid) = $I{dbobject}->getVar('currentqid', 'values');
 	printf <<EOT, $currentqid eq $qid ? " CHECKED" : "";
 
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">

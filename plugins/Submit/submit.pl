@@ -137,7 +137,7 @@ sub previewForm {
 
 	my $admin = $I{U}{aseclev} > 99;
 
-	my $writestatus = $I{dbobject}->getVar("defaultwritestatus");
+	my $writestatus = $I{dbobject}->getVar('defaultwritestatus', 'values');
 	my @values = qw(email name subj tid story time comment);
 	my $submission = $I{dbobject}->getSubmission($subid, @values);
 

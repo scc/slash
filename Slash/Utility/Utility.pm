@@ -31,7 +31,9 @@ sub apacheLog {
 		my $r = Apache->request;
 		$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
 	} else {
-		print STDERR ("Error in library:$package:$filename:$line:@_");
+		print STDERR ("Error in library:$package:$filename:$line:@_\n");
+		($package, $filename, $line) = caller(2);
+		print STDERR ("Which was called by:$package:$filename:$line:@_\n");
 	}
 	return 0;
 }

@@ -284,8 +284,9 @@ sub overRide {
 
 
 ########################################################
-# IF passed a valid uid & passwd, it logs in $U
-# else $U becomes Anonymous Coward (eg UID $I{anonymous_coward_uid})
+# When passed an ID it creates the user hash. If it is
+# determined that this is an anonymous coward, it
+# creates that form of the user account.
 sub getUser {
 	my($uid) = @_;
 	#Ok, lets build user
@@ -304,6 +305,7 @@ sub getUser {
 		my $dateformats = $I{dbobject}->getCodes('dateformats');
 
 		$user->{'format'} = $dateformats->{ $user->{dfid} };
+		$user->{'is_anon'} = 0;
 
 
 	} else {
@@ -315,6 +317,7 @@ sub getUser {
 		for (keys %$coward) {
 			$user->{$_} = $coward->{$_};
 		}
+		$user->{'is_anon'} = 1;
 
 	}
 
@@ -433,7 +436,6 @@ sub getsiddir {
 # for the next version
 sub anonLog {
 	my($op, $data) = ('/', '');
-	$I{U}{uid} = getCurrentStatic('anonymous_coward_uid');
 
 	$_ = $ENV{REQUEST_URI};
 	s/(.*)\?/$1/;
@@ -528,7 +530,7 @@ sub getSection {
 sub pollbooth {
 	my($qid, $notable) = @_;
 
-	$qid = $I{dbobject}->getVar("currentqid") unless $qid;
+	$qid = $I{dbobject}->getVar('currentqid', 'value') unless $qid;
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	my $polls = $I{dbobject}->getPoll($qid);

@@ -224,7 +224,7 @@ sub varEdit {
 	my $vars = $I{dbobject}->getDescriptions('vars');
 	createSelect('name', $vars, $name);
 
-	my($value, $desc) = $I{dbobject}->getVar($name);
+	my($value, $desc) = $I{dbobject}->getVar($name,'value','description');
 	print "Next<BR>\n",
 		formLabel('Variable Name'),
 		$I{query}->textfield(-name => 'thisname', -default => $name),
@@ -1056,9 +1056,9 @@ EOT
 		print '</TD></TR></TABLE>';
 
 	} else { # New Story
-		$S->{writestatus} = $I{dbobject}->getVar('defaultwritestatus');
-		$S->{displaystatus} = $I{dbobject}->getVar('defaultdisplaystatus');
-		$S->{commentstatus} = $I{dbobject}->getVar('defaultcommentstatus');
+		$S->{writestatus} = $I{dbobject}->getVar('defaultwritestatus', 'value');
+		$S->{displaystatus} = $I{dbobject}->getVar('defaultdisplaystatus', 'value');
+		$S->{commentstatus} = $I{dbobject}->getVar('defaultcommentstatus', 'value');
 
 		$S->{sqltime} = $I{dbobject}->getTime();
 		$S->{tid} ||= 'news';
