@@ -405,7 +405,8 @@ sub linkStory {
 		threshold	=> $threshold,
 		sid		=> $story_link->{sid},
 		section		=> $story_link->{section},
-		text		=> $story_link->{'link'}
+		text		=> $story_link->{'link'},
+		dynamic		=> 1,
 	}, { Return => 1, Nocomm => 1 });
 }
 

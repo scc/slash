@@ -707,7 +707,44 @@ sub clearM2Flag {
 	# Note that we only update flags that are in the:
 	#	10 - M2 Pending
 	# state.
-	$self->sqlUpdate('metamodlog', { -flag => '0', }, "id=$id");
+	$self->sqlUpdate('metamodlog', {
+		-flag => '0',
+	}, "where flag=10 and id=$id");
+}
+
+
+########################################################
+# For freshneup.pl
+#
+#
+sub getDiscussionsWithFlag {
+	my($self, $flag) = @_;
+	my $flag_quoted = $self->sqlQuote($flag);
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	return $self->sqlSelectAll(
+		"id",
+		"discussions",
+		"FIND_IN_SET($flag_quoted, discussions.flags)",
+		# update the stuff at the top of the page first
+		"ORDER BY id DESC LIMIT 200",
+	);
+}
+
+########################################################
+# For freshneup.pl
+#
+#
+sub getStoriesWithFlag {
+	my($self, $flag) = @_;
+	my $flag_quoted = $self->sqlQuote($flag);
+	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	return $self->sqlSelectAll(
+		"sid, discussion, title, section",
+		$story_table,
+		"FIND_IN_SET($flag_quoted, flags)",
+		# update the stuff at the top of the page first
+		"ORDER BY time DESC LIMIT 200",
+	);
 }
 
 1;

@@ -27,7 +27,7 @@ sub main {
 
 	header($title, $story->{section});
 	slashDisplay('display', {
-		poll			=> pollbooth($story->{sid}, 1),
+		poll			=> pollbooth($story->{qid}, 1),
 		section			=> $SECT,
 		section_block		=> $slashdb->getBlock($SECT->{section}),
 		show_poll		=> $slashdb->getPollQuestion($story->{poll}),

@@ -11,7 +11,6 @@ my $total_freshens = 0;
 
 $task{$me}{timespec} = '1-30/5 * * * *';
 $task{$me}{code} = sub {
-
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
 	my $bd = $constants->{basedir}; # convenience
@@ -27,7 +26,7 @@ $task{$me}{code} = sub {
 	my $start_time = time;
 
 	# Mark discussions with new comment data as needing to be freshened.
-	my $discussions = getDiscussionsWithFlag($slashdb, "hitparade_dirty");
+	my $discussions = $slashdb->getDiscussionsWithFlag($slashdb, "hitparade_dirty");
 	for my $i (0..$#$discussions) {
 		my $id_ary = $discussions->[$i];
 		# @$discussions is an array of arrays, annoyingly.
@@ -53,7 +52,7 @@ $task{$me}{code} = sub {
 
 	# Mark stories with new data as needing to be freshened.
 	my @story_order = ( );
-	my $stories = getStoriesWithFlag($slashdb, "data_dirty");
+	my $stories = $slashdb->getStoriesWithFlag($slashdb, "data_dirty");
 	for my $info_ary (@$stories) {
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
 		next unless $sid;	# XXX for now, skip poll/journal discussions since we don't know how to write their hitparades in yet
@@ -67,7 +66,7 @@ $task{$me}{code} = sub {
 	}
 
 	# Delete stories marked as needing such
-	$stories = getStoriesWithFlag($slashdb, "delete_me");
+	$stories = $slashdb->getStoriesWithFlag($slashdb, "delete_me");
 	for my $i (0..$#$stories) {
 		my $info_ary = $stories->[$i];
 		my($sid, $discussion_id, $title, $section) = @$info_ary;
@@ -114,6 +113,7 @@ $task{$me}{code} = sub {
 		sleep 1 if ($i % 5) == 0;
 		++$total_freshens;
 	}
+
 	if (@freshened_stories) {
 		$slashdb->setStoryFlagsBySid([@freshened_stories], 0, ["data_dirty"]);
 	}
@@ -145,31 +145,4 @@ sub makeDir {
 	mkpath "$bd/$section/$yearid/$monthid/$dayid", 0, 0755;
 }
 
-sub getDiscussionsWithFlag {
-	my($slashdb, $flag) = @_;
-	my $flag_quoted = $slashdb->sqlQuote($flag);
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	return $slashdb->sqlSelectAll(
-		"id",
-		"discussions",
-		"FIND_IN_SET($flag_quoted, discussions.flags)",
-		# update the stuff at the top of the page first
-		"ORDER BY id DESC LIMIT 200",
-	);
-}
-
-sub getStoriesWithFlag {
-	my($slashdb, $flag) = @_;
-	my $flag_quoted = $slashdb->sqlQuote($flag);
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	return $slashdb->sqlSelectAll(
-		"sid, discussion, title, section",
-		$story_table,
-		"FIND_IN_SET($flag_quoted, flags)",
-		# update the stuff at the top of the page first
-		"ORDER BY time DESC LIMIT 200",
-	);
-}
-
 1;
-

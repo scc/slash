@@ -25,7 +25,7 @@ CREATE TABLE abusers (
 	KEY ipid (ipid),
 	KEY subnetid (subnetid),
 	KEY reason (reason)
-);
+) TYPE = myisam;
 
 DROP TABLE IF EXISTS accesslist; 
 CREATE TABLE accesslist ( 
@@ -44,7 +44,7 @@ CREATE TABLE accesslist (
 	key subnetid (subnetid), 
 	key formname (formname), 
 	key ts (ts)
-);
+) TYPE = myisam;
 
 DROP TABLE IF EXISTS accesslog; 
 CREATE TABLE accesslog (
@@ -58,7 +58,7 @@ CREATE TABLE accesslog (
 	query_string varchar(50),
 	user_agent varchar(50),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'backup_blocks'
@@ -70,7 +70,7 @@ CREATE TABLE backup_blocks (
 	block text,
 	FOREIGN KEY (bid) REFERENCES blocks(bid),
 	PRIMARY KEY (bid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'blocks'
@@ -93,7 +93,7 @@ CREATE TABLE blocks (
 	PRIMARY KEY (bid),
 	KEY type (type),
 	KEY section (section)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'code_param'
@@ -107,7 +107,7 @@ CREATE TABLE code_param (
 	name varchar(32) NOT NULL,
 	UNIQUE code_key (type,code),
 	PRIMARY KEY (param_id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'commentmodes'
@@ -119,7 +119,7 @@ CREATE TABLE commentmodes (
 	name varchar(32),
 	description varchar(64),
 	PRIMARY KEY (mode)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'comments'
@@ -146,7 +146,7 @@ CREATE TABLE comments (
 	KEY subnetid (subnetid),
 	KEY theusual (sid,uid,points,cid),
 	KEY countreplies (sid,pid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'comment_heap'
@@ -185,7 +185,7 @@ CREATE TABLE comment_text (
 	comment text NOT NULL,
 	FOREIGN KEY (cid) REFERENCES comments(cid),
 	PRIMARY KEY (cid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'content_filters'
@@ -206,7 +206,7 @@ CREATE TABLE content_filters (
 	KEY form (form),
 	KEY regex (regex),
 	KEY field_key (field)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'dateformats'
@@ -218,7 +218,7 @@ CREATE TABLE dateformats (
 	format varchar(32),
 	description varchar(64),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'discussions'
@@ -242,7 +242,7 @@ CREATE TABLE discussions (
 	FOREIGN KEY (topic) REFERENCES topics(tid),
 	KEY (sid),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'discussion_hitparade'
@@ -258,7 +258,7 @@ CREATE TABLE discussion_hitparade (
 	UNIQUE dtkey (discussion, threshold),
 	FOREIGN KEY (discussion) REFERENCES discussions(id),
 	PRIMARY KEY (hpid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'formkeys'
@@ -283,7 +283,7 @@ CREATE TABLE formkeys (
 	KEY id (id),
 	KEY ts (ts),
 	KEY submit_ts (submit_ts)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'menus'
@@ -300,7 +300,7 @@ CREATE TABLE menus (
 	PRIMARY KEY (id),
 	KEY page_labels (menu,label),
 	UNIQUE page_labels_un (menu,label)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'metamodlog'
@@ -315,7 +315,7 @@ CREATE TABLE metamodlog (
 	id mediumint UNSIGNED NOT NULL auto_increment,
 	flag mediumint DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'moderatorlog'
@@ -334,7 +334,7 @@ CREATE TABLE moderatorlog (
 	PRIMARY KEY (id),
 	KEY sid (sid,cid),
 	KEY sid_2 (sid,uid,cid)
-);
+) TYPE = myisam;
 
 
 #
@@ -349,7 +349,7 @@ CREATE TABLE pollanswers (
 	votes mediumint,
 	FOREIGN KEY (qid) REFERENCES pollquestions(qid),
 	PRIMARY KEY (qid,aid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'pollquestions'
@@ -368,7 +368,7 @@ CREATE TABLE pollquestions (
 	FOREIGN KEY (discussion) REFERENCES discussions(id),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (qid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'pollvoters'
@@ -383,7 +383,7 @@ CREATE TABLE pollvoters (
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (qid) REFERENCES pollquestions(qid),
 	KEY qid (qid,id,uid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'related_links'
@@ -397,7 +397,7 @@ CREATE TABLE related_links (
 	link varchar(128) NOT NULL,
 	KEY (keyword),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'sections'
@@ -416,7 +416,7 @@ CREATE TABLE sections (
 	KEY (section),
 	FOREIGN KEY (qid) REFERENCES discussions(qid),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'section_topics'
@@ -429,7 +429,7 @@ CREATE TABLE section_topics (
 	FOREIGN KEY (section) REFERENCES sections(section),
 	FOREIGN KEY (tid) REFERENCES topics(tid),
 	PRIMARY KEY (section,tid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'sessions'
@@ -444,7 +444,7 @@ CREATE TABLE sessions (
 	lasttitle varchar(50),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (session)
-);
+) TYPE = myisam;
 
 DROP TABLE IF EXISTS site_info;
 CREATE TABLE site_info (
@@ -454,7 +454,7 @@ CREATE TABLE site_info (
 	description varchar(255),
 	UNIQUE site_keys (name,value),
 	PRIMARY KEY (param_id)
-);
+) TYPE = myisam;
 
 
 #
@@ -496,7 +496,7 @@ CREATE TABLE stories (
 	FOREIGN KEY (section) REFERENCES sections(section),
 	KEY time (time),
 	KEY searchform (displaystatus,time)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'story_heap'
@@ -534,7 +534,7 @@ CREATE TABLE story_text (
 	relatedtext text,
 	FOREIGN KEY (sid) REFERENCES stories(sid),
 	PRIMARY KEY (sid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'story_param'
@@ -548,7 +548,7 @@ CREATE TABLE story_param (
 	value varchar(254) DEFAULT '' NOT NULL,
 	UNIQUE story_key (sid,name),
 	PRIMARY KEY (param_id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'submissions'
@@ -577,7 +577,7 @@ CREATE TABLE submissions (
 	KEY ipid (ipid),
 	KEY subnetid (subnetid)
 
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'templates'
@@ -595,7 +595,7 @@ CREATE TABLE templates (
 	title varchar(128),
 	PRIMARY KEY (tpid),
 	UNIQUE true_template (name,page,section,lang)
-);
+) TYPE = myisam;
 #
 # Table structure for table 'topics'
 #
@@ -609,7 +609,7 @@ CREATE TABLE topics (
 	width smallint UNSIGNED,
 	height smallint UNSIGNED,
 	PRIMARY KEY (tid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'tzcodes'
@@ -621,7 +621,7 @@ CREATE TABLE tzcodes (
 	off_set mediumint,
 	description varchar(64),
 	PRIMARY KEY (tz)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users'
@@ -644,7 +644,7 @@ CREATE TABLE users (
 	KEY chk4user (nickname,realemail),
 	KEY nickname_lookup (nickname),
 	KEY chk4email (realemail)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users_acl'
@@ -660,7 +660,7 @@ CREATE TABLE users_acl (
 	KEY uid (uid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (id)
-);
+) TYPE = myisam;
 
 
 #
@@ -688,7 +688,7 @@ CREATE TABLE users_comments (
 	threshold tinyint DEFAULT '0',
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users_index'
@@ -705,7 +705,7 @@ CREATE TABLE users_index (
 	noboxes tinyint DEFAULT '0' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users_info'
@@ -735,7 +735,7 @@ CREATE TABLE users_info (
 	session_login tinyint DEFAULT '0' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users_param'
@@ -751,7 +751,7 @@ CREATE TABLE users_param (
 	KEY (uid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (param_id)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'users_prefs'
@@ -769,7 +769,7 @@ CREATE TABLE users_prefs (
 	lang char(5) DEFAULT 'en_US' NOT NULL,
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	PRIMARY KEY (uid)
-);
+) TYPE = myisam;
 
 #
 # Table structure for table 'vars'
@@ -781,5 +781,5 @@ CREATE TABLE vars (
 	value text,
 	description varchar(255),
 	PRIMARY KEY (name)
-);
+) TYPE = myisam;
 
