@@ -110,19 +110,19 @@ $werder = new Silly::Werder;
 		$comment = addDomainTags($comment);
 
 		my $score = 1;
-		if ($uid == $constants->{anonymous_coward_uid}) {
+		if ($uid == $constants->{anonymous_coward_uid}
+			or $user->{karma} < $constants->{badkarma}) {
 			$score = 0;
 		} elsif ($user->{karma} > $constants->{goodkarma}) {
-			++$score;
-		} elsif ($user->{karma} < $constants->{badkarma}) {
-			--$score;
+			$score = 2;
 		}
 		my $score_rand = rand(1);
-		   if ($score < 0.05 )	{ $score -= 1	}
-		elsif ($score < 0.75 )	{		}
-		elsif ($score < 0.90 )	{ $score += 1	}
-		elsif ($score < 0.97 )	{ $score += 2	}
-		else			{ $score += 3	}
+		   if ($score_rand < 0.05 )	{ $score -= 1	}
+		elsif ($score_rand < 0.75 )	{		}
+		elsif ($score_rand < 0.90 )	{ $score += 1	}
+		elsif ($score_rand < 0.94 )	{ $score += 2	}
+		elsif ($score_rand < 0.98 )	{ $score += 3	}
+		else				{ $score  = 5	}
 
 		my $subj = make_werds(1 + rand 5);
 		$subj =~ s/\W+$// if rand(1) < 0.1;

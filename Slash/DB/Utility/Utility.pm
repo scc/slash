@@ -12,7 +12,8 @@ use vars qw($VERSION);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-# BENDER: Oh no! Not the magnet!
+# FRY: Bender, if this is some kind of scam, I don't get it.  You already
+# have my power of attorney.
 
 my $timeout = 30; # This should eventualy be a parameter that is configurable
 

@@ -26,7 +26,10 @@ $task{$me}{code} = sub {
 	my $start_total_freshens = $total_freshens;
 	my %updates;
 
-	warn "user not anon!" if !$user->{is_anon};
+	if (!$user->{is_anon}) {
+		errorLog("user not anon!");
+		return ;
+	}
 
 	my($min, $max) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
         my $num_scores = $max-$min+1;

@@ -1155,7 +1155,7 @@ sub get_ispell_comments {
 	$tmpok = write_to_temp_file($ok) if $ok;
 	$tmpok = " -p $tmpok" if $tmpok;
 	if (!open(ISPELL, "$ispell -a -B -S -W 3$tmpok < $tmptext 2> /dev/null |")) {
-		warn "could not pipe to $ispell from $tmptext, $!";
+		errorLog("could not pipe to $ispell from $tmptext, $!");
 		return "could not pipe to $ispell from $tmptext, $!";
 	}
 	my %w;
@@ -1362,7 +1362,7 @@ sub saveStory {
 		} else {
 			# Probably should be a warning sent to the browser
 			# for this error, though it should be rare.
-			warn "could not create discussion for story '$sid'";
+			errorLog("could not create discussion for story '$sid'");
 		}
 	} else {
 		titlebar('100%', getData('story_creation_failed'));

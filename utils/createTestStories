@@ -44,6 +44,7 @@ usage('Invalid number of stories')
 createEnvironment($opts{u});
 $slashdb = getCurrentDB();
 $werder = new Silly::Werder;
+$werder->set_syllables_num(2, 6);
 $constants = getCurrentStatic();
 
 # main program logic (in braces to offset nicely)
@@ -306,7 +307,7 @@ sub typical_remark {
 		"<b>Update at 14:59 by <a href=\"me\@privacy.net\">J</a></b>: Sorry, I got this completely wrong. My bad.",
 		"<b>Update at 18:57 by <a href=\"me\@privacy.net\">H</a></b>: Yes, we posted this last month - sorry.",
 	);
-	return $t[rand @t];
+	return " " . $t[rand @t];
 }
 
 sub usage {
