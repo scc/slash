@@ -75,7 +75,7 @@ sub main {
 	# zero the order count
 	$I{StoryCount} = 0;
 
-	$I{dbobject}->writelog($I{U}{uid}, 'index', $I{F}{section} || 'index') unless $I{F}{ssi};
+	$I{dbobject}->writelog('index', $I{F}{section} || 'index') unless $I{F}{ssi};
 }
 
 #################################################################

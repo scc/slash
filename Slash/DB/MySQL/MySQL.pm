@@ -446,16 +446,16 @@ sub setAdminInfo {
 }
 
 ########################################################
+# In need of rewriting
 sub writelog {
 	my $self = shift;
-	my $uid = shift;
 	my $op = shift;
 	my $dat = join("\t", @_);
 
 	$self->sqlInsert('accesslog', {
 		host_addr	=> $ENV{REMOTE_ADDR} || '0',
 		dat		=> $dat,
-		uid		=> $uid || '-1',
+		uid		=> getCurrentUser('uid'),
 		op		=> $op,
 		-ts		=> 'now()',
 		query_string	=> $ENV{QUERY_STRING} || '0',
@@ -466,8 +466,6 @@ sub writelog {
 		$self->sqlUpdate('storiestuff', { -hits => 'hits+1' },
 			'sid=' . $self->{dbh}->quote($dat)
 		);
-	} elsif ($op eq 'index') {
-		# Update Section Counter
 	}
 }
 

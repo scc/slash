@@ -56,7 +56,7 @@ sub main {
 	else	{
 		print "Invalid operation!<BR>";
 	}
-	$I{dbobject}->writelog($I{U}{uid}, "search", $I{F}{query})
+	$I{dbobject}->writelog("search", $I{F}{query})
 		if $I{F}{op} =~ /^(?:comments|stories|users)$/;
 	footer();	
 }
