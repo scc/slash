@@ -51,8 +51,8 @@ sub sqlConnect {
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
 				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
 			} else {
-				my $time = $self->{_dbh}->selectrow_array('SELECT now()');
-				#print STDERR "Rebuilt at $time\n";
+				my $time = localtime();
+				print STDERR "Rebuilt at $time\n";
 			}
 		}
 	}
