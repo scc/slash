@@ -107,8 +107,9 @@ my %descriptions = (
 
 	'plugins'
 		=> sub { $_[0]->sqlSelectMany('value,description', 'site_info', "name='plugin'") },
+
 	'site_info'
-		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") }
+		=> sub { $_[0]->sqlSelectMany('name,value', 'site_info', "name != 'plugin'") },
 
 );
 

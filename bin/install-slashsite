@@ -91,20 +91,22 @@ unless ($opts{'o'}) {
 } else {
 	$owner = $opts{'o'};
 }
-$owner_id = getpwnam($owner) or die "$owner is not a valid user name.\n";
+$owner_id = getpwnam($owner);
+die "$owner is not a valid user name.\n" unless defined $owner_id;
 
 unless ($opts{'g'}) {
 	my $tmpgroup = getgrgid($owner_id); 
-	$tmpgroup ||= 'nobody';
+	$tmpgroup = defined($tmpgroup) ? $tmpgroup : 'nobody';
 	print "\nWhat group would you like to run your slash site under? [$tmpgroup] ";
 	chomp($group = <STDIN>);
 	$group ||= $tmpgroup;
 } else {
 	$group = $opts{'g'};
 }
-$group_id = getgrnam($group) or die "$group is not a valid group name.\n";
+$group_id = getgrnam($group);
+die "$group is not a valid group name.\n" unless defined $group_id;
 
-if($opts{'r'}) {
+if ($opts{'r'}) {
 	$sitename = $host_noport;
 } else {
 	unless ($opts{'s'}) {
@@ -275,7 +277,7 @@ $install->create({ name => 'db_driver', value => "$driver"});
 my $time = localtime();
 $install->create({ name => 'installed', value => $time});
 
-for(keys %$plugins) {
+for (keys %$plugins) {
 	if ($answers[$plugins->{$_}{'order'}]) {
 		$install->create({ name => 'plugin', value => $plugins->{$_}{'order'}, description => $plugins->{$_}{'description'} });
 	}
