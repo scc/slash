@@ -585,8 +585,8 @@ sub createAccessLog {
 		$uid = getCurrentStatic('anonymous_coward_uid');
 	}
 
-	my $ipid = getCurrentUser('ipid');
-	my $subnetid = getCurrentUser('subnetid');
+	my $ipid = getCurrentUser('ipid') || '';
+	my $subnetid = getCurrentUser('subnetid') || '';
 
 	$self->sqlInsert('accesslog', {
 		host_addr	=> $ipid,

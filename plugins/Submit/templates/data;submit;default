@@ -21,7 +21,11 @@ __template__
 	[% constants.sitename %] Submissions[% tbtitle %]
 
 [% CASE 'updatehead' %]
-	Deleting [% subids.join(', ') %]
+	[% IF subids.size > 0 %]
+		Deleting [% subids.size %]
+		[% IF subids.size == 1 %] submission [% ELSE %] submissions [% END %]
+		[% IF subids.size <= 3 %] ( [% subids.join(', ') %] ) [% END %]
+	[% END %]
 
 [% CASE 'quickieshead' %]
 	Quickies Generated
