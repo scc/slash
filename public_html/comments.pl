@@ -42,8 +42,8 @@ sub main {
 	my($s, $title, $commentstatus);
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
-	if($sct) {
-		($s, $title, $commentstatus) = $I{dbobject}->getNewStories($sct);
+	if($I{F}{sid}) {
+		($s, $title, $commentstatus) = $I{dbobject}->getNewStories($I{F}{sid});
 	} else {
 		$title = "Comments";
 	}
@@ -74,7 +74,7 @@ sub main {
 
 		if ($I{F}{op} eq 'Reply') {
 			$I{F}{formkey} = getFormkey();
-			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey} $I{U}{uid});	
+			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid});	
 		} else {
 			if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
 				$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey}, $I{anonymous_coward}, $I{U}{uid});
@@ -105,7 +105,13 @@ sub main {
 		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{op} eq "Change") {
-		saveChanges() if $I{U}{uid} != $I{anonymous_coward};
+		if ($I{U}{uid} != $I{anonymous_coward} || defined $I{query}->param("savechanges")) {
+			$I{dbobject}->setUsersComments($I{U}{uid}, {
+					threshold	=> $I{U}{threshold}, 
+					mode		=> $I{U}{mode},
+					commentsort	=> $I{U}{commentsort}
+			});
+		}
 		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{cid}) {
@@ -135,31 +141,19 @@ sub commentIndex {
 discussions,stories where displaystatus > -1 and discussions.sid=stories.sid and time <= now() order by time desc LIMIT 50
 SQL
 
-	while (my $C = $c->fetchrow_hashref) {
-		$C->{title} ||= "untitled";
+	my $discussions = $I{dbobject}->getDiscussions();
+	for(@$discussions) {
+		my($sid, $title, $url) = @$_;
+		$title ||= "untitled";
 		print <<EOT;
-	<LI><A HREF="$I{rootdir}/comments.pl?sid=$C->{sid}">$C->{title}</A>
-	(<A HREF="$C->{url}">referer</A>)
+	<LI><A HREF="$I{rootdir}/comments.pl?sid=$sid">$title</A>
+	(<A HREF="$url">referer</A>)
 
 EOT
 
 	}
 
 	print "</MULTICOL>\n\n";
-	$c->finish;
-}
-
-
-##################################################################
-# Save users preferences is they change them, and click the "Save" checkbox
-sub saveChanges {
-	return unless $I{U}{uid} != $I{anonymous_coward};
-
-	sqlUpdate("users_comments", { 
-		threshold	=> $I{U}{threshold}, 
-		mode		=> $I{U}{mode},
-		commentsort	=> $I{U}{commentsort}
-	}, "uid=$I{U}{uid}") if defined $I{query}->param("savechanges");
 }
 
 
