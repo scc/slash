@@ -12,6 +12,8 @@ __lang__
 en_US
 __name__
 sectionindexd
+__instructions__
+placeholder
 __template__
 	<TR>
   		<TD>

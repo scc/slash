@@ -11,6 +11,8 @@ __lang__
 en_US
 __name__
 recentTopics
+__instructions__
+placeholder
 __template__
 	<TD><A HREF="[% constants.rootdir %]/search.pl?topic=news"><IMG
 		SRC="[% constants.imagedir %]/topics/topicnews.gif"
