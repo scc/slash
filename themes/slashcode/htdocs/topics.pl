@@ -65,11 +65,13 @@ sub topTopics {
 sub listTopics {
 	my $slashdb = getCurrentDB();
 
+	my $topics = $slashdb->getTopics();
+
 	slashDisplay('listTopics', {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') > 500,
-		topics		=> $slashdb->getTopics()
+		topics		=> [ values %$topics ],
 	});
 
 }

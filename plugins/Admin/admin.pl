@@ -789,21 +789,8 @@ sub listTopics {
 	my $topics = $slashdb->getTopics();
 	my $title = getTitle('listTopics-title');
 
-	my $x = 0;
-	my $topicref = {};
-
-	for my $topic (values %$topics) {
-
-		$topicref->{$topic->{tid}} = {
-			alttext  	=> $topic->{alttext},
-			image 		=> $topic->{image},
-			height 		=> $topic->{height},
-			width 		=> $topic->{width},
-		};
-	}
-
 	slashDisplay('listTopics', {
-			topicref 	=> $topicref,
+			topics 		=> [ values %$topics ],
 			title		=> $title
 		}
 	);

@@ -97,7 +97,9 @@ sub slashTest {
 
 	$VirtualUser = $vuser unless defined $VirtualUser;
 
-	createEnvironment($VirtualUser);
+	eval { createEnvironment($VirtualUser) };
+	die $@ if $@ && (caller)[0] ne 'Slash::Test';
+
 	$::slashdb   = getCurrentDB();
 	$::constants = getCurrentStatic();
 	$::user      = getCurrentUser();
