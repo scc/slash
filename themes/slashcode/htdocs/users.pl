@@ -523,10 +523,11 @@ sub showInfo {
 			$constants->{user_comment_display_default}
 		) if $commentcount;
 	}
-
+	
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 
+		my $type;
 		# This works since $sid is numeric.
 		my $replies = $slashdb->countCommentsBySidPid($sid, $cid);
 
@@ -534,25 +535,26 @@ sub showInfo {
 		# ...however, the "sid" parameter here must be the string
 		# based SID from either the "stories" table or from 
 		# pollquestions.
-		my($discussion, $story_sid) = ($slashdb->getDiscussion($sid), 0);
-		$story_sid = $discussion->{sid} if $discussion;
-		my($story, $question);
-		if ($story_sid) {
-			$story = $slashdb->getStory($story_sid);
-			$question = $slashdb->getPollQuestion(
-				$story_sid, 'question'
-			);
+		my ($discussion) = $slashdb->getDiscussion($sid);
+
+		if ($discussion->{url} =~ /journal/i) {
+			$type = 'journal';
+		} elsif ($discussion->{url} =~ /poll/i) {
+			$type = 'poll';
+		} else {
+			$type = 'story';
 		}
 
 		push @$commentstruct, {
 			pid 		=> $pid,
+			url			=> $discussion->{url},
+			type 		=> $type,	
+			disc_title	=> $discussion->{title},
 			sid 		=> $sid,
 			cid 		=> $cid,
 			subj		=> $subj,
 			cdate		=> $cdate,
-			pts		=> $pts,
-			story		=> $story,
-			question	=> $question,
+			pts			=> $pts,
 			replies		=> $replies,
 		};
 	}

@@ -136,9 +136,9 @@ sub header {
 		return;
 	}
 
-	if ($constants->{run_ads}) {
-		$adhtml = getAd(1);
-	}
+	# if ($constants->{run_ads}) {
+	#	$adhtml = getAd(1);
+	# }
 
 	slashDisplay('header');
 

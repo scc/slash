@@ -85,18 +85,18 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 [% FOREACH comment = commentstruct %]
 	[% n = n + 1 %]
 	[% replies = comment.replies ? " Replies: $comment.replies" : "" %]
-	[% IF comment.story;
-		href    = "$constants.rootdir/article.pl?sid=$comment.story.sid";
-		label    = comment.story.title;
+	[% IF comment.type == 'poll';
+		label   = "Poll: $comment.disc_title ";
+	ELSIF comment.type == 'journal';
+		label   = "Journal Discussion: $comment.disc_title";
 	ELSE;
-		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.question.sid";
-		label   = "Poll: $comment.question.question";
-        END %]
+		label    = comment.disc_title;
+	END %]
 <P><B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">
    [% comment.subj %]</A> posted on [% comment.cdate %]
         (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">
-           <BR>attached to <A HREF="[% href %]">[% label %]</A>
+           <BR>attached to <A HREF="[% comment.url %]">[% label %]</A>
       </FONT>
 [% END %]
 
