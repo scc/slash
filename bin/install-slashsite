@@ -15,7 +15,7 @@ use Slash::Install;
 # -Brian (brian@tangent.org)
 
 my %opts;
-usage() unless getopts('h:o:g:s:a:e:p:t:?r', \%opts);
+usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 
 usage() if $opts{'?'};
 

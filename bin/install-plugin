@@ -1,0 +1,74 @@
+#!/usr/bin/perl -w 
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
+use strict;
+use File::Copy;
+use File::Find;
+use File::Path;
+use Slash::DB;
+use Getopt::Std;
+use Slash::Install;
+
+# This is the uber install script.
+# -Brian (brian@tangent.org)
+
+my %opts;
+usage() unless getopts('?l', \%opts);
+
+usage() if $opts{'?'};
+
+$| = 1;
+
+my $prefix = "/usr/local/slash";
+
+
+usage() unless ($ARGV[0]);
+
+unless (DBIx::Password::checkVirtualUser($ARGV[0])) {
+	print "You did not supply a valid DBIx::Password virtual name.\n";
+	exit;
+}
+
+my $install = Slash::Install->new($ARGV[0]);
+#---------------------------------------------------
+print "\nPlease select which plugins you would like?\n" unless $opts{'l'} ;
+my $plugins = $install->getPluginList($prefix);
+for (sort keys %$plugins) {
+	print "$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
+}
+exit 0 if $opts{'l'} ;
+my @answers;
+my $select = 'a';
+print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
+while($select ne 'q'){
+	chomp($select = <STDIN>);
+
+	if($select =~ /^\d\,/) {
+		@answers = split(/\,/,$select);
+		last;	
+	}
+	elsif($select eq 'a') {
+		for(keys %$plugins) {
+			push @answers, $plugins->{$_}{'order'};
+		}
+		last;
+	} elsif($select ne 'q') {
+		push @answers, $select;
+	}
+}
+
+$install->installPlugin(\@answers);
+
+sub usage {
+usage() unless getopts('l?', \%opts);
+	print "Usage:install-slashsite  [OPTIONS] <DBIx:Password Virtual User>\n";
+	print "\t?: Gives you this list.\n";
+	print "\tl: List all known plugins.\n";
+	print "\n\tIf no virtual user is given the install will not run\n\n";
+	exit();
+}
+
+
+__END__
