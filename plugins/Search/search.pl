@@ -26,7 +26,16 @@ sub main {
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
-	my $slashdb = getCurrentDB();
+
+	my ($slashdb, $searchDB);
+
+	if($constants->{search_db_user}) {
+		$slashdb   = getObject('Slash::DB', $constants->{search_db_user});
+		$searchDB   = getObject('Slash::Search', $constants->{search_db_user});
+	} else {
+		$slashdb   = getCurrentDB();
+		$searchDB = Slash::Search->new(getCurrentVirtualUser());
+	}
 
 	# Set some defaults
 	$form->{query}		||= '';
@@ -62,7 +71,7 @@ sub main {
 		});
 
 		if ($ops{$form->{op}}) {
-			$ops{$form->{op}}->($form, $constants);
+			$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB);
 		}
 		footer();
 	}
@@ -120,9 +129,7 @@ sub _buildargs {
 
 #################################################################
 sub commentSearch {
-	my($form, $constants) = @_;
-	my $slashdb = getCurrentDB();
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $comments = $searchDB->findComments($form, $start, $constants->{search_default_display} + 1);
@@ -159,8 +166,7 @@ sub commentSearch {
 
 #################################################################
 sub userSearch {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $users = $searchDB->findUsers($form, $start, $constants->{search_default_display} + 1);
@@ -196,8 +202,7 @@ sub userSearch {
 
 #################################################################
 sub storySearch {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1);
@@ -234,9 +239,7 @@ sub storySearch {
 
 #################################################################
 sub commentSearchRSS {
-	my($form, $constants) = @_;
-	my $slashdb = getCurrentDB();
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $comments = $searchDB->findComments($form, $start, 15);
@@ -263,8 +266,7 @@ sub commentSearchRSS {
 
 #################################################################
 sub userSearchRSS {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $users = $searchDB->findUsers($form, $start, 15);
@@ -291,8 +293,7 @@ sub userSearchRSS {
 
 #################################################################
 sub storySearchRSS {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $stories = $searchDB->findStory($form, $start, 15);
@@ -320,9 +321,7 @@ sub storySearchRSS {
 #################################################################
 # Do not enable -Brian
 sub findRetrieveSite {
-	my($form, $constants) = @_;
-	my $slashdb = getCurrentDB();
-	my $searchDB = Slash::FeedSearch->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $feeds = $searchDB->findRetrieveSite($form->{query}, $start, $constants->{search_default_display} + 1);
@@ -360,9 +359,7 @@ sub findRetrieveSite {
 #################################################################
 # Do not enable -Brian
 sub findRetrieveSiteRSS {
-	my($form, $constants) = @_;
-	my $slashdb = getCurrentDB();
-	my $searchDB = Slash::FeedSearch->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $feeds = $searchDB->findFeeds($form->{query}, $start, 15);
@@ -391,8 +388,7 @@ sub findRetrieveSiteRSS {
 #################################################################
 # Do not enable -Brian
 sub findJournalEntry {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findJournalEntry($form, $start, $constants->{search_default_display} + 1);
@@ -430,9 +426,9 @@ sub findJournalEntry {
 #################################################################
 # Do not enable -Brian
 # do not WRITE in the first place -- pudge
+# Writing is fine if it is not enabled --Brian
 sub findJournalEntryRSS {
-	my($form, $constants) = @_;
-	my $searchDB = Slash::Search->new(getCurrentVirtualUser());
+	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
 	my $entries = $searchDB->findJournalEntry($form, $start, 15);
