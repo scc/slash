@@ -638,7 +638,8 @@ sub createAccessLog {
 		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
 	}, 1);
 
-	if ($dat =~ /\//) {
+	if ($dat =~ /.*(\d{2}\/\d{2}\/\d{2}\/\d{4,7}).*/) {
+		$dat = $1;
 		$self->sqlUpdate('stories', { -hits => 'hits+1' },
 			'sid=' . $self->sqlQuote($dat)
 		);

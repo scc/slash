@@ -149,10 +149,12 @@ sub yourPendingSubmissions {
 
 	if (my $submissions = $slashdb->getSubmissionsPending()) {
 		my $count = $slashdb->getSubmissionCount();
+		my $title = slashDisplay('pendingTitle', { count => $count}, 
+				{ Return => 1, Nocomm => 1 });
 		slashDisplay('yourPendingSubs', {
 			submissions	=> $submissions,
 			submissioncount	=> $slashdb->getSubmissionCount(),
-			title		=> "Your Recent Submissions (total:$count)",
+			title		=> $title, 
 			width		=> '100%',
 			totalcount	=> $count,
 		});
