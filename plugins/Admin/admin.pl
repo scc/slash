@@ -1011,7 +1011,7 @@ sub editStory {
 
 	$sections = $slashdb->getDescriptions('sections');
 
-	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
+	$topic_select = selectTopic('tid', $storyref->{tid}, $storyref->{section}, 1);
 
 	$section_select = selectSection('section', $storyref->{section}, $sections, 1) unless $user->{section};
 
@@ -1348,9 +1348,8 @@ sub saveStory {
 
 	my $sid = $slashdb->createStory($form);
 	if ($sid) {
-		my $id = $slashdb->createDiscussion($sid, $form->{title},
-			$form->{'time'},
-			"$rootdir/article.pl?sid=$sid", $form->{topic}
+		my $id = $slashdb->createDiscussion($form->{title},
+			"$rootdir/article.pl?sid=$sid", $form->{topic}, '', $sid, $form->{'time'}
 		);
 		$slashdb->setStory($sid, { discussion => $id });
 	} else {

@@ -67,6 +67,9 @@ my %descriptions = (
 	'topics_all'
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
 
+	'topics_section'
+		=> sub { $_[0]->sqlSelectMany('topics.tid,topics.alttext', 'topics, section_topics', "section='$_[2]' AND section_topics.tid=topics.tid") },
+
 	'maillist'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='maillist'") },
 
@@ -2773,11 +2776,12 @@ sub getTrollUID {
 
 ########################################################
 sub createDiscussion {
-	my($self, $sid, $title, $time, $url, $topic,  $type) = @_;
+	my($self, $title, $url, $topic, $type, $sid, $time) = @_;
 
 	#If no type is specified we assume the value is zero
 	$type ||= 0;
 	$sid ||= '';
+	$time ||= $self->getTime();
 
 	$self->sqlInsert('discussions', {
 		sid	=> $sid,

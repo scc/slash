@@ -12,7 +12,6 @@ __name__
 discreate
 __template__
 [% USE Slash %]
-
 [% begin = BLOCK %]
 <FORM METHOD="POST" ACTION="[% constants.rootdir %]/comments.pl" ENCTYPE="application/x-www-form-urlencoded">
 <INPUT TYPE="hidden" NAME="op" VALUE="creatediscussion">
@@ -28,7 +27,7 @@ __template__
 [% END %]
 
 [% val3 = BLOCK %]
-[% Slash.selectTopic('topic', topic, 1) %]
+[% Slash.selectTopic('topic', topic,'', 1) %]
 <INPUT TYPE="submit" NAME="submit" VALUE="Submit">
 [% END %]
 

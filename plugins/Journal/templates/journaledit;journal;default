@@ -24,7 +24,7 @@ __template__
 		<INPUT TYPE="text" NAME="description" SIZE="60" VALUE="[% FILTER strip_attribute; article.description; END %]">
 
 		[% INCLUDE formLabel value => "Journal Topic";
-		   Slash.selectTopic('tid', article.tid, 1) %]
+		   Slash.selectTopic('tid', article.tid, '', 1) %]
 
 	[% IF !article.discussion %]
 		[% INCLUDE formLabel value => "Comments", comment => "Comments cannot be disabled once enabled" %]

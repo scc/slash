@@ -30,8 +30,10 @@ my $PROGNAME = basename($0);
 my %opts;
 # Remember to doublecheck these match usage()!
 usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:R', \%opts);
+$opts{'u'} ||= 'slash';
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
+
 
 $| = 1;
 

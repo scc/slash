@@ -26,7 +26,7 @@ __template__
 	<BR><B>The Question</B> (followed by the total number of voters so far)<BR>
 	<INPUT TYPE="TEXT" NAME="question" VALUE="[% question.question %]" SIZE="40">
 	<INPUT TYPE="TEXT" NAME="voters" VALUE="[% question.voters %]" SIZE="5"><BR>
-	Poll Topic: [% Slash.selectTopic('topic', question.topic, 1) %]
+	Poll Topic: [% Slash.selectTopic('topic', question.topic, '', 1) %]
 	<BR><B>The Answers</B> (voters)<BR>
 
 [% FOREACH n = [0 .. 7] %]

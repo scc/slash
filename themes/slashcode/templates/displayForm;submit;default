@@ -55,7 +55,7 @@ be deleted.)</FONT>
 [% INCLUDE formLabel value => "Topic and Section" %]
 
 [% tid = form.tid || 'news' %]
-[% Slash.selectTopic('tid', tid, 1) %]
+[% Slash.selectTopic('tid', tid,section, 1) %]
 [% Slash.selectSection('section', section, 0, 1) %]
 
 <BR><FONT SIZE="2">(Almost everything should go under Articles)</FONT>

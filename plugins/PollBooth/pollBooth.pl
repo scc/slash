@@ -103,8 +103,7 @@ sub savepoll {
 	my $qid = $slashdb->savePollQuestion($form);
 
 	if ($constants->{poll_discussions}) {
-		my $discussion = $slashdb->createDiscussion('', $form->{question},
-			$slashdb->getTime(),
+		my $discussion = $slashdb->createDiscussion($form->{question},
 			"$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid", $form->{topic}
 		);
 		$slashdb->setPollQuestion($qid, { discussion => $discussion });

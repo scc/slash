@@ -53,7 +53,7 @@ __template__
 		dept <INPUT TYPE="text" NAME="dept" SIZE="50">
 	[% END %]
 		<BR>
-	[% Slash.selectTopic('tid', submission.tid, 1) %]
+	[% Slash.selectTopic('tid', submission.tid, section, 1) %]
 	[% Slash.selectSection('section', section, 0, 1) %]
 
 		<INPUT TYPE="submit" NAME="op" VALUE="preview"><BR>

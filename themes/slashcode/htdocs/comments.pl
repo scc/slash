@@ -167,8 +167,8 @@ sub createDiscussion {
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
 		$form->{url} ||= $ENV{HTTP_REFERER};
-		$slashdb->createDiscussion('', $form->{title},
-			$slashdb->getTime(), $form->{url}, $form->{topic}, 1
+		$slashdb->createDiscussion($form->{title},
+			$form->{url}, $form->{topic}, 1
 		);
 	}
 

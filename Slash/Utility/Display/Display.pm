@@ -140,7 +140,7 @@ sub createSelect {
 
 #========================================================================
 
-=head2 selectTopic(LABEL [, DEFAULT, RETURN, ALL])
+=head2 selectTopic(LABEL [, DEFAULT, SECTION, RETURN])
 
 Creates a drop-down list of topics in HTML.  Calls C<createSelect>.
 
@@ -158,13 +158,13 @@ The name for the HTML entity.
 
 Default topic for the list.
 
+=item SECTION
+
+Default section to take topics from.
+
 =item RETURN
 
 See "Return value" below.
-
-=item ALL
-
-Boolean for including "All Topics" item.
 
 =back
 
@@ -179,23 +179,20 @@ true/false if operation is successful.
 =cut
 
 sub selectTopic {
-	my($label, $default, $return, $all) = @_;
+	my($label, $default, $section, $return, $all) = @_;
 	my $slashdb = getCurrentDB();
+	$section ||= getCurrentStatic('defaultsection');
 
-	my $topicbank = $slashdb->getTopics();
-	my %topics = map {
-		($_, $topicbank->{$_}{alttext})
-	} keys %$topicbank;
-	delete $topics{''} unless $all;
+	my $topics = $slashdb->getDescriptions('topics_section', $section);
 
 	my $ordered = [
 		map  { $_->[0] }
 		sort { $a->[1] cmp $b->[1] }
-		map  { [$_, lc $topics{$_}] }
-		keys %topics
+		map  { [$_, lc $topics->{$_}] }
+		keys %$topics
 	];
 
-	createSelect($label, \%topics, $default, $return, 0, $ordered);
+	createSelect($label, $topics, $default, $return, 0, $ordered);
 }
 
 #========================================================================
@@ -265,7 +262,6 @@ sub selectSection {
 	} grep {
 		!($sectionbank->{$_}{isolate} && $seclev < 500)
 	} keys %$sectionbank;
-	delete $sections{''} unless $all;
 
 	createSelect($label, \%sections, $default, $return);
 }
