@@ -305,7 +305,6 @@ themes/slashcode/htdocs/article.pl
 themes/slashcode/htdocs/authors.pl
 themes/slashcode/htdocs/comments.pl
 themes/slashcode/htdocs/faq.shtml
-themes/slashcode/htdocs/getting_started.shtml
 themes/slashcode/htdocs/images/660000.gif
 themes/slashcode/htdocs/images/admin_bracket.gif
 themes/slashcode/htdocs/images/bsb.gif
@@ -348,6 +347,7 @@ themes/slashcode/htdocs/index.pl
 themes/slashcode/htdocs/metamod.pl
 themes/slashcode/htdocs/pollBooth.pl
 themes/slashcode/htdocs/sections.pl
+themes/slashcode/htdocs/slashguide.shtml
 themes/slashcode/htdocs/submit.pl
 themes/slashcode/htdocs/topics.pl
 themes/slashcode/htdocs/users.pl
