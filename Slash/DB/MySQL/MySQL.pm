@@ -3179,10 +3179,11 @@ sub createStory {
 			-karma => $newkarma },
 		"uid=$suid") if !isAnon($suid);
 
-		$self->sqlUpdate('users_info',
-			{ -karma => 'karma + 3' },
-			"uid=$suid"
-		) if !isAnon($suid);
+# This is a bit repetitive...
+#		$self->sqlUpdate('users_info',
+#			{ -karma => 'karma + 3' },
+#			"uid=$suid"
+#		) if !isAnon($suid);
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },

@@ -971,7 +971,7 @@ sub moderateCid {
 				if $newkarma <= $constants->{maxkarma} &&
 				   $newkarma >= $constants->{minkarma};
 			$slashdb->setUser($cuid, {
-				karma		=> $newkarma,
+				karma		=> $cuser->{karma},
 				upmods		=> $cuser->{upmods},
 				downmods	=> $cuser->{downmods},
 			});

@@ -97,7 +97,7 @@ sub reconcileM2 {
 			for (@dis) {
 				$slashdb->setUser($_->[0], {
 					-karma => "karma-$change",
-				});
+				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
 
 				# Also flag these specific M2 instances as 
 				# suspect for later analysis.
@@ -137,7 +137,7 @@ sub reconcileM2 {
 					# Uncomment only one of these at a time!
 					#-karma => "karma+$slots{$_}",
 					-karma => "karma+1",
-				});
+				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
 			}
 
 			# Award moderator if moderation matches consensus.
@@ -149,7 +149,7 @@ sub reconcileM2 {
 							  'karma');
 				$slashdb->setUser($modlog->{uid}, {
 					karma => $mod_karma + $change,
-				});
+				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
 			}
 		}
 
