@@ -70,6 +70,9 @@ if ($opts{'c'}) {
 if ($opts{'O'}) {
 	if ( ! -d $opts{'O'}) {
 		if ($opts{'d'} || $opts{'e'} || ( $opts{'l'} && $opts{'f'})) {
+			# needs to use File::Path::mkpath(); and
+			# even if you wanted mkdir, why not use Perl's
+			# mkdir()?  fix please.
 			system("mkdir $opts{'O'}") 
 		} else {
 			print "Invalid directory $opts{'O'} \n";
@@ -173,7 +176,7 @@ if ($opts{'s'}) {
 		if ($template_counter > 1 && $opts{'f'}) {
 			usage('too many templates per file');
 		} else {
-			dump_templates($templatelist,$filename);
+			dump_templates($templatelist, $filename);
 		}
 	} elsif ($opts{'r'}) {
 		delete_templates($templatelist);
@@ -184,6 +187,7 @@ if ($opts{'s'}) {
 sub dump_templates {
 	my($templatelist, $directory) = @_;
 	my $filename;
+	$directory = curdir() unless defined($directory);
 
 	for my $template (keys %$templatelist) {
 		if (! $directory || -d $directory) {
@@ -260,7 +264,7 @@ sub compile_template {
 
 	my $template_provider = Slash::Display::get_template({}, {
 		COMPILE_EXT	=> '.ttc',
-		COMPILE_DIR	=> $opts{O} || curdir(),
+		COMPILE_DIR	=> defined($opts{O}) ? $opts{O} : curdir(),
 	});
 
 	my $page = $opts{P} || 'misc';
