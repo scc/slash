@@ -2115,7 +2115,7 @@ sub getSubmissionForUser {
 	$sql .= "		or note=' ' " unless $form->{note};
 	$sql .= ")";
 	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
-	$sql .= "         and section=" . $self->{_dbh}->quote($user->{asection}) if $user->{asection};
+	$sql .= "         and section=" . $self->{_dbh}->quote($user->{section}) if $user->{section};
 	$sql .= "         and section=" . $self->{_dbh}->quote($form->{section})  if $form->{section};
 	$sql .= "	  ORDER BY time";
 
@@ -2447,8 +2447,8 @@ sub getStoryList {
 			date_format(time,"%m/%d")
 			FROM stories,storiestuff
 			WHERE storiestuff.sid=stories.sid];
-	$sql .= "	AND section='$user->{asection}'" if $user->{asection};
-	$sql .= "	AND section='$form->{section}'"  if $form->{section} && !$user->{asection};
+	$sql .= "	AND section='$user->{section}'" if $user->{section};
+	$sql .= "	AND section='$form->{section}'"  if $form->{section} && !$user->{section};
 	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq "";
 	$sql .= "	ORDER BY time DESC";
 

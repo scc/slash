@@ -77,8 +77,8 @@ sub listSections {
 	my($user) = @_;
 	my $slashdb = getCurrentDB();
 
-	if ($user->{asection}) {
-		editSection($user->{asection});
+	if ($user->{section}) {
+		editSection($user->{section});
 		return;
 	}
 

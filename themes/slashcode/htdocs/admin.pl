@@ -897,9 +897,7 @@ sub editStory {
 
 	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
 
-	unless ($user->{section}) {
-		$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
-	}
+	$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
 
 	if ($user->{seclev} > 100 and $storyref->{aid}) {
 		$authoredit_flag = 1;
