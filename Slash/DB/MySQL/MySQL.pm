@@ -166,7 +166,7 @@ sub init {
 	for my $table (@user_tables) {
 		my $keys = $self->getKeys($table);
 		for (@$keys) {
-			$self->{'_all_user_keys'}->{$_} = $table;
+			$self->{'_all_user_keys'}{$_} = $table;
 		}
 	}
 	$self->{_user_tables} = \@user_tables;
@@ -1888,17 +1888,6 @@ sub getStoryByTime {
 }
 
 ########################################################
-sub setUsers {
-	my($self, $uid, $hashref) = @_;
-	if (exists $hashref->{passwd}) {
-		# get rid of newpasswd if defined in DB
-		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = md5_hex($hashref->{passwd});
-	}
-	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
-}
-
-########################################################
 sub countStories {
 	my($self) = @_;
 	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,aid",
@@ -2779,7 +2768,7 @@ sub getUser {
 	my $members = @val;
 	my $answer;
 	if ($members == 1) {
-		my $table = $self->{_all_user_keys}->{$val[0]};
+		my $table = $self->{_all_user_keys}{$val[0]};
 		($answer) = $self->sqlSelect($val[0], $table, 'uid=' .$self->{dbh}->quote($uid));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
@@ -2787,7 +2776,7 @@ sub getUser {
 		my $where;
 		my $uid_db = $self->{dbh}->quote($uid);
 		for(@val) {
-			$tables{$self->{_all_user_keys}->{$_}} = 1;
+			$tables{$self->{_all_user_keys}{$_}} = 1;
 		}
 		for(keys %tables) {
 			$where .= "$_.uid=$uid_db AND ";
@@ -2818,18 +2807,29 @@ sub getUser {
 sub setUser {
 	my($self, $uid, $hashref) = @_;
 	my %tables;
-	for(keys %$hashref) {
-		my $key = $self->{_all_user_keys}->{$_};
-		push @{$tables{$key}}, $_;
+
+	# encrypt password  --  done here OK?
+	if (exists $hashref->{passwd}) {
+		# get rid of newpasswd if defined in DB
+		$hashref->{newpasswd} = '';
+		$hashref->{passwd} = md5_hex($hashref->{passwd});
 	}
+
+	for my $key (keys %$hashref) {
+		my $table = $self->{_all_user_keys}{$key};
+		push @{$tables{$table}}, $key;
+	}
+
 	for my $table (keys %tables) {
 		my %minihash;
-		for(@{$tables{$table}}){
-			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
+		for my $key (@{$tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
 		}
-		$self->sqlUpdate($table, \%minihash, "uid=" . $uid, 1);
+		$self->sqlUpdate($table, \%minihash, "uid=$uid", 1);
 	}
 }
+
 ########################################################
 # For slashdb
 sub setStoryIndex {

@@ -40,4 +40,7 @@ for my $key (sort keys %$conf) {
 
 	my $sql = "INSERT INTO vars VALUES ('$key',$value,'','$datatype','value')";
 	print $sql, "\n";
-	$slashdb->sqlDo($sql8¤ì5ô45}}9}|
+	$slashdb->sqlDo($sql);
+}
+
+__END__

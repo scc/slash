@@ -755,15 +755,13 @@ EOT
 	# for the users table
 	my $H = {
 		sig		=> $I{F}{sig},
-		homepage	=> $I{F}{'homepage'},
-		fakeemail	=> $I{F}{'fakeemail'},
-		maillist	=> $I{F}{'maillist'},
-		realname	=> $I{F}{'realname'},
-		bio		=> $I{F}{'bio'},
-		pubkey => $I{F}{'pubkey'}
+		homepage	=> $I{F}{homepage},
+		fakeemail	=> $I{F}{fakeemail},
+		maillist	=> $I{F}{maillist},
+		realname	=> $I{F}{realname},
+		bio		=> $I{F}{bio},
+		pubkey		=> $I{F}{pubkey}
 	};
-
-
 
 	if ($user_email->{realemail} ne $I{F}{realemail}) {
 		$H->{realemail} = chopEntity(stripByMode($I{F}{realemail}, 'attribute'), 50);
@@ -799,7 +797,7 @@ EOT
 	}
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid, $H) if $uid != $I{anonymous_coward_uid};
+	$I{dbobject}->setUser($uid, $H);
 
 	return fixparam($note);
 }
@@ -842,7 +840,7 @@ EOT
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid,$H) if $uid != $I{anonymous_coward_uid};
+	$I{dbobject}->setUser($uid, $H);
 }
 
 #################################################################
@@ -886,9 +884,6 @@ EOT
 	$I{F}{maxstories} = 66 if $I{F}{maxstories} > 66;
 	$I{F}{maxstories} = 1 if $I{F}{maxstories} < 1;
 
-	# Take care of the preferences table
-
-	# for users_index
 	my $H = {
 		extid		=> checkList($extid),
 		exaid		=> checkList($exaid),
@@ -896,22 +891,17 @@ EOT
 		exboxes		=> checkList($exboxes),
 		maxstories	=> $I{F}{maxstories},
 		noboxes		=> ($I{F}{noboxes} ? 1 : 0),
-	};
-
-	# for users_prefs
-	my $H2 = {
 		light		=> ($I{F}{light} ? 1 : 0),
 		noicons		=> ($I{F}{noicons} ? 1 : 0),
 		willing		=> ($I{F}{willing} ? 1 : 0),
-	}; 
-
+	};
 	
 	if (defined $I{F}{tzcode} && defined $I{F}{tzformat}) {
-		$H2->{tzcode} = $I{F}{tzcode};
-		$H2->{dfid} = $I{F}{tzformat};
+		$H->{tzcode} = $I{F}{tzcode};
+		$H->{dfid}   = $I{F}{tzformat};
 	}
 
-	$H2->{mylinks} = $I{F}{mylinks} if $I{F}{mylinks};
+	$H->{mylinks} = $I{F}{mylinks} if $I{F}{mylinks};
 
 	# If a user is unwilling to moderate, we should cancel all points, lest
 	# they be preserved when they shouldn't be.
@@ -923,9 +913,6 @@ EOT
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
 	$I{dbobject}->setUser($uid, $H);
-
-	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUser($uid, $H2) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################
