@@ -76,7 +76,7 @@ sub getCurrentUser {
 	my $user = $user_cfg->{'user'};
 
 	if($value) {
-		return $user? ($value == undef) : $user->{$value};
+		return $user->{$value};
 	} else {
 		return $user;
 	}
