@@ -1782,14 +1782,17 @@ EOT
 ########################################################
 sub dispStory {
 	my($S, $A, $T, $full) = @_;
+	my($rootdir) = $I{rootdir};
+	$rootdir .= '/' if $rootdir;
 	my $title = $S->{title};
 	if(!$full && index($S->{title}, ':') == -1
-		&& $S->{section} ne 'articles'
+		&& $S->{section} ne $I{defaultsection}
 		&& $S->{section} ne $I{F}{section}) {
 
 		# Need Header
 		my $SECT = getSection($S->{section});
-		$title = "$SECT->{title}: $S->{title}";
+		$title =
+			"<A HREF=\"$rootdir$S->{section}/\"><FONT COLOR=\"$I{fg}->[3]\">$SECT->{title}</FONT></A>: $S->{title}";
 	}
 
 	titlebar($I{titlebar_width}, $title);
