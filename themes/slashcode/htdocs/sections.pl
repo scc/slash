@@ -53,7 +53,7 @@ EOT
 	}
 
 	my $op = $I{F}{op};
-	my $seclev=$user->{aseclev};
+	my $seclev = $user->{aseclev};
 	if ($op eq "rmsub" && $seclev > 99) {
 
 	} elsif ($I{F}{addsection}) {
@@ -83,7 +83,7 @@ EOT
 
 #################################################################
 sub listSections {
-	my ($user) = @_;
+	my($user) = @_;
 	if ($user->{asection}) {
 		editSection($user->{aseclev}, $user->{asection});
 		return;

@@ -27,7 +27,7 @@ sub SlashUserInit ($$) {
 sub handler {
 	my($r) = @_;
 	my $filename = $r->filename;
-	unless($filename =~ /\.pl$/) {
+	unless ($filename =~ /\.pl$/) {
 		print STDERR "Skipping $filename \n";
 		return OK;
 	} else {

@@ -34,7 +34,7 @@ Slashdot.  Exciting?  Nope.
 =cut
 
 use strict;
-use vars '$I';
+use vars qw($I %savedBlocks);
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
@@ -48,8 +48,6 @@ use Slash::Utility;
 my $slashdb = Slash::DB->new('slash');
 $I = $slashdb->getSlashConf();
 my $totalChangedStories = 1;
-
-my %savedBlocks;
 
 sub makeTmp {
 	if (-f "$I->{datadir}/logs/portald.pid") {

@@ -26,7 +26,7 @@ $Slash::Utility::VERSION = '0.01';
 sub apacheLog {
 	# ummm ... won't this fail if called while not running under
 	# Apache?
-	my ($package, $filename, $line) = caller(1);
+	my($package, $filename, $line) = caller(1);
 	if ($ENV{SCRIPT_NAME}) {
 		my $r = Apache->request;
 		$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");

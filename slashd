@@ -234,8 +234,8 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	my $sections = $slashdb->getSections('section');
 print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
-	for(@$sections) {
-		my ($section) = @$_;
+	for (@$sections) {
+		my($section) = @$_;
 		mkdir "$I->{basedir}/$section", 0755;
 		sectionHeaders($section);
 	}
@@ -243,11 +243,10 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 	*STDOUT = *SO;
 }
 
-
 #################################
 sub newrdf {
 	my $section = shift;
-	my $storis_and_topics = $slashdb->getBackendStories($section);
+	my $stories_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '0.9',
 		$I->{rdfencoding} ? (encoding => $I->{rdfencoding}) : ()
@@ -275,7 +274,7 @@ sub newrdf {
 	);
 
 
-	for my $section (@$storis_and_topics) {
+	for my $section (@$stories_and_topics) {
 		$rss->add_item(
 			title	=> xmlEncodeStr($section->{title}),
 			'link'	=> "$I->{absolutedir}/article.pl?sid=$section->{sid}",
@@ -289,7 +288,7 @@ sub newrdf {
 #################################
 sub newwml {
 	my $section = shift;
-	my $storis_and_topics = $slashdb->getBackendStories($section);
+	my $stories_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
@@ -309,11 +308,11 @@ EOT
 
         my $z = 0;
         my $body;
-				for my $section (@$storis_and_topics) {
-					$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-						xmlEncodeStr(stripByMode($section->{title})) . 
-						"</option>\n";
-					$z++;
+	for my $section (@$stories_and_topics) {
+		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
+			xmlEncodeStr(stripByMode($section->{title})) . 
+			"</option>\n";
+		$z++;
         }     
 
         $x .= <<EOT;
@@ -330,7 +329,7 @@ EOT
 #################################
 sub newxml {
 	my $section = shift;
-	my $storis_and_topics = $slashdb->getBackendStories($section);
+	my $stories_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
@@ -338,7 +337,7 @@ xmlns:backslash="$I->{rootdir}/backslash.dtd">
 
 EOT
 
-	for my $section (@$storis_and_topics) {
+	for my $section (@$stories_and_topics) {
 		$x.= sprintf <<EOT, xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
 	<story>
 		<title>%s</title>
@@ -360,15 +359,14 @@ EOT
 	save2file("$I->{basedir}/$file.xml", $x);
 }
 
-
 #################################
 sub openBackend {
 	newxml();
 	newrdf();
 	newwml();
 	my $sections = $slashdb->getSections('section');
-	for(@$sections){
-		my ($section) = @$_;
+	for (@$sections)
+		my($section) = @$_;
 		newxml($section);
 		newrdf($section);
 	}
@@ -419,7 +417,7 @@ sub freshenup {
 
 	my $x = 0;
 	$stories = $slashdb->getStoriesForSlashdb();
-	for (@$stories){
+	for (@$stories) {
 		my($sid, $title, $section) = @$_;
 		$x++;
 		$updates{$section} = 1;

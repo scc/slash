@@ -805,6 +805,7 @@ sub setAuthor {
 	my($self, $author, $value) = @_;
 	$self->sqlUpdate('authors', $value, 'name=' . $self->{dbh}->quote($author));
 }
+
 ########################################################
 sub setBlock {
 	my($self, $bid, $block) = @_;
@@ -884,7 +885,7 @@ sub getBlock {
 ########################################################
 sub getSectionBank {
 	my($self, $section) = @_;
-	if($section) {
+	if ($section) {
 		return $sectionBank{$section} if $sectionBank{$section};
 	} else {
 		return \%sectionBank if keys %sectionBank;
@@ -896,7 +897,7 @@ sub getSectionBank {
 	}
 	$sth->finish;
 
-	if($section) {
+	if ($section) {
 		return $sectionBank{$section};
 	} else {
 		return \%sectionBank;
@@ -1404,7 +1405,7 @@ sub deleteStoryAll {
 # for slashd
 # This method is used in a pretty wasteful way
 sub getBackendStories {
-	my ($self, $section) = @_;
+	my($self, $section) = @_;
 
 	my $cursor = $self->{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
 		image,commentcount,section,introtext,bodytext,
@@ -1421,9 +1422,9 @@ sub getBackendStories {
 		  # AND time < date_add(now(), INTERVAL 4 HOUR)
 
 	$cursor->execute;
-	my $returnable = ();
-	while( my $row  = $cursor->fetchrow_hashref) {
-		push(@$returnable ,$row);
+	my $returnable = [];
+	while (my $row = $cursor->fetchrow_hashref) {
+		push(@$returnable, $row);
 	}
 
 	return $returnable;
@@ -2843,7 +2844,7 @@ sub getModeratorLog {
 ########################################################
 # For slashdb
 sub setStoryIndex {
-	my $self = shift;
+	my($self) = @_;
 
 	my %stories;
 
@@ -2862,7 +2863,7 @@ sub setStoryIndex {
 ########################################################
 # For slashdb
 sub getNewStoryTopic {
-	my ($self) = @_;
+	my($self) = @_;
 
 	my $returnable = $self->sqlSelectHashref(
 				"alttext,image,width,height,newstories.tid",
@@ -2879,7 +2880,7 @@ sub getNewStoryTopic {
 ########################################################
 # For slashdb
 sub getStoriesForSlashdb {
-	my ($self) = @_;
+	my($self) = @_;
 
 	my $returnable = $self->sqlSelectAll("sid,title,section", 
 			"stories", "writestatus=1");
