@@ -12,6 +12,7 @@
 <UL>
 
 	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#warning">WARNING</A></LI>
 	<LI><A HREF="#description">DESCRIPTION</A></LI>
 	<LI><A HREF="#documentation">DOCUMENTATION</A></LI>
 	<LI><A HREF="#links">LINKS</A></LI>
@@ -26,11 +27,19 @@
 <P>README - Slash Readme</P>
 <P>
 <HR>
+<H1><A NAME="warning">WARNING</A></H1>
+<P>This release is <STRONG>BETA</STRONG> software.  It is not intended or recommended
+for production use, and is constantly changing.  Please use this only
+for development and testing purposes.</P>
+<P>There are currently <STRONG>NO</STRONG> upgrade procedures in place for previous
+versions of Slash.  Those will be coming in a subsequent beta.</P>
+<P>
+<HR>
 <H1><A NAME="description">DESCRIPTION</A></H1>
 <P>Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
 that runs Slashdot.  More than that, however, Slash is an architecture
 for putting together web sites.  It comes with functionality for posting
-articles, conducting polls, having discussions, and more.  But it can be
+articles, conducting polls, having discussions, and more; but it can be
 extended in innumerable ways.</P>
 <P>Slash is written in Perl, and is built on top of Apache and mod_perl. It
 requires a database backend, though the only well-supported database
@@ -89,8 +98,11 @@ The details of the API available in Slash.
         perldoc Slash::Utility
         perldoc Slash::Display
         perldoc Slash::DB</PRE>
-<P>The modules represent the public API of Slash.  The other Slash
-modules have embedded POD to be read with perldoc, too.</P>
+<P>The modules represent the bulk of the public API of Slash.
+The other Slash modules have embedded POD to be read with perldoc, too.
+Some of the documentation here is woefully incomplete.</P>
+<PRE>
+        use Source 'Luke';</PRE>
 <P></P>
 <DT><STRONG><A NAME="item_HOWTOs">HOWTOs</A></STRONG><BR>
 <DD>
@@ -102,7 +114,7 @@ for templates, plugins, and themes.
 <P></P>
 <DT><STRONG><A NAME="item_Schema">Schema</A></STRONG><BR>
 <DD>
-The layout and description of the database.
+The layout and description of the database.  [These are out of date.]
 <P><EM>docs/slasherd_bender.fig</EM></P>
 <P><EM>docs/slasherd_bender.pdf</EM></P>
 <P><EM>docs/slasherd_bender.ps</EM></P>

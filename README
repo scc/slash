@@ -1,11 +1,19 @@
 NAME
     README - Slash Readme
 
+WARNING
+    This release is BETA software. It is not intended or recommended for
+    production use, and is constantly changing. Please use this only for
+    development and testing purposes.
+
+    There are currently NO upgrade procedures in place for previous versions
+    of Slash. Those will be coming in a subsequent beta.
+
 DESCRIPTION
     Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
     that runs Slashdot. More than that, however, Slash is an architecture
     for putting together web sites. It comes with functionality for posting
-    articles, conducting polls, having discussions, and more. But it can be
+    articles, conducting polls, having discussions, and more; but it can be
     extended in innumerable ways.
 
     Slash is written in Perl, and is built on top of Apache and mod_perl. It
@@ -33,8 +41,8 @@ DESCRIPTION
 
 DOCUMENTATION
     The .pod documentation included with Slash can be read with the
-    `perldoc' program, included with perl, or translated using one of the
-    many `pod2*' translators.
+    "perldoc" program, included with perl, or translated using one of the
+    many "pod2*" translators.
 
     The documentation is also available online on the Slash FAQ.
 
@@ -67,8 +75,11 @@ DOCUMENTATION
                 perldoc Slash::Display
                 perldoc Slash::DB
 
-        The modules represent the public API of Slash. The other Slash
-        modules have embedded POD to be read with perldoc, too.
+        The modules represent the bulk of the public API of Slash. The other
+        Slash modules have embedded POD to be read with perldoc, too. Some
+        of the documentation here is woefully incomplete.
+
+                use Source 'Luke';
 
     HOWTOs
         There are currently the beginnings of HOWTO documents for templates,
@@ -81,7 +92,7 @@ DOCUMENTATION
         docs/HOWTO-Themes.pod
 
     Schema
-        The layout and description of the database.
+        The layout and description of the database. [These are out of date.]
 
         docs/slasherd_bender.fig
 

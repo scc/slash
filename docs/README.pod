@@ -117,7 +117,7 @@ F<docs/HOWTO-Themes.pod>
 
 =item Schema
 
-The layout and description of the database.  [There are out of date.]
+The layout and description of the database.  [These are out of date.]
 
 F<docs/slasherd_bender.fig>
 
