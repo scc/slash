@@ -1571,8 +1571,8 @@ sub getStoryByTime {
 ########################################################
 sub countStories {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,uid",
-		"stories","", "ORDER BY commentcount DESC LIMIT 10"
+	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,users.nickname",
+		"stories,users","stories.uid=users.uid", "ORDER BY commentcount DESC LIMIT 10"
 	);
 	return $stories;
 }
@@ -1664,8 +1664,8 @@ sub countUsers {
 ########################################################
 sub countStoriesStuff {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,uid",
-		"stories,storiestuff","stories.sid=storiestuff.sid",
+	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,users.nickname",
+		"stories,storiestuff,users","stories.sid=storiestuff.sid AND stories.uid=users.uid",
 		"ORDER BY hits DESC LIMIT 10"
 	);
 	return $stories;
