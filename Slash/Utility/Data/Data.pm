@@ -617,12 +617,25 @@ sub stripBadHtml {
 	$str =~ s/></> </g;
 
 	# Encode stray >
-	1 while $str =~ s/(>[^<]*)>/$1\&gt;/g;
-	1 while $str =~ s/^([^<]*)>/$1\&gt;/g;
+	1 while $str =~ s{
+		(
+			(?: ^ | > )	# either beginning of string,
+					# or another close bracket
+			[^<]*		# not matching open bracket
+		)
+		>			# close bracket
+	}{$1&gt;}gx;
 
-	# Encode stray <
-	1 while $str =~ s/<([^>]*<)/\&lt;$1/g;
-	1 while $str =~ s/<([^>]*)$/\&lt;$1/g;
+
+	# Encode stray >
+	1 while $str =~ s{
+		<			# open bracket
+		(
+			[^>]*		# not match close bracket
+			(?: < | $ )	# either open bracket, or
+					# end of string
+		)
+	}{&lt;$1}gx;
 
 	return $str;
 }

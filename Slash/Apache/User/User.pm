@@ -13,9 +13,10 @@ use Apache::File;
 use Apache::ModuleConfig;
 use AutoLoader ();
 use DynaLoader ();
+use Slash::Apache ();
 use Slash::Utility;
 use URI ();
-use vars qw($REVISION $VERSION @ISA @QUOTES);
+use vars qw($REVISION $VERSION @ISA @QUOTES $USER_MATCH);
 
 @ISA		= qw(DynaLoader);
 $VERSION	= '2.001000';	# v2.1.0
@@ -26,10 +27,7 @@ bootstrap Slash::Apache::User $VERSION;
 # BENDER: Oh, so, just 'cause a robot wants to kill humans
 # that makes him a radical?
 
-my $user_match = qr{ \buser=(?!	# must have user, but NOT ...
-	(?: nobody | %[20]0 )?	# nobody or space or null or nothing ...
-	(?: \s | ; | $ )	# followed by whitespace, ;, or EOS
-)}x;
+$USER_MATCH = $Slash::Apache::USER_MATCH;
 
 sub SlashEnableENV ($$$) {
 	my($cfg, $params, $flag) = @_;
@@ -100,8 +98,8 @@ sub handler {
 		# GET, and the user has logged in successfully
 
 		if ($method eq 'GET' && $uid && ! isAnon($uid)) {
-			$form->{returnto} =~ s/\%3D/=/;
-			$form->{returnto} =~ s/\%3F/?/;
+			$form->{returnto} =~ s/%3D/=/;
+			$form->{returnto} =~ s/%3F/?/;
 			$form->{returnto} = url2abs($newpass
 				? "$constants->{rootdir}/users.pl?op=changepasswd" .
 				  "&note=Please+change+your+password+now!"
@@ -245,7 +243,7 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
-	if ($r->header_in('Cookie') =~ $user_match) {
+	if ($r->header_in('Cookie') =~ $USER_MATCH) {
 		if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
 			my($toss,$op) = split /\//, $1, 3;
 			# Its past five, and the below makes it go -Brian

@@ -15,13 +15,13 @@ use Slash::Display;
 use Slash::Utility;
 require DynaLoader;
 require AutoLoader;
-use vars qw($REVISION $VERSION @ISA);
+use vars qw($REVISION $VERSION @ISA $USER_MATCH);
 
 @ISA		= qw(DynaLoader);
 $VERSION	= '2.001000';	# v2.1.0
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-my $user_match = qr{ \buser=(?!	# must have user, but NOT ...
+$USER_MATCH = qr{ \buser=(?!	# must have user, but NOT ...
 	(?: nobody | %[20]0 )?	# nobody or space or null or nothing ...
 	(?: \s | ; | $ )	# followed by whitespace, ;, or EOS
 )}x;
@@ -79,7 +79,10 @@ sub SlashCompileTemplates ($$$) {
 	# temporarily turn off warnings and errors, see errorLog()
 	# This is normally considered a big no no inside of Apache
 	# since how will its own signal handlers be put back in place?
-  # -Brian
+	# -Brian
+	# what do you mean, put back in place?  when the function
+	# finishes, they are all automatically reverted, because
+	# of local() -- pudge
 	local $Slash::Utility::NO_ERROR_LOG = 1;
 	local $SIG{__WARN__} = 'IGNORE';
 	local $slashdb->{_dbh}{PrintError};
@@ -121,8 +124,8 @@ sub IndexHandler {
 
 # 		if ($r->header_in('Cookie') =~ /\b(?:user)=[%\w]/) {
 # 		if ($r->header_in('Cookie') =~ /(?:user)/) {
-		# $user_match defined above
-		if ($r->header_in('Cookie') =~ $user_match) {
+		# $USER_MATCH defined above
+		if ($r->header_in('Cookie') =~ $USER_MATCH) {
 			$r->uri('/index.pl');
 			$r->filename("$basedir/index.pl");
 			return OK;

@@ -527,7 +527,7 @@ sub showInfo {
 			$constants->{user_comment_display_default}
 		) if $commentcount;
 	}
-	
+
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
 
@@ -539,7 +539,7 @@ sub showInfo {
 		# ...however, the "sid" parameter here must be the string
 		# based SID from either the "stories" table or from 
 		# pollquestions.
-		my ($discussion) = $slashdb->getDiscussion($sid);
+		my($discussion) = $slashdb->getDiscussion($sid);
 
 		if ($discussion->{url} =~ /journal/i) {
 			$type = 'journal';
@@ -551,14 +551,14 @@ sub showInfo {
 
 		push @$commentstruct, {
 			pid 		=> $pid,
-			url			=> $discussion->{url},
+			url		=> $discussion->{url},
 			type 		=> $type,	
 			disc_title	=> $discussion->{title},
 			sid 		=> $sid,
 			cid 		=> $cid,
 			subj		=> $subj,
 			cdate		=> $cdate,
-			pts			=> $pts,
+			pts		=> $pts,
 			replies		=> $replies,
 		};
 	}
@@ -1352,7 +1352,7 @@ sub saveComm {
 	my $slashdb = getCurrentDB();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my ($uid, $user_fakeemail);
+	my($uid, $user_fakeemail);
 
 	if ($user->{seclev} >= 100) {
 		$uid = shift;
