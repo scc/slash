@@ -96,6 +96,9 @@ my (%conversions) = (
 		# don't know.
 		$data->{seclev} ||= 0;
 		$data->{section} ||= $vars->{defaultsection};
+		$data->{portal} ||= 0;
+		$data->{retrieve} ||= 0;
+		$data->{title} ||= '';
 
 		# Drop columns.
 		delete $data->{aid};
@@ -151,9 +154,10 @@ EOT
                 }
 
 		# Program should accept a default topic for discussions.
-		$data->{'topic'} = (defined($story_hash->{$data->{'sid'}}{'tid'})) ?
-			$topics{$story_hash->{$data->{'sid'}}{'tid'}} :
-			$vars->{defaulttopic};
+		$data->{'topic'} =
+			(defined($story_hash->{$data->{sid}}{tid})) ?
+				$topics{$story_hash->{$data->{sid}}{tid}} :
+				$vars->{defaulttopic};
 		# Admins must disable stories via their own criterion.
 		$data->{'type'} = 'open';
 		if (!$opts{I}) {
@@ -195,6 +199,15 @@ EOT
 
 		$data->{passwd} = md5_hex($data->{passwd})
 			if exists $data->{passwd};
+		
+		if (exists $data->{exaid}) {
+			my @auth_uids;
+			for (split /,/, $data->{exaid}) {
+				push @auth_uids, $story_authors{$_}
+					if $story_authors{$_};
+			}
+			$data->{exaid} = join ',', @auth_uids;
+		}
 
 		# Valid fields for ALL user_* tables since they all use
 		# the same filter. Anything not in this list will be dropped
@@ -340,9 +353,9 @@ EOT
 		$data->{uid} = $ac_uid{$data->{uid}} 
 			if exists $ac_uid{$data->{uid}};
 
-		$data->{tid} = ($data->{tid}) ? 
-			$topics{$data->{tid}} : $vars->{defaulttopic};
-		$data->{$_} ||= '' for (qw(comment name note story));
+		$data->{tid} = $topics{$data->{tid}} if $data->{tid};
+		$data->{tid} ||= $vars{defaulttopic};
+		$data->{$_} ||= '' for (qw(comment name email note story));
 		return $data;
 	},
 
