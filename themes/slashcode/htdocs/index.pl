@@ -137,15 +137,20 @@ sub displayStandardBlocks {
 
 	return if $user->{noboxes};
 
-	my(@boxes, $return);
+	my(@boxes, $return, $boxcache);
 	my($boxBank, $sectionBoxes) = $slashdb->getPortalsCommon();
 	my $getblocks = $section->{section} || 'index';
 
+	# two variants of box cache: one for index with portalmap,
+	# the other for any other section, or without portalmap
+
 	if ($user->{exboxes} && $getblocks eq 'index') {
 		@boxes = getUserBoxes();
+		$boxcache = $cache->{slashboxes}{index_map} ||= {};
 	} else {
 		@boxes = @{$sectionBoxes->{$getblocks}}
 			if ref $sectionBoxes->{$getblocks};
+		$boxcache = $cache->{slashboxes}{$getblocks} ||= {};
 	}
 
 	for my $bid (@boxes) {
@@ -158,7 +163,7 @@ sub displayStandardBlocks {
 			);
 
 		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
-			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
+			$return .= $boxcache->{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				getData('morehead'),
 				getOlderStories($older_stories_essentials, $section),
@@ -169,7 +174,7 @@ sub displayStandardBlocks {
 			# do nothing!
 
 		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
+			$return .= $boxcache->{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
 				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
@@ -178,6 +183,7 @@ sub displayStandardBlocks {
 			);
 
 		} elsif ($bid eq 'poll' && !$constants->{poll_cache}) {
+			# this is only executed if poll is to be dynamic
 			$return .= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
@@ -187,7 +193,7 @@ sub displayStandardBlocks {
 			);
 
 		} else {
-			$return .= $cache->{slashboxes}{$bid} ||= portalbox(
+			$return .= $boxcache->{$bid} ||= portalbox(
 				$constants->{fancyboxwidth},
 				$boxBank->{$bid}{title},
 				$slashdb->getBlock($bid, 'block'),
