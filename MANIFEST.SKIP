@@ -1,0 +1,9 @@
+blib
+\\\.
+CVS
+MANIFEST\.bak
+^\.
+Makefile\.old
+Slash/.xs
+Slash/.Makefile$
+\.#
