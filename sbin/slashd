@@ -51,13 +51,12 @@ sub slashdLogInit {
 }
 
 sub slashdLog {
+	chomp @_;
 	local *LOG;
 	my $file = "$constants->{logdir}/slashd.log";
 	open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
-	my $log_msg = sprintf "%s\t%s\n", localtime(), join("\t", @_); 
-	# Collapse multiple ending carriage returns into one.
-	$log_msg =~ s/\n+$//;
-	print LOG "$log_msg\n";
+	my $log_msg = scalar(localtime) . "\t" . join("\t", @_) . "\n";
+	print LOG $log_msg;
 	close LOG;
 }
 
