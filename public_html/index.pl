@@ -164,8 +164,8 @@ sub displayStandardBlocks {
 	my ($boxBank, $sectionBoxes) = $I{dbobject}->getPortalsCommon();
 
 	my $getblocks = $SECT->{section} || 'index';
-	my @boxes;
 
+	my @boxes;
 	if ($user->{exboxes} && $getblocks eq 'index') {
 		$user->{exboxes} =~ s/'//g;
 		@boxes = split m/,/, $user->{exboxes};
@@ -188,11 +188,13 @@ sub displayStandardBlocks {
 			# Don't do nuttin'
 		} elsif ($bid eq "userlogin") {
 			my $SB = $boxBank->{$bid};
-			my $B = eval prepBlock $I{blockBank}{$bid};
+			my $B = eval prepBlock $I{dbobject}->getBlock($bid, 'block');
+			#my $B = eval prepBlock $I{blockBank}{$bid};
 			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		} else {
 			my $SB = $boxBank->{$bid};
-			my $B = $I{blockBank}{$bid};
+			my $B = $I{dbobject}->getBlock($bid, 'block');
+			#my $B = $I{blockBank}{$bid};
 			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
 		}
 	}

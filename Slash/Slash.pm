@@ -162,7 +162,7 @@ sub selectTopic {
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
 	my $topicbank = $I{dbobject}->getTopics();
 	foreach my $thistid (sort keys %$topicbank) {
-		my $topic = $I{dbobject}->getTopics($thistid);
+		my $topic = $I{dbobject}->getTopic($thistid);
 		my $selected = $topic->{tid} eq $tid ? ' SELECTED' : '';
 		$html_to_display .= qq!\t<OPTION VALUE="$topic->{tid}"$selected>$topic->{alttext}</OPTION>\n!;
 	}
@@ -1828,7 +1828,7 @@ sub displayStory {
 
 	# No, we do not need this variable, but for readability 
 	# I think it is justified (and it is just a reference....)
-	my $topic = $I{dbobject}->getTopics($S->{tid});
+	my $topic = $I{dbobject}->getTopic($S->{tid});
 	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $topic, $full);
 	return($S, $I{dbobject}->getAuthor($S->{aid}), $topic);
 }
