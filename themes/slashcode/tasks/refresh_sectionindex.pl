@@ -1,3 +1,5 @@
+#!/usr/bin/perl -w
+#
 # $Id$
 #
 # SlashD Task (c) OSDN 2001
@@ -5,7 +7,6 @@
 # Description: refreshes the static "sectionindex_display" template for use
 # in HTML output.
 
-#!/usr/bin/perl -w
 
 use strict;
 my $me = 'refresh_sectionindex.pl';
@@ -31,7 +32,7 @@ $task{$me}{code} = sub {
 	}
 
 	slashdLog("$me: %d sections refreshed");
-}
+};
 
 1;
 

@@ -40,7 +40,8 @@ sub main {
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section});
 
-	my $stories_essentials = $slashdb->getStoriesEssentials($section->{section});
+	my $stories_essentials = 
+		$slashdb->getStoriesEssentials($section->{section});
 	my $Stories = displayStories($stories_essentials);
 	my $StandardBlocks = displayStandardBlocks($section, $stories_essentials);
 
@@ -204,7 +205,15 @@ sub displayStories {
 	# method)
 	while (my $story_essentials = shift @$stories_essentials) {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) =
-			@$story_essentials{qw( sid section title time commentcount day hitparade )};
+			@$story_essentials{qw(
+				sid 
+				section 
+				title 
+				time 
+				commentcount 
+				day 
+				hitparade 
+			)};
 		my @links;
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
 		my($storytext, $story) = displayStory($sid);

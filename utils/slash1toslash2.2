@@ -69,7 +69,7 @@ my @user_tables = qw(
 
 my($vars, $del_users, $do_heaps);
 my(%ac_uid, %topics, %discussions, %polls, %comments, %skip_polls);
-my(%story_authors, @new_polls);
+my(%story_authors);
 
 my $usersub;
 my (%conversions) = (
@@ -127,7 +127,7 @@ my (%conversions) = (
 
 	'discussions'		=> sub {
 		# Convert discussion primary key into a sequence.
-		my($data) = @_;
+		my($data, $story_hash) = @_;
 		if (! $data->{url}) {
 			printf <<EOT, ($data->{sid}) ? "($data->{sid})":'';
       Discussion "$data->{title}" %s had null URL; skipping...
@@ -140,13 +140,19 @@ EOT
 		$data->{'topic'} = -1;
 		# Admins must disable stories via their own criterion.
 		$data->{'type'} = 0;
+		$data->{flags} = 'hitparade_dirty';
+		if (!$opts{I}) {
+			# Reset the flag only if necessary. Pretty much we
+			# want to set things dirty and let slashd clean up
+			# as much of it as it can.
+			$data->{flags} = $story_hash->{$data->{sid}}{flags}
+				unless
+				$story_hash->{$data->{sid}}{writestatus} == 1;
+		}
 
 		$data->{'ALLOWED_FIELDS'} = [qw(
-			id sid title url topic ts type
+			id sid title url topic ts type flags
 		)];
-
-		# NOTE: commentcount and writestatus will be converted 
-		# after the stories table has been processed.
 			
 		return $data
 	},
@@ -214,19 +220,26 @@ EOT
 		delete $data->{aid};
 		$data->{tid} = $topics{$data->{tid}} || $topics{''};
 
-		$data->{discussion} = $discussions{$data->{sid}};
+		# Dammit, this relationship becomes CIRCULAR if looked at from
+		# an incremental perspective! So for now we must load this info
+		# somewhere else.
+		#
+		#$data->{discussion} = $discussions{$data->{sid}};
 		$data->{hits} = $hitlist->{$data->{sid}}{hits} || 0;
-		$data->{flags} = 'data_dirty'
-			if $data->{writestatus} == 1;
-		$data->{flags} = 'delete_me'
-			if $data->{writestatus}==5 || $data->{writestatus}==10;
+		$data->{flags} = 'data_dirty';
+		# We only care about accurate representation of flags when 
+		# we do a full import.
+		if (!$opts{I}) {
+			$data->{flags}='delete_me' if $data->{writestatus}==5 ||
+						      $data->{writestatus}==10;
+		}
 		# Use to properly assign topics to story-based discussions.
 		#$story_topics{$data->{sid}} = $data->{tid};
 		my %newfields;
 		map { $newfields{$_} = $dbh_new->quote($data->{$_}) }
 			qw[sid introtext bodytext relatedtext];
 		$dbh_new->do(<<EOT);
-INSERT INTO story_text (sid, introtext, bodytext, relatedtext) VALUES
+REPLACE INTO story_text (sid, introtext, bodytext, relatedtext) VALUES
 	($newfields{sid},
 	 $newfields{introtext}, 
 	 $newfields{bodytext},
@@ -247,11 +260,11 @@ EOT
 	},
 
 	'pollquestions'		=> sub {
-		my($data) = @_;
+		my($data, $new_polls) = @_;
 		$data->{'discussion'} = $discussions{$data->{qid}};
 		# Program should accept a default topic for polls.
 		$data->{'topic'} = -1;
-		push @new_polls, $data->{qid} if $opts{I};
+		push @{$new_polls}, $data->{qid} if $new_polls;
 		delete $data->{qid};
 		return $data;
 	},
@@ -289,10 +302,12 @@ EOT
 		return if !$data->{sid};
 		my $oldcid = $data->{cid};
 		$data->{cid} = $comments{$sid}->{$oldcid};
-		(print <<EOT and return) if !$data->{cid};
+		return $data if $data->{cid};
+		print <<EOT if !$opts{I};
       Warning: NULL CID found for '$sid' #$oldcid - record not imported.
 EOT
-		return $data;
+
+      		return;
 	},
 
 	'submissions'		=> sub {
@@ -408,7 +423,7 @@ EOT
 
 	if ($opts{I}) {
 		incremental();
-		refill_heaps() if $allow_heaps;
+		refill_heaps() if $vars->{mysql_heap_table};
 		# We're done.
 		exit 0;
 	}	
@@ -471,10 +486,6 @@ sub incremental {
 	# Reload topic data for the rest of the show.
 	reload_keys('topics', \%topics, 'tid', 'alttext');
 
-	# Discussions.
-	update('discussions');
-	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
-
 	# Stories.
 	#
 	# Determine list of authors, before story processing.
@@ -482,9 +493,10 @@ sub incremental {
 	update_stories();
 
 	# Polls.
-	update('pollquestions');
+	my @new_polls;
+	update('pollquestions', \@new_polls);
 	reload_keys('pollquestions', \%polls, 'qid', 'date');
-	update_pollresults();
+	update_pollresults(\@new_polls);
 	%skip_polls=(); %polls=();
 
 	# Comments - This only PARTIALLY works. Records referring to 
@@ -498,7 +510,7 @@ sub incremental {
 	copy_comments();
 
 	# And the rest of the rabble.
-	update('moderatorlog');
+	update('moderatorlog', 'id');
 	%discussions=(); %comments=();
 
 	for my $table (@user_tables, qw(submissions metamodlog)) {
@@ -518,12 +530,6 @@ sub update_stories {
 
 	map { s/^(database=)?([^;]+);?(.+)?$/$2/; }
 		my($old_name, $new_name)=($dbh_old->{Name}, $dbh_new->{Name}); 
-
-	# The query below doesn't QUITE work because stories is an ever changing
-	# table. It isn't sufficient to just know the differing SIDs, you have
-	# to know the SIDs that CHANGED. This is impossible with Slash's current
-	# schema. Maybe have a "lastmod" flag?
-	#						- Cliff 07/03/01
 
 	# There should be a DESTQUERY "DELETE FROM stories..." to remove stories
 	# within the last two weeks. Then these stories (remember to grab SIDs!)
@@ -551,8 +557,16 @@ EOT
 
 	# Now go back and handle discussion updates.
 	print "Reprocessing discussions and hitparade...\n";
-	$dbh_new->do("DELETE FROM discussions WHERE ts >= $datecond")
-		if $opts{I};
+	# Now what we NEED to do here is flatten @stories into a temporary 
+	# hash keyed on SID so when discussions gets processed it doesn't take
+	# forever to get the associated record.
+	my %story_hash;
+	for (@stories) {
+		$story_hash{$_->{sid}} = $_;
+	}
+	$deleted_discussions = 
+		$dbh_new->do("DELETE FROM discussions WHERE ts >= $datecond")
+	if $opts{I};
 	$sql = <<EOT;
 SELECT * FROM discussions WHERE ts >= $datecond
 EOT
@@ -561,43 +575,74 @@ EOT
 	$sth_s->execute;
 	die "SQL: $sql\n" if $dbh_old->errstr;
 	# Need a list of the Discussion SIDs that are updated, here.
-	do_handle('discussions', $sth_s, 0);
+	do_handle('discussions', $sth_s, 0, \%story_hash);
+	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
 
 	# Create all nonexisting rows in discussion_hitparade.
-	for (@stories) {
+	for my $story (@stories) {
+		# Make SURE we update stories....damned circular relationships!
+		$dbh_new->do(<<EOT);
+UPDATE stories SET discussion = $discussions{$story->{sid}}
+	WHERE sid=@{[$dbh_new->quote($story->{sid})]}
+EOT
+
 		my $val = $vars->{comment_minscore};
-		for (split /,/, $_->{hitparade}) {
+		for (split /,/, $story->{hitparade}) {
+			next if !$discussions{$story->{sid}};
 			# This SQL syntax is rather silly, no?
 			$sql =  <<EOT;
-INSERT IGNORE INTO discussions_hitparade (discussion, threshold, count)
-	VALUES ($discussions{$_->{sid}}, @{[$val++]}, 0)
+INSERT IGNORE INTO discussion_hitparade (discussion, threshold, count)
+	VALUES ($discussions{$story->{sid}}, @{[$val++]}, 0)
 EOT
 
 			$dbh_new->do($sql);
 			die "SQL: $sql\n" if $dbh_new->errstr;
 		}
 	}
+
+	print <<EOT;
+      Deleted $deleted_stories stories, $deleted_discussions discussions 
+      Imported @{[scalar @stories]} stories and associated records.
+EOT
+
 }
 
 
 sub update_pollresults {
-	return if !@new_polls;
-	printf "Updating results from %d new polls...\n", scalar @new_polls;
-	for (@new_polls) {
-		my $sth_s = $dbh_old->prepare(<<EOT);
-SELECT * FROM pollanswers WHERE qid=$_
+	my ($new_polls) = @_;
+
+	my $sth_s;
+
+	return if !@{$new_polls};
+
+	printf "Updating results from %d new polls...\n", scalar @{$new_polls};
+	for (@{$new_polls}) {
+		$sth_s = $dbh_old->prepare(<<EOT);
+SELECT * FROM pollanswers WHERE qid=@{[$dbh_old->quote($_)]}
 EOT
 
-		$sth_s->execute();
+		$sth_s->execute;
 		do_handle('pollanswers', $sth_s, 0);
 
 		$sth_s = $dbh_old->prepare(<<EOT);
-SELECT * FROM pollvoters WHERE qid=$_;
+SELECT * FROM pollvoters WHERE qid=@{[$dbh_old->quote($_)]}
 EOT
 
-		$sth_s->execute();
+		$sth_s->execute;
 		do_handle('pollvoters', $sth_s, 0);
 	}
+
+	# Make sure we get the latest poll. This should only return an array
+	# with one value.
+	my $newpoll_ar = $dbh_old->selectall_arrayref(<<EOT);
+SELECT value FROM vars WHERE name='currentqid'
+EOT
+
+	# Remember we need to change the key for Fry.
+	$dbh_new->do(<<EOT);
+UPDATE vars SET	value=$polls{$newpoll_ar->[0][0]} WHERE name='currentqid'
+EOT
+
 }
 
 
@@ -622,9 +667,6 @@ sub convert {
 	duplicate('topics', 1);
 	reload_keys('topics', \%topics, 'tid', 'alttext');
 	
-	duplicate('discussions', 1);
-	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
-
 	for (@user_tables) {
 		# users_param does not exist in MAIN.
 		next if $_ eq 'users_param';
@@ -641,16 +683,12 @@ sub convert {
 	# removal of all text fields into their own table (story_text).
 	update_stories();
 	
-	duplicate('pollquestions', 1);
+	my @newpolls;
+	duplicate('pollquestions', 1, \@newpolls);
 	reload_keys('pollquestions', \%polls, 'qid', 'date');
-
-	duplicate('pollanswers', 1);
-	# Done with %skipped_polls.
-	%skip_polls = ();
-
-	duplicate('pollvoters', 1);
+	update_pollresults(\@newpolls);
 	# Done with polls by this point.
-	%polls = ();
+	%skip_polls = (); %polls = ();
 
 	copy_comments();
 
@@ -734,10 +772,10 @@ EOT
 ####################################
 sub refill_heaps {
 	printf "%sPopulating the story_heap table...\n", ($opts{I}) ? 'Re':'';
-	$dbh_new->do('DELETE FROM story_heap') if ($opts{I});
+	$dbh_new->do('DELETE FROM story_heap') if $opts{I};
 	$dbh_new->do('INSERT INTO story_heap SELECT * FROM stories');
 	printf "%sPopulating the comment_heap table...\n", ($opts{I}) ? 'Re':'';
-	$dbh_new->do('DELETE FROM comment_heap') if ($opts{I});
+	$dbh_new->do('DELETE FROM comment_heap') if $opts{I};
 	$dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
 }
 
@@ -1099,7 +1137,7 @@ EOT
 
 
 sub update {
-	my($table) = @_;
+	my($table, @opt) = @_;
 	my($where, $cond);
 
 	return if !$table;
@@ -1131,7 +1169,7 @@ EOT
 
 	$sth_s->execute();
 	print "Updating $table...\n" if $sth_s->rows;
-	do_handle($table, $sth_s, 0);
+	do_handle($table, $sth_s, 0, @opt);
 }
 
 
@@ -1195,6 +1233,17 @@ EOT
 		$dbh_new->do($insert);
 		my $err = $dbh_new->errstr;
 		die "$table: $err" if $err;
+
+		# This hack might be a better way to do what reload_keys()
+		# does and is required in a few places. 
+		# [unused, but let's leave it for now. It shouldn't hurt
+		# anything as long as nothing refers to it]
+		if (exists $data->{KEY_HASH}) {
+			my $sth_d = $dbh_new->prepare("SELECT LAST_INSERT_ID()");
+			$sth_d->execute;
+			($data->{KEY_HASH}{$data->{$data->{KEY_OLD}}}) = 
+				$sth_d->fetchrow_array;
+		}
 	}
 }
 

@@ -2765,7 +2765,6 @@ sub getStoriesEssentials {
 	# just getting the sid now, and we'll pick up the discussion field
 	# later when we query that table (which we have to do anyway;
 	# separating the two queries is faster than a join).
-
 	my $columns = "$story_table.sid, $story_table.uid,
 			$story_table.title, section, time, hits";
 
@@ -2810,7 +2809,14 @@ sub getStoriesEssentials {
 
 	my(@stories, @story_ids, @discussion_ids, $count);
 	my $cursor = $self->sqlSelectMany($columns, $story_table, $where, $other)
-		or errorLog("error in getStoriesEssentials columns $columns story_table $story_table where $where other $other");
+		or
+	errorLog(<<EOT);
+error in getStoriesEssentials
+	columns: $columns
+	story_table: $story_table
+	where: $where
+	other: $other
+EOT
 
 	while (my $row = $cursor->fetchrow_hashref) {
 
@@ -2819,8 +2825,9 @@ sub getStoriesEssentials {
 		# hh (13)		mm (27)		ss (11)
 		# mon ("Jun")		day (20010621)	wordytime ("Sunday June 21 12:34 PM")
 		my @timesplit = split /\D+/, $row->{'time'};
+		my @fields = qw(yyyy MM dd hh mm ss);
 		for my $i (0..$#timesplit) {
-			$row->{ (qw( yyyy MM dd hh mm ss ))[$i] } = $timesplit[$i];
+			$row->{ $fields[$i] } = $timesplit[$i];
 		}
 		formatDate([ $row ], 'time', 'day', '%Q');
 
@@ -2831,12 +2838,14 @@ sub getStoriesEssentials {
 		# It just adds "mon" based on "MM" (see comment above) - Jamie
 		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
+		for (@fields) { delete $row->{$_}; }
 		push @stories, $row;
 		push @story_ids, $row->{sid};
 		last if ++$count >= $limit;
 
 	}
 	$cursor->finish;
+	return unless @stories;
 
 	# Convert the list of story ids into the list of corresponding
 	# discussion ids.  %sid_to_disc_data's key is a story sid, and
