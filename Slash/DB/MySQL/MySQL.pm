@@ -3713,7 +3713,7 @@ sub calcModval {
 	# get the moderatorlog valsum twice.
 	my $cid_text = join(",", @$cid_ar);
 	if ($minicache and defined($minicache->{$cid_text})) {
-#printf STDERR "cM 1 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $modval;
+#printf STDERR "cM 1 %d %.3f %d\n", scalar(@$cid_ar), Time::HiRes::time()-$start_time, $minicache->{$cid_text};
 		return $minicache->{$cid_text};
 	}
 
