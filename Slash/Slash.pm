@@ -1724,7 +1724,7 @@ sub getOlderStories {
 	my $user = getCurrentUser();
 	my $dbslash = getCurrentDB();
 
-	$array_ref ||= $dbslash->getStories($user, $I{F}, $SECT, $I{currentSection});
+	$array_ref ||= $dbslash->getStories($SECT, $I{currentSection});
 
 	for (@{$array_ref}) {
 		my($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 

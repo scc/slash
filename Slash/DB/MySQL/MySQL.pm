@@ -2042,7 +2042,10 @@ sub getComments {
 ########################################################
 # Do we need to bother passing in User and Form?
 sub getStories {
-	my($self, $user, $form, $SECT, $currentSection, $limit, $tid) = @_;
+	my($self, $SECT, $currentSection, $limit, $tid) = @_;
+
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	$limit ||= $user->{maxstories};
 
