@@ -148,7 +148,7 @@ sub setheadertopics {
 	my($x, $r, $t);
 
 	for (@$stories) {
-		break if $x < 5;
+		last if $x < 5;
 		local $_ = $t;
 		if (! /$_->{'tid'}/) {	
 			$r .= <<EOT;
@@ -230,7 +230,7 @@ sub newfooter {
 
 	sectionHeaders("");
 	my $sections = $slashdb->getSections('section');
-	for(@$sections)
+	for(@$sections) {
 		my ($section) = @$_;
 		mkdir "$I->{basedir}/$section", 0755;
 		sectionHeaders($section);
@@ -239,32 +239,11 @@ sub newfooter {
 	*STDOUT = *SO;
 }
 
-#################################
-sub getBackendStories {
-	my $section = shift;
-
-	my $c = $slashdb->{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
-		image,commentcount,section,introtext,bodytext,
-		topics.tid as tid
-		    FROM stories,topics
-		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
-		      OR (section=\"$section\" and displaystatus > -1)) 
-		     AND time < now()
-		     AND writestatus > -1
-		     AND stories.tid=topics.tid
-		ORDER BY time DESC
-		   LIMIT 10");
-
-		  # AND time < date_add(now(), INTERVAL 4 HOUR)
-
-	$c->execute;
-	return $c;
-}
 
 #################################
 sub newrdf {
 	my $section = shift;
-	my $c = getBackendStories($section);
+	my $storis_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '0.9',
 		$I->{rdfencoding} ? (encoding => $I->{rdfencoding}) : ()
@@ -292,13 +271,12 @@ sub newrdf {
 	);
 
 
-	while (my $S = $c->fetchrow_hashref) {
+	for my $section (@$storis_and_topics) {
 		$rss->add_item(
-			title	=> xmlEncodeStr($S->{title}),
-			'link'	=> "$I->{absolutedir}/article.pl?sid=$S->{sid}",
+			title	=> xmlEncodeStr($section->{title}),
+			'link'	=> "$I->{absolutedir}/article.pl?sid=$section->{sid}",
 		);
 	}
-	$c->finish;
 
 	(my $file = $section || lc $I->{sitename}) =~ s/\W+//g;
 	$rss->save("$I->{basedir}/$file.rdf");
@@ -307,7 +285,7 @@ sub newrdf {
 #################################
 sub newwml {
 	my $section = shift;
-	my $c = getBackendStories($section);
+	my $storis_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
@@ -327,13 +305,12 @@ EOT
 
         my $z = 0;
         my $body;
-        while (my $S = $c->fetchrow_hashref) {
-                $x .= qq|<option title="View" onpick="/wml.pl?sid=$S->{sid}">| .
-                	xmlEncodeStr(stripByMode($S->{title})) . 
-                	"</option>\n";
-                $z++;
+				for my $section (@$storis_and_topics) {
+					$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
+						xmlEncodeStr(stripByMode($section->{title})) . 
+						"</option>\n";
+					$z++;
         }     
-        $c->finish;
 
         $x .= <<EOT;
 </select>
@@ -349,7 +326,7 @@ EOT
 #################################
 sub newxml {
 	my $section = shift;
-	my $c = getBackendStories($section);
+	my $storis_and_topics = $slashdb->getBackendStories($section);
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
@@ -357,68 +334,36 @@ xmlns:backslash="$I->{rootdir}/backslash.dtd">
 
 EOT
 
-	while (my $S = $c->fetchrow_hashref) {
-		$x.= sprintf <<EOT, xmlEncodeStr($S->{title}), xmlEncodeStr($S->{dept});
+	for my $section (@$storis_and_topics) {
+		$x.= sprintf <<EOT, xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
 	<story>
 		<title>%s</title>
-		<url>$I->{rootdir}/article.pl?sid=$S->{sid}</url>
-		<time>$S->{'time'}</time>
-		<author>$S->{aid}</author>
+		<url>$I->{rootdir}/article.pl?sid=$section->{sid}</url>
+		<time>$section->{'time'}</time>
+		<author>$section->{aid}</author>
 		<department>%s</department>
-		<topic>$S->{tid}</topic>
-		<comments>$S->{commentcount}</comments>
-		<section>$S->{section}</section>
-		<image>$S->{image}</image>
+		<topic>$section->{tid}</topic>
+		<comments>$section->{commentcount}</comments>
+		<section>$section->{section}</section>
+		<image>$section->{image}</image>
 	</story>
 
 EOT
 	}
-
-	$c->finish;
 
 	$x .= "</backslash>\n";
 	(my $file = $section || lc $I->{sitename}) =~ s/\W+//g;
 	save2file("$I->{basedir}/$file.xml", $x);
 }
 
-#################################
-sub newultra {
-	my $c = getBackendStories();
-	my $y = 0;
-	my $um = <<EOT;
-WARNING:ultramode.txt will soon be obsolete.  Please us slashdot.xml or slashdot.rdf instead!  You have been warned!
-%%
-EOT
-
-	while (($y < 11) && (my($sid, $title, $time, $dept, $aid, $topic, $image,
-			$commentcount,$section) = $c->fetchrow)) {
-		$y++;
-
-		$um .= <<EOT;
-$title
-$I->{rootdir}/$section/$sid.shtml
-$time EDT
-$aid
-$dept
-$topic
-$commentcount
-$section
-$image
-%%
-EOT
-	}
-	$c->finish;
-	save2file("$I->{basedir}/ultramode.txt", $um);
-}
 
 #################################
 sub openBackend {
-	newultra();
 	newxml();
 	newrdf();
 	newwml();
 	my $sections = $slashdb->getSections('section');
-	for(@$sections)
+	for(@$sections){
 		my ($section) = @$_;
 		newxml($section);
 		newrdf($section);
@@ -446,6 +391,7 @@ sub freshenup {
 	my @updatedsids;
 
 	for (@$stories){
+		my($sid, $title, $section) = @$_;
 		slashdLog("Updating $title $sid");
 		$updates{$section} = 1;
 		makeDir($section, $sid);
@@ -470,15 +416,14 @@ sub freshenup {
 	my $x = 0;
 	$stories = $slashdb->getStoriesForSlashdb();
 	for (@$stories){
-	while (my($sid, $section) = $c->fetchrow) {
+		my($sid, $title, $section) = @$_;
 		$x++;
 		$updates{$section} = 1;
 		unlink "$I->{basedir}/$section/$sid.shtml"
 			or warn "Can't unlink $I->{basedir}/$section/$sid.shtml: $!";
 		unlink "$I->{basedir}/$section/${sid}_F.shtml"
 			or warn "Can't unlink $I->{basedir}/$section/${sid}_F.shtml: $!";
-		$slashdb->{dbh}->do("DELETE from stories where sid='$sid'");
-		$slashdb->{dbh}->do("DELETE from newstories where sid='$sid'");
+		$slashdb->deleteStoryAll($sid);
 		slashdLog("Deleting $sid");
 	}
 
@@ -507,53 +452,6 @@ sub writePollBooth {
 	$I->{currentSection} = "";
 }
 
-#######################################
-sub getSlicesTable {
-	my $adfu_dbh = DBI->connect($I->{adfu_dsn}, $I->{adfu_dbuser},
-		$I->{adfu_dbpass}) or die "Can't connect to adfu: $!";
-
-	my $count = 1;
-	$slashdb->{dbh}->do("LOCK TABLES slashslices WRITE");
-	$slashdb->{dbh}->do("DELETE FROM slashslices");
-
-	my $adfu_sth = $adfu_dbh->prepare("SELECT ssID, ssRUID, ssLayer FROM slashslices");
-	$adfu_sth->execute;
-
-	while (my($ssID, $ssRUID, $ssLayer) = $adfu_sth->fetchrow_array) {
-	    next if $ssID eq "" || $ssRUID eq "";
-		unless ($ssLayer =~ /servfu\.pl/) {
-			$ssLayer = <<EOT;
-<TABLE ALIGN="LEFT" BORDER="0" CELLPADDING="0" CELLSPACING="0">
-	<TR><TD WIDTH="1"><IMG SRC="http://209.207.224.220/servfu.pl?c,$ssRUID,\$random"
-		WIDTH="1" HEIGHT="1"><BR></TD></TR>
-</TABLE>$ssLayer
-EOT
-		}
-
-		$ssLayer =~ s/'/''/g;
-
-		$slashdb->{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
-			"VALUES ($ssID, " . $count++ . ", $ssRUID, '$ssLayer')");
-	}
-
-	$adfu_sth->finish;
-	$adfu_dbh->disconnect;
-
-	for (my $i = $count; $i <= 1000; $i++) {
-		my $randnum = int(rand($count - 1)) + 1;
-		my ($ssID, $ssRUID, $ssLayer) = $slashdb->{dbh}->selectrow_array(
-			"SELECT ssID, ssRUID, ssLayer from slashslices WHERE ssRank=$randnum"
-		);
-
-		next if $ssID eq "" || $ssRUID eq "";
-		$ssLayer =~ s/'/''/g;
-
-		$slashdb->{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
-			"VALUES ($ssID, $i, $ssRUID, '$ssLayer')");
-	}
-
-	$slashdb->{dbh}->do("UNLOCK TABLES");
-}
 
 main();
 
