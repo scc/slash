@@ -113,13 +113,23 @@ sub create {
 sub remove {
 	my($self, $id) = @_;
 	my $uid = $ENV{SLASH_USER};
-	return unless $self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id");
+
+	if ($self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id") == 0) {
+		# Return value 0E0 means "no rows deleted" (i.e. this user owns
+		# no such journal) and undef means "error."  Either way, abort.
+		return;
+	}
+
 	$self->sqlDo("DELETE FROM journals_text WHERE id=$id");
 
-	my($date) = $self->sqlSelect('MAX(date)', 'journals', "uid=$uid");
-	$date ||= 0;	# has to be defined
+	my $date = $self->sqlSelect('MAX(date)', 'journals', "uid=$uid");
+	if ($date) {
+		$date = $self->sqlQuote($date);
+	} else {
+		$date = "NULL";
+	}
 	my $slashdb = getCurrentDB();
-	$slashdb->setUser($uid, { journal_last_entry_date => $date });
+	$slashdb->setUser($uid, { -journal_last_entry_date => $date });
 }
 
 sub friends {
