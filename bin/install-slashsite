@@ -385,6 +385,9 @@ unless (exists $slash_sites{$opts{'u'}}) {
 
 find(sub { chown $owner_id, $group_id, $_ unless -l $_ }, "$prefix_site/$sitename");
 
+# Install spamarmors for a given site. This can be recoded/moved/whatever
+# if this code is inappropriate, for whatever reason.
+system("$PREFIX/bin/reload_armor -u $opts{'u'}");
 apache_site_conf();
 $dbh->disconnect;
 install_message();
