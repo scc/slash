@@ -174,9 +174,11 @@ sub main {
 	srand(time() ^ ($$+($$<<15)));
 
 	my $subref = get_task_subref;
+	slashdLog("$task_name begin");
 	my $start_time = Time::HiRes::time;
 	&$subref($virtual_user, $constants, $slashdb, $user);
 	my $duration = Time::HiRes::time - $start_time;
+	slashdLog("$task_name end");
 	printf "$task_name done in %.2f seconds\n", $duration;
 }
 

@@ -54,7 +54,10 @@ sub slashdLog {
 	local *LOG;
 	my $file = "$constants->{logdir}/slashd.log";
 	open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
-	print LOG localtime() . "\t", join("\t", @_), "\n";
+	my $log_msg = sprintf "%s\t%s\n", localtime(), join("\t", @_); 
+	# Collapse multiple ending carriage returns into one.
+	$log_msg =~ s/\n+$//;
+	print LOG "$log_msg\n";
 	close LOG;
 }
 
@@ -76,19 +79,21 @@ sub process_tasks {
 	my($cron) = @_;
 	%task = ( );
 
-	# "require" all the task files -- each will put its info into $task{"filename.pl"}
-
+	# "require" all the task files -- each will put its info into
+	# $task{"filename.pl"}
 	my %success = my %failure = ( );
 	my $dir = "$constants->{datadir}/tasks";
 	if (!-e $dir or !-d _ or !-r _) {
-		slashdLogDie("could not process task files in $dir, not readable to $>");
+		slashdLogDie(<<EOT);
+could not process task files in $dir, not readable to $>
+EOT
 	}
 
 	# Go through the files and require them all.  Each file will store its
-	# data and code in %task and execute any necessary initialization.  We also
-	# do some rudimentary checks of whether an attacker with guest access on
-	# this system could be feeding us bad code (the better solution, of course,
-	# is not to let attackers have local guest access).
+	# data and code in %task and execute any necessary initialization.  We
+	# also do some rudimentary checks of whether an attacker with guest
+	# access on this system could be feeding us bad code (the better 
+	# solution, of course, is not to let attackers have local guest access).
 
 	my $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE = 0;
 	if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
@@ -103,8 +108,9 @@ sub process_tasks {
 	for my $fullname (@files) {
 		if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
 			and (stat $fullname)[2] & 002) {
-			slashdLogDie("you really don't want me to use a task file",
-				"that's world-writable: $fullname");
+			slashdLogDie(<<EOT);
+you really don't want me to use a task file that's world-writable: $fullname
+EOT
 		}
 		my $file = basename($fullname);
 		my $ok = 0;
@@ -151,9 +157,8 @@ sub process_tasks {
 			: ""
 		)
 	);
-	if (!%task) {
-		slashdLogDie("aborting: no files successfully processed from $dir");
-	}
+	slashdLogDie("aborting: no files successfully processed from $dir")
+		if !%task 
 
 	# The appropriate data is in $task{"filename.pl"} -- write it all into
 	# the $cron object.

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/local/bin/perl -w
 
 use strict;
 my $me = 'run_moderatord.pl';
@@ -15,7 +15,6 @@ $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	slashdLog("$me begin");
 	if (! $constants->{allow_moderation}) {
 		slashdLog(<<EOT);
 $me - moderation system is inactive, no action performed
@@ -29,22 +28,30 @@ EOT
 			system("$moderatord $virtual_user");
 		} else {
 			slashdLog(<<EOT);
-$me cannot find $moderatord or not executable
+$me - cannot find $moderatord or not executable
 EOT
 
 		}
 		reconcileM2($constants, $slashdb);
 	}
-	slashdLog("$me end");
 
 };
 
 
 sub reconcileM2 {
 	my($constants, $slashdb) = @_;
+	# We load the optional plugin object here, so we save a few cycles, 
+	# rather than loading it constantly in a lower scope.
+	my $messages;
+	#my $messages = getObject('Slash::Messages');
 
-	for my $m2id ($slashdb->getMetamodIDs()) {
-		my $m2_list = $slashdb->getMetaModerations($_);
+	my $m2ids = $slashdb->getMetamodIDs();
+	slashdLog(
+		sprintf "$me - Iterating from %ld to %ld in lots of (%d)",
+			$m2ids->[0], $m2ids->[-1], $constants->{m2_batchsize}
+	);
+	for my $m2id (@{$m2ids}) {
+		my $m2_list = $slashdb->getMetaModerations($m2id);
 		my %m2_votes;
 		my(@con, @dis);
 
@@ -55,6 +62,8 @@ sub reconcileM2 {
 		my @rank = sort { 
 			$m2_votes{$a} <=> $m2_votes{$b}
 		} keys %m2_votes;
+		# Prevent errors due to undef'd value.
+		map { $m2_votes{$_} ||= 0 } @rank;
 		my($con, $dis) = @{%m2_votes}{@rank};
 		next if $con+$dis == 0;
 		my($con_avg, $dis_avg) = ($con/($con+$dis), $dis/($con+$dis));
@@ -69,7 +78,7 @@ sub reconcileM2 {
 		}
 
 		# Try to penalize suspicious M2 behavior.
-		if ($dis_avg < $constants->{m2_minority_trigger}) {
+		if ($dis && $dis_avg < $constants->{m2_minority_trigger}) {
 			# Penalty cost is the dissension cost per head
 			# of each dissenter.
 			my $penalty = int(
@@ -77,7 +86,7 @@ sub reconcileM2 {
 				$constants->{m2_dissension_penalty}
 			);
 			for (@dis) {
-				setUser($_->[0], {
+				$slashdb->setUser($_->[0], {
 					-karma => "karma-$penalty",
 				});
 
@@ -89,6 +98,10 @@ sub reconcileM2 {
 				$slashdb->updateM2Flag($_->[1], 8);
 			}
 		}
+		
+		slashdLog(sprintf <<EOT, $con, $con_avg, $dis,$dis_avg);
+$me - $m2id: CON=%d (%6.4f) DIS=%d (%6.4f)
+EOT
 
 		# Dole out reward among the consensus if there is a clear
 		# victory. Note that a user only gets the optional message
@@ -107,7 +120,7 @@ sub reconcileM2 {
 				# pool as a default, if you want a random
 				# distribution across users, uncomment
 				# the first line and comment out the second.
-				setUser($_, {
+				$slashdb->setUser($_, {
 					# Uncomment only one of these at a time!
 					#-karma => "karma+$slots{$_}",
 					-karma => "karma+1",
@@ -119,23 +132,20 @@ sub reconcileM2 {
 				$slashdb->getModeratorLog($m2_list->[0]{mmid});
 			if ($modlog->{val} eq $rank[0]) {
 				my $mod_karma =
-					getUser($m2_list->[0]{uid}, 'karma');
-				setUser($m2_list->[0]{uid}, {
+					$slashdb->getUser($m2_list->[0]{uid}, 'karma');
+				$slashdb->setUser($m2_list->[0]{uid}, {
 					karma => $mod_karma + 1,
 				});
 			}
 
 			# Optional: Send message to original moderator 
 			# indicating results of metamoderation.
-			my $messages = getObject('Slash::Messages');
 			if ($messages) {
 				# Why is there no $slashdb->getComment($cid)?
 				# doesn't seem it is needed -- pudge
 				my $comment = $slashdb->getComments(
 					$modlog->{sid}, $modlog->{cid}
 				);
-				# not used? -- pudge
-				my $m_user = getUser($modlog->{uid});
 
 				# Unfortunately, the template must be aware
 				# of the valid states of $modlog->{val}, but
@@ -161,8 +171,12 @@ sub reconcileM2 {
 
 		# Mark remaining entries with a '0' which means that they have
 		# been processed.
-		$slashdb->clearM2Flag($m2id);
+		#$slashdb->clearM2Flag($m2id);
 	}
+	slashdLog(<<EOT) if scalar @{$m2ids};
+$me - Metamoderation processed @{[scalar @{$m2ids}]} discussions.
+EOT
+
 }
 
 1;

@@ -368,6 +368,7 @@ INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Las
 INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/www.example.com/logs','Where should the logs be found?');
 INSERT INTO vars (name, value, description) VALUES ('m1_pointgrant_end', '0.167', 'Starting percentage into the pool of eligible moderators (used by moderatord');
 INSERT INTO vars (name, value, description) VALUES ('m1_pointgrant_start', '0.8888', 'Ending percentage into the pool of eligible moderators (used by moderatord');
+INSERT INTO vars (name, value, description) VALUES ('m2_batchsize', 800, 'Maximum number of moderations processed for M2 reconciliation per execution of moderation daemon.');
 INSERT INTO vars (name, value, description) VALUES ('m2_bonus','+1','Bonus for participating in meta-moderation');
 INSERT INTO vars (name, value, description) VALUES ('m2_comments','10','Number of comments for meta-moderation');
 INSERT INTO vars (name, value, description) VALUES ('m2_consensus_trigger', '0.75', 'Weighted average of consensus votes to dissentor votes which determines a "clear victory" in M2.');

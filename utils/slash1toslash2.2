@@ -145,9 +145,9 @@ EOT
 			# Reset the flag only if necessary. Pretty much we
 			# want to set things dirty and let slashd clean up
 			# as much of it as it can.
-			$data->{flags} = $story_hash->{$data->{sid}}{flags}
-				unless
-				$story_hash->{$data->{sid}}{writestatus} == 1;
+			$data->{flags} =
+				$story_hash->{$data->{sid}}{flags} || ''
+			unless $story_hash->{$data->{sid}}{writestatus} == 1;
 		}
 
 		$data->{'ALLOWED_FIELDS'} = [qw(
@@ -1114,7 +1114,7 @@ EOT
 	# Now update discussion_hitparade...
 	print "Updating story comment counts...";
 	$sth_d = $dbh_new->prepare(<<EOT);
-SELECT id FROM discussions WHERE flags='hitparade_dirty'
+SELECT id FROM discussions WHERE FLAG_IN_SET(flags, 'hitparade_dirty')
 EOT
 
 	$sth_d->execute();

@@ -281,10 +281,16 @@ my $strip_mode = sub {
 	return sub { strip_mode($_[0], @args) };
 };
 
+# Note that the strip_anchor filter really isn't all
+# that necessary if you know how to edit templates.
+# However, it's better if you have a specific style 
+# for a template and you don't want your tags running
+# up against each other.		- Cliff 8/1/01
 my $filters = Template::Filters->new({
 	FILTERS => {
 		fixparam	=> \&fixparam,
 		fixurl		=> \&fixurl,
+		strip_anchor	=> \&strip_anchor,
 		strip_attribute	=> \&strip_attribute,
 		strip_code	=> \&strip_code,
 		strip_extrans	=> \&strip_extrans,

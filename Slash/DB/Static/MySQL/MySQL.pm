@@ -631,6 +631,7 @@ sub getMetamodIDs {
 	my $list = $self->sqlSelectAll(
 		'mmid', 'metamodlog', 
 		"TO_DAYS(CURDATE())-TO_DAYS(ts) >= $num_days AND flag=10",
+		"order by mmid LIMIT $constants->{m2_batchsize}"
 	);
 	# Flatten the returned list out to a simple list of mmids.
 	my(@returnable) = map { $_ = $_->[0] } @{$list};
@@ -709,7 +710,7 @@ sub clearM2Flag {
 	# state.
 	$self->sqlUpdate('metamodlog', {
 		-flag => '0',
-	}, "where flag=10 and id=$id");
+	}, "flag=10 and id=$id");
 }
 
 ########################################################

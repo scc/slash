@@ -53,6 +53,7 @@ use vars qw($VERSION @EXPORT);
 	getArmoredEmail
 	html2text
 	root2abs
+	strip_anchor
 	strip_attribute
 	strip_code
 	strip_extrans
@@ -84,6 +85,7 @@ use constant PLAINTEXT	=> 1;
 use constant HTML	=> 2;
 use constant EXTRANS	=> 3;
 use constant CODE	=> 4;
+use constant ANCHOR	=> 5;
 
 #========================================================================
 
@@ -417,9 +419,19 @@ but " marks are also converted to their HTML entity.
 Similar to 'extrans', but does not translate < and >
 and & first (so C<stripBadHtml> is called first).
 
+=item anchor
+
+Removes ALL whitespace from inside the filter. It's
+is indented for use (but not limited to) the removal
+of white space from in side HREF anchor tags to 
+prevent nasty browser artifacts from showing up in
+the display. (Note: the value of NO_WHITESPACE_FIX 
+is ignored)
+
 =item html (or anything else)
 
 Just runs through C<stripBadHtml>.
+
 
 =item NO_WHITESPACE_FIX
 
@@ -443,7 +455,8 @@ The manipulated string.
 sub stripByMode {
 	my($str, $fmode, $no_white_fix) = @_;
 	$fmode ||= NOHTML;
-	$no_white_fix = defined($no_white_fix) ? $no_white_fix : $fmode == LITERAL;
+	$no_white_fix = defined($no_white_fix) ?
+		$no_white_fix : $fmode == LITERAL;
 
 	# insert whitespace into long words, convert <>& to HTML entities
 	if ($fmode == LITERAL || $fmode == EXTRANS || $fmode == ATTRIBUTE || $fmode == CODE) {
@@ -488,7 +501,11 @@ sub stripByMode {
 	# convert HTML attribute to allowed text (just convert ")
 	} elsif ($fmode == ATTRIBUTE) {
 		$str =~ s/"/&#34;/g;
-
+	# for use in templates to remove whitespace from inside HREF anchors.
+	} elsif ($fmode == ANCHOR) {
+		# The ever popular Portable-CR/LF-Removal. The one below
+		# is NOT very portable, but should work fine for Slashdot.
+		$str =~ s/\n+//g;
 	# probably 'html'
 	} else {
 		$str = stripBadHtml($str);
@@ -500,6 +517,8 @@ sub stripByMode {
 
 
 #========================================================================
+
+=head2 strip__anchor(STRING [, NO_WHITESPACE_FIX])
 
 =head2 strip_attribute(STRING [, NO_WHITESPACE_FIX])
 
@@ -534,6 +553,7 @@ sub strip_mode {
 	return stripByMode($string, $mode, @args);
 }
 
+sub strip_anchor	{ stripByMode($_[0], ANCHOR,    @_[1 .. $#_]) }
 sub strip_attribute	{ stripByMode($_[0], ATTRIBUTE,	@_[1 .. $#_]) }
 sub strip_code		{ stripByMode($_[0], CODE,	@_[1 .. $#_]) }
 sub strip_extrans	{ stripByMode($_[0], EXTRANS,	@_[1 .. $#_]) }

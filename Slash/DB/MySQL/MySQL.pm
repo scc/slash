@@ -948,6 +948,7 @@ sub createUser {
 	$self->sqlInsert("users_info", {
 		uid 			=> $uid,
 		-lastaccess		=> 'now()',
+		-created_at		=> 'now()',
 	});
 	$self->sqlInsert("users_prefs", { uid => $uid });
 	$self->sqlInsert("users_comments", { uid => $uid });
@@ -963,16 +964,19 @@ sub createUser {
 	#	- Cliff
 	# Initialize the expiry variables...
 	# ...users start out as registered...
-	# ...the default email view is to SHOW email address... (not anymore - Jamie)
+	# ...the default email view is to SHOW email address... 
+	#	(not anymore - Jamie)
 	my $constants = getCurrentStatic();
+
+	# editComm;users;default knows that the default emaildisplay is 0...
+	# ...as it should be
 	$self->setUser($uid, {
 		'registered'		=> 1,
 		'expiry_comm'		=> $constants->{min_expiry_comm},
 		'expiry_days'		=> $constants->{min_expiry_days},
 		'user_expiry_comm'	=> $constants->{min_expiry_comm},
 		'user_expiry_days'	=> $constants->{min_expiry_days},
-#		'emaildisplay'		=> 2, # editComm;users;default knows that the default emaildisplay is 0, as it should be
-		'created_on'		=> scalar localtime(),
+#		'emaildisplay'		=> 2, 
 	});
 
 	return $uid;
@@ -1630,7 +1634,8 @@ sub deleteStory {
 	my $sid_quoted = $self->sqlQuote($sid);
 	my @tables = qw( discussions stories );
 	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
-	# Note that (if there is a heap) the order is: discussions, stories, story_heap
+	# Note that (if there is a heap) the order is:
+	#	discussions, stories, story_heap
 	# for best attempt at atomicity.
 	for my $table (@tables) {
 		$self->sqlUpdate(
@@ -1647,7 +1652,8 @@ sub undeleteStory {
 	my $sid_quoted = $self->sqlQuote($sid);
 	my @tables = qw( discussions stories );
 	push @tables, "story_heap" if getCurrentStatic('mysql_heap_table');
-	# Note that (if there is a heap) the order is: discussions, stories, story_heap
+	# Note that (if there is a heap) the order is:
+	#	discussions, stories, story_heap
 	# for best attempt at atomicity.
 	for my $table (@tables) {
 		$self->sqlUpdate(

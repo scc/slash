@@ -471,7 +471,7 @@ sub getWebByUID {
 
 #========================================================================
 
-=head2 gets(ID)
+=head2 get(ID)
 
 Get message with ID from messages queue.
 
