@@ -34,12 +34,13 @@ sub main {
 	getSlash();
 
 	# Set some defaults
-	$I{F}{query}	||= "";
-	$I{F}{section}	||= "";
-	$I{F}{op}	||= "";
-	$I{F}{min}	||= "0";
-	$I{F}{max}	||= "30";
-	$I{F}{'last'}	||= $I{F}{min} + $I{F}{max};
+	$I{F}{query}		||= "";
+	$I{F}{section}		||= "";
+	$I{F}{op}		||= "";
+	$I{F}{min}		||= "0";
+	$I{F}{max}		||= "30";
+	$I{F}{threshold}	||= $I{U}{threshold};
+	$I{F}{'last'}		||= $I{F}{min} + $I{F}{max};
 
 	# get rid of bad characters
 	$I{F}{query} =~ s/[^A-Z0-9'. ]//gi;
@@ -157,7 +158,7 @@ EOT
 
 	my $search = $I{dbobject}->getSearch($I{F}, $I{U});
 	my $x = $I{F}{min};
-	for(@$search) {
+	for (@$search) {
 		my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,
 		$cdate, $uid, $cid, $match) = @$_;
 		last if $I{F}{query} && !$match;
@@ -194,27 +195,36 @@ sub userSearch {
 		'link'	=> "<B>$I{F}{min} previous matches...</B>",
 		min	=> $prev
 	}), "<P>" if $prev >=0;
-	
-	my $c = sqlSelectMany("fakeemail,nickname,uid," .
-		keysearch($I{F}{query},"nickname"),
-		"users", "", "ORDER BY kw DESC LIMIT $I{F}{min}, $I{F}{max}"
-	) if $I{F}{query};
+
+	# userSearch REALLY doesn't need to be ordered by keyword since you 
+	# only care if the substring is found.
+	my $sqlquery = "SELECT fakeemail,nickname,uid ";
+	$sqlquery .= " FROM users WHERE uid > 0 ";
+	if ($I{F}{query}) {
+		my $kw = keysearch($I{F}{query}, 'nickname', 'ifnull(fakeemail,"")');
+		$kw =~ s/as kw$//;
+		$kw =~ s/\+/ OR /g;
+		$sqlquery .= "AND ($kw) ";
+	}
+	$sqlquery .= "ORDER BY uid LIMIT $I{F}{min}, $I{F}{max}";
+	my $c = $I{dbh}->prepare($sqlquery);
+	undef $c unless $c->execute;
+
 	return unless $c;
 
 	my $total = $c->{rows};
 	my($x, $cnt) = 0;
 
 	while(my $N = $c->fetchrow_hashref) {
-		last unless $N->{kw};
 		my $ln = $N->{nickname};
 		$ln =~ s/ /+/g;
 
 		my $fake = $N->{fakeemail} ? <<EOT : '';
-	<A HREF="mailto:$N->{fakeemail}">$N->{fakeemail}</A>
+	email: <A HREF="mailto:$N->{fakeemail}">$N->{fakeemail}</A>
 EOT
 		print <<EOT;
-<LI><A HREF="$I{rootdir}/users.pl?nick=$ln">$N->{nickname}</A> &nbsp;
-($N->{uid}) $fake</LI>
+<A HREF="$I{rootdir}/users.pl?nick=$ln">$N->{nickname}</A> &nbsp;
+($N->{uid}) $fake<BR>
 EOT
 
 		$x++;
@@ -224,11 +234,10 @@ EOT
 
 	print "No Matches Found for your query" if $x < 1;
 
-	my $remaining = $total - $I{F}{'last'};
+	print "<P>";
 	print linkSearch({
-#		'link'	=> "<B>$remaining matches left</B>",
 		'link'	=> "<B>More matches...</B>",
-		min	=> $I{F}{'last'}
+		min	=> $I{F}{'last'},
 	}) unless !$x || $x < $I{F}{max};
 }
 
@@ -240,14 +249,13 @@ sub storySearch {
 		min	=> $prev
 	}), "<P>" if $prev >= 0;
 
-	my $sqlquery = "SELECT aid,title,sid," .
-			getDateFormat("time", "t", $I{U}) .
-			", commentcount,section ";
+	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
+		", commentcount,section ";
 	$sqlquery .= "," . keysearch($I{F}{query}, "title", "introtext") . " "
 		if $I{F}{query};
 	$sqlquery .="	,0 " unless $I{F}{query};
 
-	if ($I{F}{query}) {
+	if ($I{F}{query} || $I{F}{topic}) {
 		$sqlquery .= "  FROM stories ";
 	} else {
 		$sqlquery .= "  FROM newstories ";
@@ -258,17 +266,17 @@ WHERE ((displaystatus = 0 and "$I{F}{section}"="")
         OR (section="$I{F}{section}" and displaystatus>=0))
 EOT
 
-	$sqlquery .= "   AND time < now() AND writestatus >= 0  ";
-	$sqlquery .= "   AND aid="	. $I{dbh}->quote($I{F}{author})
+	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
+	$sqlquery .= "   AND aid=" . $I{dbh}->quote($I{F}{author})
 		if $I{F}{author};
-	$sqlquery .= "   AND section="	. $I{dbh}->quote($I{F}{section})
+	$sqlquery .= "   AND section=" . $I{dbh}->quote($I{F}{section})
 		if $I{F}{section};
-	$sqlquery .= "   AND tid="	. $I{dbh}->quote($I{F}{topic})
+	$sqlquery .= "   AND tid=" . $I{dbh}->quote($I{F}{topic})
 		if $I{F}{topic};
 
 	$sqlquery .= " ORDER BY ";
 	$sqlquery .= " kw DESC, " if $I{F}{query};
-	$sqlquery .= " time DESC LIMIT $I{F}{min},$I{F}{max} ";
+	$sqlquery .= " time DESC LIMIT $I{F}{min},$I{F}{max}";
 
 #	print "<P><TT>$sqlquery</TT></P>";
 
@@ -297,7 +305,6 @@ EOT
 
 	my $remaining = "";
 	print "<P>", linkSearch({
-#		'link'	=> "<B>$remaining matches left</B>",
 		'link'	=> "<B>More Articles...</B>",
 		min	=> $I{F}{'last'}
 	}) unless !$x || $x < $I{F}{max};

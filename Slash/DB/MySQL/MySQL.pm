@@ -1319,21 +1319,21 @@ my ($self) = @_;
 
 ########################################################
 sub setQuickies {
-my ($self, $content) = @_;
+	my($self, $content) = @_;
 	$self->sqlInsert("submissions", {
-			subid => 'quickies',
-			subj  => 'Generated Quickies',
-			email => '',
-			name  => '',
-			-'time' => 'now()',
-			section => 'articles',
-			tid => 'quickies',
-			story => $content,
-		});
+		subid	=> 'quickies',
+		subj	=> 'Generated Quickies',
+		email	=> '',
+		name	=> '',
+		-'time'	=> 'now()',
+		section	=> 'articles',
+		tid	=> 'quickies',
+		story	=> $content,
+	});
 }
 ########################################################
 sub getSubmission {
-	my ($self, $dateformat, $form, $user) = @_;
+	my($self, $dateformat, $form, $user) = @_;
 	my $sql = "SELECT subid, subj, date_format($dateformat, 'm/d  H:i'), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
 	$sql .= $form->{note} ? "note=" . $self->{dbh}->quote($form->{note}) : "isnull(note)";
@@ -1354,7 +1354,7 @@ sub getSubmission {
 
 ########################################################
 sub getSearch{
-	my ($self, $form, $user) =  @_;
+	my($self, $form, $user) =  @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
