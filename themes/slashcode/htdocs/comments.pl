@@ -40,6 +40,7 @@ sub main {
 
 	# maybe do an $op = lc($form->{'op'}) to make it simpler?
 	# just a thought.  -- pudge
+	# Not a bad idea actually --Brian
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -406,9 +407,15 @@ sub previewForm {
 
 ##################################################################
 # Saves the Comment
+# A note, right now form->{sid} is a discussion id, not a
+# story id.
 sub submitComment {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 	my $error_message;
+
+	if (COMMENTS_ARCHIVE == $slashdb->getDiscussion($form->{sid}, 'type')) {
+		return;
+	}
 
 	unless (checkFormPost("comments",
 		$constants->{post_limit},
@@ -489,7 +496,7 @@ sub submitComment {
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 			if (@$users) {
 				my $reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
-				my $story = $slashdb->getStory($form->{sid});
+				my $story = $slashdb->getStory($sid);
 				my $data  = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },

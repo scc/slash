@@ -74,7 +74,7 @@ __template__
 	[% END %]
 	[% lcp %]
 
-[% IF can_moderate %]
+[% IF can_moderate && user.mode != 'archive' %]
 	<TR><TD>
 		<P>Have you read the
 		<A HREF="[% constants.rootdir %]/moderation.shtml">Moderator Guidelines</A>

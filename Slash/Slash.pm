@@ -33,6 +33,10 @@ use Slash::Utility;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
+use constant COMMENTS_OPEN 	=> 0;
+use constant COMMENTS_RECYCLE 	=> 1;
+use constant COMMENTS_ARCHIVE 	=> 2;
+
 $VERSION   = '2.001000';  # v2.1.0
 # note: those last two lines of functions will be moved elsewhere
 @EXPORT	   = qw(
@@ -266,10 +270,16 @@ print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($
 		$cc = $comments->[$cid || $pid]{visiblekids};
 	}
 
+	$user->{mode} = 'archive' if $discussion->{type} == COMMENTS_ARCHIVE;
+
 	$lvl++ if $user->{mode} ne 'flat' && $user->{mode} ne 'archive'
 		&& $cc > $user->{commentspill}
 		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
 
+
+	if($user->{mode} eq 'archive') {
+		slashDisplay('printCommNoArchive');
+	}
 
 	slashDisplay('printCommentsMain', {
 		comments	=> $comments,

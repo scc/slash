@@ -94,7 +94,9 @@ __template__
 	[% END %]
 
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
-		<INPUT TYPE="submit" NAME="op" VALUE="Reply">
+		[% IF user.mode != 'archive' %]
+			<INPUT TYPE="submit" NAME="op" VALUE="Reply">
+		[% END %]
 	</TD></TR>
 	<TR><TD BGCOLOR="[% user.bg.3 %]" ALIGN="CENTER">
 		<FONT COLOR="[% user.fg.3 %]" SIZE="1">
