@@ -830,6 +830,10 @@ sub setStoryCount {
 		-commentcount	=> "commentcount-$count",
 		writestatus	=> 1
 	}, 'sid=' . $self->{_dbh}->quote($sid));
+	$self->sqlUpdate('newstories', {
+		-commentcount	=> "commentcount-$count",
+		writestatus	=> 1
+	}, 'sid=' . $self->{_dbh}->quote($sid));
 }
 
 ########################################################
@@ -1203,6 +1207,8 @@ sub deleteStoryAll {
 ########################################################
 sub setStory {
 	_genericSet('stories', 'sid', 'story_param', @_);
+	# ??? should we do this?  -- pudge
+	_genericSet('newstories', 'sid', 'story_param', @_);
 }
 
 ########################################################
