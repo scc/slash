@@ -609,7 +609,7 @@ sub currentAdminUsers {
 
 	my $aids = $slashdb->currentAdmin();
 	for (@$aids) {
-		if ($_->[0] eq $user->{aid}) {
+		if ($_->[0] eq $user->{nickname}) {
 		    $_->[1] = "-";
 		} elsif ($_->[1] <= 99) {
 		    $_->[1] .= "s";

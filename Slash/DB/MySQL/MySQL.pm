@@ -1470,8 +1470,8 @@ sub checkForm {
 # Current admin users
 sub currentAdmin {
 	my($self) = @_;
-	my $aids = $self->sqlSelectAll('uid,now()-lasttime,lasttitle', 'sessions',
-		'uid=uid GROUP BY uid'
+	my $aids = $self->sqlSelectAll('nickname,now()-lasttime,lasttitle', 'sessions,users',
+		'sessions.uid=users.uid GROUP BY sessions.uid'
 	);
 
 	return $aids;
@@ -2530,12 +2530,6 @@ sub getStory {
 ########################################################
 sub getAuthor {
 	my($self, $id, $values, $cache_flag) = @_;
-	unless (getCurrentStatic('cache_enabled')) {
-		my $answer = $self->sqlSelectHashref('uid,nickname,fakeemail', 
-				'users', 'uid=' . $self->{_dbh}->quote($id));
-		return $answer;
-	}
-
 	my $table = 'authors';
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
@@ -2563,7 +2557,7 @@ sub getAuthor {
 	# -Brian
 	$self->{$table_cache}{$id} = {};
 	my $answer = $self->sqlSelectHashref('users.uid as uid,nickname,fakeemail,bio', 
-			'users,users_info', 'uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
+			'users,users_info', 'users.uid=' . $self->{_dbh}->quote($id) . ' AND users.uid = users_info.uid');
 	$self->{$table_cache}{$id} = $answer;
 
 	$self->{$table_cache_time} = time();
@@ -2584,15 +2578,6 @@ sub getAuthor {
 # This of course is modified from the norm
 sub getAuthors {
 	my($self, $cache_flag) = @_;
-	unless (getCurrentStatic('cache_enabled')) {
-		my %authors;
-		my $sth = $self->sqlSelectMany('users.uid as uid,nickname,fakeemail,bio', 'users,users_info', 'users.seclev >= 99 AND users.uid = users_info.uid');
-		while (my $row = $sth->fetchrow_hashref) {
-			$authors{ $row->{'uid'} } = $row;
-		}
-		
-		return \%authors;
-	}
 
 	my $table = 'authors';
 	my $table_cache= '_' . $table . '_cache';

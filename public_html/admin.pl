@@ -785,9 +785,6 @@ sub otherLinks {
 	my($aid, $tid) = @_;
 
 	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
 
 
 	my $topic = $slashdb->getTopic($tid);
@@ -864,7 +861,7 @@ sub editStory {
 
 		$constants->{currentSection} = $tmp;
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
-			. otherLinks($storyref->{aid}, $storyref->{tid});
+			. otherLinks($slashdb->getAuthor($storyref->{aid}, 'nickname'), $storyref->{tid});
 
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
 
@@ -882,6 +879,8 @@ sub editStory {
 
 		$storyref->{'time'} = $slashdb->getTime();
 		# hmmm. I don't like hardcoding these PMG 10/19/00
+		# I would agree. How about setting defaults in vars
+		# that can be override? -Brian
 		$storyref->{tid} ||= 'news';
 		$storyref->{section} ||= 'articles';
 
@@ -898,8 +897,8 @@ sub editStory {
 
 	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
 
-	unless ($user->{asection}) {
-		$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{asection};
+	unless ($user->{section}) {
+		$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
 	}
 
 	if ($user->{seclev} > 100 and $storyref->{aid}) {
@@ -912,7 +911,7 @@ sub editStory {
 
 	$locktest = lockTest($storyref->{title});
 
-	unless ($user->{asection}) {
+	unless ($user->{section}) {
 		my $description = $slashdb->getDescriptions('displaycodes');
 		$displaystatus_select = createSelect('displaystatus', $description, $storyref->{displaystatus},1);
 	}
@@ -1019,7 +1018,7 @@ sub listStories {
 
 		$yesterday = $td;
 
-		unless ($user->{asection} || $form->{section}) {
+		unless ($user->{section} || $form->{section}) {
 			$sectionflag = 1;
 			$substrsection = substr($section,0,5) 
 		}
@@ -1167,8 +1166,8 @@ sub updateStory {
 	my $constants = getCurrentStatic();
 
 	# Some users can only post to a fixed section
-	if ($user->{asection}) {
-		$form->{section} = $user->{asection};
+	if ($user->{section}) {
+		$form->{section} = $user->{section};
 		$form->{displaystatus} = 1;
 	}
 
@@ -1179,7 +1178,7 @@ sub updateStory {
 	($form->{aid}) = $slashdb->getStory($form->{sid}, 'aid')
 		unless $form->{aid};
 	$form->{relatedtext} = getRelated("$form->{title} $form->{bodytext} $form->{introtext}")
-		. otherLinks($form->{aid}, $form->{tid});
+		. otherLinks($slashdb->getAuthor($form->{aid}, 'nickname'), $form->{tid});
 
 	$slashdb->updateStory();
 	titlebar('100%', getTitle('updateStory-title'));
@@ -1195,12 +1194,12 @@ sub saveStory {
 	my $constants = getCurrentStatic();
 
 	$form->{sid} = getsid();
-	$form->{displaystatus} ||= 1 if $user->{asection};
-	$form->{section} = $user->{asection} if $user->{asection};
+	$form->{displaystatus} ||= 1 if $user->{section};
+	$form->{section} = $user->{section} if $user->{section};
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
-	) . otherLinks($user->{uid}, $form->{tid});
+	) . otherLinks($user->{nickname}, $form->{tid});
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	$slashdb->saveStory();

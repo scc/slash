@@ -130,7 +130,7 @@ sub previewForm {
 		$sub->{email} = "http://$sub->{email}";
 	}
 
-	$slashdb->setSessionByAid($user->{aid}, { lasttitle => $sub->{subj} });
+	$slashdb->setSession($user->{uid}, { lasttitle => $sub->{subj} });
 
 	slashDisplay('submit-previewForm', {
 		submission	=> $sub,
