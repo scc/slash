@@ -301,10 +301,24 @@ if ($driver eq 'oracle') {
 #}
 #close $dump;
 #
-for (@sql) {
-	next unless $_;
-	unless ($dbh->do($_)) {
-		print "Failed on :$_:\n";
+for my $cmd (@sql) {
+	next unless $cmd;
+	my $rows_affected = $dbh->do($cmd);
+	if (!$rows_affected) {
+		# It's very bad if a CREATE TABLE does nothing.
+		if ($cmd =~ /^CREATE TABLE/) {
+			die <<EOT;
+The CREATE TABLE command below failed.  This almost certainly means
+the rest of the slashsite installation will fail, so we're aborting.
+This is probably because your SQL user associated with your
+DBIx::Password user '$opts{u}' lacks CREATE and/or DROP permissions.
+Fix this, or whatever the problem is, and rerun $PROGNAME.
+Failed command: $cmd
+EOT
+		}
+		# It's OK if a DROP TABLE does nothing, that just means
+		# the table wasn't there to begin with.
+		print "Failed on '$cmd'\n" unless $cmd =~ /^DROP TABLE/;
 	}
 }
 
@@ -367,7 +381,7 @@ find(sub { chown $owner_id, $group_id, $_ unless -l $_ }, "$prefix_site/$sitenam
 
 # Install spamarmors for a given site. This can be recoded/moved/whatever
 # if this code is inappropriate, for whatever reason.
-system("$PREFIX/bin/reload_armor -u $opts{'u'}");
+system("$PREFIX/bin/reload_armor -u $opts{'u'} -q");
 apache_site_conf();
 
 $dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename/logs") . " WHERE name = 'logdir'");

@@ -191,7 +191,7 @@ sub get_next_event {
 		my $timespec = $task{$file}{timespec};
 		my $entry_time = $cron->get_next_execution_time($timespec, $time);
 		if ($entry_time < $time) {
-			slashdLog("error: entry_time in the past ($entry_time < $time) $file $timespec $min_time");
+			slashdLog("error: entry_time in the past ($entry_time < $time) $file $timespec $min_time - check TZ");
 			next;
 		}
 		if ($entry_time < $min_time) {
@@ -215,6 +215,13 @@ sub main {
 	slashdLogInit();
 	slashdPid();
 	slashdLog("Starting up Slashd with pid $$");
+	if ($ENV{TZ} ne 'GMT') {
+		slashdLog(join(" ",
+			"Note: \$ENV{TZ}='$ENV{TZ}' not GMT, this may cause",
+			"'entry_time in the past' errors; did you not start",
+			"slashd with the init script?"
+		));
+	}
 
 	my $cron = init_cron();
 	process_tasks($cron);

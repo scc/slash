@@ -17,7 +17,7 @@ my $PROGNAME = basename($0);
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hvu:', \%opts);
+usage('Options used incorrectly') unless getopts('hvqu:', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
 $opts{'u'} ||= 'slash';
@@ -43,7 +43,7 @@ $opts{'u'} ||= 'slash';
 	}
 
 	if (my $n = $inst->reloadArmors($armors)) {
-		print "$n armoring codes loaded into database.\n";
+		print "$n armoring codes loaded into database.\n" unless $opts{'q'};
 	}
 }
 
@@ -87,6 +87,7 @@ sub readArmorFile {
 
 
 sub usage {
+	return if $opts{'q'};
 	print "*** $_[0]\n" if $_[0];
 	# Remember to doublecheck these match getopts()!
 	print <<EOT;
@@ -97,6 +98,7 @@ SHORT PROGRAM DESCRIPTION
 
 Main options:
 	-h	Help (this message)
+	-q	Quiet (no output to STDOUT)
 	-v	Version
 	-u	Virtual user (default is "slash")
 
@@ -108,6 +110,7 @@ EOT
 }
 
 sub version {
+	return if $opts{'q'};
 	print <<EOT;
 
 $PROGNAME $VERSION

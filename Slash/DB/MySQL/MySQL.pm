@@ -2465,7 +2465,7 @@ sub getStoriesEssentials {
 	my $columns =
 		'sid, uid, commentcount, title, section, time, hits, hitparade';
 
-	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
+	my $where = "time < NOW() ";
 	$where .= "AND displaystatus=0 " unless $form->{section};
 	$where .= "AND (displaystatus>=0 AND section='$section') "
 		if $section_display;
@@ -2479,16 +2479,20 @@ sub getStoriesEssentials {
 	# Order
 	my $other = "ORDER BY time DESC ";
 
-	# With the change from newstories to story_heap, without a limit, here
-	# this will KILL your httpds with a resource bug.
-	$other .= "LIMIT $limit";
-	# This section of the code should be replace (or removed) when better
-	# story selection code is implemented (date_* functions + other logic...
-	# heck, this could probably even use a rewrite.
-	#
-	# - Cliff 7/2/01
+	# Since stories/story_heap may potentially have thousands of rows, we
+	# cannot simply select the whole table and cursor through it, it might
+	# seriously suck resources.  Normally we can just add a LIMIT $limit,
+	# but if we're in "issue" form we have to be careful where we're
+	# starting/ending so we only limit by time in the DB and do the rest
+	# in perl.
+	if (!$form->{issue}) {
+		$other .= "LIMIT $limit ";
+	} else {
+		my $tomorrow_str =  'DATEFORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
+		my $yesterday_str = 'DATEFORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
+		$where .= "AND '$form->{issue}' BETWEEN $tomorrow_str AND $yesterday_str ";
+	}
 
-	# We need to check up on this later for performance -Brian
 	my(@stories, $count);
 	my $cursor = $self->sqlSelectMany($columns, $table, $where, $other)
 		or errorLog("error in getStoriesEssentials columns $columns table $table where $where other $other");
@@ -2508,8 +2512,8 @@ sub getStoriesEssentials {
 		# If we're not back to the day the user asked for, skip it.
 		next if $form->{issue} and $row->{day} > $form->{issue};
 
-		# Expressions like this will make someone crosseyed! %)
-		# - Cliff
+		# Expressions like this will make someone crosseyed! %) - Cliff
+		# It just adds "mon" based on "MM" (see comment above) - Jamie
 		$row->{mon} = ${Date::Manip::Lang}{${Date::Manip::Cnf}{Language}}{MonL}[$row->{MM}-1];
 		formatDate([ $row ], 'time', 'wordytime', '%A %B %d %I %M %p');
 		push @stories, $row;

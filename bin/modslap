@@ -40,10 +40,10 @@ my $constants = getCurrentStatic();
 		}
 
 		print "Mod Slapping #$_...\n";
-		print "Revoking Points\n";
 		$slashdb->setUser($_, {
 			-karma	=> $constants->{badkarma},
 			-points	=> 0,
+			rtbl	=> 1,
 		});
 	}
 }
