@@ -1955,7 +1955,7 @@ sub checkSubmission {
 }
 
 ########################################################
-# Ok, in a CGI we need to set up enough of an
+# Ok, in a non CGI we need to set up enough of an
 # environment so that methods that are accustom
 # to Apache do not choke.
 sub createEnvironment {

@@ -2473,6 +2473,7 @@ sub getSlashConf {
 		sitename
 		siteowner
 		slogan
+		slashdir
 		smtp_server
 		stats_reports
 		stir
@@ -2824,7 +2825,8 @@ sub setUser {
 	$cache = _genericGetCacheName($self, $tables);
 
 	for (keys %$hashref) {
-		my $key = $self->{$cache}{$_};
+		my $clean_val =~ s/^-//;
+		my $key = $self->{$cache}{$clean_val};
 		if ($key) {
 			push @{$update_tables{$key}}, $_;
 		} else {
@@ -2864,7 +2866,8 @@ sub getUser {
 	if (ref($val) eq 'ARRAY') {
 		my($values, %tables, @param, $where, $table);
 		for (@$val) {
-			if ($self->{$cache}{$_}) {
+			my $clean_val =~ s/^-//;
+			if ($self->{$cache}{$clean_val}) {
 				$tables{$self->{$cache}{$_}} = 1;
 				$values .= "$_,";
 			} else {
@@ -2886,7 +2889,9 @@ sub getUser {
 		}
 
 	} elsif ($val) {
-		my $table = $self->{$cache}{$val};
+		my $clean_val = $val;
+		my $clean_val =~ s/^-//;
+		my $table = $self->{$cache}{$clean_val};
 		if ($table) {
 			($answer) = $self->sqlSelect($val, $table, "uid=$id");
 		} else {

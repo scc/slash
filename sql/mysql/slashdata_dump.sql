@@ -681,6 +681,7 @@ INSERT INTO vars VALUES ('badkarma','-10','Users get penalized for posts if karm
 INSERT INTO vars VALUES ('basedir','/usr/local/slash/public_html','Where should the html/perl files be found?',NULL,NULL);
 INSERT INTO vars VALUES ('basedomain','www.example.com','The URL for the site',NULL,NULL);
 INSERT INTO vars VALUES ('sbindir','/usr/local/slash/sbin','Where are the sbin scripts kept',NULL,NULL);
+INSERT INTO vars VALUES ('slashdir','/usr/local/slash','Directory where slash was installed',NULL,NULL);
 INSERT INTO vars VALUES ('block_expire','3600','Default expiration time for the block cache',NULL,NULL);
 INSERT INTO vars VALUES ('breaking','100','Undefined',NULL,NULL);
 INSERT INTO vars VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not',NULL,NULL);

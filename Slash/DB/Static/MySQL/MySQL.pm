@@ -163,7 +163,7 @@ sub updateStamps {
 
 	for (@{$E}) {
 		my $uid=$_->[0];
-		$self->setUser($uid, {lastaccess=>'now()'});
+		$self->setUser($uid, {-lastaccess=>'now()'});
 	}
 	$self->sqlDo("UNLOCK TABLES");
 }

@@ -69,7 +69,7 @@ for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys
 }
 
 $email .= "\n-----------------------\n";
-$email .= `$constants->{datadir}/bin/tailslash $virtual_user today`;
+#$email .= `$constants->{slashdir}/bin/tailslash $virtual_user today`;
 $email .= "\n-----------------------\n";
 
 
