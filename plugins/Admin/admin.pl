@@ -157,6 +157,8 @@ sub main {
 		templateEdit($user->{seclev}, $form->{thistpid}, $page, $section);
 
 	} elsif ($form->{templaterevert}) {
+		#Fuck! This is not right at all. Blocks is for blocks
+		#not templates! -Brian
 		$slashdb->revertBlock($form->{thistpid}) if $user->{seclev} < 500;
 		templateEdit($user->{seclev}, $form->{tpid}, $form->{page}, $form->{section});
 

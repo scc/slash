@@ -146,9 +146,6 @@ __template__
 		<TD VALIGN="TOP"><B>Template</B><BR>
 		<P>
 			<INPUT TYPE="SUBMIT" VALUE="Save Template" NAME="templatesave"><BR>
-			<INPUT TYPE="SUBMIT" NAME="templaterevert" VALUE="Revert to default">
-			<BR><INPUT TYPE="SUBMIT" NAME="templatesavedef" VALUE="Save as default">
-			(Make sure this is what you want!)
 		</P>
 		</TD>
 		<TD ALIGN="left" COLSPAN="2">
