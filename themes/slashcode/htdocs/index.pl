@@ -37,9 +37,9 @@ sub main {
 	$section->{mainsize} = int($section->{artcount} / 3);
 
 	my $title = getData('head', { section => $section });
-	header($title, $section->{section} || 'index');
+	header($title, $section->{section});
 
-	my $stories = $slashdb->getNewStories($section);
+	my $stories = $slashdb->getNewStories($section->{section});
 	my $Stories = displayStories($stories);
 	my $StandardBlocks = displayStandardBlocks($section, $stories);
 

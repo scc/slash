@@ -392,9 +392,10 @@ sub templateEdit {
 			}
 		}
 
-		# is this $page supposed to be in quotes?  single quotes?  -- pudge
-		my $pages = $slashdb->getDescriptions('pages', '$page', 1);
-		my $sections = $slashdb->getDescriptions('templatesections', '$section', 1);
+		# PatG, is this $page and $section supposed to be in single quotes?
+		# I removed them for now.  -- pudge
+		my $pages = $slashdb->getDescriptions('pages', $page, 1);
+		my $sections = $slashdb->getDescriptions('templatesections', $section, 1);
 
 		$pages->{All} = 'All';
 		$pages->{misc} = 'misc';

@@ -99,6 +99,9 @@ my %descriptions = (
 	'pages'
 		=> sub { $_[0]->sqlSelectMany('distinct page,page', 'templates') },
 
+	'templatesections'
+		=> sub { $_[0]->sqlSelectMany('distinct section,section', 'templates') },
+
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }
 
@@ -1820,12 +1823,14 @@ sub getComments {
 sub getNewStories {
 	my($self, $section, $limit, $tid, $section_display) = @_;
 
+	$section ||= $user->{currentSection};
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	$section_display ||= $form->{section};
 
-	$limit ||= $user->{currentSection} eq 'index'
-		? $user->{maxstories} : $self->getSection($section, 'artcount');
+	$limit ||= $section eq 'index'
+		? $user->{maxstories}
+		: $self->getSection($section, 'artcount');
 
 	my $tables = 'newstories';
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
