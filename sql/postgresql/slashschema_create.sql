@@ -4,7 +4,7 @@ CREATE TABLE abusers (
 	pagename varchar(20) DEFAULT '' NOT NULL,
 	ts datetime  DEFAULT '1970-01-01 00:00:00' NOT NULL,
 	reason varchar(120) DEFAULT '' NOT NULL,
-	querystring varchar(60) DEFAULT '' NOT NULL,
+	querystring varchar(200) DEFAULT '' NOT NULL,
 	PRIMARY KEY (abuser_id)
 );
 CREATE INDEX idx_host_name ON abusers(host_name);

@@ -27,7 +27,9 @@ drop table abusers;
 prompt create table abusers
 CREATE TABLE abusers (
   abuser_id          number(12),
-  host_name          varchar2(25)  DEFAULT '' NOT NULL,
+  user_id 	number (11) NOT NULL,
+  ipid          varchar2(32)  DEFAULT '' NOT NULL,
+  subnetid          varchar2(32)  DEFAULT '' NOT NULL,
   pagename           varchar2(20)  DEFAULT '' NOT NULL,
   ts                 date          DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
   reason             varchar2(120) DEFAULT '' NOT NULL,
@@ -42,12 +44,51 @@ prompt create sequence abusers_seq
 create sequence abusers_seq
     start with 1;
 
-prompt create index idx_host_name
-CREATE INDEX idx_host_name ON abusers(host_name);
+prompt create index idx_user_id
+CREATE INDEX idx_user_id ON abusers(user_id);
+
+prompt create index idx_ipid
+CREATE INDEX idx_ipid ON abusers(ipid);
+
+prompt create index idx_subnetid
+CREATE INDEX idx_subnetid ON abusers(subnetid);
 
 prompt create index idx_reason
 CREATE INDEX idx_reason ON abusers(reason);
 
+/**********************************************************
+* this table is for accesscontrol and is work in progress
+***********************************************************/
+
+prompt drop table accesslist
+drop table accesslist;
+
+prompt create table accesslist
+CREATE TABLE accesslist (
+  id		number(12),
+  user_id	number(12),
+  ipid		varchar2(32)	DEFAULT '' NOT NULL,
+  subnetid	varchar2(32)	DEFAULT '' NOT NULL,
+  formname	varchar2(20)	DEFAULT '' NOT NULL,
+  readonly	number(4)	DEFAULT '' NOT NULL,
+  isbanned	number(4)	DEFAULT '' NOT NULL,
+  ts		date		DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
+  reason	varchar2(120)	DEFAULT '' NOT NULL,
+  constraint	accesslist_pk	PRIMARY KEY (id)
+);
+
+CREATE INDEX idx_user_id ON accesslist(user_id);
+CREATE INDEX idx_ipid ON accesslist(ipid);
+CREATE INDEX idx_subnetid ON accesslist(subnetid);
+CREATE INDEX idx_formname ON accesslist(formname);
+CREATE INDEX idx_ts ON accesslist(ts);
+
+prompt drop sequence accesslist_seq
+drop sequence accesslist_seq;
+
+prompt create sequence accesslist_seq
+create sequence accesslist_seq
+       start with 1;
 
 /**********************************************************
 *  IMPORTANT NOTE
@@ -188,7 +229,8 @@ CREATE TABLE comments (
   cid          number(12)    DEFAULT 0  NOT NULL,
   pid          number(12)    DEFAULT 0  NOT NULL,
   comment_date date          DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
-  host_name    varchar2(30)  DEFAULT '0.0.0.0' NOT NULL,
+  ipid         char2(32)     DEFAULT '0.0.0.0' NOT NULL,
+  subnetid     char2(32)     DEFAULT '0.0.0.0' NOT NULL,
   subject      varchar2(50)  DEFAULT '' NOT NULL,
   comment_text clob          default empty_clob() not null,
   user_id      number(12)    NOT NULL,
@@ -203,6 +245,8 @@ CREATE INDEX idx_display ON comments(sid,points,user_id);
 CREATE INDEX idx_byname ON comments(user_id,points);
 CREATE INDEX idx_theusual ON comments(sid,user_id,points,cid);
 CREATE INDEX idx_countreplies ON comments(sid,pid);
+CREATE INDEX idx_ipid	ON comments(ipid);
+CREATE INDEX idx_subnetid ON comments(subnetid);
 
 
 prompt drop table content_filters
@@ -211,6 +255,7 @@ drop table content_filters;
 prompt create table content_filters
 CREATE TABLE content_filters (
   filter_id      number(12),
+  form 		varchar2(20) 	  DEFAULT ''NOT NULL,
   regex          varchar2(100)    DEFAULT '' NOT NULL,
   modifier       varchar2(5)      DEFAULT '' NOT NULL,
   field          varchar2(20)     DEFAULT '' NOT NULL,
@@ -218,11 +263,11 @@ CREATE TABLE content_filters (
   minimum_match  number(12)       DEFAULT 0 NOT NULL,
   minimum_length number(12)       DEFAULT 0 NOT NULL,
   err_message    varchar2(150)    DEFAULT '',
-  maximum_length number(12)       DEFAULT 0 NOT NULL,
   constraint contect_filers_pk PRIMARY KEY (filter_id)
 );
 CREATE INDEX idx_regex ON content_filters(regex);
 CREATE INDEX idx_field ON content_filters(field);
+CREATE INDEX idx_form ON content_filters(form);
 
 prompt drop sequence content_filters_seq
 drop sequence content_filters_seq;
@@ -266,8 +311,8 @@ CREATE TABLE formkeys (
   formname       varchar2(20) DEFAULT '' NOT NULL,
   id             varchar2(30) DEFAULT '' NOT NULL,
   sid            varchar2(30) DEFAULT '' NOT NULL,
+  ipid           char2(32) DEFAULT '0.0.0.0' NOT NULL,
   user_id        number(12)   NOT NULL,
-  host_name      varchar2(30) DEFAULT '0.0.0.0' NOT NULL,
   value          number(10)   DEFAULT 0 NOT NULL,
   cid            number(12)   DEFAULT 0 NOT NULL,
   ts             number(10)   DEFAULT 0 NOT NULL,
@@ -568,10 +613,14 @@ CREATE TABLE submissions (
   section             varchar2(30)   DEFAULT '' NOT NULL,
   submission_comment  varchar2(255),
   user_id             number(12)     DEFAULT 1 NOT NULL,
+  ipid			char2(32)     DEFAULT '0.0.0.0' NOT NULL,
+  subnetid		char2(32)     DEFAULT '0.0.0.0' NOT NULL,
   del                 number(6)      DEFAULT 0 NOT NULL,
   constraint submissions_pk PRIMARY KEY (subid)
 );
 CREATE INDEX idx_subid ON submissions(subid,section);
+CREATE INDEX idx_ipid ON submissions(ipid,section);
+CREATE INDEX idx_subnetid ON submissions(subnetid,section);
 
 
 prompt drop table templates

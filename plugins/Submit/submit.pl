@@ -121,6 +121,7 @@ sub genQuickies {
 
 #################################################################
 sub submissionEd {
+	# mmmm, code comments in here sure would be nice
 	my($title) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
@@ -155,6 +156,7 @@ sub submissionEd {
 
 	$all_sections{$def_section} = 1;
 
+	# self documentation, right?
 	@sections =	map  { [$_->[0], ($_->[0] eq $def_section ? '' : $_->[0])] }
 			sort { $a->[1] cmp $b->[1] }
 			map  { [$_, ($_ eq $def_section ? '' : $_)] }
@@ -246,7 +248,7 @@ sub displayForm {
 				last;
 			}
 			# run through compress test
-		 	if (! compressOk($form->{$_})) {
+		 	if (! compressOk('submissions', $_, $form->{$_})) {
 				# blammo luser
 				my $err = getData('compresserror');
 				titlebar('100%', $err);
@@ -276,8 +278,9 @@ sub saveSub {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
-	if (checkSubmission('submissions', $constants->{submission_speed_limit},
-		$constants->{max_submissions_allowed}, $id)
+	my $err_message = '';
+	if (checkFormPost('submissions', $constants->{submission_speed_limit},
+		$constants->{max_submissions_allowed}, $id, \$err_message)
 	) {
 		if (length($form->{subj}) < 2) {
 			titlebar('100%', getData('error'));
@@ -328,6 +331,8 @@ sub saveSub {
 			anonsubmit	=> length($form->{from}) < 3,
 			submissioncount	=> $slashdb->getSubmissionCount(),
 		});
+	} else {
+		print $err_message;
 	}
 }
 

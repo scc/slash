@@ -58,6 +58,11 @@ CASE "max posts" %]
 </B></P>
 [%
 
+# READ ONLY
+CASE "readonly" %]
+<b>You can't post to this page</b><br>
+[%
+
 # TROLL MESSAGE.
 CASE "troll message" %]
 This account or IP has been temporarily disabled. This means that either

@@ -19,6 +19,7 @@ sub main {
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $id = getFormkeyId($user->{uid});
+	
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -41,11 +42,18 @@ sub main {
 	}
 
 	if ($form->{op} eq "Submit") {
-		submitComment() if checkSubmission("comments",
+		my $err_message = '';
+		if (checkFormPost("comments",
 			$constants->{post_limit},
 			$constants->{max_posts_allowed},
-			$id
-		);
+			$id,
+			\$err_message))
+
+		{
+			submitComment(); 
+		} else {
+			print $err_message;
+		}
 
 	} elsif ($form->{op} eq "Edit" || $form->{op} eq "post" ||
 		$form->{op} eq "Preview" || $form->{op} eq "Reply") {
@@ -194,6 +202,13 @@ sub validateComment {
 	$$comm ||= $form->{postercomment};
 	$$subj ||= $form->{postersubj};
 
+	if ($slashdb->checkReadOnly('comments')) {
+		$$error_message = slashDisplay('errors', {
+			type =>	'readonly',
+		}, 1);
+		$form_success = 0;
+		editComment('', $$error_message), return unless $preview;
+	}
 
 	if (isTroll($user, $constants, $slashdb)) {
 		$$error_message = slashDisplay('errors', {
@@ -256,6 +271,7 @@ sub validateComment {
 		}
 	}
 
+
 	# test comment and subject using filterOk. If the filter is 
 	# matched against the content, display an error with the 
 	# particular message for the filter that was matched
@@ -277,7 +293,7 @@ sub validateComment {
 			last;
 		}
 		# run through compress test
-	 	if (! compressOk($fields->{$_})) {
+	 	if (! compressOk('comments', $_, $fields->{$_})) {
 			# blammo luser
 			$$error_message = slashDisplay('errors', {
 			 	type	=> 'compress filter',

@@ -90,7 +90,7 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments (sid, cid, pid, date, host_name, subject, comment, uid, points, lastmod, reason) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','208.163.7.213','First Post!','This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!',1,0,-1,0);
+INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, comment, uid, points, lastmod, reason) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!','This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!',1,0,-1,0);
 
 #
 # Dumping data for table 'content_filters'
@@ -271,7 +271,7 @@ INSERT INTO storiestuff (sid, hits) VALUES ('00/01/25/1236215',2);
 # Dumping data for table 'submissions'
 #
 
-INSERT INTO submissions (subid, email, name, time, subj, story, tid, note, section, comment, uid, del) VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ','topic1',NULL,'articles',NULL,2,0);
+INSERT INTO submissions (subid, email, name, time, subj, story, tid, note, section, comment, uid, del, ipid, subnetid) VALUES ('15258.025100','somewhere@somewhere.com','PostMyStory','2000-01-25 15:25:08','This is the Submissions Area','This is where you read the submissions that your reader send you.  From here you can delete them (click the checkboxes and hit update) or attach little notes to them and flag them to be put on hold, or saved for quickies (all of these things are helpful when you have several people working on the backend at the same time).\r\n\r\n<P>Most of the time you\'ll just want to click on the title of the submission, and then either preview/post it, or delete it. ','topic1',NULL,'articles',NULL,2,0,'2','8f2e0eec531acf0e836f6770d7990857');
 
 #
 # Dumping data for table 'templates'

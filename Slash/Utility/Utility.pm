@@ -102,6 +102,10 @@ use vars qw($VERSION @ISA @EXPORT);
 	writeLog
 	xmldecode
 	xmlencode
+	submittedAlready
+	checkFormPost
+	filterOk
+	compressOk
 	xmlencode_plain
 );
 
@@ -666,6 +670,7 @@ sub createCurrentUser {
 	my($user) = @_;
 
 	$user ||= {};
+
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
@@ -2417,10 +2422,88 @@ The decoded string.
 
 ## NEED DOCS
 #========================================================================
+
+sub submittedAlready {
+	my($formkey, $formname, $err_message) = @_;
+	my $slashdb = getCurrentDB();
+
+	# find out if this form has been submitted already
+	my($submitted_already, $submit_ts) = $slashdb->checkForm($formkey, $formname)
+		or $$err_message = Slash::getData('noformkey', '', ''), return;
+
+		if ($submitted_already) {
+			$$err_message = Slash::getData('submitalready', {
+				interval_string => intervalString(time() - $submit_ts)
+			}, '');
+		}
+		return($submitted_already);
+}
+
+#========================================================================
+
+sub checkFormPost {
+	my($formname, $limit, $max, $id, $err_message) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = $slashdb->getCurrentUser();
+
+	my $uid;
+
+	if ($user->{uid} == $constants->{anonymous_coward_uid}) {
+		$uid = $user->{ipid};
+	} else {
+		$uid = $user->{uid};
+	}
+
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	# If formkey starts to act up, me doing the below
+	# may be the cause
+	my $formkey = getCurrentForm('formkey');
+
+	my $last_submitted = $slashdb->getSubmissionLast($id, $formname);
+
+	my $interval = time() - $last_submitted;
+
+	if ($interval < $limit) {
+		$$err_message = Slash::getData('speedlimit', {
+			limit_string	=> intervalString($limit),
+			interval_string	=> intervalString($interval)
+		}, '');
+		return;
+
+	} else {
+		if ($slashdb->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
+			undef $formkey unless $formkey =~ /^\w{10}$/;
+
+			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
+				$slashdb->createAbuse("invalid form key", $uid, $formname, $ENV{QUERY_STRING});
+				$$err_message = Slash::getData('invalidformkey', '', '');
+				return;
+			}
+
+			if (submittedAlready($formkey, $formname, $err_message)) {
+				$slashdb->createAbuse("form already submitted", $uid, $formname, $ENV{QUERY_STRING});
+				return;
+			}
+
+		} else {
+			$slashdb->createAbuse("max form submissions $max reached", $uid, $formname, $ENV{QUERY_STRING});
+			$$err_message = Slash::getData('maxposts', {
+				max		=> $max,
+				timeframe	=> intervalString($constants->{formkey_timeframe})
+			}, '');
+			return;
+		}
+	}
+	return 1;
+}
+
+#========================================================================
 sub filterOk {
 	my($formname, $field, $content, $error_message) = @_;
 
 	my $slashdb = getCurrentDB();
+	my $user = getCurrentUser();
 
 	my $filters = $slashdb->getContentFilters($formname, $field);
 
@@ -2461,14 +2544,29 @@ sub filterOk {
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
 		if ($modifier eq 'g') {
-			$isTrollish = 1 if $text_to_test =~ /$regex/g;
+			if ($text_to_test =~ /$regex/g) {
+				$$error_message = $err_message;
+				$slashdb->createAbuse(
+					$user->{uid},
+					$user->{ipid},
+					$user->{subnetid},
+					"content filter", 
+					$formname, 
+					$text_to_test);
+				return(0);
+			}
 		} else {
-			$isTrollish = 1 if $text_to_test =~ /$regex/;
-		}
-
-		if ($isTrollish) {
-			$$error_message = $err_message;
-			return(0);
+			if ($text_to_test =~ /$regex/) {
+				$$error_message = $err_message;
+				$slashdb->createAbuse(
+					$user->{uid},
+					$user->{ipid},
+					$user->{subnetid},
+					"content filter", 
+					$formname, 
+					$text_to_test);
+				return(0);
+			}
 		}
 	}
 	return(1);
@@ -2477,7 +2575,18 @@ sub filterOk {
 ## NEED DOCS
 #========================================================================
 sub compressOk {
-	my($content) = @_;
+	my($formname, $field, $content) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = $slashdb->getCurrentUser();
+	my $uid;
+
+	if ($user->{uid} == $constants->{anonymous_coward_uid}) {
+		$uid = $user->{ipid};
+	} else {
+		$uid = $user->{uid};
+	}
 
 	# interpolative hash ref. Got these figures by testing out
 	# several paragraphs of text and saw how each compressed
@@ -2506,6 +2615,10 @@ sub compressOk {
 				# troll comment
 				if ((length(compress($content)) /
 					length($content)) <= $_) {
+					$slashdb->createAbuse("content compress", 
+						$uid,
+						$formname, 
+						$content);
 					return(0);
 				}
 			}
@@ -2572,8 +2685,11 @@ sub prepareUser {
 	$cookies ||= {};
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
+	my $r = Apache->request;
+ 	my $hostip = $r->connection->remote_ip; 
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
+
 
 	if (isAnon($uid)) {
 		if ($ENV{GATEWAY_INTERFACE}) {
@@ -2603,6 +2719,11 @@ sub prepareUser {
 		my $dateformats = $slashdb->getDescriptions('datecodes');
 		$user->{'format'} = $dateformats->{ $user->{dfid} };
 	}
+
+	$user->{ipid} = md5_hex($hostip);
+	$user->{subnetid} = $hostip; 
+	$user->{subnetid} =~ s/(\d+\.\d+\.\d+)\.\d/$1\.0/;	
+	$user->{subnetid} = md5_hex($user->{subnetid});
 
 	my @defaults = (
 		['mode', 'thread'], qw[

@@ -2045,59 +2045,7 @@ sub getFormkeyId {
 }
 
 
-########################################################
-sub intervalString {
-	# Ok, this isn't necessary, but it makes it look better than saying:
-	#  "blah blah submitted 23333332288 seconds ago"
-	my($interval) = @_;
-	my $interval_string;
 
-	if ($interval > 60) {
-		my($hours, $minutes) = 0;
-		if ($interval > 3600) {
-			$hours = int($interval/3600);
-			if ($hours > 1) {
-				$interval_string = $hours . ' ' . getData('hours', '', '');
-			} elsif ($hours > 0) {
-				$interval_string = $hours . ' ' . getData('hour', '', '');
-			}
-			$minutes = int(($interval % 3600) / 60);
-
-		} else {
-			$minutes = int($interval / 60);
-		}
-
-		if ($minutes > 0) {
-			$interval_string .= ", " if $hours;
-			if ($minutes > 1) {
-				$interval_string .= $minutes . ' ' . getData('minutes', '', '');
-			} else {
-				$interval_string .= $minutes . ' ' . getData('minute', '', '');
-			}
-		}
-	} else {
-		$interval_string = $interval . ' ' . getData('seconds', '', '');
-	}
-
-	return($interval_string);
-}
-
-##################################################################
-sub submittedAlready {
-	my($formkey, $formname) = @_;
-	my $slashdb = getCurrentDB();
-
-	# find out if this form has been submitted already
-	my($submitted_already, $submit_ts) = $slashdb->checkForm($formkey, $formname)
-		or errorMessage(getData('noformkey', '', '')), return;
-
-		if ($submitted_already) {
-			errorMessage(getData('submitalready', {
-				interval_string => intervalString(time() - $submit_ts)
-			}, ''));
-		}
-		return($submitted_already);
-}
 
 ##################################################################
 # nice little function to print out errors
@@ -2105,57 +2053,6 @@ sub errorMessage {
 	my($error_message) = @_;
 	print $error_message, "\n";
 	return;
-}
-
-
-##################################################################
-# make sure they're not posting faster than the limit
-sub checkSubmission {
-	my($formname, $limit, $max, $id) = @_;
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-
-	my $formkey_earliest = time() - $constants->{formkey_timeframe};
-	# If formkey starts to act up, me doing the below
-	# may be the cause
-	my $formkey = getCurrentForm('formkey');
-
-	my $last_submitted = $slashdb->getSubmissionLast($id, $formname);
-
-	my $interval = time() - $last_submitted;
-
-	if ($interval < $limit) {
-		errorMessage(getData('speedlimit', {
-			limit_string	=> intervalString($limit),
-			interval_string	=> intervalString($interval)
-		}, ''));
-		return;
-
-	} else {
-		if ($slashdb->checkTimesPosted($formname, $max, $id, $formkey_earliest)) {
-			undef $formkey unless $formkey =~ /^\w{10}$/;
-
-			unless ($formkey && $slashdb->checkFormkey($formkey_earliest, $formname, $id, $formkey)) {
-				$slashdb->createAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
-				errorMessage(getData('invalidformkey', '', ''));
-				return;
-			}
-
-			if (submittedAlready($formkey, $formname)) {
-				$slashdb->createAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
-				return;
-			}
-
-		} else {
-			$slashdb->createAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
-			errorMessage(getData('maxposts', {
-				max		=> $max,
-				timeframe	=> intervalString($constants->{formkey_timeframe})
-			}, ''));
-			return;
-		}
-	}
-	return 1;
 }
 
 #========================================================================
@@ -2270,6 +2167,7 @@ sub getData {
 	$opts{Page} = $page || 'NONE' if defined $page;
 	return slashDisplay('data', $hashref, \%opts);
 }
+#========================================================================
 
 1;
 

@@ -11,14 +11,37 @@
 DROP TABLE IF EXISTS abusers;
 CREATE TABLE abusers (
   abuser_id int(5) NOT NULL auto_increment,
-  host_name char(32) NOT NULL,
+  uid int(11) NOT NULL,
+  ipid char(32) DEFAULT '' NOT NULL,
+  subnetid char(32) DEFAULT '' NOT NULL,
   pagename varchar(20) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   reason varchar(120) DEFAULT '' NOT NULL,
-  querystring varchar(60) DEFAULT '' NOT NULL,
+  querystring varchar(200) DEFAULT '' NOT NULL,
   PRIMARY KEY (abuser_id),
-  KEY host_name (host_name),
+  KEY uid (uid),
+  KEY ipid (ipid),
+  KEY subnetid (subnetid),
   KEY reason (reason)
+);
+
+DROP TABLE IF EXISTS accesslist; 
+CREATE TABLE accesslist ( 
+  id int(10) NOT NULL auto_increment, 
+  uid int(11) NOT NULL,
+  ipid char(32) DEFAULT '' NOT NULL,
+  subnetid char(32) DEFAULT '' NOT NULL,
+  formname varchar(20) DEFAULT '' NOT NULL,
+  readonly int(4) DEFAULT 0 NOT NULL, 
+  isbanned int(4) DEFAULT 0 NOT NULL,
+  ts datetime default '0000-00-00 00:00:00', 
+  reason varchar(120), 
+  PRIMARY KEY id (id), 
+  key uid (uid), 
+  key ipid (ipid), 
+  key subnetid (subnetid), 
+  key formname (formname), 
+  key ts (ts)
 );
 
 #
@@ -28,10 +51,11 @@ CREATE TABLE abusers (
 DROP TABLE IF EXISTS accesslog;
 CREATE TABLE accesslog (
   id int(5) NOT NULL auto_increment,
-  host_addr char(32)  NOT NULL,
+  host_addr char(32)  DEFAULT '' NOT NULL,
+  subnetid char(32)  DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
-  uid int(1) NOT NULL,
+  uid int(11) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   query_string varchar(50),
   user_agent varchar(50),
@@ -107,7 +131,8 @@ CREATE TABLE comments (
   cid int(15) DEFAULT '0' NOT NULL,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-  host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
+  ipid char(32) DEFAULT '' NOT NULL,
+  subnetid char(32) DEFAULT '' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
   comment text DEFAULT '' NOT NULL,
   uid int(11) NOT NULL,
@@ -117,6 +142,8 @@ CREATE TABLE comments (
   PRIMARY KEY (sid,cid),
   KEY display (sid,points,uid),
   KEY byname (uid,points),
+  KEY ipid (ipid),
+  KEY subnetid (subnetid),
   KEY theusual (sid,uid,points,cid),
   KEY countreplies (sid,pid)
 );
@@ -178,7 +205,7 @@ CREATE TABLE formkeys (
   id varchar(30) DEFAULT '' NOT NULL,
   sid char(16) DEFAULT '' NOT NULL,
   uid int(11) NOT NULL,
-  host_name char(32) NOT NULL,
+  ipid	char(32) DEFAULT '' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
   ts int(12) DEFAULT '0' NOT NULL,
@@ -422,9 +449,14 @@ CREATE TABLE submissions (
   section varchar(30) DEFAULT '' NOT NULL,
   comment varchar(255),
   uid int(11) DEFAULT '1' NOT NULL,
+  ipid char(32) DEFAULT '' NOT NULL,
+  subnetid char(32) DEFAULT '' NOT NULL,
   del tinyint(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid),
-  KEY subid (subid,section)
+  KEY subid (subid,section),
+  KEY ipid (ipid),
+  KEY subnetid (subnetid)
+
 );
 
 #

@@ -129,6 +129,7 @@ my %descriptions = (
 
 );
 
+########################################################
 sub _whereFormkey {
 	my($self, $formkey_id) = @_;
 	my $where;
@@ -136,8 +137,7 @@ sub _whereFormkey {
 	my $user = getCurrentUser();
 	# anonymous user without cookie, check host, not formkey id
 	if ($user->{anon_id} && ! $user->{anon_cookie}) {
-		my $md5 = md5_hex($ENV{REMOTE_ADDR});
-		$where = "host_name = '$md5'";
+		$where = "ipid = '$user->{ipid}'";
 	} else {
 		$where = "id='$formkey_id'";
 	}
@@ -205,7 +205,7 @@ sub createComment {
 
 	$maxCid++; # This is gonna cause troubles, fixed in altcomments
 	my $insline = "INSERT into comments values ($sid_db,$maxCid," .
-		$self->{_dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
+		$self->{_dbh}->quote($form->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 		$self->{_dbh}->quote($form->{postersubj}) . "," .
 		$self->{_dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
@@ -377,6 +377,9 @@ sub createSubmission {
 	my($self, $submission) = @_;
 	return unless $submission;
 
+	$submission->{ipid} = getCurrentUser('ipid');
+	$submission->{subnetid} = getCurrentUser('subnetid');
+
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;
 	my $subid = "$hour$min$sec.$mon$mday$year";
 
@@ -490,8 +493,12 @@ sub createAccessLog {
 		$uid = getCurrentStatic('anonymous_coward_uid');
 	}
 
+	my $ipid = getCurrentUser('ipid'); 
+	my $subnetid = getCurrentUser('subnetid');
+
 	$self->sqlInsert('accesslog', {
-		host_addr	=> md5_hex($ENV{REMOTE_ADDR}),
+		host_addr	=> $ipid, 
+		subnetid	=> $subnetid,
 		dat		=> $dat,
 		uid		=> $uid,
 		op		=> $op,
@@ -1291,6 +1298,8 @@ sub createFormkey {
 	my($self, $formname, $id, $sid) = @_;
 	my $form = getCurrentForm();
 
+	my $ipid = getCurrentUser('ipid');
+
 	# save in form object for printing to user
 	$form->{formkey} = getFormkey();
 
@@ -1301,7 +1310,7 @@ sub createFormkey {
 		id 		=> $id,
 		sid		=> $sid,
 		uid		=> $ENV{SLASH_USER},
-		host_name	=> md5_hex($ENV{REMOTE_ADDR}),
+		ipid		=> $ipid, 
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1369,15 +1378,39 @@ sub formFailure {
 ##################################################################
 # logs attempts to break, fool, flood a particular form
 sub createAbuse {
-	my($self, $reason, $remote_addr, $script_name, $query_string) = @_;
+	my($self, $uid, $ipid, $subnetid, $reason, $script_name, $query_string) = @_;
+
 	# logem' so we can banem'
 	$self->sqlInsert("abusers", {
-		host_name	=> md5_hex($remote_addr),
+		uid		=> $uid,
+		ipid		=> $ipid, 
+		subnetid	=> $subnetid,
 		pagename	=> $script_name,
 		querystring	=> $query_string,
 		reason		=> $reason,
 		-ts		=> 'now()',
 	});
+}
+
+##################################################################
+sub checkReadOnly {
+	my($self, $formname) = @_;
+
+	my $where = '';
+
+ 	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+
+	if($user->{uid} ne $constants->{anonymous_coward_uid}) {
+		$where = "uid = $user->{uid} or";
+	}
+
+	$where = "($where ipid = '$user->{ipid}' or subnetid = '$user->{subnetid}') and readonly = 1 and formname = '$formname'"; 
+
+	$self->sqlSelect(
+		"readonly",
+		"accesslist", $where
+	);
 }
 
 ##################################################################
@@ -2011,10 +2044,12 @@ sub getSubmissionForUser {
 ########################################################
 sub getTrollAddress {
 	my($self) = @_;
+
+	my $ipid = getCurrentUser('ipid');
 	my($badIP) = $self->sqlSelect("sum(val)","comments,moderatorlog",
 			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-			AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
-			AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
+			AND ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
+			AND (to_days(now()) - to_days(ts) < 3) GROUP BY ipid"
 	);
 
 	return $badIP;
