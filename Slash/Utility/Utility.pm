@@ -16,17 +16,14 @@ require Exporter;
 	getCurrentStatic
 	getCurrentDB
 	getCurrentAnonymousCoward
-<<<<<<< Utility.pm
 	setCurrentUser
 	setCurrentForm
 	setCurrentStatic
 	setCurrentDB
 	setCurrentAnonymousCoward
 	isAnon
-=======
 	getAnonId
 	getFormkey
->>>>>>> 1.1.2.14
 );
 $Slash::Utility::VERSION = '0.01';
 
