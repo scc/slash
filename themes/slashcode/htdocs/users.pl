@@ -1722,7 +1722,7 @@ sub getUserAdmin {
 	my($user_edit, $user_editfield, $uidlist, $iplist, $authors, $author_flag, $topabusers, $thresh_select);
 	my $user_editinfo_flag = ($form->{op} eq 'userinfo' || ! $form->{op} || $form->{userinfo} || $form->{saveuseradmin}) ? 1 : 0;
 	my $authoredit_flag = ($user->{seclev} >= 10000) ? 1 : 0;
-	my ($isbanned, $banned, $banned_reason);
+	my($isbanned, $banned, $banned_reason);
 
 	$field ||= 'uid';
 	if ($field eq 'uid') {
@@ -1796,7 +1796,7 @@ sub getUserAdmin {
 		field			=> $field,
 		useredit		=> $user_edit,
 		banned 			=> $banned,
-		banned_reason	=> $banned_reason,
+		banned_reason		=> $banned_reason,
 		userinfo_flag		=> $user_editinfo_flag,
 		userfield		=> $user_editfield,
 		iplist			=> $iplist,

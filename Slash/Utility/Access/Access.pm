@@ -632,7 +632,7 @@ sub setUserExpired {
 
 	# Apply the appropriate readonly flags.
 	for (split /,\s+/, $constants->{expire_forms}) {
-		$slashdb->setReadOnly($_, $uid, $val, 0,'expired');
+		$slashdb->setReadOnly($_, $uid, $val, 0, 'expired');
 	}
 
 	if ($val) {

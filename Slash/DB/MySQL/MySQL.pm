@@ -2283,7 +2283,7 @@ sub getNetIDList {
 
 ########################################################
 sub getBanList {
-	my ($self, $refresh) = @_;
+	my($self, $refresh) = @_;
 	my $constants = getCurrentStatic();
 	my $banlist_ref;
 	
@@ -2306,7 +2306,7 @@ sub getBanList {
 
 ########################################################
 sub isBanned {
-	my ($self, $id) = @_;
+	my($self, $id) = @_;
 
 	if ($self->{banlist}{$id}) {
 		return(1);
@@ -2396,7 +2396,7 @@ sub getReadOnlyReason {
 ##################################################################
 sub setReadOnly {
 	# do not use this method to set/unset expired
-	my ($self, $formname, $user, $flag, $banned, $reason) = @_;
+	my($self, $formname, $user, $flag, $banned, $reason) = @_;
 
 	return if $reason eq 'expired';
 
@@ -3637,9 +3637,9 @@ sub getTrollAddress {
 	my $days_back = int($hours_back / 24);
 	my $ipid = getCurrentUser('ipid');
 	my($badIP) = $self->sqlSelect("sum(val)", "comments, moderatorlog",
-			"comments.cid = moderatorlog.cid AND
-			 ipid ='$ipid' AND moderatorlog.active=1 AND
-			 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
+		"comments.cid = moderatorlog.cid AND
+		 ipid ='$ipid' AND moderatorlog.active=1 AND
+		 TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back"
 	);
 	$badIP = 0 if !$badIP; # make sure it's not undef
 
