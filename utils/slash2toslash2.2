@@ -67,15 +67,19 @@ my @user_tables = qw(
 	users users_comments users_info users_index users_prefs users_param
 );
 
+# Run ONLY for plugins that were installed on both sites.
 my %plugins = (
 	Journal => {
 		tables => [qw(
 			journals journals_text journal_friends journal_themes
 		)],
 	},
+
+	Search => undef,
 );
 
-my(%plugin_fixup) = (
+# Run ONLY for plugins that were installed on both sites.
+my(%plugin_cleanup) = (
 	Journal => sub {
 		$dbh_new->do(<<EOT);
 UPDATE journals SET tid=$vars{journal_default_topic} WHERE tid=0
@@ -84,7 +88,24 @@ EOT
 	},
 );
 
-my $usersub;
+
+# Run for plugins that are INSTALLED on the NEW site.
+my(%plugin_fixup) = (
+	Messages => sub {
+		my $m_list = $dbh_old->selectcol_arrayref(<<EOT);
+SELECT uid FROM users_info WHERE maillist=1
+EOT
+
+		for (@{$m_list}) {
+			$dbh_new->do(<<EOT)
+INSERT INTO users_param (uid, name, value) VALUES ($_, 'messagecodes_1', 1)
+EOT
+
+		}
+	},
+);
+
+
 my (%conversions) = (
 	# Straight copy tables.
 	'metamodlog'		=> undef,
@@ -170,7 +191,7 @@ EOT
 	},
 
 	'users'			=> sub {
-		my($data) = @_;
+		my($data, $maillist) = @_;
 
 		# Handle author flag conversion.
 		$data->{author} = 1 if exists $story_authors{lc($data->{nickname})};
@@ -491,14 +512,22 @@ sub convert_plugins {
 	for (@{$new_plugins}) {
 		local $" = '|';
 		my $alit = "(@{$old_plugins})";
+
+		# Handle plugin fixup.
+		if ($plugin_fixup{$_}) {
+			print "\nExecuting '$_' plugin fixup.\n\n";
+			&{$plugin_fixup{$_}}();
+		}
+			
+		# Handle plugin conversion and cleanup.
 		if ($forced_plugins{$_} || /^$alit$/) {
 			if (! $printed) {
 				print "\nConverting PLUGINS...\n";
 				$printed++;
 			}
-			if (! $plugins{$_}{tables}) {
+			if ($plugins{$_} && ! $plugins{$_}{tables}) {
 				print <<EOT;
-Skipping conversion: No conversion data for PLUGIN '$_'!
+Skipping conversion: No conversion tableset for PLUGIN '$_'!
 EOT
 
 				next;
@@ -507,13 +536,13 @@ EOT
 			for (@{$plugins{$_}{tables}}) {
 				duplicate($_, 1);
 			}
-		}
 
-		if (exists $plugin_fixup{$_} && 
-		    (ref $plugin_fixup{$_} eq 'CODE')) 
-		{
-			print "Plugin Cleanup.\n";
-			&{$plugin_fixup{$_}}();
+			if (exists $plugin_cleanup{$_} && 
+			    (ref $plugin_cleanup{$_} eq 'CODE')) 
+			{
+				print "Plugin Cleanup.\n";
+				&{$plugin_fixup{$_}}();
+			}
 		}
 	}
 }
@@ -685,7 +714,8 @@ EOT
 		$sth_s->execute;
 		do_handle('pollvoters', $sth_s, $del);
 
-		# Only want del active the first time thru this, if it's active at all.
+		# Only want del active the first time thru this, if it's active
+		# at all.
 		$del = 0 if $del;
 	}
 
@@ -886,14 +916,14 @@ EOT
 					$vars{rootdir}, $polls{$data->{sid}};
  
 				$insert_q = <<EOT;
-INSERT INTO discussions (sid, title, url, topic, ts, flags)
+INSERT INTO discussions (title, url, topic, ts, flags)
 VALUES (
-	@{[$dbh_new->quote($data->{sid})]},
 	@{[$dbh_new->quote($ques)]},
 	@{[$dbh_new->quote($poll_url)]},
 	$vars{defaulttopic},
 	$poll_data{$data->{sid}}->{date},
-	'dirty')
+	'dirty'
+)
 EOT
 
 				$dbh_new->do($insert_q);
