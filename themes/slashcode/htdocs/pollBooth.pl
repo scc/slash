@@ -116,13 +116,31 @@ sub savepoll {
 	#We are lazy, we just pass along $form as a $poll
 	my $qid = $slashdb->savePollQuestion($form);
 
+	# we have a problem here.  if you attach the poll to an SID,
+	# and then unattach it, it will still be attached to that SID
+	# until you either change it manually in the DB, or attach it
+	# to a new SID.  Deal with it, or send in a patch.  The logic
+	# to deal with it otherwise is too complex to be warranted
+	# given the infrequency of the circumstance. -- pudge
+
 	if ($constants->{poll_discussions}) {
-		my $discussion = $slashdb->createDiscussion({
-			title	=> $form->{question},
-			topic	=> $form->{topic},
-			url	=> "$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid",
-		});
-		$slashdb->setPollQuestion($qid, { discussion => $discussion });
+		my $poll = $slashdb->getPollQuestion($qid);
+		my $discussion;
+		if ($poll->{sid}) {
+			# if sid lookup fails, then $discussion is empty,
+			# and the poll's discussion is not set
+			$discussion = $slashdb->getStory($form->{sid}, 'discussion');
+		} elsif (!$poll->{discussion}) {
+			$discussion = $slashdb->createDiscussion({
+				title	=> $form->{question},
+				topic	=> $form->{topic},
+				url	=> "$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid",
+			});
+		}
+		# if it already has a discussion (so $discussion is not set),
+		# or discussion ID is unchanged, don't bother setting
+		$slashdb->setPollQuestion($qid, { discussion => $discussion })
+			if $discussion && $discussion != $poll->{discussion};
 	}
 	$slashdb->setStory($form->{sid}, { qid => $qid }) if $form->{sid};
 }

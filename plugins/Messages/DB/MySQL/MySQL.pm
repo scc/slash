@@ -70,6 +70,11 @@ sub getMessageCode {
 
 sub init {
 	my($self, @args) = @_;
+
+	my $slashdb = getCurrentDB();
+	my $plugins = $slashdb->getDescriptions('plugins');
+	return unless $plugins->{'Messages'};
+
 	$self->{_drop_table} = 'message_drop';
 	$self->{_drop_cols}  = 'id,user,code,message,fuser,altto,date';
 	$self->{_drop_prime} = 'id';
@@ -84,6 +89,7 @@ sub init {
 	$self->{_web_prime2} = 'id';
 
 	$self->{_log_table}  = 'message_log';
+	1;
 }
 
 sub log {

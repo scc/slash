@@ -31,7 +31,9 @@ sub new {
 	$self->sqlConnect();
 
 	if ($self->can('init')) {
-		$self->init(@args);
+		# init should return TRUE for success, else
+		# we abort
+		return unless $self->init(@args);
 
 		if (exists $self->{'_where'}) {
 			for (keys %{ $self->{'_where'} }) {

@@ -51,12 +51,13 @@ sub main {
 			$authorbox = $newestthree . $nextblock;
 		}
 
+		my $pollbooth = pollbooth($story->{sid}, 1);
 		slashDisplay('display', {
-			poll			=> pollbooth($story->{qid}, 1),
+			poll			=> $pollbooth,
 			authorbox 		=> $user->{seclev} >=  100 ? $authorbox : '',
 			section			=> $SECT,
 			section_block		=> $slashdb->getBlock($SECT->{section}),
-			show_poll		=> $slashdb->getPollQuestion($story->{poll}),
+			show_poll		=> $pollbooth ? 1 : 0,
 			story			=> $story,
 			'next'			=> $slashdb->getStoryByTime('>', $story, $SECT),
 			prev			=> $slashdb->getStoryByTime('<', $story, $SECT),

@@ -2488,11 +2488,17 @@ sub getTopNewsstoryTopics {
 sub getPoll {
 	my($self, $qid) = @_;
 
+	my $col = 'qid';
+	# might want to select by sid ...
+	if ($qid !~ /^\d+$/) {
+		$col = 'sid';
+		$qid = $self->sqlQuote($qid);
+	}
 	my $sth = $self->{_dbh}->prepare_cached("
-			SELECT question,answer,aid,votes  from pollquestions, pollanswers
-			WHERE pollquestions.qid=pollanswers.qid AND
-			pollquestions.qid=$qid
-			ORDER BY pollanswers.aid
+		SELECT question,answer,aid,votes,pollquestions.qid  from pollquestions, pollanswers
+		WHERE pollquestions.qid=pollanswers.qid AND
+		pollquestions.$col=$qid
+		ORDER BY pollanswers.aid
 	");
 	$sth->execute;
 	my $polls = $sth->fetchall_arrayref;

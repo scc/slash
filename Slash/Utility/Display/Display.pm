@@ -501,12 +501,18 @@ sub pollbooth {
 	my($qid, $no_table, $center) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
+	my $sect = getCurrentUser('currentSection');
 
 	$qid = $slashdb->getVar('currentqid', 'value') unless $qid;
 	return "" if $qid eq "";
-	my $sect = getCurrentUser('currentSection');
+
 	my $polls = $slashdb->getPoll($qid);
+	return "" unless @$polls;
+
+	# in case $qid was really an sid
+	my $qid = $polls->[0][-1];
 	my $poll_q = $slashdb->getPollQuestion($qid);
+	return "" unless keys %$poll_q;
 
 	my $pollbooth = slashDisplay('pollbooth', {
 		polls		=> $polls,

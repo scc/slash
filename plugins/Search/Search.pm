@@ -20,6 +20,10 @@ sub new {
 	my($class, $user) = @_;
 	my $self = {};
 
+	my $slashdb = getCurrentDB();
+	my $plugins = $slashdb->getDescriptions('plugins');
+	return unless $plugins->{'Search'};
+
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->sqlConnect();

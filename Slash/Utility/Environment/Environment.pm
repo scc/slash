@@ -1287,7 +1287,7 @@ Any other arguments to be passed to the object's constructor.
 
 =item Return value
 
-An object.
+An object, unless object cannot be gotten; then undef.
 
 =back
 
