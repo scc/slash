@@ -266,7 +266,7 @@ sub authorEdit {
 	$aid = '' if $form->{authornew};
 
 	my $authors = $slashdb->getDescriptions('authors');
-	my $author = $slashdb->getUser($aid, ['nickname', 'fakemail']) if $aid;
+	my $author = $slashdb->getAuthor($aid) if $aid;
 
 	$author_select = createSelect('myaid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;
@@ -824,7 +824,7 @@ sub editStory {
 	my $newarticle = 1 if (!$sid && !$form->{sid});
 	
 	if ($form->{title}) { 
-		$slashdb->setSessionByAid($user->{aid}, { lasttitle => $storyref->{title} });
+		$slashdb->setSession($user->{nickname}, { lasttitle => $storyref->{title} });
 
 		$storyref->{writestatus} = $slashdb->getVar('defaultwritestatus', 'value');
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
@@ -849,7 +849,7 @@ sub editStory {
 
 		$topic = $slashdb->getTopic($storyref->{tid});
 		$form->{aid} ||= $user->{aid};
-		$author= $slashdb->getUser($form->{aid}, ['nickname', 'fakeemail']);
+		$author= $slashdb->getAuthor($form->{aid});
 		$sid = $form->{sid};
 
 		if (!$form->{time} || $form->{fastforward}) {
