@@ -6,7 +6,7 @@
 
 use strict;
 use Image::Size;
-use POSIX qw(O_RDWR O_CREAT O_EXCL);
+use POSIX qw(O_RDWR O_CREAT O_EXCL tmpnam);
 
 use Slash;
 use Slash::Display;
