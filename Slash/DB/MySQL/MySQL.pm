@@ -766,7 +766,7 @@ sub getACTz {
 ########################################################
 sub setVar {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{_dbh}->quote($name));
+	$self->sqlUpdate('vars', {value => ref($value) ? $value->{'value'} : $value}, 'name=' . $self->{_dbh}->quote($name));
 }
 
 ########################################################
