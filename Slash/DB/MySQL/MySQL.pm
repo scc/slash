@@ -772,14 +772,14 @@ sub createAccessLog {
 
 	if ($dat =~ /.*(\d{2}\/\d{2}\/\d{2}\/\d{4,7}).*/) {
 		$dat = $1;
-		$self->sqlUpdate('stories', { -hits => 'hits+1' },
-			'sid=' . $self->sqlQuote($dat)
-		);
-		if ($constants->{mysql_heap_table}) {
-			$self->sqlUpdate('story_heap', { -hits => 'hits+1' },
-				'sid=' . $self->sqlQuote($dat)
-			);
-		}
+#		$self->sqlUpdate('stories', { -hits => 'hits+1' },
+#			'sid=' . $self->sqlQuote($dat)
+#		);
+#		if ($constants->{mysql_heap_table}) {
+#			$self->sqlUpdate('story_heap', { -hits => 'hits+1' },
+#				'sid=' . $self->sqlQuote($dat)
+#			);
+#		}
 	}
 
 	$self->sqlInsert('accesslog', {
