@@ -1835,11 +1835,7 @@ EOT
 	if ($SECT->{issue}) {
 		my $yesterday;
 		unless ($I{F}{issue} > 1 || $I{F}{issue}) {
-			my @date = localtime();
-			$date[4] += 1;
-			$date[5] += 1;
-			$date[6] += 1900;
-			$yesterday = Date_DaysSince1BC($date[5], $date[4], $date[6])
+			$yesterday = $dbslash->getDay() -1;
 		} else {
 			$yesterday = int($I{F}{issue}) - 1;
 		}

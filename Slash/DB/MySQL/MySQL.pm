@@ -1,8 +1,4 @@
 package Slash::DB::MySQL;
-# Big note on *User methods. They are in need of clean
-# up in a big way. If we had one normalized table
-# this would be quite clean. I will find a way around
-# this.  -Brian
 use strict;
 use Digest::MD5 'md5_hex';
 use DBIx::Password;
@@ -2483,6 +2479,14 @@ sub getUrlFromTitle {
 sub getTime {
 	my($self) = @_;
 	my($now) = $self->sqlSelect('now()');
+
+	return $now;
+}
+##################################################################
+# Should this really be in here?
+sub getDay {
+	my($self) = @_;
+	my($now) = $self->sqlSelect('to_days(now())');
 
 	return $now;
 }
