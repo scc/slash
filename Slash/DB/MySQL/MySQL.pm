@@ -245,12 +245,12 @@ sub createComment {
 			comment	=>  $comment->{postercomment},
 	});
 
-	if (getCurrentStatic('mysql_heap_table')) {
-		my $insline = "INSERT into comment_heap (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header,$cid," .
-			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
-			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
-		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
-	}
+# 	if (getCurrentStatic('mysql_heap_table')) {
+# 		my $insline = "INSERT into comment_heap (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header,$cid," .
+# 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
+# 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
+# 		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
+# 	}
 
 	# should this be conditional on the others happening?
 	# is there some sort of way to doublecheck that this value
@@ -289,7 +289,7 @@ sub setModeratorLog {
 sub getMetamodComments {
 	my($self, $id, $uid, $num_comments) = @_;
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	# Removed extraneous "users.uid!=$uid" from WHERE clause.
 	# Also removed "sig" from field list as we anonymize it below.
@@ -334,7 +334,7 @@ sub getModeratorCommentLog {
 #
 # I've replaced it. - Cliff
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	# We no longer need SID as CID is now unique.
 	my $comments = $self->sqlSelectMany("$comment_table.sid as sid,
 				 $comment_table.cid as cid,
@@ -397,13 +397,13 @@ sub unsetModeratorlog {
 			{ -points => "points+" . (-1 * $val) },
 			"cid=$cid AND $scorelogic"
 		);
-		if ($constants->{mysql_heap_table}) {
-			$self->sqlUpdate(
-				"comment_heap",
-				{ -points => "points+" . (-1 * $val) },
-				"cid=$cid AND $scorelogic"
-			);
-		}
+# 		if ($constants->{mysql_heap_table}) {
+# 			$self->sqlUpdate(
+# 				"comment_heap",
+# 				{ -points => "points+" . (-1 * $val) },
+# 				"cid=$cid AND $scorelogic"
+# 			);
+# 		}
 		push(@removed, $cid);
 	}
 
@@ -890,7 +890,7 @@ sub getCommentsByUID {
 sub getCommentsByNetID {
 	my($self, $id, $min) = @_;
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min ";
@@ -906,7 +906,7 @@ sub getCommentsByNetID {
 sub getCommentsBySubnetID{
 	my($self, $subnetid, $min) = @_;
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE subnetid='$subnetid' "
 			. " ORDER BY date DESC LIMIT $min ";
@@ -1075,10 +1075,7 @@ sub setTemplate {
 ########################################################
 sub getCommentChildren {
 	my($self, $cid) = @_;
-	my $comment_table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$comment_table = 'comment_heap';
-	}
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($scid) = $self->sqlSelectAll('cid', $comment_table, "pid=$cid");
 
 	return $scid;
@@ -1093,10 +1090,10 @@ sub deleteComment {
 	my($self, $cid, $discussion_id) = @_;
 	my @comment_tables = qw( comment_text comments );
 	my $comment_table = "comments";
-	if (getCurrentStatic('mysql_heap_table')) {
-		$comment_table = "comment_heap";
-		push @comment_tables, $comment_table;
-	}
+# 	if (getCurrentStatic('mysql_heap_table')) {
+# 		$comment_table = "comment_heap";
+# 		push @comment_tables, $comment_table;
+# 	}
 	# We have to update the discussion, so make sure we have its id.
 	if (!$discussion_id) {
 		($discussion_id) = $self->sqlSelect("sid", $comment_table, "cid=$cid");
@@ -1117,7 +1114,7 @@ sub deleteComment {
 sub getCommentPid {
 	my($self, $sid, $cid) = @_;
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	$self->sqlSelect('pid', $comment_table, "sid='$sid' and cid=$cid");
 }
@@ -2713,8 +2710,8 @@ sub setCommentCleanup {
 		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
 	my($rc1, $rc2) = (0, 0);
-	$rc1 = $self->sqlDo("UPDATE comment_heap $strsql")
-		if getCurrentStatic('mysql_heap_table');
+# 	$rc1 = $self->sqlDo("UPDATE comment_heap $strsql")
+# 		if getCurrentStatic('mysql_heap_table');
 	$rc2 = $self->sqlDo("UPDATE comments $strsql");
 
 	return $rc1 || $rc2;
@@ -2734,8 +2731,7 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
-	my $comment_table = getCurrentStatic('mysql_heap_table') ?
-		'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my $sid_quoted = $self->sqlQuote($sid);
 	my $reply = $self->sqlSelectHashref(
 		"date,subject,$comment_table.points as points,
@@ -2909,7 +2905,7 @@ sub _getCommentText {
 sub getComments {
 	my($self, $sid, $cid) = @_;
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	$self->sqlSelect("uid, pid, subject, points, reason, ipid, subnetid",
 		$comment_table,
 		"cid=$cid AND sid=$sid_quoted"
@@ -3031,8 +3027,7 @@ sub getCommentsTop {
 	my $user = getCurrentUser();
 	my $story_table = getCurrentStatic('mysql_heap_table') ?
 		'story_heap' : 'stories';
-	my $comment_table = getCurrentStatic('mysql_heap_table') ?
-		'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
 	my $where = "$story_table.sid=$comment_table.sid AND
 		     $story_table.uid=users.uid";
@@ -3142,8 +3137,7 @@ sub getTrollAddress {
 	my($self) = @_;
 
 	my $ipid = getCurrentUser('ipid');
-	my $comment_table = "comments";
-	$comment_table = 'comment_heap' if getCurrentStatic('mysql_heap_table');
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
 			"$comment_table.cid = moderatorlog.cid AND
 			 ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1 AND
@@ -3157,8 +3151,7 @@ sub getTrollAddress {
 sub getTrollUID {
 	my($self) = @_;
 	my $user = getCurrentUser();
-	my $comment_table = getCurrentStatic('mysql_heap_table') ?
-		'comment_heap' : 'comments';
+	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($badUID) = $self->sqlSelect("sum(val)",
 		"$comment_table,moderatorlog",
 		"$comment_table.cid=moderatorlog.cid
@@ -4456,7 +4449,7 @@ sub fzGetStories {
 
 	my($comment_table, $story_table);
 	if (getCurrentStatic('mysql_heap_table')) {
-		$comment_table = "comment_heap";
+		$comment_table = "comments";  # comment_heap
 		$story_table  = "story_heap";
 	} else {
 		$comment_table = "comments";

@@ -775,10 +775,10 @@ sub deleteStoryAll {
 		$self->sqlDo("DELETE FROM story_heap WHERE sid=$db_sid");
 	}
 	my $discussion_id = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
-	if ($discussion_id) {
+	if ($discussion_id) { #comment_heap
 		# In comments/comment_heap, "sid" is a numeric discussion id.
-		my $comment_ids = $self->sqlSelectAll('cid', 'comment_heap', "sid=$discussion_id");
-		$self->sqlDo("DELETE FROM comment_heap WHERE sid=$discussion_id");
+		my $comment_ids = $self->sqlSelectAll('cid', 'comments', "sid=$discussion_id");
+# 		$self->sqlDo("DELETE FROM comment_heap WHERE sid=$discussion_id");
 		$self->sqlDo("DELETE FROM comments WHERE sid=$discussion_id");
 		$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
 			. join(",", map { $_->[0] } @$comment_ids)

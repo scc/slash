@@ -249,6 +249,7 @@ INSERT INTO tzcodes (tz, off_set, description) VALUES ('NZD',46800,'New Zealand 
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('GMT',0,'Greenwich Mean');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('UTC',0,'Universal (Coordinated)');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('WET',0,'Western European');
+INSERT INTO tzcodes (tz, off_set, description) VALUES ('WEST',3600,'Western European Summer');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('WAT',-3600,'West Africa');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('AT',-7200,'Azores');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('GST',-10800,'Greenland Standard');
@@ -266,11 +267,13 @@ INSERT INTO tzcodes (tz, off_set, description) VALUES ('AHS',-36000,'Alaska-Hawa
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('NT',-39600,'Nome');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('IDL',-43200,'International Date Line West');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('CET',3600,'Central European');
+INSERT INTO tzcodes (tz, off_set, description) VALUES ('CEST',7200,'Central European Summer');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('MET',3600,'Middle European');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('MEW',3600,'Middle European Winter');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('SWT',3600,'Swedish Winter');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('FWT',3600,'French Winter');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('EET',7200,'Eastern Europe, USSR Zone 1');
+INSERT INTO tzcodes (tz, off_set, description) VALUES ('EEST',10800,'Eastern Europe Summer');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('BT',10800,'Baghdad, USSR Zone 2');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('IT',12600,'Iran');
 INSERT INTO tzcodes (tz, off_set, description) VALUES ('ZP4',14400,'USSR Zone 3');

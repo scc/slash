@@ -843,9 +843,9 @@ sub refill_heaps {
 	printf "%sPopulating the story_heap table...\n", ($opts{I}) ? 'Re':'';
 	$dbh_new->do('DELETE FROM story_heap') if $opts{I};
 	$dbh_new->do('INSERT INTO story_heap SELECT * FROM stories');
-	printf "%sPopulating the comment_heap table...\n", ($opts{I}) ? 'Re':'';
-	$dbh_new->do('DELETE FROM comment_heap') if $opts{I};
-	$dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
+# 	printf "%sPopulating the comment_heap table...\n", ($opts{I}) ? 'Re':'';
+# 	$dbh_new->do('DELETE FROM comment_heap') if $opts{I};
+# 	$dbh_new->do('INSERT INTO comment_heap SELECT * FROM comments');
 }
 
 ####################################

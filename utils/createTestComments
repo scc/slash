@@ -104,7 +104,7 @@ $werder = new Silly::Werder;
 			my $comments = $slashdb->sqlSelectAllHashref(
 				'cid',
 				'cid, pid',
-				'comment_heap',
+				'comments', #'comment_heap',
 				"sid=$discussion_id",
 			);
 	 
