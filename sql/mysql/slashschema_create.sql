@@ -586,6 +586,8 @@ CREATE TABLE users_info (
   m2unfair int(11) DEFAULT '0' NOT NULL,
   m2fairvotes int(11) DEFAULT '0' NOT NULL,
   m2unfairvotes int(11) DEFAULT '0' NOT NULL,
+  upmods int(11) DEFAULT '0' NOT NULL,
+  downmods int(11) DEFAULT '0' NOT NULL,
   PRIMARY KEY (uid)
 );
 

@@ -24,138 +24,60 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
+#use vars '%I';
 use Slash;
 use Slash::DB;
 use Slash::Utility;
+use Slash::Display;
 
 ##################################################################
 sub main {
-	*I = getSlashConf();
-	getSlash();
+	#*I = getSlashConf();
 
-	if ($I{F}{refresh}) {
-		$I{dbobject}->refreshStories($I{F}{sid});
-		# won't work now because HTTP headers not printed until header() below
-		# print qq[<FONT COLOR="white" SIZE="${\( $I{fontbase} + 5 )}">How Refreshing! ($I{F}{sid}) </FONT>\n];
-	}
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
+	$dbslash->refreshStories($form->{sid}) if $form->{refresh};
 
-	my($sect, $title, $ws);
+	print STDERR "Threshold: $form->{threshold}|$user->{threshold}\n";
 
-	# Worst case condition here is that the first lookup will cause
-	# a hit to the database. -Brian
-	$sect	= $I{dbobject}->getStory($I{F}{sid}, 'section');
-	$title	= $I{dbobject}->getStory($I{F}{sid}, 'title');
-	$ws	= $I{dbobject}->getStory($I{F}{sid}, 'writestatus');
+	# Let's make ONE call to getStory() and fetch all we need.
+	# - Cliff
+	my $story = $dbslash->getStory($form->{sid});
 
-	if ($ws == 10) {
+	if ($story->{writestatus} == 10) {
 		$ENV{SCRIPT_NAME} = '';
-		redirect("$I{rootdir}/$sect/$I{F}{sid}$I{userMode}.shtml");
+		redirect(<<EOT);
+$constants->{rootdir}/$story->{section}/$story->{sid}_$constants->{userMode}.shtml
+EOT
 		return;
 	};
 
-	my $SECT = getSection($sect);
-	$title = $SECT->{isolate} ? "$SECT->{title} | $title" : "$I{sitename} | $title";
-	header($title, $sect);
+	my $SECT = $dbslash->getSection($story->{section});
+	my $title = $SECT->{isolate} ?
+		"$SECT->{title} | $story->{title}" :
+		"$constants->{sitename} | $story->{title}";
 
-	my($story, $S, $A, $T) = displayStory($I{F}{sid}, 'Full');
+	header($title, $story->{section});
+	slashDisplay('article-display', {
+		constants		=> $constants,
+		form			=> $form,
+		poll			=> pollbooth($story->{sid}, 1),
+		section			=> $SECT,
+		section_block	=> $dbslash->getBlock($SECT->{section}),
+		show_poll		=> $dbslash->getPollQuestion($story->{sid}),
+		story			=> $story,
+		user			=> $user,
+		'next'			=> $dbslash->getStoryByTime('>', $story, $SECT),
+		prev			=> $dbslash->getStoryByTime('<', $story, $SECT),
+	});
 
-	print $story, "<P>";
-	articleMenu($S, $SECT);
-#	print qq!</TD><TD VALIGN="TOP">\n!;
-	print qq!</TD><TD>&nbsp;</TD><TD VALIGN="TOP">\n!;
+	printComments($form->{sid});
 
-	yourArticle($S);
-
-	# Poll Booth
-	pollbooth($I{F}{sid}) if $I{dbobject}->getPollQuestion($S->{sid});
-
-	# Related Links
-	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
-
-	# Display this section's Section Block (if Found)
-	fancybox($I{fancyboxwidth}, $SECT->{title},
-		$I{dbobject}->getBlock($SECT->{section}, 'block'));
-
-	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
-
-	printComments($I{F}{sid});
-	writeLog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
+	writeLog($SECT->{section}, $story->{sid} || $form->{sid})
+		unless $form->{ssi};
 	footer();
-}
-
-##################################################################
-sub pleaseLogin {
-	return unless getCurrentUser('is_anon');
-	my $block = eval prepBlock $I{dbobject}->getBlock('userlogin', 'block');
-	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
-	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
-	fancybox($I{fancyboxwidth}, "$I{sitename} Login", $block);
-}
-
-##################################################################
-sub yourArticle {
-	if (isAnon($I{U}{uid})) {
-		pleaseLogin();
-		return;
-	}
-
-	my $S = shift;
-	my $m = qq![ <A HREF="$I{rootdir}/users.pl?op=preferences">Preferences</A> !;
-	$m .= qq! | <A HREF="$I{rootdir}/admin.pl">Admin</A> |! .
-		qq! <A HREF="$I{rootdir}/admin.pl?op=edit&sid=$S->{sid}">Editor</A> !
-		if $I{U}{aseclev} > 99 and $I{U}{aid};
-	$m .= " ]<P>\n";
-
-	$m .= <<EOT if $I{U}{points} or $I{U}{aseclev} > 99;
-
-<A HREF="$I{rootdir}/users.pl">You</A> have moderator access and 
-<B>$I{U}{points}</B> points.  Welcome to the those of you
-just joining: <B>please</B> read the
-<A HREF="$I{rootdir}/moderation.shtml">moderator guidelines</A>
-for instructions. (<B>updated 9.9!</B>)
-
-<P>
-
-<LI>You can't post & moderate the same discussion.
-<LI>Concentrate on Promoting more than Demoting.
-<LI>Browse at -1 to keep an eye out for abuses.
-<LI><A HREF="mailto:$I{adminmail}">Mail admin</A> URLs showing abuse (the cid link please!).
-
-EOT
-
-	$m .= "<P> $I{U}{mylinks} ";
-
-	fancybox($I{fancyboxwidth}, $I{U}{aid} || $I{U}{nickname}, $m);
-}
-
-##################################################################
-sub articleMenu {
-	my($story, $SECT) = @_;
-
-	my $front  = nextStory('<', $story, $SECT);
-	print " &lt;&nbsp; $front" if $front;
-
-	my $n = nextStory('>', $story, $SECT);
-	print " | $n &nbsp;&gt; " if $n;
-
-	print ' <P>&nbsp;';
-}
-
-##################################################################
-sub nextStory {
-	my($sign, $story, $SECT) = @_;
-
-	# Slightly less efficient then the way it had worked, but
-	# a heck of a lot easier to understand
-	if (my $next = $I{dbobject}->getStoryByTime($sign, $story, $SECT->{isolate})) {
-		return if $next->{title} eq $story->{title};
-		return linkStory({
-			'link'	=> $next->{'title'},
-			sid	=> $next->{'sid'},
-			section	=> $next->{'section'}
-		});
-	}
 }
 
 main();

@@ -24,72 +24,77 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
+#use vars '%I';
 use Slash;
+use Slash::Utility;
+use Slash::Display;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
+	#*I = getSlashConf();
 	getSlash();
+	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $op = getCurrentForm('op');
+	my $constants = getCurrentStatic();
+	my $dbslash = getCurrentDB();
 
-	$I{U}{karma} = $I{dbobject}->getUser($I{U}{uid}, 'karma')
-		unless $I{U}{is_anon};
 	header("Meta Moderation");
 
-	my $id = isEligible();
+	my $id = isEligible($user, $dbslash, $constants);
 	if (!$id) {
-		print <<EOT;
-<BR>You are currently not eligible to Meta Moderate.<BR>
-Return to <A HREF="$I{rootdir}/">the $I{sitename} homepage</A>.<BR>
-EOT
+		slashDisplay('metamod-not-eligible', {
+			rootdir => $constants->{rootdir},
+			sitename => $constants->{sitename},
+		});
 
-	} elsif ($I{F}{op} eq "MetaModerate") {
-		metaModerate($id);
+	} elsif ($op eq "MetaModerate") {
+		metaModerate($id, $form, $user, $dbslash, $constants);
 	} else {
-		displayTheComments($id);
+		displayTheComments($id, $user, $dbslash, $constants);
 	}
 
-	writeLog("metamod", $I{F}{op});
+	writeLog("metamod", $op);
 	footer();
 }
 
 #################################################################
 sub karmaBonus {
-	my $x = $I{m2_maxbonus} - $I{U}{karma};
+	my ($u, $c) = @_;
+
+	my $x = $c->{m2_maxbonus} - $u->{karma};
 
 	return 0 unless $x > 0;
-	return 1 if rand($I{m2_maxbonus}) < $x;
+	return 1 if rand($c->{m2_maxbonus}) < $x;
 	return 0;
 }
 
 #################################################################
 sub metaModerate {
-	my %metamod;
+	my ($id, $f, $u, $db, $c) = @_;
 
-	my $id = shift;
-	# Sum Elements from Form and Update User Record
-	my $y = 0;
+	my $y = 0;								# Sum of elements from form.
+	my (%metamod, @mmids);
 
-	foreach (keys %{$I{F}}) {
-
+	$metamod{unfair} = $metamod{fair} = 0;
+	foreach (keys %{$f}) {
 		# Meta mod form data can only be a '+' or a '-' so we apply some
 		# protection from taint.
-		next unless $I{F}{$_} =~ s/^[+-]$//; # bad input, bad!
+		next if $f->{$_} !~ /^[+-]$/; # bad input, bad!
 		if (/^mm(\d+)$/) {
-			$metamod{unfair}++ if $I{F}{$_} eq "-";
-			$metamod{fair}++ if $I{F}{$_} eq "+";
+			push(@mmids, $1) if $f->{$_};
+			$metamod{unfair}++ if $f->{$_} eq '-';
+			$metamod{fair}++ if $f->{$_} eq '+';
 		}
 	}
 
-
 	my %m2victims;
-	foreach (keys %{$I{F}}) {
-		if ($y < $I{m2_comments} && /^mm(\d+)$/ && $I{F}{$_}) { 
-			my $id = $1;
+	foreach (@mmids) {
+		if ($y < $c->{m2_comments}) { 
 			$y++;
-			my $muid = $I{dbobject}->getModeratorLog($id);
+			my $muid = $db->getModeratorLog($_, 'uid');
 
-			$m2victims{$id} = [$muid, $I{F}{$_}];
+			$m2victims{$_} = [$muid, $f->{"mm$_"}];
 		}
 	}
 
@@ -102,193 +107,90 @@ sub metaModerate {
 	#		SELECT * from metamodlog WHERE uid=x and ts=y 
 	# for a given x and y.
 	my($flag, $ts) = (0, time);
-	if ($y >= $I{m2_mincheck}) {
+	if ($y >= $c->{m2_mincheck}) {
 		# Test for excessive number of unfair votes (by percentage)
 		# (Ignore M2 & penalize user)
-		$flag = 2 if ($metamod{unfair}/$y >= $I{m2_maxunfair});
+		$flag = 2 if ($metamod{unfair}/$y >= $c->{m2_maxunfair});
 		# Test for questionable number of unfair votes (by percentage)
 		# (Ignore M2).
-		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $I{m2_toomanyunfair}));
+		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $c->{m2_toomanyunfair}));
 	}
 
-	my $changes = $I{dbobject}->setMetaMod(\%m2victims, $flag, $ts);
-	for (@$changes) {
-		print "<BR>Updating $_[0] with $_[1]" if $I{U}{aseclev} > 10;
-	}
+	my $changes = $db->setMetaMod(\%m2victims, $flag, $ts);
 
-	print <<EOT;
-$y comments have been meta moderated.  Thanks for participating.
-You may wanna go back <A HREF="$I{rootdir}/">home</A> or perhaps to
-<A HREF="$I{rootdir}/users.pl">your user page</A>.
-EOT
+	slashDisplay('metamod-results', {
+		changes => $changes,
+		count	=> $y,
+		rootdir => $c->{rootdir},
+		aseclev => $u->{aseclev},
+		metamod => \%metamod,
+	});
 
-	print "<BR>Total unfairs is $metamod{unfair}" if $I{U}{aseclev} > 10;
-
-	$metamod{unfair} ||= 0;
-	$metamod{fair} ||= 0;
-	$I{dbobject}->setModerationVotes($I{U}{uid}, \%metamod)
-		unless $I{U}{is_anon};
+	$db->setModeratorVotes($u->{uid}, \%metamod) unless $u->{is_anon};
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
-	if ($y > $I{m2_mincheck}) {
-		if (!$flag && karmaBonus()) {
+	if ($y > $c->{m2_mincheck} && !$u->{is_anon}) {
+		if (!$flag && karmaBonus($u, $c)) {
 			# Bonus Karma For Helping Out - the idea here, is to not 
 			# let meta-moderators get the +1 posting bonus.
 			($change, $excon) =
-				("karma$I{m2_bonus}", "and karma<$I{m2_maxbonus}");
-			$change = $I{m2_maxbonus}
-				if $I{m2_maxbonus} < $I{U}{karma} + $I{m2_bonus};
+				("karma$c->{m2_bonus}", "and karma<$c->{m2_maxbonus}");
+			$change = $c->{m2_maxbonus}
+				if $c->{m2_maxbonus} < $u->{karma} + $c->{m2_bonus};
 
 		} elsif ($flag == 2) {
 			# Penalty for Abuse
-			($change, $excon) = ("karma$I{m2_penalty}", '');
+			($change, $excon) = ("karma$c->{m2_penalty}", '');
 		}
 
 		# Update karma.
 		# This is an abuse
-		$I{dbobject}->setUser($I{U}{uid}, { -karma => "karma$change" })
-			if $change;
+		$db->setUser($u->{uid}, { -karma => "karma$change" }) if $change;
 	}
 }
 
 
 #################################################################
 sub displayTheComments {
-	my $id = shift;
+	my ($id, $u, $db, $c) = @_;
 
-	titlebar("99%","Meta Moderation");
-	print <<EOT;
-<B>PLEASE READ THE DIRECTIONS CAREFULLY BEFORE EMAILING
-\U$I{siteadmin_name}\E!</B> <P>What follows is $I{m2_comments} random 
-moderations performed on comments in the last few weeks on $I{sitename}. 
-You are asked to <B>honestly</B> evaluate the actions of the moderator of each
-comment. Moderators who are ranked poorly will cease to be eligible for
-moderator access in the future.
+	$u->{points} = 0;
+	my $comments = $db->getMetamodComments($id, $u->{uid}, $c->{m2_comments});
 
-<UL>
-
-<LI>If you are confused about the context of a particular comment, just
-link back to the comment page through the parent link, or the #XXX cid
-link.</LI>
-
-<LI><B><FONT SIZE="5">Duplicates are fine</FONT></B> (Big because over
-<B>100</B> people have emailed me to tell me about this even though it is
-explained <B>right here</B>.)  You are not moderating a "Comment" you
-are moderating a "Moderation".  Therefore, if a comment is moderated
-more than once, it can appear multiple times below.  Don't worry about it.</LI>
-
-<LI>If you are unsure, feel free to leave it unchanged.</LI>
-
-<LI>Please read the <A HREF="$I{rootdir}/moderation.shtml">Moderator Guidelines</A>
-and try to be impartial and fair.  You are not moderating to make your
-opinions heard, you are trying to help promote a rational discussion. 
-Play fairly and help make $I{sitename} a little better for everyone.</LI>
-
-<LI>Scores and information identifying the posters of these comments have been
-removed to help prevent bias in meta moderation.
-If you really need to know, you can click through and see the original message,
-but we encourage you not to do this unless you need more context to fairly
-meta moderate.</LI> 
-
-</UL>
-
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-<TABLE>
-
-EOT
-	
-	$I{U}{noscores} = 1; # Keep Things Impartial
-
-	my $c = sqlSelectMany("comments.cid," . getDateFormat("date","time") . ",
-		subject,comment,nickname,homepage,fakeemail,realname,
-		users.uid as uid,sig,comments.points as points,pid,comments.sid as sid,
-		moderatorlog.id as id,title,moderatorlog.reason as modreason,
-		comments.reason",
-		"comments,users,users_info,moderatorlog,stories",
-		"stories.sid=comments.sid AND 
-		moderatorlog.sid = comments.sid AND
-		moderatorlog.cid = comments.cid AND
-		moderatorlog.id > $id AND
-		comments.uid != $I{U}{uid} AND
-		users.uid = comments.uid AND
-		users.uid = users_info.uid AND
-		users.uid != $I{U}{uid} AND
-		moderatorlog.uid != $I{U}{uid} AND
-		moderatorlog.reason < 8 LIMIT $I{m2_comments}");
-
-	$I{U}{points} = 0;
-	while(my $C = $c->fetchrow_hashref) {
-		# Anonymize the comment; it should be safe to reset $C->{uid}, and 
-		# $C->{points} (as a matter of fact, the latter SHOULD be done due to
-		# the nickname).
-		#
-		# The '-' in place of nickname -may- be a problem, though. And we
-		# Probably shouldn't assume a score of 0, here either but we'll leave
-		# it for now.
-		@{$C}{qw(nickname uid fakeemail homepage points)} =
-			('-', -1, '', '', 0);
-		dispComment($C);
-		printf <<EOT, linkStory({ 'link' => $C->{title}, sid => $C->{sid} });
-	<TR><TD>
-		Story:<B>%s</B><BR> Rating:
-		'<B>$I{reasons}[$C->{modreason}]</B>'.<BR>This rating is <B>Unfair
-			<INPUT TYPE="RADIO" NAME="mm$C->{id}" VALUE="-">
-			<INPUT TYPE="RADIO" NAME="mm$C->{id}" VALUE="0" CHECKED>
-			<INPUT TYPE="RADIO" NAME="mm$C->{id}" VALUE="+">
-		Fair</B><HR>
-	</TD></TR>
-	
-EOT
-	}
-
-	print <<EOT;
-
-</TABLE>
-
-<INPUT TYPE="SUBMIT" NAME="op" VALUE="MetaModerate">
-
-</FORM>
-
-EOT
-
-
+	slashDisplay('metamod-display', {
+		constants 	=> $c,
+		comments 	=> $comments,
+		user 		=> $u,
+	});
 }
+
 
 #################################################################
 # This is going to break under replication
 sub isEligible {
+	my ($u, $db, $c) = @_;
 
-	if ($I{U}{is_anon}) {
-		print "You are not logged in";
-		return 0;
-	}
+	my $tuid = $db->countUsers();
+	my $last = $db->getModeratorLast($u->{uid});
 
-	my $tuid = $I{dbobject}->countUsers();
-	
-	if ($I{U}{uid} > int($tuid * $I{m2_userpercentage}) ) {
-		print "You haven't been a $I{sitename} user long enough.";
-		return 0;
-	}
+	my $result = slashDisplay('metamod-eligibility-tests', {
+		user 		=> $u,
+		constants 	=> $c,
+		user_count	=> $tuid,
+		'last'		=> $last,
+	}, 1, 1);
 
-	if ($I{U}{karma} < 0) {
-		print "You have bad Karma.";
-		return 0;	
-	}
-
-	my $last = $I{dbobject}->getModeratorLast($I{U}{uid});
-
-	# must be eq "0", since == 0 might return true improperly
-	if ($last->{'lastmm'} eq "0") {
-		print "You have recently meta moderated.";
+	if ($result ne 'Eligible') {
+		print $result;
 		return 0;
 	}
 
 	# Eligible for M2. Determine M2 comments by selecting random starting
 	# point in moderatorlog.
 	unless ($last->{'lastmmid'}) {
-		$last->{'lastmmid'} = $I{dbobject}->getModeratorLogRandom();
-		$I{dbobject}->setUser($I{U}{uid}, { lastmmid => $last->{'lastmmid'} });
+		$last->{'lastmmid'} = $db->getModeratorLogRandom();
+		$db->setUser($u->{uid}, { lastmmid => $last->{'lastmmid'} });
 	}
 
 	return $last->{'lastmmid'}; # Hooray!

@@ -26,104 +26,108 @@
 use strict;
 use Date::Manip;
 use Compress::Zlib;
-use vars '%I';
+#use vars '%I';
 use Slash;
 use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 use CGI ();
 
 
 ##################################################################
 sub main {
-	*I = getSlashConf();
+	#*I = getSlashConf();
 	getSlash();
+
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $id = getFormkeyId($user->{uid});
 
-	my $id = getFormkeyId($I{U}{uid});
-
-	# Seek Section for Appropriate L&F
 	my $stories;
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
-	if ($I{F}{sid}) {
-		$stories = $I{dbobject}->getNewStory($I{F}{sid},
-			['section', 'title', 'commentstatus']);
+	if ($form->{sid}) {
+		$stories = $dbslash->getNewStory($form->{sid},
+				['section', 'title', 'commentstatus']);
 	} else {
 		$stories->{'title'} = "Comments";
 	}
-	my $SECT = getSection($stories->{'section'});
+	my $SECT = $dbslash->getSection($stories->{'section'});
 
-	$I{F}{pid} ||= "0";
+	$form->{pid} ||= "0";
 	
 	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
 
-	if ($I{U}{uid} < 1 && length($I{F}{upasswd}) > 1) {
-		print "<P><B>Login for \"$I{F}{unickname}\" has failed</B>.  
-			Please try again. $I{F}{op}<BR><P>";
-		$I{F}{op} = "Preview";
+	if ($user->{uid} < 1 && length($form->{upasswd}) > 1) {
+		slashDisplay('comments-error', {
+			type		=> 'login error'
+			nickname	=> $form->{unickname},
+			op			=> $form->{op},
+		});
+		$form->{op} = "Preview";
 	}
 
-	$I{U}{karma} = $I{dbobject}->getUser($I{U}{uid}, 'karma')
-		unless $I{U}{is_anon};
-	$I{dbobject}->createDiscussions($I{F}{sid}) unless ($I{F}{sid});
+	$dbslash->createDiscussions($form->{sid}) unless ($form->{sid});
 
-	if ($I{F}{op} eq "Submit") {
+	if ($form->{op} eq "Submit") {
+		submitComment($form, $user, $dbslash, $constants)
+			if checkSubmission("comments",
+					   $constants->{post_limit},
+					   $constants->{max_posts_allowed},
+					   $id);
 
-		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-			submitComment();
-		}
+	} elsif ($form->{op} eq "Edit" || $form->{op} eq "post" ||
+			 $form->{op} eq "Preview" || $form->{op} eq "Reply") {
 
-	} elsif ($I{F}{op} eq "Edit" || $I{F}{op} eq "post" 
-			||
-		$I{F}{op} eq "Preview" || $I{F}{op} eq "Reply") {
-
-		if ($I{F}{op} eq 'Reply') {
-			$I{F}{formkey} = getFormkey();
-			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid});	
+		if ($form->{op} eq 'Reply') {
+			$form->{formkey} = $dbslash->getFormkey();
+			$dbslash->insertFormkey("comments", $id, $form->{sid});	
 		} else {
-			$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey},
-				getCurrentStatic('anonymous_coward_uid'), $I{U}{uid},
-				$form->{'rlogin'}, $I{F}{upasswd}
+			$dbslash->updateFormkeyId('comments',
+				$form->{formkey},
+				$constants->{anonymous_coward_uid},
+				$user->{uid},
+				$form->{'rlogin'},
+				$form->{upasswd}
 			);
 		}
 
-		# find out their Karma
-		editComment($id);
+		editComment($id, $form, $user, $dbslash, $constants);
 
+	} elsif ($form->{op} eq "delete" && $user->{aseclev}) {
+		titlebar("99%", "Delete $form->{cid}");
 
-	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
-		titlebar("99%", "Delete $I{F}{cid}");
+		my $delCount = deleteThread($form->{sid}, $form->{cid}, $user, $dbslash);
+		$dbslash->setCommentCount($delCount);
+#		print "Deleted $delCount items from story $form->{sid}\n";
 
-		my $delCount = deleteThread($I{F}{sid}, $I{F}{cid});
-		$I{dbobject}->setCommentCount($delCount);
-		print "Deleted $delCount items from story $I{F}{sid}\n";
+	} elsif ($form->{op} eq "moderate") {
+		titlebar("99%", "Moderating $form->{sid}");
+		moderate($form, $user, $dbslash, $constants);
+		printComments($form->{sid}, $form->{pid}, $form->{cid});
 
-	} elsif ($I{F}{op} eq "moderate") {
-		titlebar("99%", "Moderating $I{F}{sid}");
-		moderate();
-		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid});
-
-	} elsif ($I{F}{op} eq "Change") {
-		if ($I{U}{is_anon} || defined $I{F}->{"savechanges"}) {
-			$I{dbobject}->setUser($I{U}{uid}, {
-					threshold	=> $I{U}{threshold}, 
-					mode		=> $I{U}{mode},
-					commentsort	=> $I{U}{commentsort}
-			}) unless $I{U}{is_anon};
+	} elsif ($form->{op} eq "Change") {
+		if (defined $form->{'savechanges'} && !$user->{is_anon}) {
+			$dbslash->setUser($user->{uid}, {
+				threshold	=> $user->{threshold}, 
+				mode		=> $user->{mode},
+				commentsort	=> $user->{commentsort}
+			});
 		}
-		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid});
+		printComments($form->{sid}, $form->{cid}, $form->{cid});
 
-	} elsif ($I{F}{cid}) {
-		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid});
+	} elsif ($form->{cid}) {
+		printComments($form->{sid}, $form->{cid}, $form->{cid});
 
-	} elsif ($I{F}{sid}) {
-		printComments($I{F}{sid}, $I{F}{pid});
-
+	} elsif ($form->{sid}) {
+		printComments($form->{sid}, $form->{pid});
 	} else {
-		commentIndex();
+		commentIndex($dbslash, $constants);
 	}
 
-	writeLog("comments", $I{F}{sid}) unless $I{F}{ssi};
+	writeLog('comments', $form->{sid}) unless $form->{ssi};
 
 	footer();
 }
@@ -133,22 +137,14 @@ sub main {
 # Index of recent discussions: Used if comments.pl is called w/ no
 # parameters
 sub commentIndex {
+	my ($db, $c) = @_;
+
 	titlebar("90%", "Several Active Discussions");
-	print qq!<MULTICOL COLS="2">\n!;
-
-	my $discussions = $I{dbobject}->getDiscussions();
-	for(@$discussions) {
-		my($sid, $title, $url) = @$_;
-		$title ||= "untitled";
-		print <<EOT;
-	<LI><A HREF="$I{rootdir}/comments.pl?sid=$sid">$title</A>
-	(<A HREF="$url">referer</A>)
-
-EOT
-
-	}
-
-	print "</MULTICOL>\n\n";
+	my $discussions = $db->getDiscussions();
+	slashDisplay('comments-discussion-list', {
+		rootdir => $c->{rootdir},
+		discussions => $discussions,
+	});
 }
 
 
@@ -156,231 +152,103 @@ EOT
 # Welcome to one of the ancient beast functions.  The comment editor
 # is the form in which you edit a comment.
 sub editComment {
-	my($id) = @_;
-	$I{U}{points} = 0;
+	my($id, $f, $u, $db, $c, $error_message) = @_;
 
-	my $formkey_earliest = time() - $I{formkey_timeframe};
+	my $formkey_earliest = time() - $c->{formkey_timeframe};
+	$u->{points} = 0;
 
-	my $reply = $I{dbobject}->getCommentReply(
-		getDateFormat("date", "time"),
-		$I{F}{sid}, $I{F}{pid}
-	);
+	my $reply = $db->getCommentReply(getDateFormat('date', 'time'), $f->{sid},
+									 $f->{pid});
 
-	# Display parent comment if we got one
-	if ($I{F}{pid}) {
-		titlebar("95%", " $reply->{subject}");
-		print <<EOT;
-<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="95%" ALIGN="CENTER">
-EOT
-		dispComment($reply);
-		print "\n</TABLE><P>\n\n";
-	}
-
-	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest)) {
-		my $max_posts_warn =<<EOT;
-<P><B>Warning! you've exceeded max allowed submissions for the day :
-$I{max_submissions_allowed}</B></P>
-EOT
-		errorMessage($max_posts_warn);
-	}
-
-	if (!$I{allow_anonymous} && (!$I{U}{uid} || $I{U}{uid} < 1)) {
-	    print <<EOT;
-Sorry, anonymous posting has been turned off.
-Please <A HREF="$I{rootdir}/users.pl">register and log in</A>.
-EOT
+	if (!$c->{allow_anonymous} && $u->{is_anon}) {
+		slashDisplay('comments-error', {
+			type	=> 'no anonymous posting',
+			rootdir => $c->{rootdir},
+		});
 	    return;
 	}
 
-	
-	if ($I{F}{postercomment}) {
-		titlebar("95%", "Preview Comment"); 
-		previewForm();
-		print "<P>\n";
+	my $mp = $c->{max_posts_allowed};
+	my $previewForm;
+	# Don't munge the current error_message if there already is one.
+	if (! $db->checkTimesPosted('comments',$mp,$id,$formkey_earliest)) {
+		$error_message ||= slashDisplay('comments-errors', {
+			type		=> 'max posts',
+			max_posts 	=> $mp,
+		}, 1);
+	} else {
+		$previewForm = previewForm($f, $u) if ($f->{postercomment});
+		if ($previewForm =~ s/^ERROR: //) {
+			$error_message ||= $previewForm;
+			$previewForm = '';
+		}
 	}
 
-	titlebar("95%", "Post Comment");
-	print <<EOT;
-
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-
-	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$I{F}{sid}">
-	<INPUT TYPE="HIDDEN" NAME="pid" VALUE="$I{F}{pid}">
-	<INPUT TYPE="HIDDEN" NAME="mode" VALUE="$I{U}{mode}">
-	<INPUT TYPE="HIDDEN" NAME="startat" VALUE="$I{U}{startat}">
-	<INPUT TYPE="HIDDEN" NAME="threshold" VALUE="$I{U}{threshold}">
-	<INPUT TYPE="HIDDEN" NAME="commentsort" VALUE="$I{U}{commentsort}">
-
-	<TABLE BORDER="0" CELLSPACING="0" CELLPADDING="1">
-
-EOT
-
-	 # put in hidden field if there's a formkey
-        print qq(<INPUT type="hidden" name="formkey" value="$I{F}{formkey}">\n);
-
-	print <<EOT if $I{U}{uid} < 1;
-	<TR><TD> </TD><TD>
-		You are not logged in.  You can login now using the
-		convenient form below, or
-		<A HREF="$I{rootdir}/users.pl">Create an Account</A>.
-		Posts without proper registration are posted as
-		<B>$I{U}{nickname}</B>
-	</TD></TR>
-
-	<INPUT TYPE="HIDDEN" NAME="rlogin" VALUE="userlogin">
-
-	<TR><TD ALIGN="RIGHT">Nick</TD><TD>
-		<INPUT TYPE="TEXT" NAME="unickname" VALUE="$I{F}{unickname}">
-
-	</TD></TR><TR><TD ALIGN="RIGHT">Passwd</TD><TD>
-		<INPUT TYPE="PASSWORD" NAME="upasswd">
-
-	</TD></TR>
-
-EOT
-
-	print <<EOT;
-	<TR><TD WIDTH="130" ALIGN="RIGHT">Name</TD><TD WIDTH="500">
-		<A HREF="$I{rootdir}/users.pl">$I{U}{nickname}</A> [
-EOT
-
-	print !$I{U}{is_anon} ? <<EOT1 : <<EOT2;
-		<A HREF="$I{rootdir}/users.pl?op=userclose">Log Out</A> 
-EOT1
-		<A HREF="$I{rootdir}/users.pl">Create Account</A> 
-EOT2
-			
-	print " ] </TD></TR>\n\n";
-
-	print <<EOT if $I{U}{fakeemail};
-	<TR><TD ALIGN="RIGHT">Email</TD>
-		<TD>$I{U}{fakeemail}</TD></TR>
-
-EOT
-
-	print <<EOT if $I{U}{homepage};
-	<TR><TD ALIGN="RIGHT">URL</TD>
-		<TD><A HREF="$I{U}{homepage}">$I{U}{homepage}</A></TD></TR>
-
-EOT
-
-	print qq!\t<TR><TD ALIGN="RIGHT">Subject</TD>\n\n!;
-
-	if ($I{F}{pid} && !$I{F}{postersubj}) { 
-		$I{F}{postersubj} = $reply->{subject};
-		$I{F}{postersubj} =~ s/^Re://i;
-		$I{F}{postersubj} =~ s/\s\s/ /g;
-		$I{F}{postersubj} = "Re:$I{F}{postersubj}";
+	if ($f->{pid} && !$f->{postersubj}) { 
+		$f->{postersubj} = $reply->{subject};
+		$f->{postersubj} =~ s/^Re://i;
+		$f->{postersubj} =~ s/\s\s/ /g;
+		$f->{postersubj} = "Re:$f->{postersubj}";
 	} 
 
-	print "\t\t<TD>", CGI::textfield(
-		-name		=> 'postersubj', 
-		-default	=> $I{F}{postersubj}, 
-		-size		=> 50,
-		-maxlength	=> 50
-	), "</TD></TR>\n\n";
+	my $formats = $db->getDescriptions('postmodes');
 
-	printf <<EOT, stripByMode($I{F}{postercomment}, 'literal');
-	<TR>
-		<TD ALIGN="RIGHT" VALIGN="TOP">Comment</TD>
-		<TD><TEXTAREA WRAP="VIRTUAL" NAME="postercomment" ROWS="10"
-		COLS="50">%s</TEXTAREA>
-		<BR>(Use the Preview Button! Check those URLs!
-		Don't forget the http://!)
-	</TD></TR>
+	my $formatSelect = ($f->{posttype}) ?
+		createSelect('posttype', $formats, $f->{posttype}, 1) :
+		createSelect('posttype', $formats, $u->{posttype}, 1);
 
-	<TR><TD> </TD><TD>
-EOT
+	my $approvedtags =
+		join "\n", map { "\t\t\t&lt;$_&gt;" } @{$c->{approvedtags}};
 
-	my $checked = $I{F}{nobonus} ? ' CHECKED' : '';
-	print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="nobonus"> No Score +1 Bonus\n!
-		if $I{U}{karma} > $I{goodkarma} && !$I{U}{is_anon};
-
-        if ($I{allow_anonymous}) {
-	    $checked = $I{F}{postanon} ? ' CHECKED' : '';
-	    print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="postanon"> Post Anonymously<BR>\n!
-		if $I{U}{karma} > -1 && !$I{U}{is_anon};
-        }
-
-	print <<EOT;
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="Submit">
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="Preview">
-
-EOT
-
-	my $formats = $I{dbobject}->getDescriptions('postmodes');
-	if ($I{F}{posttype}) {
-		createSelect('posttype', $formats, $I{F}{posttype});
-	} else {
-		createSelect('posttype', $formats, $I{U}{posttype});
-	}
-
-	printf <<EOT, join "\n", map { "\t\t\t&lt;$_&gt;" } @{$I{approvedtags}};
-	</TD></TR><TR>
-		<TD VALIGN="TOP" ALIGN="RIGHT">Allowed HTML</TD><TD><FONT SIZE="1">
-%s
-		</FONT>
-	</TD></TR>
-</TABLE>
-
-
-</FORM>
-
-<B>Important Stuff:</B>
-	<LI>Please try to keep posts on topic.
-	<LI>Try to reply to other people comments instead of starting
-		new threads.
-	<LI>Read other people's messages before posting your own to
-		avoid simply duplicating what has already been said.
-	<LI>Use a clear subject that describes what your message is about.
-	<LI>Offtopic, Inflammatory, Inappropriate, Illegal,
-		or Offensive comments might be moderated.  (You can read
-		everything, even moderated posts, by adjusting your 
-		threshold on the User Preferences Page)
-
-<P><FONT SIZE="2">Problems regarding accounts or comment posting 
-	should be sent to
-	<A HREF="mailto:$I{adminmail}">$I{siteadmin_name}</A>.</FONT>
-EOT
-
+	# Consider passing $c.
+	slashDisplay('comments-edit-comment', {
+		form => $f,
+		user => $u,
+		cgi => new CGI,
+		admin_mail => $c->{adminmail},
+		admin_name => $c->{siteadmin_name},
+		approved_tags => $approvedtags,
+		error_message => $error_message,
+		format_select => $formatSelect,
+		goodkarma => $c->{goodkarma},
+		preview => $previewForm,
+		reply => $reply,
+		rootdir => $c->{rootdir},
+	});
 }
+
 
 ##################################################################
 # Validate comment, looking for errors
 sub validateComment {
-	my($comm, $subj, $preview) = @_;
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
+	my($f, $u, $preview, $comm, $subj) = @_;
+	$comm ||= $f->{postercomment};
+	$subj ||= $f->{postersubj};
 
-	if (isTroll()) {
-		print <<EOT;
-This account or IP has been temporarily disabled. This means that either
-this IP or user account has been moderated down more than 5 times in the
-last 24 hours.  If you think this is unfair, you should contact
-$constants->{adminmail}.  If you are being a troll, now is the time for you to
-either grow up, or change your IP.
-EOT
+	my $db = getCurrentDB();
+	my $c = getCurrentStatic();
 
-		return;
+	if (isTroll($u, $c, $db)) {
+		my $err_msg = slashDisplay('comments-errors', {
+			type 		=> 'troll message',
+			admin_mail	=> $c->{adminmail},
+		}, 1);
+		return (undef, undef, $err_msg);
 	}
 
-	if (!$constants->{allow_anonymous} && ($user->{uid} < 1 || $form->{postanon})) { 
-		print <<EOT;
-Sorry, anonymous posting has been turned off.
-Please <A HREF="$constants->{rootdir}/users.pl">register and log in</A>.
-EOT
-
-		return;
+	if (!$c->{allow_anonymous} && ($u->{uid} < 1 || $f->{postanon})) { 
+		my $err_msg = slashDisplay('comments-errors', {
+			type	=> 'anonymous disallowed', 
+			rootdir => $c->{rootdir},
+		}, 1);
+		return (undef, undef, $err_msg);
 	}
 
 	unless ($comm && $subj) {
-		print <<EOT;
-Cat got your tongue? (something important seems to be missing from your
-comment ... like the body or the subject!)
-EOT
-		return;
+		my $err_msg = slashDisplay('comments-errors', {
+			type	=> 'no body',
+		}, 1);
+		return (undef, undef, $err_msg);
 	}
 
 	$subj =~ s/\(Score(.*)//i;
@@ -390,16 +258,19 @@ EOT
 		my(%tags, @stack, $match, %lone, $tag, $close, $whole);
 
 		# set up / get preferences
-		if ($constants->{lonetags}) {
-			$match = join '|', @{$constants->{approvedtags}};
+		if ($c->{lonetags}) {
+			$match = join '|', @{$c->{approvedtags}};
 		} else {
-			$constants->{lonetags} = [qw(BR P LI)];
+			$c->{lonetags} = [qw(BR P LI)];
 			$match = join '|', grep !/^(?:BR|P|LI)$/,
-				@{$constants->{approvedtags}};
+				@{$c->{approvedtags}};
 		}
-		%lone = map { ($_, 1) } @{$constants->{lonetags}};
+		%lone = map { ($_, 1) } @{$c->{lonetags}};
 
-		while ($comm =~ m|(<(/?)($match)\b[^>]*>)|igo) { # loop over tags
+		# If the quoted slash in the next line bothers you, then feel free to
+		# remove it. It's just there to prevent broken syntactical highlighting
+		# on certain editors (vim AND xemacs). 
+		while ($comm =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
 			($tag, $close, $whole) = ($3, $2, $1);
 
 			if ($close) {
@@ -433,12 +304,10 @@ EOT
 				push @stack, $tag;
 
 				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-					print <<EOT;
-You can only post nested lists and blockquotes four levels deep.
-Please fix your UL, OL, and BLOCKQUOTE tags.
-EOT
-
-					return;
+					my $err_msg = slashDisplay('comments-errors', {
+						type =>	'nesting_toodeep',
+					}, 1);
+					return (undef, undef, $err_msg);
 				}
 			}
 
@@ -447,49 +316,50 @@ EOT
 		$comm =~ s/\s+$//;
 
 		# add on any unclosed tags still on stack
-		$comm .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
+		$comm .= join '',
+					  map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
 
 	}
 
-	my $dupRows = $slashdb->countComments($form->{sid}, '', '', $form->{postercomment});
+	my $dupRows = $db->countComments($f->{sid}, '', $f->{postercomment});
 
-	if ($dupRows || !$form->{sid}) { 
-		editComment(), return unless $preview;
-		print <<EOT;
-Something is wrong: parent=$form->{pid} dups=$dupRows discussion=$form->{sid}
-<UL>
-EOT
-
-		print "<LI>Didja forget a subject?</LI>\n" unless $form->{postersubj};
-		print "<LI>Duplicate.  Did you submit twice?</LI>\n" if $dupRows;
-		print "<LI>Space aliens have eaten your data.</LI>\n" unless $form->{sid};
-		print <<EOT;
-<LI>Let us know if anything exceptionally strange happens</LI>
-</UL>
-EOT
-		return;
+	if ($dupRows || !$f->{sid}) { 
+		my $err_msg = slashDisplay('comments-errors', {
+			type	=> 'validation error',
+			form	=> $f,
+			dups	=> $dupRows,
+		});
+		editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+		return (undef, undef, $err_msg);
 	}
 
-	if (length($form->{postercomment}) > 100) {
-		local $_ = $form->{postercomment};
-		my($w, $br); # Whitespace & BRs
+	if (length($f->{postercomment}) > 100) {
+		local $_ = $f->{postercomment};
+		my($w, $br); # Words & BRs
 		$w++ while m/\w/g;
 		$br++ while m/<BR>/gi;
 
+		# Should the naked '7' be converted to a Slash Variable for return by
+		# getCurrentStatic(). 	- Cliff
 		if (($w / ($br + 1)) < 7) {
-			editComment(), return unless $preview;
-			return;
+			my $err_msg = slashDisplay('comments-error',
+				type	=> 'low words-per-line',
+				ratio 	=> $w / ($br + 1),
+			}, 1);
+			editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+			return (undef, undef, $err_msg);
 		}
 	}
 
 	# here begins the troll detection code - PMG 160200
-	# hash ref from db containing regex, modifier (gi,g,..),field to be tested,
-	# ratio of field (this makes up the {x,} in the regex, minimum match (hard minimum), 
-	# minimum length (minimum length of that comment has to be to be tested), err_message 
-	# message displayed upon failure to post if regex matches contents.
-	# make sure that we don't select new filters without any regex data
-	my $filters = $slashdb->getContentFilters();
-
+	# hash ref from db containing regex, modifier (gi,g,..),field to be
+	# tested, ratio of field (this makes up the {x,} in the regex, minimum
+	# match (hard minimum), minimum length (minimum length of that comment
+	# has to be to be tested), err_message message displayed upon failure
+	# to post if regex matches contents. make sure that we don't select new
+	# filters without any regex data.
+	my $filters = $db->getContentFilters();
+	my @filterMatch = (0, '');
 	for (@$filters) {
 		my($number_match, $regex);
 		my $raw_regex		= $_->[1];
@@ -503,13 +373,13 @@ EOT
 		my $maximum_length	= $_->[8];
 		my $isTrollish		= 0;
 		
-		next if ($minimum_length && length($form->{$field}) < $minimum_length);
-		next if ($maximum_length && length($form->{$field}) > $maximum_length);
+		next if ($minimum_length && length($f->{$field}) < $minimum_length);
+		next if ($maximum_length && length($f->{$field}) > $maximum_length);
 
 		if ($minimum_match) {
 			$number_match = "{$minimum_match,}";
 		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($form->{$field}) * $ratio) . ",}";
+			$number_match = "{" . int(length($f->{$field}) * $ratio) . ",}";
 		}
 
 		$regex = $raw_regex . $number_match;
@@ -519,30 +389,37 @@ EOT
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
 		if ($modifier eq 'g') {
-			$isTrollish = 1 if $form->{$field} =~ /$regex/g;
+			$isTrollish = 1 if $f->{$field} =~ /$regex/g;
 		} else {
-			$isTrollish = 1 if $form->{$field} =~ /$regex/;
+			$isTrollish = 1 if $f->{$field} =~ /$regex/;
 		}
 
-		if ((length($form->{$field}) >= $minimum_length)
+		if ((length($f->{$field}) >= $minimum_length)
 			&& $minimum_length && $isTrollish) {
 
-			if (((length($form->{$field}) <= $maximum_length)
+			if (((length($f->{$field}) <= $maximum_length)
 				&& $maximum_length) || $isTrollish) {
 
-				editComment(), return unless $preview;
-				print <<EOT;
-<BR>Lameness filter encountered.  Post aborted.<BR><BR><B>$err_message</B><BR>
-EOT
-				return;
+				my $err_msg = slashDisplay('comments-errors', {
+					type		=> 'filter message',
+					err_message => $err_message,
+				}, 1);
+
+				editComment('', $f, $u, $db, $c, $err_msg), return
+					unless $preview;
+				@filterMatch = (1, $err_msg);
+				last;
 			}
 
 		} elsif ($isTrollish) {
-			editComment(), return unless $preview;
-			print <<EOT;
-<BR>Lameness filter encountered.  Post aborted.<BR><BR><B>$err_message</B><BR>
-EOT
-			return;
+			my $err_msg = slashDisplay('comments-errors', {
+				type		=> 'filter message',
+				err_message => $err_message,
+			}, 1);
+
+			editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+			@filterMatch = (1, $err_msg);
+			last;
 		}
 	}
 
@@ -551,182 +428,225 @@ EOT
 	# the key is the ratio it should compress, the array lower,upper
 	# for the ratio. These ratios are _very_ conservative
 	# a comment has to be absolute shit to trip this off
-	my $limits = {
-		1.3 => [10,19],
-		1.1 => [20,29],
-		.8 => [30,44],
-		.5 => [45,99],
-		.4 => [100,199],
-		.3 => [200,299],
-		.2 => [300,399],
-		.1 => [400,1000000],
-	};
+	if (!$filterMatch[0]) {
+		my $limits = {
+			1.3 => [10,19],
+			1.1 => [20,29],
+			.8 => [30,44],
+			.5 => [45,99],
+			.4 => [100,199],
+			.3 => [200,299],
+			.2 => [300,399],
+			.1 => [400,1000000],
+		};
 
-	# Ok, one list ditch effort to skew out the trolls!
-	if (length($form->{postercomment}) >= 10) {
-		for (keys %$limits) {
-			# DEBUG
-			# print "ratio $_ lower $limits->{$_}->[0] upper $limits->{$_}->[1]<br>\n";
-			# if it's within lower to upper
-			if (length($form->{postercomment}) >= $limits->{$_}->[0]
-				&& length($form->{postercomment}) <= $limits->{$_}->[1]) {
+		# Ok, one list ditch effort to skew out the trolls!
+		if (length($f->{postercomment}) >= 10) {
+			for (keys %$limits) {
+				# DEBUG
+				# print "ratio $_ lower $limits->{$_}->[0] upper $limits->{$_}->[1]<br>\n";
+				# if it's within lower to upper
+				if (length($f->{postercomment}) >= $limits->{$_}->[0] &&
+					length($f->{postercomment}) <= $limits->{$_}->[1]) {
 
-				# if is >= the ratio, then it's most likely a troll comment
-				if ((length(compress($form->{postercomment})) /
-					length($form->{postercomment})) <= $_) {
+					# if is >= the ratio, then it's most likely a
+					# troll comment
+					if ((length(compress($f->{postercomment})) /
+					     length($f->{postercomment})) <= $_) {
+	
+						# blammo luser
+						my $err_msg = slashDisplay('comments-error', {
+							type	=> 'compress filter',
+							ratio	=> $_,
+						}, 1);
+						editComment('', $f, $u, $db, $c, $err_msg), return
+							unless $preview;
+						@filterMatch = (1, $err_msg);
+					}
 
-					editComment(), return unless $preview;
-					# blammo luser
-					print <<EOT;
-
-
-<BR>Lameness filter encountered.  Post aborted.<BR><BR>
-EOT
 				}
-
 			}
 		}
 	}
+	
+	# Return error condition...
+	return (undef, undef, $filterMatch[1]) if $filterMatch[0];
 
-	return($comm, $subj);
+	# ...otherwise return data.
+	return ($comm, $subj);
 }
 
 ##################################################################
 # Previews a comment for submission
 sub previewForm {
-	$I{U}{sig} = "" if $I{F}{postanon};
+	my ($form, $user) = @_;
 
-	my $tempComment = stripByMode($I{F}{postercomment}, $I{F}{posttype});
-	my $tempSubject = stripByMode(
-		$I{F}{postersubj}, 'nohtml', $I{U}{aseclev}, 'B'
-	);
+	$user->{sig} = "" if $form->{postanon};
 
-	($tempComment, $tempSubject) = validateComment($tempComment, $tempSubject, 1);
+	my $tempComment = stripByMode($form->{postercomment},
+				      $form->{posttype});
+	my $tempSubject = stripByMode($form->{postersubj},
+				      'nohtml',
+				      $user->{aseclev},
+				      'B');
+	my $error_message;
 
-	$tempComment .= '<BR>' . $I{U}{sig};
+	($tempComment, $tempSubject, $error_message) =
+		validateComment($form, $user, 1, $tempComment, $tempSubject);
+
+	return "ERROR: $error_message" if $error_message;
 
 	my $preview = {
-		nickname  => $I{F}{postanon} ? getCurrentAnonymousCoward('nickname') : $I{U}{nickname},
-		pid	  => $I{F}{pid},
-		homepage  => $I{F}{postanon} ? '' : $I{U}{homepage},
-		fakeemail => $I{F}{postanon} ? '' : $I{U}{fakeemail},
-		'time'	  => 'soon',
-		subject	  => $tempSubject,
-		comment	  => $tempComment
+		nickname	=> $form->{postanon} ?
+			getCurrentAnonymousCoward('nickname') : $user->{nickname},
+		pid			=> $form->{pid},
+		homepage	=> $form->{postanon} ? '' : $user->{homepage},
+		fakeemail	=> $form->{postanon} ? '' : $user->{fakeemail},
+		'time'		=> 'Soon',
+		subject		=> $tempSubject,
+		comment		=> $tempComment,
 	};
 
-	print <<EOT;
-<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="95%" ALIGN="CENTER">
-EOT
+	my $tm = $user->{mode};
+	$user->{mode} = 'archive';
+	my $previewForm;
+	if ($tempSubject && $tempComment) {
+		$previewForm = slashDisplay('comments_preview_comment', {
+			preview => $preview,
+		}, 1);	
+	}
+	$user->{mode} = $tm;
 
-	my $tm = $I{U}{mode};
-	$I{U}{mode} = 'archive';
-	dispComment($preview);       
-	$I{U}{mode} = $tm;
-
-	print "</TABLE>\n";
+	return $previewForm;
 }
 
 
 ##################################################################
 # Saves the Comment
 sub submitComment {
-	$I{F}{postersubj} = stripByMode(
-		$I{F}{postersubj}, 'nohtml', $I{U}{aseclev}, ''
-	);
-	$I{F}{postercomment} = stripByMode($I{F}{postercomment}, $I{F}{posttype});
+	my ($f, $u, $db, $c) = @_;
+	my $error_message;
 
-	($I{F}{postercomment}, $I{F}{postersubj}) =
-		validateComment($I{F}{postercomment}, $I{F}{postersubj})
-		or return;
+	$f->{postersubj} = stripByMode($f->{postersubj},'nohtml',$u->{aseclev},'');
+	$f->{postercomment} = stripByMode($f->{postercomment}, $f->{posttype});
+
+	($f->{postercomment}, $f->{postersubj}, $error_message) =
+		validateComment($f, $u);
+
+	return if $error_message || (!$f->{postercomment} && !$f->{postersubj});
 
 	titlebar("95%", "Submitted Comment");
 
 	my $pts = 0;
 
-	if (!$I{U}{is_anon} && !$I{F}{postanon} ) {
-		$pts = $I{U}{defaultpoints};
-		$pts-- if $I{U}{karma} < $I{badkarma};
-		$pts++ if $I{U}{karma} > $I{goodkarma} && !$I{F}{nobonus};
+	if (!$u->{is_anon} && !$f->{postanon} ) {
+		$pts = $u->{defaultpoints};
+		$pts-- if $u->{karma} < $c->{badkarma};
+		$pts++ if $u->{karma} > $c->{goodkarma} && !$f->{nobonus};
 		# Enforce proper ranges on comment points.
-		$pts = $I{comment_minscore} if $pts < $I{comment_minscore};
-		$pts = $I{comment_maxscore} if $pts > $I{comment_maxscore};
+		my ($minScore,$maxScore)=($c->{comment_minscore},$c->{comment_maxscore});
+		$pts = $minScore if $pts < $minScore;
+		$pts = $maxScore if $pts > $maxScore;
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, getCurrentStatic('anonymous_coward_uid'));
+	my $maxCid = $db->setComment($f, $u, $pts, $c->{anonymous_coward_uid});
 	if ($maxCid == -1) {
-		print "<P>There was an unknown error in the submission.<BR>";
+		# What vars should be accessible here?
+		slashDisplay('comments-error', {
+			type	=> 'submission error',
+		});
 	} elsif (!$maxCid) {
-		print "Don't you have anything better to do with your life? $maxCid";	
+		# What vars should be accessible here?
+		#	- $maxCid?
+		slashDisplay('comments-error', {
+			type	=> 'maxcid exceeded',
+		});
 	} else {
-		print "Comment Submitted. There will be a delay before the comment becomes part
-			of the static page.  What you submitted appears below.  If there is a
-			mistake, well, you should have used the Preview button!<P>";
-		undoModeration($I{F}{sid});
-		printComments($I{F}{sid}, $maxCid, $maxCid);
+		slashDisplay('comments_comment_submitted');
+		undoModeration($f->{sid}, $u, $db, $c);
+		printComments($f->{sid}, $maxCid, $maxCid);
 	}
 }
+
 
 ##################################################################
 # Handles moderation
 # gotta be a way to simplify this -Brian
 sub moderate {
+	my ($f, $u, $db, $c) = @_;
 	my $totalDel = 0;
 	my $hasPosted;
-	unless($I{U}{aseclev} > 99 && $I{authors_unlimited}) {
-		$hasPosted = $I{dbobject}->commentCount($I{F}{sid},'','', $I{U}{uid});
+
+	unless($u->{aseclev} > 99 && $c->{authors_unlimited}) {
+		$hasPosted = $db->countComments($f->{sid}, '','', $u->{uid});
 	}
 
-	print "\n<UL>\n";
+	slashDisplay('comment_moderation_header');
 
 	# Handle Deletions, Points & Reparenting
-	for (sort keys %{$I{F}}) {
-		if (/^del_(\d+)$/) { # && $I{U}{points}) {
-			my $delCount = deleteThread($I{F}{sid}, $1);
+	for (sort keys %{$f}) {
+		if (/^del_(\d+)$/) { # && $user->{points}) {
+			my $delCount = deleteThread($f->{sid}, $1, $u, $db);
 			$totalDel += $delCount;
-			$I{dbobject}->setStoriesCount($I{F}{sid}, $delCount);
-
-			print <<EOT if $totalDel;
-	<LI>Deleted $delCount items from story $I{F}{sid} under comment $I{F}{$_}</LI>
-EOT
+			$db->setStoriesCount($f->{sid}, $delCount);
 
 		} elsif (!$hasPosted && /^reason_(\d+)$/) {
-			moderateCid($I{F}{sid}, $1, $I{F}{"reason_$1"});
+			moderateCid($f->{sid}, $1, $f->{"reason_$1"}, $u, $db, $c);
 		}
 	}
 
-	print "\n</UL>\n";
+	slashDisplay('comment_moderation_footer');
 
 	if ($hasPosted && !$totalDel) {
-		print "You've already posted something in this discussion<BR>";
-	} elsif ($I{U}{aseclev} && $totalDel) {
-		my $count = $I{dbobject}->setCommentCount($I{F}{sid});
-		print "$totalDel comments deleted.  Comment count set to $count<BR>\n";
+		slashDisplay('comments-errors', {
+			type	=> 'already posted',
+		});
+	} elsif ($u->{aseclev} && $totalDel) {
+		my $count = $db->countComments($f->{sid});
+		slashDisplay('comments_deleted_message', {
+			total_deleted => $totalDel,
+			comment_count => $count,
+		});
 	}
 }
+
 
 ##################################################################
 # Handles moderation
 # Moderates a specific comment
 sub moderateCid {
-	my($sid, $cid, $reason) = @_;
+	my($sid, $cid, $reason, $u, $db, $c) = @_;
 	# Check if $uid has seclev and Credits
 	return unless $reason;
+
+	my $superAuthor = $c->{authors_unlimited};
 	
-	if ($I{U}{points} < 1) {
-		unless ($I{U}{aseclev} > 99 && $I{authors_unlimited}) {
-			print "You don't have any moderator points.";
+	if ($u->{points} < 1) {
+		unless ($u->{aseclev} > 99 && $superAuthor) {
+			slashDisplay('comments-errors', {
+				type	=> 'no points',
+			});
 			return;
 		}
 	}
 
-	my($cuid, $ppid, $subj, $points, $oldreason) = $I{dbobject}->getComments($sid, $cid);
+	my($cuid, $ppid, $subj, $points, $oldreason) = 
+		$db->getComments($sid, $cid);
+
+	my $dispArgs = {
+		cid	=> $cid,
+		sid	=> $sid,
+		subject => $subj,
+		reason	=> $c->{reasons}[$reason],
+		points	=> $u->{points},
+	};
 	
-	unless ($I{U}{aseclev} > 99 && $I{authors_unlimited}) {
-		my $mid = $I{dbobject}->getModeratorLogID($cid, $sid, $I{U}{uid});
+	unless ($u->{aseclev} > 99 && $superAuthor) {
+		my $mid = $db->getModeratorLogID($cid, $sid, $u->{uid});
 		if ($mid) {
-			print "<LI>$subj ($sid-$cid, <B>Already moderated</B>)</LI>";
+			$dispArgs->{type} = 'already moderated';
+			slashDisplay('comments-moderation', $dispArgs);
 			return;
 		}	
 	}
@@ -741,49 +661,66 @@ sub moderateCid {
 		$val = "+1";
 		$val = "+0" if $points > 1;
 		$reason = $oldreason;
-	} elsif ($reason > $I{badreasons}) {
+	} elsif ($reason > $c->{badreasons}) {
 		$val = "+1";
 	}
+	# Add moderation value to display arguments.
+	$dispArgs->{'val'} = $val;
 
 	my $scorecheck = $points + $val;
-	# If the resulting score is out of comment score range, no further actions 
-	# need be performed.
-	if ($scorecheck < $I{comment_minscore} || $scorecheck > $I{comment_maxscore}) {
-		# We should still log the attempt for M2, but marked as inactive so
-		# we don't mistakenly undo it.
-		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
-
-		print "<LI>$subj ($sid-$cid, <B>Comment already at limit</B>)</LI>";
+	# If the resulting score is out of comment score range, no further
+	# actions need be performed.
+	if ($scorecheck < $c->{comment_minscore} || 
+	    $scorecheck > $c->{comment_maxscore})
+	{
+		# We should still log the attempt for M2, but marked as
+		# 'inactive' so we don't mistakenly undo it.
+		$db->setModeratorLog($cid, $sid, $u->{uid}, $val, $modreason);
+		$dispArgs->{type} = 'score limit';
+		slashDisplay('comments-moderation', $dispArgs);
 		return;
 	}
 
-	if($I{dbobject}->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
-		print <<EOT;
-	<LI>$val ($I{reasons}[$reason]) $subj
-		($sid-$cid, <B>$I{U}{points}</B> points left)</LI>
-EOT
+	if ($db->setCommentCleanup($val, $sid, $reason, $modreason, $cid)) {
+		# Update points for display due to possible change in above line.
+		$dispArgs->{points} = $u->{points};
+		$dispArgs->{type} = 'moderated';
+		slashDisplay('comments-moderation', $dispArgs);
 	}
 }
+
 
 ##################################################################
 # Given an SID & A CID this will delete a comment, and all its replies
 sub deleteThread {
-	my($sid, $cid) = @_;
+	my($sid, $cid, $u, $db, $level, $deleted) = @_;
+	$level ||= 0;
+
 	my $delCount = 1;
+	my @delList if !$level;
+	$deleted = \@delList if !$level;
 
-	return unless $I{U}{aseclev} > 100;
+	return unless $u->{aseclev} > 100;
 
-	print "Deleting $cid from $sid, ";
+	my $delkids = $db->getCommentCid($sid, $cid);
 
-	my $delkids = $I{dbobject}->getCommentCid($sid,$cid);
-
-	for (@$delkids) {
-		$delCount += deleteThread($sid, $_);
+	# Delete children of $cid.
+	push @{$deleted}, $cid;
+	for (@{$delkids}) {
+		my ($cid) = @{$_};
+		push @{$deleted}, $cid;
+		$delCount += deleteThread($sid, $cid, $u, $db, $level + 1, $deleted);
 	}
+	# And now delete $cid.
+	$db->deleteComment($sid, $cid);
 
-	$I{dbobject}->deleteComment($sid, $cid);
-
-	print "<BR>";
+	if (!$level) {
+		slashDisplay('comments_deleted_cids', {
+			sid => $sid,
+			count => $delCount,
+			comments_deleted => $deleted,
+		});
+	}
 	return $delCount;
 }
 
@@ -791,34 +728,42 @@ sub deleteThread {
 ##################################################################
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
-	my($sid) = @_;
-	return if !$I{U}{is_anon}
-		|| ($I{U}{aseclev} > 99 && $I{authors_unlimited});
-	my $removed = $I{dbobject}->unsetModeratorlog($I{U}{uid}, $sid, $I{comment_maxscore},$I{comment_minscore});
+	my($sid, $u, $db, $c) = @_;
+	return if !$u->{is_anon} || ($u->{aseclev} > 99 && $c->{authors_unlimited});
 
-	for my $cid (@$removed) {
-		print "Undoing moderation to Comment #$cid<BR>";
-	}	
+	my $removed = $db->unsetModeratorlog($u->{uid},
+										 $sid,
+										 $c->{comment_maxscore},
+										 $c->{comment_minscore});
+
+	slashDisplay('comment_undo_moderation', {
+		removed => $removed,
+	});
 }
 
+
 ##################################################################
-# Troll Detection: essentially checks to see if this IP or UID has been abusing
-# the system in the last 24 hours.
+# Troll Detection: essentially checks to see if this IP or UID has been
+# abusing the system in the last 24 hours.
 # 1=Troll 0=Good Little Goober
 # This maybe should go into DB package -Brian
 sub isTroll {
-	return if $I{U}{aseclev} > 99;
-	my($badIP, $badUID) = (0, 0);
-	return 0 if !$I{U}{is_anon} && $I{U}{karma} > -1;
-	# Anonymous only checks HOST
-	$badIP = $I{dbobject}->getTrollAddress();
-	return 1 if $badIP < $I{down_moderations}; 
+	my ($user, $constants, $db) = @_;
+	return if $user->{aseclev} > 99;
 
-	unless ($I{U}{is_anon}) {
-		$badUID = $I{dbobject}->getTrollUID();
+	my($badIP, $badUID) = (0, 0);
+	return 0 if !$user->{is_anon} && $user->{karma} > -1;
+
+	# Anonymous only checks HOST
+	my $downMods = $constants->{down_moderations};
+	$badIP = $db->getTrollAddress();
+	return 1 if $badIP < $downMods;
+
+	unless ($user->{is_anon}) {
+		$badUID = $db->getTrollUID();
 	}
 
-	return 1 if $badUID < $I{down_moderations};
+	return 1 if $badUID < $downMods;
 	return 0;
 }
 

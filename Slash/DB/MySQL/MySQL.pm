@@ -254,6 +254,36 @@ sub setModeratorLog {
 	});
 }
 
+sub getMetamodComments {
+	my ($self, $id, $uid, $num_comments) = @_;
+
+	my $sth = $self->sqlSelectMany(
+		'comments.cid,' . getDateFormat('date','time') .
+		',subject,comment,nickname,homepage,fakeemail,realname,users.uid as uid,
+		sig,comments.points as points,pid,comments.sid as sid,
+		moderatorlog.id as id,title,moderatorlog.reason as modreason,
+		comments.reason',
+		'comments,users,users_info,moderatorlog,stories',
+		"stories.sid=comments.sid AND moderatorlog.sid=comments.sid AND
+		moderatorlog.cid=comments.cid AND moderatorlog.id>$id AND
+		comments.uid!=$uid AND users.uid=comments.uid AND
+		users.uid=users_info.uid AND users.uid!=$uid AND
+		moderatorlog.uid!=$uid AND moderatorlog.reason<8 LIMIT $num_comments"
+	);
+
+	my @comments;
+	while (my $C = $sth->fetchrow_hashref) {
+		# Anonymize comment that is to be metamoderated.
+		@{$C}{qw(nickname uid fakeemail homepage points)} =
+			('-', -1, '', '', 0);
+
+		push (@comments, $C);
+	}
+	$sth->finish;
+
+	return \@comments;
+}
+
 ########################################################
 sub getModeratorCommentLog {
 
@@ -872,7 +902,7 @@ sub updateCommentTotals {
 ########################################################
 sub getCommentCid {
 	my($self, $sid, $cid) = @_;
-	my($scid) = $self->sqlSelectMany("cid", "comments", "sid='$sid' and pid='$cid'");
+	my($scid) = $self->sqlSelectAll("cid", "comments", "sid='$sid' and pid='$cid'");
 
 	return $scid;
 }
@@ -1920,7 +1950,7 @@ sub setCommentCleanup {
 	my($self, $val, $sid, $reason, $modreason, $cid) = @_;
 	# Grab the user object.
 	my $user = getCurrentUser();
-	my $constants = getSlashConstants();
+	my $constants = getCurrentStatic();
 	my($cuid, $ppid, $subj, $points, $oldreason) = $self->getComments($sid, $cid);
 
 	my $strsql = "UPDATE comments SET
