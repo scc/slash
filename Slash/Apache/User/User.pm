@@ -26,6 +26,13 @@ sub SlashUserInit ($$) {
 # handler method
 sub handler {
 	my($r) = @_;
+	my $filename = $r->filename;
+	unless($filename =~ /\.pl$/) {
+		print STDERR "Skipping $filename \n";
+		return OK;
+	} else {
+		print STDERR "Doing $filename \n";
+	}
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	# Lets do this to make it a bit easier to handle

@@ -14,7 +14,7 @@ require Exporter;
 	getCurrentUser
 	getCurrentForm
 	getCurrentStatic
-	getCurrentSlashDB
+	getCurrentDB
 	getCurrentAnonymousCoward
 );
 $Slash::Utility::VERSION = '0.01';
@@ -26,11 +26,12 @@ $Slash::Utility::VERSION = '0.01';
 sub apacheLog {
 	# ummm ... won't this fail if called while not running under
 	# Apache?
-	my $r = Apache->request;
+	my ($package, $filename, $line) = caller(1);
 	if ($ENV{SCRIPT_NAME}) {
-		$r->log_error("$ENV{SCRIPT_NAME}:@_");
+		my $r = Apache->request;
+		$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
 	} else {
-		$r->log_error("Error in library:@_");
+		print STDERR ("Error in library:$package:$filename:$line:@_");
 	}
 	return 0;
 }
@@ -124,6 +125,16 @@ sub getCurrentAnonymousCoward{
 
 	return $slashdb;
 }
+
+#################################################################
+sub getCurrentDB{
+	my $r = Apache->request;
+	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+	my $slashdb = $const_cfg->{'dbslash'};
+
+	return $slashdb;
+}
+
 1;
 
 =head1 NAME

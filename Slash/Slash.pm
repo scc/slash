@@ -51,9 +51,9 @@ BEGIN {
 		sqlSelectHashref sqlUpdate sqlInsert sqlReplace sqlConnect
 		sqlTableExists sqlSelectColumns getSlash linkStory getSection
 		selectTopic selectSection fixHref
-		getblock getsid getsiddir getWidgetBlock
+		getsid getsiddir getWidgetBlock
 		anonLog pollbooth stripByMode header footer pollItem
-		prepEvalBlock prepBlock blockCache formLabel
+		prepEvalBlock prepBlock formLabel
 		titlebar fancybox portalbox printComments displayStory
 		sendEmail getOlderStories selectStories timeCalc
 		getEvalBlock dispStory lockTest getSlashConf
@@ -174,7 +174,7 @@ sub selectTopic {
 # Drop down list of available sections (based on admin seclev)
 sub selectSection {
 	my($name, $section, $SECT) = @_;
-	$I{sectionBank} = $I{dbobject}->getSectionBank();
+	my $sectionBank = $I{dbobject}->getSectionBank();
 
 	if ($SECT->{isolate}) {
 		print qq!<INPUT TYPE="hidden" NAME="$name" VALUE="$section">\n!;
@@ -182,8 +182,8 @@ sub selectSection {
 	}
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
-	foreach my $s (sort keys %{$I{sectionBank}}) {
-		my $S = $I{sectionBank}{$s};
+	foreach my $s (sort keys %{$sectionBank}) {
+		my $S = $sectionBank->{$s};
 		next if $S->{isolate} && getCurrentUser('aseclev') < 500;
 		my $selected = $s eq $section ? ' SELECTED' : '';
 		$html_to_display .= qq!\t<OPTION VALUE="$s"$selected>$S->{title}</OPTION>\n!;
@@ -216,24 +216,6 @@ sub selectMode {
 	}
 	$html_to_display .= "</SELECT>";
 	return $html_to_display;
-}
-
-#############################################################################
-# Functions for dealing with Blocks (big chunks of data)
-sub getblock {
-	my($bid) = @_;
-	$I{dbobject}->getBlockBank(\%I);
-	return $I{blockBank}{$bid}; # unless $blockBank{$bid} eq "$I{anonymous_coward_uid}";
-}
-
-
-########################################################
-# Gets a block.  Stores a block.  Returns a block.  Future requests read
-# from cache.  Nice and quick.
-sub blockCache {
-	my($bid) = @_;
-	$I{dbobject}->getBlockBank(\%I);
-	return $I{blockBank}{$bid};
 }
 
 ########################################################
@@ -271,9 +253,9 @@ sub getSectionBlock {
 	my $thissect = getCurrentUser('light')? 'light' : $I{currentSection};
 	my $block;
 	if ($thissect) {
-		$block = blockCache($thissect . "_$name");
+		$block = $I{dbobject}->getBlock($thissect . "_$name");
 	}
-	$block ||= blockCache($name);
+	$block ||= $I{dbobject}->getBlock($name);
 	return $block;
 }
 
@@ -308,6 +290,7 @@ sub getUser {
 	my($uid) = @_;
 	#Ok, lets build user
 	my $user;
+	my $form = getCurrentForm();
 
 	if (($uid != $I{anonymous_coward_uid})
 		&& ($user = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
@@ -336,10 +319,10 @@ sub getUser {
 	}
 
 	# Add On Admin Junk
-	if ($I{F}{op} eq 'adminlogin') {
+	if ($form->{op} eq 'adminlogin') {
 		my $sid;
 		($user->{aseclev}, $sid) =
-			$I{dbobject}->setAdminInfo($I{F}{aaid}, $I{F}{apasswd});			
+			$I{dbobject}->setAdminInfo($form->{aaid}, $form->{apasswd});			
 		if ($user->{aseclev}) {
 			$user->{aid} = $I{F}{aaid};
 			$I{SETCOOKIE} = setCookie('session', $sid);
@@ -532,9 +515,7 @@ sub getSection {
 	my ($section) = @_;
 	return { title => $I{slogan}, artcount => $I{U}{maxstories} || 30, issue => 3 }
 		unless $section;
-	return $I{sectionBank}{$section} if $I{sectionBank}{$section};
-	$I{sectionBank} = $I{dbobject}->getSectionBank();
-	return $I{sectionBank}{$section};
+	return $I{dbobject}->getSectionBank($section);
 }
 
 
@@ -568,8 +549,9 @@ EOT
 		$tablestuff .= qq!<BR><INPUT TYPE="radio" NAME="aid" VALUE="$aid">$answer\n!;
 	}
 
-	my $voters = $I{dbobject}->getPollQuestions($qid, 'voters');
-	my $comments = $I{dbobject}->getPollComments($qid);
+	my $voters = $I{dbobject}->getPollQuestion($qid, 'voters');
+	my $comments = $I{dbobject}->countComments($qid);
+#	my $comments = $I{dbobject}->getPollComments($qid);
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
@@ -984,10 +966,10 @@ EOT
 
 	my $topics;
 	unless ($I{U}{noicons} || $I{U}{light}) {
-		$topics = blockCache('topics');
+		$topics = $I{dbobject}->getBlock('topics');
 	}
 
-	my $vertmenu = blockCache('mainmenu');
+	my $vertmenu = $I{dbobject}->getBlock('mainmenu');
 	my $menu = eval prepBlock($vertmenu);
 
 	my $horizmenu = $menu;
@@ -1007,12 +989,12 @@ EOT
 
 ########################################################
 sub getSectionMenu {
-	my $menu = getblock('sectionindex_html1');
+	my $menu = $I{dbobject}->getBlock('sectionindex_html1');
 
 	# the reason this is three calls is that sectionindex regularly is
 	# updated by portald, so it's a more dynamic block
-	$menu .= getblock('sectionindex');
-	$menu .= getblock('sectionindex_html2');
+	$menu .= $I{dbobject}->getBlock('sectionindex');
+	$menu .= $I{dbobject}->getBlock('sectionindex_html2');
 
 	my $org_code = getEvalBlock('organisation');
 	my $execme = prepEvalBlock($org_code);
@@ -1037,10 +1019,10 @@ sub footer {
 	if ($I{U}{aseclev}) {
 		$motd .= currentAdminUsers();
 	} else {
-		$motd .= blockCache('motd');
+		$motd .= $I{dbobject}->getBlock('motd');
 	}
 
-	my $vertmenu = blockCache('mainmenu');
+	my $vertmenu = $I{dbobject}->getBlock('mainmenu');
 	my $menu = prepBlock($vertmenu);
 
 	my $horizmenu = eval $menu;
@@ -1380,7 +1362,7 @@ EOT
 		<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}">
 EOT
 
-		print blockCache('commentswarning'), "</FONT></FORM></TD></TR>";
+		print $I{dbobject}->getBlock('commentswarning'), "</FONT></FORM></TD></TR>";
 
 		if ($I{U}{mode} eq 'nocomment') {
 			print "</TABLE>";

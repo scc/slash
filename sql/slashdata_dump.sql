@@ -730,4 +730,5 @@ INSERT INTO vars VALUES ('commentstatus','0','default comment code');
 INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.');
 INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
+INSERT INTO vars VALUES ('anonymous_coward_uid','-1','UID to use for anonymous coward');
 

@@ -73,7 +73,7 @@ sub main {
 	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
 
 	# Display this section's Section Block (if Found)
-	fancybox($I{fancyboxwidth}, $SECT->{title}, getblock($SECT->{section}));
+	fancybox($I{fancyboxwidth}, $SECT->{title}, $I{dbobject}->getBlock($SECT->{section}));
 
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 
@@ -96,7 +96,7 @@ sub main {
 ##################################################################
 sub pleaseLogin {
 	return if $I{U}{uid} != $I{anonymous_coward_uid};
-	my $block = eval prepBlock getblock('userlogin');
+	my $block = eval prepBlock $I{dbobject}->getBlock('userlogin');
 	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
 	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
 	fancybox($I{fancyboxwidth}, "$I{sitename} Login", $block);

@@ -24,10 +24,12 @@
 #  $Id$
 ###############################################################################
 use strict;
+use diagnostics;
 use vars '%I';
 use Image::Size;
 use Slash;
 use Slash::Utility;
+use Slash::DB;
 
 sub main {
 	*I = getSlashConf();
@@ -410,8 +412,8 @@ EOT
 		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete1"></TD>\n\t</TR>\n];
 		# get the portald blocks
 		print qq[\t<TR><TD><B>Portald Blocks</B></TD><TD>];
-		$block = $I{dbobject}->getPortaldBlock($seclev);
-		createSelect('bid2', $block, $bid);
+		my $second_block = $I{dbobject}->getPortaldBlock($seclev);
+		createSelect('bid2', $second_block, $bid);
 		print qq[</TD><TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked2"></TD>
 		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete2"></TD>\n\t</TR>\n</TABLE>\n];
 	}
@@ -1439,6 +1441,4 @@ sub prog2file {
 
 
 main();
-# No kick the baby
-#$I{dbh}->disconnect if $I{dbh};
 1;

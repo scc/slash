@@ -111,6 +111,7 @@ sub sqlSelectHashref {
 	
 	unless ($sth->execute) {
 		apacheLog($sql);
+		return;
 		#kill 9,$$;
 	} 
 	my $H = $sth->fetchrow_hashref;

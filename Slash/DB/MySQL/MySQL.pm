@@ -16,8 +16,10 @@ my $timeout = 30; #This should eventualy be a parameter that is configurable
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
 my %topicBank; # This is here to save us a database call
+my %blockBank; # This is here to save us a database call
 my %codeBank; # This is here to save us a database call
-my $commonportals; # portals on the front page.
+my %sectionBank; # This is here to save us a database call
+# The following two are for CommonPortals
 my $boxes;
 my $sectionBoxes;
 
@@ -865,32 +867,45 @@ sub getNicknameByUID {
 }
 
 ########################################################
-sub getBlockBank {
-	my($self, $iHashRef) = @_;
-	return if $iHashRef->{blockBank}{cached};
-	$iHashRef->{blockBank}{cached} = localtime;
+# All cache'ing happens in here.
+sub getBlock {
+	my($self, $bid) = @_;
+	return $blockBank{$bid} if $blockBank{$bid};
 
 	my $sth = $self->sqlSelectMany ('bid,block', 'blocks');
 	while (my($thisbid, $thisblock) = $sth->fetchrow) {
-		$iHashRef->{blockBank}{$thisbid} = $thisblock;
+		$blockBank{$thisbid} = $thisblock;
 	}
 	$sth->finish;
+
+	return $blockBank{$bid};
 }
 
 ########################################################
 sub getSectionBank {
-	my($self) = @_;
-	my $sectionbank = {};
+	my($self, $section) = @_;
+	if($section) {
+		return $sectionBank{$section} if $sectionBank{$section};
+	} else {
+		return \%sectionBank if keys %sectionBank;
+	}
+
 	my $sth = $self->sqlSelectMany('*', 'sections');
 	while (my $section = $sth->fetchrow_hashref) {
-		$sectionbank->{ $section->{section} } = $section;
+		$sectionBank{ $section->{section} } = $section;
 	}
 	$sth->finish;
-	return $sectionbank;
+
+	if($section) {
+		return $sectionBank{$section};
+	} else {
+		return \%sectionBank;
+	}
 }
 
 ########################################################
 #This should be made to be generic
+# This should be combinded with the above method
 sub getSection {
 	my($self, $section) = @_;
 	$self->sqlSelect(
@@ -1273,7 +1288,7 @@ sub savePollQuestion {
 ########################################################
 sub getPollQuestionList {
 	my($self, $time) = @_;
-	my $questions = sqlSelectAll("qid, question, date_format(date,\"W M D\")",
+	my $questions = $self->sqlSelectAll("qid, question, date_format(date,\"W M D\")",
 		"pollquestions order by date DESC LIMIT $time,20");
 
 	return $questions;
@@ -1374,6 +1389,44 @@ sub deleteStory {
 	);
 
 	$self->{dbh}->do("DELETE from discussions WHERE sid = '$sid'");
+}
+
+########################################################
+# for slashd
+sub deleteStoryAll {
+	my($self, $sid) = @_;
+
+	$self->{dbh}->do("DELETE from stories where sid='$sid'");
+	$self->{dbh}->do("DELETE from newstories where sid='$sid'");
+}
+
+########################################################
+# for slashd
+# This method is used in a pretty wasteful way
+sub getBackendStories {
+	my ($self, $section) = @_;
+
+	my $cursor = $self->{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
+		image,commentcount,section,introtext,bodytext,
+		topics.tid as tid
+		    FROM stories,topics
+		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
+		      OR (section=\"$section\" and displaystatus > -1)) 
+		     AND time < now()
+		     AND writestatus > -1
+		     AND stories.tid=topics.tid
+		ORDER BY time DESC
+		   LIMIT 10");
+
+		  # AND time < date_add(now(), INTERVAL 4 HOUR)
+
+	$cursor->execute;
+	my $returnable = ();
+	while( my $row  = $cursor->fetchrow_hashref) {
+		push(@$returnable ,$row);
+	}
+
+	return $returnable;
 }
 
 ########################################################
@@ -1695,12 +1748,13 @@ sub getPoll {
 }
 
 ##################################################################
-sub getPollComments {
-	my($self, $qid) = @_;
-	my($comments) = $self->sqlSelect('count(*)', 'comments', " sid=$self-{dbh}->quote($qid)");
-
-	return $comments;
-}
+# This should be deletable at this point
+#sub getPollComments {
+#	my($self, $qid) = @_;
+#	my($comments) = $self->sqlSelect('count(*)', 'comments', "sid=" .$self->{dbh}->quote($qid));
+#
+#	return $comments;
+#}
 
 ##################################################################
 sub getSubmissionsSections {
@@ -1799,13 +1853,13 @@ sub countComments {
 	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
 	if ($uid) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
 	} elsif ($cid) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
 	} elsif ($comment) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . ' AND comment=' . $self->{dbh}->quote($comment));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid) . ' AND comment=' . $self->{dbh}->quote($comment));
 	} else {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid));
+		($value) = $self->sqlSelect("count(*)", "comments", "sid=" . $self->{dbh}->quote($sid));
 	}
 
 	return $value;
@@ -2727,7 +2781,7 @@ sub _genericGet {
 	my $members = @val;
 	my $answer;
 	if ($members == 1) {
-		($answer) = $self->sqlSelect('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+		($answer) = $self->sqlSelect($val[0], $table, "$table_prime=" . $self->{dbh}->quote($id));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
 		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=" . $self->{dbh}->quote($id));
@@ -2827,7 +2881,7 @@ sub getNewStoryTopic {
 sub getStoriesForSlashdb {
 	my ($self) = @_;
 
-	my $returnable = $self->sqlSelectHashref("sid,title,section", 
+	my $returnable = $self->sqlSelectAll("sid,title,section", 
 			"stories", "writestatus=1");
 
 	return $returnable;

@@ -27,6 +27,8 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
+use Slash::Utility;
 
 #################################################################
 sub main {

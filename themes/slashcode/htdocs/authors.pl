@@ -32,28 +32,30 @@ use Slash::Utility;
 sub main {
 	*I = getSlashConf();
 	getSlash();
-	my $SECT=getSection($I{F}{section});
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $SECT=getSection(getCurrentForm('section'));
 
-	header("$I{sitename}: Authors", $SECT->{section});
+	header("$constants->{sitename}: Authors", $SECT->{section});
 	titlebar("90%","The Authors");
 	print <<EOT;
 <P>I keep getting asked 'Who are you guys', so to help unload
 some of that extra mail from my box I have now provided
-this nice little page with a summary of the active $I{sitename}
+this nice little page with a summary of the active $constants->{sitename}
 authors here, along with the number of articles that they
 have posted.
 EOT
 
-	my $authors = $I{dbobject}->getAuthorDescription();
+	my $authors = $slashdb->getAuthorDescription();
 
 	for (@$authors) {
 		my ($count, $aid, $url, $copy) = @$_;
 		next if $count < 1; 
 		print <<EOT;
-<H2><B><A HREF="$I{rootdir}/search.pl?author=$aid">$count</A></B>
+<H2><B><A HREF="$constants->{rootdir}/search.pl?author=$aid">$count</A></B>
 	<A HREF="$url">$aid</A></H2>
 EOT
-		print qq![ <A HREF="$I{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
+		print qq![ <A HREF="$constants->{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
 			if getCurrentUser('aseclev') > 1000;
 		print $copy;
 	}
@@ -63,10 +65,8 @@ EOT
 <P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
 EOT
 
-	$I{dbobject}->writelog("authors");
-	footer($I{F}{ssi});
+	$slashdb->writelog("authors");
+	footer(getCurrentForm('ssi'));
 }
 
 main();
-#$I{dbh}->disconnect if $I{dbh};
-

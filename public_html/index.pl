@@ -173,7 +173,7 @@ sub displayStandardBlocks {
 		@boxes = @{$sectionBoxes->{$getblocks}} if ref $sectionBoxes->{$getblocks};
 	}
 
-	foreach my $bid (@boxes) {
+	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
 			print portalbox(
 				$I{fancyboxwidth}, "$user->{nickname}'s Slashbox",

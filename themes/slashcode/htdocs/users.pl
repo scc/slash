@@ -249,7 +249,7 @@ sub mailPassword {
 	}
 	my $user = $I{dbobject}->getUserInfoByUID($uid);
 
-	my $msg = blockCache("newusermsg");
+	my $msg = $I{dbobject}->getBlock("newusermsg");
 	$msg = prepBlock($msg);
 	$msg = eval $msg;
 

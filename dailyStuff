@@ -189,7 +189,7 @@ sub generateDailyMail {
 	my $E = sqlSelectAll($columns,$tables,$where,$other);
 
 	my $r = "$I{sitename} Daily Headline Mailer\n\n";
-	$r .= getblock("emailsponsor");
+	$r .= $I{dbobject}->getBlock("emailsponsor");
 	# newlines after advert 
 	$r .= "\n\n";
 
