@@ -638,10 +638,12 @@ sub getMetamodIDs {
 #	given the appropriate M2ID (primary
 #	key into the metamodlog table).
 #
-sub getMetamoderations {
+sub getMetaModerations {
 	my($self, $mmid) = @_;
 
-	my $ret = $self->sqlSelectAllHashref('*', 'metamodlog', "mmid=$mmid");
+	my $ret = $self->sqlSelectAllHashref(
+		'id','*','metamodlog', "mmid=$mmid"
+	);
 
 	return $ret;
 }

@@ -511,73 +511,67 @@ sub incremental {
 # Technically, this will work on any table with a non date/int key that
 # we want to update. Something to think about for the future.
 sub update_stories {
-	my ($del_table) = @_;
 	my (@stories, %hitlist);
 
-	$del_table ||= 0;
 	map { s/^(database=)?([^;]+);?(.+)?$/$2/; }
 		my($old_name, $new_name)=($dbh_old->{Name}, $dbh_new->{Name}); 
 
-	# This is a sneaky, evil query! And MySQL's alias processor needs some
-	# damned work. I shouldn't NEED to refer to $dbh_old in the query at
-	# all since that's the handle I'm using!!
-	my $sql = <<EOT;
-SELECT ${old_name}.stories.* FROM ${old_name}.stories
-	LEFT JOIN
-		${new_name}.stories ON
-		${old_name}.stories.sid=${new_name}.stories.sid
-	WHERE ${new_name}.stories.sid IS NULL
+	# The query below doesn't QUITE work because stories is an ever changing
+	# table. It isn't sufficient to just know the differing SIDs, you have
+	# to know the SIDs that CHANGED. This is impossible with Slash's current
+	# schema. Maybe have a "lastmod" flag?
+	#						- Cliff 07/03/01
+
+	# There should be a DESTQUERY "DELETE FROM stories..." to remove stories
+	# within the last two weeks. Then these stories (remember to grab SIDs!)
+	# should be imported/updated and/or marked dirty for refreshing.
+	my $datecond = <<EOT
+date_format(date_sub(now(), interval 15 day), '%Y-%m-%d 00:00')
 EOT
 
-	my $sth_s = $dbh_old->prepare($sql);
-	$sth_s->execute;
-	my $err = $dbh_new->errstr;
-	die "SQL: $sql\n" if $err;
 	# Load the hits for processing.
 	load_storystuff(\%hitlist);
-	do_handle('stories', $sth_s, $del_table, \%hitlist, \@stories);
+	
+	# Remove stale rows.
+	my($deleted_stories, $deleted_discussions);
+	$deleted_stories =
+		$dbh_new->do("DELETE FROM stories WHERE time>=$datecond")
+	if $opts{$I};
+
+	# Update stories.
+	my $sql = 'SELECT * FROM stories';
+	$sql .= " WHERE time >= $datecond" if $opts{I};
+	my $sth_s = $dbh_old->prepare($sql);
+	$sth_s->execute;
+	die "SQL: $sql\n" if $dbh_new->errstr;
+	do_handle('stories', $sth_s, 0, \%hitlist, \@stories);
 
 	# Now go back and handle discussion updates.
 	print "Reprocessing discussions and hitparade...\n";
+	$dbh_new->do("DELETE FROM discussions WHERE ts >= $datecond");
+		if $del_table;
+	$sql = <<EOT;
+SELECT * FROM discussions WHERE ts >= $datecond
+EOT
+
+	$sth_s = $dbh_old->prepare($sql);
+	$sth_s->execute;
+	die "SQL: $sql\n" if $dbh_old->errstr;
+	# Need a list of the Discussion SIDs that are updated, here.
+	do_handle('discussions', $sth_s, 0);
+
+	# Create all nonexisting rows in discussion_hitparade.
 	for (@stories) {
-		my ($sid, $title, $time) = @{%{$_}}{qw(sid title time)};
-		for ($sid, $title, $time) { $_ = $dbh_new->quote($_); }
-		my $sql = <<EOT;
-INSERT INTO discussions (sid, title, url, topic, ts, type, uid, flags)
-	VALUES (
-		$sid,
-		$title,
-		"$vars->{rootdir}/article.pl?sid=$sid",
-		$topics{$_-{tid}},
-		$time,
-		0,
-		$_->{uid},
-		'hitparade_dirty'
-	)
-EOT
-
-		$dbh_new->do($sql);
-		my $err = $dbh_new->errstr;
-		die "SQL: $sql\n" if $err;
-
-		# And link the story to the new discussion!
-		$dbh_new->do(<<EOT);
-UPDATE stories SET discussion=LAST_INSERT_ID() WHERE sid=$sid
-EOT
-
-		die "Couldn't set story to refer to new discussion!\n"
-			if $dbh_new->errstr;
-
 		my $val = $comment_minscore;
 		for (split /,/, $_->{hitparade}) {
+			# This SQL syntax is rather silly, no?
 			$sql =  <<EOT;
-INSERT INTO discussions_hitparade (discussion, threshold, count)
+INSERT IGNORE INTO discussions_hitparade (discussion, threshold, count)
 	VALUES ($discussions{$sid}, @{[$val++]}, 0)
 EOT
 
 			$dbh_new->do($sql);
-			$err = $dbh_new->errstr;
-			die "SQL: $sql\n" if $err;
+			die "SQL: $sql\n" if $dnh_new->errstr;
 		}
 	}
 }
