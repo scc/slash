@@ -174,6 +174,7 @@ sub sqlSelectAll {
 
 	$self->sqlConnect();
 	my $H = $self->{_dbh}->selectall_arrayref($sql);
+	errorLog($sql) unless($H);
 	return $H;
 }
 

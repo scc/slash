@@ -65,7 +65,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
-		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', seclev => 99) },
 
 	'templates'
 		=> sub { $_[0]->sqlSelectMany('tpid,title', 'templates') },
@@ -343,7 +343,7 @@ sub getContentFilters {
 
 ########################################################
 sub createPollVoter {
-	my($self, $qid, $aid) = @_;
+	my($self, $qid, $uid) = @_;
 
 	$self->sqlInsert("pollvoters", {
 		qid	=> $qid,
@@ -356,7 +356,7 @@ sub createPollVoter {
 	$self->sqlDo("update pollquestions set
 		voters=voters+1 where qid=$qid_db");
 	$self->sqlDo("update pollanswers set votes=votes+1 where
-		qid=$qid_db and aid=" . $self->{_dbh}->quote($aid));
+		qid=$qid_db and uid=" . $self->{_dbh}->quote($uid));
 }
 
 ########################################################
@@ -414,35 +414,35 @@ sub getDiscussions {
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
-sub getAuthorInfo {
-	my($self, $session, $admin_timeout, $user) = @_;
-
-	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
-
-	my($aid, $seclev, $section, $url) = $self->sqlSelect(
-		'sessions.aid, authors.seclev, section, url',
-		'sessions, authors',
-		'sessions.aid=authors.aid AND session=' . $self->{_dbh}->quote($session)
-	);
-
-	unless ($aid) {
-		return;
-	} else {
-		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
-			$self->{_dbh}->quote($session)
-		);
-		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
-			'session=' . $self->{_dbh}->quote($session)
-		);
-		$user->{aid} = $aid;
-		$user->{seclev} = $seclev;
-		$user->{asection} = $section;
-		$user->{url} = $url;
-		$user->{is_admin} = 1;
-		
-		return $seclev;
-	}
-}
+#sub getAuthorInfo {
+#	my($self, $session, $admin_timeout, $user) = @_;
+#
+#	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
+#
+#	my($uid, $seclev, $section, $url) = $self->sqlSelect(
+#		'sessions.uid, authors.seclev, section, url',
+#		'sessions, authors',
+#		'sessions.uid=authors.uid AND session=' . $self->{_dbh}->quote($session)
+#	);
+#
+#	unless ($aid) {
+#		return;
+#	} else {
+#		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
+#			$self->{_dbh}->quote($session)
+#		);
+#		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
+#			'session=' . $self->{_dbh}->quote($session)
+#		);
+#		$user->{aid} = $aid;
+#		$user->{seclev} = $seclev;
+#		$user->{asection} = $section;
+#		$user->{url} = $url;
+#		$user->{is_admin} = 1;
+#		
+#		return $seclev;
+#	}
+#}
 
 ########################################################
 sub setContentFilter {
@@ -477,36 +477,36 @@ sub setSectionExtra {
 
 ########################################################
 # Initial Administrator Login.
-sub getAuthorAuthenticate {
-	my($self, $aid, $pwd, $user) = @_;
-
-	my $db_aid = $self->{_dbh}->quote($aid);
-	if (my($seclev) = $self->sqlSelect('seclev', 'authors',
-			"aid=$db_aid" .
-			' AND pwd=' . $self->{_dbh}->quote($pwd) ) ) {
-		$user->{seclev} = $seclev;
-		$user->{aid} = $aid;
-		$user->{is_admin} = 1;
-
-		my($title) = $self->sqlSelect('lasttitle', 'sessions',
-			"aid=$db_aid"
-		);
-
-		$self->sqlDo("DELETE FROM sessions WHERE aid=$db_aid");
-
-		my $sid = $self->generatesession($aid);
-		$self->sqlInsert('sessions', { session => $sid, -aid => $db_aid,
-			-logintime => 'now()', -lasttime => 'now()',
-			lasttitle => $title }
-		);
-
-		return $sid;
-	} else {
-		return;
-	}
-}
-
-
+#sub getAuthorAuthenticate {
+#	my($self, $aid, $pwd, $user) = @_;
+#
+#	my $db_aid = $self->{_dbh}->quote($aid);
+#	if (my($seclev) = $self->sqlSelect('seclev', 'authors',
+#			"aid=$db_aid" .
+#			' AND pwd=' . $self->{_dbh}->quote($pwd) ) ) {
+#		$user->{seclev} = $seclev;
+#		$user->{aid} = $aid;
+#		$user->{is_admin} = 1;
+#
+#		my($title) = $self->sqlSelect('lasttitle', 'sessions',
+#			"aid=$db_aid"
+#		);
+#
+#		$self->sqlDo("DELETE FROM sessions WHERE aid=$db_aid");
+#
+#		my $sid = $self->generatesession($aid);
+#		$self->sqlInsert('sessions', { session => $sid, -aid => $db_aid,
+#			-logintime => 'now()', -lasttime => 'now()',
+#			lasttitle => $title }
+#		);
+#
+#		return $sid;
+#	} else {
+#		return;
+#	}
+#}
+#
+#
 ########################################################
 # This creates an entry in the accesslog
 sub createAccessLog {
@@ -850,7 +850,7 @@ sub setVar {
 ########################################################
 sub setSessionByAid {
 	my($self, $name, $value) = @_;
-	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{_dbh}->quote($name));
+	$self->sqlUpdate('sessions', $value, 'uid=' . $self->{_dbh}->quote($name));
 }
 
 ########################################################
@@ -980,7 +980,7 @@ sub getSectionTitle {
 # not part in the form
 sub deleteSubmission {
 	my($self, $subid) = @_;
-	my $aid = getCurrentUser('aid');
+	my $uid = getCurrentUser('uid');
 	my $form = getCurrentForm();
 	my %subid;
 
@@ -988,9 +988,8 @@ sub deleteSubmission {
 		$self->sqlUpdate("submissions", { del => 1 },
 			"subid=" . $self->{_dbh}->quote($form->{subid})
 		);
-		$self->sqlUpdate("authors",
-			{ -deletedsubmissions => 'deletedsubmissions+1' },
-			"aid='$aid'"
+		$self->setUser($uid,
+			{ -deletedsubmissions => 'deletedsubmissions+1' }
 		);
 		$subid{$form->{subid}}++;
 	}
@@ -1019,9 +1018,8 @@ sub deleteSubmission {
 			my $key = $n;
 			$self->sqlUpdate("submissions", { del => 1 },
 				"subid='$key'");
-			$self->sqlUpdate("authors",
-				{ -deletedsubmissions => 'deletedsubmissions+1' },
-				"aid='$aid'"
+			$self->setUser($uid,
+				{ -deletedsubmissions => 'deletedsubmissions+1' }
 			);
 			$subid{$n}++;
 		}
@@ -1032,19 +1030,19 @@ sub deleteSubmission {
 
 ########################################################
 sub deleteSession {
-	my($self, $aid) = @_;
-	if ($aid) {
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($aid));
+	my($self, $uid) = @_;
+	if ($uid) {
+		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 	} else {
-		my $user = getCurrentUser();
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($user->{aid}));
+		$uid = getCurrentUser('uid');
+		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 	}
 }
 
 ########################################################
 sub deleteAuthor {
-	my($self, $aid) = @_;
-	$self->sqlDo('DELETE FROM sessions WHERE authors=' . $self->{_dbh}->quote($aid));
+	my($self, $uid) = @_;
+	$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 }
 
 ########################################################
@@ -1213,8 +1211,8 @@ sub getSectionBlock {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll("count(*) as c, aid",
-		"stories", '', "GROUP BY aid ORDER BY c DESC"
+	my $authors = $self->sqlSelectAll("count(*) as c, uid",
+		"stories", '', "GROUP BY uid ORDER BY c DESC"
 	);
 
 	return $authors;
@@ -1251,7 +1249,7 @@ sub savePollQuestion {
 	for (my $x = 1; $x < 9; $x++) {
 		if ($form->{"aid$x"}) {
 			$self->sqlReplace("pollanswers", {
-				aid	=> $x,
+				uid	=> $x,
 				qid	=> $form->{qid},
 				answer	=> $form->{"aid$x"},
 				votes	=> $form->{"votes$x"}
@@ -1259,7 +1257,7 @@ sub savePollQuestion {
 
 		} else {
 			$self->{_dbh}->do("DELETE from pollanswers WHERE qid="
-					. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
+					. $self->{_dbh}->quote($form->{qid}) . " and uid=$x");
 		}
 	}
 }
@@ -1277,7 +1275,7 @@ sub getPollQuestionList {
 sub getPollAnswers {
 	my($self, $id, $val) = @_;
 	my $values = join ',', @$val;
-	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by aid');
+	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by uid');
 
 	return $answers;
 }
@@ -1325,7 +1323,7 @@ sub deleteStoryAll {
 sub getBackendStories {
 	my($self, $section) = @_;
 
-	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
+	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
 		image,commentcount,section,introtext,bodytext,
 		topics.tid as tid
 		    FROM stories,topics
@@ -1384,7 +1382,7 @@ sub getSectionBlocks {
 ########################################################
 sub getLock {
 	my($self) = @_;
-	my $locks = $self->sqlSelectAll('lasttitle,aid', 'sessions');
+	my $locks = $self->sqlSelectAll('lasttitle,uid', 'sessions');
 
 	return $locks;
 }
@@ -1503,8 +1501,8 @@ sub checkForm {
 # Current admin users
 sub currentAdmin {
 	my($self) = @_;
-	my $aids = $self->sqlSelectAll('aid,now()-lasttime,lasttitle', 'sessions',
-		'aid=aid GROUP BY aid'
+	my $aids = $self->sqlSelectAll('uid,now()-lasttime,lasttitle', 'sessions',
+		'uid=uid GROUP BY uid'
 	);
 
 	return $aids;
@@ -1533,10 +1531,10 @@ sub getPoll {
 	my($self, $qid) = @_;
 
 	my $sth = $self->{_dbh}->prepare_cached("
-			SELECT question,answer,aid  from pollquestions, pollanswers
+			SELECT question,answer,uid  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
 			pollquestions.qid= " . $self->{_dbh}->quote($qid) . "
-			ORDER BY pollanswers.aid
+			ORDER BY pollanswers.uid
 	");
 	$sth->execute;
 	my $polls = $sth->fetchall_arrayref;
@@ -1702,11 +1700,15 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 }
 
 ##################################################################
-sub getAuthorAids {
-	my($self, $aid) = @_;
-	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
+sub getAuthorNames {
+	my($self) = @_;
+	my $authors = $self->getAuthors();
+	my @authors;
+	for my $author (@$authors){
+		push @authors, $author->{'nickname'};
+	}
 
-	return $aids;
+	return [sort(@authors)];
 }
 
 ##################################################################
@@ -1736,7 +1738,7 @@ sub getStoryByTime {
 	}
 
 	$where .= "   AND tid not in ($user->{'extid'})" if $user->{'extid'};
-	$where .= "   AND aid not in ($user->{'exaid'})" if $user->{'exaid'};
+	$where .= "   AND uid not in ($user->{'exaid'})" if $user->{'exaid'};
 	$where .= "   AND section not in ($user->{'exsect'})" if $user->{'exsect'};
 	$where .= "   AND sid != '$story->{'sid'}'";
 
@@ -1753,7 +1755,7 @@ sub getStoryByTime {
 ########################################################
 sub countStories {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,aid",
+	my $stories = $self->sqlSelectAll("sid,title,section,commentcount,uid",
 		"stories","", "ORDER BY commentcount DESC LIMIT 10"
 	);
 	return $stories;
@@ -1846,7 +1848,7 @@ sub countUsers {
 ########################################################
 sub countStoriesStuff {
 	my($self) = @_;
-	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,aid",
+	my $stories = $self->sqlSelectAll("stories.sid,title,section,storiestuff.hits as hits,uid",
 		"stories,storiestuff","stories.sid=storiestuff.sid",
 		"ORDER BY hits DESC LIMIT 10"
 	);
@@ -1856,9 +1858,9 @@ sub countStoriesStuff {
 ########################################################
 sub countStoriesAuthors {
 	my($self) = @_;
-	my $authors = $self->sqlSelectAll("count(*) as c, stories.aid, url",
-		"stories, authors","authors.aid=stories.aid",
-		"GROUP BY aid ORDER BY c DESC LIMIT 10"
+	my $authors = $self->sqlSelectAll("count(*) as c, uid, fakeemail",
+		"stories, users","users.uid=stories.uid",
+		"GROUP BY uid ORDER BY c DESC LIMIT 10"
 	);
 	return $authors;
 }
@@ -2057,7 +2059,7 @@ sub getStories {
 
 	# User Config Vars
 	$where .= "AND tid not in ($user->{extid}) " if $user->{extid};
-	$where .= "AND aid not in ($user->{exaid}) " if $user->{exaid};
+	$where .= "AND uid not in ($user->{exaid}) " if $user->{exaid};
 	$where .= "AND section not in ($user->{exsect}) "	if $user->{exsect};
 
 	# Order
@@ -2087,7 +2089,7 @@ sub getCommentsTop {
 	my $user = getCurrentUser();
 	my $where = "stories.sid=comments.sid";
 	$where .= " AND stories.sid=" . $self->{_dbh}->quote($sid) if $sid;
-	my $stories = $self->sqlSelectAll("section, stories.sid, aid, title, pid, subject,"
+	my $stories = $self->sqlSelectAll("section, stories.sid, uid, title, pid, subject,"
 		. getDateFormat("date","d") . "," . getDateFormat("time","t")
 		. ",uid, cid, points"
 		, "stories, comments"
@@ -2247,7 +2249,7 @@ sub saveStory {
 
 	$self->sqlInsert('stories',{
 		sid		=> $form->{sid},
-		aid		=> $form->{aid},
+		uid		=> $form->{uid},
 		tid		=> $form->{tid},
 		dept		=> $form->{dept},
 		'time'		=> $form->{'time'},
@@ -2411,14 +2413,14 @@ sub autoUrl {
 	s/([0-9a-z])\?([0-9a-z])/$1'$2/gi if $form->{fixquotes};
 	s/\[(.*?)\]/linkNode($1)/ge if $form->{autonode};
 
-	my $initials = substr $user->{aid}, 0, 1;
-	my $more = substr $user->{aid}, 1;
+	my $initials = substr $user->{nickname}, 0, 1;
+	my $more = substr $user->{nickname}, 1;
 	$more =~ s/[a-z]//g;
 	$initials = uc($initials . $more);
 	my($now) = $self->sqlSelect('date_format(now(),"m/d h:i p")');
 
 	# Assorted Automatic Autoreplacements for Convenience
-	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$user->{url}">$user->{aid}</A> owns shares in $1</B>|ig;
+	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$user->{url}">$user->{nickname}</A> owns shares in $1</B>|ig;
 	s|<update>|<B>Update: <date></B> by <author>|ig;
 	s|<date>|$now|g;
 	s|<author>|<B><A HREF="$user->{url}">$initials</A></B>:|ig;
@@ -2469,7 +2471,7 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, aid,
+	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, uid,
 			date_format(time,"%k:%i") as t,tid,section,
 			displaystatus,writestatus,
 			date_format(time,"%W %M %d"),
@@ -2558,14 +2560,93 @@ sub getStory {
 
 ########################################################
 sub getAuthor {
-	my $answer = _genericGetCache('authors', 'aid', @_);
-	return $answer;
+	my($self, $id, $values, $cache_flag) = @_;
+	unless (getCurrentStatic('cache_enabled')) {
+		my $answer = $self->sqlSelectHashref('uid,nickname,fakeemail', 
+				'users', 'uid=' . $self->{_dbh}->quote($id));
+		return $answer;
+	}
+
+	my $table = 'authors';
+	my $table_cache = '_' . $table . '_cache';
+	my $table_cache_time= '_' . $table . '_cache_time';
+
+	my $type;
+	if (ref($values) eq 'ARRAY') {
+		$type = 0;
+	} else {
+		$type  = $values ? 1 : 0;
+	}
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values}
+			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
+	} else {
+		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		}
+	}
+
+	# Lets go knock on the door of the database
+	# and grab the data's since it is not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	$self->{$table_cache}{$id} = {};
+	my $answer = $self->sqlSelectHashref('uid,nickname,fakeemail', 
+			'users', 'uid=' . $self->{_dbh}->quote($id));
+	$self->{$table_cache}{$id} = $answer;
+
+	$self->{$table_cache_time} = time();
+
+	if ($type) {
+		return $self->{$table_cache}{$id}{$values};
+	} else {
+		if ($self->{$table_cache}{$id}) {
+			my %return = %{$self->{$table_cache}{$id}};
+			return \%return;
+		} else {
+			return;
+		}
+	}
 }
 
 ########################################################
+# This of course is modified from the norm
 sub getAuthors {
-	my $answer = _genericGetsCache('authors', 'aid', @_);
-	return $answer;
+	my($self, $cache_flag) = @_;
+	unless (getCurrentStatic('cache_enabled')) {
+		my %authors;
+		my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 99');
+		while (my $row = $sth->fetchrow_hashref) {
+			$authors{ $row->{'uid'} } = $row;
+		}
+		
+		return \%authors;
+	}
+
+	my $table = 'authors';
+	my $table_cache= '_' . $table . '_cache';
+	my $table_cache_time= '_' . $table . '_cache_time';
+	my $table_cache_full= '_' . $table . '_cache_full';
+
+	if (keys %{$self->{$table_cache}} && $self->{$table_cache_full} && !$cache_flag) {
+		my %return = %{$self->{$table_cache}};
+		return \%return;
+	}
+
+	$self->{$table_cache} = {};
+	my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 99');
+	while (my $row = $sth->fetchrow_hashref) {
+		$self->{$table_cache}{ $row->{'uid'} } = $row;
+	}
+
+	$self->{$table_cache_full} = 1;
+	$sth->finish;
+	$self->{$table_cache_time} = time();
+
+	my %return = %{$self->{$table_cache}};
+	return \%return;
 }
 
 ########################################################

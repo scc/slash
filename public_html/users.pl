@@ -348,9 +348,9 @@ sub editKey {
 
 	my $slashdb = getCurrentDB();
 
-	my $user = $slashdb->getUser($uid, ['pubkey']);
+	my $pubkey = $slashdb->getUser($uid, 'pubkey');
 
-	my $key = stripByMode($user->{key}, 'literal');
+	my $key = stripByMode($pubkey, 'literal');
 	my $editkey = slashDisplay('users-editKey', { key => $key }, 1);	
 	return $editkey;
 }
@@ -396,10 +396,9 @@ sub tildeEd {
 	my $title = getTitle('tildeEd_title');
 
 	# Customizable Authors Thingee
-	my $aids = $slashdb->getAuthorAids();
+	my $aids = $slashdb->getAuthorNames();
 	my $n = 0;
-	for (@$aids) {
-		my($aid) = @$_;
+	for my $aid (@$aids) {
 		$aidref->{$aid}{checked} = ($exaid =~ /'$aid'/) ? ' CHECKED' : '';
 	}
 

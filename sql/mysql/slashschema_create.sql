@@ -29,7 +29,7 @@ CREATE TABLE accesslog (
   host_addr varchar(16) DEFAULT '' NOT NULL,
   op varchar(8),
   dat varchar(32),
-  uid int(1) DEFAULT '0' NOT NULL,
+  uid int(1) DEFAULT '1' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   query_string varchar(50),
   user_agent varchar(50),
@@ -73,7 +73,7 @@ CREATE TABLE backup_blocks (
 CREATE TABLE blocks (
   bid varchar(30) DEFAULT '' NOT NULL,
   block text,
-  aid varchar(20),
+  uid int(11),
   seclev int(1),
   type varchar(20) DEFAULT '' NOT NULL,
   description text,
@@ -122,7 +122,7 @@ CREATE TABLE comments (
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   subject varchar(50) DEFAULT '' NOT NULL,
   comment text DEFAULT '' NOT NULL,
-  uid int(1) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   points int(1) DEFAULT '0' NOT NULL,
   lastmod int(1),
   reason int(11) DEFAULT '0',
@@ -194,7 +194,7 @@ CREATE TABLE formkeys (
   formname varchar(20) DEFAULT '' NOT NULL,
   id varchar(30) DEFAULT '' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
@@ -273,7 +273,7 @@ CREATE TABLE menus (
 
 CREATE TABLE metamodlog (
   mmid int(11) DEFAULT '0' NOT NULL,
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   val int(11) DEFAULT '0' NOT NULL,
   ts datetime,
   id int(11) NOT NULL auto_increment,
@@ -287,7 +287,7 @@ CREATE TABLE metamodlog (
 
 CREATE TABLE moderatorlog (
   id int(1) NOT NULL auto_increment,
-  uid int(1) DEFAULT '0' NOT NULL,
+  uid int(1) DEFAULT '1' NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE moderatorlog (
 CREATE TABLE newstories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30) DEFAULT '' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
@@ -332,10 +332,10 @@ CREATE TABLE newstories (
 
 CREATE TABLE pollanswers (
   qid char(20) DEFAULT '' NOT NULL,
-  aid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   answer char(255),
   votes int(11),
-  PRIMARY KEY (qid,aid)
+  PRIMARY KEY (qid,uid)
 );
 
 #
@@ -358,7 +358,7 @@ CREATE TABLE pollvoters (
   qid char(20) DEFAULT '' NOT NULL,
   id char(35) DEFAULT '' NOT NULL,
   time datetime,
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   KEY qid (qid,id,uid)
 );
 
@@ -393,7 +393,7 @@ CREATE TABLE sections (
 
 CREATE TABLE sessions (
   session varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30),
+  uid int(11),
   logintime datetime,
   lasttime datetime,
   lasttitle varchar(50),
@@ -427,7 +427,7 @@ CREATE TABLE statuscodes (
 CREATE TABLE stories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
-  aid varchar(30) DEFAULT '' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
   dept varchar(100),
@@ -472,7 +472,7 @@ CREATE TABLE submissions (
   note varchar(30),
   section varchar(30) DEFAULT '' NOT NULL,
   comment varchar(255),
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   del tinyint(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid),
   KEY subid (subid,section)
@@ -551,7 +551,7 @@ CREATE TABLE users (
 #
 
 CREATE TABLE users_comments (
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   points int(11) DEFAULT '0' NOT NULL,
   posttype varchar(10) DEFAULT 'html' NOT NULL,
   defaultpoints int(11) DEFAULT '1' NOT NULL,
@@ -576,7 +576,7 @@ CREATE TABLE users_comments (
 #
 
 CREATE TABLE users_index (
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   extid varchar(255),
   exaid varchar(100),
   exsect varchar(100),
@@ -591,7 +591,7 @@ CREATE TABLE users_index (
 #
 
 CREATE TABLE users_info (
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   totalmods int(11) DEFAULT '0' NOT NULL,
   realname varchar(50),
   bio text,
@@ -618,7 +618,7 @@ CREATE TABLE users_info (
 
 CREATE TABLE users_param (
   param_id int(11) NOT NULL auto_increment,
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
   value text,
   UNIQUE uid_key (uid,name),
@@ -630,7 +630,7 @@ CREATE TABLE users_param (
 #
 
 CREATE TABLE users_prefs (
-  uid int(11) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '1' NOT NULL,
   willing tinyint(4) DEFAULT '1' NOT NULL,
   dfid int(11) DEFAULT '0' NOT NULL,
   tzcode char(3) DEFAULT 'edt' NOT NULL,

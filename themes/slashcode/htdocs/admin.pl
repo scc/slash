@@ -262,11 +262,11 @@ sub authorEdit {
 	my ($section_select,$author_select);
 	my $deletebutton_flag = 0;
 
-	$aid ||= $user->{aid};
+	$aid ||= $user->{uid};
 	$aid = '' if $form->{authornew};
 
 	my $authors = $slashdb->getDescriptions('authors');
-	my $author = $slashdb->getAuthor($aid) if $aid;
+	my $author = $slashdb->getUser($aid,[nickname, fakemail]) if $aid;
 
 	$author_select = createSelect('myaid', $authors, $aid, 1);
 	$section_select = selectSection('section', $author->{section}, {}, 1) ;
@@ -849,7 +849,7 @@ sub editStory {
 
 		$topic = $slashdb->getTopic($storyref->{tid});
 		$form->{aid} ||= $user->{aid};
-		$author= $slashdb->getAuthor($form->{aid});
+		$author= $slashdb->getUser($form->{aid}, ['nickname', 'fakeemail']);
 		$sid = $form->{sid};
 
 		if (!$form->{time} || $form->{fastforward}) {

@@ -11,6 +11,9 @@ my $prefix = "/usr/local/slash";
 my (	$user,
 			$owner,
 			$password,
+			$username,
+			$realname,
+			$email,
 			$dbh,
 			@create,
 			$sql,
@@ -148,11 +151,20 @@ $dbh->disconnect;
 
 my $slashdb = Slash::DB->new($ARGV[0]);
 
-print "Ok, we need a password for the God account (8 characters only please)\n";
+print "Ok, we need to create an admin account, give us a name (8 characters only please)\n";
+$username = <STDIN>;
+chomp($username);
+print "What is the email address of the account?\n";
+$email = <STDIN>;
+chomp($email);
+
+my $uid = $slashdb->createUser($username, $email, $username);
+
+print "What is the password for the account?\n";
 $password = <STDIN>;
 chomp($password);
 
-$slashdb->setAuthor('God', {pwd => $password});
+$slashdb->setUser($uid, {newpasswd => $password, seclev => 10000});
 
 # Now, lets update slash.sites
 open (SLASHSITES, "$prefix/slash.sites");

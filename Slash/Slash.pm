@@ -1052,6 +1052,7 @@ sub reparentComments {
 		my $reparent;
 
 		# do threshold reparenting thing
+		print STDERR "$user:$user->{reparent}:$user->{threshold}: \n";
 		if ($user->{reparent} && $comments->[$x]{points} >= $user->{threshold}) {
 			my $tmppid = $pid;
 			while ($tmppid && $comments->[$tmppid]{points} < $user->{threshold}) {
@@ -1607,7 +1608,7 @@ sub displayStory {
 
 	my $slashdb = getCurrentDB();
 	my $story = $slashdb->getStory($sid);
-	my $author = $slashdb->getAuthor($story->{aid});
+	my $author = $slashdb->getUser($story->{uid}, ['nickname', 'fakemail']);
 	my $topic = $slashdb->getTopic($story->{tid});
 	
 	# convert the time of the story (this is database format) 

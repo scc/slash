@@ -58,7 +58,7 @@ install: slash
 	# this needs to be made platform independent
 	install utils/slashd $(INIT)/init.d/
 	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/S99slashd
-	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc3.d/K99slashd
+	ln -s -f $(INIT)/init.d/slashd $(INIT)/rc6.d/K99slashd
 	touch $(PREFIX)/slash.sites
 	chown $(USER):$(GROUP) $(PREFIX)
 	chown -R $(USER):$(GROUP) $(PREFIX)/themes

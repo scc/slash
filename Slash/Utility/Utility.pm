@@ -24,6 +24,7 @@ Unless otherwise noted, they are publically available functions.
 use strict;
 use Apache;
 use Digest::MD5 'md5_hex';
+use HTML::Entities;
 require Exporter;
 use vars qw($REVISION $VERSION @ISA @EXPORT);
 

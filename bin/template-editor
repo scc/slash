@@ -46,15 +46,19 @@ if($opts{'s'}) {
 			push @files, $_;
 		}
 	}
-	for(@files) {
-		print "$_\n";
-		open(FILE, "<$opts{'d'}/$_");
+	for my $file (@files) {
+		print "$file\n";
+		if($opts{'d'}) {
+			open(FILE, "<$opts{'d'}/$file");
+		} else {
+			open(FILE, "<$file");
+		}
 		my $data;
 		while(<FILE>){
 			$data .= $_;
 		}
 		close(FILE);
-		$slash->setTemplate($_, {template => $data});
+		$slash->setTemplate($file, {template => $data});
 	}
 } else {
 	unless($ARGV[0]) {
