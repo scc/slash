@@ -194,7 +194,7 @@ sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
-	#$self->updateStoriesCounts();
+	$self->updateStoriesCounts();
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
 	$self->sqlDo("DELETE from moderatorlog WHERE
