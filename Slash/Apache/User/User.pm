@@ -123,6 +123,14 @@ sub handler {
 	$r->subprocess_env('REMOTE_USER' => $uid);
 	$cfg->{'form'} = \%form;
 
+	# This is just here for testing. This should actually occur way before this
+	# It does work, but unless you have a shtml (and that means I get
+	# other things fixed) don't comment this in
+#	if (($filename =~ /\index.pl$/) && ($uid == $constants->{'anonymous_coward_uid'})) {
+#		$r->uri('/index.shtml');
+#		# We need to log this
+#		return OK;
+#	} 
 	print STDERR "UID: $uid\n";
 
 	return OK;
