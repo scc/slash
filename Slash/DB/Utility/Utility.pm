@@ -215,9 +215,16 @@ sub sqlInsert {
 }
 
 ########################################################
+sub getKeys{
+	my ($self, $table) = @_;
+	$self->sqlSelectColumns($table)
+		if $self->sqlTableExists($table);
+
+}
+########################################################
 sub sqlTableExists {
-	my $self = shift;
-	my $table = shift or return;
+	my ($self, $table) = @_;
+	return unless $table;
 
 	my $sth = $self->{dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
 	$self->sqlConnect();
@@ -229,8 +236,8 @@ sub sqlTableExists {
 
 ########################################################
 sub sqlSelectColumns {
-	my $self = shift;
-	my $table = shift or return;
+	my ($self, $table) = @_;
+	return unless $table;
 
 	my $sth = $self->{dbh}->prepare_cached("SHOW COLUMNS FROM $table");
 	$self->sqlConnect();

@@ -381,6 +381,22 @@ sub getAdminInfo {
 }
 
 ########################################################
+sub setContentFilter {
+my ($self) = @_;
+	my $form = getCurrentForm();
+	$self->sqlUpdate("content_filters", {
+			regex => $form->{regex},
+			modifier => $form->{modifier},
+			field => $form->{field},
+			ratio => $form->{ratio},
+			minimum_match => $form->{minimum_match},
+			minimum_length => $form->{minimum_length},
+			maximum_length => $form->{maximum_length},
+			err_message => $form->{err_message},
+		}, "filter_id=$form->{filter_id}");
+}
+
+########################################################
 # Initial Administrator Login.
 sub setAdminInfo {
 	my($self, $aid, $pwd) = @_;
@@ -674,6 +690,7 @@ sub createUser {
 
 
 ########################################################
+# This method should be questioned long term
 sub getACTz {
 	my($self, $tzcode, $dfid) = @_;
 	my $ac_hash_ref;
@@ -863,6 +880,11 @@ sub getSectionTitle {
 sub deleteSection {
 	my($self, $section) = @_;
 	$self->sqlDo("DELETE from sections WHERE section='$section'");
+}
+########################################################
+sub deleteContentFilter {
+	my($self, $id) = @_;
+	$self->sqlDo("DELETE from content_filters WHERE filter_id = $id");
 }
 
 ########################################################
@@ -2097,6 +2119,7 @@ sub saveStory{
 		displaystatus	=> $form->{displaystatus},
 		commentstatus	=> $form->{commentstatus}
 	});
+	$self->saveExtras($form);
 }
 
 ########################################################
@@ -2269,6 +2292,71 @@ sub getStoryList {
 
 	return $list;
 }
+##################################################################
+sub updateStory {
+	my ($self) = @_;
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+	$self->sqlUpdate('discussions',{
+			sid	=> $form->{sid},
+			title	=> $form->{title},
+			url	=> "$constants->{rootdir}/article.pl?sid=$form->{sid}",
+			-ts	=> $form->{'time'},
+		},
+		'sid = ' . $self->{dbh}->quote($form->{sid})
+	);
+
+	$self->sqlUpdate('stories', {
+			aid		=> $form->{aid},
+			tid		=> $form->{tid},
+			dept		=> $form->{dept},
+			'time'		=> $form->{'time'},
+			title		=> $form->{title},
+			section		=> $form->{section},
+			bodytext	=> $form->{bodytext},
+			introtext	=> $form->{introtext},
+			writestatus	=> $form->{writestatus},
+			relatedtext	=> $form->{relatedtext},
+			displaystatus	=> $form->{displaystatus},
+			commentstatus	=> $form->{commentstatus}
+		}, 'sid=' . $self->{dbh}->quote($form->{sid})
+	);
+
+	$self->{dbh}->do('UPDATE stories SET time=now() WHERE sid='
+		. $self->{dbh}->quote($form->{sid})
+	) if $form->{fastforward} eq 'on';
+	$self->saveExtras($form);
+}
+
+##################################################################
+
+##################################################################
+# Probably should make this private at some point
+sub saveExtras {
+	my ($self, $form) = @_;
+	return unless $self->sqlTableExists($form->{section});
+	my @extras = $self->sqlSelectColumns($form->{section});
+	my $E;
+
+	foreach (@extras) { $E->{$_} = $form->{$_} }
+
+	if (sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
+		sqlInsert($form->{section}, $E);
+	}
+}
+##################################################################
+# This should be rewritten so that at no point do we 
+# pass along an array -Brian
+sub getKeys{
+  my ($self, $table) = @_;
+	my @keys = $self->sqlSelectColumns($table)
+		if $self->sqlTableExists($table);
+
+	return \@keys;
+}
+
+##################################################################
+
 
 1;
 

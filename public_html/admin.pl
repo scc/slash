@@ -1010,10 +1010,9 @@ EOT
 		$S->{aid} ||= $I{U}{aid};
 		$S->{section} = $I{F}{section};
 
-		my @extracolumns = sqlSelectColumns($S->{section}) 
-			if sqlTableExists($S->{section});
+		my $extracolumns = $I{dbobject}->getKeys($S->{section});
 
-		foreach (@extracolumns) {
+		foreach (@$extracolumns) {
 			$S->{$_} = $I{F}{$_} || $S->{$_};
 		}
 
@@ -1079,9 +1078,7 @@ EOT
 		$S->{section} ||= 'articles';
 		$S->{aid} = $I{U}{aid};
 	}
-
-	my @extracolumns = sqlSelectColumns($S->{section})
-		if sqlTableExists($S->{section});
+	my @$extracolumns =  $I{dbobject}->getKeys($S->{section});
 
 	my $introtext = stripByMode($S->{introtext}, 'literal', 1);
 	my $bodytext  = stripByMode($S->{bodytext}, 'literal', 1);
@@ -1145,7 +1142,7 @@ EOT
 	<TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">$introtext</TEXTAREA><BR>
 EOT
 
-	if (@extracolumns) {
+	if (@$extracolumns) {
 		print <<EOT;
 
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
@@ -1154,7 +1151,7 @@ EOT
 	</TD></TR>
 EOT
 
-		foreach (@extracolumns) {
+		foreach (@$extracolumns) {
 			next if $_ eq 'sid';
 			my($sect, $col) = split m/_/;
 			$S->{$_} = $I{F}{$_} || $S->{$_};
@@ -1374,6 +1371,7 @@ sub updateFilter {
 		});
 
 		# damn damn damn!!!! wish I could use sth->insertid !!!
+		# ewww.....
 		my($filter_id) = sqlSelect("max(filter_id)", "content_filters");
 		titlebar("100%", "New filter# $filter_id.", "c");
 		editFilter($filter_id);
@@ -1386,22 +1384,13 @@ sub updateFilter {
 			editFilter($I{F}{filter_id});
 
 		} else {
-			sqlUpdate("content_filters", {
-				regex => $I{F}{regex},
-				modifier => $I{F}{modifier},
-				field => $I{F}{field},
-				ratio => $I{F}{ratio},
-				minimum_match => $I{F}{minimum_match},
-				minimum_length => $I{F}{minimum_length},
-				maximum_length => $I{F}{maximum_length},
-				err_message => $I{F}{err_message},
-			}, "filter_id=$I{F}{filter_id}");
+			$I{dbobject}->setContentFilter();
 		}
 
 		titlebar("100%", "Filter# $I{F}{filter_id} saved.", "c");
 		editFilter($I{F}{filter_id});
 	} elsif ($filter_action eq "delete") {
-		$I{dbh}->do("DELETE from content_filters WHERE filter_id = $I{F}{filter_id}");
+		$I{dbobject}->deleteContentFilter($I{F}{filter_id});
 
 		titlebar("100%","<B>Deleted filter# $I{F}{filter_id}!</B>","c");
 		listFilters();
@@ -1419,18 +1408,6 @@ sub editbuttons {
 	print "\n\n<!-- end editbuttons -->\n\n";
 }
 
-##################################################################
-sub saveExtras {
-	return unless sqlTableExists($I{F}{section});
-	my @extras = sqlSelectColumns($I{F}{section});
-	my $E;
-
-	foreach (@extras) { $E->{$_} = $I{F}{$_} }
-
-	if (sqlUpdate($I{F}{section}, $E, "sid='$I{F}{sid}'") eq '0E0') {
-		sqlInsert($I{F}{section}, $E);
-	}
-}
 
 ##################################################################
 sub updateStory {
@@ -1444,41 +1421,12 @@ sub updateStory {
 
 	$I{F}{dept} =~ s/ /-/g;
 
-	($I{F}{aid}) = sqlSelect('aid','stories','sid=' . $I{dbh}->quote($I{F}{sid}))
+	($I{F}{aid}) = $I{dbobject}->getStoryBySid($I{F}{sid}, 'aid')
 		unless $I{F}{aid};
 	$I{F}{relatedtext} = getRelated("$I{F}{title} $I{F}{bodytext} $I{F}{introtext}")
 		. otherLinks($I{F}{aid}, $I{F}{tid});
 
-	sqlUpdate('discussions',{
-			sid	=> $I{F}{sid},
-			title	=> $I{F}{title},
-			url	=> "$I{rootdir}/article.pl?sid=$I{F}{sid}",
-			-ts	=> $I{F}{'time'},
-		},
-		'sid = ' . $I{dbh}->quote($I{F}{sid})
-	);
-
-	sqlUpdate('stories', {
-			aid		=> $I{F}{aid},
-			tid		=> $I{F}{tid},
-			dept		=> $I{F}{dept},
-			'time'		=> $I{F}{'time'},
-			title		=> $I{F}{title},
-			section		=> $I{F}{section},
-			bodytext	=> $I{F}{bodytext},
-			introtext	=> $I{F}{introtext},
-			writestatus	=> $I{F}{writestatus},
-			relatedtext	=> $I{F}{relatedtext},
-			displaystatus	=> $I{F}{displaystatus},
-			commentstatus	=> $I{F}{commentstatus}
-		}, 'sid=' . $I{dbh}->quote($I{F}{sid})
-	);
-
-	$I{dbh}->do('UPDATE stories SET time=now() WHERE sid='
-		. $I{dbh}->quote($I{F}{sid})
-	) if $I{F}{fastforward} eq 'on';
-
-	saveExtras();
+	$I{dbobject}->updateStory();
 	titlebar('100%', "Article $I{F}{sid} Saved", 'c');
 	listStories();
 }
@@ -1497,7 +1445,6 @@ sub saveStory {
 	$I{dbobject}->saveStory();
 
 	titlebar('100%', "Inserted $I{F}{sid} $I{F}{title}");
-	saveExtras();
 	listStories();
 }
 
