@@ -19,3 +19,34 @@ print "ok 1\n";
 # of the test code):
 
 my $object = Slash::Search->new('slash');
+print "ok 2\n";
+my $form = {};
+$form->{query}		||= "";
+$form->{section}	||= "";
+$form->{min}		||= 0;
+$form->{max}		||= 30;
+$form->{threshold}	||= 0;
+$form->{'last'}		||= $form->{min} + $form->{max};
+my $data = $object->findUsers($form, ['Anonymous Coward']);
+for(@$data) {
+	print "@$_\n";
+}
+print "ok 3\n";
+$form->{query} = "krow";
+my $data = $object->findUsers($form);
+for(@$data) {
+	print "@$_\n";
+}
+print "ok 4\n";
+$form->{query} = "";
+my $comments = $object->findComments($form);
+for(@$comments) {
+	print "@$_\n";
+}
+print "ok 5\n";
+$form->{query} = "";
+my $stories = $object->findStory($form);
+for(@$stories) {
+	print "@$_\n";
+}
+print "ok 6\n";

@@ -10,61 +10,62 @@ $Slash::Search::VERSION = '0.01';
 sub new {
 	my($class, $user) = @_;
 	my $self = {};
+
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->sqlConnect();
+
 	return $self;
 }
 
 #################################################################
 # Private method used by the search methods
 sub _keysearch {
-	my $self = shift;
-	my $keywords = shift;
-	my @columns = @_;
+	my ($self, $keywords, $columns) = @_;
 
 	my @words = split m/ /, $keywords;
 	my $sql;
 	my $x = 0;
 
-	foreach my $w (@words) {
-		next if length $w < 3;
+	for my $word (@words) {
+		next if length $word < 3;
 		last if $x++ > 3;
-		foreach my $c (@columns) {
+		for (@$columns) {
 			$sql .= "+" if $sql;
-			$sql .= "($c LIKE " . $self->{_dbh}->quote("%$w%") . ")";
+			$sql .= "($_ LIKE " . $self->{_dbh}->quote("%$word%") . ")";
 		}
 	}
 	# void context, does nothing?
 	$sql = "0" unless $sql;
 	$sql .= " as kw";
+
 	return $sql;
 };
 
 
 ####################################################################################
-sub find {
-	my($self) = @_;
+# This has been changed. Since we no longer delete comments
+# it is safe to have this run against stories.
+sub findComments {
+	my($self, $form) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
-	my $form = getCurrentForm();
-	my $threshold = getCurrentUser('threshold');
-	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
-		getDateFormat("time","d") . ",".
-		getDateFormat("date","t") . ",
-		uid, cid, ";
+	my $sql;
 
-	$sqlquery .= "	  " . $self->_keysearch->($self, $form->{query}, "subject", "comment") if $form->{query};
-	$sqlquery .= "	  1 as kw " unless $form->{query};
-	$sqlquery .= "	  FROM newstories, comments
-			 WHERE newstories.sid=comments.sid ";
-	$sqlquery .= "     AND newstories.sid=" . $self->{_dbh}->quote($form->{sid}) if $form->{sid};
-	$sqlquery .= "     AND points >= $threshold ";
-	$sqlquery .= "     AND section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
-	$sqlquery .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
+	$sql = "SELECT section, stories.sid,";
+	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid, ";
+	$sql .= "	  " . $self->_keysearch($self, $form->{query}, ['subject', 'comment']) 
+			if $form->{query};
+	$sql .= "	  1 as kw " unless $form->{query};
+	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
+	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid}) if $form->{sid};
+	$sql .= "     AND points >= $form->{threshold} " if $form->{threshold};
+	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
+	$sql .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
 
 
-	my $cursor = $self->{_dbh}->prepare($sqlquery);
+	my $cursor = $self->{_dbh}->prepare($sql);
+	print ":$sql:\n";
 	$cursor->execute;
 
 	my $search = $cursor->fetchall_arrayref;
@@ -73,24 +74,29 @@ sub find {
 
 ####################################################################################
 sub findUsers {
-	my($self, $form, @users_to_ignore) = @_;
+	my($self, $form, $users_to_ignore) = @_;
 	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
-	my $sqlquery = "SELECT fakeemail,nickname,uid ";
-	$sqlquery .= " FROM users";
-	$sqlquery .= " WHERE uid not $users_to_ignore[1]" if $users_to_ignore[1];
-	shift @users_to_ignore;
-	for my $user (@users_to_ignore) {
-		$sqlquery .= " AND uid not $user";
+	my $sql;
+	$sql .= 'SELECT fakeemail,nickname,uid ';
+	$sql .= ' FROM users ';
+	$sql .= ' WHERE ' if $users_to_ignore or $form->{query};
+	my $x = 0;
+	for my $user (@$users_to_ignore) {
+		$sql .= ' AND ' if $x != 0;
+		$sql .= " nickname != " .  $self->{_dbh}->quote($user);
+		$x++;
 	}
+
 	if ($form->{query}) {
-		my $kw = $self->_keysearch->($self, $form->{query}, 'nickname', 'ifnull(fakeemail,"")');
+		$sql .= ' AND ' if @$users_to_ignore;
+		my $kw = $self->_keysearch($form->{query}, ['nickname', 'ifnull(fakeemail,"")']);
 		$kw =~ s/as kw$//;
 		$kw =~ s/\+/ OR /g;
-		$sqlquery .= "AND ($kw) ";
+		$sql .= " ($kw) ";
 	}
-	$sqlquery .= "ORDER BY uid LIMIT $form->{min}, $form->{max}";
-	my $sth = $self->{_dbh}->prepare($sqlquery);
+	$sql .= " ORDER BY uid LIMIT $form->{min}, $form->{max}";
+	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute;
 
 	my $users = $sth->fetchall_arrayref;
@@ -101,36 +107,36 @@ sub findUsers {
 ####################################################################################
 sub findStory {
 	my($self, $form) = @_;
-	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
-		", commentcount,section ";
-	$sqlquery .= "," . $self->_keysearch->($self, $form->{query}, "title", "introtext") . " "
+	my $sql;
+	$sql .= "SELECT nickname,title,sid, time, commentcount,section ";
+	$sql .= "," . $self->_keysearch($self, $form->{query}, ['title', 'introtext']) . " "
 		if $form->{query};
-	$sqlquery .= "	,0 " unless $form->{query};
+	$sql .= "	,0 " 
+		unless $form->{query};
 
-	if ($form->{query} || $form->{topic}) {
-		$sqlquery .= "  FROM stories ";
+	$sql .= " FROM stories, users WHERE ";
+	if($form->{section}) {
+		$sql .= qq| ((displaystatus = 0 and "$form->{section}" = "")|;
+    $sql .= qq| OR (section = "$form->{section}" and displaystatus >= 0))|;
 	} else {
-		$sqlquery .= "  FROM newstories ";
+		$sql .= ' displaystatus >= 0 ';
 	}
 
-	$sqlquery .= $form->{section} ? <<EOT : 'WHERE displaystatus >= 0';
-WHERE ((displaystatus = 0 and "$form->{section}"="")
-        OR (section="$form->{section}" and displaystatus>=0))
-EOT
-
-	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
-	$sqlquery .= "   AND aid=" . $self->{_dbh}->quote($form->{author})
+	$sql .= " AND time < now() AND writestatus>=0 AND displaystatus>=0";
+	$sql .= " AND aid=" . $self->{_dbh}->quote($form->{author})
 		if $form->{author};
-	$sqlquery .= "   AND section=" . $self->{_dbh}->quote($form->{section})
+	$sql .= " AND section=" . $self->{_dbh}->quote($form->{section})
 		if $form->{section};
-	$sqlquery .= "   AND tid=" . $self->{_dbh}->quote($form->{topic})
+	$sql .= " AND tid=" . $self->{_dbh}->quote($form->{topic})
 		if $form->{topic};
 
-	$sqlquery .= " ORDER BY ";
-	$sqlquery .= " kw DESC, " if $form->{query};
-	$sqlquery .= " time DESC LIMIT $form->{min},$form->{max}";
+	$sql .= " AND stories.uid=users.uid ";
 
-	my $cursor = $self->{_dbh}->prepare($sqlquery);
+	$sql .= " ORDER BY ";
+	$sql .= " kw DESC, " if $form->{query};
+	$sql .= " time DESC LIMIT $form->{min},$form->{max}";
+
+	my $cursor = $self->{_dbh}->prepare($sql);
 	$cursor->execute;
 	my $stories = $cursor->fetchall_arrayref;
 
@@ -149,7 +155,7 @@ __END__
 
 =head1 NAME
 
-Slash::Search - Perl extension for blah blah blah
+Slash::Search - Slash Search module
 
 =head1 SYNOPSIS
 
@@ -157,9 +163,7 @@ Slash::Search - Perl extension for blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Slash::Search was created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
+Slash search module.
 
 Blah blah blah.
 

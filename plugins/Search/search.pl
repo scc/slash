@@ -28,17 +28,21 @@ use Slash;
 use Slash::Utility;
 use Slash::Search;
 
+my %ops = {
+	comments => &commentSearch,
+	users => &userSearch,
+	stories => &storySearch,
+};
 #################################################################
 sub main {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
 	# Set some defaults
-	$form->{query}		||= "";
-	$form->{section}	||= "";
-	$form->{op}		||= "";
-	$form->{min}		||= "0";
-	$form->{max}		||= "30";
+	$form->{query}		||= '';
+	$form->{section}	||= '';
+	$form->{min}		||= 0;
+	$form->{max}		||= 30;
 	$form->{threshold}	||= getCurrentUser('threshold');
 	$form->{'last'}		||= $form->{min} + $form->{max};
 
@@ -48,12 +52,11 @@ sub main {
 	header("$constants->{sitename}: Search $form->{query}", $form->{section});
 	titlebar("99%", "Searching $form->{query}");
 
-	searchForm();
+	searchForm($form);
 
-	if	($form->{op} eq 'comments')	{ commentSearch()	}
-	elsif	($form->{op} eq 'users')	{ userSearch()		}
-	elsif	($form->{op} eq 'stories')	{ storySearch()		}
-	else	{
+	if($ops{$form->{op}}) {
+		$ops{$form->{op}}->($form);
+	} else	{
 		print "Invalid operation!<BR>";
 	}
 	writeLog("search", $form->{query})
@@ -82,9 +85,9 @@ sub linkSearch {
 
 #################################################################
 sub searchForm {
+	my ($form) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
 
 	my $SECT = getSection($form->{section});
 
@@ -134,9 +137,9 @@ EOT
 
 #################################################################
 sub commentSearch {
+	my ($form) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
 	my $searchDB = Slash::Search->new(getCurrentSlashUser());
 
 	print <<EOT;
@@ -166,7 +169,7 @@ EOT
 		return unless $form->{query};
 	}
 
-	my $search = $searchDB->find();
+	my $search = $searchDB->findComments($form);
 	my $x = $form->{min};
 	for (@$search) {
 		my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,
@@ -201,8 +204,8 @@ EOT
 
 #################################################################
 sub userSearch {
+	my ($form) = @_;
 	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
 	my $searchDB = Slash::Search->new(getCurrentSlashUser());
 
 	my $prev = int($form->{min}) - $form->{max};
@@ -213,24 +216,19 @@ sub userSearch {
 
 	my($x, $cnt) = 0;
 
-	my $users = $searchDB->findUsers($form, getCurrentStatic('anonymous_coward_uid'));
+	my $users = $searchDB->findUsers($form, [getCurrentAnonymousCoward('nickname')]);
 	for (@$users) {
 		my($fakeemail, $nickname, $uid) = @$_;
 		my $ln = $nickname;
 		$ln =~ s/ /+/g;
 
-		my $fake = $fakeemail ? <<EOT : '';
-	email: <A HREF="mailto:$fakeemail">$fakeemail</A>
-EOT
+		my $fake = '';
+		$fake = qq|email: <A HREF="mailto:$fakeemail">$fakeemail</A>| if $fakeemail;
 		print <<EOT;
-<A HREF="$constants->{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp;
-($uid) $fake<BR>
-EOT
-
+		print qq| <A HREF="$constants->{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp; |;
+		print qq| ($uid) $fake<BR> |;
 		$x++;
 	}
-
-
 	print "No Matches Found for your query" if $x < 1;
 
 	print "<P>";
@@ -242,7 +240,7 @@ EOT
 
 #################################################################
 sub storySearch {
-	my $form = getCurrentForm();
+	my ($form) = @_;
 	my $searchDB = Slash::Search->new(getCurrentSlashUser());
 
 	my $prev = $form->{min} - $form->{max};
@@ -254,7 +252,7 @@ sub storySearch {
 	my($x, $cnt) = 0;
 	print " ";
 
-	my $stories = $searchDB->getSearchStory($form);
+	my $stories = $searchDB->findStory($form);
 	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $form->{query};

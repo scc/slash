@@ -35,6 +35,8 @@ sub main {
 
 	getSection('admin');
 
+	
+	redirect("/users.pl") if($user->{seclev} < 100);
 	my($tbtitle);
 	if (($form->{op} =~ /^preview|edit$/) && $form->{title}) {
 		# Show submission/article title on browser's titlebar.

@@ -144,41 +144,6 @@ sub getCommentReply {
 }
 
 ########################################################
-sub getCommentsForUser {
-	my($self, $sid, $cid) = @_;
-	my $user = getCurrentUser();
-	my $form = getCurrentForm();
-	my $sql = "SELECT cid," . getDateFormat('date', 'time') . ",
-				subject,comment,
-				nickname,homepage,fakeemail,
-				users.uid as uid,sig,
-				comments.points as points,pid,sid,
-				lastmod, reason
-			   FROM comments,users
-			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
-			    AND comments.uid=users.uid";
-	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$user->{uid} OR " unless $user->{is_anon};
-	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		comments.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
-	$sql .= "		  1=1 )   ";
-	$sql .= "	  ORDER BY ";
-	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
-	$sql .= " cid ";
-	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
-
-
-	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
-	$thisComment->execute or errorLog($sql);
-	my(@comments);
-	while (my $comment = $thisComment->fetchrow_hashref){
-		push @comments, $comment;
-	}
-	return \@comments;
-}
-
-
-########################################################
 # What an ugly method
 sub getSubmissionForUser {
 	my($self, $dateformat) = @_;

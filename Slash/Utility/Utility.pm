@@ -76,6 +76,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 	strip_nohtml
 	strip_plaintext
 	root2abs
+	getCurrentSlashUser
 );
 
 # LEELA: We're going to deliver this crate like professionals.
