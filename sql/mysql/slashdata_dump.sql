@@ -949,6 +949,7 @@ INSERT INTO vars VALUES ('run_ads','0','Should we be running ads?',NULL,NULL);
 INSERT INTO vars VALUES ('send_mail','0','Turn On/Off the mailing list',NULL,NULL);
 INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site',NULL,NULL);
 INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site',NULL,NULL);
+INSERT INTO vars VALUES ('siteid','slashsite','The unique ID for this site',NULL,NULL);
 INSERT INTO vars VALUES ('sitename','Slash Site','Name of the site',NULL,NULL);
 INSERT INTO vars VALUES ('siteowner','slash','What user this runs as',NULL,NULL);
 INSERT INTO vars VALUES ('slogan','Slash Site','Slogan of the site',NULL,NULL);

@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w 
 use strict;
+use File::Copy;
+use File::Find;
+use File::Path;
 use Slash::DB;
 
 # This is the uber install script.
@@ -8,24 +11,9 @@ use Slash::DB;
 $| = 1;
 
 my $prefix = "/usr/local/slash";
-my(	$user,
-	$owner,
-	$password,
-	$username,
-	$realname,
-	$email,
-	$dbh,
-	@create,
-	$sql,
-	@sql,
-	$hostname,
-	@directories,
-	@binaries,
-	$httpd,
-	$uname,
-	%slash_sites,
-	$sitename,
-	$host_noport
+my(	$user, $owner, $owner_id, $group, $group_id, $password,
+	$sitename, $username, $realname, $email, $dbh, @create, $sql,
+	@sql, $hostname, $hostname_f, $host_noport, $httpd, %slash_sites
 );
 
 my @standard_http = qw(
@@ -64,14 +52,24 @@ unless ($dbh) {
 	exit;
 }
 
+END { $dbh->disconnect if $dbh }
 
-print "\nWhat is name of your slash site (e.g., www.slashdot.org)? ";
+chomp($hostname_f = `hostname -f`);
+print "\nWhat is hostname of your slash site
+(e.g., www.slashdot.org)? [$hostname_f] ";
 chomp($hostname = <STDIN>);
+$hostname ||= $hostname_f;
 ($host_noport = $hostname) =~ s/:.+$//;
 
 print "\nWhat user would you like to run your slash site as? [nobody] ";
 chomp($owner = <STDIN>);
 $owner ||= 'nobody';
+$owner_id = getpwnam($owner) or die "$owner is not a valid user name.\n";
+
+print "\nWhat group would you like to run your slash site under? [nobody] ";
+chomp($group = <STDIN>);
+$group ||= 'nobody';
+$group_id = getpwnam($group) or die "$group is not a valid group name.\n";
 
 # We also need to really be determining driver here and 
 # picking the right schema. Having it loop through
@@ -79,27 +77,31 @@ $owner ||= 'nobody';
 print "\nWhich theme do you want to use? (Skipping since we only have one theme.)\n";
 my $theme = "$prefix/themes/slashcode";
 
-print "\nOK, I am planning on user $hostname as the unique name
+print "\nOK, I am planning on user $host_noport as the unique name
 for the slash site.  If this is not ok, you need to fill in
-something else here. [$hostname] ";
+something else here. [$host_noport] ";
 chomp($sitename = <STDIN>);
-$sitename ||= $hostname;
+$sitename ||= $host_noport;
 
 print "\nOK, we need to create an admin account;
-give us a name (8 characters only please). ";
+give us a name (8 characters only please). [$owner] ";
 chomp($username = <STDIN>);
+$username ||= $owner;
 
-print "\nWhat is the email address of the account? ";
+print "\nWhat is the email address of the account? [$owner\@$host_noport] ";
 chomp($email = <STDIN>);
+$email ||= "$owner\@$host_noport";
 
 print "\nWhat is the password for the account? ";
 chomp($password = <STDIN>);
+die "You need to give us a password.\n" unless $password;
 
-
-
-if (open(APXS, 'apxs -q SYSCONFDIR |')) {
-	($httpd) = <APXS>;
-	close(APXS);
+{
+	local *STDERR;
+	if (open(APXS, 'apxs -q SYSCONFDIR |')) {
+		($httpd) = <APXS>;
+		close(APXS);
+	}
 }
 
 unless ($httpd) {
@@ -150,18 +152,26 @@ for (@sql) {
 	}
 }
 
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename/logs' WHERE name = 'logdir'");
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename/htdocs' WHERE name = 'basedir'");
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename' WHERE name = 'datadir'");
-
-system("mkdir $prefix/$sitename");
-system("mkdir $prefix/$sitename/logs");
-system("mkdir $prefix/$sitename/htdocs");
-system("mkdir $prefix/$sitename/backups");
-system("mkdir $prefix/$sitename/sbin");
-system("cp -r $theme/htdocs/* $prefix/$sitename/htdocs");
-
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/logs") . " WHERE name = 'logdir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/htdocs") . " WHERE name = 'basedir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename") . " WHERE name = 'datadir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote($sitename) . " WHERE name = 'siteid'");
 $dbh->disconnect;
+
+mkpath "$prefix/$sitename", 0, 0775;
+mkpath "$prefix/$sitename/logs", 0, 0775;
+mkpath "$prefix/$sitename/htdocs", 0, 0775;
+mkpath "$prefix/$sitename/backups", 0, 0775;
+mkpath "$prefix/$sitename/sbin", 0, 0775;
+find(sub {
+	my $f1 = $File::Find::name;
+	(my $f2 = $f1) =~ s|^$theme/htdocs/|$prefix/$sitename/htdocs/|;
+	if (-d $f1) {
+		mkpath $f2, 0, 0775;
+	} else {
+		copy $f1, $f2;
+	}
+}, "$theme/htdocs/");
 
 
 my $slashdb = Slash::DB->new($ARGV[0]);
@@ -185,7 +195,7 @@ unless (exists $slash_sites{$user}) {
 	close(SLASHSITES);
 }
 
-system("chown -R $owner $prefix/");
+find(sub { chown $owner_id, $group_id, $_ }, "$prefix/$sitename");
 
 print "\nDone, thanks.\n";
 
