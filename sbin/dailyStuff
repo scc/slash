@@ -37,12 +37,12 @@ $constants->{sitename} Stats for yesterday
      total $count->{'total'}
     unique $count->{'unique'}
 total hits $sdTotalHits
-  homepage $count->{'index'}es{'index'}
+  homepage $count->{'index'}{'index'}
    indexes 
 EOT
 
 for (keys %{$count->{'index'}}) {
-	$email .= "\t   $_=$count->{'index'}es{$_}\n"
+	$email .= "\t   $_=$count->{'index'}{$_}\n"
 }
 
 $email .= "\n-----------------------\n";
