@@ -177,6 +177,30 @@ sub _deleteThread {
 
 	return $count;
 }
+########################################################
+# For dailystuff
+# This just updates the counts for the day before
+# -Brian
+sub updateStoriesCounts {
+	my($self) = @_;
+	my $counts = $self->sqlSelectAll(
+		'dat,count(*)',
+		'accesslog',
+		"op='article' AND dat !='' AND to_days(now()) - to_days(ts) = 1",
+		'GROUP BY(dat)'
+	);
+
+	for my $count (@$counts) {
+		$self->sqlUpdate('stories', { -hits => "hits+$count->[1]" },
+			'sid=' . $self->sqlQuote($count->[0])
+		);
+		if ($constants->{mysql_heap_table}) {
+			$self->sqlUpdate('story_heap', { -hits => "hits+$count->[1]" },
+				'sid=' . $self->sqlQuote($count->[0])
+			);
+		}
+	}
+}
 
 ########################################################
 # For dailystuff
@@ -184,6 +208,7 @@ sub deleteDaily {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 
+	#$self->updateStoriesCounts();
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
 	$self->sqlDo("DELETE from moderatorlog WHERE
