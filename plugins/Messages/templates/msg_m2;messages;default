@@ -49,11 +49,12 @@ other [% constants.sitename %] readers. Here are the exciting results:
 </UL>
 [% ELSE %]
 [% FOREACH m2item = m2 -%]
-	[%- reason = constants.reasons.${m2item.reason} -%]
-	- "[% m2item.subj %]" from the discussion "[% m2item.title %]"
-	which you moderated as [% reason %] was voted [% vote_result.${m2item.vote} %]
-[% IF m2item.url -%]
-	<[% m2item.url %]>
+	[%- reason = m2item.reason -%]
+	- "[% m2item.subj %]" from the discussion [% discussion %]
+	which you moderated as "[% reason %]" was voted [% vote_result.${m2item.vote} %]
+[% url=m2item.url; IF url; IF !m2item.url.search('^http:'); url="http:$url"; END -%]
+	<[% url %]>
+
 [%- END %]
 [% END %]
 [%- END -%]
