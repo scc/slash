@@ -18,7 +18,7 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	if(($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}){
+	if (($form->{content_type} eq 'rss') and ($form->{op} eq 'list') and $constants->{submiss_view}) {
 		displayRSS($slashdb, $constants, $user, $form);
 		return;
 	}
@@ -226,31 +226,28 @@ sub submissionEd {
 }	
 
 #################################################################
-sub	displayRSS {
-	my ($slashdb, $constants, $user, $form) = @_;
+sub displayRSS {
+	my($slashdb, $constants, $user, $form) = @_;
 	my($submissions, @items);
 	$submissions = $slashdb->getSubmissionForUser();
 
 	for (@$submissions) {
-		my ($subid, $subj, $time, $tid, $note, $email, $name, $section, $comment, $uid, $karma) = @$_;
+		my($subid, $subj, $time, $tid, $note, $email, $name, $section, $comment, $uid, $karma) = @$_;
 
 		# title should be cleaned up
 		push(@items, {
-				title => $subj,
-				'link' => ($constants->{rootdir} . '/submit.pl?op=viewsub\&subid=' . $subid),
-			}
-		);
+			title => $subj,
+			'link' => ($constants->{rootdir} . '/submit.pl?op=viewsub\&subid=' . $subid),
+		});
 	}
 
-	xmlDisplay {
-	'rss', {
+	xmlDisplay('rss', {
 		channel => {
 			title => "$constants->{rootdir}'s submissions",
 			'link' => "$constants->{rootdir}/submit.pl?op=list",
-			},
+		},
 		item => \@items,
-		}, { apache => 1},
-	}
+	}, { apache => 1} );
 }
 
 

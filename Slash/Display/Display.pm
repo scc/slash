@@ -41,14 +41,14 @@ L<Template> for more information about templates.
 =cut
 
 use strict;
-use base 'Exporter';
-use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
-use Exporter ();
 use Slash::Display::Provider ();
 use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Slash::Utility::System;
 use Template;
+
+use base 'Exporter';
+use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(slashDisplay);
