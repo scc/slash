@@ -3657,60 +3657,60 @@ sub _saveExtras {
 # We make use of story_heap if it exists, it will be much
 # faster than stories.
 sub getStory {
-	my($self, $id, $val, $cache_flag) = @_;
+	my($self, $id, $val, $force_cache_freshen) = @_;
+	my $constants = getCurrentStatic();
+
 	# Lets see if we can use story_heap
-	my $story_table = getCurrentStatic('mysql_heap_table') ?
-		'story_heap' : 'stories';
-	# We need to expire stories
-	_genericCacheRefresh($self, $story_table, getCurrentStatic('story_expire'));
+	my $story_table = $constants->{mysql_heap_table} ? 'story_heap' : 'stories';
+
+	# If our story cache is too old, expire it.
+	_genericCacheRefresh($self, $story_table, $constants->{story_expire});
 	my $table_cache = '_' . $story_table . '_cache';
 	my $table_cache_time= '_' . $story_table . '_cache_time';
 
-	my $type;
-	if (ref($val) eq 'ARRAY') {
-		$type = 0;
-	} else {
-		$type  = $val ? 1 : 0;
-	}
+	my $val_scalar = 1;
+	$val_scalar = 0 if !$val or ref($val);
 
-	if ($type) {
-		return $self->{$table_cache}{$id}{$val}
-			if (keys %{$self->{$table_cache}{$id}} and !$cache_flag);
-	} else {
-		if (keys %{$self->{$table_cache}{$id}} && !$cache_flag) {
-			my %return = %{$self->{$table_cache}{$id}};
-			return \%return;
+	# Go grab the data if we don't have it, or if the caller
+	# demands that we grab it anyway.
+	my $is_in_cache = exists $self->{$table_cache}{$id};
+	if (!$is_in_cache or $force_cache_freshen) {
+		# We avoid the join here. Sure, it's two calls to the db,
+		# but why do a join if it's not needed?
+		my($append, $answer, $db_id);
+		$db_id = $self->sqlQuote($id);
+		$answer = $self->sqlSelectHashref('*', $story_table, "sid=$db_id");
+		$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
+		for my $key (keys %$append) {
+			$answer->{$key} = $append->{$key};
 		}
-	}
-# At this point its not in the cache so we go grab
-# the entity.
-# BTW, we avoid the join here. Sure, its two calls to
-# the db but why do a join if it is not needed?
-	my($append, $answer, $db_id);
-	$db_id = $self->sqlQuote($id);
-	$answer = $self->sqlSelectHashref('*', $story_table, "sid=$db_id");
-	$append = $self->sqlSelectHashref('*', 'story_text', "sid=$db_id");
-	for (keys %$append) {
-		$answer->{$_} = $append->{$_};
-	}
-	$append = $self->sqlSelectAll('name,value', 'story_param', "sid=$db_id");
-	for (@$append) {
-		$answer->{$_->[0]} = $_->[1];
+		$append = $self->sqlSelectAll('name,value', 'story_param', "sid=$db_id");
+		for my $ary_ref (@$append) {
+			$answer->{$ary_ref->[0]} = $ary_ref->[1];
+		}
+		# If this is the first data we're writing into the cache,
+		# mark the time -- this data, and any other stories we
+		# write into the cache for the next n seconds, will be
+		# expired at that time.
+		$self->{$table_cache_time} = time() if !$self->{$table_cache_time};
+		# Cache the data.
+		$self->{$table_cache}{$id} = $answer;
 	}
 
-# We save the entity
-	$self->{$table_cache}{$id} = $answer;
-	$self->{$table_cache_time} = time();
-
-	if ($type) {
-		return $self->{$table_cache}{$id}{$val};
-	} else {
-		if ($self->{$table_cache}{$id}) {
-			my %return = %{$self->{$table_cache}{$id}};
-			return \%return;
+	# The data is in the table cache now.
+	if ($val_scalar) {
+		# Caller only asked for one return value.
+		if (exists $self->{$table_cache}{$id}{$val}) {
+			return $self->{$table_cache}{$id}{$val};
 		} else {
-			return;
+			return undef;
 		}
+	} else {
+		# Caller asked for multiple return values.  It really doesn't
+		# matter what specifically they asked for, we always return
+		# the same thing:  a hashref with all the values.
+		my %return = %{$self->{$table_cache}{$id}};
+		return \%return;
 	}
 }
 
