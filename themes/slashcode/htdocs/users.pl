@@ -448,42 +448,45 @@ sub showInfo {
 	my($points, $lastgranted, $nickmatch_flag, $uid, $nick);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
-	if ($form->{userfield} =~ /^\d+$/) {
-		$fieldkey = 'uid';
-		$id ||= $form->{userfield};
-		$requested_user = $slashdb->getUser($id);
-		$uid = $requested_user->{uid};
-		$nick = $requested_user->{nickname};
+	if ($form->{userfield} and $user->{is_admin}) {
+		if ($form->{userfield} =~ /^\d+$/) {
+			$fieldkey = 'uid';
+			$id ||= $form->{userfield};
+			$requested_user = $slashdb->getUser($id);
+			$uid = $requested_user->{uid};
+			$nick = $requested_user->{nickname};
 
-	} elsif (length($form->{userfield}) == 32) {
-		$fieldkey = 'ipid';
-		$requested_user->{nonuid} = 1;
-		$requested_user->{ipid} = $form->{userfield};
-		$id ||= $form->{userfield};
+		} elsif (length($form->{userfield}) == 32) {
+			$fieldkey = 'ipid';
+			$requested_user->{nonuid} = 1;
+			$requested_user->{ipid} = $form->{userfield};
+			$id ||= $form->{userfield};
 
-	} elsif ($form->{userfield} =~ /^(\d+\.\d+.\d+\.0)$/) {
-		$fieldkey = 'subnetid';
-		$requested_user->{nonuid} = 1;
-		$requested_user->{subnetid} = md5_hex($1);
-		$id ||= $form->{userfield};
+		} elsif ($form->{userfield} =~ /^(\d+\.\d+.\d+\.0)$/) {
+			$fieldkey = 'subnetid';
+			$requested_user->{nonuid} = 1;
+			$requested_user->{subnetid} = md5_hex($1);
+			$id ||= $form->{userfield};
 
-	} elsif ($form->{userfield} =~ /^([\d+\.]+)$/) {
-		$fieldkey = 'ipid';
-		$requested_user->{nonuid} = 1;
-		$id ||= $1;
-		$requested_user->{ipid} = md5_hex($1);
-
-	} elsif (! $id && ! $form->{userfield} && $form->{op} eq 'userinfo') {
-		$fieldkey = 'uid';
-		$id = $user->{uid};
-		$uid = $id;
-		$requested_user = $user;
-
+		} elsif ($form->{userfield} =~ /^([\d+\.]+)$/) {
+			$fieldkey = 'ipid';
+			$requested_user->{nonuid} = 1;
+			$id ||= $1;
+			$requested_user->{ipid} = md5_hex($1);
+		}
 	} else {
-		$fieldkey = 'nickname';
-		$id = $form->{userfield} ? $form->{userfield} : $user->{nickname};
-		$uid = $slashdb->getUserUID($id);
-		$requested_user = $slashdb->getUser($uid);
+		if (! $id && ! $form->{userfield} && $form->{op} eq 'userinfo') {
+			$fieldkey = 'uid';
+			$id = $user->{uid};
+			$uid = $id;
+			$requested_user = $user;
+
+		} else {
+			$fieldkey = 'nickname';
+			$id = $form->{userfield} ? $form->{userfield} : $user->{nickname};
+			$uid = $slashdb->getUserUID($id);
+			$requested_user = $slashdb->getUser($uid);
+		}
 	}
 
 	if ($requested_user->{nonuid}) {
