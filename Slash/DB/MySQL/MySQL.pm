@@ -482,18 +482,17 @@ sub setAdminInfo {
 	}
 }
 
+
 ########################################################
-# In need of rewriting
-sub writelog {
-	my $self = shift;
-	my $op = shift;
-	my $dat = join("\t", @_);
+# This creates an entry in the accesslog
+sub createAccessLog {
+	my ($self, $op, $dat) = @_;
 
 	my $uid;
 	if ($ENV{REMOTE_ADDR}) {
 		$uid = getCurrentUser('uid')
 	} else {
-		$self->getVar('anonymous_coward_uid');
+		$self->getCurrentStatic('anonymous_coward_uid');
 	}
 
 	$self->sqlInsert('accesslog', {

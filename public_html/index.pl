@@ -80,7 +80,7 @@ sub main {
 
 	footer();
 
-	$I{dbobject}->writelog('index', $form->{section} || 'index') unless $form->{ssi};
+	writeLog('index', $form->{section} || 'index') unless $form->{ssi};
 }
 
 #################################################################

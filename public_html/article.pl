@@ -80,7 +80,7 @@ sub main {
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 
 	printComments($I{F}{sid});
-	$I{dbobject}->writelog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
+	writeLog($SECT->{section}, $I{F}{sid}) unless $I{F}{ssi};
 	footer();
 }
 

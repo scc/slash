@@ -65,7 +65,7 @@ EOT
 <P><BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
 EOT
 
-	$slashdb->writelog("authors");
+	writeLog("authors");
 	footer(getCurrentForm('ssi'));
 }
 

@@ -66,7 +66,7 @@ sub main {
 
 	footer();
 
-	$db->writelog("cheesyportal") unless getCurrentForm('ssi');
+	writeLog("cheesyportal") unless getCurrentForm('ssi');
 }
 
 main();

@@ -139,7 +139,7 @@ print STDERR "OP $I{F}{op}\n";
 	}
 
 	miniAdminMenu() if $I{U}{aseclev} > 100;
-	$I{dbobject}->writelog("users", $I{U}{nickname});
+	writeLog("users", $I{U}{nickname});
 	footer();
 }
 

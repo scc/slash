@@ -122,7 +122,7 @@ sub main {
 		commentIndex();
 	}
 
-	$I{dbobject}->writelog("comments", $I{F}{sid}) unless $I{F}{ssi};
+	writeLog("comments", $I{F}{sid}) unless $I{F}{ssi};
 
 	footer();
 }

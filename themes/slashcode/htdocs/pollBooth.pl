@@ -63,7 +63,7 @@ sub main {
 			if $vote && ! $I{dbobject}->getVar('nocomment', 'value');
 	}
 
-	$I{dbobject}->writelog("pollbooth", $I{F}{qid});
+	writeLog("pollbooth", $I{F}{qid});
 	footer();
 }
 

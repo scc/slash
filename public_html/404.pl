@@ -65,7 +65,7 @@ sub main {
 	print "<P>If you feel like it, mail the url, and where ya came from to <A HREF=\"mailto:$I{adminmail}\">$admin</A>\n";
 
 	# $r->log_error("Borked Browser $url $ENV{HTTP_REFERER} $ENV{HTTP_USER_AGENT}") if $url=~/gif/;
-	$I{dbobject}->writelog("404","404");
+	writeLog("404","404");
 	footer();
 }
 

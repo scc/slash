@@ -185,7 +185,7 @@ sub main {
 		listStories();
 	}
 
-	$I{dbobject}->writelog('admin', $I{U}{aid}, $op, $I{F}{sid});
+	writeLog('admin', $I{U}{aid}, $op, $I{F}{sid});
 
 	# Display who is logged in right now.
 	footer();
