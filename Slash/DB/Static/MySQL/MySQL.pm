@@ -126,18 +126,15 @@ sub archiveComments {
 		 WHERE to_days(now()) - to_days(ts) > $days_to_archive AND 
 		       type='open' OR type='dirty'"
 	);
+
 	# Close associated story so that final archival .shtml is written
 	# to disk. This is accomplished by the archive.pl task.
 	$self->sqlDo(
 		"UPDATE stories SET writestatus='archived'
 		 WHERE to_days(now()) - to_days(time) > $days_to_archive AND
+		       time > '$last_archive_date' AND
 		       writestatus='ok' OR type='dirty'"
 	);
-
-	# Dirty stories would live for an extra day, but we don't pay much 
-	# attention to archived stories so this is ok.
-	# AKA is bookkeeping. -Brian
-	$self->sqlDo("update stories SET writestatus='archived'  WHERE to_days(now()) - to_days(time) > $constants->{discussion_archive} AND writestatus = 'ok' ");
 
 	my $comments = $self->sqlSelectAll(
 		'cid, discussions.id',

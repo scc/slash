@@ -79,7 +79,7 @@ $task{$me}{code} = sub {
 		my $cc = $1 || 0;
 		my $hp = $2 || 0;
 		$slashdb->setStory($sid, { 
-			writestatus  => 'ok',
+			writestatus  => 'archive-ok',
 			commentcount => $cc,
 			hitparade    => $hp,
 		});
