@@ -949,7 +949,7 @@ sub editStory {
 	my($authoredit_flag, $extracolumn_flag) = (0,0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
 		$editbuttons, $sections, $topic_select, $section_select, $author_select,
-		$extracolumns, $displaystatus_select, $commentstatus_select);
+		$extracolumns, $displaystatus_select, $commentstatus_select, $description);
 	my $extracolref = {};
 	my($fixquotes_check,$autonode_check,$fastforward_check) = ('off','off','off');
 
@@ -1045,10 +1045,10 @@ sub editStory {
 	$locktest = lockTest($storyref->{title});
 
 	unless ($user->{section}) {
-		my $description = $slashdb->getDescriptions('displaycodes');
+		$description = $slashdb->getDescriptions('displaycodes');
 		$displaystatus_select = createSelect('displaystatus', $description, $storyref->{displaystatus},1);
 	}
-	my $description = $slashdb->getDescriptions('commentcodes');
+	$description = $slashdb->getDescriptions('commentcodes');
 	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus},1);
 
 	$fixquotes_check = "on" if $form->{fixquotes};
