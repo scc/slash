@@ -203,13 +203,15 @@ sub displayStandardBlocks {
 #################################################################
 # pass it how many, and what.
 sub displayStories {
-	my $cursor = shift;
+	my $stories_arrayref = shift;
 	my($today, $x) = ('', 1);
 	my $user = getCurrentUser();
 	my $cnt = int($user->{maxstories} / 3);
 
 	#stackTrace(8);
-	while (my($sid, $thissection, $title, $time, $cc, $d, $hp) = $cursor->fetchrow) {
+	for (@{$stories_arrayref}) {
+		my ($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_}; 
+
 		my @threshComments = split m/,/, $hp;
 
 		# Prefix story with section if section != this section and no

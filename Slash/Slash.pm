@@ -1928,59 +1928,14 @@ sub testExStr {
 }
 
 ########################################################
-sub selectStories {
-	my($SECT, $limit, $tid) = @_;
-
-	my $s = "SELECT sid, section, title, date_format(" .
-		getDateOffset('time', $I{U}) . ',"%W %M %d %h %i %p"),
-			commentcount, to_days(' . getDateOffset('time', $I{U}) . "),
-			hitparade
-		   FROM newstories
-		  WHERE 1=1 "; # Mysql's Optimize gets this.
-
-	$s .= " AND displaystatus=0 " unless $I{F}{section};
-	$s .= " AND time < now() "; # unless $I{U}{aseclev};
-	$s .= "	AND (displaystatus>=0 AND '$SECT->{section}'=section)" if $I{F}{section};
-	$I{F}{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
-	$s .= "   AND $I{F}{issue} >= to_days(" . getDateOffset("time", $I{U}) . ") "
-		if $I{F}{issue};
-	$s .= "	AND tid='$tid'" if $tid;
-
-	# User Config Vars
-	$s .= "	AND tid not in ($I{U}{extid})"		if $I{U}{extid};
-	$s .= "	AND aid not in ($I{U}{exaid})"		if $I{U}{exaid};
-	$s .= "	AND section not in ($I{U}{exsect})"	if $I{U}{exsect};
-
-	# Order
-	$s .= "	ORDER BY time DESC ";
-
-	if ($limit) {
-		$s .= "	LIMIT $limit";
-	} elsif ($I{currentSection} eq 'index') {
-		$s .= "	LIMIT $I{U}{maxstories}";
-	} else {
-		$s .= "	LIMIT $SECT->{artcount}";
-	}
-#	print "\n\n\n\n\n<-- stories select $s -->\n\n\n\n\n";
-
-	my $cursor = $I{dbh}->prepare($s) or apacheLog($s);
-	$cursor->execute or apacheLog($s);
-	return $cursor;
-}
-
-########################################################
 sub getOlderStories {
-	my($cursor, $SECT)=@_;
+	my($array_ref, $SECT)=@_;
 	my($today, $stuff);
 
-	$cursor ||= selectStories($SECT);
+	$array_ref ||= $I{dbobject}->getStories(\$I{U},\$I{F},$SECT,$I{currentSection});
 
-	unless($cursor->{Active}) {
-		$cursor->finish;
-		return "Your maximum stories is $I{U}{maxstories} ";
-	}
-
-	while (my($sid, $section, $title, $time, $commentcount, $day) = $cursor->fetchrow) {
+	for(@{$array_ref}) {
+		my ($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;
 		if ($today ne $w) {
 			$today  = $w;
@@ -2022,7 +1977,6 @@ EOT
 <B>Yesterday's Edition</B></A>
 EOT
 	}
-	$cursor->finish;
 	return $stuff;
 }
 

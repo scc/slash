@@ -1985,6 +1985,53 @@ sub getComments {
 }
 
 ########################################################
+sub getStories {
+	my ($self,$U,$F,$SECT,$currentSection,$limit,$tid) = @_;
+
+	my $limit ||= $U->{maxstories};
+
+	my $tables = "newstories";
+	my $columns = "sid, section, title, date_format(" .  
+		getDateOffset('time', $U) . 
+		',"%W %M %d %h %i %p"), commentcount, to_days(' .  
+		getDateOffset('time', $U) . "), hitparade";
+
+	my $where = "1=1 "; # Mysql's Optimize gets this.";
+
+	$where .= "AND displaystatus=0 " unless $F->{section};
+
+	$where .= "AND time < now() "; # unless $U->{aseclev};
+	$where .= "AND (displaystatus>=0 AND '$SECT->{section}'=section) " if $F->{section};
+
+	$F->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
+
+	$where .= "AND $F->{issue} >= to_days(" . getDateOffset("time", $U) . ") " if $F->{issue};
+	$where .= "AND tid='$tid' " if $tid;
+
+	# User Config Vars
+	$where .= "AND tid not in ($U->{extid}) " if $U->{extid};
+	$where .= "AND aid not in ($U->{exaid}) " if $U->{exaid};
+	$where .= "AND section not in ($U->{exsect}) "	if $U->{exsect};
+
+	# Order
+	my $other .= "ORDER BY time DESC ";
+
+	if ($limit) {
+		$other .= "LIMIT $limit ";
+	} elsif ($currentSection eq 'index') {
+		$other .= "LIMIT $U->{maxstories} ";
+	} else {
+		$other .= "LIMIT $SECT->{artcount} ";
+	}
+#	print "\n\n\n\n\n<-- stories select $tables $columns $where $other -->\n\n\n\n\n";
+
+	my $stories_arrayref = $self->sqlSelectAll($columns, $tables, $where, $other) 
+		or apacheLog("error in getStories columns $columns table $tables where $where other $other");
+
+	return $stories_arrayref;
+}
+
+########################################################
 sub getCommentsTop {
 	my($self, $sid, $user) = @_;
 	my $where = "stories.sid=comments.sid";
