@@ -18,7 +18,11 @@ sub main {
 	my $op = $form->{op};
 	my $uid = $user->{uid};
 
-	if ($op eq 'saveuser') {
+	if ($op eq 'userlogin' && !$user->{is_anon}) {
+		my $refer = $form->{returnto} || $constants->{rootdir};
+		redirect($refer);
+		return;
+	} elsif ($op eq 'saveuser') {
 		my $note = saveUser($form->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;

@@ -4,10 +4,7 @@
 
 package Slash::Apache::User;
 
-# EXPORT functions!
-
 use strict;
-
 use Apache; 
 use Apache::Constants qw(:common REDIRECT);
 use Apache::File; 
@@ -75,6 +72,7 @@ sub handler {
 	# from Slash::DB instead of vice versa ...
 	$slashdb->fixup;
 
+	my $method = $r->method;
 	# Don't remove this. This solves a known bug in Apache -- brian
 	$r->method('GET');
 
@@ -85,21 +83,25 @@ sub handler {
 	# the form, a cookie, or they will be anonymous
 	my $uid;
 	my $op = $form->{op} || '';
+
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 
-		# newpass is only true if the password was changed
-		if ($uid && ! isAnon($uid)) {
-			my $newurl = url2abs($newpass
+		# here we want to redirect only if the user has posted via
+		# GET, and the user has logged in successfully
+
+		if ($method eq 'GET' && $uid && ! isAnon($uid)) {
+			$form->{returnto} = url2abs($newpass
 				? "$constants->{rootdir}/users.pl?op=edit" .
 				  "user&note=Please+change+your+password+now!"
 				: $form->{returnto}
 					? $form->{returnto}
 					: $uri
 			);
-			$r->err_header_out(Location => $newurl);
-			return REDIRECT;
+			# not working ... move out into users.pl and index.pl
+#			$r->err_header_out(Location => $newurl);
+#			return REDIRECT;
 		}
 
 	} elsif ($op eq 'userclose' ) {

@@ -14,6 +14,13 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+
+	if ($form->{op} eq 'userlogin' && !$user->{is_anon}) {
+		my $refer = $form->{returnto} || $ENV{SCRIPT_NAME};
+		redirect($refer);
+		return;
+	}
+
 	# why is this commented out?  -- pudge
 	# $form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
 
@@ -30,13 +37,16 @@ sub main {
 	$section->{mainsize} = int($section->{artcount} / 3);
 
 	my $title = getData('head', { section => $section });
-	header($title, $section->{section});
+	header($title, $section->{section} || 'index');
 
 	my $stories = $slashdb->getNewStories($section);
+	my $Stories = displayStories($stories);
+	my $StandardBlocks = displayStandardBlocks($section, $stories);
+
 	slashDisplay('index', {
 		is_moderator	=> scalar $slashdb->checkForModerator($user),
-		stories		=> scalar displayStories($stories),
-		boxes		=> scalar displayStandardBlocks($section, $stories)
+		stories		=> $Stories,
+		boxes		=> $StandardBlocks,
 	});
 
 	footer();
@@ -138,7 +148,7 @@ sub displayStandardBlocks {
 				getData('morehead'),
 				getOlderStories($olderStuff, $section),
 				$bid
-			);
+			) if @$olderStuff;
 
 		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
 			# do nothing!
@@ -178,7 +188,10 @@ sub displayStories {
 	my $cnt = int($user->{maxstories} / 3);
 	my $return;
 
-	for (@{$stories}) {
+	# shift them off, so we do not display them in the Older
+	# Stuff block later (simulate the old cursor-based
+	# method)
+	while ($_ = shift @{$stories}) {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
 		my @links;
 		my @threshComments = split m/,/, $hp;  # posts in each threshold
