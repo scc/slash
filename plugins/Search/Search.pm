@@ -113,29 +113,24 @@ sub findUsers {
 	my($self, $form, $start, $limit, $users_to_ignore) = @_;
 	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
-	my $sql;
+	my $query = $self->sqlQuote($form->{query});
 	$limit = " LIMIT $start, $limit" if $limit;
 
-	$sql .= 'SELECT fakeemail,nickname,users.uid ';
-	$sql .= ' FROM users ';
-	$sql .= ' WHERE seclev > 0 ';
-	my $x = 0;
-	if ($users_to_ignore) {
-		for my $user (@$users_to_ignore) {
-			$sql .= ' AND ' if $x != 0;
-			$sql .= " nickname != " .  $self->sqlQuote($user);
-			$x++;
-		}
-	}
+	my $columns = 'fakeemail,nickname,users.uid ';
+	$columns .= ", TRUNCATE((MATCH (nickname,fakeemail) AGAINST($query)), 1) as score "
+		if $form->{query};
 
-	if ($form->{query}) {
-		$sql .= ' AND ';
-		my $kw = $self->_keysearch($form->{query}, ['nickname', 'ifnull(fakeemail,"")']);
-		$kw =~ s/as kw$//;
-		$kw =~ s/\+/ OR /g;
-		$sql .= " ($kw) ";
-	}
-	$sql .= " ORDER BY users.uid $limit";
+	my $key = " MATCH (nickname,fakeemail) AGAINST ($query) ";
+	my $tables = 'users';
+	my $where .= ' WHERE seclev > 0 ';
+	$where .= " AND $key" if $form->{query};
+
+
+	my $other = " ORDER BY users.uid "
+		if $form->{query;
+
+	my $sql = "SELECT $columns FROM $tables WHERE $where $other $limit";
+
 	my $sth = $self->{_dbh}->prepare($sql);
 	$sth->execute;
 
@@ -166,6 +161,7 @@ sub findStory {
 	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";
 	my $where = "stories.sid = story_text.sid AND stories.sid=discussions.sid AND stories.uid = users.uid ";
 	$where .= " AND $key" if $form->{query};
+
 	if ($form->{section}) { 
 		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";
 		$where .= " OR (section = '$form->{section}' AND displaystatus >= 0))";
