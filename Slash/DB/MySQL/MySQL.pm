@@ -2636,6 +2636,7 @@ sub getStory {
 	# We need to expire stories
 	_genericCacheRefresh($self, 'stories', getCurrentStatic('story_expire'));
 	my $answer = _genericGetCache('stories', 'sid', @_);
+
 	return $answer;
 }
 
@@ -2869,6 +2870,9 @@ sub _genericCacheRefresh {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGetCache {
+	unless (getCurrentStatic('cache_enabled')) {
+		return _genericGet(@_);
+	}
 	my($table, $table_prime, $self, $id, $values, $cache_flag) = @_;
 	my $table_cache = '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
@@ -2946,6 +2950,9 @@ sub _genericGet {
 # This is protected and don't call it from your
 # scripts directly.
 sub _genericGetsCache {
+	unless (getCurrentStatic{'cache_enabled'}) {
+		return _genericGets(@_);
+	}
 	my($table, $table_prime, $self, $cache_flag) = @_;
 	my $table_cache= '_' . $table . '_cache';
 	my $table_cache_time= '_' . $table . '_cache_time';
@@ -2974,6 +2981,24 @@ sub _genericGetsCache {
 	return \%return;
 }
 
+########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGets {
+	my($table, $table_prime, $self) = @_;
+	# Lets go knock on the door of the database
+	# and grab the data since it is not cached
+	# On a side note, I hate grabbing "*" from a database
+	# -Brian
+	my %return;
+	my $sth = $self->sqlSelectMany('*', $table);
+	while (my $row = $sth->fetchrow_hashref) {
+		$return{ $row->{$table_prime} } = $row;
+	}
+	$sth->finish;
+
+	return \%return;
+}
 ########################################################
 sub createBlock {
 	my($self, $hash) = @_;

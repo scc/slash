@@ -754,3 +754,4 @@ INSERT INTO vars VALUES ('totalhits','383','Total number of hits the site has ha
 INSERT INTO vars VALUES ('updatemin','5','do slashd updates, default 5',NULL,NULL);
 INSERT INTO vars VALUES ('use_dept','1','use \"dept.\" field',NULL,NULL);
 INSERT INTO vars VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting',NULL,NULL);
+INSERT INTO vars VALUES ('cache_enabled','1','Simple Boolean to determine if content is cached or not',NULL,NULL);
