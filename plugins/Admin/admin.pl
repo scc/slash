@@ -61,6 +61,12 @@ sub main {
 	} elsif ($form->{topiced} || $form->{topicnew}) {
 		topicEdit();
 
+	} elsif ($op eq 'save-keyword') {
+		saveKeyword();
+	} elsif ($op eq 'edit-keyword') {
+		editKeyword();
+	} elsif ($op eq 'delete-keyword') {
+		deleteKeyword();
 	} elsif ($op eq 'save') {
 		saveStory();
 
@@ -687,6 +693,54 @@ sub colorSave {
 }
 
 ##################################################################
+# Keyword Editor
+sub keywordEdit {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+
+	return if getCurrentUser('seclev') < 500;
+	my($keywords_menu, $keywords_select);
+
+	$keywords_menu = $slashdb->getDescriptions('keywords', '', 1);
+	$keywords_select = createSelect('nexttid', $keywords_menu, $form->{id}, 1);
+
+	slashDisplay('keywordEdit', {
+		keywords_select		=> $keywords_select,
+	});
+}
+
+##################################################################
+sub keywordDelete {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+
+	return if getCurrentUser('seclev') < 500;
+
+	print getData('keywordDelete-message');
+	$slashdb->deleteKeyword($form->{id});
+	$form->{id} = '';
+	keywordEdit();
+}
+
+##################################################################
+sub keywordSave {
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $basedir = getCurrentStatic('basedir');
+
+	return if getCurrentUser('seclev') < 500;
+
+	if($form->{id}) {
+		$slashdb->setKeyword($form->{id}, $form);
+	} else {
+		$form->{id} = $slashdb->createKeyword($form);
+	}
+
+	print getData('keywordSave-message');
+	keywordEdit();
+}
+
+##################################################################
 # Topic Editor
 sub topicEdit {
 	my $constants = getCurrentStatic();
@@ -750,6 +804,8 @@ sub topicDelete {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
+	return if getCurrentUser('seclev') < 500;
+
 	$tid ||= $form->{tid};
 
 	print getMessage('topicDelete-message', { tid => $tid });
@@ -763,6 +819,8 @@ sub topicSave {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
+
+	return if getCurrentUser('seclev') < 500;
 
 	if (!$form->{width} && !$form->{height}) {
 		@{ $form }{'width', 'height'} = imgsize("$basedir/images/topics/$form->{image}");
@@ -1011,7 +1069,7 @@ sub editStory {
 
 	$sections = $slashdb->getDescriptions('sections');
 
-	$topic_select = selectTopic('tid', $storyref->{tid}, 1);
+	$topic_select = selectTopic('tid', $storyref->{tid}, $storyref->{section}, 1);
 
 	$section_select = selectSection('section', $storyref->{section}, $sections, 1) unless $user->{section};
 
@@ -1353,6 +1411,7 @@ sub saveStory {
 }
 
 #################################################################
+# This should go away and getData() should be used -Brian
 sub getMessage {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
