@@ -24,7 +24,7 @@ __template__
 <B>[% question %]</B>
 
 [% FOREACH ans = polls %][% answer = ans.1; aid = ans.2; votes = ans.3 %]
-	<BR>&bull; [% answer %] ([% votes %])
+	<BR><LI> [% answer %] ([% votes %])</LI>
 [% END %]
 
 <P><EM>(You've already voted.)</EM><BR>
