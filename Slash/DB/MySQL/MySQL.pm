@@ -2466,6 +2466,7 @@ sub getSlashConf {
 		rdflanguage
 		rootdir
 		run_ads
+		sbindir
 		send_mail
 		siteadmin
 		siteadmin_name
@@ -2783,8 +2784,16 @@ sub getNewStory {
 
 ########################################################
 sub getVar {
-	my $answer = _genericGet('vars', 'name', @_);
-	return $answer;
+  my ($self, $name) = @_;
+	my $db_name = $self->{_dbh}->quote($name);
+
+	my $sql;
+	$sql .= qq| SELECT |;
+	$sql .= qq| value |;
+	$sql .= qq| FROM vars WHERE name=$db_name |;
+	my $var = $self->{_dbh}->selectrow_array($sql);
+
+	return $var;
 }
 
 ########################################################

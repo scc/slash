@@ -55,7 +55,7 @@ total hits $sdTotalHits
    indexes 
 EOT
 
-foreach (keys %indexes) {
+for (keys %indexes) {
 	$email .= "\t   $_=$count->{'index'}es{$_}\n"
 }
 

@@ -53,7 +53,8 @@ sub new {
 
 sub DESTROY {
   my($self) = @_;
-  $self->{_dbh}->disconnect;
+
+  $self->{_dbh}->disconnect if $self->{_dbh};
 }
 
 
