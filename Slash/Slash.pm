@@ -2215,8 +2215,9 @@ sub getData {
 	my($value, $hashref, $page) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
-	return slashDisplay('data', $hashref,
-		{ Return => 1, Nocomm => 1 });
+	my %opts = ( Return => 1, Nocomm => 1 );
+	$opts{Page} = $page if defined $page;
+	return slashDisplay('data', $hashref, \%opts);
 }
 
 1;
