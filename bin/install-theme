@@ -1,11 +1,11 @@
 #!/usr/bin/perl -w
 # This code is a part of Slash, and is released under the GPL.
-# Copyright 1997-2001 by Open Source Development Network. See README
+# Copyright 2001 by Open Source Development Network. See README
 # and COPYING for more information, or see http://slashcode.com/.
 # $Id$
 
-# This is the plugin install script.
-# -Brian (brian@tangent.org)
+# This is a theme install script.
+# chromatic (chromatic@wgz.org), based on install-plugin by Krow
 
 use strict;
 use File::Basename;
@@ -35,10 +35,10 @@ unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
 {
 	my $install = Slash::Install->new($opts{'u'});
 
-	print "\nPlease select which plugins you would like?\n" unless $opts{'l'} ;
-	my $plugins = $install->getPluginList($PREFIX);
-	for (sort keys %$plugins) {
-		print "$plugins->{$_}{'order'}.\t$_ $plugins->{$_}{'description'}\n";
+	print "\nPlease select which themes you would like?\n" unless $opts{'l'} ;
+	my $themes = $install->getThemeList($PREFIX);
+	for (sort keys %$themes) {
+		print "$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
 	}
 	exit 0 if $opts{'l'};
 
@@ -52,8 +52,8 @@ unless (DBIx::Password::checkVirtualUser($opts{'u'})) {
 			@answers = split(/\,/, $select);
 			last;
 		} elsif ($select eq 'a') {
-			for (keys %$plugins) {
-				push @answers, $plugins->{$_}{'order'};
+			for (keys %$themes) {
+				push @answers, $themes->{$_}{'order'};
 			}
 			last;
 		} elsif ($select eq "") {
@@ -76,7 +76,7 @@ your Slash directories). [Y] ";
 		$symlink = $ans =~ /^\s*[Yy]/;
 	}
 
-	$install->installPlugins(\@answers, 0, $symlink);
+	$install->installThemes(\@answers, 0, $symlink);
 }
 
 sub usage {
@@ -86,14 +86,14 @@ sub usage {
 
 Usage: $PROGNAME [OPTIONS]
 
-Installs Slash plugins.
+Installs Slash themes.
 
 Main options:
 	-h	Help (this message)
 	-v	Version
 	-u	Virtual user (default is "slash")
-	-l	Does not install plugins, just lists known plugins
-	-L	Install files in htdocs using symlinks [y/n]
+	-l	Does not install themes, just lists known themes
+	-L	Install files using symlinks [y/n]
 
 EOT
 	exit;

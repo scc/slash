@@ -133,6 +133,19 @@ sub installTheme {
 	$self->_install($themes->{$answer}, $symlink);
 }
 
+sub installThemes {
+	my($self, $answers, $themes, $symlink) = @_;
+	$themes ||= $self->{'_themes'};
+
+	for my $answer (@$answers) {
+		for (keys %$themes) {
+			if ($answer eq $themes->{$_}{order}) {
+				$self->_install($themes->{$_}, $symlink, 0);
+			}
+		}
+	}
+}
+
 sub installPlugin {
 	my($self, $answer, $plugins, $symlink) = @_;
 	$plugins ||= $self->{'_plugins'};
@@ -170,6 +183,12 @@ sub _install {
 			description     => $hash->{'description'},
 		});
 	} else {
+		# not sure if this is what we want, but leave it
+		# in until someone complains.  really, we should
+		# have reinstall theme/plugin methods or
+		# something.  -- pudge
+		return if $self->exists('theme', $hash->{name});
+
 		$self->create({
 			name            => 'theme',
 			value           => $hash->{'name'},
