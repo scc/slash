@@ -12,6 +12,7 @@
 # should go to him. -Brian
 use strict;
 use Slash;
+use Slash::Utility;
 use Slash::DB;
 use Getopt::Std;
 use Cwd;
@@ -23,7 +24,7 @@ my $COPYRIGHT =
 
 
 my %opts;
-usage('no options supplied to program') unless getopts('deilrsvD:P:S:p:f:u:?', \%opts);
+usage('no options supplied to program') unless getopts('cdeilrsvD:O:P:S:p:f:u:?', \%opts);
 usage('help requested') if $opts{'?'};
 # can't have more than one template for a file in a dump
 usage('you have supplied more templates than there are files to save them to') 
@@ -37,6 +38,7 @@ usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
 my $slash = Slash::DB->new($opts{'u'});
+createCurrentDB($slash);
 
 # datastruct of ALL templates, keyed by uid
 my $templates = $slash->getTemplates();
@@ -48,6 +50,21 @@ my ($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0,0,0,0);
 # version
 if ($opts{'v'}) {
 	print "$0, Version $VERSION, $COPYRIGHT\n";
+	exit();
+}
+
+##################################
+# compile to perl code
+if ($opts{'c'}) {
+	# There is logic in making -i work with -P and -S, but I'm too tired to
+	# implement that right now.
+	die "Can't use -P or -S options with -i and -c!\n" 
+		if $opts{i} && ($opts{P} || $opts{S});
+	# (-i) Sanity check. We only want an @ARGV full of numeric arguments.
+	map {
+		die "Non-numeric options given with -i!\n" if /^\d+$/;
+	} @ARGV if $opts{i};
+	compile_template();
 	exit();
 }
 
@@ -402,6 +419,80 @@ sub delete_templates {
 }
 
 ###############################################
+sub compile_template {
+	# Reproduce Slash::Display environment while adding our own options.
+	require Slash::Display;
+	require Slash::Display::Provider;			# could just duplicate the filters, here.
+
+	my $template_provider = Slash::Display::Provider->new({
+		TRIM 		=> 1,
+		PRE_CHOMP 	=> 1,
+		POST_CHOMP	=> 1,
+		COMPILE_EXT	=> '.ttc',
+		COMPILE_DIR	=> $opts{O} || '.',
+	});
+
+	require Template::Stash;
+
+	my %list_ops = ( 
+		'rand' => sub {
+			my $list = shift;
+			return $list->[rand @$list];
+		}
+	);
+
+	my %scalar_ops = (
+        'uc'		=> sub { uc $_[0] },
+        'lc'		=> sub { lc $_[0] },
+        'ucfirst'	=> sub { ucfirst $_[0] },
+        'lcfirst'	=> sub { lcfirst $_[0] },
+	);
+
+	@{$Template::Stash::LIST_OPS}  {keys %list_ops}   = values %list_ops;
+	@{$Template::Stash::SCALAR_OPS}{keys %scalar_ops} = values %scalar_ops;
+
+	my $page = $opts{P} || 'misc';
+	my $section = $opts{S} || 'default';
+
+	for (@ARGV) {
+		my($data, $template, $compiled_template, $error);
+
+		if ($opts{i}) {
+			$template = $slash->getTemplate($_, 'template');
+		} elsif ($opts{f}) {
+			# The logic here is that $template would be set to the contents
+			# of the file named $_.
+			local $/ = undef;
+			if (open(INFILE, "$_")) {
+				$template = <INFILE>;
+				close(INFILE);
+			} else {
+				print "Can't open file $_ for reading: $!\n";
+			}
+		} else {
+			$template = $slash->getTemplateByName(	$_, 'template', 0,
+													$page, $section );
+		}
+		die "Requested template '${_}' (${section}|$page) is empty!\n"
+			if !$template;
+
+		# Load us a custom %data for compilation.
+		$data = {
+			text	=> $template,
+			name	=> $_,
+			time	=> 0,
+			load	=> 0,
+		};
+		# Now perform the actual compilation...
+		# -- Yes, Krow. I know I'm not supposed to access private members this 
+		# way, but I'm being quick'n'dirty here.
+		($compiled_template, $error) =
+			$template_provider->_compile($data, "${_}_${section}_$page.ttc");
+		print "ERROR: $error\n" if $error;
+	}
+}
+
+###############################################
 sub usage {
 	my ($message) = @_;
 	print "ERROR: $message\n";
@@ -453,6 +544,14 @@ Section, page, and template args logic:
 	-S <section> -P <page> <template templateN> templates for a page and 
 	section with the name(s) <template templateN> all templates having the 
 	name(s) all other template fields should be modified via web interface
+
+Debugging options:
+
+	-c Compiles named template into Perl code for testing.
+	-O <directory> Destination directory of compiled templates (default=.)
+
+	Compiled templates are saved as <template-name>.ttc in the destination
+	directory.
 
 	-v Version of this program
 EOT
