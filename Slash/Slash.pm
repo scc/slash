@@ -29,6 +29,7 @@ use Symbol 'gensym';
 use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
+use Time::Local;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -883,9 +884,10 @@ sub getOlderStories {
 
 	my $yesterday;
 	if ($form->{issue}) {
-		# Wrong - but this is how slash 1.0 did it :)
-		# This should go from 20010901 to 20010831, not 20010900
-		$yesterday = int($form->{issue}) - 1;
+		my($y, $m, $d) = $form->{issue} =~ /^(\d\d\d\d)(\d\d)(\d\d)$/;
+		$yesterday = timeCalc(scalar localtime(
+			timelocal(0, 0, 12, $d, $m - 1, $y - 1900) - 86400
+		), '%Y%m%d');
 	} else {
 		$yesterday = $slashdb->getDay(1);
 	}
