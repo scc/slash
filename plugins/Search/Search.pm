@@ -86,7 +86,7 @@ sub findUsers {
 	my $sql;
 	$sql .= 'SELECT fakeemail,nickname,uid ';
 	$sql .= ' FROM users ';
-	$sql .= ' WHERE ' if $users_to_ignore or $form->{query};
+	$sql .= ' WHERE seclev > 0 ';
 	my $x = 0;
 	for my $user (@$users_to_ignore) {
 		$sql .= ' AND ' if $x != 0;

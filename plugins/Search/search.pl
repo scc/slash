@@ -111,7 +111,7 @@ sub userSearch {
 	my $constants = getCurrentStatic();
 	my $searchDB = Slash::Search->new(getCurrentSlashUser());
 
-	my $users = $searchDB->findUsers($form, [getCurrentAnonymousCoward('nickname')]);
+	my $users = $searchDB->findUsers($form);
 	slashDisplay('usersearch', {
 		users => $users
 	});
