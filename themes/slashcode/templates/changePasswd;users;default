@@ -38,6 +38,7 @@ __template__
 [% ELSE %]
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% useredit.uid %]">
 [% END %]
+		<B>Session Login</B> [% session %]<BR>
 		<B>Password</B> Enter new passwd twice to change it.
 		(must be 6-32 chars long)</B><BR>
 		<INPUT TYPE="PASSWORD" NAME="pass1" SIZE="32" MAXLENGTH="32">

@@ -86,8 +86,8 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check valid_check
-				interval_check formkey_check regen_formkey) ],
+			[ qw (valid_check
+				formkey_check regen_formkey) ],
 		},
 		savecomm	=> {
 			function	=> \&saveComm,
@@ -95,8 +95,8 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check valid_check
-				interval_check formkey_check regen_formkey) ],
+			[ qw (valid_check
+				formkey_check regen_formkey) ],
 		},
 		saveuser	=> {
 			function	=> \&saveUser,
@@ -104,22 +104,22 @@ sub main {
 			post		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check valid_check
-				interval_check formkey_check regen_formkey) ],
+			[ qw (valid_check
+				formkey_check regen_formkey) ],
 		},
 		changepasswd	=> {
 			function	=> \&changePasswd,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=> $savepass_flag ? [] :
-			[ qw (max_post_check generate_formkey) ],
+			[ qw (generate_formkey) ],
 		},
 		edituser	=> {
 			function	=> \&editUser,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check generate_formkey) ],
+			[ qw (generate_formkey) ],
 		},
 		authoredit	=> {
 			function	=> \&editUser,
@@ -132,14 +132,14 @@ sub main {
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check generate_formkey) ],
+			[ qw (generate_formkey) ],
 		},
 		editcomm	=> {
 			function	=> \&editComm,
 			seclev		=> 1,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check generate_formkey) ],
+			[ qw (generate_formkey) ],
 		},
 		newuser		=> {
 			function	=> \&newUser,
@@ -198,7 +198,7 @@ sub main {
 			seclev		=> 0,
 			formname	=> $formname,
 			checks		=>
-			[ qw (max_post_check generate_formkey) ],
+			[ qw (generate_formkey) ],
 		},
 		listreadonly => {
 			function	=> \&listReadOnly,
@@ -1190,6 +1190,7 @@ sub savePasswd {
 
 	if (! $error_flag) {
 		$user_edits_table->{passwd} = $form->{pass1};
+		$user_edits_table->{session_login} => $form->{session_login};
 		if ($form->{uid} eq $user->{uid}) {
 			setCookie('user', bakeUserCookie($uid, encryptPassword($user_edits_table->{passwd})));
 		}

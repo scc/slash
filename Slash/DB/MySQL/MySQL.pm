@@ -151,7 +151,8 @@ sub _whereFormkey {
 
 	my $user = getCurrentUser();
 	# anonymous user without cookie, check host, not formkey id
-	if ($user->{anon_id} && ! $user->{anon_cookie}) {
+	#if ($user->{anon_id} && ! $user->{anon_cookie}) {
+	if (isAnon($user->{uid})) {
 		$where = "ipid = '$user->{ipid}'";
 	} else {
 		$where = "id='$formkey_id'";
@@ -1746,7 +1747,7 @@ sub checkResponseTime {
 		print STDERR "LIMIT REACHED $response_time\n";
 	}
 
-	return $response_time < $response_limit ? $response_time : 0;
+	return ($response_time < $response_limit && $response_time > 0) ? $response_time : 0;
 }
 
 ########################################################
@@ -1883,7 +1884,7 @@ sub checkPostInterval {
 	$interval ||= 0;
 	print STDERR "CHECK INTERVAL $interval speedlimit $speedlimit\n" if $constants->{DEBUG};
 
-	return $interval < $speedlimit ? $interval : 0;
+	return ($interval < $speedlimit && $speedlimit > 0) ? $interval : 0;
 }
 
 ##################################################################
