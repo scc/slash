@@ -68,6 +68,12 @@ $I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
 																				# put the info for Apache
 																				# to do this later.
 																				# 	-Brian
+$I{dbobject}->setAnonymous($I{anonymous_coward}); # Code defaults to -1
+																						# currently if this is
+																						# not called. This 
+																						# has to be changed
+																						# when we get Oracle running
+																				
 
 
 ###############################################################################

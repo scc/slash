@@ -39,14 +39,17 @@ sub main {
 	my $id = getFormkeyId($I{U}{uid});
 
 	# Seek Section for Appropriate L&F
-	my $sct = $I{dbh}->quote($I{F}{sid}) || "''";
-	my($s, $title, $commentstatus) = sqlSelect(
-		"section,title,commentstatus","newstories","sid=$sct"
-	);
+	my($s, $title, $commentstatus);
+	#This is here to save a function call, even though the
+	# function can handle the situation itself
+	if($sct) {
+		($s, $title, $commentstatus) = $I{dbobject}->getNewStories($sct);
+	} else {
+		$title = "Comments";
+	}
 	my $SECT = getSection($s);
 
 	$I{F}{pid} ||= "0";
-	$title ||= "Comments";
 	
 	header("$SECT->{title}: $title", $SECT->{section});
 
@@ -56,25 +59,12 @@ sub main {
 		$I{F}{op} = "Preview";
 	}
 
-	unless ($I{F}{sid}) {
-		# Posting from outside discussions...
-		$I{F}{sid} = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
-		$I{story_time} = sqlSelect("time", "stories", "sid = '$I{F}{sid}'"); 
-		$I{story_time} ||= "now()";
-		unless (sqlSelect("title", "discussions", "sid='$I{F}{sid}'")) {
-			sqlInsert("discussions", {
-				sid	=> $I{F}{sid},
-				title	=> '',
-				ts	=> $I{story_time},
-				url	=> $ENV{HTTP_REFERER}
-			});
-		}
-	}
+	$I{dbobject}->createDiscussions($I{F}{sid}) unless ($I{F}{sid});
 
 	if ($I{F}{op} eq "Submit") {
 
 		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-			($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
+			$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward};
 			submitComment();
 		}
 
@@ -84,7 +74,7 @@ sub main {
 
 		if ($I{F}{op} eq 'Reply') {
 			$I{F}{formkey} = getFormkey();
-			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey}, $I{U}{uid}, $ENV{REMOTE_ADDR});	
+			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $I{F}{formkey} $I{U}{uid});	
 		} else {
 			if ($I{U}{uid} != $I{anonymous_coward} && $I{query}->param('rlogin') && length($I{F}{upasswd}) > 1) {
 				$I{dbobject}->updateFormkeyId("comments", $I{F}{formkey}, $I{anonymous_coward}, $I{U}{uid});
@@ -92,13 +82,12 @@ sub main {
 		}
 
 		# find out their Karma
-		($I{U}{karma}) = sqlSelect("karma", "users_info",
-			"uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
+		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid}) if $I{U}{uid} != $I{anonymous_coward};
 		editComment($id);
 
 
 	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
-		($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
+		$I{U}{karma} = $I{dbobject}->getUserKarma($I{U}{uid})
 			if $I{U}{uid} != $I{anonymous_coward};
 		titlebar("99%", "Delete $I{F}{cid}");
 
@@ -109,7 +98,7 @@ sub main {
 		print "Deleted $delCount items from story $I{F}{sid}\n";
 
 	} elsif ($I{F}{op} eq "moderate") {
-		($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
+		($I{U}{karma}) = $I{dbobject}->getUserKarma($I{U}{uid})
 			if $I{U}{uid} != $I{anonymous_coward};
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();

@@ -85,7 +85,7 @@ sub main {
 		# insert the fact that the form has been displayed,
 		# but not submitted at this point
 		my $formkey = $I{F}{formkey};
-		$I{dbobject}->insertFormkey("submissions", $id, "submission", $I{F}{formkey}, $I{U}{uid}, $ENV{REMOTE_ADDR});
+		$I{dbobject}->insertFormkey("submissions", $id, "submission", $I{F}{formkey}, $I{U}{uid});
 
 		displayForm($I{F}{from}, $I{F}{email}, $I{F}{section}, $id);
 

@@ -22,6 +22,7 @@ my $commonportals; # portals on the front page.
 my $boxes;
 my $sectionBoxes;
 my $dbh;
+my $anonymous = -1;
 
 # For the getDecriptionsk() method
 my %descriptions = (
@@ -160,6 +161,48 @@ sub sqlConnect {
 	$dbh = $self->{dbh};
 }
 
+########################################################
+# We should eventually take an array and work out some
+# logic for handling multiple anon id's.
+sub setAnonymous {
+	my ($self, $anon) = @_;
+	$anonymous = $anon;
+}
+########################################################
+sub createDiscussions{
+	my ($self, $sid) = @_;
+	# Posting from outside discussions...
+	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
+	$sid = $dbh->quote($sid);
+	my ($story_time) = sqlSelect("time", "stories", "sid=$sid");
+	$story_time ||= "now()";
+	unless ($dbh->sqlSelect("title", "discussions", "sid=$sid")) {
+		$dbh->sqlInsert("discussions", {
+				sid => $sid,
+				title => '',
+				ts  => $story_time,
+				url => $ENV{HTTP_REFERER}
+		});
+	}
+}
+
+########################################################
+sub getUserKarma {
+	my ($self, $uid) = @_;
+	my ($karma) =	sqlSelect("karma", "users_info", "uid=$uid");
+
+	return $karma;
+}
+########################################################
+sub getNewStories {
+	my ($self, $sid) = @_;
+	return unless ($sid);
+	my($s, $title, $commentstatus) = $dbh->sqlSelect(
+		"section,title,commentstatus","newstories","sid=" . $dbh->quote($sid)
+	);
+
+	return ($s, $title, $commentstatus);
+}
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
@@ -467,7 +510,7 @@ sub getAC{
 	$ac_hash_ref = $self->sqlSelectHashref('*',
 		'users, users_index, users_comments, users_prefs',
 		'users.uid=-1 AND users_index.uid=-1 AND ' .
-		'users_comments.uid=-1 AND users_prefs.uid=-1'
+		"users_comments.uid=-1 AND users_prefs.uid=$anonymous"
 	);
 	return $ac_hash_ref;
 }
@@ -737,7 +780,7 @@ sub getUserBio {
 			"SELECT homepage,fakeemail,users.uid,bio, seclev,karma
 			FROM users, users_info
 			WHERE users.uid = users_info.uid AND nickname="
-			. $self->{dbh}->quote($nick) . " and users.uid > 0"
+			. $self->{dbh}->quote($nick) . " and users.uid not anonymous"
 		);
 	$sth->execute;
 	my $bio = $sth->fetchrow_arrayref;
@@ -874,7 +917,7 @@ sub updateFormkeyId {
 
 ########################################################
 sub insertFormkey {
-	my($self, $formname, $id, $sid, $formkey, $uid, $remote ) = @_;
+	my($self, $formname, $id, $sid, $formkey, $uid) = @_;
 
 
 	# insert the fact that the form has been displayed, but not submitted at this point
@@ -884,7 +927,7 @@ sub insertFormkey {
 		id 		=> $id,
 		sid		=> $sid,
 		uid		=> $uid,
-		host_name	=> $remote,
+		host_name	=> $ENV{REMOTE_ADDR},
 		value		=> 0,
 		ts		=> time()
 	});
@@ -1223,22 +1266,22 @@ sub setUsersKey{
 ########################################################
 sub setUsersInfo{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid>0", 1);
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
 }
 ########################################################
 sub setUsersComments{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid>0", 1);
+	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
 }
 ########################################################
 sub setUsers{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users", $hashref, "uid=" . $uid . " AND uid>0", 1);
+	$self->sqlUpdate("users", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
 }
 ########################################################
 sub setUsersPrefrences{
 	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid . " AND uid>0", 1);
+	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
 }
 ########################################################
 sub countStories{
@@ -1394,7 +1437,7 @@ sub getSearchUsers {
 	# userSearch REALLY doesn't need to be ordered by keyword since you 
 	# only care if the substring is found.
 	my $sqlquery = "SELECT fakeemail,nickname,uid ";
-	$sqlquery .= " FROM users WHERE uid > 0 ";
+	$sqlquery .= " FROM users WHERE uid not $anonymous";
 	if ($form->{query}) {
 		my $kw = $keysearch->($form->{query}, 'nickname', 'ifnull(fakeemail,"")');
 		$kw =~ s/as kw$//;
