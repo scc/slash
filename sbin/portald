@@ -181,24 +181,26 @@ sub getRDF {
 }
 
 #################################################################
-sub getSectionMenu2 {
-	my $menu = "\n\n<!-- begin section index block -->\n\n";
-	my $section_menu = $slashdb->getSectionMenu2();
-	for (@$section_menu) {
-		my $s = $_->[0];
-		my($month, $day, $count) = $slashdb->getSectionMenu2Info($s);
-
-		$menu .= "\n$month/$day" if $month && $day;
-		$menu .= " ($count)" if $count > 1;
-		$menu .= <<EOT;
-<BR>
-<B><A HREF="$constants->{rootdir}/index.pl?section=$s">$s</A></B><BR>
-EOT
-	}
-	$menu .= "\n\n<!-- end section index block -->\n\n";
-
-	setblock("sectionindex", $menu);
-}
+# obsoleted by the Slashd task refresh_sectionindex.pl
+#sub getSectionMenu2 {
+#
+#	my $menu = "\n\n<!-- begin section index block -->\n\n";
+#	my $section_menu = $slashdb->getSectionMenu2();
+#	for (@$section_menu) {
+#		my $s = $_->[0];
+#		my($month, $day, $count) = $slashdb->getSectionMenu2Info($s);
+#
+#		$menu .= "\n$month/$day" if $month && $day;
+#		$menu .= " ($count)" if $count > 1;
+#		$menu .= <<EOT;
+#<BR>
+#<B><A HREF="$constants->{rootdir}/index.pl?section=$s">$s</A></B><BR>
+#EOT
+#	}
+#	$menu .= "\n\n<!-- end section index block -->\n\n";
+#
+#	setblock("sectionindex", $menu);
+#}
 
 
 #################################################################
@@ -217,7 +219,8 @@ if (-e $p_site) {
 
 portaldLog("Updating Portal Box Thingees");
 
-getSectionMenu2();
+# Obsoleted by slashd Task refresh_sectionindex.pl
+#getSectionMenu2();
 
 # loop through all the RDF sites
 my $RDFlist = $slashdb->getSitesRDF();
