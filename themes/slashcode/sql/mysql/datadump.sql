@@ -437,7 +437,7 @@ INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What 
 INSERT INTO vars (name, value, description) VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey');
 INSERT INTO vars (name, value, description) VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value');
 INSERT INTO vars (name, value, description) VALUES ('http_proxy','','http://proxy.www.example.com');
-INSERT INTO vars (name, value, description) VALUES ('mysql_hash_table','0','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
+INSERT INTO vars (name, value, description) VALUES ('mysql_heap_table','0','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('imagedir','//www.example.com/images','Absolute URL for image directory');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');

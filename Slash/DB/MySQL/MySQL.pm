@@ -224,7 +224,7 @@ sub createComment {
 			cid	=> $cid,
 			comment	=>  $comment->{postercomment},
 	});
-	if (getCurrentStatic('mysql_hash_table')) {
+	if (getCurrentStatic('mysql_heap_table')) {
 		my $insline = "INSERT into comments_hash (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db,$cid," .
 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
@@ -2094,7 +2094,7 @@ sub getCommentsForUser {
 	
 	my $table = 'comments';
 
-	if(getCurrentStatic('mysql_hash_table')) {
+	if(getCurrentStatic('mysql_heap_table')) {
 		$table = 'comments_hash';
 	}
 
