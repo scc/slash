@@ -211,6 +211,22 @@ sub ident {
 		$data =~ s/'/\\'/;
 		return "'$data'";
 	}
+	elsif ($ident->[0] eq q['form'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+		(my $data = $1) =~ s/'/\\'/;
+		return "\$form->{'$data'}";
+	}
+	elsif ($ident->[0] eq q['user'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+		(my $data = $1) =~ s/'/\\'/;
+		return "\$user->{'$data'}";
+	}
+	elsif ($ident->[0] eq q['env'] && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
+		(my $data = $1) =~ s/'/\\'/;
+		return "\$ENV{uc '$data'}";
+	}
+	# fg/bg
+	elsif ($ident->[0] eq q['user'] && @$ident == 6 && $ident->[2] =~ /^'(fg|bg)'$/s) {
+		return "\$user->{'$1'}[$ident->[4]]";
+	}
 
 	if (scalar @$ident <= 2 && ! $ident->[1]) {
 		$ident = $ident->[0];
@@ -218,6 +234,38 @@ sub ident {
 		$ident = '[' . join(', ', @$ident) . ']';
 	}
 	return "\$stash->get($ident)";
+}
+
+
+sub template {
+	my($class, $block) = @_;
+	$block = pad($block, 2) if $Template::Directive::PRETTY;
+
+	return "sub { return '' }" unless $block =~ /\S/;
+
+	my $extra;
+	$extra .= "my \$user = Slash::getCurrentUser();\n" if $block =~ /\$user->/;
+	$extra .= "my \$form = Slash::getCurrentForm();\n" if $block =~ /\$form->/;
+
+    return <<EOF;
+sub {
+    my \$context = shift || die "template sub called without context\\n";
+    my \$stash   = \$context->stash;
+    my \$output  = '';
+    my \$error;
+    
+    eval { BLOCK: {
+$extra
+$block
+    } };
+    if (\$@) {
+        \$error = \$context->catch(\$@, \\\$output);
+	die \$error unless \$error->type eq 'return';
+    }
+
+    return \$output;
+}
+EOF
 }
 
 
