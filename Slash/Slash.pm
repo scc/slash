@@ -64,20 +64,18 @@ BEGIN {
 }
 
 getSlashConf();
-#$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
-																				# put the info for Apache
 																				# to do this later.
 																				# 	-Brian
-{
+if ($ENV{GATEWAY_INTERFACE} =~ m|^CGI-Perl/|) {
 	my $r = Apache->request();
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	# Even bothering to populate %I will go away soon.
 	# We should be bootstrapped to the point where we 
 	# do not need it.
 	$I{dbobject} = $cfg->{'Apache'}->{'dbslash'};
+} else {
+	$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
 }
-
-																				
 
 
 ###############################################################################
@@ -697,10 +695,10 @@ EOT
 
 ########################################################
 sub stripByMode {
-	my $str = shift;
-	my $fmode = shift || 'nohtml';
+	my($str, $fmode, $no_white_fix) = @_;
+	$fmode ||= 'nohtml';
 
-	$str =~ s/(\S{90})/$1 /g;
+	$str =~ s/(\S{90})/$1 /g unless $no_white_fix;
 	if ($fmode eq 'literal' || $fmode eq 'exttrans' || $fmode eq 'attribute') {
 		# Encode all HTML tags
 		$str =~ s/&/&amp;/g;
