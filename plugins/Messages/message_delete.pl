@@ -23,8 +23,7 @@ $task{$me}{code} = sub {
 		return;
 	}
 
-# don't actually delete yet ... more testing needed
-#	$messages->deleteMessages();
+	$messages->deleteMessages();
 	messagedLog("$me end");
 };
 
