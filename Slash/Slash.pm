@@ -106,13 +106,12 @@ sub selectComments {
 	my $hp = join ',', @{$comments->[0]{totals}};
 
 	#This is broke -Brian
-	if($sid) {
+	if ($sid) {
 		$slashdb->setStory($sid, {
-				hitparade	=> $hp,
-				writestatus	=> 0,
-				commentcount	=> $comments->[0]{totals}[0]
-			}
-		);
+			hitparade	=> $hp,
+			writestatus	=> 0,
+			commentcount	=> $comments->[0]{totals}[0]
+		});
 	}
 
 	reparentComments($comments);

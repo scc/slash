@@ -686,7 +686,7 @@ sub undoModeration {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	if($sid !~ /^\d+$/) {
+	if ($sid !~ /^\d+$/) {
 		$sid = $slashdb->getDiscussionBySid($sid, 'header');
 	} 
 

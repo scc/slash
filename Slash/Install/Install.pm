@@ -178,7 +178,7 @@ sub _install {
 				chomp;
 				next if /^#/;
 				next if /^$/;
-				next if /^\.$/;  #No hidden files! -Brian
+				next if /^\./;  #No hidden files! -Brian
 				next if /^ $/;
 				push @create, $_;
 			}

@@ -15,13 +15,13 @@ sub main {
 	my $form = getCurrentForm();
 
 	my %ops = (
-		edit => \&editpoll,
-		save => \&savepoll,
-		delete => \&deletepolls,
-		list => \&listpolls,
-		default => \&default,
-		vote => \&vote,
-		get => \&poll_booth,
+		edit		=> \&editpoll,
+		save		=> \&savepoll,
+		'delete'	=> \&deletepolls,
+		list		=> \&listpolls,
+		default		=> \&default,
+		vote		=> \&vote,
+		get		=> \&poll_booth,
 	);
 
 	my $op = $form->{op};
@@ -40,14 +40,14 @@ sub main {
 
 #################################################################
 sub poll_booth {
-	my ($form) = @_;
+	my($form) = @_;
 
 	print pollbooth($form->{'qid'}, 0, 1);
 }
 
 #################################################################
 sub default {
-	my ($form) = @_;
+	my($form) = @_;
 
 	if (!$form->{'qid'}) {
 		listpolls(@_);
@@ -65,7 +65,7 @@ sub default {
 
 #################################################################
 sub editpoll {
-	my ($form) = @_;
+	my($form) = @_;
 
 	my($qid) = $form->{'qid'};
 	unless (getCurrentUser('is_admin')) {
@@ -90,7 +90,7 @@ sub editpoll {
 
 #################################################################
 sub savepoll {
-	my ($form) = @_;
+	my($form) = @_;
 
 	unless (getCurrentUser('is_admin')) {
 		default(@_);
@@ -103,8 +103,8 @@ sub savepoll {
 	my $qid = $slashdb->savePollQuestion($form);
 
 	if ($constants->{poll_discussions}) {
-		my $discussion = $slashdb->createDiscussion('', $form->{question}, 
-			$slashdb->getTime(), 
+		my $discussion = $slashdb->createDiscussion('', $form->{question},
+			$slashdb->getTime(),
 			"$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid", $form->{topic}
 		);
 		$slashdb->setPollQuestion($qid, { discussion => $discussion });
@@ -114,7 +114,7 @@ sub savepoll {
 
 #################################################################
 sub vote {
-	my ($form) = @_;
+	my($form) = @_;
 
 	my $qid = $form->{'qid'};
 	my $aid = $form->{'aid'};
@@ -177,7 +177,7 @@ sub vote {
 
 #################################################################
 sub deletepolls {
-	my ($form) = @_;
+	my($form) = @_;
 	if (getCurrentUser('is_admin')) {
 		my $slashdb = getCurrentDB();
 		$slashdb->deletePoll($form->{'qid'});
@@ -187,13 +187,14 @@ sub deletepolls {
 
 #################################################################
 sub listpolls {
-	my ($form) = @_;
+	my($form) = @_;
 	my $slashdb = getCurrentDB();
 	my $min = $form->{min} || 0;
 	my $questions = $slashdb->getPollQuestionList($min);
 	my $sitename = getCurrentStatic('sitename');
 
 	# Just me, but shouldn't title be in the template?
+	# yes
 	slashDisplay('listpolls', {
 		questions	=> $questions,
 		startat		=> $min + @$questions,

@@ -1309,7 +1309,7 @@ sub getPollVoter {
 sub savePollQuestion {
 	my($self, $poll) = @_;
 	$poll->{voters} ||= "0";
-	if($poll->{qid}) {
+	if ($poll->{qid}) {
 		$self->sqlUpdate("pollquestions", {
 			question	=> $poll->{question},
 			voters		=> $poll->{voters},
@@ -1382,7 +1382,7 @@ sub getPollQuestions {
 #
 	my($self, $limit) = @_;
 
-	$limit = 25 if(!defined($limit));
+	$limit = 25 if (!defined($limit));
 
 	my $poll_hash_ref = {};
 	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC ";
