@@ -45,7 +45,7 @@ use Slash::DB;
 use Slash::Utility;
 
 *I = getSlashConf();
-my $slashdb = new Slash::DB('slash');
+my $slashdb = $I{dbobject} ||= Slash::DB->new('slash');
 my %savedBlocks;
 
 sub makeTmp {

@@ -39,7 +39,7 @@ use Slash;
 use Slash::DB;
 
 *I = getSlashConf();
-my $slashdb = new Slash::DB('slash');
+my $slashdb = $I{dbobject} ||= Slash::DB->new('slash');
 my $totalChangedStories = 1;
 
 sub END { Carp::cluck("why am I here?") }
