@@ -1014,7 +1014,21 @@ sub fudgeurl {
 	# run it through the grungy URL miscellaneous-"fixer"
 	$url = fixHref($url) || $url;
 
-	if (1) {
+	my $uri = new URI $url;
+	if ($uri && $uri->can('scheme') && $uri->scheme eq 'about') {
+		# Fix broken MSIE which allows arbitrary tags
+		# in about: URLs.  I really hate how broken Microsoft
+		# is, over and over again in just about everything.
+
+		# we could try to use URI class methods to deal with it,
+		# but we have to deal with opaque vs. fragment etc.;
+		# fuggedaboudit. -- pudge
+
+		$url =~ s/^about://;
+		$url =~ tr/A-Za-z0-9-//cd; # allow only a few chars
+		$url = 'about:' . $url;
+
+	} elsif (1) {
 		# Strip the authority, if any.
 		# This prevents annoying browser-display-exploits
 		# like "http://cnn.com%20%20%20...%20@baddomain.com".
@@ -1022,7 +1036,7 @@ sub fudgeurl {
 		# getCurrentUser()->{state}{fixurlauth} that will allow
 		# this behavior to be turned off -- it's wrapped in
 		# "if (1)" to remind us of this...
-		my $uri = new URI $url;
+
 		if ($uri && $uri->can('host') && $uri->can('authority')) {
 			# Make sure the host and port are legit, then zap
 			# the port if it's the default port.

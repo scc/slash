@@ -4954,7 +4954,7 @@ sub fzGetStories {
 # stories as S for when we did a join, keep in case we do another
 # at some point -- pudge
 	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
-S.sid, S.title, S.time, S.commmentcount
+S.sid, S.title, S.time, S.commentcount
 S
 stories AS S
 F

@@ -1097,7 +1097,7 @@ EOT
 					$reasons, '', 1, 1);
 		}
 
-		my $deletion = qq? | <INPUT TYPE="CHECKBOX" NAME="del_comment->{cid}">?
+		my $deletion = qq? | <INPUT TYPE="CHECKBOX" NAME="del_$comment->{cid}">?
 			if $user->{is_admin} and !$user->{state}{comment_read_only};
 
 		$return .= <<EOT;
