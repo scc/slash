@@ -264,9 +264,9 @@ sub validateComment {
 			postercomment 	=>	$$comm,
 	};
 			
-	for ( keys %$fields) {
+	for (keys %$fields) {
 		# run through filters
-		if ( ! filterOk('comments', $_, $fields->{$_}, \$message)) {
+		if (! filterOk('comments', $_, $fields->{$_}, \$message)) {
 			$$error_message = slashDisplay('errors', {
 					type		=> 'filter message',
 					err_message	=> $message,

@@ -331,9 +331,7 @@ sub getContentFilters {
 	return $filters;
 }
 
-
-
-################################################
+########################################################
 sub createPollVoter {
 	my($self, $qid, $aid) = @_;
 

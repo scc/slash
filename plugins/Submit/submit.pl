@@ -289,7 +289,7 @@ sub saveSub {
 		for ( keys %$form ) {
 			my $message = "";
 			# run through filters
-			if (! $slashdb->filterOk('submissions', $_, $form->{$_}, \$message)) {
+			if (! filterOk('submissions', $_, $form->{$_}, \$message)) {
 
 
 				displayForm($form->{from}, $form->{email}, $form->{section}, '','', $message);
