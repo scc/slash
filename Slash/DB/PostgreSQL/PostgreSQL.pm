@@ -246,7 +246,9 @@ sub saveStory {
 # Should this really be in here?
 sub getDay {
 	my($self) = @_;
-	my($now) = $self->sqlSelect('to_days(now())');
+	my($now) = $self->sqlSelect("now() - '0000-01-01'::date");
+	($now) = split / /, $now;
+	$now++;
 
 	return $now;
 }

@@ -1898,7 +1898,8 @@ sub displayStory {
 
 	# get extra data from section table for this story
 	# (if exists)
-	$slashdb->setSectionExtra($full, $story);
+	# this only needs to run for slashdot
+	#$slashdb->setSectionExtra($full, $story);
 
 	my $return = dispStory($story, $author, $topic, $full);
 	return($return, $story, $author, $topic);

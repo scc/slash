@@ -43,7 +43,8 @@ sub main {
 	header();
 	if($op eq 'display') {
 		my $slashdb = getCurrentDB();
-		my $nickname = $slashdb->getUser($form->{uid}, 'nickname');
+		my $nickname = $slashdb->getUser($form->{uid}, 'nickname') if $form->{uid};
+		$nickname ||= getCurrentUser('nickname');
 		titlebar("100%","${nickname}'s Journal");
 	} else {
 		titlebar("100%","Journal System");
