@@ -930,8 +930,9 @@ sub _hard_dispComment {
 	unless ($user->{noscores}) {
 		$score_to_display .= "(Score:$comment->{points}";
 
-		my $reason = $reasons->{$comment->{'reason'}};
-		$score_to_display .= ", $reason" if $constants->{reason};
+		if ($comment->{reason}) {
+			$score_to_display .= ", $reasons->{$comment->{reason}}";
+		}
 
 		$score_to_display .= ")";
 	}
