@@ -415,7 +415,7 @@ sub linkStory {
 		$dynamic = 1 if $story_link->{mode} || exists $story_link->{threshold} || $ENV{SCRIPT_NAME};
 	}
 
-	return _hard_linkComment($story_link, $mode, $threshold, $dynamic)
+	return _hard_linkStory($story_link, $mode, $threshold, $dynamic)
 		if getCurrentStatic('comments_hardcoded');
 
 	return slashDisplay('linkStory', {
@@ -1009,6 +1009,7 @@ sub lockTest {
 sub _hard_linkStory {
 	my($story_link, $mode, $threshold, $dynamic) = @_;
 	my $constants = getCurrentStatic();
+
 	if ($dynamic) {
 	    my $link = qq[<A HREF="$constants->{rootdir}/article.pl?sid=$story_link->{sid}];
             $link .= "&amp;mode=$mode" if $mode;

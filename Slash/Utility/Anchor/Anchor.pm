@@ -318,7 +318,6 @@ sub getSectionBlock {
 sub getSectionColors {
 	my($color_block) = @_;
 	my $user = getCurrentUser();
-	my $slashdb = getCurrentDB();
 	my @colors;
 	my $colorblock = getCurrentForm('colorblock');
 

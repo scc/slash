@@ -942,13 +942,16 @@ sub _hard_dispComment {
 	if (isAnon($comment->{uid})) {
 		$user_to_display = $comment->{nickname};
 	} else {
-		$userinfo_to_display = qq|<BR>(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$comment->{uid}">User #$comment->{uid} Info</A>)|;
+		$userinfo_to_display = qq|<BR><FONT SIZE="-1">(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$comment->{uid}">User #$comment->{uid} Info</A>|;
 
-		$userinfo_to_display .= qq| <A HREF="$comment->{homepage}">$comment->{homepage}</A>|
+		$userinfo_to_display .= qq[ | <A HREF="$comment->{homepage}">$comment->{homepage}</A>]
 			if length($comment->{homepage}) > 8;
 
-		$userinfo_to_display .= qq| <A HREF="$constants->{rootdir}/journal.pl?op=display&uid=$comment->{uid}"><SMALL>View User's Journal</SMALL></A>|
-			if $comment->{journal_last_entry_date};
+		$userinfo_to_display .= sprintf(' | Last Journal: <A HREF="%s/journal.pl?op=display&amp;uid=%s">%s</A>',
+			$constants->{rootdir}, $comment->{uid}, timeCalc($comment->{journal_last_entry_date})
+		) if $comment->{journal_last_entry_date} =~ /[1-9]/;
+
+		$userinfo_to_display .= ')</FONT>';
 
 		# This is wrong, must be fixed before we ship -Brian
 		# i think it is right now -- pudge

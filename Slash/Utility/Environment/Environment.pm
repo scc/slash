@@ -1474,6 +1474,7 @@ sub createEnvironment {
 	createCurrentUser($user);
 	createCurrentAnonymousCoward($user);
 }
+
 ######################################################################
 # Quick intro -Brian
 sub getCurrentCache {
