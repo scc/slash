@@ -12,23 +12,30 @@ Slash::Test - Command-line Slash testing
 
 =head1 SYNOPSIS
 
-	perl -MSlash::Test -e 'print Dumper $user'
+	% perl -MSlash::Test -wle Display
+	Current user is [% user.nickname %] ([% user.uid %])
+	^DCurrent user is Anonymous Coward (1)
 
-	perl -MSlash::Test -e 'slashTest("virtualuser"); print Dumper $user'
+	% perl -MSlash::Test -e 'print Dumper $user'
 
+	% perl -MSlash::Test=virtualuser -e 'print Dumper $user'
+
+	#!/usr/bin/perl -w
+	use Slash::Test qw(virtualuser);
+	print Dumper $user;
 
 =head1 DESCRIPTION
 
 Will export everything from Slash, Slash::Utility, Slash::Display,
-and Data::Dumper into the current namespace.  Will export $user, $form,
-$constants, and $slashdb as global variables into the current namespace.
+Slash::XML, and Data::Dumper into the current namespace.  Will export $user,
+$form, $constants, and $slashdb as global variables into the current namespace.
 
-So use it one of those two ways (use the default Virtual User,
-or pass in with slashTest()), and then
+So use it one of three ways (use the default Virtual User,
+or pass it in via the import list, or pass in with slashTest()), and then
 just use the Slash API in your one-liners.
 
-It is recommended you change the hardcoded default to whatever Virtual User
-you use most.
+It is recommended that you change the hardcoded default to whatever
+Virtual User you use most.
 
 =head1 EXPORTED FUNCTIONS
 
@@ -55,8 +62,13 @@ use vars qw($VERSION @EXPORT $vuser);
 	'Display',
 );
 
-$vuser = 'slash';
-slashTest();
+# "manually" export @EXPORT symbols
+Slash::Test->export_to_level(1, @EXPORT);
+
+# allow catching of virtual user in import list
+sub import {
+    slashTest($_[1] || 'slash');
+}
 
 #========================================================================
 
@@ -95,12 +107,11 @@ $form, $constants, and $slashdb into current namespace.
 
 
 sub slashTest {
-	my($VirtualUser) = @_;
+	my($VirtualUser, $noerr) = @_;
 
-	$VirtualUser = $vuser unless defined $VirtualUser;
-
+	die "No virtual user" unless defined $VirtualUser and $VirtualUser ne "";
 	eval { createEnvironment($VirtualUser) };
-	die $@ if $@ && (caller)[0] ne 'Slash::Test';
+	die $@ if $@ && !$noerr;
 
 	$::slashdb   = getCurrentDB();
 	$::constants = getCurrentStatic();
