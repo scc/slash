@@ -12,27 +12,21 @@ __name__
 journallist
 __template__
 [% USE Slash %]
-<TABLE>
-	<TR VALIGN="TOP"><TD COLSPAN="3">
+[% showopts = !user.is_anon && (!uid || uid == user.uid) %]
+[% INCLUDE journaloptions IF showopts %]
 
-	[% x = 0 %]
-	[% FOREACH article = articles %]
-		[% IF x % 2;
-			color = "#dcdcdc";
-		ELSE;
-			color = "#ffffff";
-		END %]
-		<TR VALIGN="TOP" BGCOLOR="[% color %]">
-			<TD>[% Slash.timeCalc(article.1) %]</TD>
-		[% IF !user.is_anon && (!uid || uid == user.uid) %]
-			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[% article.2 %]</A></TD>
-			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
-		[% ELSE %]
-			<TD><A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]&amp;id=[% article.0 %]">[% article.2 %]</A></TD>
-		[% END %]
-		</TR>
-		[% x = x + 1 %]
-	[% END %]
+[% INCLUDE titlebar title => "$nickname's Journal Entries" %]
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+[% FOREACH article = articles %]
+  <TR>
+    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% uid %]&amp;id=[% article.0 %]"><B>[% article.2 %]</B></A></TD>
+    <TD VALIGN="TOP"><EM>[% Slash.timeCalc(article.1) %]</EM></TD>
+[%- IF showopts %]
+    <TD><A HREF="[% constants.rootdir %]/journal.pl?op=edit&amp;id=[% article.0 %]">[edit]</A></TD>
+    <TD><A HREF="[% constants.rootdir %]/journal.pl?op=remove&amp;id=[% article.0 %]">[delete]</A></TD>
+[%- END %]
+  </TR>
+[% END %]
 </TABLE>
 
 __seclev__

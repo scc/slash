@@ -26,58 +26,47 @@ __template__
 # LOGIN ERROR.
 CASE "login error" %]
 <P><B>Login for "[% form.unickname %]" has failed</B>. Please try again. [% form.op %]<BR><P>
-[%
 
-# NO ANONYMOUS POSTING.
+[% # NO ANONYMOUS POSTING.
 CASE "no anonymous posting" %]
 Sorry, anonymous posting has been turned off. Please
 <A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
-[%
 
-# ALREADY POSTED.
+[% # ALREADY POSTED.
 CASE "already posted" %]
 You've already posted something in this discussion<BR>
-[%
 
-# ANONYMOUS DISALLOWED.
+[% # ANONYMOUS DISALLOWED.
 CASE "anonymous disallowed" %]
 Sorry, anonymous posting has been turned off.
 Please <A HREF="[% constants.rootdir %]/users.pl">register and log in</A>.
-[%
 
-# NO BODY.
+[% # NO BODY.
 CASE "no body" %]
 Cat got your tongue? (something important seems to be missing from your
 comment ... like the body or the subject!)
-[%
 
-# NO POINTS.
+[% # NO POINTS.
 CASE "no points" %]
 You don't have any moderator points.<BR>
-[%
 
-# MAX POSTS.
+[% # MAX POSTS.
 CASE "max posts" %]
 <BR><P><B>You've reached your maximum number of comments you can post: [% max_posts %] comments over [% timeframe %].
 </B></P>
-[%
 
-# INVALID FORMKEY
+[% # INVALID FORMKEY
 CASE "invalid formkey" %]
 <BR><P><B>Invalid form key [% formkey %] !</B></P>
  
-[%
-
-# RESPONSE LIMIT 
+[% # RESPONSE LIMIT 
 CASE "response limit" %]
 <BR><B>Slow down cowboy</B><BR>
 <P>[% constants.sitename %] requires you to wait [% limit %] between
 hitting 'reply' and submitting a comment.</P>
 <P>It's been [% response %] since you hit 'reply'!</P>
 
-[%
-
-# POST LIMIT
+[% # POST LIMIT
 CASE "post limit" %]
 <BR><B>Slow down cowboy!</B><BR>
 <P>[% constants.sitename %] requires you to wait [% limit %] between
@@ -85,69 +74,55 @@ each successful posting of a comment to allow everyone a fair chance
 at posting a comment.</P>
 <P>It's been [% interval %] since you last successfully posted a comment</P>
 
-[%
-
-# USED FORM
+[% # USED FORM
 CASE "used form" %]
 <BR><B>Form Error!</B><BR>
 This form has been used already to submit a comment [% interval %] ago.
 You can not use a form and hit the back button to use it again.
 
-[% 
-# READ ONLY
+[% # READ ONLY
 CASE "readonly" %]
 <BR><B>You can't post to this page.</B><br>
-[%
 
-# TROLL MESSAGE.
+[% # TROLL MESSAGE.
 CASE "troll message" %]
 This account or IP has been temporarily disabled. This means that either
 this IP or user account has been moderated down more than 5 times in the
 last 24 hours.  If you think this is unfair, you should contact
 [% constants.admin_mail %].  If you are being a troll, now is the time for you to
 either grow up, or change your IP.
-[%
 
-# NESTING TOO DEEP
+[% # NESTING TOO DEEP
 CASE "nesting too deep" %]
 You can only post nested lists and blockquotes four levels deep.
 Please fix your UL, OL, and BLOCKQUOTE tags.
 
-[%
-
-# LOW WORDS-PER-LINE
+[% # LOW WORDS-PER-LINE
 CASE "low words-per-line" %]
 Your comment has too few words per line (currently [% ratio %]).<BR>
 
-[%
-
-# FILTER MESSAGE.
+[% # FILTER MESSAGE.
 CASE "filter message" %]
 <BR>Lameness filter encountered.  Post aborted.<BR><BR>
 [% IF err_message %]
 <B>Reason: [% err_message %]</B><BR>
 [% END %]
-[%
 
-# COMPRESS FILTER.
+
+[% # COMPRESS FILTER.
 CASE "compress filter" %]
 Lameness filter encountered. Your comment violated the [% ratio %] compression filter.
 <B>Comment aborted</B>
 
-[%
-
-# SUBMISSION ERROR.
+[% # SUBMISSION ERROR.
 CASE "submission error" %]
 <P>There was an unknown error in the submission.<BR>
 
-[%
-
-# MAXCID EXCEEDED.
+[% # MAXCID EXCEEDED.
 CASE "maxcid exceeded" %]
 Don't you have anything better to do with your life?<BR>
-[%
 
-# VALIDATION ERROR. (possible dup? not quite sure about this one...)
+[% # VALIDATION ERROR. (possible dup? not quite sure about this one...)
 CASE "validation error" %]
 Something is wrong: parent=[% form.pid %] dups=[% dups %] discussion=[% form.sid %]
 <UL>
@@ -162,27 +137,20 @@ Something is wrong: parent=[% form.pid %] dups=[% dups %] discussion=[% form.sid
 [% END %]
 	<LI>Let us know if anything exceptionally strange happens</LI>
 </UL>
-[%
 
-# FORMABUSE MAX POSTS 
+[% # FORMABUSE MAX POSTS 
 CASE "formabuse_maxposts" %]
 maxposts [% maxposts %] reached!
- 
-[%
 
-# FORMABUSE INVALID FORMKEY
+[% # FORMABUSE INVALID FORMKEY
 CASE "formabuse_invalidformkey" %]
 invalid formkey [% formkey %]
 
-[%
-
-# FORMABUSE USED FORM
+[% # FORMABUSE USED FORM
 CASE "formabuse_usedform" %]
 form [% formkey %] already submitted
 
-[%
-
-CASE %]
+[% CASE %]
 An unexpected error has occured.<BR><B>[% value %]</B><BR>
 [% END %]
 

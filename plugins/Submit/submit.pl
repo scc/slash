@@ -250,9 +250,10 @@ sub displayRSS {
 
 	xmlDisplay('rss', {
 		channel	=> {
-			title	=> "$constants->{sitename} submissions",
+			title	=> "$constants->{sitename} Submissions",
 			'link'	=> "$constants->{absolutedir}/submit.pl?op=list",
 		},
+		image	=> 1,
 		items	=> \@items,
 	});
 }

@@ -1,7 +1,10 @@
 __section__
 default
 __description__
+Displays friends.
 
+* friends = arrayref of friends (nickname, uid, last entry time, last entry description, last entry id)
+* search = boolean for if this screen is shown as the result of a user search
 __title__
 
 __page__
@@ -12,37 +15,23 @@ __name__
 journalfriends
 __template__
 [% USE Slash %]
-<TABLE BORDER="0" BGCOLOR="[% user.bg.3 %]" WIDTH="100%"><TR><TD>
-	<TABLE WIDTH="100%" BGCOLOR="[% user.bg.0 %]" BORDER="0" CELLPADDING="5" CELLSPACING="0">
-		<TR VALIGN="TOP"><TD ALIGN="LEFT" BGCOLOR="[% user.bg.3 %]">
-			<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.0 %]">
-				<B>[% user.nickname %]'s Friends</B>
-			</FONT>
-		</TD></TR>
-		<TR VALIGN="TOP"><TD>
-			<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.2 %]">
-			[% FOREACH friend = friends %]
-				<TR>
-					<TD>
-						<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% friend.1 %]">[% friend.0 %]</A>
-					</TD>
-					<TD>
-						[% Slash.timeCalc(friend.2) %]
-					</TD>
-					<TD>
-						[% friend.3 %]
-					</TD>
-				[% UNLESS user.is_anon %]
-					<TD>
-						<A HREF="[% constants.rootdir %]/journal.pl?op=delete&uid=[% friend.1 %]">[delete]</A>
-					</TD>
-				[% END %]
-				</TR>
-			[% END %]
-			</FONT>
-		</TD></TR>
-	</TABLE>
-</TD></TR></TABLE>
+[% IF search; nickstrip = BLOCK; FILTER strip_literal; form.nickname; END; END; END %]
+[% INCLUDE titlebar title => (search ? "User Search Results for \"$nickstrip\"" : "Your Friends") %]
+
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+[% FOREACH friend = friends %]
+    <TR><TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER strip_attribute; friend.0; END %]">[% friend.0 %]</A></TD>
+    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% friend.1 %]"><B>[% friend.3 %]</B></A></TD>
+    <TD VALIGN="TOP"><EM>[% Slash.timeCalc(friend.2) %]</EM></TD>
+[% IF !user.is_anon && !search %]     <TD><A HREF="[% constants.rootdir %]/journal.pl?op=delete&amp;uid=[% friend.1 %]">[delete]</A></TD>
+[% END %]
+</TR>
+[% END %]
+</TABLE>
+
+<BR><BR>
+
+[% INCLUDE searchusers %]
 
 __seclev__
 100

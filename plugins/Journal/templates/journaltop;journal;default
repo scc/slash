@@ -12,58 +12,40 @@ __name__
 journaltop
 __template__
 [% USE Slash %]
-<TABLE BORDER="0" BGCOLOR="[% user.bg.3 %]" WIDTH="100%"><TR><TD>
-	<TABLE WIDTH="100%" BGCOLOR="[% user.bg.0 %]" BORDER="0" CELLPADDING="5" CELLSPACING="0">
-		<TR VALIGN="TOP" BGCOLOR="[% user.bg.3 %]">
-			<TD COLSPAN=3 ALIGN="LEFT" BGCOLOR="[% user.bg.3 %]">
-				<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.0 %]">
-					[% IF type == 'top' %]
-						<B>Top Posters By Number of Entries</B>
-					[% ELSIF type == 'recent' %]
-						<B>Top Recent Posters</B>
-					[% ELSIF type == 'friend' %]
-						<B>Top Posters By Friends</B>
-					[% ELSE %]
-						&nbsp;
-					[% END %]
-				</FONT>
-			<HR noshade width="100%" size="1">
-			</TD>
-		<TR VALIGN="TOP" BGCOLOR="[% user.bg.3 %]">
-			<TD ALIGN="LEFT" BGCOLOR="[% user.bg.3 %]">
-				<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.0 %]">
-					<B>Users</B>
-				</FONT>
-			</TD>
-			<TD ALIGN="LEFT" BGCOLOR="[% user.bg.3 %]">
-				<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.0 %]">
-					[% IF type == 'friend' %]
-						<B>Popularity</B>
-					[% ELSE %]
-						<B>Entries</B>
-					[% END %]
-				</FONT>
-			</TD>
-			<TD ALIGN="LEFT" BGCOLOR="[% user.bg.3 %]">
-				<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.0 %]">
-					<B>Last Updated</B>
-				</FONT>
-			</TD>
-		</TR>
-		<TR VALIGN="TOP">
-			<FONT FACE="[% constants.mainfontface %]" SIZE="3" COLOR="[% user.fg.2 %]">
-			[% FOREACH journal = journals %]
-			<TR><TD>
-				<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% journal.2 %]">[% journal.1 %]</A>
-			</TD><TD>
-				[% journal.0 %]
-			</TD><TD>
-				[% Slash.timeCalc(journal.3) %] &nbsp;
-			</TD></TR>
-			[% END %]
-			</FONT>
-		</TR>
-	</TABLE>
-</TD></TR></TABLE>
+[% IF type == 'top';
+	title = "Top Posters By Number of Entries";
+ELSIF type == 'recent';
+	title = "Top Recent Posters";
+ELSIF type == 'friend';
+	title = "Top Posters By Friends";
+END %]
+
+[% IF type == "friend";
+	col2 = "Popularity";
+ELSE;
+	col2 = "Entries";
+END %]
+
+
+[% INCLUDE titlebar %]
+<TABLE WIDTH="90%" BORDER="0" CELLPADDING="2" CELLSPACING="0">
+  <TR BGCOLOR="[% user.bg.2 %]">
+    <TD VALIGN="TOP" WIDTH="40%"><B>User</B></TD>
+    <TD VALIGN="TOP" WIDTH="20%"><B>[% col2 %]</B></TD>
+    <TD VALIGN="TOP" WIDTH="40%"><B>Last Updated</B></TD>
+  </TR>
+
+[% FOREACH journal = journals %]
+  <TR>
+    <TD VALIGN="TOP"><A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% journal.2 %]">[% journal.1 %]</A></TD>
+    <TD VALIGN="TOP">[% journal.0 %]</TD>
+    <TD VALIGN="TOP"><EM>[% Slash.timeCalc(journal.3) %]</EM></TD>
+  </TR>
+[% END %]
+
+</TABLE>
+
+<BR><BR>
+
 __seclev__
 100

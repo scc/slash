@@ -46,8 +46,8 @@ sub set {
 	%j1 = %$values;
 	$j2{article}  = delete $j1{article};
 
-	$self->sqlUpdate('journals', \%j1, "id=$id");
-	$self->sqlUpdate('journals_text', \%j2, "id=$id");
+	$self->sqlUpdate('journals', \%j1, "id=$id") if keys %j1;
+	$self->sqlUpdate('journals_text', \%j2, "id=$id") if $j2{article};
 }
 
 sub getsByUid {
@@ -85,12 +85,12 @@ sub create {
 	$self->sqlInsert("journals", {
 		uid		=> $uid,
 		description	=> $description,
-		tid	=> $tid,
+		tid		=> $tid,
 		-date		=> 'now()',
 		posttype	=> $posttype,
 	});
 
-	my($id) = $self->getLastInsertId('journals','id');
+	my($id) = $self->getLastInsertId('journals', 'id');
 	return unless $id;
 
 	$self->sqlInsert("journals_text", {
@@ -113,15 +113,41 @@ sub remove {
 sub friends {
 	my($self) = @_;
 	my $uid = $ENV{SLASH_USER};
-	my $sql;
-#	$sql .= " SELECT u.nickname, j.friend, MAX(jo.date) as date, jo.description ";
-#	$sql .= " FROM journals as jo, journal_friends as j,users as u ";
-#	$sql .= " WHERE j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid";
-#	$sql .= " GROUP BY u.nickname ORDER BY date DESC";
-#	$self->sqlConnect;
-	my $friends = $self->sqlSelectAll('u.nickname, j.friend, MAX(jo.date) as date, jo.description','journals as jo, journal_friends as j,users as u', "j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid", 'GROUP BY u.nickname ORDER BY date DESC');
 
-	return $friends;
+# old style that ALMOST worked ...
+# 	my $friends = $self->sqlSelectAll(
+# 		'u.nickname, j.friend, MAX(jo.date) as date, jo.description',
+# 		'journals as jo, journal_friends as j,users as u',
+# 		"j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid",
+# 		'GROUP BY u.nickname ORDER BY date DESC'
+# 	);
+
+	my($friends, $journals, $ids, %data);
+	$friends = $self->sqlSelectAll(
+		'u.nickname, j.friend, MAX(jo.id) as id',
+		'journals as jo, journal_friends as j, users as u',
+		"j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid",
+		'GROUP BY u.nickname'
+	);
+	return [] unless @$friends;
+
+	for my $friend (@$friends) {
+		$ids .= "id = $friend->[2] OR ";
+		$data{$friend->[2]} = [ @$friend[0, 1] ];
+	}
+	$ids =~ s/ OR $//;
+
+	$journals = $self->sqlSelectAll(
+		'date, description, id', 'journals', $ids
+	);
+
+	for my $journal (@$journals) {
+		# tack on the extra data
+		@{$data{$journal->[2]}}[2 .. 4] = @{$journal}[0 .. 2];
+	}
+
+	# pull it all back together
+	return [ map { $data{$_} } sort { $b <=> $a } keys %data ];
 }
 
 sub message_friends {
@@ -153,7 +179,7 @@ sub delete {
 
 sub top {
 	my($self, $limit) = @_;
-	$limit ||= 10;
+	$limit ||= getCurrentStatic('journal_top') || 10;
 	my $sql;
 	$sql .= "SELECT count(j.uid) as c, u.nickname, j.uid, max(date)";
 	$sql .= " FROM journals as j,users as u WHERE ";
@@ -168,7 +194,7 @@ sub top {
 
 sub topFriends {
 	my($self, $limit) = @_;
-	$limit ||= 10;
+	$limit ||= getCurrentStatic('journal_top') || 10;
 	my $sql;
 	$sql .= " SELECT count(friend) as c, nickname, friend ";
 	$sql .= " FROM journal_friends, users ";
@@ -188,7 +214,7 @@ sub topFriends {
 
 sub topRecent {
 	my($self, $limit) = @_;
-	$limit ||= 10;
+	$limit ||= getCurrentStatic('journal_top') || 10;
 	my $sql;
 	$sql .= " SELECT count(jo.id), u.nickname, u.uid, MAX(jo.date) as date ";
 	$sql .= " FROM journals as jo ,users as u ";
@@ -211,6 +237,34 @@ sub themes {
 	my $themes = $self->{_dbh}->selectcol_arrayref($sql);
 
 	return $themes;
+}
+
+sub searchUsers {
+	my($self, $nickname) = @_;
+	my($data, @users);
+
+	if (my $uid = $self->getUserUID($nickname)) {
+		$data = [[ '', '', $uid ]];
+	}
+
+	if (!$data) {
+		my $search = getObject("Slash::Search");
+		$data  = $search->findUsers(
+			{query => $nickname}, 0,
+			getCurrentStatic('search_default_display') + 1
+		);
+	}
+
+	for my $user (sort { lc $a->[1] cmp lc $b->[1] } @$data) {
+		my $id = $self->sqlSelectArrayRef(
+			'nickname, users.uid, date, description, id', 'journals, users',
+			"users.uid=$user->[2] AND journals.uid=users.uid",
+			'ORDER BY date DESC LIMIT 1'
+		);
+		push @users, $id if $id;
+	}
+
+	return \@users;
 }
 
 sub get {

@@ -13,35 +13,45 @@ journaledit
 __template__
 [% USE Slash %]
 <TABLE>
-	<TR VALIGN="TOP">
-		<TD>
-			<FORM ACTION="[% env.script_name %]" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
-				<INPUT TYPE="hidden" NAME="id" VALUE="[% article.id %]">
-				<INPUT TYPE="hidden" NAME="state" VALUE="editing">
-				<INPUT TYPE="hidden" NAME="preview" VALUE="active">
-				[% INCLUDE formLabel value => "Subject", comment => "This is required" %]
-				<INPUT TYPE="text" NAME="description" SIZE="60" VALUE="[% FILTER strip_attribute; article.description; END %]">
-				[% INCLUDE formLabel value => "Journal Topic" %]
-				[% Slash.selectTopic('tid', article.tid, 1) %]
-				[% INCLUDE formLabel value => "Entry", comment => "This will go down on your permanent record" %]
-				<TEXTAREA WRAP="virtual" NAME="article" COLS="60" ROWS="20">[% FILTER strip_literal; article.article; END %]</TEXTAREA>
-				<P>
-				<INPUT TYPE="submit" NAME="op" value="preview">
-				[% IF form.preview %]
-					<INPUT TYPE="submit" NAME="op" VALUE="save">
-				[% END %]
-				[% format_select %]
-			</FORM>
-		</TD>
-	</TR>
-	<TR>
-		<TD>
+	<TR VALIGN="TOP"><TD>
+		<FORM ACTION="[% env.script_name %]" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
+
+		<INPUT TYPE="hidden" NAME="id" VALUE="[% article.id %]">
+		<INPUT TYPE="hidden" NAME="state" VALUE="editing">
+		<INPUT TYPE="hidden" NAME="preview" VALUE="active">
+
+		[% INCLUDE formLabel value => "Subject", comment => "This is required" %]
+		<INPUT TYPE="text" NAME="description" SIZE="60" VALUE="[% FILTER strip_attribute; article.description; END %]">
+
+		[% INCLUDE formLabel value => "Journal Topic";
+		   Slash.selectTopic('tid', article.tid, 1) %]
+
+	[% IF !article.discussion %]
+		[% INCLUDE formLabel value => "Comments", comment => "Comments cannot be disabled once enabled" %]
+ 		[% jds = Slash.db.getDescriptions("journal_discuss");
+ 		   def_jd = user.journal_discuss || 0;
+		   Slash.createSelect("journal_discuss", jds, def_jd, 1) %]
+	[% ELSE %]
+		[% INCLUDE formLabel value => "Comments", comment => "Comments are enabled" %]
+	[% END %]
+
+		[% INCLUDE formLabel value => "Entry", comment => "This will go down on your permanent record" %]
+		<TEXTAREA WRAP="virtual" NAME="article" COLS="60" ROWS="20">[% FILTER strip_literal; article.article; END %]</TEXTAREA>
+		<P>
+		<INPUT TYPE="submit" NAME="op" value="preview">
+	[% IF form.preview %]
+		<INPUT TYPE="submit" NAME="op" VALUE="save">
+	[% END %]
+		[% format_select %]
+		</FORM>
+	</TD></TR>
+	<TR><TD>
 		Allowed HTML: 
 		<FONT SIZE="1">
 			&lt;[% constants.approvedtags.join("&gt;			&lt;") %]&gt;
 		</FONT>
-		</TD>
-	</TR>
+	</TD></TR>
 </TABLE>
+
 __seclev__
 100

@@ -885,7 +885,7 @@ sub getRelated {
 	my $related_links = $slashdb->getRelatedLinks();
 	my $related_text;
 
-	if($related_links) {
+	if ($related_links) {
 		for my $key (values %$related_links) {
 			if ($story_content =~ /\b$key->{keyword}\b/i) {
 				$related_text .= qq[<LI><A HREF="$key->{link}">$key->{name}</A></LI>\n];
