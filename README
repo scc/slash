@@ -8,10 +8,11 @@ WARNING
     http://slashcode.com/.
 
 DESCRIPTION
-    Slash is the code that runs Slashdot. More than that, however, Slash is
-    an architecture for putting together web sites. It comes with
-    functionality for posting articles, conducting polls, having
-    discussions, and more. But it can be extended in innumerable ways.
+    Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
+    that runs Slashdot. More than that, however, Slash is an architecture
+    for putting together web sites. It comes with functionality for posting
+    articles, conducting polls, having discussions, and more. But it can be
+    extended in innumerable ways.
 
     Slash is written in Perl, and is built on top of Apache and mod_perl. It
     requires a database backend, though the only well-supported database
@@ -43,6 +44,11 @@ DOCUMENTATION
         Toolkit site.
 
         http://www.template-toolkit.org/
+
+    RSS For more information on RSS 1.0, and the RSS Slash module.
+
+        http://purl.org/rss/1.0/
+        http://www.egroups.com/files/rss-dev/Modules/Proposed/mod_slash.html
 
     Installation
         The details on how to install Slash.
@@ -87,7 +93,10 @@ LINKS
         http://sourceforge.net/projects/slashcode/
 
 COPYRIGHT AND LICENSE
-    Slash is copyright (c) 1997-2001, OSDN.
+    The information below applies to everything in this distribution, except
+    where noted.
+
+    Slash is Copyright 1997-2001, Open Source Development Network.
 
             http://www.osdn.com/
 
@@ -99,12 +108,12 @@ COPYRIGHT AND LICENSE
     Slash is distributed in the hope that it will be useful, but WITHOUT ANY
     WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-    more details (COPYING).
+    more details.
 
     You should have received a copy of the GNU General Public License along
-    with Slash; if not, go to http://www.fsf.org/ or write to the
+    with Slash (COPYING); if not, go to http://www.fsf.org/ or write to the
     Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
     02111-1307, USA.
 
 VERSION
-    Document last modified Wednesday, January 10, 2001.
+    Document last modified Friday, January 12, 2001.

@@ -414,4 +414,4 @@ for Slashdot).
 
 =head1 VERSION
 
-Document last modified Wednesday, January 10, 2001.
+Document last modified Friday, January 12, 2001.

@@ -14,6 +14,12 @@
 	<LI><A HREF="#NAME">NAME</A>
 	<LI><A HREF="#SYNOPSIS">SYNOPSIS</A>
 	<LI><A HREF="#INSTALLATION">INSTALLATION</A>
+	<UL>
+
+		<LI><A HREF="#Installation_Notes">Installation Notes</A>
+		<LI><A HREF="#Installation_Procedure">Installation Procedure</A>
+	</UL>
+
 	<LI><A HREF="#INSTALLATION_OPTIONS">INSTALLATION OPTIONS</A>
 	<UL>
 
@@ -100,14 +106,46 @@ document, because we know you want to get right into the installation.
 <H1><A NAME="INSTALLATION">INSTALLATION
 
 </A></H1>
-<STRONG>Note</STRONG>: For slashd (see <EM>utils/slashd</EM>, which starts slashd), mod_perl (see <EM>httpd/httpd.conf</EM>), and MySQL, we set all processes to run in GMT. Then it is easy to
+<P>
+<HR>
+<H2><A NAME="Installation_Notes">Installation Notes
+
+</A></H2>
+<UL>
+<LI><STRONG></STRONG>
+For slashd (see <EM>utils/slashd</EM>, which starts slashd), mod_perl (see <EM>httpd/httpd.conf</EM>), and MySQL, we set all processes to run in GMT. Then it is easy to
 convert dates to whatever the user's local time is. If you have date offset
 problems, check that all of these are properly set to run in GMT.
 
 
 <P>
 
-<STRONG>Note</STRONG>: All of the installation steps below should be executed as root.
+<LI><STRONG></STRONG>
+You cannot have different versions of the Slash modules installed for
+different sites on the same Apache server. Well, if you want to, you can
+try the Apache::PerlVINC module, but this is <STRONG>not</STRONG> recommended for performance reasons. Slash is designed to have one shared
+core of code for all Slash sites on a system. (This is made easier than it
+was in 1.0.x, where to customize a site, you needed to change the module
+code; this should no longer be necessary.)
+
+
+<P>
+
+<LI><STRONG></STRONG>
+All of the installation steps below should be executed as root.
+
+
+<P>
+
+</UL>
+<P>
+<HR>
+<H2><A NAME="Installation_Procedure">Installation Procedure
+
+</A></H2>
+There are six steps to installation. Skip the parts you already have
+installed (making sure you have the correct versions). Make sure to read
+the special note about Apache / mod_perl installation.
 
 
 <P>
@@ -676,7 +714,7 @@ Slashdot).
 <H1><A NAME="VERSION">VERSION
 
 </A></H1>
-Document last modified Wednesday, January 10, 2001.
+Document last modified Friday, January 12, 2001.
 
 <P>
 
