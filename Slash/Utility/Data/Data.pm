@@ -64,6 +64,7 @@ use vars qw($VERSION @EXPORT);
 	strip_literal
 	strip_mode
 	strip_nohtml
+	strip_notags
 	strip_plaintext
 	timeCalc
 	url2abs
@@ -81,6 +82,7 @@ use vars qw($VERSION @EXPORT);
 # 	stripByMode
 # );
 
+use constant NOTAGS	=> -3;
 use constant ATTRIBUTE	=> -2;
 use constant LITERAL	=> -1;
 use constant NOHTML	=> 0;
@@ -501,11 +503,15 @@ sub stripByMode {
 		}
 
 	# strip out all HTML
-	} elsif ($fmode == NOHTML) {
+	} elsif ($fmode == NOHTML || $fmode == NOTAGS) {
 		$str =~ s/<.*?>//g;
 		$str =~ s/<//g;
 		$str =~ s/>//g;
-		$str =~ s/&/&amp;/g;
+		if ($fmode == NOHTML) {
+			$str =~ s/&/&amp;/g;
+		} elsif ($fmode == NOTAGS) {
+			$str =~ s/&(?!#?[a-zA-Z0-9]+;)/&amp;/g
+		}
 
 	# convert HTML attribute to allowed text (just convert ")
 	} elsif ($fmode == ATTRIBUTE) {
@@ -541,6 +547,8 @@ sub stripByMode {
 
 =head2 strip_nohtml(STRING [, NO_WHITESPACE_FIX])
 
+=head2 strip_notags(STRING [, NO_WHITESPACE_FIX])
+
 =head2 strip_plaintext(STRING [, NO_WHITESPACE_FIX])
 
 =head2 strip_mode(STRING [, MODE, NO_WHITESPACE_FIX])
@@ -569,6 +577,7 @@ sub strip_extrans	{ stripByMode($_[0], EXTRANS,	@_[1 .. $#_]) }
 sub strip_html		{ stripByMode($_[0], HTML,	@_[1 .. $#_]) }
 sub strip_literal	{ stripByMode($_[0], LITERAL,	@_[1 .. $#_]) }
 sub strip_nohtml	{ stripByMode($_[0], NOHTML,	@_[1 .. $#_]) }
+sub strip_notags	{ stripByMode($_[0], NOTAGS,	@_[1 .. $#_]) }
 sub strip_plaintext	{ stripByMode($_[0], PLAINTEXT,	@_[1 .. $#_]) }
 
 
