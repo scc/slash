@@ -1335,11 +1335,11 @@ sub parseDomainTags {
 	$udt =~ /^(\d+)$/;			# make sure it's numeric, sigh
 	$udt = 2 if !length($1);
 
-	my $want_tags = 1;				# assume we'll be displaying the [domain.tags]
-	$want_tags = 0 if				# but, don't display them if...
-		$udt == 0				# the user has said they never want the tags
-		|| (					# or
-			$udt == 1			# the user leaves it up to us
+	my $want_tags = 1;			# assume we'll be displaying the [domain.tags]
+	$want_tags = 0 if			# but, don't display them if...
+		$udt == 0			# the user has said they never want the tags
+		|| (				# or
+			$udt == 1		# the user leaves it up to us
 			and $recommended	# and we think the poster has earned tagless posting
 		);
 
