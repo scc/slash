@@ -20,7 +20,7 @@ __name__
 regResult
 __template__
 
-[% IF user.reg_id == form.id %]
+[% IF user.reg_id && user.reg_id == form.id %]
 <H2>Thanks for Reregistering!</H2>
 We're sorry about the bother, but each user who wants to post with an identity
 must have a valid e-mail account registered with the system. Thanks for putting

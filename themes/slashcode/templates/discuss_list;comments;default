@@ -26,7 +26,7 @@ IF d.1.defined && d.1.length %][% d.1 %][% ELSE %]untitled[% END %]</A>
 <P>
 
 [% IF user.seclev >= constants.discussion_create_seclev;
-    INCLUDE discreate;
+    INCLUDE discreate topic=constants.discussion_default_topic;
 END %]
 
 __seclev__

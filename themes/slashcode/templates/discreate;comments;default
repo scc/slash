@@ -28,7 +28,7 @@ __template__
 [% END %]
 
 [% val3 = BLOCK %]
-[% Slash.selectTopic('topic', topic,'', 1) %]
+[% Slash.selectTopic('topic', topic, '', 1) %]
 <INPUT TYPE="submit" NAME="submit" VALUE="Submit">
 [% END %]
 
