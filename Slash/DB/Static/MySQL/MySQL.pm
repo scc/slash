@@ -135,6 +135,7 @@ sub deleteDaily {
 	# Formkeys
 	my $delete_time = time() - $constants->{'formkey_timeframe'};
 	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
+	$self->sqlDo("DELETE FROM accesslog WHERE date_add(ts,interval 48 hour) < now()");
 }
 
 ########################################################
@@ -188,7 +189,6 @@ sub countDaily {
 	}
 	$c->finish;
 
-	$self->sqlDo("DELETE FROM accesslog WHERE date_add(ts,interval 48 hour) < now()");
 	$returnable{'index'} = \%indexes;
 	$returnable{'articles'} = \%articles;
 

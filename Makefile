@@ -55,7 +55,7 @@ install: slash plugins
 	(cd plugins/Ladybug; $(PERL) Makefile.PL; make install)
 
 	# First we do the default sutff
-	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/themes/slashcode/backup $(PREFIX)/themes/slashcode/logs/ $(PREFIX)/plugins/ $(PREFIX)/httpd/
+	install -d $(PREFIX)/bin/ $(PREFIX)/sbin $(PREFIX)/sql/ $(PREFIX)/sql/mysql/ $(PREFIX)/sql/postgresql $(PREFIX)/themes/ $(PREFIX)/themes/slashcode/htdocs/ $(PREFIX)/themes/slashcode/sql/ $(PREFIX)/themes/slashcode/sql/postgresql $(PREFIX)/themes/slashcode/sql/mysql $(PREFIX)/plugins/ $(PREFIX)/httpd/
 	install -D bin/install-slashsite bin/install-plugin bin/tailslash bin/template-tool $(PREFIX)/bin/
 	install -D sbin/slashd sbin/portald sbin/moderatord sbin/dailyStuff $(PREFIX)/sbin/
 	cp sql/mysql/slashschema_create.sql $(PREFIX)/sql/mysql/schema.sql

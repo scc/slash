@@ -2285,10 +2285,10 @@ sub getPollVotesMax {
 sub _saveExtras {
 	my($self, $form) = @_;
 	return unless $self->sqlTableExists($form->{section});
-	my @extras = $self->sqlSelectColumns($form->{section});
+	my $extras = $self->sqlSelectColumns($form->{section});
 	my $E;
 
-	foreach (@extras) { $E->{$_} = $form->{$_} }
+	for(@$extras) { $E->{$_} = $form->{$_} }
 
 	if ($self->sqlUpdate($form->{section}, $E, "sid='$form->{sid}'") eq '0E0') {
 		$self->sqlInsert($form->{section}, $E);
@@ -3102,10 +3102,10 @@ sub sqlReplace {
 # pass along an array -Brian
 sub getKeys {
 	my($self, $table) = @_;
-	my @keys = $self->sqlSelectColumns($table)
+	my $keys = $self->sqlSelectColumns($table)
 		if $self->sqlTableExists($table);
 
-	return \@keys;
+	return $keys;
 }
 
 ########################################################
@@ -3113,12 +3113,9 @@ sub sqlTableExists {
 	my($self, $table) = @_;
 	return unless $table;
 
-	my $sth = $self->{_dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
 	$self->sqlConnect();
-	$sth->execute;
-	my $te = $sth->rows;
-	$sth->finish;
-	return $te;
+	my $tab = $self->{_dbh}->selectrow_array(qq!SHOW TABLES LIKE "$table"!);
+	return $tab;
 }
 
 ########################################################
@@ -3126,15 +3123,9 @@ sub sqlSelectColumns {
 	my($self, $table) = @_;
 	return unless $table;
 
-	my $sth = $self->{_dbh}->prepare_cached("SHOW COLUMNS FROM $table");
 	$self->sqlConnect();
-	$sth->execute;
-	my @ret;
-	while (my @d = $sth->fetchrow) {
-		push @ret, $d[0];
-	}
-	$sth->finish;
-	return @ret;
+	my $rows = $self->{_dbh}->selectcol_arrayref("SHOW COLUMNS FROM $table");
+	return $rows;
 }
 
 ########################################################

@@ -29,6 +29,7 @@ Unless otherwise noted, they are publically available functions.
 
 use strict;
 use Apache;
+use Apache::ModuleConfig;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;

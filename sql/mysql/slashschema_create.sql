@@ -139,7 +139,7 @@ CREATE TABLE content_filters (
   maximum_length int(10) DEFAULT '0' NOT NULL,
   PRIMARY KEY (filter_id),
   KEY regex (regex),
-  KEY field (field)
+  KEY field_key (field)
 );
 
 #

@@ -49,7 +49,6 @@ sub createUser {
 	))[0];
 
 	$self->sqlInsert("users", {
-		uid	=> '',
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
@@ -247,8 +246,8 @@ sub setUser {
 	# What is worse, a select+update or a replace?
 	# I should look into that.
 	for (@param)  {
-		$self->sqlDo("DELETE FROM users_param where param_id = '' AND \"uid\"=$uid and name='$_->[0]'");
-		$self->sqlDo("INSERT INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
+		$self->sqlDo(qq| DELETE FROM users_param where \"uid\"=$uid and name='$_->[0]' |);
+		$self->sqlDo(qq| INSERT INTO users_param (uid, name, value) VALUES ($uid, '$_->[0]', '$_->[1]') |);
 	}
 }
 ########################################################
@@ -314,25 +313,6 @@ sub getUser {
 #
 #	return $answer;
 }
-
-########################################################
-# This could be optimized by not making multiple calls
-# to getKeys or by fixing getKeys() to return multiple
-# values
-sub _genericGetCacheName {
-	my($self, $tables) = @_;
-	my $cache = '_' . join ('_', sort(@$tables), 'cache');
-	unless (keys %{$self->{$cache}}) {
-		for my $table (@$tables) {
-			my $keys = $self->getKeys($table);
-			for (@$keys) {
-				$self->{$cache}{$_} = $table;
-			}
-		}
-	}
-	return $cache;
-}
-
 
 ########################################################
 # You can use this to reset cache's in a timely
@@ -493,7 +473,7 @@ sub sqlTableExists {
 	return unless $table;
 
 	$self->sqlConnect();
-	my $count = $self->{_dbh}->selectrow_array(qq|SELECT count(relname) from pg_class WHERE relname = "$table"|);
+	my $count = $self->{_dbh}->selectrow_array(qq|SELECT count(relname) from pg_class WHERE relname = '$table'|);
 	return $count;
 }
 
@@ -508,6 +488,36 @@ sub sqlSelectColumns {
 }
 
 1;
+
+########################################################
+# This could be optimized by not making multiple calls
+# to getKeys or by fixing getKeys() to return multiple
+# values
+sub _genericGetCacheName {
+	my($self, $tables) = @_;
+	my $cache;
+
+	if (ref($tables) eq 'ARRAY') {
+		$cache = '_' . join ('_', sort(@$tables), 'cache_tables_keys');
+		unless (keys %{$self->{$cache}}) {
+			for my $table (@$tables) {
+				my $keys = $self->getKeys($table);
+				for (@$keys) {
+					$self->{$cache}{$_} = $table;
+				}
+			}
+		}
+	} else {
+		$cache = '_' . $tables . 'cache_tables_keys';
+		unless (keys %{$self->{$cache}}) {
+			my $keys = $self->getKeys($tables);
+			for (@$keys) {
+				$self->{$cache}{$_} = $tables;
+			}
+		}
+	}
+	return $cache;
+}
 
 __END__
 

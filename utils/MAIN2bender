@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # Cliff, I recommend use strict here ... -- pudge
+# and ad -w to perl  --Brian
 use DBI;
 use Getopt::Std;
 use vars qw(%dbh);
@@ -109,6 +110,7 @@ for (@updateFile) {
 # Perform version specific conversion process.
 authors2Users();
 aid2uid();
+# Don't do codes, leave that to the new dump --Brian
 codes2CodeParam();
 userskey2Param();
 
