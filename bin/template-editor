@@ -9,9 +9,13 @@ use Slash::DB;
 use Getopt::Std;
 
 my %opts;
-usage() unless getopts('u:d:s', \%opts);
+usage() unless getopts('u:d:sc', \%opts);
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
+
+if($opts{'c'}) {
+	system("mkdir $opts{'d'}");
+}
 
 if($opts{'d'}) {
 	unless (-d $opts{'d'}) {
