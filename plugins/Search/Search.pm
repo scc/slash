@@ -152,7 +152,9 @@ sub findStory {
 	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
-	my $tables = "stories,users,story_text";
+	my $tables = "stories,users";
+	$tables .= ",story_text"
+		if $form->{query};
 	my $other;
 	if ($form->{query}) {
 		$other = " ORDER BY score DESC";
@@ -164,15 +166,15 @@ sub findStory {
 
 	# The big old searching WHERE clause, fear it
 	my $key = " (MATCH (stories.title) AGAINST ($query) or MATCH (introtext,bodytext) AGAINST ($query)) ";
-	my $where = "stories.sid = story_text.sid AND stories.uid = users.uid ";
-	$where .= " AND $key" 
+	my $where = "stories.uid = users.uid ";
+	$where .= " AND stories.sid = story_text.sid AND $key" 
 		if $form->{query};
 
 	if ($form->{section}) { 
 		$where .= " AND ((displaystatus = 0 and '$form->{section}' = '')";
-		$where .= " OR (section = '$form->{section}' AND displaystatus >= 0))";
+		$where .= " OR (section = '$form->{section}' AND displaystatus != -1))";
 	} else {
-		$where .= " AND displaystatus >= 0";
+		$where .= " AND displaystatus != -1";
 	}
 	$where .= " AND time < now() AND stories.writestatus != 'delete' ";
 	$where .= " AND stories.uid=" . $self->sqlQuote($form->{author})
