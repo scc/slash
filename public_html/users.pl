@@ -37,12 +37,14 @@ sub main {
 
 	my $op = $form->{op};
 
+	my $uid = $user->{uid};
+
 	if ($op eq 'userlogin' && !$user->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
 		redirect($refer);
 		return;
 	} elsif ($op eq 'saveuser') {
-		my $note = saveUser($user->{uid});
+		my $note = saveUser($form->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;
 	}
@@ -64,6 +66,15 @@ sub main {
 	if ($op eq 'newuser') {
 		newUser();
 
+	} elsif ($form->{authoredit} && $user->{seclev} >= 10000) {
+		editUser($form->{authoruid});
+
+	} elsif ($form->{useredit} && $user->{seclev} >= 10000) {
+		if($form->{edit_nick}) {
+			editUser($slashdb->getUserUID($form->{edit_nick}));
+		} elsif ($form->{edit_uid}) {
+			editUser($form->{edit_uid});
+		}
 	} elsif ($op eq 'edituser') {
 		# the users_prefs table
 		if (!$user->{is_anon}) {
@@ -137,7 +148,7 @@ sub main {
 		displayForm();
 	}
 
-	miniAdminMenu() if $user->{seclev} > 100;
+	# miniAdminMenu() if $user->{seclev} > 100;
 	writeLog('users', $user->{nickname});
 
 	footer();
@@ -264,9 +275,16 @@ sub userInfo {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
+	my $currentuser = getCurrentUser();
+
+	my $admin_block = '';
 
 	my $userbio = $slashdb->getUser($uid);
 	$userbio->{bio} = strip_html($userbio->{bio});
+
+	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0;
+
+	$admin_block = getUserAdmin($userbio->{uid}, $currentuser->{seclev}, 1, 0) if $author_flag;
 
 	my($title, $commentstruct, $question, $points, $nickmatch_flag, $rows);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
@@ -337,6 +355,8 @@ sub userInfo {
 		nickmatch_flag		=> $nickmatch_flag,
 		mod_flag		=> $mod_flag,
 		karma_flag		=> $karma_flag,
+		admin_block		=> $admin_block,
+		author_flag 		=> $author_flag,
 	});
 }
 
@@ -359,6 +379,10 @@ sub editUser {
 
 	my $slashdb = getCurrentDB();
 	my $user_edit = $slashdb->getUser($uid);
+	my $currentuser = getCurrentUser();
+
+	my ($author_select, $admin_block);
+
 	$user_edit->{homepage} ||= "http://";
 
 	return if isAnon($user_edit->{uid});
@@ -374,16 +398,24 @@ sub editUser {
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
+	my $author_flag = ($user_edit->{seclev} >= 100) ? 1 : 0; 
+	$admin_block = getUserAdmin($user_edit->{uid}, $currentuser->{seclev}, 0, 1) if $author_flag;
+
 	slashDisplay('users-editUser', { 
 		user_edit 	=> $user_edit, 
+		author_flag	=> $author_flag,
+		author_select	=> $author_select,
 		title		=> $title,
 		temppass	=> $temppass,
 		tempnick	=> $tempnick,	
 		bio 		=> strip_nohtml($user_edit->{bio}), 
 		sig 		=> strip_nohtml($user_edit->{sig}),
+		quote		=> strip_nohtml($user_edit->{quote}),
+		copy 		=> strip_nohtml($user_edit->{copy}),
 		editkey 	=> editKey($user_edit->{uid}),
 		maillist 	=> $maillist,
-		session 	=> $session_select 
+		session 	=> $session_select,
+		admin_block	=> $admin_block
 	});
 }
 
@@ -574,7 +606,9 @@ sub saveUser {
 		maillist	=> $form->{maillist},
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
-		pubkey		=> $form->{pubkey}
+		pubkey		=> $form->{pubkey},
+		copy		=> $form->{copy},
+		quote		=> $form->{quote}
 	};
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
@@ -780,6 +814,33 @@ sub getTitle {
 	$hashref->{value} = $value;
 	return slashDisplay('users-titles', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
+}
+
+#################################################################
+# getUserAdmin - returns a block of text
+# containing fields for admin users
+sub getUserAdmin {
+	my ($uid,$seclev,$form_flag,$display_seclev) = @_;
+
+	my $slashdb = getCurrentDB();
+
+	my $user = $slashdb->getUser($uid);
+	my $author_select;
+	my $author_flag = ($seclev >= 100) ? 1 : 0; 
+	my $authoredit_flag = ($seclev >= 10000) ? 1 : 0; 
+
+	my $authors = $slashdb->getDescriptions('authors');
+	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
+
+	return slashDisplay('users-admin', { 
+		user		=> $user,
+		seclev_field	=> $display_seclev,
+		author_select	=> $author_select,
+		author_flag 	=> $author_flag, 
+		form_flag	=> $form_flag,
+		authoredit_flag => $authoredit_flag }, 
+		{ Return => 1 }
+	);
 }
 
 #################################################################

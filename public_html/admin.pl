@@ -415,7 +415,11 @@ sub templateSave {
 
 	return if getCurrentUser('seclev') < 500;
 
+	$form->{seclev} ||= 500;
+
 	my $saved = $slashdb->getTemplate($tpid);
+
+	print "seclev $form->{seclev}<br>\n";
 
 	if (getCurrentForm('save_new')) {
 		if($saved->{tpid}) {

@@ -442,17 +442,16 @@ CREATE TABLE submissions (
 #
 # Table structure for table 'templates'
 #
-
-DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
   tpid varchar(30) DEFAULT '' NOT NULL,
   template text,
   seclev int(1),
   description text,
   title varchar(128),
-  PRIMARY KEY (tpid)
+  page varchar(20) DEFAULT 'misc' NOT NULL,
+  PRIMARY KEY (tpid),
+  KEY page (page)
 );
-
 #
 # Table structure for table 'topics'
 #

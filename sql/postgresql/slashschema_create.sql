@@ -374,15 +374,16 @@ CREATE INDEX idx_subid ON submissions(subid,section);
 
 
 
-
 CREATE TABLE templates (
 	tpid varchar(30) DEFAULT '' NOT NULL,
 	template text,
 	seclev int4,
 	description text,
 	title varchar(128),
+	page varchar(20),
 	PRIMARY KEY (tpid)
 );
+CREATE INDEX idx_tmpltpage ON templates(page);
 
 
 
