@@ -1310,7 +1310,11 @@ sub saveStory {
 	my $edituser = $slashdb->getUser($form->{uid});
 	my $rootdir = getCurrentStatic('rootdir');
 
-	$form->{displaystatus} ||= 1 if $edituser->{section};
+	# In the previous form of this, a section only
+  # editor could assign a story to a different user
+  # and bypass their own restrictions for what section
+  # they could post to.
+	$form->{displaystatus} ||= 1 if ($user->{section} || $edituser->{section});
 	$form->{section} = $edituser->{section} if $edituser->{section};
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
