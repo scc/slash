@@ -975,7 +975,7 @@ sub createMenu {
 	my $nm = $slashdb->getTemplateByName($menu, 0, 0, "menu");
 	$menu = "users" unless $nm->{page} eq "menu";
 
-	if (@$menu_items) {
+	if (@$items) {
 		return slashDisplay($menu, {
 			items	=> $items
 		}, {

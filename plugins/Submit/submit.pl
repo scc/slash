@@ -34,6 +34,15 @@ sub main {
 
 	my $section = $form->{section};
 
+        # this really should not be done now, but later, it causes
+        # a lot of problems, but it causes a LOT of problems
+        # when moved elsewhere and we get double-encoding!
+        # so leave it here until you really know what you
+        # are doing -- pudge
+        $form->{from}   = strip_attribute($form->{from})  if $form->{from};
+        $form->{subj}   = strip_attribute($form->{subj})  if $form->{subj};
+        $form->{email}  = strip_attribute($form->{email}) if $form->{email};
+
 	# Show submission title on browser's titlebar.
 	my($tbtitle) = $form->{title};
 	if ($tbtitle) {
@@ -128,10 +137,6 @@ sub blankForm {
 #################################################################
 sub previewStory {
 	my($constants, $slashdb, $user, $form) = @_;
-	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
-	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
-	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
-
 	displayForm($form->{name}, $form->{email}, $form->{section}, getData('previewhead'));
 }
 
@@ -321,9 +326,6 @@ sub displayForm {
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
-	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
-	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
-	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	if (length($form->{story}) > $constants->{max_submission_size}) {
 		titlebar('100%', getData('max_submissionsize_title'));
@@ -382,9 +384,6 @@ sub saveSub {
 	my($constants, $slashdb, $user, $form) = @_;
 
 	$form->{name} ||= '';
-	$form->{name}	= strip_attribute($form->{name})  if $form->{name};
-	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
-	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
 	if (length($form->{subj}) < 2) {
 		titlebar('100%', getData('error'));
