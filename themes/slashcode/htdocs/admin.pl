@@ -51,10 +51,10 @@ sub main {
 
 	
 	# Admin Menu
-	print "<P>&nbsp;</P>" unless $user->{aseclev};
+	print "<P>&nbsp;</P>" unless $user->{seclev};
 
 	my $op = $form->{op};
-	if (!$user->{aseclev}) {
+	if (!$user->{seclev}) {
 		titlebar('100%', getTitle('adminLogin-title'));
 		adminLoginForm();
 
@@ -95,48 +95,48 @@ sub main {
 		editStory($form->{sid});
 
 	} elsif ($op eq 'topics') {
-		listTopics($user->{aseclev});
+		listTopics($user->{seclev});
 
 	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
-		colorEdit($user->{aseclev});
+		colorEdit($user->{seclev});
 		$op = 'colored';
 
 	} elsif ($form->{colorsave} || $form->{colorsavedef} || $form->{colororig}) {
 		colorSave();
-		colorEdit($user->{aseclev});
+		colorEdit($user->{seclev});
 
 	} elsif ($form->{blockdelete_cancel} || $op eq 'blocked') {
-		blockEdit($user->{aseclev},$form->{bid});
+		blockEdit($user->{seclev},$form->{bid});
 
 	} elsif ($form->{blocknew}) {
-		blockEdit($user->{aseclev});
+		blockEdit($user->{seclev});
 
 	} elsif ($form->{blocked1}) {
-		blockEdit($user->{aseclev}, $form->{bid1});
+		blockEdit($user->{seclev}, $form->{bid1});
 
 	} elsif ($form->{blocked2}) {
-		blockEdit($user->{aseclev}, $form->{bid2});
+		blockEdit($user->{seclev}, $form->{bid2});
 
 	} elsif ($form->{blocksave} || $form->{blocksavedef}) {
 		blockSave($form->{thisbid});
-		blockEdit($user->{aseclev}, $form->{thisbid});
+		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockrevert}) {
-		$slashdb->revertBlock($form->{thisbid}) if $user->{aseclev} < 500;
-		blockEdit($user->{aseclev}, $form->{thisbid});
+		$slashdb->revertBlock($form->{thisbid}) if $user->{seclev} < 500;
+		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockdelete}) {
-		blockEdit($user->{aseclev},$form->{thisbid});
+		blockEdit($user->{seclev},$form->{thisbid});
 
 	} elsif ($form->{blockdelete1}) {
-		blockEdit($user->{aseclev},$form->{bid1});
+		blockEdit($user->{seclev},$form->{bid1});
 
 	} elsif ($form->{blockdelete2}) {
-		blockEdit($user->{aseclev},$form->{bid2});
+		blockEdit($user->{seclev},$form->{bid2});
 
 	} elsif ($form->{blockdelete_confirm}) {
 		blockDelete($form->{deletebid});
-		blockEdit($user->{aseclev});
+		blockEdit($user->{seclev});
 
 	} elsif ($op eq 'authors') {
 		authorEdit($form->{thisaid});
@@ -257,7 +257,7 @@ sub authorEdit {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 
 	my ($section_select,$author_select);
 	my $deletebutton_flag = 0;
@@ -294,7 +294,7 @@ sub authorSave {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 	if ($form->{thisaid}) {
 		# And just why do we take two calls to do
 		# a new user? 
@@ -330,7 +330,7 @@ sub authorDelete {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 
 	print qq|<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">|;
 	print getMessage('authorDelete-confirm-msg', { aid => $aid }) if $form->{authordelete};
@@ -431,7 +431,7 @@ sub blockSave {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 	return unless $bid;
 	my $saved = $slashdb->saveBlock($bid);
 
@@ -455,7 +455,7 @@ sub blockDelete {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 	$slashdb->deleteBlock($bid);
 	print getMessage('blockDelete-message', { bid => $bid });
 }
@@ -470,7 +470,7 @@ sub colorEdit {
 
 	my($color_select,$block,$colorblock_clean,$title);
 	my $colors = [];
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 
 	my $colorblock;
 	$form->{color_block} ||= 'colors';
@@ -515,7 +515,7 @@ sub colorSave {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 500;
+	return if $user->{seclev} < 500;
 	my $colorblock = join ',', @{$constants}{qw[fg0 fg1 fg2 fg3 bg0 bg1 bg2 bg3]};
 
 	$slashdb->saveColorBlock($colorblock);
@@ -530,7 +530,7 @@ sub topicEdit {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	return if $user->{aseclev} < 1;
+	return if $user->{seclev} < 1;
 	my($topic, $topics_menu, $topics_select);
 	my @available_images;
 	my $image_select = "";
@@ -903,7 +903,7 @@ sub editStory {
 		$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{asection};
 	}
 
-	if ($user->{aseclev} > 100 and $storyref->{aid}) {
+	if ($user->{seclev} > 100 and $storyref->{aid}) {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
 		$author_select = createSelect('aid', $authors, $storyref->{aid},1);
@@ -998,7 +998,7 @@ sub listStories {
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
 		$displayoff = 1 if($writestatus < 0 || $displaystatus < 0);
 
-		if ($user->{aid} eq $aid || $user->{aseclev} > 100) {
+		if ($user->{aid} eq $aid || $user->{seclev} > 100) {
 			$canedit = 1;
 			$tbtitle = fixparam($title);
 		} 

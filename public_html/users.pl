@@ -111,13 +111,13 @@ sub main {
 	} elsif ($op eq 'mailpasswd') {
 		mailPassword($slashdb->getUserUID($form->{unickname}));
 
-	} elsif ($op eq 'suedituser' && $user->{aseclev} > 100) {
+	} elsif ($op eq 'suedituser' && $user->{seclev} > 100) {
 		editUser($slashdb->getUserUID($form->{name}));
 
-	} elsif ($op eq 'susaveuser' && $user->{aseclev} > 100) {
+	} elsif ($op eq 'susaveuser' && $user->{seclev} > 100) {
 		saveUser($form->{uid}); 
 
-	} elsif ($op eq 'sudeluser' && $user->{aseclev} > 100) {
+	} elsif ($op eq 'sudeluser' && $user->{seclev} > 100) {
 		delUser($form->{uid});
 
 	} elsif ($op eq 'userclose') {
@@ -137,7 +137,7 @@ sub main {
 		displayForm();
 	}
 
-	miniAdminMenu() if $user->{aseclev} > 100;
+	miniAdminMenu() if $user->{seclev} > 100;
 	writeLog('users', $user->{nickname});
 
 	footer();
@@ -175,7 +175,7 @@ sub previewSlashbox {
 	my $cleantitle = $section->{title};
 	$cleantitle =~ s/<(.*?)>//g;
 
-	my $is_editable = $user->{aseclev} > 999;
+	my $is_editable = $user->{seclev} > 999;
 
 	my $title = getTitle('previewslashbox_title', { cleantitle => $cleantitle });
 	slashDisplay('users-previewSlashbox', {
@@ -275,7 +275,7 @@ sub userInfo {
 
 	$form->{min} = 0 unless $form->{min};
 
- 	$karma_flag = 1 if $userbio->{aseclev} || $userbio->{uidbio} == $uid;
+ 	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uidbio} == $uid;
 
 	my $public_key = $userbio->{pubkey};
 	if ($public_key) {
@@ -547,7 +547,7 @@ sub saveUser {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	my $uid = $user->{aseclev} ? shift : $user->{uid};
+	my $uid = $user->{seclev} ? shift : $user->{uid};
 	my $user_email  = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my $note;
 
@@ -612,8 +612,8 @@ sub saveComm {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $uid  = $user->{aseclev} ? shift : $user->{uid};
-	my $name = $user->{aseclev} && $form->{name} ? $form->{name} : $user->{nickname};
+	my $uid  = $user->{seclev} ? shift : $user->{uid};
+	my $name = $user->{seclev} && $form->{name} ? $form->{name} : $user->{nickname};
 
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
@@ -658,8 +658,8 @@ sub saveHome {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $uid  = $user->{aseclev} ? shift : $user->{uid};
-	my $name = $user->{aseclev} && $form->{name} ? $form->{name} : $user->{nickname};
+	my $uid  = $user->{seclev} ? shift : $user->{uid};
+	my $name = $user->{seclev} && $form->{name} ? $form->{name} : $user->{nickname};
 
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);

@@ -436,8 +436,8 @@ sub getDiscussions {
 ########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
-sub getAdminInfo {
-	my($self, $session, $admin_timeout) = @_;
+sub getAuthorInfo {
+	my($self, $session, $admin_timeout, $user) = @_;
 
 	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
@@ -448,7 +448,7 @@ sub getAdminInfo {
 	);
 
 	unless ($aid) {
-		return('', 0, '', '');
+		return(0);
 	} else {
 		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
 			$self->{_dbh}->quote($session)
@@ -456,7 +456,13 @@ sub getAdminInfo {
 		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
 			'session=' . $self->{_dbh}->quote($session)
 		);
-		return($aid, $seclev, $section, $url);
+		$user->{aid} = $aid;
+		$user->{seclev} = $seclev;
+		$user->{asection} = $section;
+		$user->{url} = $url;
+		$user->{is_admin} = 1;
+		
+		return($seclev);
 	}
 }
 
@@ -493,26 +499,30 @@ sub setSectionExtra {
 
 ########################################################
 # Initial Administrator Login.
-sub setAdminInfo {
-	my($self, $aid, $pwd) = @_;
+sub getAuthorAuthenticate {
+	my($self, $aid, $pwd, $user) = @_;
 
+	my $db_aid = $self->{_dbh}->quote($aid);
 	if (my($seclev) = $self->sqlSelect('seclev', 'authors',
-			'aid=' . $self->{_dbh}->quote($aid) .
+			"aid=$db_aid" .
 			' AND pwd=' . $self->{_dbh}->quote($pwd) ) ) {
+		$user->{seclev} = $seclev;
+		$user->{aid} = $aid;
+		$user->{is_admin} = 1;
 
 		my($title) = $self->sqlSelect('lasttitle', 'sessions',
-			'aid=' . $self->{_dbh}->quote($aid)
+			"aid=$db_aid"
 		);
 
-		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{_dbh}->quote($aid) );
+		$self->sqlDo("DELETE FROM sessions WHERE aid=$db_aid");
 
 		my $sid = $self->generatesession($aid);
-		$self->sqlInsert('sessions', { session => $sid, aid => $aid,
+		$self->sqlInsert('sessions', { session => $sid, -aid => $db_aid,
 			-logintime => 'now()', -lasttime => 'now()',
 			lasttitle => $title }
 		);
-		return($seclev, $sid);
 
+		return($sid);
 	} else {
 		return(0);
 	}
@@ -652,8 +662,8 @@ sub deleteUser {
 	my($self, $uid) = @_;
 	$self->setUser($uid, {
 		bio		=> '',
-		nickname	=> '<deleted user>',
-		matchname	=> '<deleted user>',
+		nickname	=> 'deleted user',
+		matchname	=> 'deleted user',
 		realname	=> '',
 		realemail	=> '',
 		fakeemail	=> '',
@@ -845,12 +855,12 @@ sub getACTz {
 sub getVars {
 	my($self, @invars) = @_;
 
-	my @vars;
+	my @values;
 	for (@invars) {
-		push @vars, $self->sqlSelect('value', 'vars', "name='$_'");
+		push @values, $self->sqlSelect('value', 'vars', "name='$_'");
 	}
 
-	return @vars;
+	return @values;
 }
 
 
@@ -1965,7 +1975,7 @@ sub setCommentCleanup {
 			($val > 0 ? " < $constants->{comment_maxscore}" : "");
 
 	$strsql .= " AND lastmod<>$user->{uid}"
-		unless $user->{aseclev} > 99 && $constants->{authors_unlimited};
+		unless $user->{seclev} > 99 && $constants->{authors_unlimited};
 
 	if ($val ne "+0" && $self->sqlDo($strsql)) {
 		$self->setModeratorLog($cid, $sid, $user->{uid}, $modreason, $val);
@@ -2000,7 +2010,7 @@ sub setCommentCleanup {
 			"users_comments",
 			{ -points=>$user->{points} },
 			"uid=$user->{uid}"
-		); # unless ($user->{aseclev} > 99 && $comments->{authors_unlimited});
+		); 
 		return 1;
 	}
 	return;
@@ -2095,7 +2105,7 @@ sub getStories {
 
 	$where .= "AND displaystatus=0 " unless $form->{section};
 
-	$where .= "AND time < now() "; # unless $user->{aseclev};
+	$where .= "AND time < now() "; 
 	$where .= "AND (displaystatus>=0 AND '$SECT->{section}'=section) " if $form->{section};
 
 	$form->{issue} =~ s/[^0-9]//g; # Kludging around a screwed up URL somewhere
@@ -2787,18 +2797,8 @@ sub getNewStory {
 
 ########################################################
 sub getVar {
-	my($self, $name) = @_;
-	my $db_name = $self->{_dbh}->quote($name);
-	my $sql = "SELECT value FROM vars WHERE name=$db_name";
-	my $var = $self->{_dbh}->selectrow_array($sql);
-
-	return $var;
-}
-
-########################################################
-sub getVarRef {
-	my $varref = _genericGet('vars', 'name', @_);
-	return $varref;
+	my $answer = _genericGet('vars', 'name', @_);
+	return $answer;
 }
 
 ########################################################

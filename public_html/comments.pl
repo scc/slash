@@ -91,7 +91,7 @@ sub main {
 
 		editComment($id, $form, $user, $dbslash, $constants);
 
-	} elsif ($form->{op} eq "delete" && $user->{aseclev}) {
+	} elsif ($form->{op} eq "delete" && $user->{seclev}) {
 		titlebar("99%", "Delete $form->{cid}");
 
 		my $delCount = deleteThread($form->{sid}, $form->{cid}, $user, $dbslash);
@@ -482,7 +482,7 @@ sub previewForm {
 				      $form->{posttype});
 	my $tempSubject = stripByMode($form->{postersubj},
 				      'nohtml',
-				      $user->{aseclev},
+				      $user->{seclev},
 				      'B');
 	my $error_message;
 
@@ -522,7 +522,7 @@ sub submitComment {
 	my ($f, $u, $db, $c) = @_;
 	my $error_message;
 
-	$f->{postersubj} = stripByMode($f->{postersubj},'nohtml',$u->{aseclev},'');
+	$f->{postersubj} = stripByMode($f->{postersubj},'nohtml',$u->{seclev},'');
 	$f->{postercomment} = stripByMode($f->{postercomment}, $f->{posttype});
 
 	($f->{postercomment}, $f->{postersubj}, $error_message) =
@@ -573,7 +573,7 @@ sub moderate {
 	my $totalDel = 0;
 	my $hasPosted;
 
-	unless($u->{aseclev} > 99 && $c->{authors_unlimited}) {
+	unless($u->{seclev} > 99 && $c->{authors_unlimited}) {
 		$hasPosted = $db->countComments($f->{sid}, '','', $u->{uid});
 	}
 
@@ -597,7 +597,7 @@ sub moderate {
 		slashDisplay('comments-errors', {
 			type	=> 'already posted',
 		});
-	} elsif ($u->{aseclev} && $totalDel) {
+	} elsif ($u->{seclev} && $totalDel) {
 		my $count = $db->countComments($f->{sid});
 		slashDisplay('comments_deleted_message', {
 			total_deleted => $totalDel,
@@ -618,7 +618,7 @@ sub moderateCid {
 	my $superAuthor = $c->{authors_unlimited};
 	
 	if ($u->{points} < 1) {
-		unless ($u->{aseclev} > 99 && $superAuthor) {
+		unless ($u->{seclev} > 99 && $superAuthor) {
 			slashDisplay('comments-errors', {
 				type	=> 'no points',
 			});
@@ -637,7 +637,7 @@ sub moderateCid {
 		points	=> $u->{points},
 	};
 	
-	unless ($u->{aseclev} > 99 && $superAuthor) {
+	unless ($u->{seclev} > 99 && $superAuthor) {
 		my $mid = $db->getModeratorLogID($cid, $sid, $u->{uid});
 		if ($mid) {
 			$dispArgs->{type} = 'already moderated';
@@ -695,7 +695,7 @@ sub deleteThread {
 	my @delList if !$level;
 	$deleted = \@delList if !$level;
 
-	return unless $u->{aseclev} > 100;
+	return unless $u->{seclev} > 100;
 
 	my $delkids = $db->getCommentCid($sid, $cid);
 
@@ -724,7 +724,7 @@ sub deleteThread {
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
 	my($sid, $u, $db, $c) = @_;
-	return if !$u->{is_anon} || ($u->{aseclev} > 99 && $c->{authors_unlimited});
+	return if !$u->{is_anon} || ($u->{seclev} > 99 && $c->{authors_unlimited});
 
 	my $removed = $db->unsetModeratorlog($u->{uid},
 										 $sid,
@@ -744,7 +744,7 @@ sub undoModeration {
 # This maybe should go into DB package -Brian
 sub isTroll {
 	my ($user, $constants, $db) = @_;
-	return if $user->{aseclev} > 99;
+	return if $user->{seclev} > 99;
 
 	my($badIP, $badUID) = (0, 0);
 	return 0 if !$user->{is_anon} && $user->{karma} > -1;

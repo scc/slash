@@ -251,7 +251,7 @@ sub displayStories {
 				});
 			}
 
-			push @links, getData('editstory', { sid => $sid }) if $user->{aseclev} > 100;
+			push @links, getData('editstory', { sid => $sid }) if $user->{seclev} > 100;
 		}
 
 		$return .= slashDisplay('index-storylink', {

@@ -119,7 +119,7 @@ sub metaModerate {
 		changes => $changes,
 		count	=> $y,
 		rootdir => $c->{rootdir},
-		aseclev => $u->{aseclev},
+		seclev => $u->{seclev},
 		metamod => \%metamod,
 	});
 

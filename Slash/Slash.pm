@@ -193,12 +193,12 @@ sub selectSection {
 		return;
 	}
 
-	my $aseclev = getCurrentUser('aseclev');
+	my $seclev = getCurrentUser('seclev');
 	my $sectionbank = $slashdb->getSections();
 	my %sections = map {
 		($_, $sectionbank->{$_}{title})
 	} grep {
-		!($sectionbank->{$_}{isolate} && $aseclev < 500)
+		!($sectionbank->{$_}{isolate} && $seclev < 500)
 	} keys %$sectionbank;
 
 	createSelect($label, \%sections, $default, $return);
@@ -622,7 +622,7 @@ sub currentAdminUsers {
 
 	return slashDisplay('currentAdminUsers', {
 		ids		=> $aids,
-		can_edit_admins	=> $user->{aseclev} > 10000,
+		can_edit_admins	=> $user->{seclev} > 10000,
 	}, 1);
 }
 
@@ -727,7 +727,7 @@ sub header {
 		);
 		$params{-status} = $status if $status;
 		$params{-pragma} = 'no-cache'
-			unless $user->{aseclev} || $ENV{SCRIPT_NAME} =~ /comments/;
+			unless $user->{seclev} || $ENV{SCRIPT_NAME} =~ /comments/;
 
 		print CGI::header(%params);
 	}
@@ -1190,7 +1190,7 @@ sub printComments {
 	}
 
 	slashDisplay('printCommentsComments', {
-		can_moderate	=> (($user->{aseclev} || $user->{points}) && !$user->{is_anon}),
+		can_moderate	=> (($user->{seclev} || $user->{points}) && !$user->{is_anon}),
 		comment		=> $comment,
 		comments	=> $comments,
 		'next'		=> $next,
@@ -1233,7 +1233,7 @@ sub moderatorCommentLog {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
-	my $aseclev = getCurrentUser('aseclev');
+	my $seclev = getCurrentUser('seclev');
 	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
 	my(@reasonHist, $reasonTotal);
 
@@ -1243,7 +1243,7 @@ sub moderatorCommentLog {
 	}
 
 	slashDisplay('moderatorCommentLog', {
-		mod_admin	=> getCurrentUser('aseclev') > 1000,
+		mod_admin	=> getCurrentUser('seclev') > 1000,
 		comments	=> $comments,
 		reasonTotal	=> $reasonTotal,
 		reasonHist	=> \@reasonHist,
@@ -1498,7 +1498,7 @@ sub dispComment {
 	my $can_mod = ! $user->{is_anon} &&
 		((	$user->{willing} && $user->{points} > 0 &&
 			$comment->{uid} != $user->{uid} && $comment->{lastmod} != $user->{uid}
-		) || ($user->{aseclev} > 99 && $constants->{authors_unlimited}));
+		) || ($user->{seclev} > 99 && $constants->{authors_unlimited}));
 
 	slashDisplay('dispComment', {
 		%$comment,

@@ -52,10 +52,10 @@ sub main {
 
 	header(getData('title'), $form->{section});
 
-	if ($user->{aseclev} > 99 && $op eq 'edit') {
+	if ($user->{seclev} > 99 && $op eq 'edit') {
 		editpoll($form->{qid});
 
-	} elsif ($user->{aseclev} > 99 && $op eq 'save') {
+	} elsif ($user->{seclev} > 99 && $op eq 'save') {
 		savepoll();
 
 	} elsif (! defined $form->{qid}) {
@@ -178,7 +178,7 @@ sub listpolls {
 	slashDisplay('pollBooth-listpolls', {
 		questions	=> $questions,
 		startat		=> $min + @$questions,
-		admin		=> getCurrentUser('aseclev') >= 100,
+		admin		=> getCurrentUser('seclev') >= 100,
 		title		=> "$sitename Polls",
 		width		=> '99%'
 	});

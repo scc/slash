@@ -59,7 +59,8 @@ sub comments2tokens {
 	moderatordLog($report);
 }
 
-my($tc, $lc) = $slashdb->getVars("totalComments", "lastComments");
+my $tc = $slashdb->getVar('totalComments', 'value');
+my $lc = $slashdb->getVar('lastComments', 'value');
 my $newcomments = $tc - $lc;
 #$newcomments+=1000;
 

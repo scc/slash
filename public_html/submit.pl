@@ -40,7 +40,7 @@ sub main {
 	my($section, $op, $aid) = (
 		$form->{section}, $form->{op}, $user->{aid}
 	);
-	$user->{submit_admin} = 1 if $user->{aseclev} >= 100;
+	$user->{submit_admin} = 1 if $user->{seclev} >= 100;
 
 	$form->{del}	||= 0;
 	$form->{op}	||= '';

@@ -168,7 +168,7 @@ sub getUser {
 
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
-	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {
+	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {}
 		my $timezones = $slashdb->getCodes('tzcodes');
 		$user->{offset} = $timezones->{ $user->{tzcode} };
 
@@ -191,30 +191,6 @@ sub getUser {
 		setCookie('anon', $user->{anon_id}, 1);
 	}
 
-	if ($form->{op} eq 'adminlogin') {
-		my $sid;
-		($user->{aseclev}, $sid) =
-			$slashdb->setAdminInfo($form->{aaid}, $form->{apasswd});
-		if ($user->{aseclev}) {
-			$user->{aid} = $form->{aaid};
-			setCookie('session', $sid);
-			$user->{is_admin} = 1;
-		} else {
-			undef $user->{aid};
-		}
-
-	} elsif ($cookies->{session} && length($cookies->{session}->value) > 3) {
-		(@{$user}{qw[aid aseclev asection url]}) =
-			$slashdb->getAdminInfo(
-				$cookies->{session}->value,
-				$constants->{admin_timeout}
-			);
-		$user->{is_admin} = $user->{aid} ne '';
-
-	} else {
-		$user->{aid} = '';
-		$user->{aseclev} = 0;
-	}
 
 	my @defaults = (
 		['mode', 'thread'], qw[
@@ -235,9 +211,6 @@ sub getUser {
 		}
 	}
 
-	$user->{seclev} = $user->{aseclev}
-		if $user->{aseclev} > $user->{seclev};
-
 	if ($user->{commentlimit} > $constants->{breaking}
 		&& $user->{mode} ne 'archive') {
 		$user->{commentlimit} = int($constants->{breaking} / 2);
@@ -254,6 +227,19 @@ sub getUser {
 	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
 	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
 	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
+
+	if ($form->{op} eq 'adminlogin') {
+		if(my $sid = $slashdb->getAuthorAuthenticate($form->{aaid}, $form->{apasswd}, $user)) {
+			setCookie('session', $sid);
+		} 
+	} elsif ($cookies->{session} && length($cookies->{session}->value) > 3) {
+			my $value = $slashdb->getAuthorInfo(
+					$cookies->{session}->value,
+					$constants->{admin_timeout},
+					$user
+			);
+			print STDERR "VALUE $value \n";
+	}
 
 	return $user;
 }

@@ -143,7 +143,8 @@ sub getUptime {
 	my $stats = $x;
 
 	my($today, $yesterday) = $slashdb->getAccesLogCountTodayAndYestarday();
-	my($th, $tc) = $slashdb->getVar("totalhits", "totalComments");
+	my $th = $slashdb->getVar('totalhits', 'value');
+	my $tc = $slashdb->getVar('totalComments', 'value');
 
 	$stats .= "<B>yesterday:</B> $yesterday<BR>
 		<B>today:</B> $today<BR>

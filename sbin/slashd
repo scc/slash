@@ -424,7 +424,7 @@ sub freshenup {
 		slashdLog("Deleting $sid");
 	}
 
-	my($w) = $slashdb->getVar("writestatus");
+	my $w  = $slashdb->getVar('writestatus', 'value');
 
 #	if ($updates{articles} ne "" || $w ne "0") {
 		$slashdb->setVar("writestatus", "0");
@@ -478,8 +478,8 @@ print "WATCHPOINT " . __LINE__ . " " .  __FILE__ . "\n";
 			system("$constants->{sbindir}/portald $virtual_user&");
 			sleep(60 * 2);
 
-			my($today) = $slashdb->getTime();
-			my($yesterday) = $slashdb->getVars("today");
+			my $today = $slashdb->getTime();
+			my $yesterday = $slashdb->getVar('today', 'value');
 
 			if ($today ne $yesterday) {
 				$slashdb->setVar("today", $today);

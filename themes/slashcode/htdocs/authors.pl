@@ -43,7 +43,7 @@ sub main {
 		aids	=> $list,
 		authors	=> $authors,
 		title	=> "The Authors",
-		admin	=> getCurrentUser('aseclev') >= 1000,
+		admin	=> getCurrentUser('seclev') >= 1000,
 		'time'	=> scalar localtime,
 	});
 

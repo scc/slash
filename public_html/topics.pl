@@ -90,7 +90,7 @@ sub listTopics {
 	slashDisplay('topics-listTopics', {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
-		topic_admin	=> getCurrentUser('aseclev') > 500,
+		topic_admin	=> getCurrentUser('seclev') > 500,
 		topics		=> $slashdb->getTopics()
 	});
 

@@ -35,7 +35,7 @@ sub main {
 	my $form = getCurrentForm();
 
 	my $op = $form->{op};
-	my $seclev = $user->{aseclev};
+	my $seclev = $user->{seclev};
 
 	header(getData('head'), 'admin');
 
@@ -142,7 +142,7 @@ sub editSection {
 
 	slashDisplay('sections-editSection', {
 		section		=> $section,
-		seclev		=> $user->{aseclev},
+		seclev		=> $user->{seclev},
 		this_section	=> $this_section,
 		qid		=> $qid,
 		isolate		=> $isolate,

@@ -36,7 +36,7 @@ my $slashdb = getCurrentDB();
 
 my $count = $slashdb->countDaily();
 
-my $sdTotalHits = $slashdb->getVar("totalhits");
+my $sdTotalHits = $slashdb->getVar('totalhits', 'value');
 
 $sdTotalHits = $sdTotalHits + $count->{'total'};
 $slashdb->setVar("totalhits", $sdTotalHits);
