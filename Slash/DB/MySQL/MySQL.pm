@@ -2607,10 +2607,13 @@ sub getModeratorLast {
 ########################################################
 # No, this is not API, this is pretty specialized
 sub getModeratorLogRandom {
-	my($self) = @_;
-	my $m2 = getCurrentStatic('m2_comments');
-	my($min, $max) = $self->sqlSelect("min(id),max(id)", "moderatorlog");
-	return $min + int rand($max - $min - $m2);
+	my($self, $uid) = @_;
+	my($m2max) = $self->sqlSelect("max(mmid)", "metamodlog", "uid=$uid");
+	my($modmax) = $self->sqlSelect("max(id)", "moderatorlog");
+
+	# KLUDGE: This assumes that $m2max will always be below
+	# $max - vars(m2_comment).
+	return $m2max + int rand($modmax - $m2max);
 }
 
 ########################################################
