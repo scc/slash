@@ -21,7 +21,7 @@ $task{$me}{code} = sub {
 	my(@rc);
 
 	slashdLog('Daily Deleting Begin');
-	#$slashdb->deleteDaily();
+	$slashdb->deleteDaily();
 	slashdLog('Daily Deleting End');
 
 	# Mark discussions as archived.
