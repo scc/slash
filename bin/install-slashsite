@@ -334,7 +334,7 @@ if (open(SLASHSITES, "< $prefix/slash.sites")) {
 unless (exists $slash_sites{$user}) {
 	open(SLASHSITES, ">> $prefix/slash.sites")
 		or die "Can't append to $prefix/slash.sites: $!.\n";
-	print SLASHSITES "$user:$owner\n";
+	print SLASHSITES "$user:$owner:$sitename\n";
 	close(SLASHSITES);
 }
 
