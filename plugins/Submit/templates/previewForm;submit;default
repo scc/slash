@@ -59,7 +59,7 @@ __template__
 		<INPUT TYPE="submit" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
 	<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL"
->[% FILTER strip_literal; subtext; END %]</TEXTAREA><BR>
+>[% subtext | strip_literal %]</TEXTAREA><BR>
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 	</FORM>
 [% END %]

@@ -25,7 +25,7 @@ __template__
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]"><TR><TD>
 
 You can automatically login by clicking
-<A HREF="[% constants.rootdir %]/index.pl?op=userlogin&amp;upasswd=[% FILTER fixparam; useredit.passwd; END %]&amp;unickname=[% FILTER fixparam; useredit.nickname; END %]">This Link</A>
+<A HREF="[% constants.rootdir %]/index.pl?op=userlogin&amp;upasswd=[% useredit.passwd | fixparam %]&amp;unickname=[% useredit.nickname | fixparam %]">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 <BR>
 
@@ -41,27 +41,27 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 <BR>
 	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; useredit.realname; END %]" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% useredit.realname | strip_attribute %]" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="formname" VALUE="edituser">
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% useredit.uid %]">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; useredit.nickname; END %]">
+		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% useredit.nickname | strip_attribute %]">
 <BR>
 	<B>Your Email Address</B><BR>
 	<SMALL>(required but never displayed publicly, unless you specify so in
 	your comment preferences. This is where your passwd is mailed.  If you
 	change this address, a notification will be sent, and you will need 
 	follow the enclosed instructions to re-register)</SMALL><BR>
-	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; useredit.realemail; END %]" SIZE="40"><BR>
+	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% useredit.realemail | strip_attribute %]" SIZE="40"><BR>
 <BR>
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% FILTER strip_attribute; useredit.homepage; END %]" SIZE="60"><BR>
+		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% useredit.homepage | strip_attribute %]" SIZE="60"><BR>
 
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
-		<TEXTAREA NAME="sig" ROWS="2" COLS="60">[% FILTER strip_literal; useredit.sig; END %]</TEXTAREA>
+		<TEXTAREA NAME="sig" ROWS="2" COLS="60">[% useredit.sig | strip_literal %]</TEXTAREA>
 
 	<P><B>Bio</B> (this information is publicly displayed on your
 		user page.  255 chars)<BR>
-		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">[% FILTER strip_literal; useredit.bio; END %]</TEXTAREA>
+		<TEXTAREA NAME="bio" ROWS="5" COLS="60" WRAP="virtual">[% useredit.bio | strip_literal %]</TEXTAREA>
 
 	[% editkey %]
 

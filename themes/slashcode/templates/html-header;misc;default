@@ -15,7 +15,7 @@ html-header
 __template__
 [% DEFAULT title="$constants.sitename: $constants.slogan" %]
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><TITLE>[% FILTER strip_literal; title; END %]</TITLE>
+<HTML><HEAD><TITLE>[% title | strip_literal %]</TITLE>
 
 __seclev__
 10000

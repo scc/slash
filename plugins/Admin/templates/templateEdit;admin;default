@@ -139,7 +139,7 @@ __template__
 	<TR>
 		<TD VALIGN="TOP"><B>Description</B></TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">[% FILTER strip_literal; templateref.description; END %]</TEXTAREA>
+		<TEXTAREA ROWS="6" COLS="70" NAME="description">[% templateref.description | strip_literal %]</TEXTAREA>
 		</TD>
 	</TR>
 	<TR>
@@ -150,7 +150,7 @@ __template__
 		</TD>
 		<TD ALIGN="left" COLSPAN="2">
 
-		<TEXTAREA ROWS="15" COLS="100" NAME="template">[% FILTER strip_literal; templateref.template; END %]</TEXTAREA>
+		<TEXTAREA ROWS="15" COLS="100" NAME="template">[% templateref.template | strip_literal %]</TEXTAREA>
 		</TD>
 	</TR>
 [% ELSIF seclev_flag == 0 %]

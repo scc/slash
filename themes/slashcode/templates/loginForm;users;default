@@ -65,7 +65,7 @@ __template__
 <TABLE WIDTH="75%">
 	<TR>
 		<TD><B>Nickname</B></TD>
-		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% FILTER strip_attribute; form.unickname; END %]">
+		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% form.unickname | strip_attribute %]">
 		</TD>
 	</TR>
 	<TR>

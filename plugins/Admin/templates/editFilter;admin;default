@@ -102,7 +102,7 @@ __template__
 		</TD>
 <TD>&nbsp;&nbsp;</TD><TD VALIGN="top"><BR> [% filter.err_message %]</TD>
 		<TD VALIGN="top">
-		<TEXTAREA NAME="err_message" COLS="50" ROWS="2">[% FILTER strip_literal; filter.err_message; END %]</TEXTAREA>
+		<TEXTAREA NAME="err_message" COLS="50" ROWS="2">[% filter.err_message | strip_literal %]</TEXTAREA>
 		</TD>
 	</TR>
 </TABLE>

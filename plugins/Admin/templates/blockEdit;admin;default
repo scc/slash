@@ -106,7 +106,7 @@ __template__
 	<TR>
 		<TD VALIGN="TOP"><B>Description</B></TD>
 		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">[% FILTER strip_literal; blockref.description; END %]</TEXTAREA>
+		<TEXTAREA ROWS="6" COLS="70" NAME="description">[% blockref.description | strip_literal %]</TEXTAREA>
 		</TD>
 	</TR>
 	<TR>
@@ -120,7 +120,7 @@ __template__
 		</TD>
 		<TD ALIGN="left" COLSPAN="2">
 
-		<TEXTAREA ROWS="15" COLS="100" NAME="block">[% FILTER strip_literal; blockref.block; END %]</TEXTAREA>
+		<TEXTAREA ROWS="15" COLS="100" NAME="block">[% blockref.block | strip_literal %]</TEXTAREA>
 		</TD>
 	</TR>
 [% END %]

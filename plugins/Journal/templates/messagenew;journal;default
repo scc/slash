@@ -14,8 +14,8 @@ __template__
 [% IF msg.mode == 1 %]
 
 <P>
-<A HREF="[% constants.rootdir %]/~[% FILTER fixparam; journal.nickname; END %]">[% journal.nickname %]</A> has posted a new journal entry,
-<B><A HREF="[% constants.rootdir %]/~[% FILTER fixparam; journal.nickname; END %]/journal/">[% journal.description %]</A></B>.
+<A HREF="[% constants.rootdir %]/~[% journal.nickname | fixparam %]/">[% journal.nickname %]</A> has posted a new journal entry,
+<B><A HREF="[% constants.rootdir %]/~[% journal.nickname | fixparam %]/journal/">[% journal.description %]</A></B>.
 </P>
 
 [% ELSE %]
@@ -23,7 +23,7 @@ __template__
 [% journal.nickname %] has posted a new journal entry on [% constants.sitename %].
 
     [% journal.description %]
-    [% constants.absolutedir %]/~[% FILTER fixparam; journal.nickname; END %]/journal/
+    [% constants.absolutedir %]/~[% journal.nickname | fixparam %]/journal/
 
 [% END %]
 

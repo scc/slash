@@ -41,10 +41,10 @@ __template__
 	Sections
 
 [% CASE 'edithead' %]
-	Editing [% FILTER strip_nohtml; form.section; END %] Section
+	Editing [% form.section | strip_nohtml %] Section
 
 [% CASE 'savehead' %]
-	Saving [% FILTER strip_nohtml; form.section; END %] Section
+	Saving [% form.section | strip_nohtml %] Section
 
 [% END %]
 

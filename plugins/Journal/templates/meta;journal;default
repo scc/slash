@@ -24,7 +24,7 @@ __template__
 if you really want to do it.</P>
 [% ELSE %]
 <P>Alright, before we do this thing, I just want to really make
-sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</B>
+sure that you want to make <B>[% friend.nickname | strip_literal %]</B>
 ([% friend.uid %]) your friend.</P>
 [% END %]
 
@@ -42,7 +42,7 @@ sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</
 harder than others.</P>
 [% ELSE %]
 <P>Alright, before we do this thing, I just want to really make
-sure that you want to remove <B>[% FILTER strip_literal; friend.nickname; END %]</B>
+sure that you want to remove <B>[% friend.nickname | strip_literal %]</B>
 ([% friend.uid %]) as your friend.</P>
 [% END %]
 		[% END;
@@ -55,7 +55,7 @@ sure that you want to remove <B>[% FILTER strip_literal; friend.nickname; END %]
 		text	= BLOCK %]
 <P>Alright, before we do this thing, I just want to really make
 sure that you want to delete your journal entry
-<B>[% FILTER strip_literal; article.description; END %]</B>.</P>
+<B>[% article.description | strip_literal %]</B>.</P>
 		[% END;
 END %]
 

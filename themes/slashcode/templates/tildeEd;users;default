@@ -64,7 +64,7 @@ __template__
 
 		<P><B>User Space</B> (check 'user space' below and whatever
 		you place here will appear your custom [% constants.sitename %])<BR>
-		<TEXTAREA NAME="mylinks" rows=5 COLS="60" WRAP="VIRTUAL">[% FILTER strip_literal; userspace; END %]</TEXTAREA>
+		<TEXTAREA NAME="mylinks" rows=5 COLS="60" WRAP="VIRTUAL">[% userspace | strip_literal %]</TEXTAREA>
 		<P>
 		<MULTICOL COLS="3">
 

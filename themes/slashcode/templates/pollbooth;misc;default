@@ -35,7 +35,7 @@ Comments:<B>[% comments %]</B> | Votes:<B>[% voters %]</B>
 [% ELSE %]
 
 <FORM ACTION="[% constants.rootdir %]/pollBooth.pl">
-	<INPUT TYPE="hidden" NAME="qid" VALUE="[% FILTER strip_attribute; qid; END %]">
+	<INPUT TYPE="hidden" NAME="qid" VALUE="[% qid | strip_attribute %]">
 	[% IF user.currentSection %]
 	<INPUT TYPE="hidden" NAME="section" VALUE="[% user.currentSection %]">
 	[% END %]

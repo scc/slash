@@ -39,7 +39,7 @@ __template__
 	</TR>
 	<TR>
 		<TD><B>Nickname/UID/Email</B></TD>
-		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% FILTER strip_attribute; form.unickname; END %]">
+		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% form.unickname | strip_attribute %]">
 		<INPUT TYPE="SUBMIT" NAME="mailpasswd" VALUE="Mail Password">
 		</TD>
 	</TR>

@@ -87,7 +87,7 @@ __template__
 	to re-register, then please log in as that user, first.<BR>
 
 [% CASE 'emailexists_err' %]
-	Sorry, [% FILTER strip_literal; form.realemail; END %] already exists in our userbase.<BR>
+	Sorry, [% form.realemail | strip_literal %] already exists in our userbase.<BR>
 
 [% CASE 'sig_too_long_err' %]
 	Sorry, adding domain tags to your sig made it too long. Please try again,

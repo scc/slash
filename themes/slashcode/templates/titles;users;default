@@ -18,7 +18,7 @@ __template__
 [% SWITCH value %]
 
 [% CASE 'previewslashbox_title' %]
-	Preview [% FILTER strip_literal; blocktitle; END %]
+	Preview [% blocktitle | strip_literal %]
 
 [% CASE 'newUser_title' %]
 	User [% form.newusernick %] created.

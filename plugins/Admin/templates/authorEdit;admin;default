@@ -29,10 +29,10 @@ __template__
 		<TD>Email</TD><TD><INPUT TYPE="text" NAME="email" VALUE="[% author.email %]"></TD>
 	</TR>
 	<TR>
-		<TD>Quote</TD><TD><TEXTAREA NAME="quote" COLS="50" ROWS="4">[% FILTER strip_literal; author.quote; END %]</TEXTAREA></TD>
+		<TD>Quote</TD><TD><TEXTAREA NAME="quote" COLS="50" ROWS="4">[% author.quote | strip_literal %]</TEXTAREA></TD>
 	</TR>
 	<TR>
-		<TD>Copy</TD><TD><TEXTAREA NAME="copy" COLS="50" ROWS="5">[% FILTER strip_literal; author.copy; END %]</TEXTAREA></TD>
+		<TD>Copy</TD><TD><TEXTAREA NAME="copy" COLS="50" ROWS="5">[% author.copy | strip_literal %]</TEXTAREA></TD>
 	</TR>
 	<TR>
 		<TD>Passwd</TD><TD><INPUT TYPE="password" NAME="pwd" VALUE="[% author.pwd %]"></TD>

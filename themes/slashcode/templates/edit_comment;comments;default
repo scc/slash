@@ -83,12 +83,12 @@ END %]
 [% END %]
 
 	<TR><TD ALIGN="RIGHT">Subject: </TD>
-		<TD><INPUT TYPE="text" NAME="postersubj" VALUE="[% FILTER strip_attribute; form.postersubj; END %]" SIZE=50 MAXLENGTH=50></TD>
+		<TD><INPUT TYPE="text" NAME="postersubj" VALUE="[% form.postersubj | strip_attribute %]" SIZE=50 MAXLENGTH=50></TD>
 	</TR>
 	<TR>
 		<TD ALIGN="RIGHT" VALIGN="TOP">Comment</TD>
 		<TD><TEXTAREA WRAP="VIRTUAL" NAME="postercomment" ROWS="10"
-		COLS="50">[% FILTER strip_literal; form.postercomment; END %]</TEXTAREA>
+		COLS="50">[% form.postercomment | strip_literal %]</TEXTAREA>
 		<BR>(Use the Preview Button! Check those URLs!
 		Don't forget the http://!)
 	</TD></TR>

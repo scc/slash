@@ -81,7 +81,7 @@ __template__
 		[% END %]
 
 		<TD VALIGN="MIDDLE"><B>UID/NetID/Nickname:</B> 
-		<INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
+		<INPUT TYPE="TEXT" NAME="userfield" VALUE="[% form.userfield | strip_attribute %]"></TD>
 		<TD VALIGN="MIDDLE">
 		<TABLE>
 			<TR>

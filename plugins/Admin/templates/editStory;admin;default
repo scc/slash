@@ -31,7 +31,7 @@ __template__
 
 		<TD WIDTH="210" VALIGN="TOP">
 		[% storybox %]
-		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% FILTER strip_attribute; relatedtext; END %]">
+		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
 		</TD>
 	</TR>
 </TABLE>
@@ -45,7 +45,7 @@ __template__
 		</TD>
 		<TD WIDTH="220" VALIGN="TOP">
 		[% storybox %]
-		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% FILTER strip_attribute; relatedtext; END %]">
+		<INPUT TYPE="HIDDEN" NAME="relatedtext" VALUE="[% relatedtext | strip_attribute %]">
 		</TD>
 	</TR>
 </TABLE>
@@ -81,7 +81,7 @@ __template__
 		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
 		<B>Title</B> </FONT></TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="title" VALUE="[% FILTER strip_attribute; storyref.title; END %]" SIZE="50">
+		<INPUT TYPE="TEXT" NAME="title" VALUE="[% storyref.title | strip_attribute %]" SIZE="50">
 		</TD>
 	</TR>
 
@@ -90,7 +90,7 @@ __template__
 		<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
 		<B>Dept</B> </FONT></TD>
 		<TD BGCOLOR="[% user.bg.2 %]">
-		<INPUT TYPE="TEXT" NAME="dept" VALUE="[% FILTER strip_attribute; storyref.dept; END %]" SIZE="50">
+		<INPUT TYPE="TEXT" NAME="dept" VALUE="[% storyref.dept | strip_attribute %]" SIZE="50">
 		</TD>
 	</TR>
 	[% END %]
@@ -100,7 +100,7 @@ __template__
 			<TD BGCOLOR="[% user.bg.3 %]"><FONT COLOR="[% user.fg.3 %]">
 			<B>[% extra.0 %]</B> </FONT></TD>
 			<TD BGCOLOR="[% user.bg.2 %]">
-			<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% FILTER strip_attribute; storyref.${extra.1}; END %]" SIZE="50">
+			<INPUT TYPE="TEXT" NAME="[% extra.1 %]" VALUE="[% storyref.${extra.1} | strip_attribute %]" SIZE="50">
 			</TD>
 		</TR>
 	[% END %]
@@ -122,7 +122,7 @@ __template__
 
 		[% IF sid %]
 		| <INPUT TYPE="checkbox" NAME="fastforward" VALUE="[% fastforward_check %]">fastforward
-		| <A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% FILTER fixparam; storyref.sid; END %]&qid=[% storyref.qid %]&op=edit&question=[% FILTER fixparam; storyref.title; END %]">
+		| <A HREF="[% constants.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&qid=[% storyref.qid %]&op=edit&question=[% storyref.title | fixparam %]">
 		Related Poll</A>
 		[% END %]
 
@@ -136,7 +136,7 @@ __template__
 <BR>Intro Copy<BR>
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
 	<TR>
-<TD><TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">[% FILTER strip_literal; storyref.introtext; END %]</TEXTAREA></TD>
+<TD><TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">[% storyref.introtext | strip_literal %]</TEXTAREA></TD>
 <TD valign="top">[% ispell_comments.introtext %]</TD>
 </TR></TABLE><BR>
 
@@ -145,7 +145,7 @@ __template__
 <BR>Extended Copy<BR>
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
 	<TR>
-<TD><TEXTAREA NAME="bodytext" COLS="70" WRAP="VIRTUAL" ROWS="10">[% FILTER strip_literal; storyref.bodytext; END %]</TEXTAREA></TD>
+<TD><TEXTAREA NAME="bodytext" COLS="70" WRAP="VIRTUAL" ROWS="10">[% storyref.bodytext | strip_literal %]</TEXTAREA></TD>
 <TD valign="top">[% ispell_comments.bodytext %]</TD>
 </TR></TABLE><BR>
 
