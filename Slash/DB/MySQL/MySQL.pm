@@ -786,17 +786,6 @@ sub createAccessLog {
 	my $ipid = getCurrentUser('ipid') || '';
 	my $subnetid = getCurrentUser('subnetid') || '';
 
-	$self->sqlInsert('accesslog', {
-		host_addr	=> $ipid,
-		subnetid	=> $subnetid,
-		dat		=> $dat,
-		uid		=> $uid,
-		op		=> $op,
-		-ts		=> 'now()',
-		query_string	=> $ENV{QUERY_STRING} || '0',
-		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
-	}, 1);
-
 	if ($dat =~ /.*(\d{2}\/\d{2}\/\d{2}\/\d{4,7}).*/) {
 		$dat = $1;
 		$self->sqlUpdate('stories', { -hits => 'hits+1' },
@@ -808,6 +797,17 @@ sub createAccessLog {
 			);
 		}
 	}
+
+	$self->sqlInsert('accesslog', {
+		host_addr	=> $ipid,
+		subnetid	=> $subnetid,
+		dat		=> $dat,
+		uid		=> $uid,
+		op		=> $op,
+		-ts		=> 'now()',
+		query_string	=> $ENV{QUERY_STRING} || '0',
+		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
+	}, 1);
 }
 
 ########################################################
