@@ -2211,7 +2211,7 @@ sub saveStory {
 # Getting populated with my info for the moment
 
 # We should really make this dynamic, because getCurrentStatic()
-# fails if it is missing from this array ...
+# fails if it is missing from this array ... -- pudge
 
 sub getSlashConf {
 	my($self) = @_;
@@ -2321,6 +2321,16 @@ sub getSlashConf {
 	$conf{maxkarma}		= 999  unless defined $conf{maxkarma};
 	$conf{minkarma}		= -999 unless defined $conf{minkarma};
 
+	# no trailing newlines on directory variables
+	# possibly should rethink this for basedir,
+	# since some OSes don't use /, and if we use File::Spec
+	# everywhere this won't matter, but still should be do
+	# it for the others, since they are URL paths
+	# -- pudge
+	for (qw[rootdir absolutedir imagedir basedir]) {
+		$conf{$_} =~ s|/+$||;
+	}
+
 	$conf{m2_mincheck} = defined($conf{m2_mincheck})
 				? $conf{m2_mincheck}
 				: int $conf{m2_comments} / 3;
@@ -2329,6 +2339,7 @@ sub getSlashConf {
 		$conf{m2_maxbonus} = int $conf{goodkarma} / 2;
 	}
 
+	# <metallica>eval BAD!</metallica>
 	$conf{fixhrefs} = [];  # fix later
 	$conf{stats_reports} = eval $conf{stats_reports}
 		|| { $conf{adminmail} => "$conf{sitename} Stats Report" };

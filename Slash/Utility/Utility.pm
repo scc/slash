@@ -504,6 +504,8 @@ sub getCurrentUser {
 		$user = $static_user;
 	}
 
+	$user ||= {};
+
 	# i think we want to test defined($foo), not just $foo, right?
 	if ($value) {
 		return defined($user->{$value})

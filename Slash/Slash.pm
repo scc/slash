@@ -629,7 +629,8 @@ The 'ssihead' template block.
 sub ssiHead {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
+	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
+
 	slashDisplay('ssihead', {
 		dir	=> $dir,
 		section => "$user->{currentSection}/"
@@ -659,7 +660,8 @@ The 'ssifoot' template block.
 sub ssiFoot {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
-	(my $dir = $constants->{rootdir}) =~ s|^http://[^/]+||;
+	(my $dir = $constants->{rootdir}) =~ s|^(?:https?:)?//[^/]+||;
+
 	slashDisplay('ssifoot', {
 		dir	=> $dir,
 		section => "$user->{currentSection}/"
