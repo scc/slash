@@ -21,7 +21,7 @@ __template__
 [% END %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="GET">
-	<INPUT TYPE="TEXT" NAME="query" VALUE="[% form.query %]">
+	<INPUT TYPE="TEXT" SIZE="40" NAME="query" VALUE="[% form.query %]">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
 
 	<INPUT TYPE="RADIO" NAME="op" VALUE="stories"[% IF op == 'stories' %]CHECKED[% END %]> Stories

@@ -35,6 +35,11 @@ sub main {
 
 	# get rid of bad characters
 	$form->{query} =~ s/[^A-Z0-9'. ]/ /gi;
+	
+	# truncate query length
+	if (length($form->{query}) > 40) {
+		$form->{query} = substr($form->{query},0,40);
+	}
 
 	if ($form->{content_type} eq 'rss') {
 		if ($ops_rss{$form->{op}}) {
