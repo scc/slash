@@ -21,18 +21,19 @@ sub main {
 	my $id = getFormkeyId($user->{uid});
 
 	my %ops = (
-		default		=> \&displayComments,
-		index		=> \&commentIndex,
-		moderate	=> \&moderate,
-		reply		=> \&reply,
-		Reply		=> \&reply,
-		Edit		=> \&edit,
-		edit		=> \&edit,
-		post		=> \&edit,
-		Preview		=> \&edit,
-		preview		=> \&edit,
-		submit		=> \&submitComment,
-		Submit		=> \&submitComment,
+		default => \&displayComments,
+		index => \&commentIndex,
+		moderate => \&moderate,
+		reply => \&reply,
+		Reply => \&reply,
+		Edit => \&edit,
+		edit => \&edit,
+		post => \&edit,
+		creatediscussion => \&createDiscussion,
+		Preview => \&edit,
+		preview => \&edit,
+		submit => \&submitComment,
+		Submit => \&submitComment,
 	);
 
 	# maybe do an $op = lc($form->{'op'}) to make it simpler?
@@ -135,6 +136,23 @@ sub commentIndex {
 	slashDisplay('discuss_list', {
 		discussions	=> $discussions,
 	});
+}
+
+##################################################################
+# Yep, I changed the l33t method of adding discussions.
+# "The Slash job, keeping trolls on their toes"
+# -Brian
+sub createDiscussion {
+	my ($form, $slashdb, $user, $constants, $id) = @_;
+
+	my $time = $slashdb->sqlTime();
+
+	$slashdb->createDiscussion('', $form->{title}, 
+		$time, 
+		$ENV{HTTP_REFERER}, 1
+	);
+
+	commentIndex(@_);
 }
 
 
