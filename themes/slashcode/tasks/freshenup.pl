@@ -9,7 +9,7 @@ use vars qw( %task );
 
 my $total_changed_stories = 0;
 
-$task{$me}{timespec} = '*/5 * * * *';
+$task{$me}{timespec} = '0-59/5 * * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

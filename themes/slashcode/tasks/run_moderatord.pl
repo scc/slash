@@ -5,7 +5,7 @@ my $me = 'run_moderatord.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '15 */2 * * *';
+$task{$me}{timespec} = '15 0-23/2 * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

@@ -5,7 +5,7 @@ my $me = 'p2f_cheesy.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '51 */2 * * *';
+$task{$me}{timespec} = '51 0-23/2 * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
