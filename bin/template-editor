@@ -1,0 +1,84 @@
+#!/usr/bin/perl -w 
+# First version by Brian, brian@tanegnt.org
+
+# I hope someone takes this over. A TK frontend
+# would be nice. This was Cliff's idea and kudos
+# should go to him. -Brian
+use strict;
+use Slash::DB;
+use Getopt::Std;
+
+my %opts;
+usage() unless getopts('u:d:s', \%opts);
+
+$opts{'u'} = 'slash' unless $opts{'u'};  
+
+if($opts{'d'}) {
+	unless (-d $opts{'d'}) {
+		print "Invalid directory $opts{'d'} \n";
+		exit(0);
+	}
+}
+
+usage() unless($ARGV[0] || $opts{'d'});
+
+print "@ARGV\n";
+
+
+
+my $slash = Slash::DB->new($opts{'u'});
+
+if($opts{'s'}) {
+	my @files;
+	unless($ARGV[0]) {
+		opendir(DIR, $opts{'d'});
+		while(my $dir = readdir(DIR)) {
+			next if $dir =~ /\./;
+			print ":$dir:\n";
+			push @files, $dir;
+		}
+	} else {
+		for(@ARGV) {
+			push @files, $_;
+		}
+	}
+	for(@files) {
+		print "$_\n";
+		open(FILE, "<$opts{'d'}/$_");
+		my $data;
+		while(<FILE>){
+			$data .= $_;
+		}
+		close(FILE);
+		$slash->setTemplate($_, {template => $data});
+	}
+} else {
+	unless($ARGV[0]) {
+		my $templates = $slash->getDescriptions('templates');
+
+		for my $key (keys %$templates) {
+			my $template = $slash->getTemplate($key);
+			print "$template->{'tpid'}\n";
+			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			print FILE $template->{'template'};
+			close(FILE);
+		}
+	} else {
+		for(@ARGV) {
+			my $template = $slash->getTemplate($_);
+			print "$template->{'tpid'}\n";
+			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
+			print FILE $template->{'template'};
+			close(FILE);
+		}
+	}
+}
+
+sub usage {
+	print "Usage:template-editor  [OPTIONS] template template....\n";
+	print "\t-d directory to dump all templates in\n";
+	print "\t-u Virtual user to use(default is slash)\n";
+	print "\t-s Save template\n";
+	print "\n\tIf no template name is given a directory has to be specified\n\n";
+	exit();
+}

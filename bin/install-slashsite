@@ -111,7 +111,7 @@ while(<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,"<$theme/sql/mysql/prep_date.sql");
+open(DUMP,"<$theme/sql/mysql/prep.sql");
 
 while(<DUMP>) {
 	chomp;

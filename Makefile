@@ -51,9 +51,9 @@ install: slash
 	# Now for the default theme
 	cp -r public_html/* $(PREFIX)/themes/slashcode/htdocs/
 	cp sql/postgresql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/postgresql/datadump.sql
-	cp sql/postgresql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/postgresql/prep_date.sql
+	cp sql/postgresql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/postgresql/prep.sql
 	cp sql/mysql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/mysql/datadump.sql
-	cp sql/mysql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/mysql/prep_date.sql
+	cp sql/mysql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/mysql/prep.sql
 
 	# this needs to be made platform independent
 	install utils/slashd $(INIT)/init.d/
