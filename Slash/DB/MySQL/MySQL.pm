@@ -2903,8 +2903,12 @@ sub _genericGetCache {
 	if ($type) {
 		return $self->{$table_cache}{$id}{$values};
 	} else {
-		my %return = %{$self->{$table_cache}->{$id}};
-		return \%return;
+		if($self->{$table_cache}->{$id}) {
+			my %return = %{$self->{$table_cache}->{$id}};
+			return \%return;
+		} else {
+			return;
+		}
 	}
 }
 
