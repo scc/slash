@@ -350,10 +350,11 @@ sub _install {
 		my $fh = gensym;
 		if (open($fh, "< $prep_file\0")) {
 			while (<$fh>) {
-				next unless /^INSERT/;
-				next unless /^UPDATE/;
-				next unless /^REPLACE/;
-				next unless /^ALTER/;
+				next unless /^INSERT/i;
+				next unless /^UPDATE/i;
+				next unless /^DELETE/i;
+				next unless /^REPLACE/i;
+				next unless /^ALTER/i;
 				chomp;
 				s/www\.example\.com/$hostname/g;
 				s/admin\@example\.com/$email/g;
