@@ -33,10 +33,10 @@ sub handler {
 	# what is the point of "isBanned()"?  why not just get
 	# the reference and check for existence here? -- pudge
 	my $banlist = $slashdb->getBanList();
-	print STDERR "cur_subnet $cur_subnet";
-	for (%$banlist) {
-		print STDERR "cur_subnet $cur_subnet banlist key $_\n";
-	}
+#	print STDERR "cur_subnet $cur_subnet";
+#	for (%$banlist) {
+#		print STDERR "cur_subnet $cur_subnet banlist key $_\n";
+#	}
 
 	if ($banlist->{$cur_ipid} || $banlist->{$cur_subnet}) {
 		my $bug_off =<<EOT;
