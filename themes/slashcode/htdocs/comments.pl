@@ -28,6 +28,7 @@ use Date::Manip;
 use Compress::Zlib;
 use vars '%I';
 use Slash;
+use Slash::DB;
 use Slash::Utility;
 
 
@@ -39,19 +40,19 @@ sub main {
 	my $id = getFormkeyId($I{U}{uid});
 
 	# Seek Section for Appropriate L&F
-	my($s, $title, $commentstatus);
+	my $stories;
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
 	if($I{F}{sid}) {
-		($s, $title, $commentstatus) = $I{dbobject}->getNewStories($I{F}{sid});
+		$stories = $I{dbobject}->getNewStory($I{F}{sid}, 'section','title','commentstatus')
 	} else {
-		$title = "Comments";
+		$stories->{'title'} = "Comments";
 	}
-	my $SECT = getSection($s);
+	my $SECT = getSection($stories->{'section'});
 
 	$I{F}{pid} ||= "0";
 	
-	header("$SECT->{title}: $title", $SECT->{section});
+	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
 
 	if ($I{U}{uid} < 1 && length($I{F}{upasswd}) > 1) {
 		print "<P><B>Login for \"$I{F}{unickname}\" has failed</B>.  
@@ -97,7 +98,7 @@ sub main {
 	} elsif ($I{F}{op} eq "moderate") {
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();
-		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
+		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $stories->{'commentstatus'});
 
 	} elsif ($I{F}{op} eq "Change") {
 		if ($I{U}{uid} != $I{anonymous_coward_uid} || defined $I{F}->{"savechanges"}) {
@@ -107,13 +108,13 @@ sub main {
 					commentsort	=> $I{U}{commentsort}
 			}) if $I{U}{uid} != $I{anonymous_coward_uid};
 		}
-		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $commentstatus);
+		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $stories->{'commentstatus'});
 
 	} elsif ($I{F}{cid}) {
-		printComments($I{F}{sid}, $I{F}{cid},$I{F}{cid}, $commentstatus);
+		printComments($I{F}{sid}, $I{F}{cid},$I{F}{cid}, $stories->{'commentstatus'});
 
 	} elsif($I{F}{sid}) {
-		printComments($I{F}{sid}, $I{F}{pid}, "", $commentstatus);
+		printComments($I{F}{sid}, $I{F}{pid}, "", $stories->{'commentstatus'});
 
 	} else {
 		commentIndex();

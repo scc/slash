@@ -1291,8 +1291,9 @@ sub printComments {
 			$title = $I{dbobject}->getStoryBySid($sid, 'title');
 			$section = $I{dbobject}->getStoryBySid($sid, 'section');
 		} else {
-			($title, $section) = sqlSelect('title,section', 'newstories',
-				'sid=' . $I{dbh}->quote($sid));
+			my $story = $I{dbobject}->getNewStory($sid, 'title', 'section');
+			$title = $story->{'title'};
+			$section = $story->{'section'};
 		}
 
 		if ($title) {
@@ -1764,11 +1765,11 @@ sub displayStory {
 	my($sid, $full, $caller) = @_;
 
 	# we need this for time stamping
-	$I{code_time} = time;
+	my $code_time = time;
 
 	# this is a timestamp, in memory of this apache child
 	# process, in raw seconds since 1970
-	$I{storyBank}{timestamp} ||= $I{code_time};
+	$I{storyBank}{timestamp} ||= $code_time;
 
 	# set this to 0 if the calling page is index.pl and it's not
 	# already defined
@@ -1785,18 +1786,18 @@ sub displayStory {
 
 	# difference between the timestamp on storyBank and the time this
 	# code is executing
-	my $diff = $I{code_time} - $I{storyBank}{timestamp};
+	my $diff = $code_time - $I{storyBank}{timestamp};
 
 	# this will force the storyBank to refresh if one of it's members is
 	# older than the value we set for $story_expire
-	if ($I{code_time} - $I{storyBank}{timestamp} > $I{story_expire} && $I{story_refresh} != 1) {
+	if ($code_time - $I{storyBank}{timestamp} > $I{story_expire} && $I{story_refresh} != 1) {
 		$I{story_refresh} = 1;
 
 		# This clears the stories from the cache (doesn't harm the database)
 		$I{dbobject}->clearStory();
 
 		# smack a time stamp on it with the current time (this is the new timestamp)
-		$I{storyBank}{timestamp} = $I{code_time};
+		$I{storyBank}{timestamp} = $code_time;
 	}
 
 	# give this member of storyBank the current iteration of

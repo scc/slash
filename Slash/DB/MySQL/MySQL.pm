@@ -383,17 +383,6 @@ sub getUserKarma {
 }
 
 ########################################################
-sub getNewStories {
-	my($self, $sid) = @_;
-	return unless ($sid);
-	my($s, $title, $commentstatus) = $self->sqlSelect(
-		"section,title,commentstatus","newstories","sid=" . $self->{dbh}->quote($sid)
-	);
-
-	return($s, $title, $commentstatus);
-}
-
-########################################################
 # Handles admin logins (checks the sessions table for a cookie that
 # matches).  Called by getSlash
 sub getAdminInfo {
@@ -2838,6 +2827,11 @@ sub getSectionBlockByBid {
 ########################################################
 sub getModeratorLog {
 	my $answer = _genericGet('moderatorlog', 'id', @_);
+	return $answer;
+}
+########################################################
+sub getNewStory {
+	my $answer = _genericGet('newstories', 'sid', @_);
 	return $answer;
 }
 
