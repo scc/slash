@@ -78,20 +78,6 @@ use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 	root2abs
 );
 
-# @EXPORT_OK = qw(
-# 	ATTRIBUTE
-# 	LITERAL
-# 	NOHTML
-# 	PLAINTEXT
-# 	HTML
-# 	EXTRANS
-# 	CODE
-# );
-# 
-# %EXPORT_TAGS = (
-# 	all => [@EXPORT, @EXPORT_OK],
-# );
-
 # LEELA: We're going to deliver this crate like professionals.
 # FRY: Aww, can't we just dump it in the sewer and say we delivered it?
 # BENDER: Too much work!  I say we burn it, then *say* we dumped it in the sewer!
@@ -881,17 +867,21 @@ Return value
 sub stripByMode {
 	my($str, $fmode, $no_white_fix) = @_;
 	$fmode ||= NOHTML;
+	$no_white_fix = defined($no_white_fix) ? $no_white_fix : $fmode == LITERAL;
 
+	# insert whitespace into long words, convert <>& to HTML entities
 	if ($fmode == LITERAL || $fmode == EXTRANS || $fmode == ATTRIBUTE || $fmode == CODE) {
-		$str =~ s/(\S{90})/$1 /g unless $no_white_fix;
+		$str = breakHtml($str) unless $no_white_fix;
 		# Encode all HTML tags
 		$str =~ s/&/&amp;/g;
 		$str =~ s/</&lt;/g;
 		$str =~ s/>/&gt;/g;
 	} elsif ($fmode == PLAINTEXT) {
-		$str = stripBadHtml($str, $no_white_fix);
+		$str = stripBadHtml($str);
+		$str = breakHtml($str) unless $no_white_fix;
 	}
 
+	# convert regular text to HTML-ized text, insert P, etc.
 	if ($fmode == PLAINTEXT || $fmode == EXTRANS || $fmode == CODE) {
 		$str =~ s/\n/<BR>/gi;  # pp breaks
 		$str =~ s/(?:<BR>\s*){2,}<BR>/<BR><BR>/gi;
@@ -904,17 +894,21 @@ sub stripByMode {
 			$str =~ s/<BR>\n?( +)/"<BR>\n" . ("&nbsp; " x length($1))/ieg;
 		}
 
+	# strip out all HTML
 	} elsif ($fmode == NOHTML) {
 		$str =~ s/<.*?>//g;
 		$str =~ s/<//g;
 		$str =~ s/>//g;
 		$str =~ s/&/&amp;/g;
 
+	# convert HTML attribute to allowed text (just convert ")
 	} elsif ($fmode == ATTRIBUTE) {
 		$str =~ s/"/&#34;/g;
 
+	# probably 'html'
 	} else {
-		$str = stripBadHtml($str, $no_white_fix);
+		$str = stripBadHtml($str);
+		$str = breakHtml($str) unless $no_white_fix;
 	}
 
 	return $str;
@@ -922,6 +916,13 @@ sub stripByMode {
 
 sub strip_mode {
 	my($string, $mode, @args) = @_;
+
+	# note that user-supplied modes are all > 0, so
+	# we only allow modes to use this function that are
+	# greater than 0, all others must be called via their
+	# function names directly (literal, attribute, nohtml)
+
+	$mode ||= 0;
 	return if $mode < 1;	# user-supplied modes > 0
 	return stripByMode($string, $mode, @args);
 }
@@ -941,12 +942,41 @@ sub stripBadHtml  {
 
 	$str =~ s/<(?!.*?>)//gs;
 	$str =~ s/<(.*?)>/approveTag($1)/sge;
-
 	$str =~ s/></> </g;
 
-	$str =~ s/([^<>\s]{90})/$1 /g unless $no_white_fix;
-
 	return $str;
+}
+
+########################################################
+{
+	my %is_break_tag;
+
+	sub breakHtml {
+		my($comment, $mwl) = @_;
+		my($new, $l, $c, $in_tag, $this_tag, $cwl);
+
+		$mwl = $mwl || 50;
+		$l = length($comment);
+
+		%is_break_tag = map { uc, 1 } qw(HR BR LI P OL UL BLOCKQUOTE DIV)
+			unless scalar keys %is_break_tag;
+
+		for (my $i = 0; $i < $l; $new .= $c, ++$i) {
+			$c = substr($comment, $i, 1);
+			if ($c eq '<')		{ $in_tag = 1 }
+			elsif ($c eq '>')	{
+				$in_tag = 0;
+				$this_tag =~ s{^/?(\S+).*}{\U$1};
+				$cwl = 0 if $is_break_tag{$this_tag};
+				$this_tag = '';
+			}
+			elsif ($in_tag)		{ $this_tag .= $c }
+			elsif ($c =~ /\s/)	{ $cwl = 0 }
+			elsif (++$cwl > $mwl)	{ $new .= ' '; $cwl = 1 }
+		}
+
+		return $new;
+	}
 }
 
 ########################################################
@@ -1124,21 +1154,18 @@ Return value
 sub fixurl {
 	my($url, $parameter) = @_;
 
-	# RFC 2396
-	my $mark = quotemeta(q"-_.!~*'()");
-	my $alphanum = 'a-zA-Z0-9';
-	my $unreserved = $alphanum . $mark;
-	my $reserved = quotemeta(';|/?:@&=+$,');
-	my $extra = quotemeta('%#');
-
 	if ($parameter) {
-		$url =~ s/([^$unreserved])/sprintf "%%%02X", ord $1/ge;
+		$url =~ s/([^$URI::unreserved])/$URI::Escape::escapes{$1}/oge;
 		return $url;
 	} else {
 		$url =~ s/[" ]//g;
+		# strip surrounding ' if exists
 		$url =~ s/^'(.+?)'$/$1/g;
-		$url =~ s/([^$unreserved$reserved$extra])/sprintf "%%%02X", ord $1/ge;
+		# add '#' to allowed characters
+		$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
 		$url = fixHref($url) || $url;
+
+		# we don't like SCRIPT a the beginning of a URL
 		my $decoded_url = decode_entities($url);
 		return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
 	}

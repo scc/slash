@@ -255,15 +255,12 @@ sub newrdf {
 	);
 
 	my $SECT = getSection($section);
-	$SECT->{title} = "$constants->{sitename}: $SECT->{title}" unless $SECT->{isolate};
-
-	my @fs = (xmlEncodeStr($SECT->{title}),
-		$section ? "/index.pl?section=$section" : '',
-		xmlEncodeStr($constants->{sitename})
-	);
+	my $title = $SECT->{isolate}
+		? $SECT->{title}
+		: "$constants->{sitename}: $SECT->{title}";
 
 	$rss->channel(
-		title		=> xmlEncodeStr($SECT->{title}),
+		title		=> xmlEncodeStr($title),
 		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
 #		language	=> $constants->{rdflanguage},
 		description	=> $constants->{slogan},
@@ -340,13 +337,14 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 EOT
 
 	for my $section (@$stories_and_topics) {
-		$x.= sprintf <<EOT, xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
+		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept});
+		$x.= <<EOT;
 	<story>
-		<title>%s</title>
+		<title>$str[0]</title>
 		<url>$constants->{rootdir}/article.pl?sid=$section->{sid}</url>
 		<time>$section->{'time'}</time>
 		<author>$section->{aid}</author>
-		<department>%s</department>
+		<department>$str[1]</department>
 		<topic>$section->{tid}</topic>
 		<comments>$section->{commentcount}</comments>
 		<section>$section->{section}</section>

@@ -53,7 +53,7 @@ sub fetch {
 
 		# nothing in cache so try to load, compile and cache
 		($data, $error) = $self->_load($name, $text);
-		($data, $error) = $self->_compile($data) unless ($error); # , $compfile
+		($data, $error) = $self->_compile($data) unless $error; # , $compfile
 		$data = $self->_store($name, $data) unless $error;
 	}
 

@@ -28,6 +28,7 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
+require URI;
 
 #################################################################
 sub main {
@@ -118,10 +119,16 @@ sub previewForm {
 
 	my $sub = $slashdb->getSubmission($subid,
 		[qw(email name subj tid story time comment)]);
+
 	$sub->{story} =~ s/\n\n/\n<P>/gi;
 	$sub->{story} .= ' ';
-	$sub->{story} =~  s{(?<!"|=|>)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
-			{<A HREF="$1://$2">$1://$2</A> }gi;
+	$introtext =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
+		my($proto, $url) = ($1, $2);
+		my $extra = '';
+		$extra = ',' if $url =~ s/,$//;
+		$extra = ')' . $extra if $url !~ /\(/ && $url =~ s/\)$//;
+		qq[<A HREF="$proto://$url">$proto://$url</A>$extra];
+	}ogie;
 	$sub->{story} =~ s/\s+$//;
 
 	if ($sub->{email} =~ /@/) {
@@ -267,7 +274,7 @@ sub displayForm {
 		fakeemail	=> $form->{email} || $fakeemail,
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $slashdb->getTopic($form->{tid}),
-		literalstory	=> strip_literal($form->{story}, 1),
+		literalstory	=> strip_literal($form->{story}),
 		width		=> '100%',
 		title		=> $title,
 	});

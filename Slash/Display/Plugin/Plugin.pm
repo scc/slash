@@ -36,8 +36,9 @@ sub new {
 sub db { Slash::Utility::getCurrentDB() }
 
 sub AUTOLOAD {
-	# pull off class name before sending to function;
-	# that's the whole reason we have AUTOLOAD here at all
+	# pull off first param before sending to function;
+	# that's the whole reason we have AUTOLOAD here,
+	# to de-OOP the call
 	shift;
 	(my $name = $AUTOLOAD) =~ s/^.*://;
 	return if $name eq 'DESTROY';

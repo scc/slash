@@ -201,10 +201,7 @@ sub newUser {
 	my $title;
 
 	# Check if User Exists
-	$form->{newuser} =~ s/\s+/ /g;
-	$form->{newuser} =~ s/[^ a-zA-Z0-9\$_.+!*'(),-]+//g;
-	$form->{newuser} = substr($form->{newuser}, 0, 20);
-
+	$form->{newuser} = fixNickname($form->{newuser});
 	(my $matchname = lc $form->{newuser}) =~ s/[^a-zA-Z0-9]//g;
 
 	if ($matchname ne '' && $form->{newuser} ne '' && $form->{email} =~ /\@/) {
@@ -256,7 +253,8 @@ sub mailPassword {
 
 #################################################################
 sub userInfo {
-	my($uid, $nick) = @_;
+	my($uid, $orignick) = @_;
+	my $nick = strip_literal($orignick);
 
 	if (! defined $uid) {
 		print getMessage('userinfo_nicknf_msg', { nick => $nick });
@@ -282,7 +280,7 @@ sub userInfo {
 		$public_key = strip_html($public_key);
 	}
 
-	if ($userbio->{nickname} eq $nick) {
+	if ($userbio->{nickname} eq $orignick) {
 		$nickmatch_flag = 1;
 		$points = $userbio->{points};
 		$mod_flag = 1 if $userbio->{uid} == $uid && $points > 0;
@@ -739,7 +737,9 @@ sub displayForm {
 
 	my($title, $title2);
 
-	$title = $form->{unickname}? getTitle('displayForm_err_title') : getTitle('displayForm_title');
+	$title = $form->{unickname}
+		? getTitle('displayForm_err_title')
+		: getTitle('displayForm_title');
 
 	$form->{unickname} ||= $form->{newuser};
 
@@ -753,6 +753,7 @@ sub displayForm {
 	$msg .= getMessage('dispform_new_msg_2') if ! $form->{newuser};
 
 	slashDisplay('users-displayForm', {
+		newnick		=> fixNickname($form->{newuser}),
 		title 		=> $title,
 		title2 		=> $title2,
 		msg 		=> $msg
@@ -782,6 +783,14 @@ sub getTitle {
 }
 
 #################################################################
+sub fixNickname {
+	local($_) = @_;
+	s/\s+/ /g;
+	s/[^ a-zA-Z0-9\$_.+!*'(),-]+//g;
+	$_ = substr($_, 0, 20);
+	return $_;
+}
+
 createEnvironment();
 main();
 

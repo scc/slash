@@ -179,8 +179,9 @@ EOT
 			: "$constants->{rootdir}/comments.pl?sid=$sid&pid=$pid#$cid";
 
 		my $user_email = $slashdb->getUser($uid, ['fakeemail', 'nickname']);
-		printf <<EOT, $match ? $match : $x;
-<BR><B>%s</B>
+		my $match_p = $match ? $match : $x;
+		print <<EOT;
+<BR><B>$match_p</B>
 	<A HREF="$href">$subj</A>
 	by <A HREF="mailto:$user_email->{fakeemail}">$user_email->{nickname}</A> on $cdate<BR>
 	<FONT SIZE="2">attached to <A HREF="$constants->{rootdir}/$section/$sid.shtml">$title</A> 

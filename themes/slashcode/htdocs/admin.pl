@@ -286,7 +286,7 @@ sub authorEdit {
 	$deletebutton_flag = 1 if (! $authornew && $aid ne $user->{uid}) ;
 
 	for ($author->{email}, $author->{copy}) {
-		$_ = strip_literal($_, 1);
+		$_ = strip_literal($_);
 	}
 
 	slashDisplay('admin-authorEdit', {
@@ -396,8 +396,8 @@ sub templateEdit {
 		$templateedit_flag = 1;
 	}
 
-	$description_ta = strip_literal($templateref->{description}, 1);
-	$template_ta = strip_literal($templateref->{template}, 1);
+	$description_ta = strip_literal($templateref->{description});
+	$template_ta = strip_literal($templateref->{template});
 
 	$templateform_flag = 1 if ( (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
 
@@ -519,8 +519,8 @@ sub blockEdit {
 		}	
 	}	
 
-	$description_ta = strip_literal($blockref->{description}, 1);
-	$block_ta = strip_literal($blockref->{block}, 1);
+	$description_ta = strip_literal($blockref->{description});
+	$block_ta = strip_literal($blockref->{block});
 
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
@@ -976,9 +976,9 @@ sub editStory {
 	}
 	$extracolumns =  $slashdb->getKeys($storyref->{section});
 
-	$introtext = strip_literal($storyref->{introtext}, 1);
-	$bodytext  = strip_literal($storyref->{bodytext}, 1);
-	$relatedtext = strip_literal($storyref->{relatedtext}, 1);
+	$introtext = strip_literal($storyref->{introtext});
+	$bodytext  = strip_literal($storyref->{bodytext});
+	$relatedtext = strip_literal($storyref->{relatedtext});
 	my $SECT = getSection($storyref->{section});
 
 	$editbuttons = editbuttons($newarticle);
@@ -1181,7 +1181,7 @@ sub editFilter {
 	my $filter = $slashdb->getContentFilter($filter_id, \@values, 1);
 
 	# this has to be here - it really screws up the block editor
-	$filter->{err_message} = strip_literal($filter->{'err_message'}, 1);
+	$filter->{err_message} = strip_literal($filter->{'err_message'});
 
 	slashDisplay('admin-editFilter', { 
 		filter		=> $filter, 

@@ -152,6 +152,7 @@ sub setComment {
 	# This will keep a pid from being replace by
 	# with other comment's pid
 	if ($form->{pid} >= $maxCid || $form->{pid} < 0) {
+		$self->sqlDo("UNLOCK TABLES");
 		return;
 	}
 
@@ -369,7 +370,7 @@ sub createSubmission {
 			email	=> $form->{email},
 			uid	=> $ENV{SLASH_USER},
 			name	=> $form->{from},
-			story	=> $form->{story},
+			story	=> strip_html($form->{story}),
 			-'time'	=> 'now()',
 			subid	=> $subid,
 			subj	=> $form->{subj},

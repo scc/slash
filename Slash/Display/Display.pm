@@ -283,7 +283,8 @@ It might seem simpler to just use the functional form:
 	[% FILTER strip_nohtml %][% form.something %][% END %]
 	[% Slash.strip_nohtml(form.something) %]
 
-But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>).
+But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>)
+in the future, so it is best to stick with the filter.
 
 =cut
 
@@ -294,53 +295,18 @@ my $strip_mode = sub {
 	return sub { strip_mode($_[0], @args) };
 };
 
-my $strip_attribute = sub {
-	my($context, @args) = @_;
-	return sub { strip_attribute($_[0], @args) };
-};
-
-my $strip_code = sub {
-	my($context, @args) = @_;
-	return sub { strip_code($_[0], @args) };
-};
-
-my $strip_extrans = sub {
-	my($context, @args) = @_;
-	return sub { strip_extrans($_[0], @args) };
-};
-
-my $strip_html = sub {
-	my($context, @args) = @_;
-	return sub { strip_html($_[0], @args) };
-};
-
-my $strip_literal = sub {
-	my($context, @args) = @_;
-	return sub { strip_literal($_[0], @args) };
-};
-
-my $strip_nohtml = sub {
-	my($context, @args) = @_;
-	return sub { strip_nohtml($_[0], @args) };
-};
-
-my $strip_plaintext = sub {
-	my($context, @args) = @_;
-	return sub { strip_plaintext($_[0], @args) };
-};
-
 $filters = Template::Filters->new({
 	FILTERS => {
 		fixparam	=> \&fixparam,
 		fixurl		=> \&fixurl,
-		strip_attribute	=> [ $strip_attribute,	1 ],
-		strip_code	=> [ $strip_code,	1 ],
-		strip_extrans	=> [ $strip_extrans,	1 ],
-		strip_html	=> [ $strip_html,	1 ],
-		strip_literal	=> [ $strip_literal,	1 ],
-		strip_nohtml	=> [ $strip_nohtml,	1 ],
-		strip_plaintext	=> [ $strip_plaintext,	1 ],
-		strip_mode	=> [ $strip_mode,	1 ]
+		strip_attribute	=> \&strip_attribute,
+		strip_code	=> \&strip_code,
+		strip_extrans	=> \&strip_extrans,
+		strip_html	=> \&strip_html,
+		strip_literal	=> \&strip_literal,
+		strip_nohtml	=> \&strip_nohtml,
+		strip_plaintext	=> \&strip_plaintext,
+		strip_mode	=> [ $strip_mode, 1 ]
 	}
 });
 
