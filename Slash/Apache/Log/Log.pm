@@ -19,6 +19,7 @@ sub handler {
 	my($r) = @_;
 	my $constants = getCurrentStatic();
 	return OK if -e "$constants->{datadir}/dboff";
+	return unless $r->status == 200;
 
 	# Notes has a bug (still in apache 1.3.17 at
 	# last look). Apache's directory sub handler
