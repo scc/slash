@@ -17,9 +17,9 @@ __template__
 <TABLE BGCOLOR="[% user.bg.2 %]" BORDER="0"  WIDTH="100%" CELLPADDING="2" CELLSPACING="0">
 	<TR>
 		<TD>[ [% FOR i = items %]
-		<A HREF="[% i.value %]">[% i.label %]</A>
+		<FONT SIZE="2"><A HREF="[% i.value %]">[% i.label %]</A>
 	[% " | " UNLESS loop.last %]
-[% END %] ]	</TD>
+[% END %] ]	<FONT></TD>
 	</TR>
 </TABLE>
 
