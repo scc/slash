@@ -17,6 +17,12 @@ data
 __template__
 [% SWITCH value %]
 
+[% CASE 'mainhead' %]
+	[% constants.sitename %] Journal System
+
+[% CASE 'userhead' %]
+	[% nickname %]'s Journal
+
 [% CASE 'nousers' %]
 	No users with journals found matching "[% FILTER strip_literal; form.nickname; END %]".
 

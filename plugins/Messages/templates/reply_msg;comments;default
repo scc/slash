@@ -19,7 +19,7 @@ __template__
 %]">[% reply.subject %]</A></B>, in reply to your comment,
 <B><A HREF="[% constants.rootdir %]/comments.pl?sid=[% parent.sid %]&amp;cid=[% parent.cid
 %]">[% parent.subject %]</A></B>, attached to
-<B><A HREF="[% constants.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</A></B>.
+<B><A HREF="[% discussion.url %]">[% discussion.title %]</A></B>.
 </P>
 
 [% ELSE %]
@@ -32,9 +32,9 @@ Replied to:
     [% parent.subject %]    
     [% constants.absolutedir %]/comments.pl?sid=[% parent.sid %]&cid=[% parent.cid %]
 
-Attached to the story:
-    [% story.title %]
-    [% constants.absolutedir %]/article.pl?sid=[% story.sid %]
+Attached to:
+    [% discussion.title %]
+    [% discussion.url %]
 
 [% END %]
 

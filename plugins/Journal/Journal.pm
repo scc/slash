@@ -99,7 +99,8 @@ sub create {
 	});
 
 	my($date) = $self->sqlSelect('date', 'journals', "id=$id");
-	$self->setUser($uid, { journal_last_entry_date	=> $date });
+	my $slashdb = getCurrentDB();
+	$slashdb->setUser($uid, { journal_last_entry_date => $date });
 
 	return $id;
 }
@@ -108,6 +109,10 @@ sub remove {
 	my($self, $id) = @_;
 	my $uid = $ENV{SLASH_USER};
 	$self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id");
+
+	my($date) = $self->sqlSelect('MAX(date)', 'journals', "uid=$uid");
+	my $slashdb = getCurrentDB();
+	$slashdb->setUser($uid, { journal_last_entry_date => $date });
 }
 
 sub friends {

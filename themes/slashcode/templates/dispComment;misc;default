@@ -38,9 +38,9 @@ __template__
 				<FONT FACE="[% constants.mainfontface %]" SIZE="1">by
 [% IF fakeemail %]<A HREF="mailto:[% fakeemail %]">[% nickname %]</A>
 <B><FONT SIZE="2">([% fakeemail %])</FONT></B>[% ELSE %][% nickname %][% END %]
- on [% time %] (<A HREF="[% constants.rootdir %]/comments.pl?sid=[% sid %]&cid=[% cid %]">#[% cid %]</A>)</FONT><BR>
+ on [% time %] (<A HREF="[% constants.rootdir %]/comments.pl?sid=[% sid %]&amp;cid=[% cid %]">#[% cid %]</A>)</FONT><BR>
 				<FONT FACE="[% constants.mainfontface %]" SIZE="1">
-[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
+[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&amp;nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
 [% IF homepage && homepage.length > 8 %]<A HREF="[% homepage %]">[% homepage %]</A><BR>[% END %]
 </FONT>
 			</TD></TR></TABLE></TD>

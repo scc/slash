@@ -50,7 +50,8 @@ use vars qw($VERSION @EXPORT $vuser);
 	@Slash::Utility::EXPORT,
 	@Slash::XML::EXPORT,
 	@Data::Dumper::EXPORT,
-	'slashTest'
+	'slashTest',
+	'Display',
 );
 
 $vuser = 'slash';
@@ -104,6 +105,31 @@ sub slashTest {
 	$::constants = getCurrentStatic();
 	$::user      = getCurrentUser();
 	$::form      = getCurrentForm();
+}
+
+#========================================================================
+
+=head2 Display(TEMPLATE [, HASHREF, RETURN])
+
+A wrapper for slashDisplay().  Pass in a template string (not a template
+name) and optional hashref of variables.  Nocomm is true.  Default is to
+print (else make third param true).
+
+If first arg is false, then takes template from STDIN.  You can type in
+your template on the command line, then, and hit ctrl-D or whatever
+to end.
+
+=cut
+
+sub Display {
+	my($template, $hashref, $return) = @_;
+	if (!$template) {
+		$template = '';
+		while (<>) {
+			$template .= $_;
+		}
+	}
+	slashDisplay(\$template, $hashref, { Nocomm => 1, Return => $return });
 }
 
 1;

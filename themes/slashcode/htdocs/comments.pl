@@ -335,7 +335,7 @@ sub createDiscussion {
 	my($form, $slashdb, $user, $constants, $formkeyid) = @_;
 
 	if ($user->{seclev} >= $constants->{discussion_create_seclev}) {
-		$form->{url} ||= $ENV{HTTP_REFERER};
+		$form->{url} = fixurl($form->{url} || $ENV{HTTP_REFERER});
 		$slashdb->createDiscussion($form->{title},
 			$form->{url}, $form->{topic}, 1
 		);
@@ -634,15 +634,14 @@ sub submitComment {
 			my $parent = $slashdb->getCommentReply($form->{sid}, $form->{pid});
 			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
 			if (@$users) {
-				my $reply   = $slashdb->getCommentReply($form->{sid}, $maxCid);
-				my $realsid = $slashdb->getDiscussion($form->{sid}); # this is so lame
-				my $story   = $slashdb->getStory($realsid);
+				my $reply	= $slashdb->getCommentReply($form->{sid}, $maxCid);
+				my $discussion	= $slashdb->getDiscussion($form->{sid});
 				my $data    = {
 					template_name	=> 'reply_msg',
 					subject		=> { template_name => 'reply_msg_subj' },
 					reply		=> $reply,
 					parent		=> $parent,
-					story		=> $story,
+					discussion	=> $discussion,
 				};
 
 				$messages->create($users->[0], MSG_CODE_COMMENT_REPLY, $data);
@@ -850,16 +849,14 @@ sub moderateCid {
 				MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]
 			);
 			if (@$users) {
-#				my $realsid = $slashdb->getDiscussion($form->{sid}); # this is so lame
-#				my $story = $slashdb->getStory($realsid);
-				my $story = $slashdb->getStory($sid);
+				my $discussion = $slashdb->getDiscussion($sid);
 				my $data  = {
 					template_name	=> 'mod_msg',
 					subject		=> {
 						template_name => 'mod_msg_subj'
 					},
 					comment		=> $comment,
-					story		=> $story,
+					discussion	=> $discussion,
 					moderation	=> {
 						user	=> $user,
 						value	=> $val,

@@ -70,24 +70,7 @@ sub main {
 			displayRSS($journal, $constants, $user, $form, $slashdb);
 		}
 	} else {
-		# rethink all this ... give more control
-		# by allowing menu to not display there, and by
-		# putting text in templates
-		if ($op eq 'display') {
-			my $nickname = $form->{uid}
-				? $slashdb->getUser($form->{uid}, 'nickname')
-				: $user->{'nickname'};
-			header("${nickname}'s Journal");
-			titlebar("100%", "${nickname}'s Journal");
-		} else {
-			header("$constants->{sitename} Journal System");
-			titlebar("100%", "Journal System");
-		}
-
-		print createMenu('journal');
-
 		$ops{$op}[FUNCTION]->($journal, $constants, $user, $form, $slashdb);
-
 		footer();
 	}
 }
@@ -95,6 +78,8 @@ sub main {
 sub displayTop {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 	my $journals;
+
+	_printHead("mainhead");
 
 	if ($constants->{journal_top_posters}) {
 		$journals = $journal->top();
@@ -114,6 +99,9 @@ sub displayTop {
 
 sub displayFriends {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
+
+	_printHead("mainhead");
+
 	my $friends = $journal->friends();
 	if (@$friends) {
 		slashDisplay('journalfriends', { friends => $friends });
@@ -128,6 +116,7 @@ sub searchUsers {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 
 	if (!$form->{nickname}) {
+		_printHead("mainhead");
 		slashDisplay('searchusers');
 		return;
 	}
@@ -142,9 +131,14 @@ sub searchUsers {
 		}
 		$form->{uid} = $results;
 		displayArticle(@_);
+		return;
+	}
+
+	# print the lovely headers
+	_printHead("mainhead");
 
 	# if false or empty ref, no users
-	} elsif (!$results || (ref($results) eq 'ARRAY' && @$results < 1)) {
+	if (!$results || (ref($results) eq 'ARRAY' && @$results < 1)) {
 		print getData('nousers');
 		slashDisplay('searchusers');
 
@@ -235,6 +229,8 @@ sub displayArticle {
 	$user		= $slashdb->getUser($form->{uid}, ['nickname']) if $form->{uid};
 	my $uid		= $form->{uid} || $user->{uid};
 	my $nickname	= $user->{nickname};
+
+	_printHead("userhead", { nickname => $nickname });
 
 	# clean it up
 	my $start = fixint($form->{start}) || 0;
@@ -329,6 +325,8 @@ sub listArticle {
 	my $nickname	= $form->{uid}
 		? $slashdb->getUser($form->{uid}, 'nickname')
 		: $user->{nickname};
+
+	_printHead("userhead", { nickname => $nickname });
 
 	if (@$list) {
 		slashDisplay('journallist', {
@@ -487,6 +485,8 @@ sub editArticle {
 	my $article = {};
 	my $posttype;
 
+	_printHead("mainhead");
+
 	if ($form->{state}) {
 		$article->{date}	= scalar(localtime(time()));
 		$article->{article}	= $form->{article};
@@ -552,6 +552,13 @@ sub _validFormkey {
 
 	getCurrentDB()->updateFormkey;
 	return 1;
+}
+
+sub _printHead {
+	my($head, $data) = @_;
+	my $title = getData($head, $data);
+	header($title);
+	slashDisplay("journalhead", { title => $title });
 }
 
 createEnvironment();
