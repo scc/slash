@@ -953,13 +953,15 @@ sub _hard_dispComment {
 	if (isAnon($comment->{uid})) {
 		$user_to_display = $comment->{nickname};
 	} else {
-		$userinfo_to_display = qq|<BR><FONT SIZE="-1">(<A HREF="$constants->{rootdir}/users.pl?op=userinfo&uid=$comment->{uid}">User #$comment->{uid} Info</A>|;
+		my $nick = fixparam($comment->{nickname});
+
+		$userinfo_to_display = qq|<BR><FONT SIZE="-1">(<A HREF="$constants->{rootdir}/~$nick/">User #$comment->{uid} Info</A>|;
 
 		$userinfo_to_display .= qq[ | <A HREF="$comment->{homepage}">$comment->{homepage}</A>]
 			if length($comment->{homepage}) > 8;
 
-		$userinfo_to_display .= sprintf(' | Last Journal: <A HREF="%s/journal.pl?op=display&amp;uid=%s">%s</A>',
-			$constants->{rootdir}, $comment->{uid}, timeCalc($comment->{journal_last_entry_date})
+		$userinfo_to_display .= sprintf(' | Last Journal: <A HREF="%s/~%s/journal/">%s</A>',
+			$constants->{rootdir}, $nick, timeCalc($comment->{journal_last_entry_date})
 		) if $comment->{journal_last_entry_date} =~ /[1-9]/;
 
 		$userinfo_to_display .= ')</FONT>';
