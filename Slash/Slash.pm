@@ -122,7 +122,7 @@ sub selectComments {
 		$comments->{0}{natural_totals}[$x]	+= $comments->{0}{natural_totals}[$x+1];
 	}
 
-	#reparentComments($comments);
+	reparentComments($comments);
 	return($comments, $count);
 }
 
@@ -146,17 +146,17 @@ sub reparentComments {
 		}
 	}
 
-	for (my $x = 1; $x < @$comments; $x++) {
-		next unless $comments->[$x];
+	for my $comment (@$comments) {
+		my $x = $comment->{cid};
 
-		my $pid = $comments->[$x]{pid};
+		my $pid = $comments->{$x}{pid};
 		my $reparent;
 
 		# do threshold reparenting thing
-		if ($user->{reparent} && $comments->[$x]{points} >= $user->{threshold}) {
+		if ($user->{reparent} && $comments->{$x}{points} >= $user->{threshold}) {
 			my $tmppid = $pid;
-			while ($tmppid && $comments->[$tmppid]{points} < $user->{threshold}) {
-				$tmppid = $comments->[$tmppid]{pid};
+			while ($tmppid && $comments->{$tmppid}{points} < $user->{threshold}) {
+				$tmppid = $comments->{$tmppid}{pid};
 				$reparent = 1;
 			}
 
@@ -169,11 +169,11 @@ sub reparentComments {
 
 		if ($depth && !$reparent) { # don't reparent again!
 			# set depth of this comment based on parent's depth
-			$comments->[$x]{depth} = ($pid ? $comments->[$pid]{depth} : 0) + 1;
+			$comments->{$x}{depth} = ($pid ? $comments->{$pid}{depth} : 0) + 1;
 
 			# go back each pid until we find one with depth less than $depth
-			while ($pid && $comments->[$pid]{depth} >= $depth) {
-				$pid = $comments->[$pid]{pid};
+			while ($pid && $comments->{$pid}{depth} >= $depth) {
+				$pid = $comments->{$pid}{pid};
 				$reparent = 1;
 			}
 		}
@@ -181,15 +181,15 @@ sub reparentComments {
 		if ($reparent) {
 			# remove child from old parent
 			if ($pid >= ($form->{cid} || $form->{pid})) {
-				@{$comments->[$comments->[$x]{pid}]{kids}} =
+				@{$comments->{$comments->{$x}{pid}}{kids}} =
 					grep { $_ != $x }
-					@{$comments->[$comments->[$x]{pid}]{kids}}
+					@{$comments->{$comments->{$x}{pid}}{kids}}
 			}
 
 			# add child to new parent
-			$comments->[$x]{realpid} = $comments->[$x]{pid};
-			$comments->[$x]{pid} = $pid;
-			push @{$comments->[$pid]{kids}}, $x;
+			$comments->{$x}{realpid} = $comments->{$x}{pid};
+			$comments->{$x}{pid} = $pid;
+			push @{$comments->{$pid}{kids}}, $x;
 		}
 	}
 }
