@@ -118,12 +118,13 @@ sub main {
 		userInfo($user->{uid}, $user->{nickname});
 
 	} elsif ($op eq 'validateuser') {
-		if ($user->{is_anon} || !length($user->{reg_id})) {
+		if ($user->{is_anon} || !$user->{reg_id}) {
 			if ($user->{is_anon}) {
 				print getMessage('anon_validation_attempt');
 				displayForm();
 			} else {
-				print getMessage('no_registration_needed') if !$user->{reg_id};
+				print getMessage('no_registration_needed')
+					if !$user->{reg_id};
 				userInfo($user->{uid}, $user->{nickname});
 			}
 		} else {
@@ -353,7 +354,7 @@ sub validateUser {
 	# If we aren't expiring accounts in some way, we don't belong here.
 	if (! allowExpiry()) {
 		displayForm();
-		exit;
+		return;
 	}
 
 	# Maybe this should be taken care of in a more centralized location?
