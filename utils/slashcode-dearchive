@@ -1,0 +1,257 @@
+#!/usr/local/bin/perl
+
+use Slash::DB;
+use Slash::DB::Utility;
+use Getopt::Std;
+use Date::Manip;
+
+# Parameter validation.
+my(%opts);
+getopts('d:s:f:y:X', \%opts);
+&usage if !keys(%opts);
+# Optionally use single parameter as virtual username, however specification
+# with -d <virtualuser> will override anything given in @ARGV.
+$opts{d} = $ARGV[-1] if !$opts{d};
+$opts{y} = UnixDate('now', '%Y') if !$opts{y};
+$debug = 1 if $opts{X};
+
+&usage if !$opts{f} || !$opts{s} || !$opts{d};
+
+# Initialize Slash site database object.
+my $slashdb = new Slash::DB($opts{d}) ||
+	die "*** Can't open database on Virtual User $opts{d}.\n";
+
+# Set our timezone and initialize the date routines.
+$ENV{TZ} = 'EST5EDT';
+&Date_Init();
+
+# Globals.
+my($cid, %data);
+my $ac_uid = $slashdb->getVar('anonymous_coward_uid', 'value');
+my $ac_nickname = $slashdb->getUser($ac_uid, 'nickname');
+
+# We slurp in everything as one big file. This will NOT be pleasant on machines
+# with low amounts of memory (anything < 32M - Heavy Slashdot .shtml files
+# can amass well over one meg in size and that's for a SINGLE scalar.
+do {
+	local($/) = undef;
+
+	open(INPUT, "<$opts{f}");
+	$_ = <INPUT>;
+	close(INPUT);
+};
+
+# Main loop is over our master regexp (we'd need to create a ludicrously large 
+# array to be able to use split() ...
+$regexp = '<!-- begin comment block -->(.+?)<!-- end comment block -->';
+while (/$regexp/g) {
+	my($uid, $email_addy, $uid_s, $x_data, $wait, $result, $resultpos);
+	my($subj, $score_ind, $username, $ts, $url, $url_name, $comment, $sig);
+	my($gmt_time, $score, $posttime, $uname);
+	my(%uid_cache, $rc);
+
+	$x_data = $1;
+	$result = 'Unextracted ';
+	$resultpos = '';
+
+#$x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR> <FONT.+?>(?:\(.+?User Info</A>\) (?:<A HREF="(.+?)">(.+?)</A><BR>)?)?</TD></TR>\s<TR><TD BGCOLOR=.+?>(.+)<BR>(.+?)?</TD></TR> (?:<TR><TD> |<LI><FONT .+?><B>.+)?} 
+
+	if	(
+$x_data =~ m{<A NAME="(.+?)"><B>(.+?)</B></A>(.+?)</FONT>.+?by (.+?) on (.+?)\(.+?\)</FONT><BR> <FONT.+?>(?:\(.+?User Info</A>\) (?:<A HREF="(.+?)">(.+?)</A><BR>)?)? .+?<TR><TD BGCOLOR=.+?>.+?</TD>.+?<TR><TD BGCOLOR=.+?>(.+?)</TD>}
+		)
+	{
+		# This is ugly...
+		($cid,
+		 $subj, 
+		 $score_ind, 
+		 $username, 
+		 $ts, 
+		 $url, 
+		 $url_name, 
+		 $comment,
+		 $sig) = ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+
+		print STDERR "EXTRACTED: $1, $2, $3, $4, $5, $6, $7, $8, $9\n"
+			if $debug;
+
+		# Copy $username.
+		$uname = $username;
+		# Fix $uname if it is a link.
+		$uname =~ s/<A HREF=".*?">(.+?)<\/A>/$1/;
+		# Also extract and remove email information.
+		$uname =~ s/ <B><FONT.+?>\((.+?)\)<\/FONT><\/B>// and
+			$email_addy = $1;
+
+		# Grab score from indicator.
+		if ($score_ind =~ /Score:(\d+)/) {
+			$score = $1 if defined $1;
+		}
+
+		# Strip signature of </TD> and </TR> tags (these are part of display
+		# code)
+		$sig =~ s!(?:</TD>|</TR>)!!g if $sig;
+
+		($rc, $result) = ('', '');
+		$uid_s = defined $email_addy ? " <$email_addy>" : '';
+
+		# Use database to see if we can match the nickname to a UID.
+		if ($uname && $uname ne $ac_nickname) {
+			# Check user id cache for hit on the parsed username.
+			$uid = 0;
+			if ($uid_cache{$uname}) {
+				$uid = $uid_cache{$uname};
+			} else {
+				$uid = $slashdb->getUserUID($uname);
+				$uid_cache{$uname} = $uid if $uid;
+			}
+			$uid_s .= " ($uid)" if $uid;
+		} else {
+			$uid = $ac_uid if $uname eq $ac_nickname;
+		}
+
+		# Convert date to internal representation and then adjust for GMT
+		# time (since all times should be stored as GMT in dB).
+		if ($ts) {
+			# Some versions of dispComment have the a link to the comment
+			# right after the date. This should be removed.
+			$ts =~ s/\(<A HREF.+?<\/A>\)//i;
+
+			# Get rid of the extraneous commas and '@' symbols which may 
+			# interfere with parsing.
+			$ts =~ s/,\s@/ /g;
+
+			# Date::Manip balks if DoW is present in a datespec which specifies
+			# no year value and does NOT represent a date within the current
+			# year. So the simple solution is to strip the DoW which appears
+			# at the beginning of the string. This really depends on the site
+			# but this is the default for Slashcode and also works on Slashdot.
+			$ts =~ s/(?:
+					  Monday|
+					  Tuesday|
+					  Wednesday|
+					  Thursday|
+					  Friday|
+					  Saturday|
+					  Sunday)\s+//x;
+
+			# Now grab the zone associated with the date.
+			$ts =~ /\s([^\ ]+?)$/;
+			
+			# Need $oldPos becuase Date::Manip routines mess with $_.
+			my($oldPos) = pos $_;
+			my($tsdate, $tszone) = (ParseDate($ts), $1);
+			
+			# Insure date is set to the correct year based on parameters.
+			# Could manually set this by SID, but SID isn't really 
+			# Y2K compliant...
+			$tsdate = Date_SetDateField($tsdate, 'y', $opts{y});
+
+			if ($tsdate) {
+				$gmt_ts = Date_ConvTZ($tsdate, $tszone, 'GMT');
+				$ts .= ' (' . UnixDate($gmt_ts, "%A %B %d, %Y \@%r GMT") . ')';
+			}
+			pos $_ = $oldPos;
+		}
+
+		# Attribute comment to the proper nickname in the comment if the 
+		# user doesn't turn up in the database.
+		$comment = "Posted by $username:<BR><BR>$comment"
+			if (! $uid);
+
+		print	"\n", header("Extracted ${\(length($x_data))} bytes"),
+				($cid ? "#$cid\n" : ""),
+				($subj ? "Subj: $subj\n": ""),
+				($uname ? "User: $uname$uid_s\n" : ""),
+				($ts ? "Date: $ts\n" : ""),
+				($url_name ? "URL: $url_name " : ""),
+				($url ? "($url)\n" : ($url_name ? "\n" : "")),
+				($score ? "Score: $score" : ""),
+				($comment ? "\n--> $comment\n\n" : "\n"),
+				($sig ? "\nSig: $sig\n\n" : "\n");
+
+		# Drop statement handle if necessary.
+		$sth->finish if defined $sth;
+
+		# Assign data to hash.
+		$data{$cid}->{subject} = $subj;
+		$data{$cid}->{'-uid'} = ($uid) ? $uid : -1;
+		$data{$cid}->{date} = $gmt_ts;
+		$data{$cid}->{comment} = $comment;
+		$data{$cid}->{'-points'} = ($score) ? $score : 0;
+	}
+
+	print header("${result}X-Data$resultpos") . "$x_data\n";
+	if ($result eq 'Unextracted ' || $rc || 
+		$comment =~ /<\/?TD>/ || 
+		$comment =~ /<\/?TR>/)
+	{
+		print '--- Check  data ---';
+		$wait = <STDIN>;
+	}
+}
+
+# Unload massive scalar (would setting $_ to undef be a bad thing here?)
+$_  = '';
+
+# Now write data to database.
+print "Writing to database...";
+my $nr = 0;
+foreach (sort { $data{$a}->{ts} cmp $data{$b}->{ts} } keys(%data)) {
+	# We process comments into the database serially by DATE.
+
+	# Copy and sanitize data for insert into the comments table.
+	my(%sqldata);
+	%sqldata = %{$data{$_}};
+	$sqldata{sid} = $opts{s};
+	$sqldata{'-cid'} = $_;
+	# Until nested mode support can be coded in, Parent ID data will be lost.
+	$sqldata{'-pid'} = 0;
+	# Since host_name information is not included in the .shtml, we lose that
+	# information as well.
+	$sqldata{host_name} = '';
+	# This data isn't as important. It would be a pain in the ass to go thru
+	# and collect the moderation data for proper insertion, so it's just
+	# easier to leave it out for now.
+	$sqldata{'-lastmod'} = -1;
+	$sqldata{'-reason'} = 0;
+	$sqldata{'date'} = UnixDate($data{$_}->{date}, '%Y-%m-%d %H:%M');
+
+	# Can $slashdb return meaningful errors if one of its methods fails?
+	if ($slashdb->sqlInsert('comments', \%sqldata)) {
+		$nr++;
+	} else {
+		print "\nError occured while inserting comment #$_!\n";
+	}
+}
+
+print "\n$nr records written to COMMENTS for SID $opts{s}\n";
+
+
+0;
+
+
+sub header {
+	my($text) = shift;
+
+	"$text\n${\('-' x length($text))}\n";
+}
+
+
+sub usage {
+	print <<EOT;
+
+$ARGV[0] [-d <virtuser>] [-f <filename>] [-s <sid to use>] {-y <year>}
+
+-or-
+
+$ARGV[0] [-f <filename>] [-s <sid to use>] {-y <year>} <virtuser>
+
+Note: If the first form is used and <virtuser> is also specified as in the
+second form, then one specified by the -d switch is used!
+
+EOT
+
+	exit 1;
+
+}
+
