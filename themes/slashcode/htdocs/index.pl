@@ -45,7 +45,7 @@ sub main {
 	my $StandardBlocks = displayStandardBlocks($section, $stories);
 
 	slashDisplay('index', {
-		is_moderator	=> scalar $slashdb->checkForModerator($user),
+		is_moderator	=> scalar $slashdb->checkForMetaModerator($user),
 		stories		=> $Stories,
 		boxes		=> $StandardBlocks,
 	});

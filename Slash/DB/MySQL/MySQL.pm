@@ -210,8 +210,8 @@ sub getMetamodComments {
 
 	my $sth = $self->sqlSelectMany(
 		'comments.cid,date,' .
-		'subject,comment,nickname,homepage,fakeemail,realname,users.uid as uid,
-		sig,comments.points as points,pid,comments.sid as sid,
+		'subject,comment,users.uid as uid,
+		sig,pid,comments.sid as sid,
 		moderatorlog.id as id,title,moderatorlog.reason as modreason,
 		comments.reason',
 		'comments,users,users_info,moderatorlog,stories',
@@ -225,9 +225,7 @@ sub getMetamodComments {
 	my $comments = [];
 	while (my $comment = $sth->fetchrow_hashref) {
 		# Anonymize comment that is to be metamoderated.
-		@{$comment}{qw(nickname uid fakeemail homepage points)} =
-			('-', -1, '', '', 0);
-
+		@{$comment}{qw(nickname uid points)} = ('-', -1, 0);
 		push @$comments, $comment;
 	}
 	$sth->finish;
@@ -1500,7 +1498,7 @@ sub countStory {
 }
 
 ##################################################################
-sub checkForModerator {	# check for MetaModerator / M2, not Moderator
+sub checkForMetaModerator {
 	my($self, $user) = @_;
 	return unless $user->{willing};
 	return if $user->{is_anon};
@@ -1509,6 +1507,7 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
 	my($tuid) = $self->sqlSelect('count(*)', 'users');
+	return if $user->{uid} > $tuid * getVar('m2_userpercentage', 'value');
 	# what to do with I hash here?
 	return 1;  # OK to M2
 }

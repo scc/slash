@@ -15,19 +15,27 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-
 	my $op = getCurrentForm('op');
 
 	# this text must be in a template!
 	header(getData('header'));
 
-	my $id = isEligible();
-	if (!$id) {
+	if (! $slashdb->checkForMetaModerator($user)) {
 		print getData('not-eligible');
-	} elsif ($op eq "MetaModerate") {
-		metaModerate($id);
 	} else {
-		displayTheComments($id);
+		my $last = ($slashdb->getModeratorLast($user->{uid}))->{lastmmid};
+		unless ($last) {
+			$last = $slashdb->getModeratorLogRandom();
+			$slashdb->setUser($user->{uid}, {
+				lastmmid => $last,
+			});
+       		}
+
+		if ($op eq 'MetaModerate') {
+			metaModerate($last);
+		} else {
+			displayTheComments($last);
+		}
 	}
 
 	writeLog($op);
@@ -148,33 +156,40 @@ sub displayTheComments {
 
 #################################################################
 # This is going to break under replication
-sub isEligible {
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $user = getCurrentUser();
-
-	my $tuid = $slashdb->countUsers();
-	my $last = $slashdb->getModeratorLast($user->{uid});
-
-	my $result = slashDisplay('isEligible', {
-		user_count	=> $tuid,
-		'last'		=> $last,
-	}, { Return => 1, Nocomm => 1 });
-
-	if ($result ne 'Eligible') {
-		print $result;
-		return 0;
-	}
-
-	# Eligible for M2. Determine M2 comments by selecting random starting
-	# point in moderatorlog.
-	unless ($last->{'lastmmid'}) {
-		$last->{'lastmmid'} = $slashdb->getModeratorLogRandom();
-		$slashdb->setUser($user->{uid}, { lastmmid => $last->{'lastmmid'} });
-	}
-
-	return $last->{'lastmmid'}; # Hooray!
-}
+#
+# Yeah, this should be a lot more flexible, but lets leave that
+# issue for when we revamp security. For now, we'll just use
+# $slashdb->checkForMetaModerator(). What we do lose is the 
+# reporting behind WHY a user can't M2, which isn't all that
+# critical right now, since they will get an error of some sort.
+#						- Cliff
+#sub isEligible {
+#	my $slashdb = getCurrentDB();
+#	my $constants = getCurrentStatic();
+#	my $user = getCurrentUser();
+#
+#	my $tuid = $slashdb->countUsers();
+#	my $last = $slashdb->getModeratorLast($user->{uid});
+#
+#	my $result = slashDisplay('isEligible', {
+#		user_count	=> $tuid,
+#		'last'		=> $last,
+#	}, { Return => 1, Nocomm => 1 });
+#
+#	if ($result ne 'Eligible') {
+#		print $result;
+#		return 0;
+#	}
+#
+#	# Eligible for M2. Determine M2 comments by selecting random starting
+#	# point in moderatorlog.
+#	unless ($last->{'lastmmid'}) {
+#		$last->{'lastmmid'} = $slashdb->getModeratorLogRandom();
+#		$slashdb->setUser($user->{uid}, { lastmmid => $last->{'lastmmid'} });
+#	}
+#
+#	return $last->{'lastmmid'}; # Hooray!
+#}
 
 #################################################################
 createEnvironment();
