@@ -377,6 +377,7 @@ sub createDiscussion {
 		my $newform = {
 			sid	=> $id,
 			pid	=> 0, 
+			title	=> $form->{title},
 			formkey => $form->{formkey},
 		};
 		# We COULD drop ID from the call below, but not right now.
