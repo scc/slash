@@ -1183,7 +1183,7 @@ sub HTML::FormatText::AddRefs::get_refs {
 
 #========================================================================
 
-=head2 balanceTags(HTML [, NO_DEEP_NESTING])
+=head2 balanceTags(HTML [, DEEP_NESTING])
 
 Balances HTML tags; if tags are not closed, close them; if they are not
 open, remove close tags; if they are in the wrong order, reorder them
@@ -1199,9 +1199,10 @@ open, remove close tags; if they are in the wrong order, reorder them
 
 The HTML to balance.
 
-=item NO_DEEP_NESTING
+=item DEEP_NESTING
 
-Boolean for allowing deep nesting (four deep) or not.
+Integer for how deep to allow nesting indenting tags, 0 means
+no limit.
 
 =back
 
@@ -1268,8 +1269,11 @@ sub balanceTags {
 			$tags{$tag}++;
 			push @stack, $tag;
 
-			return undef if $max_nest_depth and
-				$tags{UL} + $tags{OL} + $tags{BLOCKQUOTE} > $max_nest_depth;
+			if ($max_nest_depth) {
+				my $cur_depth = 0;
+				for (qw( UL OL DIV BLOCKQUOTE )) { $cur_depth += $tags{$_} }
+				return undef if $cur_depth > $max_nest_depth;
+			}
 		}
 
 	}

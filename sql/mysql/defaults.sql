@@ -443,7 +443,7 @@ INSERT INTO vars (name, value, description) VALUES ('moderatord_lag_threshold','
 INSERT INTO vars (name, value, description) VALUES ('moderatord_debug_info', '1', 'Add in more detailed information into slashd.log for moderation task info. This WILL increase the size by slashd.log quite a bit, so use only if you need to.');
 INSERT INTO vars (name, value, description) VALUES ('mod_same_subnet_forbid','1','Forbid users from moderating any comments posted by someone in their subnet?');
 INSERT INTO vars (name, value, description) VALUES ('newsletter_body','0','Print bodytext, not merely introtext, in newsletter.');
-INSERT INTO vars (name, value, description) VALUES ('nesting_maxdepth','4','Maximum depth to which <BLOCKQUOTE>-type tags can be nested');
+INSERT INTO vars (name, value, description) VALUES ('nesting_maxdepth','3','Maximum depth to which <BLOCKQUOTE>-type tags can be nested');
 INSERT INTO vars (name, value, description) VALUES ('panic','0','0:Normal, 1:No frills, 2:Essentials only');
 INSERT INTO vars (name, value, description) VALUES ('poll_cache','0','On home page, cache and display default poll for users (if false, is extra hits to database)');
 INSERT INTO vars (name, value, description) VALUES ('poll_discussions','1','Allow discussions on polls');
