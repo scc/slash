@@ -13,6 +13,7 @@ use CGI::Cookie;
 use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
+use URI ();
 use vars qw($REVISION $VERSION @ISA);
 
 # $Id$
@@ -50,8 +51,9 @@ sub handler {
 	my $slashdb = $dbcfg->{slashdb};
 
 	# let pass unless / or .pl
+	my $uri = fixuri($r->uri, $constants->{rootdir});
 	unless ($cfg->{auth}) {
-		unless ($r->uri =~ m[(?:^/$)|(?:\.pl$)]) {
+		unless ($uri =~ m[(?:^/$)|(?:\.pl$)]) {
 			$r->subprocess_env(SLASH_USER => $constants->{anonymous_coward_uid});
 			return OK;
 		}
@@ -60,6 +62,9 @@ sub handler {
 	$slashdb->sqlConnect;
 	#Ok, this solves the annoying issue of not having true OOP in perl
 	# You can comment this out if you want if you only use one database type
+	# long term, it might be nice to create new classes for each slashdb
+	# object, and set @ISA for each class, or make each other class inherit
+	# from Slash::DB instead of vice versa ...
 	$slashdb->fixup;
 
 	# Don't remove this. This solves a known bug in Apache -- brian
@@ -241,10 +246,10 @@ sub getUser {
 		$user->{aton} = 'on'; # getData('aton');
 	}
 
-
-	if($r->uri =~ m[^/$]) {
+	my $uri = fixuri($r->uri, $constants->{rootdir});
+	if ($uri =~ m[^/$]) {
 		$user->{currentPage} = 'index';
-	} elsif ($r->uri =~ m[^/(.*)\.pl$]) {
+	} elsif ($uri =~ m[^/(.*)\.pl$]) {
 		$user->{currentPage} = $1;
 	} else {
 		$user->{currentPage} = 'misc';
@@ -333,6 +338,18 @@ sub testExStr {
 	local($_) = @_;
 	$_ .= "'" unless m/'$/;
 	return $_;
+}
+
+
+########################################################
+# adjust path for non-rooted slash sites
+sub fixuri {
+	my($uri, $rootdir) = @_;
+	if ($rootdir) {
+		my $path = URI->new($rootdir)->path;
+		$uri =~ s/^\Q$path//;
+	}
+	return $uri;
 }
 
 sub DESTROY {
