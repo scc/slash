@@ -54,12 +54,7 @@ install: slash plugins
 	cp sql/postgresql/slashschema_create.sql $(PREFIX)/sql/postgresql/schema.sql
 
 	# Now for the default theme (be nice when this goes in themes)
-	cp -r public_html/* $(PREFIX)/themes/slashcode/htdocs/
 	cp -r plugins/* $(PREFIX)/plugins/
-	cp sql/postgresql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/postgresql/datadump.sql
-	cp sql/postgresql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/postgresql/prep.sql
-	cp sql/mysql/slashdata_dump.sql $(PREFIX)/themes/slashcode/sql/mysql/datadump.sql
-	cp sql/mysql/slashdata_prep.sql $(PREFIX)/themes/slashcode/sql/mysql/prep.sql
 	# Now all other themes
 	cp -r themes/* $(PREFIX)/themes
 
