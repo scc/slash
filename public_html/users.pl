@@ -139,7 +139,7 @@ print STDERR "OP $I{F}{op}\n";
 	}
 
 	miniAdminMenu() if $I{U}{aseclev} > 100;
-	$I{dbobject}->writeLog("users", $I{U}{nickname});
+	writeLog("users", $I{U}{nickname});
 	footer();
 }
 
@@ -497,19 +497,7 @@ sub editHome {
 		extid exsect exaid exboxes mylinks
 	);
 
-	# this is an example of how we can get the current user data ...
-	# maybe we can just add this to getUser ... ?  so we could freely
-	# call getUser and it would check the $uid and get data from
-	# getCurrentUser if it is there? -- pudge
-	my $user_edit = getCurrentUser();
-	if ($uid == $user_edit->{uid}) {
-		@values = grep ! exists $user_edit->{$_}, @values;
-		my $tmpuser = $I{dbobject}->getUser($uid, @values);
-		@{$user_edit}{ keys %$tmpuser} = values %$tmpuser;
-	} else {
-		$user_edit = $I{dbobject}->getUser($uid, @values);
-		$user_edit->{uid} = $uid;
-	}
+	my $user_edit = $I{dbobject}->getUser($uid, \@values);
 
 	return if isAnon($user_edit->{uid});
 
