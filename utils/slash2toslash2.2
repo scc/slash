@@ -16,16 +16,17 @@ my $PROGNAME = basename($0);
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
 my(%opts, %forced_plugins, %sacred_tables);
-my($del_users, $poll_uid);
+my($del_users, $poll_uid, $process_menus);
 my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%vars, %story_authors);
 
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('Ihvu:U:P:X:', \%opts);
+usage('Options used incorrectly') unless getopts('-IMhvu:U:P:X:', \%opts);
 usage() if $opts{'h'};
 version() if $opts{'v'};
 usage('Need v2 virtual user') unless $opts{'U'};
 usage('Need new virtual user') unless $opts{'u'};
+$process_menus++ if $opts{'M'};
 
 # Determine plugins to force conversion for.
 for (split /,/, $opts{P}) {
@@ -826,7 +827,7 @@ sub convert {
 	# These are direct copy tables that don't depend on anything else.
 	duplicate('content_filters', 1);
 	duplicate('tzcodes', 'tz');
-	duplicate('menus', 1);
+	duplicate('menus', 1) if $process_menus;
 
 	duplicate('topics', 1);
 	reload_keys('topics', \%topics, 'tid', 'alttext');
@@ -1304,6 +1305,8 @@ Main options:
 
 The following are advanced options. Use these ONLY IF YOU KNOW 
 WHAT YOU ARE DOING:
+
+	-M	Use old menus table.
 
 	-P<x>	Force presence (and conversion) of comma separated list 
 		of plugins: <x>
