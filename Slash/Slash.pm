@@ -28,6 +28,7 @@ use strict;  # ha ha ha ha ha!
 use Apache::SIG ();
 use CGI ();
 use DBI;
+use Data::Dumper;  # the debuggerer's best friend
 use Date::Manip;
 use File::Spec::Functions;
 use HTML::Entities;
@@ -42,7 +43,7 @@ BEGIN {
 
 	require Exporter;
 	use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS %I $CRLF);
-	$VERSION = '1.0.6';
+	$VERSION = '1.0.7';
 	@ISA	 = 'Exporter';
 	@EXPORT  = qw(
 		sqlSelectMany sqlSelect sqlSelectHash sqlSelectAll approveTag
@@ -108,10 +109,14 @@ sub getSlashConf {
 # Blank variables, get $I{r} (apache) $I{query} (CGI) $I{U} (User) and $I{F} (Form)
 # Handles logging in and printing HTTP headers
 sub getSlash {
-#We should pull 'r' out of %I
+	# We should pull 'r' out of %I
 	for (qw[r query F U SETCOOKIE]) {
 		undef $I{$_} if $I{$_};
 	}
+
+	# what do we do about when this is called from the command line,
+	# so there is no Apache?  cf. prog2file in slashd, when index.pl
+	# is called without Apache -- pudge
 
 	#Ok, I hate single character variables, but 'r' is a bit
 	#of a tradition in apache stuff -Brian
@@ -119,14 +124,8 @@ sub getSlash {
 	$I{r} = $r;
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
-#	while (my ($key, $val) = each %$cfg) {
-#		print STDERR "APACHE $key:$val\n";
-#	}
-#	while (my ($key, $val) = each %$user_cfg) {
-#		print STDERR "USER $key:$val\n";
-#	}
-	# We might as well put this here for the moment
-	$I{dbobject} = $cfg->{'dbslash'};
+
+	$I{dbobject} = $cfg->{'dbslash'} || Slash::DB->new('slash');
 	$I{query} = new CGI;
 
 	my $user = getUser($ENV{REMOTE_USER});
@@ -355,6 +354,7 @@ sub getUser {
 		addToUser($I{AC});
 
 	}
+
 	# Add On Admin Junk
 	if ($I{F}{op} eq 'adminlogin') {
 		my $sid;
