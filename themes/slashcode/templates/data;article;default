@@ -18,7 +18,7 @@ __template__
 [% SWITCH value %]
 
 [% CASE 'no_such_sid' %]
-	Nothing for you to see here.  Please Move Along.
+	Nothing for you to see here.  Please move along.
 
 [% END %]
 

@@ -264,6 +264,11 @@ sub printComments {
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
 
+	unless($discussion) {
+		print getData('no_such_sid');
+		return 0;
+	}
+
 	$pid ||= 0;
 	$cid ||= 0;
 	my $lvl = 0;

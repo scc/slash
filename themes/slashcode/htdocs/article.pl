@@ -20,24 +20,30 @@ sub main {
 	# - Cliff
 	my $story = $slashdb->getStory($form->{sid});
 
-	my $SECT = $slashdb->getSection($story->{section});
-	my $title = $SECT->{isolate} ?
-		"$SECT->{title} | $story->{title}" :
-		"$constants->{sitename} | $story->{title}";
+	if($story) {
+		my $SECT = $slashdb->getSection($story->{section});
+		my $title = $SECT->{isolate} ?
+			"$SECT->{title} | $story->{title}" :
+			"$constants->{sitename} | $story->{title}";
 
-	header($title, $story->{section});
-	slashDisplay('display', {
-		poll			=> pollbooth($story->{qid}, 1),
-		section			=> $SECT,
-		section_block		=> $slashdb->getBlock($SECT->{section}),
-		show_poll		=> $slashdb->getPollQuestion($story->{poll}),
-		story			=> $story,
-		'next'			=> $slashdb->getStoryByTime('>', $story, $SECT),
-		prev			=> $slashdb->getStoryByTime('<', $story, $SECT),
-	});
+		header($title, $story->{section});
+		slashDisplay('display', {
+			poll			=> pollbooth($story->{qid}, 1),
+			section			=> $SECT,
+			section_block		=> $slashdb->getBlock($SECT->{section}),
+			show_poll		=> $slashdb->getPollQuestion($story->{poll}),
+			story			=> $story,
+			'next'			=> $slashdb->getStoryByTime('>', $story, $SECT),
+			prev			=> $slashdb->getStoryByTime('<', $story, $SECT),
+		});
 
-	my $discussion = $slashdb->getDiscussionBySid($story->{sid});
-	printComments($discussion);
+		my $discussion = $slashdb->getDiscussionBySid($story->{sid});
+		printComments($discussion);
+	} else {
+		my $message = getData('no_such_sid');
+		header($message);
+		print $message;
+	}
 
 	footer();
 	writeLog($story->{sid} || $form->{sid});
