@@ -631,11 +631,12 @@ sub submitComment {
 	my $pts = 0;
 
 	if (!$user->{is_anon} && !$form->{postanon}) {
-		$pts = $user->{defaultpoints};
+		$pts = ($user->{karma} < 0) ? 0 : $user->{defaultpoints};
 		$pts-- if $user->{karma} < $constants->{badkarma};
 		$pts++ if $user->{karma} > $constants->{goodkarma} && !$form->{nobonus};
 		# Enforce proper ranges on comment points.
-		my($minScore, $maxScore) = ($constants->{comment_minscore}, $constants->{comment_maxscore});
+		my($minScore, $maxScore) =
+			($constants->{comment_minscore}, $constants->{comment_maxscore});
 		$pts = $minScore if $pts < $minScore;
 		$pts = $maxScore if $pts > $maxScore;
 	}
