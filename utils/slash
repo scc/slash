@@ -6,8 +6,8 @@ PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin/X11:
 
 # slash home
 DATADIR=/usr/local/slash
-SLASHD="$DATADIR/slashd $server_name"
-SLASHSITE=/usr/local/slash/slash.site
+SLASHD="$DATADIR/sbin/slashd $server_name"
+SLASHSITE=/usr/local/slash/slash.sites
 
 
 RUNNING_PID=$DATADIR
