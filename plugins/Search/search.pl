@@ -56,7 +56,7 @@ sub main {
 
 		$form->{op} ||= 'stories';
 		slashDisplay('searchform', {
-			sections		=> _sections(),
+			sections	=> _sections(),
 			topics		=> _topics(),
 			tref		=> $slashdb->getTopic($form->{topic}),
 			op		=> $form->{op},

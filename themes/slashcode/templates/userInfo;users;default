@@ -24,8 +24,8 @@ en_US
 __name__
 userInfo
 __template__
-[% INCLUDE titlebar width="95%" %]
 [% USE Slash %]
+[% INCLUDE titlebar width="95%" %]
 
 [% IF nickmatch_flag %]
 
@@ -53,9 +53,9 @@ before you do any moderation.<BR><P>
 [% END; IF useredit.fakeemail %]
 <A HREF="mailto:[% useredit.fakeemail %]">[% useredit.fakeemail %]</A><BR>
 [% END; IF useredit.journal_last_entry_date %]
-<A HREF="[% constants.rootdir %]/journal.pl?op=display&uid=[% useredit.uid %]">
+<A HREF="[% constants.rootdir %]/journal.pl?op=display&amp;uid=[% useredit.uid %]">
 Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A>
-[ <A HREF="[% constants.rootdir %]/journal.pl?op=list&uid=[% useredit.uid %]">List</A> ]
+[ <A HREF="[% constants.rootdir %]/journal.pl?op=list&amp;uid=[% useredit.uid %]">List</A> ]
 <BR>
 [% END %]
 </P>
@@ -87,7 +87,7 @@ Last Journal Entry was [% Slash.timeCalc(useredit.journal_last_entry_date) %]</A
 		href    = "$constants.rootdir/pollBooth.pl?qid=$comment.sid";
 		label   = question.question;
         END %]
-<B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&cid=[% comment.cid %]">
+<B>[% n %]</B> <A HREF="[% constants.rootdir %]/comments.pl?sid=[% comment.sid %]&amp;cid=[% comment.cid %]">
    [% comment.subj %]</A> posted on [% comment.cdate %]
         (Score:[% comment.pts %][% replies %])
       <FONT SIZE="2">

@@ -239,7 +239,7 @@ sub showInfo {
 	my($points, $lastgranted, $nickmatch_flag, $uid, $nick);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
-	if ( $form->{userfield_flag} eq 'uid' ) {
+	if ($form->{userfield_flag} eq 'uid') {
 		$id ||= $form->{userfield};
 		$user = $slashdb->getUser($id);
 		$uid = $user->{uid};
@@ -247,7 +247,7 @@ sub showInfo {
 		$admin_block = $admin_flag ? getUserAdmin($uid, 1, 1) : '';
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
 
-	} elsif ( $form->{userfield_flag} eq 'nickname') { 
+	} elsif ($form->{userfield_flag} eq 'nickname') { 
 		$id ||= $form->{userfield};
 		$nick = $id;
 		$uid = $slashdb->getUserUID($nick);
@@ -265,7 +265,7 @@ sub showInfo {
 		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
 		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
 
-	} elsif ( $form->{userfield_flag} eq 'subnet' ) {
+	} elsif ($form->{userfield_flag} eq 'subnet') {
 		$id ||= $form->{userfield};
 		if ($id =~ /(\d+\.\d+\.\d+)\.?\d+?/) {
 			$user->{subnetid} = $1 . ".0";
@@ -281,7 +281,7 @@ sub showInfo {
 		$admin_block = $admin_flag ? getUserAdmin($user->{subnetid}, 1, 0) : '';
 		$comments = $slashdb->getCommentsBySubnetID($user->{subnetid}, $form->{min});
 
-	} elsif ( $form->{nick} ) {
+	} elsif ($form->{nick}) {
 		$nick = $form->{nick};
 		$uid = $slashdb->getUserUID($nick);
 		$user = $slashdb->getUser($uid);
@@ -781,7 +781,7 @@ sub saveUserAdmin {
 
 	return if $curuser->{seclev} < 100;
 
-	my ($users_table, $user) = ({}, {});
+	my($users_table, $user) = ({}, {});
 	my $save_success = 0;
 	my $author_flag;
 	my $note = '';
@@ -862,7 +862,6 @@ sub savePasswd {
 	my($note, $author_flag, $user_fakeemail, $formname);
 	my $user = {};
 
-
 	my $users_table = {};
 
 	if ($curuser->{seclev} >= 100) {
@@ -914,6 +913,7 @@ sub savePasswd {
 
 	return $note;
 }
+
 #################################################################
 sub saveUser {
 	my $slashdb = getCurrentDB();
@@ -1289,17 +1289,9 @@ sub getUserAdmin {
 	my $form	= getCurrentForm();
 	my $constants	= getCurrentStatic();
 
-	my $user;
-	my $userfield = '';
-
-	my ($checked, $uidstruct, $readonly, $readonly_reasons) = 
-		({}, {}, {}, {});
-	my ($uidlist, $iplist);
-	my ($authors, $author_flag);
-	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo}) ? 1 : 0; 
-
-	my ($formname, $author_select ) = ('', '');
-
+	my($checked, $uidstruct, $readonly, $readonly_reasons) = ({}, {}, {}, {});
+	my($user, $userfield, $uidlist, $iplist, $authors, $author_flag, $author_select);
+	my $userinfo_flag = ($form->{op} eq 'userinfo' || $form->{userinfo}) ? 1 : 0;
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
 
 	if ($form->{userfield_flag} eq 'uid') {
@@ -1358,7 +1350,7 @@ sub getUserAdmin {
 		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, $user) if $readonly->{$formname};
 	}
 
-	for(@$uidlist) {
+	for (@$uidlist) {
 		$uidstruct->{$_->[0]} = $slashdb->getUser($_->[0], 'nickname');
 	}
 

@@ -1646,7 +1646,7 @@ sub checkReadOnly {
 
 ##################################################################
 sub getUIDList {
-	my ($self, $column, $id) = @_;
+	my($self, $column, $id) = @_;
 
 	my $fields = { ipid => 'ipid', subnetid => 'subnetid' };
 	my $where = "WHERE $fields->{$column} = '$id'";
@@ -1655,7 +1655,7 @@ sub getUIDList {
 
 ##################################################################
 sub getNetIDList {
-	my ($self, $id) = @_;
+	my($self, $id) = @_;
 	my $where = "WHERE uid = '$id'";
 	$self->sqlSelectAll("DISTINCT ipid", "comments $where");
 }

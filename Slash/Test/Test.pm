@@ -40,7 +40,9 @@ use Slash::Utility;
 use Data::Dumper;
 
 use base 'Exporter';
-use vars qw(@EXPORT $vuser);	# our() doesn't work with 5.005
+use vars qw($VERSION @EXPORT $vuser);
+
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT = (
 	@Slash::EXPORT,
 	@Slash::Display::EXPORT,

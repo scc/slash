@@ -29,7 +29,7 @@ __template__
 	</TR>
 		[% FOREACH tmpuid = uidstruct.keys %]
 	<TR>
-		<TD><A HREF="[% env.script_name %]?op=userinfo&userfield_flag=uid&userfield=[% tmpuid %]">
+		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield_flag=uid&amp;userfield=[% tmpuid %]">
 		[% tmpuid %] &nbsp; [% uidstruct.$tmpuid %]
 		</A>	
 		</TD>
@@ -46,7 +46,7 @@ __template__
 	</TR>
 		[% FOREACH tmpip = iplist %]
 	<TR>
-		<TD><A HREF="[% env.script_name %]?op=userinfo&userfield_flag=ip&userfield=[% tmpip.0 %]">
+		<TD><A HREF="[% env.script_name %]?op=userinfo&amp;userfield_flag=ip&amp;userfield=[% tmpip.0 %]">
 		[% tmpip.0 %]
 		</A>	
 		</TD>
