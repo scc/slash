@@ -1,4 +1,27 @@
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
 package Slash::XML;
+
+=head1 NAME
+
+Slash::XML - Perl extension for Slash.
+
+=head1 SYNOPSIS
+
+	use Slash::XML;
+	xmlDisplay(%data);
+
+=head1 DESCRIPTION
+
+Slash::XML aids in creating XML.  Right now, only RSS is supported.
+
+
+=head1 EXPORTED FUNCTIONS
+
+=cut
 
 use strict;
 use Date::Manip;
@@ -11,22 +34,31 @@ use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT = qw( 
-	xmlDisplay
+@EXPORT = qw(xmlDisplay);
+
+# FRY: There must be layers and layers of old stuff down there!
+
+my %types = (
+	rss	=> \&create_rss,
 );
 
-# maybe a better name? ... we are not merely displaying XML, we are creating
-# a whole XML file, right?
-sub xmlDisplay {
-	my($type, $type_param, $param) = @_;
-	$param ||= {};
-	return unless $type =~ /^rss$/i;
+#========================================================================
 
-	my $content = create_rss($type_param);
+sub xmlDisplay {
+	my($type, $param, $opt) = @_;
+
+	return unless exists $types{$type};
+
+	if (! ref $opt) {
+		$opt = $opt == 1 ? { Return => 1 } : {};
+	}
+
+	my $content = $types{$type}->($param);
 	return unless $content;
 
-	# why not just check $ENV{GATEWAY_INTERFACE} ?
-	if ($param->{apache}) {
+	if ($opt->{Return}) {
+		return $content;
+	} else {
 		my $r = Apache->request;
 		$r->header_out('Cache-Control', 'private');
 		$r->content_type('text/xml');
@@ -35,11 +67,11 @@ sub xmlDisplay {
 		$r->rflush;
 		$r->print($content);
 		$r->status(200);
-	} else {
-		return $content;
+		return 1;
 	}
 }
 
+#========================================================================
 
 sub create_rss {
 	my($param) = @_;
@@ -74,7 +106,7 @@ sub create_rss {
 		updatePeriod	=> $constants->{rdfupdateperiod},
 		updateFrequency	=> $constants->{rdfupdatefrequency},
 		updateBase	=> $constants->{rdfupdatebase},
-	);		
+	);
 
 	# let $param->{channel} override
 	for (keys %channel) {
@@ -192,6 +224,7 @@ sub create_rss {
 	return $rss->as_string;
 }
 
+#========================================================================
 # get a standard ISO 8601 time string
 sub date2iso8601 {
 	my($time) = @_;
@@ -208,15 +241,22 @@ sub date2iso8601 {
 	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
 }
 
+#========================================================================
 # set up a story item
 sub rss_story {
 	my($item, $encoded_item, $version) = @_;
 
-	return unless $version > 0.9;
-
 	# delete it so it won't be processed later
 	my $story = delete $item->{story};
 	my $constants = getCurrentStatic();
+
+	$encoded_item->{title}  = encode($story->{title});
+	$encoded_item->{'link'} = encode("$constants->{absolutedir}/article.pl?sid=$story->{sid}", 'link');
+
+	if ($version >= 0.91) {
+		my $desc = rss_item_description($item->{description});
+		$encoded_item->{description} = encode($desc) if $desc;
+	}
 
 	if ($version >= 1.0) {
 		my $slashdb   = getCurrentDB();
@@ -232,15 +272,10 @@ sub rss_story {
 			if $constants->{use_dept};
 	}
 
-	$encoded_item->{title}  = encode($story->{title});
-	$encoded_item->{'link'} = encode("$constants->{absolutedir}/article.pl?sid=$story->{sid}", 'link');
-
-	my $desc = rss_item_description($item->{description});
-	$encoded_item->{description} = encode($desc) if $desc;
-
 	return $encoded_item;
 }
 
+#========================================================================
 # set up an item description
 sub rss_item_description {
 	my($desc) = @_;
@@ -260,6 +295,7 @@ sub rss_item_description {
 	return $desc;
 }
 
+#========================================================================
 sub encode {
 	my($value, $key) = @_;
 	$key ||= '';
@@ -270,28 +306,9 @@ sub encode {
 }
 
 1;
+
 __END__
-# Below is the stub of documentation for your module. You better edit it!
-
-=head1 NAME
-
-Slash::XML - Perl extension for Slash.
-
-=head1 SYNOPSIS
-
-  use Slash::XML;
-  xmlDisplay();
-
-=head1 DESCRIPTION
-
-Take the red one first before trying to understand.
-
-=head1 AUTHOR
-
-Arthur Dent, lost@clue.no
 
 =head1 SEE ALSO
 
-perl(1).
-
-=cut
+Slash(3), Slash::Utility(3), XML::Parser(3), XML::RSS(3).

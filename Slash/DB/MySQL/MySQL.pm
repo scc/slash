@@ -1593,6 +1593,7 @@ sub _checkAccessList {
 
 	return($rows);
 }
+
 ##################################################################
 # Check to see if the form already exists
 sub checkForm {
