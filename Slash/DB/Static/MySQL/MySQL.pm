@@ -744,6 +744,32 @@ sub getStoriesWithFlag {
 	);
 }
 
+
+########################################################
+# For tasks/spamarmor.pl
+#
+# Please note use of closure. This is not an error.
+#
+{
+my($usr_block_size, $usr_start_point);
+
+sub iterateUsers {
+	my($self, $blocksize, $start) = @_;
+
+	$start ||= 0;
+
+	($usr_block_size, $usr_start_point) = ($blocksize, $start)
+		if $blocksize && $blocksize != $usr_block_size;
+	$usr_start_point += $usr_block_size  + 1 if !$blocksize;
+
+	return $self->sqlSelectAllHashrefArray(
+		'*',
+		'users', '',
+		"ORDER BY uid LIMIT $usr_start_point,$usr_block_size"
+	);
+}
+}
+
 1;
 
 __END__
