@@ -102,7 +102,7 @@ sub commentSearch {
 	slashDisplay('linksearch', {
 		prev => $prev,
 		linksearch => \&linksearch
-	}) if ($prev => 0);
+	}) if $prev >= 0;
 }
 
 #################################################################
@@ -123,7 +123,7 @@ sub userSearch {
 	slashDisplay('linksearch', {
 		prev => $prev,
 		linksearch => \&linksearch
-	}) if ($prev => 0);
+	}) if $prev >= 0;
 }
 
 #################################################################
@@ -143,7 +143,7 @@ sub storySearch {
 	slashDisplay('linksearch', {
 		prev => $prev,
 		linksearch => \&linksearch
-	}) if $prev => 0;
+	}) if $prev >= 0;
 }
 
 #################################################################
