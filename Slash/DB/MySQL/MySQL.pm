@@ -21,7 +21,6 @@ my %codeBank; # This is here to save us a database call
 my $commonportals; # portals on the front page.
 my $boxes;
 my $sectionBoxes;
-my $dbh;
 
 # For the getDecriptionsk() method
 my %descriptions = (
@@ -75,6 +74,7 @@ my %descriptions = (
 #################################################################
 # Private method used by the search methods
 my $keysearch = sub {
+	my $self = shift;
 	my $keywords = shift;
 	my @columns = @_;
 
@@ -87,7 +87,7 @@ my $keysearch = sub {
 		last if $x++ > 3;
 		foreach my $c (@columns) { 
 			$sql .= "+" if $sql;
-			$sql .= "($c LIKE " . $dbh->quote("%$w%") . ")";
+			$sql .= "($c LIKE " . $self->{dbh}->quote("%$w%") . ")";
 		}
 	}
 #	void context, does nothing?
@@ -157,24 +157,23 @@ sub sqlConnect {
 	}
 	#This is only here for backwards compatibility
 	$Slash::I{dbh} = $self->{dbh};
-	$dbh = $self->{dbh};
 }
 
 ########################################################
 sub setComment{
 	my($self, $form, $user, $pts, $default_user) = @_;
 
-	$dbh->do("LOCK TABLES comments WRITE");
+	$self->{dbh}->do("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
-		"max(cid)", "comments", "sid=" . $dbh->quote($form->{sid})
+		"max(cid)", "comments", "sid=" . $self->{dbh}->quote($form->{sid})
 	);
 
 	$maxCid++; # This is gonna cause troubles
 	my $insline = "INSERT into comments values (".
-		$dbh->quote($form->{sid}) . ",$maxCid," .
-		$dbh->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
-		$dbh->quote($form->{postersubj}) . "," .
-		$dbh->quote($form->{postercomment}) . "," .
+		$self->{dbh}->quote($form->{sid}) . ",$maxCid," .
+		$self->{dbh}->quote($form->{pid}) . ",now(),'$ENV{REMOTE_ADDR}'," .
+		$self->{dbh}->quote($form->{postersubj}) . "," .
+		$self->{dbh}->quote($form->{postercomment}) . "," .
 		($form->{postanon} ? $default_user : $user->{uid}) . ", $pts,-1,0)";
 
 	# don't allow pid to be passed in the form.
@@ -184,38 +183,38 @@ sub setComment{
 		return;
 	}
 
-	if ($dbh->do($insline)) {
-		$dbh->do("UNLOCK TABLES");
+	if ($self->{dbh}->do($insline)) {
+		$self->{dbh}->do("UNLOCK TABLES");
 
 		# Update discussion
 		my($dtitle) = $self->sqlSelect(
-			'title', 'discussions', "sid=" . $dbh->quote($form->{sid})
+			'title', 'discussions', "sid=" . $self->{dbh}->quote($form->{sid})
 		);
 
 		unless ($dtitle) {
 			$self->sqlUpdate(
 				"discussions",
 				{ title => $form->{postersubj} },
-				"sid=" . $dbh->quote($form->{sid})
+				"sid=" . $self->{dbh}->quote($form->{sid})
 			) if $form->{sid};
 		}
 
 		my($ws) = $self->sqlSelect(
-			"writestatus", "stories", "sid=" . $dbh->quote($form->{sid})
+			"writestatus", "stories", "sid=" . $self->{dbh}->quote($form->{sid})
 		);
 
 		if ($ws == 0) {
 			sqlUpdate(
 				"stories",
 				{ writestatus => 1 }, 
-				"sid=" . $dbh->quote($form->{sid})
+				"sid=" . $self->{dbh}->quote($form->{sid})
 			);
 		}
 
 		$self->sqlUpdate(
 			"users_info",
 			{ -totalcomments => 'totalcomments+1' },
-			"uid=" . $dbh->quote($user->{uid}), 1
+			"uid=" . $self->{dbh}->quote($user->{uid}), 1
 		);
 
 		# successful submission		
@@ -232,7 +231,7 @@ sub setComment{
 		return $maxCid;
 
 	} else {
-		$dbh->do("UNLOCK TABLES");
+		$self->{dbh}->do("UNLOCK TABLES");
 		apacheLog("$DBI::errstr $insline");
 		return -1;
 	}
@@ -263,16 +262,16 @@ sub getModeratorLogID {
 sub unsetModeratorlog{
 	my($self, $uid, $sid, $max, $min) = @_;
 	my $cursor = $self->sqlSelectMany("cid,val,active", "moderatorlog",
-			"uid=$uid and sid=" . $dbh->quote($sid)
+			"uid=$uid and sid=" . $self->{dbh}->quote($sid)
 	);
 	my @removed;
 
 	while (my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
-		$dbh->do("delete from moderatorlog where
+		$self->{dbh}->do("delete from moderatorlog where
 			cid=$cid and uid=$uid and sid=" .
-			$dbh->quote($sid)
+			$self->{dbh}->quote($sid)
 		);
 
 		# If moderation wasn't actually performed, we should not change
@@ -286,7 +285,7 @@ sub unsetModeratorlog{
 		$self->sqlUpdate(
 			"comments",
 			{ -points => "points+" . (-1 * $val) },
-			"cid=$cid and sid=" . $dbh->quote($sid) . " AND $scorelogic"
+			"cid=$cid and sid=" . $self->{dbh}->quote($sid) . " AND $scorelogic"
 		);
 		push(@removed, $cid);
 	}
@@ -304,7 +303,7 @@ sub createDiscussions{
 	my ($self, $sid) = @_;
 	# Posting from outside discussions...
 	$sid = $ENV{HTTP_REFERER} ? crypt($ENV{HTTP_REFERER}, 0) : '';
-	$sid = $dbh->quote($sid);
+	$sid = $self->{dbh}->quote($sid);
 	my ($story_time) = $self->sqlSelect("time", "stories", "sid=$sid");
 	$story_time ||= "now()";
 	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
@@ -341,7 +340,7 @@ sub getNewStories {
 	my ($self, $sid) = @_;
 	return unless ($sid);
 	my($s, $title, $commentstatus) = $self->sqlSelect(
-		"section,title,commentstatus","newstories","sid=" . $dbh->quote($sid)
+		"section,title,commentstatus","newstories","sid=" . $self->{dbh}->quote($sid)
 	);
 
 	return ($s, $title, $commentstatus);
@@ -725,8 +724,8 @@ sub getCommentCid {
 ########################################################
 sub removeComment{
 	my($self, $sid, $cid) = @_;
-	  $dbh->do("delete from comments WHERE sid=" .
-		    $dbh->quote($sid) . " and cid=" . $dbh->quote($cid)
+	  $self->{dbh}->do("delete from comments WHERE sid=" .
+		    $self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
 		);
 
 }
@@ -809,7 +808,7 @@ sub setStoriesCount {
 				-commentcount => "commentcount-$count",
 				writestatus => 1
 			},
-			"sid=" . $dbh->quote($sid)
+			"sid=" . $self->{dbh}->quote($sid)
 	);
 
 }
@@ -1360,13 +1359,13 @@ sub countComments {
 	my($self, $sid, $cid, $comment, $uid) = @_;
 	my $value;
 	if ($uid) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND uid = ". $self->{dbh}->quote($uid));
 	} elsif ($cid) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . " AND pid = ". $self->{dbh}->quote($cid));
 	} elsif ($comment) {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid) . ' AND comment=' . $dbh->quote($comment));
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid) . ' AND comment=' . $self->{dbh}->quote($comment));
 	} else {
-		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $dbh->quote($sid));
+		($value) = $self->sqlSelect("count(sid)", "comments", "sid=" . $self->{dbh}->quote($sid));
 	}
 
 	return $value;
@@ -1378,7 +1377,7 @@ sub method {
 	$self->sqlUpdate(
 			"stories",
 			{ commentcount => $count },
-			"sid=" . $dbh->quote($sid)
+			"sid=" . $self->{dbh}->quote($sid)
 	);
 
 	return $count;
@@ -1602,7 +1601,7 @@ sub getSearch{
 		getDateFormat("date","t", $user) . ", 
 		uid, cid, ";
 
-	$sqlquery .= "	  " . $keysearch->($form->{query}, "subject", "comment") if $form->{query};
+	$sqlquery .= "	  " . $keysearch->($self, $form->{query}, "subject", "comment") if $form->{query};
 	$sqlquery .= "	  1 as kw " unless $form->{query};
 	$sqlquery .= "	  FROM newstories, comments
 			 WHERE newstories.sid=comments.sid ";
@@ -1644,13 +1643,13 @@ sub getSearchUsers {
 		$sqlquery .= " AND uid not $user";
 	}
 	if ($form->{query}) {
-		my $kw = $keysearch->($form->{query}, 'nickname', 'ifnull(fakeemail,"")');
+		my $kw = $keysearch->($self, $form->{query}, 'nickname', 'ifnull(fakeemail,"")');
 		$kw =~ s/as kw$//;
 		$kw =~ s/\+/ OR /g;
 		$sqlquery .= "AND ($kw) ";
 	}
 	$sqlquery .= "ORDER BY uid LIMIT $form->{min}, $form->{max}";
-	my $sth = $dbh->prepare($sqlquery);
+	my $sth = $self->{dbh}->prepare($sqlquery);
 	$sth->execute;
 
 	my $users = $sth->fetchall_arrayref;
@@ -1663,7 +1662,7 @@ sub getSearchStory {
 my ($self, $form) = @_;
 	my $sqlquery = "SELECT aid,title,sid," . getDateFormat("time","t") .
 		", commentcount,section ";
-	$sqlquery .= "," . $keysearch->($form->{query}, "title", "introtext") . " "
+	$sqlquery .= "," . $keysearch->($self, $form->{query}, "title", "introtext") . " "
 		if $form->{query};
 	$sqlquery .="	,0 " unless $form->{query};
 
@@ -1679,18 +1678,18 @@ WHERE ((displaystatus = 0 and "$form->{section}"="")
 EOT
 
 	$sqlquery .= "   AND time<now() AND writestatus>=0 AND displaystatus>=0";
-	$sqlquery .= "   AND aid=" . $dbh->quote($form->{author})
+	$sqlquery .= "   AND aid=" . $self->{dbh}->quote($form->{author})
 		if $form->{author};
-	$sqlquery .= "   AND section=" . $dbh->quote($form->{section})
+	$sqlquery .= "   AND section=" . $self->{dbh}->quote($form->{section})
 		if $form->{section};
-	$sqlquery .= "   AND tid=" . $dbh->quote($form->{topic})
+	$sqlquery .= "   AND tid=" . $self->{dbh}->quote($form->{topic})
 		if $form->{topic};
 
 	$sqlquery .= " ORDER BY ";
 	$sqlquery .= " kw DESC, " if $form->{query};
 	$sqlquery .= " time DESC LIMIT $form->{min},$form->{max}";
 
-	my $cursor = $dbh->prepare($sqlquery);
+	my $cursor = $self->{dbh}->prepare($sqlquery);
 	$cursor->execute;
 	my $stories = $cursor->fetchall_arrayref;
 
