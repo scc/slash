@@ -75,6 +75,11 @@ Slash/Display/Plugin/Plugin.pm
 Slash/Display/Provider/MANIFEST
 Slash/Display/Provider/Makefile.PL
 Slash/Display/Provider/Provider.pm
+Slash/Install/Changes
+Slash/Install/Install.pm
+Slash/Install/MANIFEST
+Slash/Install/Makefile.PL
+Slash/Install/test.pl
 Slash/MANIFEST
 Slash/Makefile.PL
 Slash/Slash.pm
@@ -88,6 +93,7 @@ bin/backup-blocks
 bin/install-slashsite
 bin/tailslash
 bin/template-editor
+bin/template-tool
 docs/INSTALL.html
 docs/INSTALL.pod
 docs/README.html
