@@ -2,6 +2,7 @@
 
 HOWTO-Templates - How to write Slash templates
 
+
 =head1 What is a template?
 
 A template is a bit of text that is parsed by Perl, using the Template
@@ -16,17 +17,20 @@ For more information on how templates are written, see the man pages
 for Slash::Display and Template, and the Template Toolkit web page
 at E<lt>URL:http://www.template-toolkit.org/E<gt>.
 
+
 =head1 How do I get my template into a running site?
 
 Use the Template Editor via the admin menu on the site, or use
 template-tool on the command line. You can find out information
 on it by calling it with the "-h" option.
 
+
 =head1 How do I get my template installed with a plugin/theme?
 
 For a plugin it has to be added to the PLUGIN file (see
 F<HOWTO-Plugins>). For a theme it just needs to be in the templates
 directory for the theme (see F<HOWTO-Themes>).
+
 
 =head1 What language encoding are the templates using?
 
@@ -45,6 +49,29 @@ underscore.  e.g., en_US, en_CA, de_DE, zh_CN, ja_JP.
 Use template-tool:
 
 	template-tool -g filename
+
+
+=head1 Can I set my own Template options?
+
+As of now, the only way to do it is to add them to the Slash/Display.pm file,
+which changes them for everyone.  We will likely be adding some variables
+to the vars table to set your own preferences.
+
+
+=head1 Why does whitespace keep disappearing between Template tags?
+
+We have the POST_CHOMP, PRE_CHOMP, and TRIM options turned on.
+L<Template::Context>.  L<Template::Parser>.  TRIM essentially removes leading
+and trailing whitespace from the output of templates and BLOCKs.  So if you
+INCLUDE a template or BLOCK, there will be no leading or trailing whitespace.
+PRE_CHOMP and POST_CHOMP do the same, but for the beginning or the end of any
+Template tag.  So "[% foo %] bar" is rendered as "[% foo %]bar".
+
+TRIM cannot be disabled without changing the value in Slash/Display.pm.
+PRE_CHOMP and POST_CHOMP can be disabled with the "+" sign placed immediately
+after (for PRE) or before (for POST) the tag delimiter.  For example,
+to keep the whitespace inthe example above: "[% foo +%] bar".
+
 
 =head1 I have a really cool template for a theme/plugin, and I would like
 to see it added to the Slash distribution. Will you distribute mine?
