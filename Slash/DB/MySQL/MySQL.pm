@@ -2461,9 +2461,9 @@ sub getTemplate {
 	my($self, $name, $values, $cache_flag, $page, $section) = @_;
 	_genericCacheRefresh($self, 'templates', getCurrentStatic('block_expire'));
 
-	my $table_cache = '_template_cache';
-	my $table_cache_time= '_template_cache_time';
-	my $table_cache_id= '_template_cache_id';
+	my $table_cache = '_templates_cache';
+	my $table_cache_time= '_templates_cache_time';
+	my $table_cache_id= '_templates_cache_id';
 
 	#First, we get the cache
 	$self->{$table_cache_id} ||= _getTemplateNameCache($self);

@@ -41,10 +41,12 @@ sub new {
 			require Slash::DB::PostgreSQL;
 			require Slash::DB::MySQL;
 			@Slash::DB::ISA = @Slash::DB::ISAPg;
-#			unless ($ENV{GATEWAY_INTERFACE}) {
-#				require Slash::DB::Static::PostgreSQL;
-#				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
-#			}
+			unless ($ENV{GATEWAY_INTERFACE}) {
+				require Slash::DB::Static::PostgreSQL;
+				push(@Slash::DB::ISA, 'Slash::DB::Static::PostgreSQL');
+				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
+				push(@Slash::DB::ISAPg, 'Slash::DB::Static::MySQL');
+			}
 		}
 	} else {
 		warn("We don't support the database ($dsn) specified. Using user ($user) "

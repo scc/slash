@@ -54,7 +54,7 @@ sub findComments {
 
 	$sql = "SELECT section, stories.sid,";
 	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid, ";
-	$sql .= "	  " . $self->_keysearch($self, $form->{query}, ['subject', 'comment']) 
+	$sql .= "	  " . $self->_keysearch($form->{query}, ['subject', 'comment']) 
 			if $form->{query};
 	$sql .= "	  1 as kw " unless $form->{query};
 	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
@@ -109,7 +109,7 @@ sub findStory {
 	my($self, $form) = @_;
 	my $sql;
 	$sql .= "SELECT nickname,title,sid, time, commentcount,section ";
-	$sql .= "," . $self->_keysearch($self, $form->{query}, ['title', 'introtext']) . " "
+	$sql .= "," . $self->_keysearch($form->{query}, ['title', 'introtext']) . " "
 		if $form->{query};
 	$sql .= "	,0 " 
 		unless $form->{query};

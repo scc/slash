@@ -1,11 +1,15 @@
 package Slash::DB::Static::PostgreSQL;
 use strict;
-use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
 
+@Slash::DB::Static::PostgreSQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::Static::PostgreSQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+# BENDER: I hate people who love me.  And they hate me.
+
+
 1;
 
 __END__
@@ -25,6 +29,8 @@ No documentation yet. Sue me.
 =head1 AUTHOR
 
 Brian Aker, brian@tangent.org
+
+Chris Nandor, pudge@pobox.com
 
 =head1 SEE ALSO
 

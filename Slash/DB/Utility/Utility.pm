@@ -20,7 +20,7 @@ sub sqlConnect {
 # Ok, first lets see if we already have a connection
 	my($self) = @_;
 
-	if (defined($self->{_dbh})) {
+	if (defined($self->{_dbh}) and $self->{_dbh}->ping) {
 		unless ($self->{_dbh}) {
 			print STDERR ("Undefining and calling to reconnect: $@\n");
 			$self->{_dbh}->disconnect;
@@ -29,6 +29,7 @@ sub sqlConnect {
 		}
 	} else {
 # Ok, new connection, lets create it
+		print STDERR ("Having to rebuild the database handle\n");
 		{
 			local @_;
 			eval {
@@ -37,12 +38,16 @@ sub sqlConnect {
 				$self->{_dbh} = DBIx::Password->connect($self->{virtual_user});
 				alarm 0;
 			};
-			if ($@) {
+
+			if ($@ or !defined $self->{_dbh}) {
 				#In the future we should have a backupdatabase
 				#connection in here. For now, we die
 				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
-				kill 9, $$ unless $self->{_dbh};	 # The Suicide Die
+				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
+			} else {
+				my $time = $self->{_dbh}->selectcol_arrayref('SELECT now()');
+				print STDERR "Rebuilt at $time->[0]\n";
 			}
 		}
 	}

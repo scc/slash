@@ -28,13 +28,14 @@ use Slash;
 use Slash::Utility;
 use Slash::Search;
 
-my %ops = {
-	comments => \&commentSearch,
-	users => \&userSearch,
-	stories => \&storySearch,
-};
 #################################################################
 sub main {
+	my %ops = (
+		comments => \&commentSearch,
+		users => \&userSearch,
+		stories => \&storySearch
+	);
+
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
 
@@ -56,9 +57,8 @@ sub main {
 
 	if($ops{$form->{op}}) {
 		$ops{$form->{op}}->($form);
-	} else	{
-		print "Invalid operation!<BR>";
-	}
+	} 
+
 	writeLog("search", $form->{query})
 		if $form->{op} =~ /^(?:comments|stories|users)$/;
 	footer();	
@@ -104,7 +104,7 @@ sub searchForm {
 EOT
 
 	print <<EOT;
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
+<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="GET">
 	<INPUT TYPE="TEXT" NAME="query" VALUE="$form->{query}">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
 EOT
@@ -122,6 +122,8 @@ EOT
 
 	if ($form->{op} eq "stories") {
 		my $authors = $slashdb->getDescriptions('authors');
+		#Kinda hate this aye?
+		$authors->{''} = 'All Authors';
 		createSelect('author', $authors, $form->{author});
 	} elsif ($form->{op} eq "comments") {
 		print <<EOT;
@@ -224,7 +226,6 @@ sub userSearch {
 
 		my $fake = '';
 		$fake = qq|email: <A HREF="mailto:$fakeemail">$fakeemail</A>| if $fakeemail;
-		print <<EOT;
 		print qq| <A HREF="$constants->{rootdir}/users.pl?nick=$ln">$nickname</A> &nbsp; |;
 		print qq| ($uid) $fake<BR> |;
 		$x++;
@@ -253,6 +254,7 @@ sub storySearch {
 	print " ";
 
 	my $stories = $searchDB->findStory($form);
+	print "Stories:$stories:\n";
 	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $form->{query};
