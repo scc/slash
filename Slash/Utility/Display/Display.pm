@@ -600,6 +600,8 @@ sub horizmenu {
 	$horizmenu =~ s/^\s*//mg;
 	$horizmenu =~ s/^-\s*//mg;
 	$horizmenu =~ s/\s*$//mg;
+	$horizmenu =~ s/<NOBR>//gi;
+	$horizmenu =~ s/<\/NOBR>//gi;
 	$horizmenu =~ s/<HR(?:>|\s[^>]*>)//g;
 	$horizmenu = join ' | ', split /<BR>/, $horizmenu;
 	$horizmenu =~ s/[\|\s]+$//;
