@@ -109,9 +109,8 @@ docs/slasherd_bender.ps
 docs/slasherd_main.fig
 docs/slasherd_main.pdf
 docs/slasherd_main.ps
-docs/slashtables.html
-docs/slashtables.ps
-docs/slashtables.sdw
+docs/slashtables_bender.txt
+docs/slashtables_main.txt
 httpd/slash.conf
 plugins/Admin/PLUGIN
 plugins/Admin/admin.pl
@@ -136,6 +135,8 @@ plugins/Admin/templates/topicEdit;admin;default
 plugins/Admin/templates/varEdit;admin;default
 plugins/BunchaBlocks/PLUGIN
 plugins/BunchaBlocks/blocks
+plugins/CheesyPortal/PLUGIN
+plugins/CheesyPortal/cheesyportal.pl
 plugins/Journal/Changes
 plugins/Journal/Journal.pm
 plugins/Journal/MANIFEST
@@ -188,6 +189,7 @@ sbin/dailyStuff
 sbin/moderatord
 sbin/portald
 sbin/slashd
+slash.spec
 sql/mysql/slashschema_create.sql
 sql/oracle/slashschema_create.sql
 sql/postgresql/slashschema_create.sql
@@ -195,7 +197,6 @@ sql/updates/MAIN2bender
 themes/slashcode/htdocs/404.pl
 themes/slashcode/htdocs/article.pl
 themes/slashcode/htdocs/authors.pl
-themes/slashcode/htdocs/cheesyportal.pl
 themes/slashcode/htdocs/comments.pl
 themes/slashcode/htdocs/getting_started.shtml
 themes/slashcode/htdocs/hof.pl
