@@ -355,7 +355,7 @@ sub userLogin {
 	$passwd = substr $passwd, 0, 12;
 	my $uid = $I{dbobject}->getUserAuthenticate($name, $passwd);
 
-	if ($uid > 0) {
+	if ($uid != $I{anonymous_coward}) {
 		my $cookie = $uid . '::' . $passwd;
 		$cookie =~ s/(.)/sprintf("%%%02x",ord($1))/ge;
 		$I{SETCOOKIE} = setCookie('user', $cookie);
@@ -405,7 +405,7 @@ sub getUser {
 	my($uid, $passwd) = @_;
 	undef $I{U};
 
-	if (($uid > 0) && ($I{U} = $I{dbobject}->getUserInfoAuthenticate($uid, $passwd, $ENV{SCRIPT_NAME}))) { 
+	if (($uid != $I{anonymous_coward}) && ($I{U} = $I{dbobject}->getUserInfoAuthenticate($uid, $passwd, $ENV{SCRIPT_NAME}))) { 
 
 		# Get the Timezone Stuff
 		my $timezones = $I{dbobject}->getCodes('tzcodes');
@@ -1186,7 +1186,7 @@ sub selectComments {
 	$sql .= "	    AND comments.cid >= $I{F}{pid} " if $I{F}{pid} && $I{shit}; # BAD
 	$sql .= "	    AND comments.cid >= $cid " if $cid && $I{shit}; # BAD
 	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$I{U}{uid} OR " if $I{U}{uid} > 0;
+	$sql .= "		comments.uid=$I{U}{uid} OR " if $I{U}{uid} != $I{anonymous_coward};
 	$sql .= "		cid=$cid OR " if $cid;
 	$sql .= "		comments.points >= " . $I{dbh}->quote($I{U}{threshold}) . " OR " if $I{U}{hardthresh};
 	$sql .= "		  1=1 )   ";
@@ -1374,10 +1374,10 @@ sub printComments {
 
 		print ' | ';
 
-		if ($I{U}{uid} < 0) {
+		if ($I{U}{uid} == $I{anonymous_coward}) {
 			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
-		} elsif ($I{U}{uid} > 0) {
+		} elsif ($I{U}{uid} != $I{anonymous_coward}) {
 			print qq!<A HREF="$I{rootdir}/users.pl?op=edituser">!,
 				qq!<FONT COLOR="$I{fg}[3]">Preferences</FONT></A> !
 		}
@@ -1416,7 +1416,7 @@ EOT
 
 
 		print qq!\t\tSave:<INPUT TYPE="CHECKBOX" NAME="savechanges">!
-			if $I{U}{uid} > 0;
+			if $I{U}{uid} != $I{anonymous_coward};
 
 		print <<EOT;
 		<INPUT TYPE="submit" NAME="op" VALUE="Change">
@@ -1629,7 +1629,7 @@ sub displayThread {
 		$I{F}{startat} = 0; # Once We Finish Skipping... STOP
 
 		if ($C->{points} < $I{U}{threshold}) {
-			if ($I{U}{uid} < 0 || $I{U}{uid} != $C->{uid})  {
+			if ($I{U}{uid} == $I{anonymous_coward} || $I{U}{uid} != $C->{uid})  {
 				$hidden++;
 				next;
 			}
@@ -2153,7 +2153,7 @@ sub getFormkeyId {
 		# id includes '&' to prevent uid's and IPs
 		# from potentially being the same
 		$id = '-1-' . $ENV{REMOTE_ADDR};
-	} elsif ($uid > 0) {
+	} elsif ($uid != $I{anonymous_coward}) {
 		$id = $uid;
 		} else {
 		$id = '-1-' . $ENV{REMOTE_ADDR};

@@ -407,7 +407,7 @@ USER
 		$name  =~ s/<(.*)>//g;
 		$email =~ s/<(.*)>//g;
 
-		$karma = $uid > -1 && defined $karma ? " ($karma)" : "";
+		$karma = $uid != $I{anonymous_coward} && defined $karma ? " ($karma)" : "";
 
 		my @strs = (substr($subj, 0, 35), substr($name, 0, 20), substr($email, 0, 20));
 		my $sec = $section ne $I{defaultsection} ? "&section=$section" : "";

@@ -36,7 +36,7 @@ sub main {
 
 	my $op = $I{F}{op};
 
-	if ($op eq "userlogin" and $I{U}{uid} > 0) {
+	if ($op eq "userlogin" and $I{U}{uid} != $I{anonymous_coward}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
@@ -44,7 +44,7 @@ sub main {
 
 	header("$I{sitename} Users");
 
-	print <<EOT if $I{U}{uid} > 0 && $op ne "userclose";
+	print <<EOT if $I{U}{uid} != $I{anonymous_coward} && $op ne "userclose";
  [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
 	<A HREF="$ENV{SCRIPT_NAME}?op=edituser">Edit User Info</A> |
@@ -61,7 +61,7 @@ EOT
 
 	} elsif ($op eq "edituser") {
 		# the users_prefs table
-		if ($I{U}{uid} > 0) {
+		if ($I{U}{uid} != $I{anonymous_coward}) {
 			editUser($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -69,7 +69,7 @@ EOT
 
 	} elsif ($op eq "edithome" || $op eq "preferences") {
 		# also known as the user_index table
-		if ($I{U}{uid} > 0) {
+		if ($I{U}{uid} != $I{anonymous_coward}) {
 			editHome($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -77,7 +77,7 @@ EOT
 
 	} elsif ($op eq "editcomm") {
 		# also known as the user_comments table
-		if ($I{U}{uid} > 0) {
+		if ($I{U}{uid} != $I{anonymous_coward}) {
 			editComm($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -123,14 +123,14 @@ EOT
 		print "ok bubbye now.";
 		displayForm();
 
-	} elsif ($op eq "userlogin" && $I{U}{uid} > 0) {
+	} elsif ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward}) {
 		# print $query->redirect("$I{rootdir}/index.pl");
 		userInfo($I{U}{nickname});
 
 	} elsif ($op eq "preview") {
 		previewSlashbox();
 
-	} elsif ($I{U}{uid} > 0) {
+	} elsif ($I{U}{uid} != $I{anonymous_coward}) {
 		userInfo($I{F}{nick});
 
 	} else {
@@ -689,7 +689,7 @@ sub saveUser {
 	my $user  = $I{dbobject}->getUserInfoByUID($uid);
 
 	$user->{nickname} = substr($user->{nickname}, 0, 20);
-	return unless $uid > 0;
+	return unless $uid != $I{anonymous_coward};
 
 	print "<P>Saving $user->{nickname}<BR><P>";
 	print <<EOT if $uid < 1 || !$user->{nickname};
@@ -764,7 +764,7 @@ sub saveComm {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return unless $uid > 0;
+	return unless $uid != $I{anonymous_coward};
 
 	print "<P>Saving $name<BR><P>";
 	print <<EOT if $uid < 1 || !$name;
@@ -805,7 +805,7 @@ sub saveHome {
 	my $name = $I{U}{aseclev} && $I{F}{name} ? $I{F}{name} : $I{U}{nickname};
 
 	$name = substr($name, 0, 20);
-	return unless $uid > 0;
+	return unless $uid != $I{anonymous_coward};
 
 	print "<P>Saving $name<BR><P>";
 	print <<EOT if $uid < 1 || !$name;

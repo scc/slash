@@ -36,7 +36,7 @@ sub main {
 
 	my $op = $I{F}{op};
 
-	if ($op eq "userlogin" && $I{U}{uid} > 0) {
+	if ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
@@ -45,7 +45,7 @@ sub main {
 	header("$I{sitename} Award Nominations", "awards");
 
 	# and now the carnage begins
-	if ($I{U}{uid} < 0) {
+	if ($I{U}{uid} == $I{anonymous_coward}) {
 		crapMesg();
 	} elsif ($op eq "Save") {
 		saveNoms();

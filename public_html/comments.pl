@@ -73,7 +73,7 @@ sub main {
 	if ($I{F}{op} eq "Submit") {
 
 		if (checkSubmission("comments", $I{post_limit}, $I{max_posts_allowed}, $id)) {
-			($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}") if $I{U}{uid} > 0;
+			($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
 			submitComment();
 		}
 
@@ -89,13 +89,13 @@ sub main {
 
 		# find out their Karma
 		($I{U}{karma}) = sqlSelect("karma", "users_info",
-			"uid=$I{U}{uid}") if $I{U}{uid} > 0;
+			"uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
 		editComment($id);
 
 
 	} elsif ($I{F}{op} eq "delete" && $I{U}{aseclev}) {
 		($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
-			if $I{U}{uid} > 0;
+			if $I{U}{uid} != $I{anonymous_coward};
 		titlebar("99%", "Delete $I{F}{cid}");
 
 		my $delCount = deleteThread($I{F}{sid}, $I{F}{cid});
@@ -106,13 +106,13 @@ sub main {
 
 	} elsif ($I{F}{op} eq "moderate") {
 		($I{U}{karma}) = sqlSelect("karma", "users_info", "uid=$I{U}{uid}")
-			if $I{U}{uid} > 0;
+			if $I{U}{uid} != $I{anonymous_coward};
 		titlebar("99%", "Moderating $I{F}{sid}");
 		moderate();
 		printComments($I{F}{sid}, $I{F}{pid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{op} eq "Change") {
-		saveChanges() if $I{U}{uid} > 0;
+		saveChanges() if $I{U}{uid} != $I{anonymous_coward};
 		printComments($I{F}{sid}, $I{F}{cid}, $I{F}{cid}, $commentstatus);
 
 	} elsif ($I{F}{cid}) {
@@ -160,7 +160,7 @@ EOT
 ##################################################################
 # Save users preferences is they change them, and click the "Save" checkbox
 sub saveChanges {
-	return unless $I{U}{uid} > 0;
+	return unless $I{U}{uid} != $I{anonymous_coward};
 
 	sqlUpdate("users_comments", { 
 		threshold	=> $I{U}{threshold}, 
@@ -268,7 +268,7 @@ EOT
 		<A HREF="$I{rootdir}/users.pl">$I{U}{nickname}</A> [
 EOT
 
-	print $I{U}{uid} > 0 ? <<EOT1 : <<EOT2;
+	print $I{U}{uid} != $I{anonymous_coward} ? <<EOT1 : <<EOT2;
 		<A HREF="$I{rootdir}/users.pl?op=userclose">Log Out</A> 
 EOT1
 		<A HREF="$I{rootdir}/users.pl">Create Account</A> 
@@ -318,12 +318,12 @@ EOT
 
 	my $checked = $I{F}{nobonus} ? ' CHECKED' : '';
 	print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="nobonus"> No Score +1 Bonus\n!
-		if $I{U}{karma} > 25 and $I{U}{uid} > 0;
+		if $I{U}{karma} > 25 and $I{U}{uid} != $I{anonymous_coward};
 
         if ($I{allow_anonymous}) {
 	    $checked = $I{F}{postanon} ? ' CHECKED' : '';
 	    print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="postanon"> Post Anonymously<BR>\n!
-		if $I{U}{karma} > -1 and $I{U}{uid} > 0;
+		if $I{U}{karma} > -1 and $I{U}{uid} != $I{anonymous_coward};
         }
 
 	print <<EOT;
@@ -648,7 +648,7 @@ sub submitComment {
 	my $ident = $ENV{REMOTE_ADDR};
 	my $pts = 0;
 
-	if($I{U}{uid} > 0 && !$I{F}{postanon} ) {
+	if($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
 		$pts = $I{U}{defaultpoints};
 		$pts-- if $I{U}{karma} < -10;
 		$pts++ if $I{U}{karma} > 25 and !$I{F}{nobonus};
@@ -668,7 +668,7 @@ sub submitComment {
 		$I{dbh}->quote($I{F}{pid}) . ",now(),'$ident'," .
 		$I{dbh}->quote($I{F}{postersubj}) . "," .
 		$I{dbh}->quote($I{F}{postercomment}) . "," .
-		($I{F}{postanon} ? -1 : $I{U}{uid}) . ",$pts,-1,0)";
+		($I{F}{postanon} ? $I{anonymous_coward} : $I{U}{uid}) . ",$pts,-1,0)";
 
 	# don't allow pid to be passed in the form.
 	# This will keep a pid from being replace by
@@ -848,7 +848,7 @@ sub moderateCid {
 			"users_info",
 			{ -karma => "karma$val" }, 
 			"uid=$cuid"
-		) if $val && $cuid > 0;
+		) if $val && $cuid != $I{anonymous_coward};
 
 		# Adjust moderators total mods
 		sqlUpdate(
@@ -914,7 +914,7 @@ sub hasPosted {
 # If you moderate, and then post, all your moderation is undone.
 sub undoModeration {
 	my($sid) = @_;
-	return if $I{U}{uid} == -1 || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
+	return if $I{U}{uid} == $I{anonymous_coward} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
 	my $c=sqlSelectMany("cid,val", "moderatorlog",
 		"uid=$I{U}{uid} and sid=" . $I{dbh}->quote($sid)
 	);
@@ -945,7 +945,7 @@ sub undoModeration {
 sub isTroll {
 	return if $I{U}{aseclev} > 99;
 	my($badIP, $badUID) = (0, 0);
-	return 0 if $I{U}{uid} > 0 && $I{U}{karma} > -1;
+	return 0 if $I{U}{uid} != $I{anonymous_coward} && $I{U}{karma} > -1;
 	# Anonymous only checks HOST
 	($badIP) = sqlSelect("sum(val)","comments,moderatorlog",
 		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
@@ -955,7 +955,7 @@ sub isTroll {
 
 	return 1 if $badIP < $I{down_moderations}; 
 
-	if ($I{U}{uid} > 0) {
+	if ($I{U}{uid} != $I{anonymous_coward}) {
 		($badUID) = sqlSelect("sum(val)","comments,moderatorlog",
 			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
 			AND comments.uid=$I{U}{uid}

@@ -84,7 +84,7 @@ sub saveUserBoxes {
 
 	$I{U}{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
 	$I{dbobject}->setUserBoxes($I{U}{uid}, $I{U}{exboxes}) 
-		if $I{U}{uid} > 0;
+		if $I{U}{uid} != $I{anonymous_coward};
 }
 
 #################################################################
@@ -165,7 +165,7 @@ sub displayStandardBlocks {
 			print portalbox(200,"Older Stuff",
 				getOlderStories($olderStuff, $SECT),
 				$bid) if $olderStuff;
-		} elsif ($bid eq "userlogin" && $I{U}{uid} > 0) {
+		} elsif ($bid eq "userlogin" && $I{U}{uid} != $I{anonymous_coward}) {
 			# Don't do nuttin'
 		} elsif ($bid eq "userlogin") {
 			my $SB = $boxBank->{$bid};

@@ -1632,12 +1632,12 @@ sub saveStory {
 			'subid=' . $I{dbh}->quote($I{F}{subid})
 		);
 
-		print "Assigning 3 karma to UID $suid" if $suid > 0;
+		print "Assigning 3 karma to UID $suid" if $suid != $I{anonymous_coward};
 
 		sqlUpdate('users_info',
 			{ -karma => 'karma + 3' }, 
 			"uid=$suid"
-		) if $suid > 0;
+		) if $suid != $I{anonymous_coward};
 
 		sqlUpdate('submissions',
 			{ del=>2 }, 

@@ -32,7 +32,7 @@ sub main {
 	*I = getSlashConf();
 	getSlash();
 
-	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} > 0;
+	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
 	header("Meta Moderation");
 	$I{F}{cid}=~s/[^0-9]//g;  # Some browser wants to send invalid chars
 
@@ -237,7 +237,7 @@ EOT
 #################################################################
 sub isEligible {
 
-	if ($I{U}{uid} < 0) {
+	if ($I{U}{uid} == $I{anonymous_coward}) {
 		print "You are not logged in";
 		return 0;
 	}

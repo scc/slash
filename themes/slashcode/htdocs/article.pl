@@ -95,7 +95,7 @@ sub main {
 
 ##################################################################
 sub pleaseLogin {
-	return if $I{U}{uid} > 0;
+	return if $I{U}{uid} != $I{anonymous_coward};
 	my $block = eval prepBlock getblock('userlogin');
 	$block =~ s/index\.pl/article.pl?sid=$I{F}{sid}/;
 	$block =~ s/\$I{rootdir}/$I{rootdir}/g;
@@ -104,7 +104,7 @@ sub pleaseLogin {
 
 ##################################################################
 sub yourArticle {
-	if ($I{U}{uid} < 1) {
+	if ($I{U}{uid} == $I{anonymous_coward}) {
 		pleaseLogin();
 		return;
 	}
@@ -184,7 +184,7 @@ sub nextStory {
 			&&
 		$array_place != -1
 			&&
-		$I{U}{uid} == -1
+		$I{U}{uid} == $I{anonymous_coward};
 	) {
 		my $title   = $I{dbobject}->getStoryBySid($I{sid_array}[$array_place], 'title');
 		my $psid    = $I{sid_array}[$array_place];

@@ -169,7 +169,7 @@ sub vote {
 	my $qid_htm = stripByMode($qid, 'attribute');
 
 	my $notes = "Displaying poll results $aid";
-	if ($I{U}{uid} == -1 && ! $I{allow_anonymous}) {
+	if ($I{U}{uid} == $I{anonymous_coward} && ! $I{allow_anonymous}) {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
 	} elsif ($aid > 0) {
