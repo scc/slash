@@ -33,7 +33,7 @@ __template__
 	User Info for [% nick %] ([% uid %])
 
 [% CASE 'user_netID_user_title' %]
-	User Info for [% md5id %] ([% id %])
+	User Info for [% md5id_vis %] ([% id %])
 
 [% CASE 'editUser_title' %]
 	Editing [% user_edit.nickname %] ([% user_edit.uid %]) [% user_edit.realemail %]

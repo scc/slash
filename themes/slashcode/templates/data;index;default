@@ -40,7 +40,7 @@ __template__
 
 [% CASE 'seclink' %]
 	[% IF user.is_anon; url="$constants.rootdir/$name/"; 
-	   ELSE url="$constants.rootdir/index.pl?section=$name"; END -%]
+	   ELSE; url="$constants.rootdir/index.pl?section=$name"; END -%]
 	<A HREF="[% url %]">[% section.title %]</A>
 
 [% CASE 'editstory' %]

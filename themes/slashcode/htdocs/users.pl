@@ -565,10 +565,14 @@ sub showInfo {
 		} else {
 			$netid = $requested_user->{subnetid} ;
 		}
+		my $netid_vis = $netid;
+		$netid_vis = substr($netid, 0, $constants->{id_md5_vislength})
+			if $constants->{id_md5_vislength};
 
 		$title = getTitle('user_netID_user_title', {
 			id => $id,
 			md5id => $netid,
+			md5id_vis => $netid_vis,
 		});
 
 		
