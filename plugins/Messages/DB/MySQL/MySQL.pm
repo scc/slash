@@ -148,11 +148,24 @@ sub _get_web_by_uid {
 	my $prime = "message_web.id=message_web_text.id AND user";
 	my $other = "ORDER BY date ASC";
 
-	my $id_db = $self->sqlQuote($uid);
+	my $id_db = $self->sqlQuote($uid || $ENV{SLASH_USER});
 	my $data = $self->sqlSelectAllHashrefArray(
 		$cols, $table, "$prime=$id_db", $other
 	);
 	return $data;
+}
+
+sub _get_web_count_by_uid {
+	my($self, $uid) = @_;
+	my $table = $self->{_web_table1};
+	my $cols  = "count($self->{_web_prime1})";
+	my $prime = "readed = '' AND user";
+
+	my $id_db = $self->sqlQuote($uid || $ENV{SLASH_USER});
+	my $data = $self->sqlSelect(
+		$cols, $table, "$prime=$id_db",
+	);
+	return $data || 0;
 }
 
 sub _get {

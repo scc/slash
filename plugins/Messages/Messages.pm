@@ -415,6 +415,11 @@ sub send {
 
 }
 
+sub getUnreadCount {
+	my($self, $uid);
+	$self->_get_web_count_by_uid($uid);
+}
+
 # this method will only send email, and it assumes that the caller
 # already checked (if appropriate) whether or not the user is
 # allowed to get email sent to them, and whether or not they are

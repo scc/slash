@@ -49,7 +49,7 @@ __template__
 		center		= 1;
 ELSE;
 	# User is logged in.
-	M = BLOCK %][ <A HREF="[% constants.rootdir %]/users.pl?edithome=Edit%20Index%20Page">Preferences</A>[% END %]
+	M = BLOCK %][ <A HREF="[% constants.rootdir %]/users.pl?op=edithome">Preferences</A>[% END %]
 	[% IF user.seclev > 99 && user.uid;
 		M = BLOCK %]
 [% M %] | <A HREF="[% constants.rootdir %]/admin.pl">Admin</A> |

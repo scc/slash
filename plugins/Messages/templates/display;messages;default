@@ -13,6 +13,7 @@ display
 __template__
 [% USE Slash %]
 [% INCLUDE titlebar title => "$constants.sitename Message for $user.nickname", width => "100%" %]
+[% Slash.createMenu('messages') %]
 
 [% IF message && message.user.uid == user.uid %]
 
@@ -38,5 +39,6 @@ to another user.
 </P>
 
 [% END %]
+
 __seclev__
 500

@@ -1069,15 +1069,15 @@ sub prepareUser {
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
 
-	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
-
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		$hostip = $r->connection->remote_ip;
 	} else {
 		$hostip = '';
 	}
-	
+
+	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
+
 	if (isAnon($uid)) {
 		if ($ENV{GATEWAY_INTERFACE}) {
 			$user = getCurrentAnonymousCoward();

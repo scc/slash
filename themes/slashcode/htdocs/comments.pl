@@ -11,6 +11,8 @@ use Slash;
 use Slash::Display;
 use Slash::Utility;
 
+use constant MSG_CODE_COMMENT_MODERATE	=> 3;
+use constant MSG_CODE_COMMENT_REPLY	=> 4;
 
 ##################################################################
 sub main {
@@ -21,19 +23,19 @@ sub main {
 	my $id = getFormkeyId($user->{uid});
 
 	my %ops = (
-		default => \&displayComments,
-		index => \&commentIndex,
-		moderate => \&moderate,
-		reply => \&reply,
-		Reply => \&reply,
-		Edit => \&edit,
-		edit => \&edit,
-		post => \&edit,
-		creatediscussion => \&createDiscussion,
-		Preview => \&edit,
-		preview => \&edit,
-		submit => \&submitComment,
-		Submit => \&submitComment,
+		default			=> \&displayComments,
+		index			=> \&commentIndex,
+		moderate		=> \&moderate,
+		reply			=> \&reply,
+		Reply			=> \&reply,
+		Edit			=> \&edit,
+		edit			=> \&edit,
+		post			=> \&edit,
+		creatediscussion	=> \&createDiscussion,
+		Preview			=> \&edit,
+		preview			=> \&edit,
+		submit			=> \&submitComment,
+		Submit			=> \&submitComment,
 	);
 
 	# maybe do an $op = lc($form->{'op'}) to make it simpler?
@@ -149,7 +151,7 @@ sub commentIndex {
 # "The Slash job, keeping trolls on their toes"
 # -Brian
 sub createDiscussion {
-	my ($form, $slashdb, $user, $constants, $id) = @_;
+	my($form, $slashdb, $user, $constants, $id) = @_;
 
 	my $time = $slashdb->sqlTime();
 
@@ -470,6 +472,25 @@ sub submitComment {
 		$slashdb->setUser($user->{uid}, { -totalcomments => 'totalcomments+1' });
 
 		$slashdb->formSuccess($form->{formkey}, $maxCid, length($form->{postercomment}));
+
+		my $messages = getObject('Slash::Messages') if $form->{pid};
+		if ($form->{pid} && $messages) {
+			my $parent = $slashdb->getCommentReply($form->{sid}, $form->{pid});
+			my $users  = $messages->checkMessageCodes(MSG_CODE_COMMENT_REPLY, [$parent->{uid}]);
+			if (@$users) {
+				my $reply = $slashdb->getCommentReply($form->{sid}, $maxCid);
+				my $story = $slashdb->getStory($form->{sid});
+				my $data  = {
+					template_name	=> 'reply_msg',
+					subject		=> { template_name => 'reply_msg_subj' },
+					reply		=> $reply,
+					parent		=> $parent,
+					story		=> $story,
+				};
+
+				$messages->create($users->[0], MSG_CODE_COMMENT_REPLY, $data);
+			}
+		}
 	}
 }
 
@@ -597,6 +618,27 @@ sub moderateCid {
 		$dispArgs->{points} = $user->{points};
 		$dispArgs->{type} = 'moderated';
 		slashDisplay('moderation', $dispArgs);
+
+		my $messages = getObject('Slash::Messages');
+		if ($messages) {
+			my $comment = $slashdb->getCommentReply($sid, $cid);
+			my $users   = $messages->checkMessageCodes(MSG_CODE_COMMENT_MODERATE, [$comment->{uid}]);
+			if (@$users) {
+				my $story = $slashdb->getStory($sid);
+				my $data  = {
+					template_name	=> 'mod_msg',
+					subject		=> { template_name => 'mod_msg_subj' },
+					comment		=> $comment,
+					story		=> $story,
+					moderation	=> {
+						user	=> $user,
+						value	=> $val,
+						reason	=> $modreason,
+					}
+				};
+				$messages->create($users->[0], MSG_CODE_COMMENT_MODERATE, $data);
+			}
+		}
 	}
 }
 

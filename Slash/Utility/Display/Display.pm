@@ -906,6 +906,10 @@ sub createMenu {
 		};
 	}
 
+	# default to "users" menu template
+	my $nm = $slashdb->getTemplateByName($menu, 0, 0, "menu");
+	$menu = "users" unless $nm->{page} eq "menu";
+
 	if (@$menu_items) {
 		return slashDisplay($menu, {
 			items	=> $items

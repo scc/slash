@@ -16,3 +16,5 @@ template=templates/messagenew_subj;submit;default
 template=templates/msg_email;messages;default
 template=templates/msg_email_subj;messages;default
 template=templates/msg_web_subj;messages;default
+template=templates/reply_msg;comments;default
+template=templates/reply_msg_subj;comments;default

@@ -40,7 +40,8 @@ sub main {
 		delete_message	=> [ !$user->{is_anon},	\&delete_message	],
 		'delete'	=> [ !$user->{is_anon},	\&delete_message	],
 		deletemsgs	=> [ !$user->{is_anon},	\&delete_messages	],
-		default		=> [ 1,			\&display_prefs		]
+		# ????
+		default		=> [ 1,			\&list_messages		]
 	);
 
 	# prepare op to proper value if bad value given
@@ -95,14 +96,6 @@ sub save_prefs {
 	@{$user}{keys %params} = values %params;
 
 	display_prefs(@_, getData('prefs saved'));
-}
-
-sub default {	# ???
-	my($messages, $constants, $user, $form) = @_;
-	# ...
-
-	header(getData('header'));
-	footer();
 }
 
 sub list_messages {

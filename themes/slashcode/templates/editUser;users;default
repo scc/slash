@@ -87,7 +87,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	</TD></TR></TABLE><P>
 
 	<INPUT TYPE="HIDDEN" NAME="op" VALUE="saveuser">
-	<INPUT TYPE="SUBMIT" NAME="saveuser" VALUE="Save User">
+	<INPUT TYPE="SUBMIT" VALUE="Save User">
 	</FORM>
 
 

@@ -16,11 +16,23 @@ en_US
 __name__
 index
 __template__
-[% IF is_moderator %]
-Have you <A HREF="[% constants.rootdir %]/metamod.pl">Meta Moderated</A> Today?<BR>
-[% END %]
+[% USE Slash %]
 
 [% UNLESS user.is_anon %]
+[% IF is_moderator %]
+Have you <B><A HREF="[% constants.rootdir %]/metamod.pl">Meta Moderated</A></B> Today?<BR>
+[% END %]
+
+[% messages = Slash.getObject("Slash::Messages");
+   IF messages;
+		message_count = messages.getUnreadCount();
+		IF message_count %]
+You have <B><A HREF="[% constants.rootdir %]/messages.pl?op=list">[%
+message_count %] new message[%
+	message_count == 1 ? "" : "s"
+%]</A></B> waiting for you.<BR>
+[% END; END %]
+
 	[% group    = ['Flock', 'Swarm', 'Barrel', 'Team', 'Squadron',
 	               'Group', 'Cadre'];
 	   modifier = ['Rabid', 'Uber', 'Psycho', 'Attack', 'Circus',
@@ -43,6 +55,7 @@ Have you <A HREF="[% constants.rootdir %]/metamod.pl">Meta Moderated</A> Today?<
 <TD>&nbsp;</TD><TD WIDTH="210" ALIGN="CENTER" VALIGN="TOP">
 [% boxes %]
 [% END %]
+
 
 __seclev__
 10000

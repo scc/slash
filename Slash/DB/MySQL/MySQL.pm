@@ -206,6 +206,7 @@ sub sqlTransactionCancel {
 # Bad need of rewriting....
 sub createComment {
 	my($self, $comment, $user, $pts, $default_user) = @_;
+	# why no quote() anymore?
 	my $header = $comment->{sid};
 	my $cid;
 
@@ -232,7 +233,7 @@ sub createComment {
 		my $insline = "INSERT into comment_heap (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($header,$cid," .
 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
-			$self->sqlDo($insline);
+		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
 	}
 
 	return $cid;
@@ -948,7 +949,7 @@ sub deleteComment {
 		}
 		my $ids = $self->sqlSelectAll('cid', $table, "sid='$sid'");
 		$self->sqlDo("DELETE FROM comments WHERE sid=" .  $self->{_dbh}->quote($sid));
-		for(@$ids) {
+		for (@$ids) {
 			$self->sqlDo("DELETE FROM comment_text WHERE cid=$_->[0]");
 		}
 		if (getCurrentStatic('mysql_heap_table')) {
@@ -1590,8 +1591,10 @@ sub checkReadOnly {
 
 	my $where = '';
 
+	# please check to make sure this is what you want;
+	# isAnon already checks for numeric uids -- pudge
 	if ($user->{uid} && $user->{uid} =~ /^\d+$/) {
-		if ($user->{uid} != $constants->{anonymous_coward_uid}) {
+		if (!isAnon($user->{uid})) {
 			$where = "uid = $user->{uid}";
 		} else { 
 			$where = "ipid = '$curuser->{ipid}'";
@@ -1622,13 +1625,11 @@ sub getReadOnlyReason {
 	my ($reason,$where) = ('','');
 
 	if ($user) {
-		if ($user->{uid} =~ /^\d+$/ && $user->{uid} != $constants->{anonymous_coward_uid}) {
+		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where = "WHERE uid = $user->{uid}";
-		} 
-		elsif ($user->{ipid}) {
+		} elsif ($user->{ipid}) {
 			$where = "WHERE ipid = '$user->{ipid}'"; 
-		}
-		elsif ($user->{subnetid}) { 
+		} elsif ($user->{subnetid}) { 
 			$where = "WHERE subnetid = '$user->{subnetid}'"; 
 		} else {
 			$where = "WHERE uid = $user->{uid}";
@@ -1662,14 +1663,12 @@ sub setReadOnly {
 
 	my $where = '';
 
-	if($user) {
-		if ($user->{uid} =~ /^\d+$/ && $user->{uid} != $constants->{anonymous_coward_uid}) {
+	if ($user) {
+		if ($user->{uid} =~ /^\d+$/ && !isAnon($user->{uid})) {
 			$where = "uid = $user->{uid}";
-		} 
-		elsif ($user->{ipid}) {
+		} elsif ($user->{ipid}) {
 			$where = "ipid = '$user->{ipid}'"; 
-		} 	
-		elsif ($user->{subnetid}) {
+		} elsif ($user->{subnetid}) {
 			$where = "subnetid = '$user->{subnetid}'"; 
 		}
 
@@ -1683,25 +1682,16 @@ sub setReadOnly {
 
 	if ($self->checkReadOnly($formname, $user) && $flag == 0) {
 		if ($reason) {
-			if ( ($self->sqlUpdate("accesslist", {
-					-readonly => $flag,
-					reason => $reason,
-					}, $where
-			)) ) {
-				return(1);
-			} else {
-				return(0);
-			}
-
+			my $return = $self->sqlUpdate("accesslist", {
+				-readonly	=> $flag,
+				reason		=> $reason,
+			}, $where);
+			return $return ? 1 : 0;
 		} else {
-			if ( ($self->sqlUpdate("accesslist", {
-					-readonly => $flag,
-					}, $where
-			)) ) {
-				return(1);
-			} else {
-				return(0);
-			}
+			my $return = $self->sqlUpdate("accesslist", {
+				-readonly	=> $flag,
+			}, $where);
+			return $return ? 1 : 0;
 		}
 	} elsif ($flag == 1) {
 		$user->{ipid} = '' if ! $user->{ipid};
@@ -1720,29 +1710,22 @@ sub setReadOnly {
 						reason => $reason,
 				}, $where );
 			} else {
-				if(($self->sqlUpdate("accesslist", {
+				my $return = $self->sqlUpdate("accesslist", {
 					-readonly => $flag,
-				}, $where ))) {
-
-					return(1);
-
-				} else {
-					return(0);
-				}	
+				}, $where );
+				return $return ? 1 : 0;
 			}
 		} else {
-			if (($self->sqlInsert("accesslist", {
-				-uid => $user->{uid},
-				ipid => $user->{ipid},
-				subnetid => $user->{subnetid}, 
-				formname => $formname,
-				-ts   => "now()",
-				-readonly => $flag,
-				reason => $reason, }))) {
-				return(1);
-			} else {	
-				return(0);
-			}
+			my $return = $self->sqlInsert("accesslist", {
+				-uid		=> $user->{uid},
+				ipid		=> $user->{ipid},
+				subnetid	=> $user->{subnetid},
+				formname	=> $formname,
+				-ts		=> "now()",
+				-readonly	=> $flag,
+				reason		=> $reason
+			});
+			return $return ? 1 : 0;
 		}
 	}
 }
@@ -2518,12 +2501,12 @@ sub createStory {
 				? $constants->{maxkarma}
 				: "karma+$constants->{submission_bonus}";
 		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
-			if $suid != $constants->{anonymous_coward_uid};
+			if !isAnon($suid);
 
 		$self->sqlUpdate('users_info',
 			{ -karma => 'karma + 3' },
 			"uid=$suid"
-		) if $suid != $constants->{anonymous_coward_uid};
+		) if !isAnon($suid);
 
 		$self->sqlUpdate('submissions',
 			{ del=>2 },
@@ -3252,8 +3235,12 @@ sub getUser {
 		$table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where) if $values;
 		for (@param) {
-			my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
-			$answer->{$_} = $val;
+			if ($_ eq 'is_anon') {
+				$answer->{is_anon} = isAnon($id);
+			} else {
+				my $val = $self->sqlSelect('value', 'users_param', "uid=$id AND name='$_'");
+				$answer->{$_} = $val;
+			}
 		}
 
 	} elsif ($val) {
@@ -3278,6 +3265,7 @@ sub getUser {
 		for (@$append) {
 			$answer->{$_->[0]} = $_->[1];
 		}
+		$answer->{is_anon} = isAnon($id);
 	}
 
 	return $answer;
