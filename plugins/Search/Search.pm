@@ -129,7 +129,7 @@ sub findStory {
 	}
 
 	$sql .= " AND time < now() AND writestatus>=0 AND displaystatus>=0";
-	$sql .= " AND aid=" . $self->{_dbh}->quote($form->{author})
+	$sql .= " AND stories.uid=" . $self->{_dbh}->quote($form->{author})
 		if $form->{author};
 	$sql .= " AND section=" . $self->{_dbh}->quote($form->{section})
 		if $form->{section};
