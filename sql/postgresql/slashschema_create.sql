@@ -188,26 +188,6 @@ CREATE INDEX idx_sid ON moderatorlog(sid,cid);
 CREATE INDEX idx_sid_2 ON moderatorlog(sid,uid,cid);
 
 
-CREATE TABLE newcomments (
-	sid char(16) DEFAULT '' NOT NULL,
-	cid int4 DEFAULT '0' NOT NULL,
-	pid int4 DEFAULT '0' NOT NULL,
-	date datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
-	host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
-	subject varchar(50) DEFAULT '' NOT NULL,
-	comment text NOT NULL,
-	uid int4 NOT NULL,
-	points int2 DEFAULT '0' NOT NULL,
-	lastmod int2,
-	reason int2 DEFAULT '0',
-	PRIMARY KEY (sid,cid)
-);
-
-CREATE INDEX idx_display_new ON newcomments(sid,points,uid);
-CREATE INDEX idx_byname_new ON newcomments(uid,points);
-CREATE INDEX idx_theusual_new ON newcomments(sid,uid,points,cid);
-CREATE INDEX idx_countreplies_new ON newcomments(sid,pid);
-
 CREATE TABLE newstories (
 	sid char(16) DEFAULT '' NOT NULL,
 	tid varchar(20) DEFAULT '' NOT NULL,
