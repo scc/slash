@@ -62,23 +62,42 @@ CREATE TABLE commentcodes (
   PRIMARY KEY (code)
 );
 
+
 #
-# Table structure for table 'commentkey'
+# Table structure for table 'formkeys'
 #
-CREATE TABLE commentkey (
+CREATE TABLE formkeys (
   formkey varchar(20) DEFAULT '' NOT NULL,
+  formname varchar(20) DEFAULT '' NOT NULL,
+  id varchar(30) DEFAULT '' NOT NULL,
   sid varchar(30) DEFAULT '' NOT NULL,
-  uid int(1) DEFAULT '-1' NOT NULL,
-  host_name varchar(30),
-  ts varchar(20) DEFAULT '0' NOT NULL,
+  uid int(11) DEFAULT '-1' NOT NULL,
+  host_name varchar(30) DEFAULT '0.0.0.0' NOT NULL,
   value int(1) DEFAULT '0' NOT NULL,
   cid int(15) DEFAULT '0' NOT NULL,
-  submit_ts varchar(20) DEFAULT '0',
-  comment_length int(4) DEFAULT '0' NOT NULL,
+  ts int(12) DEFAULT '0' NOT NULL,
+  submit_ts int(12) DEFAULT '0' NOT NULL,
+  content_length int(4) DEFAULT '0' NOT NULL,
   PRIMARY KEY (formkey),
-  KEY sid (sid),
-  KEY id (sid,cid),
-  KEY uid (uid)
+  KEY formname (formname),
+  KEY id (id),
+  KEY ts (ts),
+  KEY submit_ts (submit_ts)
+);
+
+#
+# Table structure for table 'abusers'
+#
+CREATE TABLE abusers (
+  abuser_id int(5) DEFAULT '0' NOT NULL auto_increment,
+  host_name varchar(25) DEFAULT '' NOT NULL,
+  pagename varchar(20) DEFAULT '' NOT NULL,
+  ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  reason varchar(120) DEFAULT '' NOT NULL,
+  querystring varchar(60) DEFAULT '' NOT NULL,
+  PRIMARY KEY (abuser_id),
+  KEY host_name (host_name),
+  KEY reason (reason)
 );
 
 #
