@@ -45,10 +45,10 @@ __template__
 [% ELSIF section.issue %]
 <P ALIGN="RIGHT">
 	[% IF section.issue == 1 || section.issue == 3 %]
-<BR><B><A HREF="[% constants.rootdir %]/search.pl?section=[% section %]&start=[% start %]"
+<BR><B><A HREF="[% constants.rootdir %]/search.pl?section=[% section.section %]&start=[% start %]"
 >Older Articles</A></B>
 	[% END %][% IF section.issue == 2 || section.issue == 3 %]
-<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section %]&mode=[% user.currentMode %]&issue=[% yesterday %]"
+<BR><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&mode=[% user.currentMode %]&issue=[% yesterday %]"
 >Yesterday's Edition</A></B>
 	[% END %]
 [% END %]
