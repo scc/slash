@@ -30,13 +30,21 @@ __template__
 	END;
 %]
 
+[% INCLUDE titlebar title = "$constants.sitename Story Submissions" %]
+
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 [% IF form.formkey %]
 <INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
 [% END %]
 
-<P>Please enter your story submission here.  You need to include a subject if you
-want to save it.</P>
+<P>Here is where you can submit a story for the [% constants.sitename %]
+Editors to peer at it, poke it with a stick, and perhaps 
+post it for all to share and enjoy.  It is <B>very</B>
+important that you write a clear simple subject, and 
+include relevant links in your story.  If you wish to be 
+anonymous, feel free to leave the identifying fields 
+blank.  Anonymity has no affect on whether we will accept or 
+reject the story.</P>
 
 [% INCLUDE formLabel value => "Your Name", comment => "Leave Blank to be Anonymous" %]
 <INPUT TYPE="text" NAME="name" VALUE="[% username %]" SIZE="50">

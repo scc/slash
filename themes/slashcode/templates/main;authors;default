@@ -17,7 +17,7 @@ en_US
 __name__
 main
 __template__
-[% INCLUDE titlebar %]
+[% INCLUDE titlebar width => '100%' %]
 <P>I keep getting asked 'Who are you guys', so to help unload
 some of that extra mail from my box I have now provided
 this nice little page with a summary of the active [% sitename %]
