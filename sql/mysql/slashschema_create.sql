@@ -609,8 +609,6 @@ CREATE TABLE vars (
   name varchar(32) DEFAULT '' NOT NULL,
   value text,
   description varchar(127),
-  datatype varchar(10),
-  dataop varchar(12),
   PRIMARY KEY (name)
 );
 
