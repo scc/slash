@@ -78,7 +78,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('U.uid,U.nickname', 'users as U, users_param as P', "P.name = 'author' AND U.uid = P.uid") },
 
 	'admins'
-		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 99') },
+		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users', 'seclev >= 100') },
 
 	'users'
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users') },
@@ -211,7 +211,7 @@ sub getMetamodComments {
 		moderatorlog.uid!=$uid AND moderatorlog.reason<8 LIMIT $num_comments"
 	);
 
-	my $comments;
+	my $comments = [];
 	while (my $comment = $sth->fetchrow_hashref) {
 		# Anonymize comment that is to be metamoderated.
 		@{$comment}{qw(nickname uid fakeemail homepage points)} =
@@ -367,6 +367,7 @@ sub getSessionInstance {
 	my $admin_timeout = getCurrentStatic('admin_timeout');
 
 	if (length($session) > 3) {
+		# CHANGE DATE_ FUNCTION
 		$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
 		my($uid) = $self->sqlSelect(
@@ -1130,8 +1131,10 @@ sub savePollQuestion {
 ########################################################
 sub getPollQuestionList {
 	my($self, $time) = @_;
-	my $questions = $self->sqlSelectAll("qid, question, date_format(date,\"W M D\")",
+	my $questions = $self->sqlSelectAll("qid, question, date",
 		"pollquestions order by date DESC LIMIT $time,20");
+
+	formatDate($questions, 2, 2, '%F'); # '%A %B %E' || '%F'
 
 	return $questions;
 }
@@ -1691,7 +1694,7 @@ sub setCommentCleanup {
 			($val > 0 ? " < $constants->{comment_maxscore}" : "");
 
 	$strsql .= " AND lastmod<>$user->{uid}"
-		unless $user->{seclev} > 99 && $constants->{authors_unlimited};
+		unless $user->{seclev} >= 100 && $constants->{authors_unlimited};
 
 	if ($val ne "+0" && $self->sqlDo($strsql)) {
 		$self->setModeratorLog($cid, $sid, $user->{uid}, $modreason, $val);
@@ -2118,20 +2121,20 @@ sub getSlashConf {
 	};
 
 	$conf{fixhrefs} = [];  # fix later
-	$conf{stats_reports} = $fixup->($conf{stats_reports})
-		|| [$conf{adminmail}];
+	$conf{stats_reports} = $fixup->($conf{stats_reports}) ||
+		[$conf{adminmail}];
 
-	$conf{submit_categories} = $fixup->($conf{submit_categories}) 
-		|| [];
+	$conf{submit_categories} = $fixup->($conf{submit_categories}) ||
+		[];
 
-	$conf{approvedtags} = $fixup->($conf{approvedtags})
-		|| [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
+	$conf{approvedtags} = $fixup->($conf{approvedtags}) ||
+		[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
-	$conf{lonetags} = $fixup->($conf{lonetags}) 
-		|| undef;
+	$conf{lonetags} = $fixup->($conf{lonetags}) ||
+		undef;
 
-	$conf{reasons} = $fixup->($conf{reasons})
-		|| [
+	$conf{reasons} = $fixup->($conf{reasons}) ||
+		[
 			'Normal',	# "Normal"
 			'Offtopic',	# Bad Responses
 			'Flamebait',
@@ -2165,6 +2168,7 @@ sub autoUrl {
 	my $more = substr $user->{nickname}, 1;
 	$more =~ s/[a-z]//g;
 	$initials = uc($initials . $more);
+	# CHANGE DATE_ FUNCTION
 	my($now) = $self->sqlSelect('date_format(now(),"m/d h:i p")');
 
 	# Assorted Automatic Autoreplacements for Convenience
@@ -2221,6 +2225,7 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+	# CHANGE DATE_ FUNCTIONS
 	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, uid,
 			date_format(time,"%k:%i") as t,tid,section,
 			displaystatus,writestatus,
@@ -2335,7 +2340,7 @@ sub getAuthors {
 	}
 
 	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 99');
+	my $sth = $self->sqlSelectMany('uid,nickname,fakeemail', 'users', 'seclev >= 100');
 	while (my $row = $sth->fetchrow_hashref) {
 		$self->{$table_cache}{ $row->{'uid'} } = $row;
 	}

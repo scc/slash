@@ -23,7 +23,7 @@ Unless otherwise noted, they are publically available functions.
 =cut
 
 use strict;
-#use Apache;
+use Apache;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
@@ -80,6 +80,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	strip_plaintext
 	timeCalc
 	writeLog
+	url2abs
 );
 
 # LEELA: We're going to deliver this crate like professionals.
@@ -126,6 +127,49 @@ sub root2abs {
 	}
 	return $rootdir;
 }
+
+#========================================================================
+
+=head2 url2abs(URL)
+
+Take URL and make it absolute.  It takes a URL,
+and adds rootdir to the beginning if necessary, and
+adds the protocol to the beginning if necessary, and
+then uses URI->new_abs() to get the correct string.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item URL
+
+URL to make absolute.
+
+=back
+
+=item Return value
+
+Fixed URL.
+
+=back
+
+=cut
+
+sub url2abs {
+	my($url) = @_;
+
+	if (getCurrentStatic('rootdir')) {	# rootdir strongly recommended
+		my $rootdir = root2abs($url);
+		$url = URI->new_abs($url, $rootdir)->canonical->as_string;
+	} elsif ($url !~ m|^https?://|i) {	# but not required
+		$url =~ s|^/*|/|;
+	}
+
+	return $url;
+}
+
 
 #========================================================================
 
@@ -281,7 +325,7 @@ sub formatDate {
 			errorLog('Not arrayref'), return unless ref eq 'ARRAY';
 			$_->[$as] = timeCalc($_->[$col], $format);
 		}
-	} else {
+	} else {	# LoH
 		$col ||= 'date';
 		$as  ||= 'time';
 		for (@$data) {
@@ -760,6 +804,7 @@ sub getCurrentStatic {
 
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
+		# should we get some sort of warning here ... ?  -- pudge
 		return unless $r;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$constants = $const_cfg->{'constants'};
@@ -1002,6 +1047,9 @@ Returns true if the UID is an anonymous coward, otherwise false.
 
 sub isAnon {
 	my($uid) = @_;
+	# this might be undefined in the event of a comment preview
+	# when a data structure is not fully filled out, etc.
+	return 1 unless defined($uid) && $uid ne '';
 	return $uid == getCurrentStatic('anonymous_coward_uid');
 }
 
@@ -1119,7 +1167,8 @@ sub eatUserCookie {
 
 =head2 setCookie(NAME, VALUE, SESSION)
 
-Creates a cookie and places it into the outbound headers.
+Creates a cookie and places it into the outbound headers.  Can be
+called multiple times to set multiple cookies.
 
 =over 4
 
@@ -1164,10 +1213,10 @@ sub setCookie {
 	my $constants = $dbcfg->{constants};
 
 	# We need to actually determine domain from preferences,
-	# not from the server.  ask me why. -- pudge
+	# not from the server, so the site admin can specify
+	# special preferences if they want to. -- pudge
 	my $cookiedomain = $constants->{cookiedomain};
 	my $cookiepath = $constants->{cookiepath};
-	my $cookiesecure = 0;  # $ENV{HTTPS} ? 1 : 0; # ?  how do we do this?
 
 	# domain must start with a '.' and have one more '.'
 	# embedded in it, else we ignore it
@@ -1179,9 +1228,13 @@ sub setCookie {
 		-name	=> $name,
 		-path	=> $cookiepath,
 		-value	=> $val || '',
-		-secure	=> $cookiesecure,
 	);
 
+# I cannot get HTTPS here ... I think it is not set until later.
+# This poses a problem.  -- pudge
+# 	if ($constants->{cookiesecure} && $r->subprocess_env->{HTTPS}) {
+# 		$cookie{-secure} = 1;
+# 	}
 	$cookie{-expires} = '+1y' unless $session;
 	$cookie{-domain}  = $domain if $domain;
 

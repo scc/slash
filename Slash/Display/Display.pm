@@ -164,12 +164,16 @@ sub slashDisplay {
 		$user->{currentPage} = $opt->{Page};
 	}
 
+	for (qw[currentSection currentPage]) {
+		$user->{$_} = defined $user->{$_} ? $user->{$_} : '';
+	}
+
 	$data ||= {};
 	_populate($data);
 
 	@comments = (
-		"\n\n<!-- start template: $name -->\n\n",
-		"\n\n<!-- end template: $name -->\n\n"
+		"\n\n<!-- start template: $name ; $user->{currentPage} ; $user->{currentSection} -->\n\n",
+		"\n\n<!-- end template: $name ; $user->{currentPage} ; $user->{currentSection} -->\n\n"
 	);
 
 	my $template = _template();

@@ -58,9 +58,10 @@ $VERSION = '1.0.9';
 
 #========================================================================
 
-=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT])
+=head2 createSelect(LABEL, DATA [, DEFAULT, RETURN, NSORT, ORDERED])
 
-Creates a drop-down list in HTML.
+Creates a drop-down list in HTML.  List is sorted by default
+alphabetically according to list values.
 
 =over 4
 
@@ -89,6 +90,11 @@ See "Return value" below.
 
 Sort numerically, not alphabetically.
 
+=item ORDERED
+
+An already-sorted array reference of keys.  If passed, then
+the NSORT parameter is ignored.
+
 =back
 
 =item Return value
@@ -106,12 +112,13 @@ The 'select' template block.
 =cut
 
 sub createSelect {
-	my($label, $hashref, $default, $return, $nsort) = @_;
+	my($label, $hashref, $default, $return, $nsort, $ordered) = @_;
 	my $display = {
 		label	=> $label,
 		items	=> $hashref,
 		default	=> $default,
-		numeric	=> $nsort	
+		numeric	=> $nsort,
+		ordered	=> $ordered,
 	};
 
 	if ($return) {
@@ -551,7 +558,7 @@ sub pollbooth {
 	my $pollbooth = slashDisplay('pollbooth', {
 		polls		=> $polls,
 		question	=> $polls->[0][0],
-		qid		=> strip_attribute($qid),
+		qid		=> $qid,
 		voters		=> $slashdb->getPollQuestion($qid, 'voters'),
 		comments	=> $slashdb->countComments($qid),
 		sect		=> $sect,
@@ -758,13 +765,7 @@ The 'html-redirect' template block.
 
 sub redirect {
 	my($url) = @_;
-
-	if (getCurrentStatic('rootdir')) {	# rootdir strongly recommended
-		my $rootdir = root2abs($url);
-		$url = URI->new_abs($url, $rootdir)->canonical->as_string;
-	} elsif ($url !~ m|^https?://|i) {	# but not required
-		$url =~ s|^/*|/|;
-	}
+	$url = url2abs($url);
 
 	my %params = (
 		-type		=> 'text/html',
@@ -934,12 +935,12 @@ sub horizmenu {
 
 Prints a titlebar widget.  Deprecated; exactly equivalent to:
 
-=over 4
-
 	slashDisplay('titlebar', {
 		width	=> $width,
 		title	=> $title
 	});
+
+=over 4
 
 =item Parameters
 
@@ -1177,7 +1178,7 @@ sub selectComments {
 	);
 
 	reparentComments($comments);
-	return($comments,$count);
+	return($comments, $count);
 }
 
 ########################################################
@@ -1374,6 +1375,7 @@ sub printComments {
 		pid		=> $pid,
 		cc		=> $cc,
 		lcp		=> linkCommentPages($sid, $pid, $cid, $cc),
+		lvl		=> $lvl,
 	});
 }
 
@@ -1528,6 +1530,12 @@ The 'linkComment' template block.
 sub linkComment {
 	my($comment, $printcomment, $date) = @_;
 	my $user = getCurrentUser();
+
+	# don't inherit these ...
+	for (qw(sid cid pid date subject comment uid points lastmod
+		reason nickname fakeemail homepage sig)) {
+		$comment->{$_} = '' unless exists $comment->{$_};	
+	}
 
 	slashDisplay('linkComment', {
 		%$comment, # defaults
@@ -1724,18 +1732,23 @@ sub dispComment {
 		$reasons{$_} = $constants->{reasons}[$_];
 	}
 
-	my $can_mod = ! $user->{is_anon} &&
+	my $can_mod = ! $comment->{no_moderation} && ! $user->{is_anon} &&
 		((	$user->{willing} && $user->{points} > 0 &&
 			$comment->{uid} != $user->{uid} && $comment->{lastmod} != $user->{uid}
 		) || ($user->{seclev} > 99 && $constants->{authors_unlimited}));
+
+	# don't inherit these ...
+	for (qw(sid cid pid date subject comment uid points lastmod
+		reason nickname fakeemail homepage sig)) {
+		$comment->{$_} = '' unless exists $comment->{$_};	
+	}
 
 	slashDisplay('dispComment', {
 		%$comment,
 		comment_shrunk	=> $comment_shrunk,
 		reasons		=> \%reasons,
-		can_mod		=> $comment->{no_moderation} ? 0 : $can_mod,
+		can_mod		=> $can_mod,
 		is_anon		=> isAnon($comment->{uid}),
-		fixednickname	=> fixparam($comment->{nickname}),
 	}, { Return => 1, Nocomm => 1 });
 }
 
@@ -1854,7 +1867,7 @@ hashref of author data, and hashref of topic data.
 
 sub displayStory {
 	# caller is the pagename of the calling script
-	my($sid, $full, $caller) = @_;
+	my($sid, $full) = @_;	# , $caller  no longer needed?  -- pudge
 
 	my $slashdb = getCurrentDB();
 	my $story = $slashdb->getStory($sid);
@@ -2000,9 +2013,9 @@ sub lockTest {
 	for (keys %$locks) {
 		if ($_->{uid} ne getCurrentUser('uid') && (my $pct = matchingStrings($_->{subject}, $subj))) {
 			$msg .= slashDisplay('lockTest', {
-				percent	=> $pct,
-				subject	=> $_->{subject},
-				aid	=> $slashdb->getUser($_->{uid}, 'nickname')
+				percent		=> $pct,
+				subject		=> $_->{subject},
+				nickname	=> $slashdb->getUser($_->{uid}, 'nickname')
 			}, 1);
 		}
 	}
@@ -2184,7 +2197,7 @@ The menu.
 
 =item Dependencies
 
-The template blocks 'menu-admin', 'menu-user', and any other
+The template blocks 'admin', 'user' (in the 'menu' page), and any other
 template blocks for menus, along with all the data in the
 'menus' table.
 
@@ -2223,7 +2236,7 @@ sub createMenu {
 
 #========================================================================
 
-=head2 getData(VALUE, [PARAMETERS, PAGE])
+=head2 getData(VALUE [, PARAMETERS, PAGE])
 
 Returns snippets of data associated with a given page.
 

@@ -30,22 +30,23 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	my $form = getCurrentForm();
-	my $user = getCurrentUser();
-	my $op = getCurrentForm('op');
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
-	my $dbslash = getCurrentDB();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	header("Meta Moderation");
+	my $op = getCurrentForm('op');
 
-	my $id = isEligible($user, $dbslash, $constants);
+	# this text must be in a template!
+	header(getData('header'));
+
+	my $id = isEligible();
 	if (!$id) {
-		slashDisplay('not-eligible');
-
+		print getData('not-eligible');
 	} elsif ($op eq "MetaModerate") {
-		metaModerate($id, $form, $user, $dbslash, $constants);
+		metaModerate($id);
 	} else {
-		displayTheComments($id, $user, $dbslash, $constants);
+		displayTheComments($id);
 	}
 
 	writeLog("metamod", $op);
@@ -54,7 +55,8 @@ sub main {
 
 #################################################################
 sub karmaBonus {
-	my ($user, $constants) = @_;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 
 	my $x = $constants->{m2_maxbonus} - $user->{karma};
 
@@ -65,10 +67,14 @@ sub karmaBonus {
 
 #################################################################
 sub metaModerate {
-	my ($id, $form, $user, $dbslash, $constants) = @_;
+	my($id) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	my $y = 0;								# Sum of elements from form.
-	my (%metamod, @mmids);
+	my $y = 0;	# Sum of elements from form.
+	my(%metamod, @mmids);
 
 	$metamod{unfair} = $metamod{fair} = 0;
 	foreach (keys %{$form}) {
@@ -86,7 +92,7 @@ sub metaModerate {
 	foreach (@mmids) {
 		if ($y < $constants->{m2_comments}) { 
 			$y++;
-			my $muid = $dbslash->getModeratorLog($_, 'uid');
+			my $muid = $slashdb->getModeratorLog($_, 'uid');
 
 			$m2victims{$_} = [$muid, $form->{"mm$_"}];
 		}
@@ -110,20 +116,20 @@ sub metaModerate {
 		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $constants->{m2_toomanyunfair}));
 	}
 
-	my $changes = $dbslash->setMetaMod(\%m2victims, $flag, $ts);
+	my $changes = $slashdb->setMetaMod(\%m2victims, $flag, $ts);
 
-	slashDisplay('results', {
-		changes => $changes,
+	slashDisplay('metaModerate', {
+		changes	=> $changes,
 		count	=> $y,
-		metamod => \%metamod,
+		metamod	=> \%metamod,
 	});
 
-	$dbslash->setModeratorVotes($user->{uid}, \%metamod) unless $user->{is_anon};
+	$slashdb->setModeratorVotes($user->{uid}, \%metamod) unless $user->{is_anon};
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
 	if ($y > $constants->{m2_mincheck} && !$user->{is_anon}) {
-		if (!$flag && karmaBonus($user, $constants)) {
+		if (!$flag && karmaBonus()) {
 			# Bonus Karma For Helping Out - the idea here, is to not 
 			# let meta-moderators get the +1 posting bonus.
 			($change, $excon) =
@@ -138,33 +144,38 @@ sub metaModerate {
 
 		# Update karma.
 		# This is an abuse
-		$dbslash->setUser($user->{uid}, { -karma => "karma$change" }) if $change;
+		$slashdb->setUser($user->{uid}, { -karma => "karma$change" }) if $change;
 	}
 }
 
-
 #################################################################
 sub displayTheComments {
-	my ($id, $user, $dbslash, $constants) = @_;
+	my($id) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	$user->{points} = 0;
-	my $comments = $dbslash->getMetamodComments($id, $user->{uid}, $constants->{m2_comments});
+	my $comments = $slashdb->getMetamodComments($id, $user->{uid},
+		$constants->{m2_comments});
 
-	slashDisplay('display', {
+	slashDisplay('displayTheComments', {
 		comments 	=> $comments,
 	});
 }
 
-
 #################################################################
 # This is going to break under replication
 sub isEligible {
-	my ($user, $dbslash, $constants) = @_;
+	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
 
-	my $tuid = $dbslash->countUsers();
-	my $last = $dbslash->getModeratorLast($user->{uid});
+	my $tuid = $slashdb->countUsers();
+	my $last = $slashdb->getModeratorLast($user->{uid});
 
-	my $result = slashDisplay('eligibility-tests', {
+	my $result = slashDisplay('isEligible', {
 		user_count	=> $tuid,
 		'last'		=> $last,
 	}, { Return => 1, Nocomm => 1 });
@@ -177,13 +188,14 @@ sub isEligible {
 	# Eligible for M2. Determine M2 comments by selecting random starting
 	# point in moderatorlog.
 	unless ($last->{'lastmmid'}) {
-		$last->{'lastmmid'} = $dbslash->getModeratorLogRandom();
-		$dbslash->setUser($user->{uid}, { lastmmid => $last->{'lastmmid'} });
+		$last->{'lastmmid'} = $slashdb->getModeratorLogRandom();
+		$slashdb->setUser($user->{uid}, { lastmmid => $last->{'lastmmid'} });
 	}
 
 	return $last->{'lastmmid'}; # Hooray!
 }
 
+#################################################################
 createEnvironment();
 main();
 

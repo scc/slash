@@ -39,7 +39,7 @@ sub main {
 
 	header("$constants->{sitename}: Authors", $section->{section});
 	slashDisplay('main', {
-		aids	=> $list,
+		uids	=> $list,
 		authors	=> $authors,
 		title	=> "The Authors",
 		admin	=> getCurrentUser('seclev') >= 1000,

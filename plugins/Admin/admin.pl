@@ -117,13 +117,13 @@ sub main {
 		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockdelete}) {
-		blockEdit($user->{seclev},$form->{thisbid});
+		blockEdit($user->{seclev}, $form->{thisbid});
 
 	} elsif ($form->{blockdelete1}) {
-		blockEdit($user->{seclev},$form->{bid1});
+		blockEdit($user->{seclev}, $form->{bid1});
 
 	} elsif ($form->{blockdelete2}) {
-		blockEdit($user->{seclev},$form->{bid2});
+		blockEdit($user->{seclev}, $form->{bid2});
 
 	} elsif ($form->{blockdelete_confirm}) {
 		blockDelete($form->{deletebid});
@@ -355,7 +355,7 @@ sub authorDelete {
 
 ##################################################################
 sub pageEdit {
-	my ($seclev,$page) = @_;
+	my($seclev, $page) = @_;
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -371,54 +371,58 @@ sub pageEdit {
 # @my_names = grep /^$foo-/, @all_names;
 sub templateEdit {
 	my($seclev, $tpid, $page, $section) = @_;
+	my($slashdb, $form, $pagehashref, $title, $templateref,
+		$template_select, $page_select, $section_select,
+		$templatedelete_flag, $templateedit_flag, $templateform_flag);
 
 	return if $seclev < 100;	
 	$page ||= 'misc';
 	$section ||= 'default';
 
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $pagehashref = {};
+	$slashdb = getCurrentDB();
+	$form = getCurrentForm();
+	$pagehashref = {};
+	$templatedelete_flag = $templateedit_flag = $templateform_flag = 0;
 
-	my ($title, $templateref,$template_select,$page_select);
-	my ($section_select,$description_ta,$template_ta, $template_ref);
-	my ($templatedelete_flag,$templateedit_flag,$templateform_flag) = (0,0,0);
+	$templateref = $slashdb->getTemplateByID($tpid, '', 1) if $tpid;
+	$title = getTitle('templateEdit-title', {}, 1);
 
-	if($tpid) {
-		$templateref = $slashdb->getTemplateByID($tpid, '', 1);
-	}
-
-	$title = getTitle('templateEdit-title',{},1);
-
-	if($form->{templatedelete}) {
+	if ($form->{templatedelete}) {
 		$templatedelete_flag = 1;
 	} else {
 		my $templates = {};
 
 		if ($form->{templatesection}) {
-			if($section eq 'All Sections') {
+			if ($section eq 'All Sections') {
 				$templates = $slashdb->getDescriptions('templates', $page, 1);
 			} else {
 				$templates = $slashdb->getDescriptions('templatesbysection', $section, 1);
 			}
 		} else {
-			if($page eq 'All') {
+			if ($page eq 'All') {
 				$templates = $slashdb->getDescriptions('templates', $page, 1);
 			} else {
 				$templates = $slashdb->getDescriptions('templatesbypage', $page, 1);
 			}
 		}
 
-
+		# is this $page supposed to be in quotes?  single quotes?  -- pudge
 		my $pages = $slashdb->getDescriptions('pages', '$page', 1);
-		my $sections = $slashdb->getDescriptions('sections','', 1);
+		my $sections = $slashdb->getDescriptions('sections', '', 1);
 
 		$pages->{All} = 'All';
 		$pages->{misc} = 'misc';
 		$sections->{default} = 'default';
 
+		# put these in alpha order by label, and add tpid to label
+		my @ordered;
+		for (sort { $templates->{$a} cmp $templates->{$b} } keys %$templates) {
+			push @ordered, $_;
+			$templates->{$_} = $templates->{$_} . " ($_)";
+		}
+
 		$page_select = createSelect('page', $pages, $page, 1);
-		$template_select = createSelect('tpid', $templates, $tpid, 1);
+		$template_select = createSelect('tpid', $templates, $tpid, 1, 0, \@ordered);
 		$section_select = createSelect('section', $sections, $section, 1);
 	}
 
@@ -426,16 +430,11 @@ sub templateEdit {
 		$templateedit_flag = 1;
 	}
 
-	$description_ta = strip_literal($templateref->{description});
-	$template_ta = strip_literal($templateref->{template});
-
 	$templateform_flag = 1 if ( (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
 
 	slashDisplay('templateEdit', {
 		tpid 			=> $tpid,
 		title 			=> $title,
-		description_ta		=> $description_ta,
-		template_ta		=> $template_ta,
 		templateref		=> $templateref,
 		templateedit_flag	=> $templateedit_flag,
 		templatedelete_flag	=> $templatedelete_flag,
@@ -466,7 +465,7 @@ sub templateSave {
 			$form->{page} eq $temp->{page});
 
 	if ($form->{save_new}) {
-		if($id->{tpid} || $exists) {
+		if ($id->{tpid} || $exists) {
 			print getMessage('templateSave-exists-message', { tpid => $tpid, name => $form->{name} } );
 			return;
 		} else {
@@ -525,10 +524,9 @@ sub blockEdit {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
-	my($hidden_bid) = "";
-	my ($blockref, $saveflag, $block_select, $retrieve_checked, $portal_checked) ;
-	my ($description_ta,$block_ta, $block_select1, $block_select2);
-	my ($blockedit_flag,$blockdelete_flag, $blockform_flag) = (0,0,0);
+	my($blockref, $saveflag, $block_select, $retrieve_checked,
+		$portal_checked, $block_select1, $block_select2);
+	my($blockedit_flag, $blockdelete_flag, $blockform_flag) = (0, 0, 0);
 
 	if ($bid) {
 		$blockref = $slashdb->getBlock($bid, '', 1);
@@ -561,9 +559,6 @@ sub blockEdit {
 		}	
 	}	
 
-	$description_ta = strip_literal($blockref->{description});
-	$block_ta = strip_literal($blockref->{block});
-
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
 	slashDisplay('blockEdit', {
@@ -577,8 +572,6 @@ sub blockEdit {
 		blockform_flag		=> $blockform_flag,
 		portal_checked		=> $portal_checked,
 		retrieve_checked	=> $retrieve_checked,
-		description_ta		=> $description_ta,
-		block_ta		=> $block_ta,
 		sectionbid		=> $sectionbid,
 	});	
 			
@@ -780,7 +773,7 @@ sub listTopics {
 			$topicref->{$topic->{tid}}{trflag} = 1;
 		}
 
-		if ($seclev > 500) {
+		if ($seclev >= 500) {
 			$topicref->{$topic->{tid}}{topicedflag} = 1;		
 		}
 	}
@@ -932,11 +925,10 @@ sub editStory {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my ($authoredit_flag,$extracolumn_flag) = (0,0);
-	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest);
-	my($editbuttons,$topic_select, $section_select, $author_select);
-	my($extracolumns,$introtext,$bodytext,$relatedtext);
-	my($displaystatus_select, $commentstatus_select);
+	my($authoredit_flag, $extracolumn_flag) = (0,0);
+	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
+		$editbuttons, $topic_select, $section_select, $author_select,
+		$extracolumns, $displaystatus_select, $commentstatus_select);
 	my $extracolref = {};
 	my($fixquotes_check,$autonode_check,$fastforward_check) = ('off','off','off');
 
@@ -1013,9 +1005,6 @@ sub editStory {
 	}
 	$extracolumns =  $slashdb->getKeys($storyref->{section});
 
-	$introtext = strip_literal($storyref->{introtext});
-	$bodytext  = strip_literal($storyref->{bodytext});
-	$relatedtext = strip_literal($storyref->{relatedtext});
 	my $SECT = getSection($storyref->{section});
 
 	$editbuttons = editbuttons($newarticle);
@@ -1024,7 +1013,7 @@ sub editStory {
 
 	$section_select = selectSection('section', $storyref->{section}, $SECT, 1) unless $user->{section};
 
-	if ($user->{seclev} > 100) {
+	if ($user->{seclev} >= 100) {
 		$authoredit_flag = 1;
 		my $authors = $slashdb->getDescriptions('authors');
 		$author_select = createSelect('uid', $authors, $storyref->{aid}, 1);
@@ -1080,9 +1069,6 @@ sub editStory {
 		fastforward_check	=> $fastforward_check,
 		extracolumn_flag	=> $extracolumn_flag,
 		extracolref		=> $extracolref,
-		introtext		=> $introtext,
-		bodytext		=> $bodytext,
-		relatedtext		=> $relatedtext,
 		user			=> $user,
 		authoredit_flag		=> $authoredit_flag,
 	});
@@ -1118,7 +1104,7 @@ sub listStories {
 		$title = substr($title, 0, 50) . '...' if (length $title > 55);
 		$displayoff = 1 if($writestatus < 0 || $displaystatus < 0);
 
-		if ($user->{uid} eq $aid || $user->{seclev} > 100) {
+		if ($user->{uid} eq $aid || $user->{seclev} >= 100) {
 			$canedit = 1;
 			$tbtitle = fixparam($title);
 		} 

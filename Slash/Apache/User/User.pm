@@ -80,11 +80,16 @@ sub handler {
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
-		if ($newpass) {
-			$r->err_header_out(Location =>
-				"$constants->{absolutedir}/users.pl?op=edit" .
-				"user&note=Please+change+your+password+now!"
+
+		if ($uid != $constants->{anonymous_coward_uid}) {
+			my $newurl = url2abs($newpass
+				? "$constants->{rootdir}/users.pl?op=edit" .
+				  "user&note=Please+change+your+password+now!"
+				: $form->{returnto}
+					? $form->{returnto}
+					: $uri
 			);
+			$r->err_header_out(Location => $newurl);
 			return REDIRECT;
 		}
 
@@ -155,9 +160,10 @@ sub userLogin {
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $slashdb = getCurrentDB();
 
-	$passwd = substr $passwd, 0, 20;
+	# Do we want to allow logins with encrypted passwords? -- pudge
+#	$passwd = substr $passwd, 0, 20;
 	my($uid, $cookpasswd, $newpass) =
-		$slashdb->getUserAuthenticate($name, $passwd, 1);
+		$slashdb->getUserAuthenticate($name, $passwd); #, 1
 
 	if (!isAnon($uid)) {
 		setCookie('user', bakeUserCookie($uid, $cookpasswd));
@@ -178,7 +184,7 @@ sub getUser {
 	$constants = $cfg->{constants};
 	$slashdb = $cfg->{slashdb};
 
-	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
+	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
 	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {}
 		my $timezones = $slashdb->getDescriptions('tzcodes');
@@ -259,7 +265,7 @@ sub getUser {
 		$user->{is_admin} = 1;
 		#$user->{aid} = $user->{nickname}; # Just here for the moment
 		my $sid;
-		if($cookies->{session}) {
+		if ($cookies->{session}) {
 			$sid = $slashdb->getSessionInstance($uid, $cookies->{session}->value);
 		} else {
 			$sid = $slashdb->getSessionInstance($uid);

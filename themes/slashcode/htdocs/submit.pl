@@ -199,7 +199,7 @@ sub submissionEd {
 		width		=> '100%',
 	});
 
-	my(@submissions, $submissions, @selection);
+	my(@submissions, $submissions, %selection);
 	$submissions = $slashdb->getSubmissionForUser();
 
 	for (@$submissions) {
@@ -226,7 +226,8 @@ sub submissionEd {
 		$sub->{section} = ucfirst($sub->{section}) unless $user->{submit_admin};
 	}
 
-	@selection = (qw(DEFAULT Hold Quik),
+	%selection = map { ($_, $_) }
+		(qw(Hold Quik), '',	# '' is special
 		(ref $constants->{submit_categories}
 			? @{$constants->{submit_categories}} : ())
 	);
@@ -234,7 +235,7 @@ sub submissionEd {
 	my $template = $user->{submit_admin} ? 'Admin' : 'User';
 	slashDisplay('submissionEd' . $template, {
 		submissions	=> \@submissions,
-		selection	=> \@selection,
+		selection	=> \%selection,
 	});
 }	
 

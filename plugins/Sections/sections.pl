@@ -142,7 +142,6 @@ sub editSection {
 
 	slashDisplay('editSection', {
 		section		=> $section,
-		seclev		=> $user->{seclev},
 		this_section	=> $this_section,
 		qid		=> $qid,
 		isolate		=> $isolate,

@@ -89,7 +89,7 @@ sub editpoll {
 
 	slashDisplay('editpoll', {
 		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
-		qid		=> strip_attribute($qid),
+		qid		=> $qid,
 		question	=> $question,
 		answers		=> $answers,
 	});
@@ -154,16 +154,12 @@ sub vote {
 		push @pollitems, [$answer, $imagewidth, $votes, $percent];
 	}
 
-	my $postvote = $slashdb->getBlock("$user->{currentSection}_postvote", 'block')
-		|| $slashdb->getBlock('postvote', 'block');
-
 	slashDisplay('vote', {
-		qid		=> strip_attribute($qid),
+		qid		=> $qid,
 		width		=> '99%',
 		title		=> $question->{question},
 		voters		=> $question->{voters},
 		pollitems	=> \@pollitems,
-		postvote	=> $postvote,
 		notes		=> $notes
 	});
 }

@@ -38,11 +38,7 @@ sub main {
 	my $op = $form->{op};
 	my $uid = $user->{uid};
 
-	if ($op eq 'userlogin' && !$user->{is_anon}) {
-		my $refer = $form->{returnto} || $constants->{rootdir};
-		redirect($refer);
-		return;
-	} elsif ($op eq 'saveuser') {
+	if ($op eq 'saveuser') {
 		my $note = saveUser($form->{uid});
 		redirect($ENV{SCRIPT_NAME} . "?op=edituser&note=$note");
 		return;
@@ -185,22 +181,19 @@ sub previewSlashbox {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $section = $slashdb->getSection($form->{bid});
-	my $cleantitle = $section->{title};
-	$cleantitle =~ s/<(.*?)>//g;
-
+	my $block = $slashdb->getBlock($form->{bid}, ['title', 'block', 'url']);
 	my $is_editable = $user->{seclev} > 999;
 
-	my $title = getTitle('previewslashbox_title', { cleantitle => $cleantitle });
+	my $title = getTitle('previewslashbox_title', { blocktitle => $block->{title} });
 	slashDisplay('previewSlashbox', {
 		width		=> '100%',
 		title		=> $title,
-		cleantitle 	=> $cleantitle,
+		block 		=> $block,
 		is_editable	=> $is_editable,
 	});
 
-	print portalbox($constants->{fancyboxwidth}, $section->{title},
-		$section->{content}, '', $section->{url});
+	print portalbox($constants->{fancyboxwidth}, $block->{title},
+		$block->{block}, '', $block->{url});
 }
 
 #################################################################
@@ -283,28 +276,29 @@ sub userInfo {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
-	my $currentuser = getCurrentUser();
+	my $user = getCurrentUser();
 
 	my $admin_block = '';
 
 	my $userbio = $slashdb->getUser($uid);
-	$userbio->{bio} = strip_html($userbio->{bio});
 
-	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0;
+	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0;
 
 	$admin_block = getUserAdmin($userbio->{uid}, $userbio->{seclev}, 1, 0) if $author_flag;
 
-	my($title, $commentstruct, $question, $points, $nickmatch_flag, $rows);
+	my($title, $commentstruct, $points, $nickmatch_flag);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
 	$form->{min} = 0 unless $form->{min};
 
- 	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uidbio} == $uid;
+ 	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uid} == $uid;
 
 	my $public_key = $userbio->{pubkey};
 	$public_key = strip_html($public_key, 1) if $public_key;
 
-	if ($userbio->{nickname} eq $orignick) {
+#	if ($userbio->{nickname} eq $orignick) {
+#	wouldn't this be better?
+	if ($userbio->{uid} == $user->{uid}) {
 		$nickmatch_flag = 1;
 		$points = $userbio->{points};
 		$mod_flag = 1 if $userbio->{uid} == $uid && $points > 0;
@@ -313,7 +307,6 @@ sub userInfo {
 
 	# my $comments = $slashdb->getUserComments($uid, $form->{min}, $userbio);
 	my $comments = $slashdb->getCommentsByUID($uid, $form->{min}, $userbio);
-	$rows = @$comments;
 
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
@@ -322,17 +315,9 @@ sub userInfo {
 
 		# This is ok, since with all luck we will not be hitting the DB
 		my $story = $slashdb->getStory($sid);
+		my $question = $slashdb->getPollQuestion($sid, 'question');
 
-		if ($story) {
-			my $href = $story->{writestatus} == 10
-				? "$constants->{rootdir}/$story->{section}/$sid.shtml"
-				: "$constants->{rootdir}/article.pl?sid=$sid";
-
-		} else {
-			$question = $slashdb->getPollQuestion($sid, 'question');
-		}
-
-		$commentstruct->[$n] = {
+		push @$commentstruct, {
 			pid 		=> $pid,
 			sid 		=> $sid,
 			cid 		=> $cid,
@@ -343,8 +328,6 @@ sub userInfo {
 			question	=> $question,
 			replies		=> $replies,
 		};
-
-		$n++;
 	}
 
 	slashDisplay('userInfo', {
@@ -356,7 +339,6 @@ sub userInfo {
 		bio			=> $userbio->{bio},
 		points			=> $points,
 		public_key		=> $public_key,
-		rows			=> $rows,
 		commentstruct		=> $commentstruct,
 		nickmatch_flag		=> $nickmatch_flag,
 		mod_flag		=> $mod_flag,
@@ -383,7 +365,7 @@ sub editUser {
 
 	my $slashdb = getCurrentDB();
 	my $user_edit = $slashdb->getUser($uid);
-	my $currentuser = getCurrentUser();
+	my $user = getCurrentUser();
 
 	my($author_select, $admin_block);
 
@@ -402,7 +384,7 @@ sub editUser {
 	my $session = $slashdb->getDescriptions('session_login');
 	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
-	my $author_flag = ($currentuser->{seclev} >= 100) ? 1 : 0; 
+	my $author_flag = ($user->{seclev} >= 100) ? 1 : 0; 
 	$admin_block = getUserAdmin($user_edit->{uid}, $user_edit->{seclev}, 0, 1) if $author_flag;
 
 	slashDisplay('editUser', { 
@@ -410,12 +392,6 @@ sub editUser {
 		author_flag		=> $author_flag,
 		author_select		=> $author_select,
 		title			=> $title,
-		temppass		=> $temppass,
-		tempnick		=> $tempnick,	
-		bio 			=> strip_nohtml($user_edit->{bio}), 
-		sig 			=> strip_nohtml($user_edit->{sig}),
-		quote			=> strip_nohtml($user_edit->{quote}),
-		copy 			=> strip_nohtml($user_edit->{copy}),
 		editkey 		=> editKey($user_edit->{uid}),
 		maillist 		=> $maillist,
 		session 		=> $session_select,
@@ -455,8 +431,6 @@ sub tildeEd {
 
 	my $customize_title = getTitle('tildeEd_customize_title');
 
-	$userspace = strip_literal($userspace);
-
 	my $tilded_customize_msg = getMessage('users_tilded_customize_msg',
 		{ userspace => $userspace });
 
@@ -468,7 +442,6 @@ sub tildeEd {
 		my($bid, $title, $boldflag) = @$_;
 
 		$section_descref->{$bid}{checked} = ($exboxes =~ /'$bid'/) ? ' CHECKED' : '';
-		$section_descref->{$bid}{srandflag} = $bid eq 'srandblock';
 		$section_descref->{$bid}{boldflag} = $boldflag > 0;
 		$title =~ s/<(.*?)>//g;
 		$section_descref->{$bid}{title} = $title;
@@ -824,11 +797,11 @@ sub getTitle {
 # getUserAdmin - returns a block of text
 # containing fields for admin users
 sub getUserAdmin {
-	my($uid, $seclev, $form_flag, $display_seclev) = @_;
+	my($uid, $seclev, $form_flag, $seclev_field) = @_;
 
-	my $slashdb 	= getCurrentDB();
-	my $form    	= getCurrentForm();	
+	my $slashdb	= getCurrentDB();
 	my $user	= getCurrentUser();
+	my $form	= getCurrentForm();	
 
 	my $edituser = $slashdb->getUser($uid);
 
@@ -848,9 +821,9 @@ sub getUserAdmin {
 	$author_select = createSelect('authoruid', $authors, $uid, 1) if $authoredit_flag;
 	$author_select =~ s/\s{2,}//g;
 
-	return slashDisplay('admin', { 
+	return slashDisplay('getUserAdmin', { 
 		edituser		=> $edituser,
-		seclev_field		=> $display_seclev,
+		seclev_field		=> $seclev_field,
 		uid_checked 		=> $uid_checked,
 		nickname_checked 	=> $nickname_checked,
 		author_select		=> $author_select,

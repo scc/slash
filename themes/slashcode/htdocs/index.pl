@@ -33,19 +33,7 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	# this is needed so that when the user does the automatic
-	# login from a URL ('http://foo/index.pl?op=userlogin&upasswd=la&unickname=me')
-	# the user's username and password will not stuck in the URL;
-	# this was a big problem because when someone would click a URL to
-	# another site from the home page after logging in this way, they would
-	# send their username and password along in the HTTP_REFERER.
-	# we could possibly move this to User.pm, though, I think.
-	# -- pudge
-	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
-		redirect($ENV{SCRIPT_NAME});
-		return;
-	}
-
+	# why is this commented out?  -- pudge
 	# $form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
 
 	for ($form->{op}) {

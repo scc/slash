@@ -56,7 +56,7 @@ EOT
 	slashDisplay('display', {
 		poll			=> pollbooth($story->{sid}, 1),
 		section			=> $SECT,
-		section_block	=> $dbslash->getBlock($SECT->{section}),
+		section_block		=> $dbslash->getBlock($SECT->{section}),
 		show_poll		=> $dbslash->getPollQuestion($story->{sid}),
 		story			=> $story,
 		'next'			=> $dbslash->getStoryByTime('>', $story, $SECT),
