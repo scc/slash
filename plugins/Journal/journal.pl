@@ -399,9 +399,10 @@ sub saveArticle {
 		}
 
 		unless ($form->{comments_on}) {
-			for (qw(description article tid posttype)) {
-				$update{$_} = $form->{$_} if $form->{$_};
+			for (qw(article tid posttype)) {
+				$update{$_} = $form->{$_} if defined $form->{$_};
 			}
+			$update{description} = $description;
 		}
 
 		$journal->set($form->{id}, \%update);
