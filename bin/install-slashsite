@@ -170,6 +170,7 @@ find(sub {
 		mkpath $f2, 0, 0775;
 	} else {
 		copy $f1, $f2;
+		chmod((stat(_))[2], $f2);
 	}
 }, "$theme/htdocs/");
 

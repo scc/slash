@@ -1126,7 +1126,6 @@ Dependencies
 
 sub printComments {
 	my($sid, $pid, $cid) = @_;
-	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
@@ -1234,7 +1233,6 @@ Dependencies
 sub moderatorCommentLog {
 	my($sid, $cid) = @_;
 	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
 
 	my $seclev = getCurrentUser('seclev');
 	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
