@@ -30,13 +30,6 @@ my %opts;
 usage('no options supplied to program') unless getopts('cdilrsvD:O:P:S:p:f:u:?', \%opts);
 usage('help requested') if $opts{'?'};
 
-# can't have more than one template for a file in a dump
-usage('you have supplied more templates than there are files to save them to') 
-
-if ($opts{'f'} && ($opts{'d'} || $opts{'e'}) && @ARGV > 1);
-# you must have -f if you want to save a particular file as a template
-usage('no file to save') if ($opts{'s'} && ! $opts{'f'} && -f $ARGV[0]);
-
 # if deleting, then there should be no other operation or file flags
 usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l'} || $opts{'f'} || $opts{'s'} || $opts{'e'} )); 
 
@@ -105,7 +98,6 @@ if ($opts{'s'}) {
 		next unless $template;
 		print "$template->{name}\n";
 		my $tpid = $slash->getTemplateByName($template->{name}, 'tpid', 1, $template->{page}, $template->{section});
-		print "TPID:$tpid\n";
 		if(defined($tpid)) {
 			$slash->setTemplate($tpid, $template);
 		} else {
