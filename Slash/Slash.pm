@@ -125,7 +125,9 @@ sub getSlash {
 	$I{F}{ssi} ||= '';
 	$ENV{SCRIPT_NAME} ||= '';
 
-	($I{anon_name}) = sqlSelect('nickname', 'users', 'uid=-1') unless $I{anon_name};
+	# This method will go away when I am done building
+	# the different user methods
+	($I{anon_name}) = getNicknameByUID('-1') unless $I{anon_name};
 
 	my $op = $I{query}->param('op') || '';
 
@@ -156,6 +158,7 @@ sub getSlash {
 # Generic way to convert a table into a drop down list
 sub selectGeneric {
 	my($table, $label, $code, $name, $default, $where, $order, $limit) = @_;
+	my($table, $code, $name, $default, $where, $order, $limit) = @_;
 	$default = '' unless defined $default;
 	$code 	 = '' unless defined $code;
 	
@@ -245,6 +248,7 @@ sub selectMode {
 		}
 		$c->finish;
 	}
+	$I{dbobject}->getCodes(\$I{modeBank}, 'sortcodes') unless $I{modeBank};
 
 	my $o .= qq!<SELECT NAME="mode">\n!;
 	foreach my $id (keys %{$I{modeBank}}) {
@@ -346,30 +350,22 @@ sub getWidgetBlock {
 
 ########################################################
 sub getvars {
-	my(@invars, @vars) = @_;
-
-	for (@invars) {
-		push @vars, sqlSelect('value', 'vars', "name='$_'");
-	}
-
-	return @vars;
+	$I{dbobject}->getVars(@_);
 }
 
 ########################################################
 sub getvar {
-	my($value, $desc) = sqlSelect('value,description', 'vars', "name='$_[0]'");
+	$I{dbobject}->getVar(@_);
 }
 
 ########################################################
 sub setvar {
-	my($name, $value) = @_;
-	sqlUpdate('vars', {value => $value}, 'name=' . $I{dbh}->quote($name));
+	$I{dbobject}->setVar(@_);
 }
 
 ########################################################
 sub newvar {
-	my($name, $value, $desc) = @_;
-	sqlInsert('vars', {name => $name, value => $value, description => $desc});
+	$I{dbobject}->newVar(@_);
 }
 
 ###############################################################################
@@ -1346,7 +1342,7 @@ sub selectComments {
 	$thisComment->finish;
 
 	getCommentTotals($comments);
-	updateCommentTotals($sid, $comments) if $I{F}{ssi};
+	$I{dbobject}->updateCommentTotals($sid, $comments) if $I{F}{ssi};
 	reparentComments($comments);
 	return($comments,$count);
 }
@@ -1359,18 +1355,6 @@ sub getCommentTotals {
 	}
 }
 
-########################################################
-sub updateCommentTotals {
-	return unless $I{F}{ssi}; # Don't bother unless we're making static.
-	my($sid, $comments) = @_;
-	my $hp = join ',', @{$comments->[0]{totals}};
-	sqlUpdate("stories", {
-			hitparade	=> $hp, 
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $I{dbh}->quote($sid)
-	);
-}
 
 ########################################################
 sub reparentComments {
@@ -1381,7 +1365,8 @@ sub reparentComments {
 
 	# adjust depth for root pid or cid
 	if (my $cid = $I{F}{cid} || $I{F}{pid}) {
-		while ($cid && (my($pid) =
+		while ($cid && (my($pid) = getCommentPid($I{F}{sid}, $cid))) {
+
 			sqlSelect('pid', 'comments',
 				"sid='$I{F}{sid}' and cid=$cid")
 		)) {
@@ -2262,6 +2247,7 @@ sub sqlSelectHash {
 	$I{dbobject}->sqlSelect(@_);
 }
 sub selectCount  {
+#Nothing seems to even call this method
 	$I{dbobject}->selectCount(@_);
 }
 sub sqlSelectHashref {

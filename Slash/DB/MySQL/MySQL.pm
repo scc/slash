@@ -137,13 +137,16 @@ sub getCodes {
 	my $sth;
 	$codeBank_hash_ref={};
 	if($codetype eq 'sortcodes') {
-		$sth = $self->sqlSelectMany('code,name', $codetype);
+		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
 	}
 	if($codetype eq 'tzcodes') {
-		$sth = $self->sqlSelectMany('tz,offset', $codetype);
+		$sth = $self->sqlSelectMany('tz,offset', 'tzcodes');
 	}
 	if($codetype eq 'dateformats') {
-		$sth = $self->sqlSelectMany('id,format', $codetype);
+		$sth = $self->sqlSelectMany('id,format', 'dateformats');
+	}
+	if($codetype eq 'commentmodes') {
+		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
 	}
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
@@ -186,6 +189,65 @@ sub getACTz{
 	return $ac_hash_ref;
 }
 
+###############################################################################
+# Functions for dealing with vars (system config variables)
+
+########################################################
+sub getvars {
+	my($self, @invars, @vars) = @_;
+
+	for (@invars) {
+		push @vars, $self->sqlSelect('value', 'vars', "name='$_'");
+	}
+
+	return @vars;
+}
+
+########################################################
+sub getvar {
+	my ($self) = @_;
+	my($value, $desc) = $self->sqlSelect('value,description', 'vars', "name='$_[0]'");
+}
+
+########################################################
+sub setvar {
+	my($self, $name, $value) = @_;
+	$self->sqlUpdate('vars', {value => $value}, 'name=' . $self->{dbh}->quote($name));
+}
+
+########################################################
+sub newvar {
+	my($self, $name, $value, $desc) = @_;
+	$self->sqlInsert('vars', {name => $name, value => $value, description => $desc});
+}
+
+
+########################################################
+sub updateCommentTotals {
+	my($self, $sid, $comments) = @_;
+	my $hp = join ',', @{$comments->[0]{totals}};
+	$self->sqlUpdate("stories", {
+			hitparade	=> $hp, 
+			writestatus	=> 0,
+			commentcount	=> $comments->[0]{totals}[0]
+		}, 'sid=' . $self->{dbh}->quote($sid)
+	);
+}
+
+########################################################
+sub getCommentPid {
+	my($self, $sid, $cid) = @_;
+	sqlSelect('pid', 'comments',
+			"sid='$sid' and cid=$cid");
+}
+
+########################################################
+# This method will go away when I am finished with the
+# user methods
+sub getCommentPid {
+	my($self, $uid) = @_;
+	sqlSelect('nickname', 'users', "uid=$uid");
+}
 
 1;
 
