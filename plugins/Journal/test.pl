@@ -62,5 +62,5 @@ for(@$top) {
 print "ok 9\n";
 my $themes = $object->themes;
 for(@$themes) {
-	print "\t@$_\n";
+	print "\t$_\n";
 }

@@ -334,7 +334,8 @@ sub timeCalc {
 
 	# find out the user's time based on personal offset
 	# in seconds
-	$date = DateCalc($date, "$user->{offset} SECONDS", \$err);
+	$date = DateCalc($date, "$user->{offset} SECONDS", \$err)
+		if $user->{offset};
 
 	# convert the raw date to pretty formatted date
 	$date = UnixDate($date, $format || $user->{'format'});

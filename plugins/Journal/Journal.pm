@@ -104,7 +104,7 @@ sub themes {
 	my ($self) = @_;
 	my $uid = $ENV{SLASH_USER};
 	my $sql;
-	$sql .= "SELECT name from jounral_themes";
+	$sql .= "SELECT name from journal_themes";
 	$self->sqlConnect;
 	my $themes = $self->{_dbh}->selectcol_arrayref($sql);
 
