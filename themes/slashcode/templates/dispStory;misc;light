@@ -11,6 +11,13 @@ en_US
 __name__
 dispStory
 __template__
+
+[% IF magic;
+	title = "<A HREF=\"$constants.rootdir/$story.section/\">$section.title</A>: $story.title";
+ELSE;
+	title = story.title;
+END %]
+
 [% INCLUDE titlebar %]
 
 <A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]">[% topic.tid %]</A> | 

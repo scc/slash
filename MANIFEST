@@ -270,7 +270,6 @@ themes/slashcode/templates/dispComment;misc;default
 themes/slashcode/templates/dispComment;misc;light
 themes/slashcode/templates/dispStory;misc;default
 themes/slashcode/templates/dispStory;misc;light
-themes/slashcode/templates/dispStoryTitle;misc;default
 themes/slashcode/templates/dispTheComments;metamod;default
 themes/slashcode/templates/display;article;default
 themes/slashcode/templates/displayForm;submit;default

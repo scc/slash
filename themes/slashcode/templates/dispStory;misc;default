@@ -20,6 +20,12 @@ en_US
 __name__
 dispStory
 __template__
+[% IF magic;
+	title = "<A HREF=\"$constants.rootdir/$story.section/\"><FONT COLOR=\"$user.fg.3\">$section.title</FONT></A>: $story.title";
+ELSE;
+	title = story.title;
+END %]
+
 [% INCLUDE titlebar %]
 
 	<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="0"><TR>

@@ -1813,7 +1813,7 @@ Story to display.
 
 =item Dependencies
 
-The 'dispStory' and 'dispStoryTitle' template blocks.
+The 'dispStory' template block.
 
 =back
 
@@ -1837,23 +1837,17 @@ sub dispStory {
 		magic	=> (!$full && index($story->{title}, ':') == -1
 			&& $story->{section} ne $constants->{defaultsection}
 			&& $story->{section} ne $form->{section})
+		width	=> $constants->{titlebar_width},
 	);
 
-	my $title = slashDisplay('dispStoryTitle', \%data,
-		{ Return => 1, Nocomm => 1 });
-	slashDisplay('dispStory', {
-		%data,
-		width	=> $constants->{titlebar_width},
-		title	=> $title,
-	}, 1);
-
+	slashDisplay('dispStory', \%data, 1);
 }
 
 #========================================================================
 
 =head2 displayStory(SID, FULL)
 
-Display a story (frontend to C<dispStory>).
+Display a story by SID (frontend to C<dispStory>).
 
 =over 4
 
@@ -1893,12 +1887,17 @@ sub displayStory {
 	# convert the time of the story (this is database format) 
 	# and convert it to the user's prefered format 
 	# based on their preferences 
+
 	# An interesting note... this is pretty much the
 	# only reason this function is even needed. 
 	# Everything else can easily be done with
 	# dispStory(). Even this could be worked
 	# into the logic for the template Display
 	#  -Brian
+
+	# well, also, dispStory needs a story reference, not an SID,
+	# though that could be changed -- pudge
+
 	$story->{storytime} = timeCalc($story->{'time'});
 
 	# get extra data from section table for this story
