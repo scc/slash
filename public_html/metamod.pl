@@ -34,7 +34,10 @@ sub main {
 
 	$I{U}{karma}=sqlSelect("karma","users_info","uid=$I{U}{uid}") if $I{U}{uid} != $I{anonymous_coward};
 	header("Meta Moderation");
-	$I{F}{cid}=~s/[^0-9]//g;  # Some browser wants to send invalid chars
+
+	# This validation now performed in Slas.pm. This section will be removed
+	# in the near future.
+	$I{F}{cid}=~s/[^0-9]//g;
 
 	my $id = isEligible();
 	if (!$id) {
@@ -55,44 +58,68 @@ EOT
 
 #################################################################
 sub karmaBonus {
-	my $x = 10 - $I{U}{karma};
+	my $x = $I{m2_maxbonus} - $I{U}{karma};
+
 	return 0 unless $x > 0;
-	return 1 if rand(10) < $x;
+	return 1 if rand($$I{m2_maxbonus}) < $x;
 	return 0;
 }
 
 #################################################################
 sub metaModerate {
+	my %metamod;
+
 	my $id = shift;
 	# Sum Elements from Form and Update User Record
 	my $y = 0;
 
 	foreach (keys %{$I{F}}) {
-		$I{F}{$_} =~ s/[^\+\-]//g; # Some protection
-		if (/mm(.*)/) {
-			$I{metamod_sum}-- if $I{F}{$_} eq "-";
-			$I{metamod_sum}++ if $I{F}{$_} eq "+";
+
+		# Meta mod form data can only be a '+' or a '-' so we apply some
+		# protection from taint.
+		$I{F}{$_} =~ s/[^\+\-]//g;
+		if (/^mm(\d+)$/) {
+			$metamod{unfair}++ if $I{F}{$_} eq "-";
+			$metamod{fair}++ if $I{F}{$_} eq "+";
 		}
 	}
 
 
 	my %m2victims;
 	foreach (keys %{$I{F}}) {
-		if ($y < 10 && /^mm(\d+)$/) { 
+		if ($y < $I{m2_comments} && /^mm(\d+)$/ && $I{F}{$_}) { 
 			my $id = $1;
 			$y++;
 			my($muid) = sqlSelect("uid","moderatorlog",
 				"id=" . $I{dbh}->quote($id)
 			);
 
-			$m2victims{$id} = [$muid, $I{F}{$_}] if $I{metamod_sum} > 0;
+			$m2victims{$id} = [$muid, $I{F}{$_}];
 			# metaMod($1, $I{F}{$_}) if $I{metamod_sum} > 0;
 		}
 	}
 
+	# Perform M2 validity checks and set $flag accordingly. M2 is only recorded
+	# if $flag is 0. Immediate and long term checks for M2 validity go here
+	# (or in moderatord?).
+	#
+	# Also, it was probably unnecessary, but I want it to be understood that
+	# an M2 session can be retrieved by:
+	#		SELECT * from metamodlog WHERE uid=x and ts=y 
+	# for a given x and y.
+	my($flag, $ts) = (0, time);
+	if ($y >= $I{m2_mincheck}) {
+		# Test for excessive number of unfair votes (by percentage)
+		# (Ignore M2 & penalize user)
+		$flag = 2 if ($metamod{unfair}/$y >= $I{m2_maxunfair});
+		# Test for questionable number of unfair votes (by percentage)
+		# (Ignore M2).
+		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $I{m2_toomanyunfair}));
+	}
+
 	$I{dbh}->do("LOCK TABLES users_info WRITE, metamodlog WRITE");
 	foreach (keys %m2victims) {
-		metaMod($m2victims{$_}[0], $m2victims{$_}[1], $_);
+		metaMod($m2victims{$_}[0], $m2victims{$_}[1], $_, $flag, $ts);
 	}
 	$I{dbh}->do("UNLOCK TABLES");
 
@@ -102,45 +129,72 @@ You may wanna go back <A HREF="$I{rootdir}/">home</A> or perhaps to
 <A HREF="$I{rootdir}/users.pl">your user page</A>.
 EOT
 
-	print "<BR>Total unfairs is $I{metamod_sum}" if $I{U}{aseclev} > 10;
+	print "<BR>Total unfairs is $metamod{unfair}" if $I{U}{aseclev} > 10;
 
+	$metamod{unfair} ||= 0;
+	$metamod{fair} ||= 0;
 	sqlUpdate("users_info",{
+		-m2unfairvotes	=>	"m2unfairvotes+$metamod{unfair}",
+		-m2fairvotes	=>	"m2fairvotes+$metamod{fair}",
 		-lastmm		=> 'now()',
 		lastmmid	=> 0
 	}, "uid=$I{U}{uid}") unless $I{U}{uid} == 1;
 
-	if ($y > 5 && $I{metamod_sum} > 0 && karmaBonus()) {
-		# Bonus Karma For Helping Out
-		sqlUpdate("users_info", { -karma => 'karma+1' },
-			"uid=$I{U}{uid} and karma<10");
+	# Of course, I'm waiting for someone to make the eventual joke...
+	my($change, $excon);
+	if ($y > $I{m2_mincheck}) {
+		if (!$flag && karmaBonus()) {
+			# Bonus Karma For Helping Out
+			($change, $excon) = ($I{m2_bonus}, "and karma<$I{m2_maxbonus}");
+		} elsif ($flag == 2) {
+			# Penalty for Abuse
+			($change, $excon) = ($I{m2_penalty}, '');
+		}
+		# Update karma.
+		sqlUpdate("users_info", { -karma => "karma$change" },
+			"uid=$I{U}{uid} $excon") if $change;
 	}
 }
 
 #################################################################
 sub getRandomActions {
 	my($min, $max) = sqlSelect("min(id),max(id)", "moderatorlog");
-	return $min + int rand($max - $min - 10);
+	return $min + int rand($max - $min - $I{m2_comments});
 }
 
 #################################################################
 sub metaMod {
-	my($muid, $val, $mmid) = @_;
+	my($muid, $val, $mmid, $flag, $ts) = @_;
 
 	return unless $val; # Gotta have something to do with it...
 
 	# Update $muid's Karma
-	if ($muid && $val) {
-		sqlUpdate("users_info", { -karma => "karma+1" },
-			"$muid=uid and karma<10") if $val eq "+";
-		sqlUpdate("users_info", { -karma => "karma-1" },
-			"$muid=uid and karma>-10") if $val eq "-";
-		sqlInsert("metamodlog", {
-			-mmid => $mmid,
-			-uid  => $muid,
-			-val  => ($val eq '+' ? 1 : -1),
-			-ts   => 'now()',
-		});
+	if ($muid && $val && !$flag) {
+		if ($val eq '+') {
+			sqlUpdate("users_info", { -m2fair => "m2fair+1" }, "uid=$muid");
+			# The idea here is to not let meta moderators get the comment
+			# bonus...
+			sqlUpdate("users_info", { -karma => "karma+1" },
+				"$muid=uid and karma<$I{m2_maxbonus}");
+		} elsif ($val eq '-') {
+			sqlUpdate("users_info", { -m2unfair => "m2unfair+1" },
+				"uid=$muid");
+			# ...while sufficiently bad moderators can still get the 
+			# comment penalty.
+			sqlUpdate("users_info", { -karma => "karma-1" },
+				"$muid=uid and karma>$I{badkarma_limit}");
+		}
 	}
+	# Time is now fixed at form submission time to ease 'debugging'
+	# of the moderation system, ie 'GROUP BY uid, ts' will give 
+	# you the M2 votes for a specific user ordered by M2 'session'
+	sqlInsert("metamodlog", {
+		-mmid => $mmid,
+		-uid  => $I{U}{uid},
+		-val  => ($val eq '+') ? 1 : -1,
+		-ts   => "from_unixtime($ts)",
+		-flag => $flag
+	});
 	print "<BR>Updating $muid with $val" if $I{U}{aseclev} > 10;
 }
 
@@ -151,9 +205,9 @@ sub displayTheComments {
 	titlebar("99%","Meta Moderation");
 	print <<EOT;
 <B>PLEASE READ THE DIRECTIONS CAREFULLY BEFORE EMAILING
-\U$I{siteadmin_name}\E!</B> <P>What follows is 10 random moderations
-performed on comments in the last few weeks on $I{sitename}.  You are
-asked to <B>honestly</B> evaluate the actions of the moderator of each
+\U$I{siteadmin_name}\E!</B> <P>What follows is $I{m2_comments} random 
+moderations performed on comments in the last few weeks on $I{sitename}. 
+You are asked to <B>honestly</B> evaluate the actions of the moderator of each
 comment. Moderators who are ranked poorly will cease to be eligible for
 moderator access in the future.
 
@@ -161,7 +215,7 @@ moderator access in the future.
 
 <LI>If you are confused about the context of a particular comment, just
 link back to the comment page through the parent link, or the #XXX cid
-link. (use the back arrow to come back or you'll get 10 new comments!)</LI>
+link.</LI>
 
 <LI><B><FONT SIZE="5">Duplicates are fine</FONT></B> (Big because over
 <B>100</B> people have emailed me to tell me about this even though it is
@@ -203,10 +257,19 @@ EOT
 		users.uid = users_info.uid AND
 		users.uid != $I{U}{uid} AND
 		moderatorlog.uid != $I{U}{uid} AND
-		moderatorlog.reason < 8 LIMIT 10");
+		moderatorlog.reason < 8 LIMIT $I{m2_comments}");
 
 	$I{U}{points} = 0;
 	while(my $C = $c->fetchrow_hashref) {
+		# Anonymize the comment; it should be safe to reset $C->{uid}, and 
+		# $C->{points} (as a matter of fact, the latter SHOULD be done due to
+		# the nickname).
+		#
+		# The '-' in place of nickname -may- be a problem, though. And we
+		# Probably shouldn't assume a score of 0, here either but we'll leave
+		# it for now.
+		@{%{$C}}{qw(nickname uid fakeemail homepage points)} =
+			('-', -1, '', '', 0);
 		dispComment($C);
 		printf <<EOT, linkStory({ 'link' => $C->{title}, sid => $C->{sid} });
 	<TR><TD>
@@ -244,7 +307,7 @@ sub isEligible {
 
 	my($tuid) = sqlSelect("count(*)", "users");
 	
-	if ($I{U}{uid} > int($tuid / 0.75) ) {
+	if ($I{U}{uid} > int($tuid * 0.75) ) {
 		print "You haven't been a $I{sitename} user long enough.";
 		return 0;
 	}
@@ -265,6 +328,8 @@ sub isEligible {
 		return 0;
 	}
 
+	# Eligible for M2. Determine M2 comments by selecting random starting
+	# point in moderatorlog.
 	unless ($lastmmid) {
 		$lastmmid = getRandomActions();
 		sqlUpdate("users_info", { lastmmid => $lastmmid }, 

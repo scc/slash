@@ -210,6 +210,11 @@ EOT
 sub saveSection {
 	my ($section) = @_;
 
+	# Non alphanumerics are not allowed in the section key.
+	# And I dont' see a reason for underscores either, but 
+	# dashes should be ther.
+	$section =~ s/[^A-Za-z0-9\-]//g;
+
 	my $status = $I{dbobject}->setSection($I{F}{section}, $I{F}{qid}, $I{F}{title}, $I{F}{issue}, $I{F}{isolate}, $I{F}{artcount});
 
 	unless ($status) {

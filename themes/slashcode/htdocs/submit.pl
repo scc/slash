@@ -47,8 +47,15 @@ sub main {
 	$I{F}{subj}  = stripByMode($I{F}{subj})  if $I{F}{subj}; 
 	$I{F}{email} = stripByMode($I{F}{email}) if $I{F}{email}; 
 
+	# Show submission title on browser's titlebar.
+	my($tbtitle) = $I{F}{title};
+	if ($tbtitle) {
+		$tbtitle =~ s/^"?(.+?)"?$/"$1"/;
+		$tbtitle = "- $tbtitle";
+	}
+
 	$section = "admin" if $seclev > 100;
-	header("$I{sitename} Submissions", $section);
+	header("$I{sitename} Submissions$tbtitle", $section);
 	# print "from $I{F}{from} email $I{F}{email} subject $I{F}{subj}<BR>\n";
 
 	#adminMenu() if $seclev > 100;
@@ -142,7 +149,7 @@ sub previewForm {
 	$introtext =~ s/\n\n/\n<P>/gi;
 	$introtext .= " ";
 	$introtext =~  s{(?<!"|=|>)(http|ftp|gopher|telnet)://(.*?)(\W\s)?[\s]}
-			{<A HREF="$1://$2">link</A> }gi;
+			{<A HREF="$1://$2">$1://$2</A> }gi;
 	$introtext =~ s/\s+$//;
 	$introtext = qq!<I>"$introtext"</I>! if $name;
 
@@ -196,17 +203,16 @@ ADMIN
 	if ($admin) {
 		selectTopic("tid", $tid);
 		selectSection("section", $I{F}{section} || $I{defaultsection});
-	}
 
-	print <<ADMIN if $admin;
-
+	print <<ADMIN, stripByMode($introtext, 'literal');
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 		<BR>Intro Copy<BR>
-		<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL">$introtext</TEXTAREA><BR>
+		<TEXTAREA NAME="introtext" COLS="70" ROWS="10" WRAP="VIRTUAL">%s</TEXTAREA><BR>
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="preview"><BR>
 	</FORM>
 
 ADMIN
+	}
 
 	sqlUpdate("sessions", { lasttitle => $title },
 		"aid=" . $I{dbh}->quote($I{U}{aid})
@@ -384,18 +390,23 @@ USER
 
 		$karma = $uid != $I{anonymous_coward} && defined $karma ? " ($karma)" : "";
 
+		# @strs is for DISPLAY purposes, nothing more.
 		my @strs = (substr($subj, 0, 35), substr($name, 0, 20), substr($email, 0, 20));
-		my $sec = $section ne $I{defaultsection} ? "&section=$section" : "";
-		printf(($admin ? <<ADMIN : <<USER), @strs);
+		$strs[0] .= '...' if length($subj) > 35;
 
+		# Adds proper section and title for form editor.
+		my $sec = $section ne $I{defaultsection} ? "&section=$section" : '';
+		my $stitle = '&title=' . fixurl($subj, 1);
+
+		printf(($admin ? <<ADMIN : <<USER), @strs);
 		</FONT><INPUT TYPE="CHECKBOX" NAME="del_$subid">
 	</NOBR></TD><TD>$ptime</TD><TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$sec">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$title$sec">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="2">%s$karma<BR>%s</FONT></TD></TR>
 ADMIN
 	<TD>\u$section</TD><TD>$ptime</TD>
 	<TD>
-		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}">%s&nbsp;</A>
+		<A HREF="$ENV{SCRIPT_NAME}?op=viewsub&subid=$subid&note=$I{F}{note}$stitle">%s&nbsp;</A>
 	</TD><TD><FONT SIZE="-1">%s<BR>%s</FONT></TD></TR>
 	<TR><TD COLSPAN="6"><IMG SRC="$I{imagedir}/pix.gif" ALT="" HEIGHT="3"></TD></TR>
 USER
@@ -491,9 +502,9 @@ EOT
 
 	print formLabel("The Scoop",
 		"HTML is fine, but double check those URLs and HTML tags!");
-	print <<EOT;
+	print <<EOT, stripByMode($I{F}{story}, 'literal');
 
-<TEXTAREA WRAP="VIRTUAL" COLS="70" ROWS="12" NAME="story">$I{F}{story}</TEXTAREA><BR>
+<TEXTAREA WRAP="VIRTUAL" COLS="70" ROWS="12" NAME="story">%s</TEXTAREA><BR>
 <FONT SIZE="2">(Are you sure you included a URL?  Didja test them for typos?)</FONT><P>
 
 <INPUT TYPE="SUBMIT" NAME="op" VALUE="PreviewStory">

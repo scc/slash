@@ -49,10 +49,14 @@ sub main {
 
 	searchForm();
 
-	if	($I{F}{op} eq "comments")	{ commentSearch()	}
-	elsif	($I{F}{op} eq "users")		{ userSearch()		}
-	else					{ storySearch()		}
-	$I{dbobject}->writelog($I{U}{uid}, "search", $I{F}{query});
+	if		($I{F}{op} eq 'comments')	{ commentSearch()	}
+	elsif	($I{F}{op} eq 'users')		{ userSearch()		}
+	else	($I{F}{op} eq 'stories')	{ storySearch()		}
+	else	{
+		print "Invalid operation!<BR>";
+	}
+	$I{dbobject}->writelog($I{U}{uid}, "search", $I{F}{query})
+		if $I{F}{op} =~ /^(comments|stories|users)$/;
 	footer();	
 }
 
@@ -61,10 +65,10 @@ sub linkSearch {
 	my $C = shift;
 	my $r;
 
-	foreach (qw[threshold query min author op sid topic section total]) {
+	foreach (qw[threshold query min author op sid topic section total hitcount]) {
 		my $x = "";
 		$x =  $C->{$_} if defined $C->{$_};
-		$x =  $I{F}{$_} if defined $I{F}{$_} && !$x;
+		$x =  $I{F}{$_} if defined $I{F}{$_} && $x eq "";
 		$x =~ s/ /+/g;
 		$r .= "$_=$x&" unless $x eq "";
 	}
@@ -112,7 +116,7 @@ EOT
 		createSelect('author', $authors, $I{F}{author});
 	} elsif ($I{F}{op} eq "comments") {
 		print <<EOT;
-	Threshold <INPUT TYPE="TEXT" SIZE="3" NAME="threshold" VALUE="$I{U}{threshold}">
+	Threshold <INPUT TYPE="TEXT" SIZE="3" NAME="threshold" VALUE="$I{F}{threshold}">
 	<INPUT TYPE="HIDDEN" NAME="sid" VALUE="$I{F}{sid}">
 EOT
 	}
@@ -130,8 +134,7 @@ each of the last 30,000 or so comments posted.  Older comments
 are removed and currently only visible as static HTML.<P>
 EOT
 	
-	$I{F}{min} = int $I{F}{min};
-	my $prev = $I{F}{min} - 20;
+	my $prev = $I{F}{min} - $I{F}{max};
 	print linkSearch({
 		'link'	=> "<B>$I{F}{min} previous matches...</B>",
 		min	=> $prev
@@ -175,13 +178,13 @@ EOT
 	}
 
 
-	print "No Matches Found for your query" unless $x > 0 || $I{F}{query};
+	print "No Matches Found for your query" if $x < 1;
 
 	my $remaining = "";
 	print "<P>", linkSearch({
-		'link'	=> "<B>$remaining Matches Left</B>",
+		'link'	=> "<B>More matches...</B>",
 		min	=> $x
-	}) unless $x - $I{F}{min} < 20;
+	}) unless !$X || $x < $I{F}{max};
 }
 
 #################################################################
@@ -194,7 +197,7 @@ sub userSearch {
 	
 	my $c = sqlSelectMany("fakeemail,nickname,uid," .
 		keysearch($I{F}{query},"nickname"),
-		"users", "", "ORDER BY kw DESC LIMIT 10"
+		"users", "", "ORDER BY kw DESC LIMIT $I{F}{min}, $I{F}{max}"
 	) if $I{F}{query};
 	return unless $c;
 
@@ -211,7 +214,7 @@ sub userSearch {
 EOT
 		print <<EOT;
 <LI><A HREF="$I{rootdir}/users.pl?nick=$ln">$N->{nickname}</A> &nbsp;
-$fake	($N->{uid})</LI>
+($N->{uid}) $fake</LI>
 EOT
 
 		$x++;
@@ -223,9 +226,10 @@ EOT
 
 	my $remaining = $total - $I{F}{'last'};
 	print linkSearch({
-		'link'	=> "<B>$remaining matches left</B>",
+#		'link'	=> "<B>$remaining matches left</B>",
+		'link'	=> "<B>More matches...</B>",
 		min	=> $I{F}{'last'}
-	}) unless $x < $I{F}{max};
+	}) unless !$x || $x < $I{F}{max};
 }
 
 #################################################################
@@ -255,9 +259,12 @@ WHERE ((displaystatus = 0 and "$I{F}{section}"="")
 EOT
 
 	$sqlquery .= "   AND time < now() AND writestatus >= 0  ";
-	$sqlquery .= "   AND aid="	. $I{dbh}->quote($I{F}{author})  if $I{F}{author};
-	$sqlquery .= "   AND section="	. $I{dbh}->quote($I{F}{section}) if $I{F}{section};
-	$sqlquery .= "   AND tid="	. $I{dbh}->quote($I{F}{topic})   if $I{F}{topic};
+	$sqlquery .= "   AND aid="	. $I{dbh}->quote($I{F}{author})
+		if $I{F}{author};
+	$sqlquery .= "   AND section="	. $I{dbh}->quote($I{F}{section})
+		if $I{F}{section};
+	$sqlquery .= "   AND tid="	. $I{dbh}->quote($I{F}{topic})
+		if $I{F}{topic};
 
 	$sqlquery .= " ORDER BY ";
 	$sqlquery .= " kw DESC, " if $I{F}{query};
@@ -273,7 +280,7 @@ EOT
 
 	while (my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = 
 		$cursor->fetchrow) {
-		last if $cnt == 0 && $I{F}{query};
+		last unless $cnt || ! $I{F}{query};
 		print $cnt ? $cnt :  $x + $I{F}{min};
 		print " ";
 		print linkStory({
@@ -290,9 +297,10 @@ EOT
 
 	my $remaining = "";
 	print "<P>", linkSearch({
-		'link'	=> "<B>$remaining matches left</B>",
+#		'link'	=> "<B>$remaining matches left</B>",
+		'link'	=> "<B>More Articles...</B>",
 		min	=> $I{F}{'last'}
-	}) unless $x < $I{F}{max};
+	}) unless !$x || $x < $I{F}{max};
 }
 
 main;

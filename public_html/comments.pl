@@ -319,7 +319,7 @@ EOT
 
 	my $checked = $I{F}{nobonus} ? ' CHECKED' : '';
 	print qq!\t\t<INPUT TYPE="CHECKBOX"$checked NAME="nobonus"> No Score +1 Bonus\n!
-		if $I{U}{karma} > 25 and $I{U}{uid} != $I{anonymous_coward};
+		if $I{U}{karma} > $I{goodkarma} and $I{U}{uid} != $I{anonymous_coward};
 
         if ($I{allow_anonymous}) {
 	    $checked = $I{F}{postanon} ? ' CHECKED' : '';
@@ -651,11 +651,11 @@ sub submitComment {
 
 	if($I{U}{uid} != $I{anonymous_coward} && !$I{F}{postanon} ) {
 		$pts = $I{U}{defaultpoints};
-		$pts-- if $I{U}{karma} < -10;
-		$pts++ if $I{U}{karma} > 25 and !$I{F}{nobonus};
+		$pts-- if $I{U}{karma} < $I{badkarma};
+		$pts++ if $I{U}{karma} > $I{goodkarma} and !$I{F}{nobonus};
 		# Enforce proper ranges on comment points.
-		$pts = -1 if $pts < -1;
-		$pts = 5 if $pts > 5;
+		$pts = $I{comment_minscore} if $pts < $I{comment_minscore};
+		$pts = $I{comment_maxscore} if $pts > $I{comment_maxscore};
 	}
 
 	$I{dbh}->do("LOCK TABLES comments WRITE");
@@ -806,6 +806,15 @@ sub moderateCid {
 		"uid,pid,subject,points,reason","comments",
 		"cid=$cid and sid='$sid'"
 	);
+	
+	my($mid) = sqlSelect(
+		"id", "moderatorlog",
+		"uid=$I{U}{uid} and cid=$cid and sid='$sid'"
+	);
+	if ($mid) {
+		print "<LI>$subj ($sid-$cid, <B>Already moderated</B>)</LI>";
+		return;
+	}	
 
 	my $modreason = $reason;
 	my $val = "-1";
@@ -821,6 +830,26 @@ sub moderateCid {
 		$val = "+1";
 	}
 
+	my $scorecheck = $points + $val;
+	# If the resulting score is out of comment score range, no further actions 
+	# need be performed.
+	if ($scorecheck < $I{comment_minscore} || $scorecheck > $I{comment_maxscore}) {
+		# We should still log the attempt for M2, but marked as inactive so
+		# we don't mistakenly undo it.
+		sqlInsert("moderatorlog", {
+			uid	=> $I{U}{uid},
+			val	=> $val,
+			sid	=> $sid,
+			cid	=> $cid,
+			reason	=> $modreason,
+			-ts	=> 'now()',
+			active => 0
+		});
+
+		print "<LI>$subj ($sid-$cid, <B>Comment already at limit</B>)</LI>";
+		return;
+	}
+
 	my $strsql = "UPDATE comments SET
 		points=points$val,
 		reason=$reason,
@@ -828,8 +857,8 @@ sub moderateCid {
 		WHERE sid=" . $I{dbh}->quote($sid)."
 		AND cid=$cid 
 		AND points " .
-			($val < 0 ? " > -1" : "") .
-			($val > 0 ? " < 5" : "");
+			($val < 0 ? " > $I{comment_minscore}" : "") .
+			($val > 0 ? " < $I{comment_maxscore}" : "");
 
 	$strsql .= " AND lastmod<>$I{U}{uid}"
 		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
@@ -916,18 +945,25 @@ sub hasPosted {
 sub undoModeration {
 	my($sid) = @_;
 	return if $I{U}{uid} == $I{anonymous_coward} || ($I{U}{aseclev} > 99 && $I{authors_unlimited});
-	my $c=sqlSelectMany("cid,val", "moderatorlog",
+	my $c=sqlSelectMany("cid,val,active", "moderatorlog",
 		"uid=$I{U}{uid} and sid=" . $I{dbh}->quote($sid)
 	);
 
-	while (my($cid, $val) = $c->fetchrow) {
+	while (my($cid, $val, $active) = $c->fetchrow) {
+		# We undo moderation even for inactive records (but silently for
+		# inactive ones...)
 		$I{dbh}->do("delete from moderatorlog where
 			cid=$cid and uid=$I{U}{uid} and sid=" .
 			$I{dbh}->quote($sid)
 		);
 
+		# If moderation wasn't actually performed, we should not change
+		# the score.
+		next if ! $active;
+
 		# Insure scores still fall within the proper boundaries
-		my $scorelogic = $val < 0 ? "points < 5" : "points > -1";
+		my $scorelogic = $val < 0 ?	"points < $I{comment_maxscore}" :
+									"points > $I{comment_minscore}";
 		sqlUpdate(
 			"comments",
 			{ -points => "points+" . (-1 * $val) },
@@ -950,7 +986,7 @@ sub isTroll {
 	# Anonymous only checks HOST
 	($badIP) = sqlSelect("sum(val)","comments,moderatorlog",
 		"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-		AND host_name='$ENV{REMOTE_ADDR}'
+		AND host_name='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1
 		AND (to_days(now()) - to_days(ts) < 3) GROUP BY host_name"
 	);
 
@@ -959,7 +995,7 @@ sub isTroll {
 	if ($I{U}{uid} != $I{anonymous_coward}) {
 		($badUID) = sqlSelect("sum(val)","comments,moderatorlog",
 			"comments.sid=moderatorlog.sid AND comments.cid=moderatorlog.cid
-			AND comments.uid=$I{U}{uid}
+			AND comments.uid=$I{U}{uid} AND moderatorlog.active=1
 			AND (to_days(now()) - to_days(ts) < 3)  GROUP BY comments.uid"
 		);
 	}

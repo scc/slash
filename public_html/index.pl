@@ -60,7 +60,7 @@ sub main {
 
 	eval $execme;
 
-	print "\n<H1>Error:$@</H1>\n" if $@;
+	print "\n<H1>Error while processing 'index' block:$@</H1>\n" if $@;
 
 	footer();
 
@@ -237,6 +237,11 @@ sub displayStories {
 
 			print ' </B>comment', $cc > 1 ? 's' : '' if $cc;
 
+		}
+
+		if ($thissection ne $I{defaultsection} && !$I{F}{section}) {
+			my($SEC) = getSection($thissection);
+			print qq' | <A HREF="$I{rootdir}/$thissection/">$SEC->{title}</A>';
 		}
 		print qq' | <A HREF="$I{rootdir}/admin.pl?op=edit&sid=$sid">Edit</A>'
 			if $I{U}{aseclev} > 100;

@@ -33,7 +33,17 @@ sub main {
 	getSlash();
 	getSection('admin');
 
-	header("backSlash $I{U}{tzcode} $I{U}{offset}", 'admin');
+	my($tbtitle);
+	if ($I{F}{op} =~ /^preview|edit$/ && $I{F}{title}) {
+		# Show submission/article title on browser's titlebar.
+		$tbtitle = $I{F}{title};
+		$tbtitle =~ s/"/'/g;
+		$tbtitle = " - \"$tbtitle\"";
+		# Undef the form title value if we have SID defined, since the editor
+		# will have to get this information from the database anyways.
+		undef $I{F}{title} if $I{F}{sid} && $I{F}{op} eq 'edit';
+	}
+	header("backSlash $I{U}{tzcode} $I{U}{offset}$tbtitle", 'admin');
 
 	# Admin Menu
 	print "<P>&nbsp;</P>" unless $I{U}{aseclev};
@@ -793,7 +803,7 @@ sub topicEd {
 	return if $I{U}{aseclev} < 1;
 	my ($tid, $width, $height, $alttext, $image, @available_images);
 
-	opendir(DIR,"$I{datadir}/public_html/images/topics");
+	opendir(DIR,"$I{basedir}/public_html/images/topics");
 	@available_images = grep(!/^\./, readdir(DIR)); 
 	closedir(DIR);
 
@@ -830,16 +840,26 @@ EOT
 		<SELECT name="image">
 EOT
 
-		print qq|<OPTION value="">Select an image</OPTION>| if $I{F}{topicnew};
-		for(@available_images) {
-			my ($selected);
-			$selected = "SELECTED" if ($_ eq $image);
-			print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
-			$selected = '';
+		if (!available_images) {
+			print qq|<SELECT name="image">|;
+			print qq|<OPTION value="">Select an image</OPTION>| if $I{F}{topicnew};
+			for(@available_images) {
+				my ($selected);
+				$selected = "SELECTED" if ($_ eq $image);
+				print qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
+				$selected = '';
+			}
+			print '</SELECT>';
+		} else {
+			# If we don't have images in the proper place, print a message
+			# and use a regular text input field.
+			print <<EOT;
+<P>No images were found in the topic images directory (&lt;basedir&gt;/images/topics).<BR>
+<IMPUT TYPE="TEXT" NAME="image" VALUE="$image"><BR><BR>
+EOT
 		}
 
 		print <<EOT;
-			</SELECT>
 			<INPUT TYPE="SUBMIT" NAME="topicsave" VALUE="Save Topic">
 			<INPUT TYPE="SUBMIT" NAME="topicdelete" VALUE="Delete Topic">
 EOT
@@ -865,7 +885,7 @@ sub topicSave {
 	if ($I{F}{tid}) {
 		my($rows) = sqlSelect('count(*)', 'topics', 'tid=' . $I{dbh}->quote($I{F}{tid}));
 		if (!$I{F}{width} && !$I{F}{height}) {
-		    @{ $I{F} }{'width', 'height'} = imgsize("$I{datadir}/public_html/images/topics/$I{F}{image}");
+		    @{ $I{F} }{'width', 'height'} = imgsize("$I{basedir}/public_html/images/topics/$I{F}{image}");
 		}
 		if($rows == 0 ) {
 			sqlInsert('topics', {
@@ -1018,7 +1038,7 @@ sub autoUrl {
 	my $more = substr $I{U}{aid}, 1;
 	$more =~ s/[a-z]//g;
 	$initials = uc($initials . $more);
-	my($now) = sqlSelect('date_format(now(),"m/d h:i")');
+	my($now) = sqlSelect('date_format(now(),"m/d h:i p")');
 
 	# Assorted Automatic Autoreplacements for Convenience
 	s|<disclaimer:(.*)>|<B><A HREF="/about.shtml#disclaimer">disclaimer</A>:<A HREF="$I{U}{url}">$I{U}{aid}</A> owns shares in $1</B>|ig;
@@ -1361,7 +1381,8 @@ EOT
 
 		print qq[\t<TR BGCOLOR="$bgcolor"><TD ALIGN="RIGHT">\n];
 		if ($I{U}{aid} eq $aid || $I{U}{aseclev} > 100) {
-			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?op=edit&sid=$sid">$x</A>\n]!;
+			my $tbtitle = fixurl($title, 1);
+			print qq!\t\t[<A HREF="$ENV{SCRIPT_NAME}?title=$tbtitle&op=edit&sid=$sid">$x</A>\n]!;
 
 		} else {
 			print "\t\t[$x]\n"
