@@ -1960,6 +1960,53 @@ sub balanceTags {
 
 }
 
+#========================================================================
+
+=head2 prepareUser(UID, FORM, URI [, COOKIES])
+
+This is called to initialize the user.  It is called from
+Slash::Apache::User::handler, and from createEnvironment (so it
+can set up a user in "command line" mode).  See those two functions
+to see how to call this function in each kind of environment.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item UID
+
+The UID of the user.  Can be anonymous coward.  Will be anonymous
+coward if uid is not defined.
+
+=item FORM
+
+The form data (which may be the same data returned by getCurrentForm).
+
+=item URI
+
+The URI of the page the user is on.
+
+=item COOKIES
+
+A CGI::Cookie object (not used in "command line" mode).
+
+=back
+
+=item Return value
+
+The prepared user data.
+
+=item Side effects
+
+Sets some cookies in Apache mode, sets currentPage (for templates) and
+bunches of other user datum.
+
+=back
+
+=cut
+
 
 ########################################################
 # get all the user data, d00d
@@ -2068,6 +2115,32 @@ sub prepareUser {
 }
 
 
+#========================================================================
+
+=head2 filter_params(PARAMS)
+
+This cleans up form data before it is used by the program.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PARAMS
+
+A hash of the parameters to clean up.
+
+=back
+
+=item Return value
+
+Hashref of cleaned-up data.
+
+=back
+
+=cut
+
 ########################################################
 # Ok, we are going to go on and process the form pieces
 # now since we need them. Below are all of the filters
@@ -2103,7 +2176,7 @@ sub filter_params {
 		$form{$_} = $params{$_};
 
 		# Paranoia - Clean out any embedded NULs. -- cbwood
-		# hm.  NULs in a param() value mean multiple values
+		# hm.  NULs in a param() value means multiple values
 		# for that item.  do we use that anywhere? -- pudge
 		$form{$_} =~ s/\0//g;
 

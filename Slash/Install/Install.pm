@@ -1,3 +1,7 @@
+# This code is a part of Slash, which is Copyright 1997-2001 OSDN, and
+# released under the GPL.  See README and COPYING for more information.
+# $Id$
+
 package Slash::Install;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
@@ -5,6 +9,7 @@ use DBIx::Password;
 use Slash;
 use Slash::DB::Utility;
 
+# BENDER: Like most of life's problems, this one can be solved with bending.
 
 @Slash::Install::ISA = qw(Slash::DB::Utility);
 @Slash::Install::EXPORT = qw();

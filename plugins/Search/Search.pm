@@ -7,6 +7,8 @@ package Slash::Search;
 use strict;
 use Slash::DB::Utility;
 
+# BENDER: The laws of science be a harsh mistress.
+
 $Slash::Search::VERSION = '0.01';
 @Slash::Search::ISA = qw( Slash::DB::Utility );
 
