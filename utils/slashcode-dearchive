@@ -1,5 +1,6 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
+use strict;
 use Slash::DB;
 use Slash::DB::Utility;
 use Getopt::Std;
@@ -120,20 +121,25 @@ if (! $opts{s}) {
 }
 die "\nCan't find ID using any extractor!\n" if !$sid;
 print STDERR "'$sid'\n" if $debug && $sid;
+if ($slashdb->sqlSelect('*', 'comments', 'sid=' . quote($sid)) && !$opts{O}) {
+	print "Data already exists for article '$sid'!!\n";
+	exit 1;
+}
+print "Beginning extraction for article '$sid'...\n";
 
 if ($confirm) {
 	print "\n\n<Hit RETURN to begin, ^C to abort execution>\n\n";
-	local $input = <STDIN>;
+	my $input = <STDIN>;
 }
 
 my($en_regexp, $ex_regexp) = 	($enclosure_regexps->{$enclosure}->{regexp},
-				 $extractor_regexps{$extractor});
+								 $extractor_regexps{$extractor});
 pos $bigscalar = 0;
 while ($bigscalar =~ /$en_regexp/sg) {
 	my($uid, $cid, $email_addy, $uid_s, $x_data, $wait, $result, $resultpos);
 	my($subj, $score_ind, $username, $ts, $url, $url_name, $comment, $sig);
 	my($gmt_time, $score, $posttime, $uname);
-	my(%uid_cache, $rc);
+	my(%uid_cache, $gmt_ts, $rc);
 
 	$x_data = $1;
 	$result = 'Unextracted ';
@@ -204,14 +210,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 			# year. So the simple solution is to strip the DoW which appears
 			# at the beginning of the string. This really depends on the site
 			# but this is the default for Slashcode and also works on Slashdot.
-			$ts =~ s/(?:
-					  Monday|
-					  Tuesday|
-					  Wednesday|
-					  Thursday|
-					  Friday|
-					  Saturday|
-					  Sunday)\s+//x;
+			$ts =~ s/(?:Mon|Tues|Wednes|Thurs|Fri|Sat|Sun)day\s+//;
 
 			# Now grab the zone associated with the date.
 			$ts =~ /\s([^\ ]+?)$/;
@@ -246,11 +245,12 @@ while ($bigscalar =~ /$en_regexp/sg) {
 				($url ? "($url)\n" : ($url_name ? "\n" : "")),
 				($score ? "Score: $score" : ""),
 				($comment ? "\n--> $comment\n\n" : "\n"),
-				($sig ? "\nSig: $sig\n\n" : "\n");
+				($sig ? "\nSig: $sig\n\n" : "\n")
+		if $debug;
 
 		if ($confirm) {
 			print "<Hit RETURN for Next Comment>";
-			local $input = <STDIN>;
+			my $input = <STDIN>;
 		}
 
 		# Assign data to hash.
@@ -261,7 +261,8 @@ while ($bigscalar =~ /$en_regexp/sg) {
 		$data{$cid}->{'-points'} = ($score) ? $score : 0;
 	}
 
-	print header("${result}X-Data$resultpos") . "$x_data\n";
+	print header("${result}X-Data$resultpos") . "$x_data\n"
+		if $debug;
 	if ($result eq 'Unextracted ' || $rc || 
 		$comment =~ /<\/?TD>/ || 
 		$comment =~ /<\/?TR>/)
@@ -269,6 +270,7 @@ while ($bigscalar =~ /$en_regexp/sg) {
 		print '--- Check  data ---';
 		$wait = <STDIN>;
 	}
+	
 }
 
 # Unload massive scalar (would setting $bigscalar to undef be a bad thing here?)
@@ -281,9 +283,8 @@ foreach (sort { $data{$a}->{ts} cmp $data{$b}->{ts} } keys(%data)) {
 	# We process comments into the database serially by DATE.
 
 	# Copy and sanitize data for insert into the comments table.
-	my(%sqldata);
-	%sqldata = %{$data{$_}};
-	$sqldata{sid} = $opts{s};
+	my(%sqldata) = %{$data{$_}};
+	$sqldata{sid} = $sid;
 	$sqldata{'-cid'} = $_;
 	# Until nested mode support can be coded in, Parent ID data will be lost.
 	$sqldata{'-pid'} = 0;
@@ -305,7 +306,7 @@ foreach (sort { $data{$a}->{ts} cmp $data{$b}->{ts} } keys(%data)) {
 	}
 }
 
-print "\n$nr records written to COMMENTS for SID $opts{s}\n";
+print "\n$nr records written to COMMENTS for SID '$sid'\n";
 
 
 0;
@@ -318,6 +319,16 @@ sub header {
 }
 
 
+# It would be nice if the Slash DB API would provide this.
+sub quote {
+	my($text) = shift;
+
+	$text =~ s/([\W\D])/\\$1/g;
+	$text = "'$text'";
+	$text;
+}
+
+
 sub usage {
 	my (@enlist)	= sort keys %{$enclosure_regexps};
 	my (@exlist)	= sort keys %extractor_regexps;
@@ -325,7 +336,7 @@ sub usage {
 	local $" = "\t\t";
 	printf <<EOT, "@enlist", "@exlist", "@idexlist";
 
-Usage: slashcode-dearchive -[df] {-ysenC} <slashsite virtual user>
+Usage: slashcode-dearchive -[df] {-ysenCO} <slashsite virtual user>
 
 	Command line options:
 		-d <virtuser> 
@@ -338,6 +349,7 @@ Usage: slashcode-dearchive -[df] {-ysenC} <slashsite virtual user>
 	Command line switches:
 		-C	Confirms all options and provides prompts during 
 			processing operations. Used primarily for debugging.
+		-O	Overwrite any comments for the given discussion ID.
 
 Notes:
 	If -d is given, then the virtual user given as the last argument will be

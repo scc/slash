@@ -1,9 +1,9 @@
-#!/usr/bin/perl
-# Cliff, I recommend use strict here ... -- pudge
-# and ad -w to perl  --Brian
+#!/usr/bin/perl -w
 use DBI;
+use strict;
 use Getopt::Std;
-use vars qw(%dbh);
+use Digest::MD5 'md5_hex';
+use vars qw(%dbh %my_conf);
 
 $0 =~ /([^\/]+)$/;
 my $PROGNAME = $1;
@@ -12,47 +12,61 @@ my $PROGNAME = $1;
 $SIG{INT} = sub { die "Interrupted.\n"; };
 
 my(%opts, %aidCache);
-getopt('Psdoup?h', \%opts);
+getopt('PsdoupUPH?h', \%opts);
 # Show usage under the necessary conditions.
-usage() if $opts{'?'} || $opts{h} || !keys(%opts);
-if (	(exists $opts{u} && !exists $opts{p}) ||
-		(!exists $opts{u} && exists $opts{p}))
+usage() if 	$opts{'?'} || $opts{h} || !keys(%opts) ||
+			($opts{s} && ($opts{U} || $opts{H}));
 {
-	print "Improper use of -u/-p! Both must be specified.\n\n";
-	usage();
+	my @options = qw[u p U P];
+	my ($a, $b);
+
+	do {
+		($a, $b) = (shift @options, shift @options);
+
+		if (	(exists $opts{$a} && !exists $opts{$b}) ||
+				(!exists $opts{$a} && exists $opts{$b}))
+		{
+			print "Improper use of $a/$b! Both must be specified.\n\n";
+			usage();
+		}
+		if ($opts{$a} && !length($opts{$b})) {
+			printf "Enter %s password: ", ($b eq 'P') ? 'slave':'master';
+			chomp($opts{$b} = <STDIN>);
+		}
+	} until $b eq 'P';
 }
 # Perform sensible tilde expansion.
 my(@fileopts) = qw[P d s o];
 map {
-	$opts{$_} =~ s/^\~(\w+)?/(($1) ? getpwnam($1):getpwuid($<))[7]/e; 
+	$opts{$_} =~ s/^\~(\w+)?/(($1) ? getpwnam($1):getpwuid($<))[7]/e
+		if $opts{$_}; 
 } @fileopts;
 
-my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd) =
-	@opts{qw[P d s o u p]};
+my ($prefix, $dumpfile, $rcfile, $outfile, $g_user, $g_pwd, $t_user, $t_pwd) =
+	@opts{qw[P d s o u p U P]};
 $prefix 	||= '/usr/local/slash';
 $dumpfile	||= './site.dump';
 $rcfile 	||= './slashdotrc.pl';
 $outfile	||= './bender.dump';
 
-die "FATAL ERROR: Can't read $rcfile: $!\n"
-	if ! -r $rcfile;
+if ($rcfile) {
+	die "FATAL ERROR: Can't read $rcfile: $!\n" if ! -r $rcfile;
+	$rcfile =~ s!^(.+)/!!;
+	unshift(@INC, $1 || '.');
+	require $rcfile;
+	*my_conf = $Slash::conf{DEFAULT};
+	$Slash::conf{DEFAULT} = undef;
+
+	# Grab any necessary defaults from the rc file.
+	$g_user	||= $my_conf{dbuser};
+	$g_pwd 	||= $my_conf{dbpass};
+	$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
+	$opts{H} = $1 || 'localhost';
+}
+my ($dbhost) = $opts{H};
+
 die "FATAL ERROR: Can't read input dump file: $!\n"
 	if ! -r $dumpfile;
-
-if ($opts{u} && !length($opts{p})) {
-	print "Enter password: ";
-	chomp($g_pwd = <STDIN>);
-}
-
-$rcfile =~ s!^(.+)/!!;
-my $rcdir = $1 || '.';
-unshift(@INC, $rcdir);
-require $rcfile;
-*my_conf = $Slash::conf{DEFAULT};
-
-# Grab any necessary defaults from the rc file.
-$g_user	||= $my_conf{dbuser};
-$g_pwd 	||= $my_conf{dbpass};
 
 my(@updateFile);
 open(INFILE, "<$prefix/sql/updates/$PROGNAME")
@@ -80,22 +94,20 @@ for (@updateFile) {
 
 # Create temporary database.
 my $tempDBname = tempDBname();
-$my_conf{dsn} =~ /host(?:name)?=(\w+)\b/;
-my $dbhostname = $1 || 'localhost';
 # We can just exit if the global handle has errors because we're being wordy in
 # the connect.
 my $g_dbh =
-	DBI->connect("DBI:mysql:database=;host=$dbhostname", $g_user, $g_pwd, {
+	DBI->connect("DBI:mysql:database=;host=$dbhost", $g_user, $g_pwd, {
 		PrintError => 1, 
 	}) or exit 1;
 $g_dbh->do("CREATE DATABASE $tempDBname") or
 	print "\n\nCREATE DATABASE failed for '$tempDBname'\n" && exit 1;
 # Can't forget the grant...
-$g_dbh->do("GRANT ALL on $tempDBname.* TO $my_conf{dbuser}\@$dbhostname") or
+$g_dbh->do("GRANT ALL on $tempDBname.* TO $t_user\@$dbhost") or
 	print "\n\nGRANT failed!\n" && exit 1;
 my $dbh =
-	DBI->connect(	"DBI:mysql:database=$tempDBname;host=$dbhostname", 
-					$my_conf{dbuser}, $my_conf{dbpass}, {PrintError=>0});
+	DBI->connect(	"DBI:mysql:database=$tempDBname;host=$dbhost", 
+					$t_user, $t_pwd, {PrintError=>0});
 die "\n\nCan't connect to temporary conversion database!\n" if ! $dbh;
 
 # Perform selective import of given dump.
@@ -111,7 +123,8 @@ for (@updateFile) {
 authors2Users();
 aid2uid();
 # Don't do codes, leave that to the new dump --Brian
-codes2CodeParam();
+#codes2CodeParam();
+md5Users();
 userskey2Param();
 
 # Drop obsolete tables.
@@ -122,7 +135,7 @@ for (@otables) {
 
 # Make dump of temporary database.
 print "-- Creating output dump '$outfile'\n";
-system("mysqldump -u $my_conf{dbuser} -p$my_conf{dbpass} $tempDBname > $outfile");
+system("mysqldump -u $t_user -p$t_pwd $tempDBname > $outfile");
 print "DONE!\n";
 
 
@@ -192,7 +205,7 @@ sub importDump {
 			print STDERR 	"Error executing statement on import: " . 
 							$dbh->errstr . "\n";
 			printf STDERR	"(%d) '$cmd'", length($cmd)
-				if ($a = $dbh->errstr) =~ /SQL syntax/,
+				if (my $a = $dbh->errstr) =~ /SQL syntax/,
 	}
 	print "-- Closing $dumpfile\n";
 }
@@ -345,11 +358,23 @@ EOQ
 }
 
 
+sub md5Users {
+	my $sth = $dbh->prepare("SELECT uid, passwd FROM users");
+	my $i_sth = $dbh->prepare('UPDATE users SET passwd=? WHERE uid=?');
+	print STDERR "-- Converting user passwords from plaintext to MD5...";
+	for (@{sth->fetchall_arrayref}) {
+		$i_sth->execute(md5_hex($_->{passwd}), $_->{uid})
+	}
+	$i_sth->finish;
+	print STDERR "Done!\n";
+}	
+
+
 sub userskey2Param {
 	my $sth = $dbh->prepare("SELECT * FROM users_key");
 	print STDERR "-- Processing table USERS_KEY into table USERS_PARAM\n";
 	for (@{$sth->fetchall_arrayref({})}) {
-		my $pubkey = $dbh->quote($_->[1]);
+		my $pubkey = $dbh->quote($_->{key});
 
 		$dbh->do(<<EOQ);
 INSERT INTO users_param (param_id, uid, name, value)
@@ -370,15 +395,21 @@ sub usage {
 
 	print <<EOT;
 
-usage: $PROGNAME {-Psdoup?h}
+usage: $PROGNAME {-PsdoupUPH?h}
 
 	-P Prefix for Slash install 		[default: /usr/local/slash]
-	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
 	-d Location of source MySQL dump	[default: ./site.dump]
 	-o Location of output dump 		[default: ./bendersite.dump]
 
-	-u User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
+	-u [MASTER] User with CREATE DATABASE/DROP DATABASE/GRANT priviledges
 	-p Password for user given by -u
+
+	-s Location of existing slashdotrc.pl	[default: ./slashdotrc.pl]
+
+	-U [SLAVE] User which will perform conversions
+	-P Password for user given by -U
+
+	-H Database hostname
 
 	-? Displays this help screen (also -h)
 
@@ -389,6 +420,8 @@ Notes:
 	You must specify -p if you specify -u, if no user is given, the one
 	in the rc file specified by -s will be used. If you specify -p with no
 	password, then the user will be prompted.
+
+	Use of the -H, -U and -P options are not allowed with -s.
 
 EOT
 
