@@ -1969,20 +1969,20 @@ sub getComments {
 ########################################################
 # Do we need to bother passing in User and Form?
 sub getStories {
-	my($self, $SECT, $limit, $tid) = @_;
+	my($self, $section, $limit, $tid) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
 	$limit ||= $user->{currentSection} eq 'index'
-		? $user->{maxstories} : $SECT->{artcount};
+		? $user->{maxstories} : $self->getSection($section, 'artcount');
 
 	my $tables = 'newstories';
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
 	$where .= "AND displaystatus=0 " unless $form->{section};
-	$where .= "AND (displaystatus>=0 AND section='$SECT->{section}') " if $form->{section};
+	$where .= "AND (displaystatus>=0 AND section='$section') " if $form->{section};
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
@@ -1993,7 +1993,7 @@ sub getStories {
 	# Order
 	my $other = "ORDER BY time DESC ";
 
-	# We need to check up on this late for performance -Brian
+	# We need to check up on this later for performance -Brian
 	my(@stories, $count);
 	my $cursor = $self->sqlSelectMany($columns, $tables, $where, $other)
 		or errorLog("error in getStories columns $columns table $tables where $where other $other");

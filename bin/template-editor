@@ -126,6 +126,7 @@ if($opts{'s'}) {
 sub usage {
 	print "Usage:template-editor  [OPTIONS] template template....\n";
 	print "\t-d directory to dump all templates in\n";
+	print "\t-c create the directory if a dump is being done\n";
 	print "\t-u Virtual user to use(default is slash)\n";
 	print "\t-n <templatefilename> <templatename> to create a template\n";
 	print "\t-s Save template\n";
