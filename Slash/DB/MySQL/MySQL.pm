@@ -2756,8 +2756,8 @@ sub _genericGetCombined {
 		my $table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} elsif ($val) {
-		my $table = $self->{$cache}{$val->[0]};
-		($answer) = $self->sqlSelect($val->[0], $table, $table_prime . '=' .$id_db);
+		my $table = $self->{$cache}{$val};
+		($answer) = $self->sqlSelect($val, $table, $table_prime . '=' .$id_db);
 	} else {
 		my $where;
 		for (@$tables) {
