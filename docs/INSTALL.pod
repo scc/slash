@@ -148,8 +148,8 @@ You might also wish to install each module by hand, using distributions
 found on the CPAN.  See http://perldoc.com/m?perlmodinstall
 for more information on installing perl modules.
 
-You must have certain libraries existing on your system before building,
-for Compress::Zlib and XML::Parser.  See L<"perl">.
+B<Note>: You must have certain libraries existing on your system before
+building, for Compress::Zlib and XML::Parser.  See L<"perl">.
 
 To use the CPAN module, invoke the CPAN shell:
 
@@ -322,7 +322,9 @@ of that system.
 
 Below, the main software components needed are listed.  The
 recommended version is noted, along with the earliest version
-that has been tested (or is expected) to work.
+that has been tested (or is expected) to work.  The earliest
+versions are not necessarily supported, but should work.
+perl 5.005_03 is supported, but MySQL 3.22 is not.
 
 
 =over 4
@@ -335,19 +337,20 @@ Version 5.6.0 (5.005_03).
 
 =item MySQL
 
-Version 3.23 (3.22).
+Version 3.23 (3.22).  Version 3.22 is no longer supported,
+but should work.
 
 	http://www.mysql.com/
 
 =item Apache
 
-Version 1.3.14 (1.3.6).
+Version 1.3.19 (1.3.6).
 
 	http://httpd.apache.org/
 
 =item mod_perl
 
-Versions 1.24_01 (1.21).
+Versions 1.25 (1.21).
 
 	http://perl.apache.org/
 
@@ -452,6 +455,18 @@ NFS server (dual PIII/600, 2GB RAM, 2 x 9GB hard drive), and one
 database server (quad Xeon/550, 2GB RAM, 6 x 9GB hard drive).  However,
 this is certainly overkill for most sites (and possibly even overkill
 for Slashdot).
+
+
+=head1 UPGRADING
+
+=head2 Slash 1.0 -> Slash 2.0
+
+Please read the complete documentation of F<utils/slash1toslash2>.
+It is a program that will convert your database from Slash 1.0
+to a new Slash 2.0 database.  The program documentation (which can
+be read with F<perldoc>) details exactly what process it follows
+to do the conversion, so you can attempt to do it by hand if you
+prefer.
 
 
 =head1 VERSION

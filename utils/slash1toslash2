@@ -421,7 +421,6 @@ EOT
 
 __END__
 
-DATEFORMATS FIX AGAIN ... ?
 
 =head1 NAME
 
@@ -447,6 +446,10 @@ display blocks, or code, it will not copy that over.
 
 A detailed description of the work done is below, L<"DETAILS">.
 You might want to read this section before running the program.
+
+Note that this is designed for converting a Slash 1.0.9 database;
+any schema changes you've made, or incompatible changes from
+earlier versions of Slash, may break this program.
 
 Please follow these instructions precisely to convert your Slash 1.0
 site to Slash 2.0.
