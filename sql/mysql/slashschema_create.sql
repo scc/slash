@@ -499,7 +499,7 @@ CREATE TABLE stories (
 	submitter mediumint UNSIGNED NOT NULL,
 	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
 	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0' NOT NULL,
-	writestatus ENUM("ok","delete","dirty","archived","archived-ok") DEFAULT 'ok' NOT NULL,
+	writestatus ENUM("ok","delete","dirty","archived") DEFAULT 'ok' NOT NULL,
 	PRIMARY KEY (sid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
 	FOREIGN KEY (tid) REFERENCES tid(topic),

@@ -115,27 +115,46 @@ sub getNewStoryTopic {
 	return $sth;
 }
 
-########################################################
-# For dailystuff
-sub archiveComments {
-	my($self) = @_;
-	my $constants = getCurrentStatic();
 
-	my $days_to_archive = $constants->{discussion_archive};
+sub updateArchivedDiscussions {
+	my($self) = @_;
+
+	my $days_to_archive = getCurrentStatic('archive_delay');
 	# Close discussions.
 	$self->sqlDo(
 		"UPDATE discussions SET type='archived'
 		 WHERE to_days(now()) - to_days(ts) > $days_to_archive AND 
 		       (type='open' OR type='dirty')"
 	);
+}
+
+
+########################################################
+# For dailystuff
+sub getArchiveList {
+	my($self, $limit, $dir) = @_;
+	$limit ||= 1;
+	$dir = 'ASC' if $dir ne 'ASC' || $dir ne 'DESC';
+
+	my $days_to_archive = getCurrentStatic('archive_delay');
 
 	# Close associated story so that final archival .shtml is written
 	# to disk. This is accomplished by the archive.pl task.
-	$self->sqlDo(
-		"UPDATE stories SET writestatus='archived'
-		 WHERE to_days(now()) - to_days(time) > $days_to_archive AND
-		       (writestatus='ok' OR writestatus='dirty')"
+	my $returnable = $self->sqlSelectAll(
+		'sid, title, section', 'stories',
+		"to_days(now()) - to_days(time) > $days_to_archive AND
+		(writestatus='ok' OR writestatus='dirty')",
+		"ORDER BY time $dir LIMIT $limit"
 	);
+
+	return $returnable;
+}
+
+
+sub deleteRecycledComments {
+	my($self) = @_;
+
+	my $days_to_archive = getCurrentStatic('archive_delay');
 
 	my $comments = $self->sqlSelectAll(
 		'cid, discussions.id',
@@ -145,12 +164,18 @@ sub archiveComments {
 		discussions.type = 'recycle' AND 
 		comments.pid = 0"
 	);
+
+	my $rtotal = 0;
 	for my $comment (@$comments) {
 		next if !$comment or ref($comment) ne 'ARRAY' or !@$comment;
 		my $local_count = $self->_deleteThread($comment->[0]);
 		$self->setDiscussionDelCount($comment->[1], $local_count);
+		$rtotal += $local_count;
 	}
+
+	return $rtotal;
 }
+	
 
 sub _deleteThread {
 	my($self, $cid, $level, $comments_deleted) = @_;
