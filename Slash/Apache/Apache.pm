@@ -11,6 +11,7 @@ use Apache::SIG ();
 use Apache::ModuleConfig;
 use Apache::Constants qw(:common);
 use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 require DynaLoader;
 require AutoLoader;
@@ -50,6 +51,37 @@ sub SlashVirtualUser ($$$) {
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 	# If this is not here this will go poorly.
 	$cfg->{slashdb}->{_dbh}->disconnect;
+}
+
+sub CompileTemplates {
+	my $slashdb   = getCurrentDB();
+	my $constants = getCurrentStatic();
+
+	# caching must be on, along with unlimited
+	# cache size, and we can't have already done
+	# this in this child
+	return unless $constants->{cache_enabled}
+		  && !$constants->{template_already_cached}
+		  && !$constants->{template_cache_size};
+
+	my $templates = $slashdb->getTemplateNameCache();
+
+	# this will call every template in turn, and it will
+	# then be compiled; now, we will get errors in
+	# the error log for templates that don't check
+	# the input values; that can't easily be helped
+	for my $t (keys %$templates) {
+		my($name, $page, $section) = split /$;/, $t;
+		slashDisplay($name, 0, {
+			Page	=> $page,
+			Section	=> $section,
+			Return	=> 1,
+			Nocomm	=> 1
+		});
+	}
+
+	# don't y'all come back now, y'hear?
+	$constants->{template_already_cached} = 1;
 }
 
 sub IndexHandler {

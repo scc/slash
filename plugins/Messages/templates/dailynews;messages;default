@@ -38,6 +38,13 @@ In this issue:[% FOR story = stories.reverse %]
 
 [% story.asciitext; IF story.refs.size %]
 
+[% IF !constants.newsletter_body && story.bodytext %]
+This story continues at:
+    [% urlize("$constants.absolutedir/article.pl?sid=$story.sid") %]
+
+[% END %]Discuss this story at:
+    [% urlize("$constants.absolutedir/comments.pl?sid=$story.sid") %]
+
 Links:[%
   count = -1;
   FOR ref = story.refs;
@@ -48,7 +55,7 @@ END %]
 
 
 [% END %]
-Copyright 1997-2001 [% constants.siteadmin_name %].  All rights reserved.
+Copyright 1997-2001 [% constants.publisher %].  All rights reserved.
 
 __seclev__
 500

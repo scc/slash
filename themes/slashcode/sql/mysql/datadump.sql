@@ -558,6 +558,7 @@ INSERT INTO vars (name, value, description) VALUES ('siteadmin_name','Slash Admi
 INSERT INTO vars (name, value, description) VALUES ('siteid','www.example.com','The unique ID for this site');
 INSERT INTO vars (name, value, description) VALUES ('sitename','Slash Site','Name of the site');
 INSERT INTO vars (name, value, description) VALUES ('siteowner','slash','What user this runs as');
+INSERT INTO vars (name, value, description) VALUES ('sitepublisher','Me','The entity that publishes the site');
 INSERT INTO vars (name, value, description) VALUES ('slashdir','/usr/local/slash','Directory where Slash was installed');
 INSERT INTO vars (name, value, description) VALUES ('slogan','Slash Site','Slogan of the site');
 INSERT INTO vars (name, value, description) VALUES ('smtp_server','localhost','The mailserver for the site');

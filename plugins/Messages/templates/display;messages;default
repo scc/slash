@@ -31,8 +31,9 @@ __template__
     <INPUT TYPE="hidden" NAME="id" VALUE="[% message.id %]">
     <INPUT TYPE="hidden" NAME="op" VALUE="delete_message">
     <INPUT TYPE="submit" VALUE="Delete Message">
+    </FORM>
   </TD></TR>
-</FORM>
+</TABLE>
 
 [% ELSE %]
 

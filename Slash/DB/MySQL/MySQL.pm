@@ -245,6 +245,9 @@ sub createComment {
 		$self->sqlDo($insline) or errorLog("$DBI::errstr $insline");
 	}
 
+	# should this be conditional on the others happening?
+	# is there some sort of way to doublecheck that this value
+	# is correct?  -- pudge
 	$self->sqlUpdate(
 		"discussions",
 		{ -commentcount => 'commentcount+1' },
@@ -1817,6 +1820,7 @@ sub resetFormkey {
 	print STDERR "RESET formkey $updated\n" if $constants->{DEBUG};
 	return($updated);
 }
+
 ##################################################################
 sub updateFormkey {
 	my($self, $formkey, $cid, $length) = @_;
@@ -1843,6 +1847,9 @@ sub checkPostInterval {
 	my $constants = getCurrentStatic();
 
 	my $where = $self->_whereFormkey($id);
+	# this is not extensible at all.  why not just do
+	# $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
+	# ? -- pudge
 	my $speedlimit = {
 		comments 	=> $constants->{comments_speed_limit},
 		discussions	=> $constants->{discussions_speed_limit},
@@ -3114,7 +3121,6 @@ sub createStory {
 	return $sid;
 }
 
-
 ##################################################################
 sub updateStory {
 	my($self) = @_;
@@ -3611,7 +3617,7 @@ sub getBlock {
 }
 
 ########################################################
-sub _getTemplateNameCache {
+sub getTemplateNameCache {
 	my($self) = @_;
 	my %cache;
 	my $templates = $self->sqlSelectAll('tpid,name,page,section', 'templates');
@@ -3653,7 +3659,7 @@ sub getTemplateByName {
 	#First, we get the cache
 	$self->{$table_cache_id} =
 		$constants->{'cache_enabled'} && $self->{$table_cache_id}
-		? $self->{$table_cache_id} : _getTemplateNameCache($self);
+		? $self->{$table_cache_id} : getTemplateNameCache($self);
 
 	#Now, lets determine what we are after
 	unless ($page) {

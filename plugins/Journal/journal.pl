@@ -342,6 +342,16 @@ sub saveArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 	my $description = strip_nohtml($form->{description});
 
+	my $error;
+	my $ok = $slashdb->updateFormkeyVal($form->{formkey});
+	if (!$ok) {
+		print <<EOT;
+<P>Your formkey is invalid.  More info later when I get this fixed.</P>
+EOT
+		editArticle(@_);
+		return;
+	}
+
 	if ($form->{id}) {
 		my %update;
 		my $article = $journal->get($form->{id});
@@ -415,6 +425,7 @@ sub saveArticle {
 			}
 		}
 	}
+
 	listArticle(@_);
 }
 
@@ -483,6 +494,9 @@ sub editArticle {
 	} else {
 		$article  = $journal->get($form->{id}) if $form->{id};
 		$posttype = $article->{posttype};
+		$slashdb->createFormkey(
+			'journal', getFormkeyId($user->{uid}), 'journal'
+		);
 	}
 
 	$posttype ||= $user->{'posttype'};
