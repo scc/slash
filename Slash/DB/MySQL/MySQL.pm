@@ -1057,24 +1057,6 @@ sub getCommentsByNetOrSubnetID {
 }
 
 #################################################################
-sub getCommentsBySubnetID{
-	my($self, $subnetid, $min) = @_;
-
-	my $sqlquery = <<EOT;
-SELECT pid,sid,cid,subject,date,points,uid
-FROM comments
-WHERE ipid='$id' or subnetid='$id'
-ORDER BY date DESC LIMIT $min
-EOT
-
-	my $sth = $self->{_dbh}->prepare($sqlquery);
-	$sth->execute;
-	my($comments) = $sth->fetchall_arrayref;
-	formatDate($comments, 4);
-	return $comments;
-}
-
-#################################################################
 # Just create an empty content_filter
 sub createContentFilter {
 	my($self, $formname) = @_;
