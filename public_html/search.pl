@@ -210,7 +210,7 @@ sub userSearch {
 
 	my($x, $cnt) = 0;
 
-	my $users = $slashdb->getSearchUsers($form->, getCurrentStatic('anonymous_coward_uid'));
+	my $users = $slashdb->getSearchUsers($form, getCurrentStatic('anonymous_coward_uid'));
 	for (@$users) {
 		my($fakeemail, $nickname, $uid) = @$_;
 		my $ln = $nickname;
@@ -239,6 +239,7 @@ EOT
 
 #################################################################
 sub storySearch {
+	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
 
 	my $prev = $form->{min} - $form->{max};
@@ -250,7 +251,7 @@ sub storySearch {
 	my($x, $cnt) = 0;
 	print " ";
 
-	my $stories = $slashdb->getSearchStory($form->);
+	my $stories = $slashdb->getSearchStory($form);
 	for (@$stories) {
 		my($aid, $title, $sid, $time, $commentcount, $section, $cnt) = @$_;
 		last unless $cnt || ! $form->{query};
