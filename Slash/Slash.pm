@@ -88,7 +88,7 @@ sub getSlash {
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 
-	$I{dbobject} = $cfg->{'dbslash'} || Slash::DB->new('slash');
+	$I{dbobject} = $cfg->{'dbslash'};
 
 	# %I legacy
 	$I{F} = $user_cfg->{'form'};
@@ -120,11 +120,12 @@ sub createSelect {
 ########################################################
 sub selectTopic {
 	my($name, $tid) = @_;
+	my $dbslash = getCurrentDB();
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
-	my $topicbank = $I{dbobject}->getTopics();
+	my $topicbank = $dbslash->getTopics();
 	foreach my $thistid (sort keys %$topicbank) {
-		my $topic = $I{dbobject}->getTopic($thistid);
+		my $topic = $dbslash->getTopic($thistid);
 		my $selected = $topic->{tid} eq $tid ? ' SELECTED' : '';
 		$html_to_display .= qq!\t<OPTION VALUE="$topic->{tid}"$selected>$topic->{alttext}</OPTION>\n!;
 	}
@@ -136,7 +137,8 @@ sub selectTopic {
 # Drop down list of available sections (based on admin seclev)
 sub selectSection {
 	my($name, $section, $SECT) = @_;
-	my $sectionBank = $I{dbobject}->getSections();
+	my $dbslash = getCurrentDB();
+	my $sectionBank = $dbslash->getSections();
 
 	if ($SECT->{isolate}) {
 		print qq!<INPUT TYPE="hidden" NAME="$name" VALUE="$section">\n!;
@@ -156,7 +158,8 @@ sub selectSection {
 
 ########################################################
 sub selectSortcode {
-	my $sortcode = $I{dbobject}->getCodes('sortcodes');
+	my $dbslash = getCurrentDB();
+	my $sortcode = $dbslash->getCodes('sortcodes');
 
 	my $html_to_display .= qq!<SELECT NAME="commentsort">\n!;
 	foreach my $id (keys %$sortcode) {
@@ -169,7 +172,8 @@ sub selectSortcode {
 
 ########################################################
 sub selectMode {
-	my $commentcode = $I{dbobject}->getCodes('commentmodes');
+	my $dbslash = getCurrentDB();
+	my $commentcode = $dbslash->getCodes('commentmodes');
 
 	my $html_to_display .= qq!<SELECT NAME="mode">\n!;
 	foreach my $id (keys %$commentcode) {
@@ -211,13 +215,14 @@ sub getEvalBlock {
 # Gets the appropriate block depending on your section
 # or else fall back to one that exists
 sub getSectionBlock {
+	my $dbslash = getCurrentDB();
 	my($name) = @_;
 	my $thissect = getCurrentUser('light')? 'light' : $I{currentSection};
 	my $block;
 	if ($thissect) {
-		$block = $I{dbobject}->getBlock($thissect . "_$name", 'block');
+		$block = $dbslash->getBlock($thissect . "_$name", 'block');
 	}
-	$block ||= $I{dbobject}->getBlock($name, 'block');
+	$block ||= $dbslash->getBlock($name, 'block');
 	return $block;
 }
 
@@ -261,6 +266,7 @@ sub getsiddir {
 # We need to have logging occur in its own module
 # for the next version
 sub anonLog {
+	my $dbslash = getCurrentDB();
 	my($op, $data) = ('/', '');
 
 	local $_ = $ENV{REQUEST_URI};
@@ -280,7 +286,7 @@ sub anonLog {
 	$data =~ s/_F//;
 	$op =~ s/_F//;
 
-	$I{dbobject}->writelog($op, $data);
+	$dbslash->writelog($op, $data);
 }
 
 
@@ -339,11 +345,13 @@ sub getSectionColors {
 ########################################################
 # Gets sections wherver needed.  if blank, gets settings for homepage, and
 # if defined tries to use cache.
+# Look at this for a rewrite
 sub getSection {
 	my ($section) = @_;
-	return { title => $I{slogan}, artcount => $I{U}{maxstories} || 30, issue => 3 }
+	return { title => getCurrentStatic('slogan'), artcount => getCurrentUser('maxstories') || 30, issue => 3 }
 		unless $section;
-	return $I{dbobject}->getSection($section);
+	my $dbslash = getCurrentDB();
+	return $dbslash->getSection($section);
 }
 
 
@@ -356,10 +364,11 @@ sub getSection {
 sub pollbooth {
 	my($qid, $notable) = @_;
 
-	$qid = $I{dbobject}->getVar('currentqid', 'value') unless $qid;
+	my $dbslash = getCurrentDB();
+	$qid = $dbslash->getVar('currentqid', 'value') unless $qid;
 	my $qid_htm = stripByMode($qid, 'attribute');
 
-	my $polls = $I{dbobject}->getPoll($qid);
+	my $polls = $dbslash->getPoll($qid);
 	my($x, $tablestuff) = (0);
 	for (@$polls) {
 		my($question, $answer, $aid) = @$_;
@@ -377,9 +386,9 @@ EOT
 		$tablestuff .= qq!<BR><INPUT TYPE="radio" NAME="aid" VALUE="$aid">$answer\n!;
 	}
 
-	my $voters = $I{dbobject}->getPollQuestion($qid, 'voters');
-	my $comments = $I{dbobject}->countComments($qid);
-#	my $comments = $I{dbobject}->getPollComments($qid);
+	my $voters = $dbslash->getPollQuestion($qid, 'voters');
+	my $comments = $dbslash->countComments($qid);
+#	my $comments = $dbslash->getPollComments($qid);
 	my $sect = "section=$I{currentSection}&" if $I{currentSection};
 
 	$tablestuff .= qq!<BR><INPUT TYPE="submit" VALUE="Vote"> ! .
@@ -646,7 +655,8 @@ EOT
 	| <A HREF="$I{rootdir}/admin.pl?op=edit">New</A>
 EOT
 
-	my $cnt = $I{dbobject}->getSubmissionCount($I{articles_only});
+	my $dbslash = getCurrentDB();
+	my $cnt = $dbslash->getSubmissionCount($I{articles_only});
 
 	print <<EOT if $seclev > 499;
 	| <A HREF="$I{rootdir}/submit.pl?op=list">$cnt Submissions</A>
@@ -677,7 +687,8 @@ sub formLabel {
 sub currentAdminUsers {
 	my $html_to_display;
 
-	my $aids = $I{dbobject}->currentAdmin();
+	my $dbslash = getCurrentDB();
+	my $aids = $dbslash->currentAdmin();
 	for (@$aids) {
 		my($aid, $lastsecs, $lasttitle) = @$_;
 		$html_to_display .= qq!\t<TR><TD BGCOLOR="$I{bg}[3]">\n!;
@@ -782,12 +793,13 @@ EOT
 		$adhtml = getAd(1);
 	}
 
+	my $dbslash = getCurrentDB();
 	my $topics;
 	unless ($I{U}{noicons} || $I{U}{light}) {
-		$topics = $I{dbobject}->getBlock('topics', 'block');
+		$topics = $dbslash->getBlock('topics', 'block');
 	}
 
-	my $vertmenu = $I{dbobject}->getBlock('mainmenu', 'block');
+	my $vertmenu = $dbslash->getBlock('mainmenu', 'block');
 	my $menu = eval prepBlock($vertmenu);
 
 	my $horizmenu = $menu;
@@ -807,12 +819,13 @@ EOT
 
 ########################################################
 sub getSectionMenu {
-	my $menu = $I{dbobject}->getBlock('sectionindex_html1', 'block');
+	my $dbslash = getCurrentDB();
+	my $menu = $dbslash->getBlock('sectionindex_html1', 'block');
 
 	# the reason this is three calls is that sectionindex regularly is
 	# updated by portald, so it's a more dynamic block
-	$menu .= $I{dbobject}->getBlock('sectionindex', 'block');
-	$menu .= $I{dbobject}->getBlock('sectionindex_html2', 'block');
+	$menu .= $dbslash->getBlock('sectionindex', 'block');
+	$menu .= $dbslash->getBlock('sectionindex_html2', 'block');
 
 	my $org_code = getEvalBlock('organisation');
 	my $execme = prepEvalBlock($org_code);
@@ -828,6 +841,7 @@ sub getSectionMenu {
 
 ########################################################
 sub footer {
+	my $dbslash = getCurrentDB();
 	if ($I{F}{ssi}) {
 		ssiFoot();
 		return;
@@ -837,10 +851,10 @@ sub footer {
 	if ($I{U}{aseclev}) {
 		$motd .= currentAdminUsers();
 	} else {
-		$motd .= $I{dbobject}->getBlock('motd', 'block');
+		$motd .= $dbslash->getBlock('motd', 'block');
 	}
 
-	my $vertmenu = $I{dbobject}->getBlock('mainmenu', 'block');
+	my $vertmenu = $dbslash->getBlock('mainmenu', 'block');
 	my $menu = prepBlock($vertmenu);
 
 	my $horizmenu = eval $menu;
@@ -985,7 +999,8 @@ sub selectComments {
 	$thisComment->finish;
 
 	getCommentTotals($comments);
-	$I{dbobject}->updateCommentTotals($sid, $comments) if $I{F}{ssi};
+	my $dbslash = getCurrentDB();
+	$dbslash->updateCommentTotals($sid, $comments) if $I{F}{ssi};
 	reparentComments($comments);
 	return($comments,$count);
 }
@@ -1105,11 +1120,12 @@ sub printComments {
 
 		my($title, $section);
 		# Print Story Name if Applicable
-		if ($I{dbobject}->getStory($sid)) {
-			$title = $I{dbobject}->getStory($sid, 'title');
-			$section = $I{dbobject}->getStory($sid, 'section');
+		my $dbslash = getCurrentDB();
+		if ($dbslash->getStory($sid)) {
+			$title = $dbslash->getStory($sid, 'title');
+			$section = $dbslash->getStory($sid, 'section');
 		} else {
-			my $story = $I{dbobject}->getNewStory($sid, 'title', 'section');
+			my $story = $dbslash->getNewStory($sid, 'title', 'section');
 			$title = $story->{'title'};
 			$section = $story->{'section'};
 		}
@@ -1181,7 +1197,7 @@ EOT
 		<FONT COLOR="$I{fg}[3]" SIZE="${\( $I{fontbase} + 2 )}">
 EOT
 
-		print $I{dbobject}->getBlock('commentswarning', 'block'), "</FONT></FORM></TD></TR>";
+		print $dbslash->getBlock('commentswarning', 'block'), "</FONT></FORM></TD></TR>";
 
 		if ($I{U}{mode} eq 'nocomment') {
 			print "</TABLE>";
@@ -1608,11 +1624,12 @@ sub displayStory {
 
 	# this will force the storyBank to refresh if one of it's members is
 	# older than the value we set for $story_expire
+	my $dbslash = getCurrentDB();
 	if ($code_time - $I{storyBank}{timestamp} > $I{story_expire} && $I{story_refresh} != 1) {
 		$I{story_refresh} = 1;
 
 		# This clears the stories from the cache (doesn't harm the database)
-		$I{dbobject}->clearStory();
+		$dbslash->clearStory();
 
 		# smack a time stamp on it with the current time (this is the new timestamp)
 		$I{storyBank}{timestamp} = $code_time;
@@ -1622,14 +1639,14 @@ sub displayStory {
 	# StoryCount if it's not already defined and the calling page is
 	# index.pl
 
-	$I{dbobject}->setStory($sid, 'story_order',$I{StoryCount})
-	    if !$I{dbobject}->getStory($sid, 'story_order') && $caller eq 'index';
+	$dbslash->setStory($sid, 'story_order',$I{StoryCount})
+	    if !$dbslash->getStory($sid, 'story_order') && $caller eq 'index';
 
 
 	# increment if the calling page was index.pl 
 	$I{StoryCount}++ if $caller eq 'index';
 
-	my $S = $I{dbobject}->getStory($sid);
+	my $S = $dbslash->getStory($sid);
 	
 
 	# convert the time of the story (this is mysql format) 
@@ -1646,9 +1663,9 @@ sub displayStory {
 
 	# No, we do not need this variable, but for readability 
 	# I think it is justified (and it is just a reference....)
-	my $topic = $I{dbobject}->getTopic($S->{tid});
-	dispStory($S, $I{dbobject}->getAuthor($S->{aid}), $topic, $full);
-	return($S, $I{dbobject}->getAuthor($S->{aid}), $topic);
+	my $topic = $dbslash->getTopic($S->{tid});
+	dispStory($S, $dbslash->getAuthor($S->{aid}), $topic, $full);
+	return($S, $dbslash->getAuthor($S->{aid}), $topic);
 }
 
 #######################################################################
@@ -1784,8 +1801,9 @@ sub getOlderStories {
 	my($array_ref, $SECT) = @_;
 	my($today, $stuff);
 	my $user = getCurrentUser();
+	my $dbslash = getCurrentDB();
 
-	$array_ref ||= $I{dbobject}->getStories($user, $I{F}, $SECT, $I{currentSection});
+	$array_ref ||= $dbslash->getStories($user, $I{F}, $SECT, $I{currentSection});
 
 	for (@{$array_ref}) {
 		my($sid, $section, $title, $time, $commentcount, $day) = @{$_}; 
@@ -1870,8 +1888,9 @@ sub matchingStrings {
 sub lockTest {
 	my ($subj) = @_;
 	return unless $subj;
+	my $dbslash = getCurrentDB();
 	my $msg;
-	my $locks = $I{dbobject}->getLock();
+	my $locks = $dbslash->getLock();
 	for (@$locks) {
 		my ($thissubj, $aid) = @$_;
 		if ($aid ne $I{U}{aid} && (my $x = matchingStrings($thissubj, $subj))) {
@@ -1960,6 +1979,7 @@ sub intervalString {
 ##################################################################
 sub submittedAlready {
 	my($formkey, $formname) = @_;
+	my $dbslash = getCurrentDB();
 
 	my $cant_find_formkey_err = <<EOT;
 <P><B>We can't find your formkey.</B></P>
@@ -1968,7 +1988,7 @@ form as required.</P>
 EOT
 
 	# find out if this form has been submitted already
-	my($submitted_already, $submit_ts) = $I{dbobject}->checkForm($formkey, $formname)
+	my($submitted_already, $submit_ts) = $dbslash->checkForm($formkey, $formname)
 		or errorMessage($cant_find_formkey_err) and return(0);
 
 		if ($submitted_already) {
@@ -2002,8 +2022,9 @@ sub errorMessage {
 sub checkSubmission {
 	my($formname, $limit, $max, $id) = @_;
 	my $formkey_earliest = time() - $I{formkey_timeframe};
+	my $dbslash = getCurrentDB();
 
-	my $last_submitted = $I{dbobject}->getSubmissionLast($id, $formname, $I{U});
+	my $last_submitted = $dbslash->getSubmissionLast($id, $formname, $I{U});
 
 	my $interval = time() - $last_submitted;
 
@@ -2020,23 +2041,23 @@ EOT
 		return(0);
 
 	} else {
-		if ($I{dbobject}->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{U})) {
+		if ($dbslash->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{U})) {
 			undef $I{F}{formkey} unless $I{F}{formkey} =~ /^\w{10}$/;
 
-			unless ($I{F}{formkey} && $I{dbobject}->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey}, $I{U})) {
-				$I{dbobject}->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+			unless ($I{F}{formkey} && $dbslash->checkFormkey($formkey_earliest, $formname, $id, $I{F}{formkey}, $I{U})) {
+				$dbslash->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				my $invalid_formkey_err = "<P><B>Invalid form key!</B></P>\n";
 				errorMessage($invalid_formkey_err);
 				return(0);
 			}
 
 			if (submittedAlready($I{F}{formkey}, $formname)) {
-				$I{dbobject}->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+				$dbslash->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				return(0);
 			}
 
 		} else {
-			$I{dbobject}->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
+			$dbslash->formAbuse("max form submissions $max reached", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 			my $timeframe_string = intervalString($I{formkey_timeframe});
 			my $max_posts_err =<<EOT;
 <P><B>You've reached you limit of maximum submissions to $ENV{SCRIPT_NAME} :
