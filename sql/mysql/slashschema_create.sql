@@ -59,6 +59,7 @@ CREATE TABLE accesslog (
 	ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
 	query_string varchar(50),
 	user_agent varchar(50),
+	section varchar(30) DEFAULT 'index' NOT NULL,
 	INDEX host_addr_part (host_addr(16)),
 	INDEX op_part (op(12)),
 	PRIMARY KEY (id)
