@@ -279,6 +279,9 @@ INSERT INTO related_links (keyword, name, link) VALUES ('news.com','News.com','h
 INSERT INTO related_links (keyword, name, link) VALUES ('cnn','CNN','http://www.cnn.com');
 INSERT INTO related_links (keyword, name, link) VALUES ('krow','Krow','http://tangent.org/~brian/');
 INSERT INTO related_links (keyword, name, link) VALUES ('tangent','TangentOrg','http://tangent.org/');
+INSERT INTO related_links (keyword, name, link) VALUES ('pudge','Pudge','http://pudge.net/');
+INSERT INTO related_links (keyword, name, link) VALUES ('macperl','MacPerl','http://dev.macperl.org/');
+INSERT INTO related_links (keyword, name, link) VALUES ('perl','Perl','http://use.perl.org/');
 
 #
 # Dumping data for table 'sections'

@@ -27,4 +27,8 @@ INSERT INTO vars (name, value, description) VALUES ('journal_top_posters', '1', 
 INSERT INTO vars (name, value, description) VALUES ('journal_top_friend', '1', 'Turn on and off top friends view');
 INSERT INTO vars (name, value, description) VALUES ('journal_top_recent', '1', 'Turn on and off top recent view');
 
+INSERT INTO vars (name, value, description) VALUES ('journal_speed_limit','30','seconds delay before repeat posting');
+INSERT INTO vars (name, value, description) VALUES ('max_journal_allowed','15','maximum number of journals per timeframe allowed');
+INSERT INTO vars (name, value, description) VALUES ('max_journals_unusedfk','300','How many unused formkeys are permitted');
+
 INSERT INTO blocks VALUES ('top10journals','',1000,'portald',NULL,'index',3,'Most Recent Journal Entries',1,NULL,'http://www.example.com/journal.pl?op=rss&content=top',1);
