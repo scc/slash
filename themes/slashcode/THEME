@@ -47,6 +47,7 @@ htdoc=htdocs/faq.shtml
 htdoc=htdocs/getting_started.shtml
 htdoc=htdocs/index.pl
 htdoc=htdocs/metamod.pl
+htdoc=htdocs/moderation.shtml
 htdoc=htdocs/pollBooth.pl
 htdoc=htdocs/sections.pl
 htdoc=htdocs/submit.pl
