@@ -75,6 +75,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT); # @EXPORT_OK %EXPORT_TAGS);
 	strip_literal
 	strip_nohtml
 	strip_plaintext
+	root2abs
 );
 
 # @EXPORT_OK = qw(
@@ -108,6 +109,15 @@ use constant CODE	=> 4;
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward);
 
+
+sub root2abs {
+	my($url) = @_;
+	my $rootdir = getCurrentStatic('rootdir');
+	if ($rootdir =~ m|^//|) {
+		$rootdir = ($ENV{HTTPS} ? 'https:' : 'http:') . $rootdir;
+	}
+	return $rootdir;
+}
 
 #========================================================================
 

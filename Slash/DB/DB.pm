@@ -3,7 +3,6 @@ package Slash::DB;
 use strict;
 use DBIx::Password;
 use Slash::DB::Utility;
-use Slash::DB::Utility;
 
 $Slash::DB::VERSION = '0.01';
 @Slash::DB::ISA = qw[ Slash::Utility ];
@@ -33,6 +32,9 @@ sub new {
 			unless ($ENV{GATEWAY_INTERFACE}) {
 				require Slash::DB::Static::Oracle;
 				push(@Slash::DB::ISA, 'Slash::DB::Static::Oracle');
+# should these be here, in addition? -- pudge
+#				require Slash::DB::Static::MySQL;
+#				push(@Slash::DB::ISA, 'Slash::DB::Static::MySQL');
 			}
 		} elsif ($dsn =~ /Pg/) {
 			print STDERR "Picking PostgreSQL \n";

@@ -661,10 +661,10 @@ Dependencies
 
 sub redirect {
 	my($url) = @_;
-	my $constants = getCurrentStatic();
 
-	if ($constants->{rootdir}) {	# rootdir strongly recommended
-		$url = URI->new_abs($url, $constants->{rootdir})->canonical->as_string;
+	if (getCurrentStatic('rootdir')) {	# rootdir strongly recommended
+		my $rootdir = root2abs($url);
+		$url = URI->new_abs($url, $rootdir)->canonical->as_string;
 	} elsif ($url !~ m|^https?://|i) {	# but not required
 		$url =~ s|^/*|/|;
 	}
@@ -1053,7 +1053,6 @@ sub reparentComments {
 		my $reparent;
 
 		# do threshold reparenting thing
-		print STDERR "$user:$user->{reparent}:$user->{threshold}: \n";
 		if ($user->{reparent} && $comments->[$x]{points} >= $user->{threshold}) {
 			my $tmppid = $pid;
 			while ($tmppid && $comments->[$tmppid]{points} < $user->{threshold}) {

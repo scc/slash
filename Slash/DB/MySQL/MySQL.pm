@@ -118,7 +118,7 @@ my %descriptions = (
 #
 ########################################################
 sub _whereFormkey {
-	my($formkey_id) = @_;
+	my($self, $formkey_id) = @_;
 	my $where;
 
 	my $user = getCurrentUser();
@@ -981,10 +981,8 @@ sub deleteSubmission {
 ########################################################
 sub deleteSession {
 	my($self, $uid) = @_;
-	if ($uid) {
-		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
-	} else {
-		$uid = getCurrentUser('uid');
+	$uid = defined($uid) || getCurrentUser('uid');
+	if (defined $uid) {
 		$self->sqlDo("DELETE FROM sessions WHERE uid=$uid");
 	}
 }
@@ -1308,7 +1306,7 @@ sub setStory {
 sub getSubmissionLast {
 	my($self, $id, $formname) = @_;
 
-	my $where = $self->_whereFormkey($self, $id);
+	my $where = $self->_whereFormkey($id);
 	my($last_submitted) = $self->sqlSelect(
 		"max(submit_ts)",
 		"formkeys",
@@ -1374,19 +1372,26 @@ sub insertFormkey {
 sub checkFormkey {
 	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
 
-	my $where = $self->_whereFormkey($self, $formkey_id);
+	my $where = $self->_whereFormkey($formkey_id);
 	my($is_valid) = $self->sqlSelect('count(*)', 'formkeys',
 		'formkey = ' . $self->{_dbh}->quote($formkey) .
 		" AND $where " .
 		"AND ts >= $formkey_earliest AND formname = '$formname'");
-	return($is_valid);
+
+	errorLog(<<EOT) unless $is_valid;
+
+SELECT count(*) FROM formkeys WHERE formkey = '$formkey' AND $where \
+	AND ts >=  $formkey_earliest AND formname = '$formname'
+EOT
+
+	return $is_valid;
 }
 
 ##################################################################
 sub checkTimesPosted {
 	my($self, $formname, $max, $id, $formkey_earliest) = @_;
 
-	my $where = $self->_whereFormkey($self, $id);
+	my $where = $self->_whereFormkey($id);
 	my($times_posted) = $self->sqlSelect(
 		"count(*) as times_posted",
 		"formkeys",
@@ -1918,7 +1923,7 @@ sub getCommentReply {
 		AND users.uid=users_info.uid
 		AND users.uid=users_comments.uid
 		AND users.uid=comments.uid"
-	);
+	) || {};
 
 	formatDate([$reply]);
 	return $reply;
@@ -1951,7 +1956,7 @@ sub getCommentsForUser {
 
 	my $thisComment = $self->{_dbh}->prepare_cached($sql) or errorLog($sql);
 	$thisComment->execute or errorLog($sql);
-	my $comments;
+	my $comments = [];
 	while (my $comment = $thisComment->fetchrow_hashref){
 		push @$comments, $comment;
 	}
@@ -2065,10 +2070,11 @@ sub setQuickies {
 ########################################################
 # What an ugly method
 sub getSubmissionForUser {
-	my($self, $dateformat) = @_;
+	my($self) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
-	my $sql = "SELECT subid,subj,date_format($dateformat,'m/d  H:i'),tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
+
+	my $sql = "SELECT subid,subj,time,tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
 	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
 	$sql .= $form->{note} ? "note=" . $self->{_dbh}->quote($form->{note}) : "isnull(note)";
 	$sql .= "		or note=' ' " unless $form->{note};
@@ -2082,6 +2088,8 @@ sub getSubmissionForUser {
 	$cursor->execute;
 
 	my $submission = $cursor->fetchall_arrayref;
+
+	formatDate($submission, 2, 2, '%m/%d  %H:%M');
 
 	return $submission;
 }

@@ -208,7 +208,7 @@ sub submissionEd {
 	});
 
 	my(@submissions, $submissions, @selection);
-	$submissions = $slashdb->getSubmissionForUser(getDateOffset('time'));
+	$submissions = $slashdb->getSubmissionForUser();
 
 	for (@$submissions) {
 		my $sub = $submissions[@submissions] = {};

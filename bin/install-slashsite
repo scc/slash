@@ -18,10 +18,10 @@ my(	$user, $owner, $owner_id, $group, $group_id, $password,
 );
 
 my %drivers = (
-		Pg => 'postgresql',
-		mysql => 'mysql',
-		oracle => 'oracle'
-	);
+	Pg	=> 'postgresql',
+	mysql	=> 'mysql',
+	oracle	=> 'oracle'
+);
 
 my @standard_http = qw(
 	PerlModule Apache::SIG
@@ -46,6 +46,7 @@ unless (DBIx::Password::checkVirtualUser($ARGV[0])) {
 	print "You did not supply a valid DBIx::Password virtual name.\n";
 	exit;
 }
+
 $driver = $drivers{DBIx::Password::getDriver($ARGV[0])};
 
 
