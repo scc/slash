@@ -999,7 +999,13 @@ sub _hard_dispComment {
 			$user_to_display = $comment->{nickname};
 		}
 	}
-			
+
+	my $ipidinfo_to_display;
+	$ipidinfo_to_display = <<EOT if $user->{seclev} >= 100;
+<BR><FONT FACE="$constants->{mainfontface}" SIZE=1>IPID:
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{ipid}">$comment->{ipid}</A>&nbsp;&nbsp;SubnetID: 
+<A HREF="$constants->{rootdir}/users.pl?op=userinfo&userfield=$comment->{subnetid}">$comment->{subnetid}</A></FONT>
+EOT
 
 	my $title = qq|<A NAME="$comment->{cid}"><B>$comment->{subject}</B></A>|;
 	my $return = <<EOT;
@@ -1008,7 +1014,7 @@ sub _hard_dispComment {
 				$title $score_to_display
 				</FONT>
 				<BR>by $user_to_display on $time_to_display ($comment_link_to_display)
-				$userinfo_to_display
+				$userinfo_to_display $ipidinfo_to_display
 			</TD></TR>
 			<TR><TD>
 				$comment_to_display
