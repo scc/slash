@@ -44,8 +44,8 @@ sub slashdLog {
         my $file = "$constants->{logdir}/slashd.log";
         open(LOG, ">>$file") or die "Can't append to $file: $!\nmsg: @_\n";
 	my $log_msg = scalar(localtime) . "\t" . join("\t", @_) . "\n";
-	print LOG "$log_msg\n";
-	print     "$log_msg\n";
+	print LOG $log_msg;
+	print     $log_msg;
         close LOG;
 }
 
