@@ -219,7 +219,7 @@ Return value
 
 sub selectSortcode {
 	my $slashdb = getCurrentDB();
-	createSelect('commentsort', $slashdb->getCodes('sortcodes'),
+	createSelect('commentsort', $slashdb->getDescriptions('sortcodes'),
 		getCurrentUser('commentsort'), 1);
 }
 
@@ -239,7 +239,7 @@ Return value
 sub selectMode {
 	my $slashdb = getCurrentDB();
 
-	createSelect('mode', $slashdb->getCodes('commentmodes'),
+	createSelect('mode', $slashdb->getDescriptions('commentmodes'),
 		getCurrentUser('mode'), 1);
 }
 

@@ -167,10 +167,10 @@ sub getUser {
 	$uid = $constants->{anonymous_coward_uid} unless defined $uid;
 
 	if (!isAnon($uid) && ($user = $slashdb->getUser($uid))) { # getUserInstance($uid, $r->uri))) {}
-		my $timezones = $slashdb->getCodes('tzcodes');
+		my $timezones = $slashdb->getDescriptions('tzcodes');
 		$user->{offset} = $timezones->{ $user->{tzcode} };
 
-		my $dateformats = $slashdb->getCodes('dateformats');
+		my $dateformats = $slashdb->getDescriptions('datecodes');
 		$user->{'format'} = $dateformats->{ $user->{dfid} };
 
 		$user->{is_anon} = 0;

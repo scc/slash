@@ -88,7 +88,7 @@ give us a name (8 characters only please). [$owner] ";
 chomp($username = <STDIN>);
 $username ||= $owner;
 
-print "\nWhat is the email address of the account? [$owner\@$host_noport] ";
+print "\nWhat is the email address of the account? [$username\@$host_noport] ";
 chomp($email = <STDIN>);
 $email ||= "$owner\@$host_noport";
 

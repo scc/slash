@@ -12,13 +12,22 @@ use URI ();
 # For the getDecriptions() method
 my %descriptions = (
 	'sortcodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'sortcodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='sortcodes'") },
+
+	'statuscodes'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
 
 	'tzcodes'
+		=> sub { $_[0]->sqlSelectMany('tz,offset', 'tzcodes') },
+
+	'tzdescription'
 		=> sub { $_[0]->sqlSelectMany('tz,description', 'tzcodes') },
 
 	'dateformats'
 		=> sub { $_[0]->sqlSelectMany('id,description', 'dateformats') },
+
+	'datecodes'
+		=> sub { $_[0]->sqlSelectMany('id,format', 'dateformats') },
 
 	'commentmodes'
 		=> sub { $_[0]->sqlSelectMany('mode,name', 'commentmodes') },
@@ -30,10 +39,10 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('code,name', 'postmodes') },
 
 	'isolatemodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'isolatemodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='isolatemodes'") },
 
 	'issuemodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'issuemodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='issuemodes'") },
 
 	'vars'
 		=> sub { $_[0]->sqlSelectMany('name,name', 'vars') },
@@ -42,16 +51,16 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('tid,alttext', 'topics') },
 
 	'maillist'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'maillist') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='maillist'") },
 
 	'session_login'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'session_login') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='session_login'") },
 
 	'displaycodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'displaycodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='displaycodes'") },
 
 	'commentcodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'commentcodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='commentcodes'") },
 
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
@@ -515,36 +524,6 @@ sub createAccessLog {
 			'sid=' . $self->{_dbh}->quote($dat)
 		);
 	}
-}
-
-########################################################
-sub getCodes {
-# Creating three different methods for this seems a bit
-# silly.
-#
-	my($self, $codetype) = @_;
-	return $self->{_codeBank}{$codetype} if $self->{_codeBank}{$codetype};
-
-	my $sth;
-	if ($codetype eq 'sortcodes') {
-		$sth = $self->sqlSelectMany('code,name', 'sortcodes');
-	} elsif ($codetype eq 'tzcodes') {
-		$sth = $self->sqlSelectMany('tz,offset', 'tzcodes');
-	} elsif ($codetype eq 'dateformats') {
-		$sth = $self->sqlSelectMany('id,format', 'dateformats');
-	} elsif ($codetype eq 'commentmodes') {
-		$sth = $self->sqlSelectMany('mode,name', 'commentmodes');
-	}
-
-	my $codeBank_hash_ref = {};
-	while (my($id, $desc) = $sth->fetchrow) {
-		$codeBank_hash_ref->{$id} = $desc;
-	}
-
-	$self->{_codeBank}{$codetype} = $codeBank_hash_ref;
-	$sth->finish;
-
-	return $codeBank_hash_ref;
 }
 
 ########################################################

@@ -229,12 +229,33 @@ INSERT INTO blocks VALUES ('Yahoo','<b>this is a test</b>',0,500,'portald','','i
 INSERT INTO blocks VALUES ('yro','',0,500,'portald','','index',-1,'Your Rights Online',1,'index.pl?section=yro','http://slashdot.org/yro.rdf',0);
 
 #
-# Dumping data for table 'commentcodes'
+# Dumping data for table 'code_param'
 #
 
-INSERT INTO commentcodes VALUES (0,'Comments Enabled');
-INSERT INTO commentcodes VALUES (1,'Read-Only');
-INSERT INTO commentcodes VALUES (-1,'Comments Disabled');
+INSERT INTO code_param VALUES (1,'commentcodes',0,'Comments Enabled');
+INSERT INTO code_param VALUES (2,'commentcodes',1,'Read-Only');
+INSERT INTO code_param VALUES (3,'commentcodes',-1,'Comments Disabled');
+INSERT INTO code_param VALUES (4,'displaycodes',0,'Always Display');
+INSERT INTO code_param VALUES (5,'displaycodes',1,'Only Display Within Section');
+INSERT INTO code_param VALUES (6,'displaycodes',-1,'Never Display');
+INSERT INTO code_param VALUES (7,'isolatemodes',0,'Part of Site');
+INSERT INTO code_param VALUES (8,'isolatemodes',1,'Standalone');
+INSERT INTO code_param VALUES (9,'issuemodes',0,'Neither');
+INSERT INTO code_param VALUES (10,'issuemodes',1,'Article Based');
+INSERT INTO code_param VALUES (11,'issuemodes',2,'Issue Based');
+INSERT INTO code_param VALUES (12,'issuemodes',3,'Both Issue and Article');
+INSERT INTO code_param VALUES (13,'maillist',0,'Don\'t Email');
+INSERT INTO code_param VALUES (14,'maillist',1,'Email Headlines Each Night');
+INSERT INTO code_param VALUES (15,'session_login',0,'Login never expires');
+INSERT INTO code_param VALUES (16,'session_login',1,'Login expires after x minutes');
+INSERT INTO code_param VALUES (17,'sortcodes',0,'Oldest First');
+INSERT INTO code_param VALUES (18,'sortcodes',1,'Newest First');
+INSERT INTO code_param VALUES (19,'sortcodes',3,'Highest Scores First');
+INSERT INTO code_param VALUES (20,'sortcodes',4,'Oldest First (Ignore Threads)');
+INSERT INTO code_param VALUES (21,'sortcodes',5,'Newest First (Ignore Threads)');
+INSERT INTO code_param VALUES (22,'statuscodes',1,'Refreshing');
+INSERT INTO code_param VALUES (23,'statuscodes',0,'Normal');
+INSERT INTO code_param VALUES (24,'statuscodes',10,'Archive');
 
 #
 # Dumping data for table 'commentmodes'
@@ -344,14 +365,6 @@ INSERT INTO discussions VALUES ('00/01/25/1430236','You\'ve Installed Slash!','h
 INSERT INTO discussions VALUES ('00/01/25/1236215','Now What?','http://www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15');
 
 #
-# Dumping data for table 'displaycodes'
-#
-
-INSERT INTO displaycodes VALUES (0,'Always Display');
-INSERT INTO displaycodes VALUES (1,'Only Display Within Section');
-INSERT INTO displaycodes VALUES (-1,'Never Display');
-
-#
 # Dumping data for table 'formkeys'
 #
 
@@ -360,36 +373,6 @@ INSERT INTO displaycodes VALUES (-1,'Never Display');
 # Dumping data for table 'hitters'
 #
 
-
-#
-# Dumping data for table 'isolatemodes'
-#
-
-INSERT INTO isolatemodes VALUES (0,'Part of Site');
-INSERT INTO isolatemodes VALUES (1,'Standalone');
-
-#
-# Dumping data for table 'issuemodes'
-#
-
-INSERT INTO issuemodes VALUES (0,'Neither');
-INSERT INTO issuemodes VALUES (1,'Article Based');
-INSERT INTO issuemodes VALUES (2,'Issue Based');
-INSERT INTO issuemodes VALUES (3,'Both Issue and Article');
-
-#
-# Dumping data for table 'maillist'
-#
-
-INSERT INTO maillist VALUES (0,'Don\'t Email');
-INSERT INTO maillist VALUES (1,'Email Headlines Each Night');
-
-#
-# Dumping data for table 'session_login'
-#
-
-INSERT INTO session_login VALUES (0,'Login never expires');
-INSERT INTO session_login VALUES (1,'Login expires after x minutes');
 
 #
 # Dumping data for table 'menus'
@@ -483,24 +466,6 @@ INSERT INTO sections VALUES ('',30,'All Sections','',0,0,0);
 # Dumping data for table 'sessions'
 #
 
-
-#
-# Dumping data for table 'sortcodes'
-#
-
-INSERT INTO sortcodes VALUES (0,'Oldest First');
-INSERT INTO sortcodes VALUES (1,'Newest First');
-INSERT INTO sortcodes VALUES (3,'Highest Scores First');
-INSERT INTO sortcodes VALUES (4,'Oldest First (Ignore Threads)');
-INSERT INTO sortcodes VALUES (5,'Newest First (Ignore Threads)');
-
-#
-# Dumping data for table 'statuscodes'
-#
-
-INSERT INTO statuscodes VALUES (1,'Refreshing');
-INSERT INTO statuscodes VALUES (0,'Normal');
-INSERT INTO statuscodes VALUES (10,'Archive');
 
 #
 # Dumping data for table 'stories'
