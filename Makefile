@@ -163,6 +163,7 @@ install: slash plugins
 	done)
 
 	$(CP) sql/mysql/slashschema_create.sql $(SLASH_PREFIX)/sql/mysql/schema.sql
+	$(CP) sql/mysql/init.sql $(SLASH_PREFIX)/sql/mysql/init.sql
 	$(CP) sql/oracle/slashschema_create.sql $(SLASH_PREFIX)/sql/oracle/schema.sql
 	$(CP) sql/postgresql/slashschema_create.sql $(SLASH_PREFIX)/sql/postgresql/schema.sql
 

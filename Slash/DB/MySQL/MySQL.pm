@@ -2091,22 +2091,29 @@ sub getCommentReply {
 ########################################################
 sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
+	
+	my $table = 'comments';
+
+	if(getCurrentStatic('mysql_hash_table')) {
+		$table = 'comments_hash';
+	}
+
 	my $user = getCurrentUser();
 	my $sql = "SELECT cid,date,
 				subject,nickname,homepage,fakeemail,
 				users.uid as uid,sig,
-				comments.points as points,pid,sid,
+				$table.points as points,pid,sid,
 				lastmod, reason
-			   FROM comments,users
+			   FROM $table,users
 			  WHERE sid=" . $self->{_dbh}->quote($sid) . "
-			    AND comments.uid=users.uid";
+			    AND $table.uid=users.uid";
 	$sql .= "	    AND (";
-	$sql .= "		comments.uid=$user->{uid} OR " unless $user->{is_anon};
+	$sql .= "		$table.uid=$user->{uid} OR " unless $user->{is_anon};
 	$sql .= "		cid=$cid OR " if $cid;
-	$sql .= "		comments.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
+	$sql .= "		$table.points >= " . $self->{_dbh}->quote($user->{threshold}) . " OR " if $user->{hardthresh};
 	$sql .= "		  1=1 )   ";
 	$sql .= "	  ORDER BY ";
-	$sql .= "comments.points DESC, " if $user->{commentsort} eq '3';
+	$sql .= "$table.points DESC, " if $user->{commentsort} eq '3';
 	$sql .= " cid ";
 	$sql .= ($user->{commentsort} == 1 || $user->{commentsort} == 5) ? 'DESC' : 'ASC';
 

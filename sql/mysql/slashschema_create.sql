@@ -148,6 +148,32 @@ CREATE TABLE comments (
   KEY countreplies (sid,pid)
 );
 
+#
+# Table structure for table 'comments'
+#
+DROP TABLE IF EXISTS comments_hash;
+CREATE TABLE comments_hash (
+  sid char(16) DEFAULT '' NOT NULL,
+  cid int(15) NOT NULL,
+  pid int(15) DEFAULT '0' NOT NULL,
+  date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  ipid char(32) DEFAULT '' NOT NULL,
+  subnetid char(32) DEFAULT '' NOT NULL,
+  subject varchar(50) DEFAULT '' NOT NULL,
+  uid int(11) NOT NULL,
+  points int(1) DEFAULT '0' NOT NULL,
+  lastmod int(1) DEFAULT '-1',
+  reason int(11) DEFAULT '0',
+	signature char(32),
+  PRIMARY KEY (cid),
+  KEY display (sid,points,uid),
+  KEY byname (uid,points),
+  KEY ipid (ipid),
+  KEY subnetid (subnetid),
+  KEY theusual (sid,uid,points,cid),
+  KEY countreplies (sid,pid)
+) TYPE = hash;
+
 DROP TABLE IF EXISTS comment_text;
 CREATE TABLE comment_text (
 	cid int(15) NOT NULL,
@@ -412,6 +438,20 @@ CREATE TABLE stories (
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
+);
+
+#
+# Table structure for table 'stories'
+#
+
+DROP TABLE IF EXISTS story_text;
+CREATE TABLE stories (
+  sid char(16) DEFAULT '' NOT NULL,
+  introtext text,
+  bodytext text,
+  relatedtext text,
+  extratext text,
+  PRIMARY KEY (sid),
 );
 
 #

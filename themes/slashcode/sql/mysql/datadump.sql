@@ -95,6 +95,11 @@ INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points,
 # Dumping data for table 'comments'
 #
 
+INSERT INTO comments_hash (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000')
+#
+# Dumping data for table 'comments'
+#
+
 INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!');
 
 #
@@ -432,6 +437,7 @@ INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What 
 INSERT INTO vars (name, value, description) VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey');
 INSERT INTO vars (name, value, description) VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value');
 INSERT INTO vars (name, value, description) VALUES ('http_proxy','','http://proxy.www.example.com');
+INSERT INTO vars (name, value, description) VALUES ('mysql_hash_table','0','Use the mysql hash tables. This requires owrk so do not turn this on unless you know what you are doing.');
 INSERT INTO vars (name, value, description) VALUES ('imagedir','//www.example.com/images','Absolute URL for image directory');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
