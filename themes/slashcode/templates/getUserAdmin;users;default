@@ -26,7 +26,8 @@ __template__
 		[% IF userinfo_flag %]
 		
 		<P><B><A HREF="[% constants.roodir %]/users.pl?op=topabusers">Top Abusers</A></B><BR>
-		<B><A HREF="[% constants.roodir %]/users.pl?op=listreadonly">Read Only List</A></B></P>
+		<B><A HREF="[% constants.roodir %]/users.pl?op=listreadonly">Read Only List</A></B><BR>
+		<B><A HREF="[% constants.roodir %]/users.pl?op=listbanned">Banned List</A></B></P>
 		
 			[% IF uidstruct %]
 		<BR>

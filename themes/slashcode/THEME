@@ -196,6 +196,7 @@ template=templates/yourPendingSubs;submit;default
 template=templates/listAbuses;admin;default
 template=templates/topAbusers;users;default
 template=templates/listReadOnly;users;default
+template=templates/listBanned;users;default
 template=templates/three;misc;default
 
 misc=misc/spamarmors

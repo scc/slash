@@ -2317,11 +2317,11 @@ sub isBanned {
 
 ##################################################################
 sub getReadOnlyList {
-	my($self, $min) = @_;
+	my($self, $min, $flag) = @_;
 	$min ||= 0;
 	my $max = $min + 100;
 
-	my $where = "WHERE readonly = 1";
+	my $where = "WHERE $flag = 1";
 	$self->sqlSelectAll("ts, uid, ipid, subnetid, formname, reason", "accesslist $where order by ts DESC limit $min, $max");
 }
 

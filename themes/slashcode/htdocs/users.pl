@@ -207,6 +207,12 @@ sub main {
 			formname	=> $formname,
 			checks		=> [],
 		},
+		listbanned => {
+			function	=> \&listBanned,
+			seclev		=> 100,
+			formname	=> $formname,
+			checks		=> [],
+		},
 		topabusers 	=> {
 			function	=> \&topAbusers,
 			seclev		=> 100,
@@ -1573,10 +1579,21 @@ sub saveHome {
 sub listReadOnly {
 	my $slashdb = getCurrentDB();
 
-	my $readonlylist = $slashdb->getReadOnlyList();
+	my $readonlylist = $slashdb->getReadOnlyList(0,'readonly');
 
 	slashDisplay('listReadOnly', {
 		readonlylist => $readonlylist,
+	});
+
+}
+#################################################################
+sub listBanned {
+	my $slashdb = getCurrentDB();
+
+	my $bannedlist = $slashdb->getReadOnlyList(0,'isbanned');
+
+	slashDisplay('listBanned', {
+		bannedlist => $bannedlist,
 	});
 
 }
