@@ -654,6 +654,38 @@ sub getMetaModerations {
 }
 
 ########################################################
+# for tasks/freshenup.pl
+sub setDiscussionHitParade {
+	my($self, $discussion_id, $hp) = @_;
+	return if !$discussion_id;
+	# Clear the hitparade_dirty flag.
+	my $rows_changed = $self->sqlUpdate(
+		"discussions",
+		{ -flags => "flags & -3" }, # works, but depends on SET() order
+		"id=$discussion_id AND FIND_IN_SET('hitparade_dirty', flags)"
+	);
+	if ($rows_changed) {
+		# Update the hitparade only if the flag was changed just now.
+		# (Guaranteed atomicity is not necessary here;  hitparade is
+		# only supposed to be close enough for horseshoes.)
+		for my $threshold (sort {$a<=>$b} keys %$hp) {
+			# We *should* be able to just sqlUpdate, not Replace,
+			# but this doesn't get performed all that much, it's
+			# not performance-intensive, and the algorithm fails
+			# annoyingly if those rows are absent, so Replace is
+			# a good thing IMHO.
+			$self->sqlReplace("discussion_hitparade", {
+				discussion	=> $discussion_id,	# key
+				threshold	=> $threshold,		# key
+				count		=> $hp->{$threshold},	# value
+			});
+		}
+	}
+}
+
+
+
+########################################################
 # For moderation scripts. 
 #
 #

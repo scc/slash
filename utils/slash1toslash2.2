@@ -564,9 +564,26 @@ EOT
 	for (@stories) {
 		$story_hash{$_->{sid}} = $_;
 	}
-	$deleted_discussions = 
-		$dbh_new->do("DELETE FROM discussions WHERE ts >= $datecond")
-	if $opts{I};
+
+	if ($opts{I}) {
+		# Preserve min discussion ID of deleted records so we can
+		# properly delete discussion_hitparade.
+		my $sth_d = $dbh_new->prepare(<<EOT);
+SELECT min(id) FROM discussions WHERE ts >= $datecond
+EOT
+		$sth_d->execute;
+		my($min_did) = $sth_d->fetchrow_array;
+
+		$deleted_discussions = 
+			$dbh_new->do(
+				"DELETE FROM discussions WHERE ts >= $datecond"
+			);
+
+		$dbh_new->do(<<EOT);
+DELETE FROM discussion_hitparade WHERE discussion >= $min_did
+EOT
+	}
+
 	$sql = <<EOT;
 SELECT * FROM discussions WHERE ts >= $datecond
 EOT
@@ -578,7 +595,7 @@ EOT
 	do_handle('discussions', $sth_s, 0, \%story_hash);
 	reload_keys('discussions', \%discussions, 'sid', 'sid', 'id');
 
-	# Create all nonexisting rows in discussion_hitparade.
+	# Update stories with the proper discussion ID.
 	for my $story (@stories) {
 		# Make SURE we update stories....damned circular relationships!
 		$dbh_new->do(<<EOT);
@@ -586,18 +603,6 @@ UPDATE stories SET discussion = $discussions{$story->{sid}}
 	WHERE sid=@{[$dbh_new->quote($story->{sid})]}
 EOT
 
-		my $val = $vars->{comment_minscore};
-		for (split /,/, $story->{hitparade}) {
-			next if !$discussions{$story->{sid}};
-			# This SQL syntax is rather silly, no?
-			$sql =  <<EOT;
-INSERT IGNORE INTO discussion_hitparade (discussion, threshold, count)
-	VALUES ($discussions{$story->{sid}}, @{[$val++]}, 0)
-EOT
-
-			$dbh_new->do($sql);
-			die "SQL: $sql\n" if $dbh_new->errstr;
-		}
 	}
 
 	print <<EOT;
@@ -1013,15 +1018,19 @@ sub copy_comments {
 	my %dead_discussions;
 	my($lastdate, $cond) = ('', '');
 
-	if ($opts{I}) {
-		my $sth_d = $dbh_new->prepare(<<EOT);
-SELECT max(date) FROM comments
+	# Is this sufficient or should this be SID based?
+	my $datecond = <<EOT;
+date_format(date_sub(now(), interval 15 day), '%Y-%m-%d 00:00')
 EOT
+	my $sth_d = $dbh_new->prepare("SELECT $datecond");
+	$sth_d->execute;
+	my($display) = $sth_d->fetchrow_array;
 
-		$sth_d->execute;
-		($lastdate) = $sth_d->fetchrow_array;
-		$cond = "WHERE date > " . $dbh_old->quote($lastdate);
-		print "Copying comment data and texts from $lastdate...\n";
+	if ($opts{I}) {
+		$cond = "WHERE date > $datecond";
+		print "Deleting stale comments...\n";
+		$dbh_new->do("DELETE FROM comments $cond");
+		print "Copying comment data and texts from $display...\n";
 	} else {
 		print "Copying comment data and texts...\n";
 	}
@@ -1033,8 +1042,8 @@ EOT
 		$data->{uid} = $ac_uid{$data->{uid}} 
 			if exists $ac_uid{$data->{uid}};
 		# Fix SID.
-		my $sid = $dbh_new->quote($discussions{$data->{sid}});
-		if (!$discussions{$data->{sid}}) {
+		my $sid = $discussions{$data->{sid}};
+		if (!$sid) {
 			$dead_discussions{$data->{sid}}++;
 			print <<EOT;
       Skipping deleted discussion '$data->{sid}'
@@ -1092,6 +1101,69 @@ EOT
 EOT
 
 	}
+
+	# We need to grab the lowest discussion ID that we are INSERTING.
+	# circular dependencies again (and the fact that there may be 
+	# dirty hitparade columns from the EXISTING data.
+	$sth_s = $dbh_new->prepare(<<EOT);
+SELECT min(id) FROM discussions WHERE ts >= $datecond
+EOT
+	$sth_s->execute;
+	my($min_did) = $sth_s->fetchrow_array;
+
+	# Now update discussion_hitparade...
+	print "Updating story comment counts...";
+	$sth_d = $dbh_new->prepare(<<EOT);
+SELECT id FROM discussions WHERE flags='hitparade_dirty'
+EOT
+
+	$sth_d->execute();
+	printf "%s\n", ($sth_d->rows) ? 
+		(sprintf "%d rows", $sth_d->rows) : '';
+	while (my($id) = $sth_d->fetchrow_array) {
+		# We COULD take the hitparade from the story, but instead
+		# we take it from COMMENTS because the data from the
+		# story is probably dirty.
+		my $sth_d1 = $dbh_new->prepare(<<EOT);
+SELECT points, count(*) FROM comments WHERE sid=$id GROUP BY points
+ORDER BY points DESC
+EOT
+
+		$sth_d1->execute;
+		my $total = 0;
+		while (my($val, $count) = $sth_d1->fetchrow_array) {
+			$total += $count;
+			# Handle the possibility that there may be records
+			# that need an UPDATE.
+			my $sql;
+			if ($id >= $min_did) {
+				$sql = <<EOT;
+INSERT INTO discussion_hitparade (discussion, threshold, count)
+	VALUES ($id, $val, $total)
+EOT
+			} else {
+				$sql = <<EOT;	
+UPDATE discussion_hitparade SET 
+	count=$total
+WHERE discussion=$id AND threshold=$val
+EOT
+			}
+
+			$dbh_new->do($sql);
+			die "SQL: $sql\n" if $dbh_new->errstr;
+		}
+		$sth_d1->finish;
+		$dbh_new->do(
+			"UPDATE discussions SET 
+				commentcount=$total 
+			WHERE id=$id"
+		);
+	}
+	
+	# Make sure we clean our flags.
+	$dbh_new->do(
+		"UPDATE discussions SET flags='' WHERE flags='hitparade_dirty'"
+	);
 }
 
 

@@ -811,7 +811,8 @@ sub getOlderStories {
 
 	}
 
-	my $yesterday = $slashdb->getDay() unless $form->{issue} > 1 || $form->{issue};
+	my $yesterday = $slashdb->getDay()
+		unless $form->{issue} > 1 || $form->{issue};
 	$yesterday ||= int($form->{issue}) - 1;
 
 	slashDisplay('getOlderStories', {
