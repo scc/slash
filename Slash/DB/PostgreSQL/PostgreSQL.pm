@@ -199,59 +199,58 @@ sub getDay {
 }
 
 
-########################################################
-sub setUser {
-	_genericSet('users', 'uid', @_);
-#	my($self, $uid, $hashref) = @_;
-#	my(@param, %update_tables, $cache);
-#	my $tables = [qw(
-#		users users_comments users_index
-#		users_info users_prefs
-#	)];
-#
-#	# special cases for password, exboxes
-#	if (exists $hashref->{passwd}) {
-#		# get rid of newpasswd if defined in DB
-#		$hashref->{newpasswd} = '';
-#		$hashref->{passwd} = encryptPassword($hashref->{passwd});
-#	}
-#
-#	# hm, come back to exboxes later -- pudge
-#	if (0 && exists $hashref->{exboxes}) {
-#		if (ref $hashref->{exboxes} eq 'ARRAY') {
-#			$hashref->{exboxes} = sprintf("'%s'", join "','", @{$hashref->{exboxes}});
-#		} elsif (ref $hashref->{exboxes}) {
-#			$hashref->{exboxes} = '';
-#		} # if nonref scalar, just let it pass
-#	}
-#
-#	$cache = _genericGetCacheName($self, $tables);
-#
-#	for (keys %$hashref) {
-#		(my $clean_val = $_) =~ s/^-//;
-#		my $key = $self->{$cache}{$clean_val};
-#		if ($key) {
-#			push @{$update_tables{$key}}, $_;
-#		} else {
-#			push @param, [$_, $hashref->{$_}];
-#		}
-#	}
-#
-#	for my $table (keys %update_tables) {
-#		my %minihash;
-#		for my $key (@{$update_tables{$table}}){
-#			$minihash{$key} = $hashref->{$key}
-#				if defined $hashref->{$key};
-#		}
-#		$self->sqlUpdate($table, \%minihash, 'uid=' . $uid, 1);
-#	}
-#	# What is worse, a select+update or a replace?
-#	# I should look into that.
-#	for (@param)  {
-#		$self->sqlDo("REPLACE INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
-#	}
-}
 
+##################################################################
+sub setUser {
+	my($self, $uid, $hashref) = @_;
+	my(@param, %update_tables, $cache);
+	my $tables = [qw( users )]; 
+	# special cases for password, exboxes
+	if (exists $hashref->{passwd}) {
+		# get rid of newpasswd if defined in DB
+		$hashref->{newpasswd} = '';
+		$hashref->{passwd} = encryptPassword($hashref->{passwd});
+	}
+
+	# hm, come back to exboxes later; it works for now
+	# as is, since external scripts handle it -- pudge
+	# a VARARRAY would make a lot more sense for this, no need to
+	# pack either -Brian
+	if (0 && exists $hashref->{exboxes}) {
+		if (ref $hashref->{exboxes} eq 'ARRAY') {
+			$hashref->{exboxes} = sprintf("'%s'", join "','", @{$hashref->{exboxes}});
+		} elsif (ref $hashref->{exboxes}) {
+			$hashref->{exboxes} = '';
+		} # if nonref scalar, just let it pass
+	}
+
+	$cache = _genericGetCacheName($self, $tables);
+
+	for (keys %$hashref) {
+		(my $clean_val = $_) =~ s/^-//;
+		my $key = $self->{$cache}{$clean_val};
+		if ($key) {
+			push @{$update_tables{$key}}, $_;
+		} else {
+			push @param, [$_, $hashref->{$_}];
+		}
+	}
+
+	for my $table (keys %update_tables) {
+		my %minihash;
+		for my $key (@{$update_tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
+		}
+		$self->sqlUpdate($table, \%minihash, '"uid"=' . $uid, 1);
+	}
+	# What is worse, a select+update or a replace?
+	# I should look into that.
+	for (@param)  {
+		$self->sqlDo("DELETE FROM users_param where param_id = '' AND \"uid\"=$uid and name='$_->[0]'");
+		$self->sqlDo("INSERT INTO users_param values ('', $uid, '$_->[0]', '$_->[1]')");
+	}
+}
 ########################################################
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
@@ -334,23 +333,6 @@ sub _genericGetCacheName {
 	return $cache;
 }
 
-########################################################
-# Now here is the thing. We want setUser to look like
-# a generic, despite the fact that it is not :)
-# We assum most people called set to hit the database
-# and just not the cache (if one even exists)
-sub _genericSet {
-	my($table, $table_prime, $self, $id, $value) = @_;
-	$self->sqlUpdate($table, $value, $table_prime . '=' . $self->{_dbh}->quote($id));
-
-	my $table_cache= '_' . $table . '_cache';
-	return unless (keys %{$self->{$table_cache}});
-	my $table_cache_time= '_' . $table . '_cache_time';
-	$self->{$table_cache_time} = time();
-	for (keys %$value) {
-		$self->{$table_cache}{$id}{$_} = $value->{$_};
-	}
-}
 
 ########################################################
 # You can use this to reset cache's in a timely
