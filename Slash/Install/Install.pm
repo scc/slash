@@ -238,7 +238,7 @@ sub getPluginList {
 		my @info;
 		{
 			local $/;
-			@info = split /\015\012?|012/, <PLUGIN>;
+			@info = split /\015\012?|\012/, <PLUGIN>;
 		}
 
 		for (@info) {
