@@ -17,10 +17,10 @@ users
 __lang__
 en_US
 __name__
-registrationResult
+regResult
 __template__
 
-[% IF user.reg_id == form.user_reg_id %]
+[% IF user.reg_id == form.id %]
 <H2>Thanks for Reregistering!</H2>
 We're sorry about the bother, but each user who wants to post with an identity
 must have a valid e-mail account registered with the system. Thanks for putting
@@ -28,13 +28,13 @@ up with the hassle.
 <P>We hope you will continue to enjoy [% constants.sitename %]!
 
 [% ELSE %]
-  [% IF user.reg_id != form.user_reg_id %]
+  [% IF form.id && user.reg_id != form.id %]
 <H2>ID Mismatch!</H2>
 Sorry, but the re-registration data which you have provided is invalid, please
 try again!<P>
   [% ELSE %]
 <H2>Welcome, [% user.nickname %]!</H2>
-  [% END IF %]
+  [% END %]
 
 In the entry field below, please enter the registration ID which should have
 been emailed to the email address associated with your user account.
@@ -51,7 +51,7 @@ Registration ID: &nbsp;
 
 <!-- End entry form -->
 
-[% END IF %]
+[% END %]
 
 __seclev__
 10000
