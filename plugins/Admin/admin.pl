@@ -1313,9 +1313,11 @@ sub saveStory {
 	# In the previous form of this, a section only
   # editor could assign a story to a different user
   # and bypass their own restrictions for what section
-  # they could post to.
+  # they could post to. -Brian
 	$form->{displaystatus} ||= 1 if ($user->{section} || $edituser->{section});
-	$form->{section} = $edituser->{section} if $edituser->{section};
+	if ($user->{section} || $edituser->{section}) {
+		$form->{section} = $user->{section} ? $user->{section} : $edituser->{section};
+	}
 	$form->{dept} =~ s/ /-/g;
 	$form->{relatedtext} = getRelated(
 		"$form->{title} $form->{bodytext} $form->{introtext}"
