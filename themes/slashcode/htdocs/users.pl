@@ -27,7 +27,9 @@ sub main {
 	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
 	my $postflag = $curuser->{state}{post};
 	my $op = lc($form->{op});
+	print STDERR "1 OP $op\n";
 	$op ||= isAnon($curuser->{uid}) ? 'userlogin' : 'userinfo';
+	print STDERR "2 OP $op\n";
 	# savepasswd is a special case, because once it's called, you
 	# have to reload the form, and you don't want to do any checks if
 	# you've just saved.
@@ -248,10 +250,12 @@ sub main {
 	} elsif ( $curuser->{seclev} < $ops->{$op}{seclev} ) {
 		$op = 'userinfo';
 	}
+	print STDERR "3 OP $op\n";
 
 	if ($ops->{$op}{post} && !$postflag) {
 		$op = isAnon($curuser->{uid}) ? 'default' : 'userinfo';
 	} 
+	print STDERR "4 OP $op\n";
 
 	if ($curuser->{seclev} < 100) { 
 		for my $check (@{$ops->{$op}{checks}}) {
@@ -265,6 +269,7 @@ sub main {
 	errorLog("users.pl error_flag '$error_flag'") if $error_flag;
 
 	# call the method
+	print STDERR "5 OP $op\n";
 	$ops->{$op}{function}->() if ! $error_flag;
 
 	if ($ops->{$op}{update_formkey} && $curuser->{seclev} < 100 && ! $error_flag) {
@@ -1477,12 +1482,16 @@ sub displayForm {
 
 	my $ops = {
 		displayform 	=> 'loginForm',
+		edithome	=> 'loginForm',
+		editicomm	=> 'loginForm',
+		edituser	=> 'loginForm',
 		mailpasswdform 	=> 'sendPasswdForm',
 		newuserform	=> 'newUserForm',
 		userclose	=> 'loginForm',
 		userlogin	=> 'loginForm',
 		default		=> 'loginForm'
 	};
+	print STDERR "OP $op OPS $ops->{$op}\n";
 
 	my($title, $title2, $msg1, $msg2) = ('', '', '', '');
 
