@@ -1,0 +1,31 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+eng
+__name__
+journaltop
+__template__
+<TABLE>
+[% x = 0 %]
+[% FOREACH journal = journals %]
+	[% IF x % 2 %]
+		[% color = "#dcdcdc" %]
+	[% ELSE %]
+		[% color = "#ffffff" %]
+	[% END %]
+	<TR VALIGN="TOP" bgcolor="[% color %]">
+	<TD>[% journal.0 %]</TD>
+	<TD><A HREF="[% url %]?op=display&uid=[% journal.2 %]">[% journal.1 %]</A></TD>
+	[% x = x + 1 %]
+	</TR>
+[% END %]
+</TABLE>
+
+__seclev__
+100

@@ -1,0 +1,35 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+journal
+__lang__
+eng
+__name__
+journalfriends
+__template__
+[% USE Slash %]
+<TABLE>
+[% x = 0 %]
+[% FOREACH friend = friends %]
+	[% IF x % 2 %]
+		[% color = "#dcdcdc" %]
+	[% ELSE %]
+		[% color = "#ffffff" %]
+	[% END %]
+	<TR VALIGN="TOP" bgcolor="[% color %]">
+	<TD>[% friend.2 %]</TD>
+	<TD><A HREF="[% url %]?op=display&uid=[% friend.1 %]">[% friend.0 %]</A></TD>
+		[% UNLESS user.is_anon %]
+			<TD><A HREF="[% url %]?op=delete&uid=[% friend.1 %]">[delete]</A></TD>
+		[% END %]
+	[% x = x + 1 %]
+	</TR>
+[% END %]
+</TABLE>
+
+__seclev__
+100
