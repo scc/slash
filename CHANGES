@@ -15,6 +15,8 @@ slash-2.0.0-pre3, 2001.04.25
 *	Added Even More upgrade information to INSTALL, regarding
 	what templates to add/delete with each version
 
+*	Makefile fixes
+
 
 slash-2.0.0-pre2, 2001.04.24
 ----------------------------
@@ -33,6 +35,9 @@ slash-2.0.0-pre2, 2001.04.24
 *	Fix getData calls in Slash.pm to get proper page/section set
 
 *	Fix Slash::Apache::IndexHandler
+
+*	Added sqlTransaction* functions as placeholders for transaction
+	support, which, for now, do table locking for MySQL
 
 *	Various fixes in Slash::DB::MySQL, including proper saving
 	of description for vars, creation of stories in newstories

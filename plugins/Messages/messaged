@@ -1,0 +1,92 @@
+#!/usr/bin/perl -w
+# This code is a part of Slash, and is released under the GPL.
+# Copyright 1997-2001 by Open Source Development Network. See README
+# and COPYING for more information, or see http://slashcode.com/.
+# $Id$
+
+use strict;
+use File::Basename;
+use File::Spec;
+use FindBin '$Bin';
+use Getopt::Std;
+use Slash 2.000000;
+use Slash::Messages;
+use Slash::Utility;
+
+(my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+my $PROGNAME = basename($0);
+(my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
+
+my %opts;
+# Remember to doublecheck these match usage()!
+usage('Options used incorrectly') unless getopts('hvu:', \%opts);
+usage() if ($opts{'h'} || !keys %opts);
+version() if $opts{'v'};
+$opts{'u'} ||= 'slash';
+
+createEnvironment($opts{'u'});
+my $messages = getObject('Slash::Messages');
+my $constants = getCurrentStatic();
+main();
+
+sub main {
+	my $count = $constants->{message_process_count} || 10;
+	my @msgs  = $messages->gets($count);
+	print Dumper \@msgs;
+	return;
+	my @good  = $messages->process(@msgs);
+
+	my %msgs  = map { ($_->{id}, $_) } @msgs;
+
+	for (@good) {
+		messagedLog("msg #{$_} sent successfully.");
+		delete $msgs{$_};
+	}
+
+	for (sort { $a <=> $b } keys %msgs) {
+		messagedLog("Error: msg #{$_} not sent successfully.");
+	}
+
+}
+
+sub messagedLog {
+	local *LOG;
+	my $dir = "$constants->{logdir}";
+	my $log = catfile($dir, "messaged.log");
+	open LOG, ">> $log\0" or die "Can't append to $log: $!";
+	print LOG localtime() . "\t", join("\t", @_), "\n";
+	close LOG;
+}
+
+sub usage {
+	print "*** $_[0]\n" if $_[0];
+	# Remember to doublecheck these match getopts()!
+	print <<EOT;
+
+Usage: $PROGNAME [OPTIONS] ... [FILES]
+
+SHORT PROGRAM DESCRIPTION
+
+Main options:
+	-h	Help (this message)
+	-v	Version
+	-u	Virtual user (default is "slash")
+
+EOT
+	exit;
+}
+
+sub version {
+	print <<EOT;
+
+$PROGNAME $VERSION
+
+This code is a part of Slash, and is released under the GPL.
+Copyright 1997-2001 by Open Source Development Network. See README
+and COPYING for more information, or see http://slashcode.com/.
+
+EOT
+	exit;
+}
+
+__END__
