@@ -607,40 +607,27 @@ sub checkUserExpiry {
 sub getMetamodIDs {
 	my($self) = @_;
 
-	# XXX This entire function was broken -- it had an extra "WHERE"
-	# string in the "WHERE" clause.  It won't work anyway because
-	# there's no "mmid" column in moderatorlog.  Until it's reviewed
-	# I'm turning this subroutine into a NOP.  - Jamie 2001/07/11
-	return [ ];
-
 	my $constants = getCurrentStatic();
 
-	# I hate having a literal '10' here, but that's the code that means
-	# "these M2 entries haven't been reconciled yet". This is yet
-	# another argument for a Slash::Constants module.
+	# The previous code was shite because I let myself get distracted
+	# due to a silly logic error. The way to REALLY do this is to wait a
+	# day LATER than the life of a discussion. This way, YOU KNOW that 
+	# no further M2 records will show up in the database after 
+	# reconciliation. 
+	#
+	# Cliff == B4K4!
+	#
+	# We could even change the increment to a specific var if someone
+	# finds a need to add more "lag time" into the system.
+	#						- Cliff 7/12/01
+
+	my $num_days = $constants->{archive_delay} + 1;
 	my $list = $self->sqlSelectAll(
 		'mmid', 'moderatorlog', 
-		"flag=10 AND TO_DAYS(CURDATE())-TO_DAYS(ts) >= $constants->{archive_delay}"
+		"TO_DAYS(CURDATE())-TO_DAYS(ts) >= $num_days"
 	);
-
-	# XXX This is zillions of times less efficient than it need be.
-	# What you WANT to do is select your id and flag together from
-	# the table, then clear the flags all at once and return the
-	# remainder -- two selects, tops, instead of hundreds. - Jamie
-
-	# Flatten returned list into a list of MMIDs that don't have any 
-	# records marked with a flag of 0.
-	my @mmids = map { $_->[0] } @$list;
-	my @returnable = grep {
-		if ( $self->sqlSelect(	'mmid', 'moderatorlog',
-		 		 	"flag=0 AND mmid=$_") )
-		{
-			$self->clearM2Flag($_);
-			0;
-		} else {
-			1;
-		}
-	} map { $_ = $_->[0] } @{$list};
+	# Flatten the returned list out to a simple list of mmids.
+	my(@returnable) = map { $_ = $_->[0] } @{$list};
 
 	return \@returnable;
 }
@@ -681,18 +668,10 @@ sub updateMMFlag {
 sub clearM2Flag {
 	my($self, $id);
 
-	# XXX This crashes, SQL error, you have an extra "where".
-	# It doesn't do what you want anyway, see my comments in
-	# getMetamodIDs.  Until it's reviewed, I'm turning this
-	# subroutine into a NOP. - Jamie 2001/07/11
-	return ;
-
 	# Note that we only update flags that are in the:
 	#	10 - M2 Pending
 	# state.
-	$self->sqlUpdate('metamodlog', {
-		-flag => '0',
-	}, "where flag=10 and id=$id");
+	$self->sqlUpdate('metamodlog', { -flag => '0', }, "id=$id");
 }
 
 

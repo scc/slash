@@ -1094,8 +1094,10 @@ sub setDiscussionDelCount {
 
 	$self->sqlUpdate(
 		'discussions',
-		{	-commentcount	=> "commentcount-$count",
-			-flags		=> "CONCAT(flags, ',hitparade_dirty')" },
+		{
+			-commentcount	=> "commentcount-$count",
+			-flags		=> "CONCAT(flags, ',hitparade_dirty')",
+		},
 		'sid=' . $self->sqlQuote($sid)
 	);
 }
@@ -2604,11 +2606,14 @@ sub countUsersIndexExboxesByBid {
 ########################################################
 sub getCommentReply {
 	my($self, $sid, $pid) = @_;
+	my $comment_table = getCurrentStatic('mysql_heap_table') ?
+		'comment_heap' : 'comments';
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	my $reply = $self->sqlSelectHashref("date, subject,$comment_table.points as points,
+	my $reply = $self->sqlSelectHashref(
+		"date,subject,$comment_table.points as points,
 		comment_text.comment as comment,realname,nickname,
-		fakeemail,homepage,$comment_table.cid as cid,sid,users.uid as uid",
+		fakeemail,homepage,$comment_table.cid as cid,sid,
+		users.uid as uid",
 		"$comment_table,comment_text,users,users_info,users_comments",
 		"sid=$sid_quoted
 		AND $comment_table.cid=$pid
@@ -2627,15 +2632,17 @@ sub getCommentsForUser {
 	my($self, $sid, $cid) = @_;
 
 	my $sid_quoted = $self->sqlQuote($sid);
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-
+	my $comment_table = getCurrentStatic('mysql_heap_table') ?
+		'comment_heap' : 'comments';
 	my $user = getCurrentUser();
-	my $sql = "SELECT cid, date, subject, nickname, homepage, fakeemail,
-			  users.uid as uid, sig, $comment_table.points as points, pid, sid,
-			  lastmod, reason
-		   FROM $comment_table, users
-		   WHERE sid=$sid_quoted"
-		 . " AND $comment_table.uid = users.uid";
+	my $sql = <<EOT;
+SELECT	cid, date, subject, nickname, homepage, fakeemail,
+	users.uid as uid, sig, $comment_table.points as points, pid, sid,
+	lastmod, reason
+FROM $comment_table, users
+WHERE sid=$sid_quoted AND $comment_table.uid=users.uid
+EOT
+
 	if ($user->{hardthresh}) {
 		$sql .= "    AND (";
 		$sql .= "	$comment_table.points >= " .
@@ -2701,7 +2708,8 @@ sub getStoriesEssentials {
 	my($self, $section, $limit, $tid, $section_display) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
 
 	$section ||= $user->{currentSection};
 	$section_display ||= $form->{section};
@@ -2713,8 +2721,9 @@ sub getStoriesEssentials {
 			$self->getSection($section)->{artcount};
 
 
-	my $columns = "$story_table.sid, $story_table.uid, commentcount, $story_table.title,"
-		. " section, time, hits, discussions.id as discussion";
+	my $columns = 	"$story_table.sid, $story_table.uid, commentcount,
+			$story_table.title, section, time, hits,
+			discussions.id as discussion";
 
 	my $from = "$story_table, discussions";
 
@@ -2725,9 +2734,12 @@ sub getStoriesEssentials {
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
-	$where .= "AND tid not in ($user->{extid}) "			if $user->{extid};
-	$where .= "AND $story_table.uid not in ($user->{exaid}) "	if $user->{exaid};
-	$where .= "AND section not in ($user->{exsect}) "		if $user->{exsect};
+	$where .= "AND tid not in ($user->{extid}) "
+		if $user->{extid};
+	$where .= "AND $story_table.uid not in ($user->{exaid}) "
+		if $user->{exaid};
+	$where .= "AND section not in ($user->{exsect}) "
+		if $user->{exsect};
 
 	# Order
 	my $other = "ORDER BY time DESC ";
@@ -2745,9 +2757,13 @@ sub getStoriesEssentials {
 		# yesterday/tomorrow for $form->{issue} in perl so that the
 		# DB only has to manipulate each row's "time" once instead
 		# of twice.  But this works now;  we'll optimize later. - Jamie
-		my $tomorrow_str =  'DATEFORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
-		my $yesterday_str = 'DATEFORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
-		$where .= "AND '$form->{issue}' BETWEEN $tomorrow_str AND $yesterday_str ";
+		my $tomorrow_str =
+			'DATEFORMAT(DATE_ADD(time, INTERVAL 1 DAY),"%Y%m%d")';
+		my $yesterday_str =
+			'DATEFORMAT(DATE_SUB(time, INTERVAL 1 DAY),"%Y%m%d")';
+		$where .=
+			"AND '$form->{issue}' BETWEEN $tomorrow_str AND
+			$yesterday_str ";
 	}
 
 	my(@stories, @discussion_ids, $count);
@@ -2805,7 +2821,8 @@ sub getStoriesEssentials {
 	my $max = getCurrentStatic('comment_maxscore');
 	for my $story (@stories) {
 		$story->{hitparade} = join (",",
-			map { $count{$story->{discussion}}{$_} || 0 } ($min .. $max)
+			map { $count{$story->{discussion}}{$_} || 0 }
+				($min .. $max)
 		);
 	}
 
@@ -2824,8 +2841,21 @@ sub getStoriesEssentials {
 sub getCommentsTop {
 	my($self, $sid) = @_;
 	my $user = getCurrentUser();
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
+	my $comment_table = getCurrentStatic('mysql_heap_table') ?
+		'comment_heap' : 'comments';
+
+	my $where = "$story_table.sid=$comment_table.sid AND
+		     $story_table.uid=users.uid";
+	$where .= " AND $story_table.sid=" . $self->sqlQuote($sid) if $sid;
+	my $stories = $self->sqlSelectAll(
+		"section, $story_table.sid, users.nickname, title,
+		pid, subject, date, time, $comment_table.uid, cid, points",
+		"$story_table, $comment_table, users",
+		$where,
+		" ORDER BY points DESC, date DESC LIMIT 10 "
+	);
 
 	# First select the top scoring comments (which on Slashdot or
 	# any big site will just be the latest score:5 comments).
@@ -2833,7 +2863,7 @@ sub getCommentsTop {
 	my $tables = $comment_table;
 	my $where = "1=1";
 	my $other = "ORDER BY points DESC, date DESC LIMIT 10";
-	my $top_comments = $self->sqlSelectAll($columns, $tables, $where, $other);
+	my $top_comments = $self->sqlSelectAll($columns,$tables,$where,$other);
 	formatDate($top_comments, 5);
 
 	# Then we want to match the sids against story_heap.discussion
@@ -2939,11 +2969,14 @@ sub getTrollAddress {
 sub getTrollUID {
 	my($self) = @_;
 	my $user = getCurrentUser();
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
-	my($badUID) = $self->sqlSelect("sum(val)", "$comment_table,moderatorlog",
+	my $comment_table = getCurrentStatic('mysql_heap_table') ?
+		'comment_heap' : 'comments';
+	my($badUID) = $self->sqlSelect("sum(val)",
+		"$comment_table,moderatorlog",
 		"$comment_table.cid=moderatorlog.cid
 		AND $comment_table.uid=$user->{uid} AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < 3)  GROUP BY $comment_table.uid"
+		AND (to_days(now()) - to_days(ts) < 3)
+		GROUP BY $comment_table.uid"
 	);
 
 	return $badUID;
@@ -3011,13 +3044,15 @@ sub createStory {
 		);
 
 		# i think i got this right -- pudge
-		my($userkarma) = $self->sqlSelect('karma', 'users_info', "uid=$suid");
+		my($userkarma) =
+			$self->sqlSelect('karma', 'users_info', "uid=$suid");
 		my $newkarma = (($userkarma + $constants->{submission_bonus})
 			> $constants->{maxkarma})
 				? $constants->{maxkarma}
 				: "karma+$constants->{submission_bonus}";
-		$self->sqlUpdate('users_info', { -karma => $newkarma }, "uid=$suid")
-			if !isAnon($suid);
+		$self->sqlUpdate('users_info', {
+			-karma => $newkarma },
+		"uid=$suid") if !isAnon($suid);
 
 		$self->sqlUpdate('users_info',
 			{ -karma => 'karma + 3' },
@@ -3040,8 +3075,9 @@ sub createStory {
 		section		=> $story->{section},
 		displaystatus	=> $story->{displaystatus},
 		commentstatus	=> $story->{commentstatus},
-		submitter	=> $story->{submitter} ? $story->{submitter} : $story->{uid},
-		flags		=> "data_dirty",
+		submitter	=> $story->{submitter} ?
+			$story->{submitter} : $story->{uid},
+		flags		=> 'data_dirty',
 	};
 
 	my $text = {
@@ -3060,6 +3096,7 @@ sub createStory {
 
 	return $sid;
 }
+
 
 ##################################################################
 sub updateStory {
@@ -3251,7 +3288,8 @@ sub linkNode {
 # Image Importing, Size checking, File Importing etc
 sub getUrlFromTitle {
 	my($self, $title) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
 	my($sid) = $self->sqlSelect('sid',
 		$story_table,
 		"title like '\%$title\%'",
@@ -3295,7 +3333,8 @@ sub getStoryList {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
 	# CHANGE DATE_ FUNCTIONS
 	my $columns = "hits, commentcount, $story_table.sid, $story_table.title, $story_table.uid, "
 		. "time, name, section, displaystatus, $story_table.flags";
@@ -3343,7 +3382,8 @@ sub _saveExtras {
 sub getStory {
 	my($self, $id, $val, $cache_flag) = @_;
 	# Lets see if we can use story_heap
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
 	# We need to expire stories
 	_genericCacheRefresh($self, $story_table, getCurrentStatic('story_expire'));
 	my $table_cache = '_' . $story_table . '_cache';
@@ -3402,7 +3442,8 @@ sub getStory {
 # wanted the meta data, didn't want to worry
 # about cache. -Brian
 sub getNewStory {
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = getCurrentStatic('mysql_heap_table') ?
+		'story_heap' : 'stories';
 	my $answer = _genericGet($story_table, 'sid', '', @_);
 	return $answer;
 }
@@ -3470,7 +3511,8 @@ sub getAuthors {
 	}
 
 	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('users.uid,nickname,fakeemail,homepage,bio',
+	my $sth = $self->sqlSelectMany(
+		'users.uid,nickname,fakeemail,homepage,bio',
 		'users,users_info,users_param',
 		'users_param.name="author" and users_param.value=1 and ' .
 		'users.uid = users_param.uid and users.uid = users_info.uid');
@@ -3502,8 +3544,11 @@ sub getAdmins {
 	}
 
 	$self->{$table_cache} = {};
-	my $sth = $self->sqlSelectMany('users.uid,nickname,fakeemail,homepage,bio',
-		'users,users_info', 'seclev >= 100 and users.uid = users_info.uid');
+	my $sth = $self->sqlSelectMany(
+		'users.uid,nickname,fakeemail,homepage,bio',
+		'users,users_info',
+		'seclev >= 100 and users.uid = users_info.uid'
+	);
 	while (my $row = $sth->fetchrow_hashref) {
 		$self->{$table_cache}{ $row->{'uid'} } = $row;
 	}
@@ -3684,7 +3729,8 @@ sub getSection {
 		my $constants = getCurrentStatic();
 		my $user      = getCurrentUser();
 		return {
-			title    => "$constants->{sitename}: $constants->{slogan}",
+			title    =>
+				"$constants->{sitename}: $constants->{slogan}",
 			artcount => getCurrentUser('maxstories') || 30,
 			issue    => 3
 		};
@@ -3764,10 +3810,17 @@ sub setUser {
 	# I should look into that.
 	for (@param)  {
 		if ($_->[0] eq "acl") {
-			$self->sqlReplace('users_acl', { uid => $uid, name => $_->[1]->{name}, value => $_->[1]->{value}});
+			$self->sqlReplace('users_acl', {
+				uid => $uid, 
+				name => $_->[1]->{name}, 
+				value => $_->[1]->{value},
+			});
 		} else {
-			$self->sqlReplace('users_param', { uid => $uid, name => $_->[0], value => $_->[1]})
-				if defined $_->[1];
+			$self->sqlReplace('users_param', {
+				uid => $uid,
+				name => $_->[0], 
+				value => $_->[1],
+			}) if defined $_->[1];
 		}
 	}
 }
@@ -3805,7 +3858,8 @@ sub getUser {
 		$where =~ s/ AND $//;
 
 		$table = join ',', keys %tables;
-		$answer = $self->sqlSelectHashref($values, $table, $where) if $values;
+		$answer = $self->sqlSelectHashref($values, $table, $where)
+			if $values;
 		for (@param) {
 			if ($_ eq 'is_anon') {
 				$answer->{is_anon} = isAnon($id);
@@ -4227,6 +4281,7 @@ GROUP BY $story_table.sid
 ORDER BY time DESC
 LIMIT 10
 E
+
 	# note that LIMIT could be a var -- pudge
 	return $data;
 }

@@ -17,7 +17,10 @@ $task{$me}{code} = sub {
 
 	slashdLog("$me begin");
 	if (! $constants->{allow_moderation}) {
-		slashdLog("$me - moderation system is inactive, no action performed");
+		slashdLog(<<EOT);
+$me - moderation system is inactive, no action performed
+EOT
+
 	} else {
 		# This will soon call a local sub that performs all necessary
 		# moderation actions.
@@ -25,7 +28,10 @@ $task{$me}{code} = sub {
 		if (-e $moderatord and -x _) {
 			system("$moderatord $virtual_user");
 		} else {
-			slashdLog("$me cannot find $moderatord or not executable");
+			slashdLog(<<EOT);
+$me cannot find $moderatord or not executable
+EOT
+
 		}
 		reconcileM2($constants, $slashdb);
 	}
@@ -36,10 +42,6 @@ $task{$me}{code} = sub {
 
 sub reconcileM2 {
 	my($constants, $slashdb) = @_;
-
-	# XXX Until getMetamodIDs is fixed, this next line just crashes slashd.
-	# I'm NOPing this subroutine until it can be reviewed. - Jamie 2001/07/11
-	return ;
 
 	for my $m2id ($slashdb->getMetamodIDs()) {
 		my $m2_list = $slashdb->getMetaModerations($_);
