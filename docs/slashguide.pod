@@ -1,3 +1,9 @@
+#!perl -w
+# run this document through perl to check its syntax
+use Pod::Checker;
+podchecker(\*DATA);
+__END__
+
 =begin html 
 <html>
 <head>
@@ -286,6 +292,9 @@ report.
 =head1 CHANGES
 
 $Log$
+Revision 1.1.2.2  2001/10/10 16:06:26  pudge
+Doc updates
+
 Revision 1.1.2.1  2001/10/09 17:54:04  pudge
 Add in slashguide (rewrite of getting_started) and update docs
 

@@ -1,3 +1,9 @@
+#!perl -w
+# run this document through perl to check its syntax
+use Pod::Checker;
+podchecker(\*DATA);
+__END__
+
 =head1 Tables in Slash 2.0
 
 The following is a listing of tables that make up the Slash schema.

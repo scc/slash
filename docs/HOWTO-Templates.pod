@@ -1,3 +1,9 @@
+#!perl -w
+# run this document through perl to check its syntax
+use Pod::Checker;
+podchecker(\*DATA);
+__END__
+
 =head1 NAME
 
 HOWTO-Templates - How to write Slash templates

@@ -1,7 +1,12 @@
+#!perl -w
+# run this document through perl to check its syntax
+use Pod::Checker;
+podchecker(\*DATA);
+__END__
+
 =head1 NAME
 
 slashstyle - Slash Style Guide
-
 
 =head1 INTRODUCTION
 
@@ -28,7 +33,7 @@ want to make up for it now.
 If you have any questions, please ask us on the slashcode-development
 mailing list at SourceForge.
 
-	http://sourceforge.net/projects/slashcode/
+	http://sf.net/projects/slashcode/
 
 We don't always follow this guide.  We are making changes throughout
 our code to be in line with it.  But just because we didn't do
@@ -1029,6 +1034,9 @@ get/gets/set/sets/create/exists/delete
 =head1 CHANGES
 
 	$Log$
+	Revision 1.1.2.12  2001/10/10 16:06:26  pudge
+	Doc updates
+	
 	Revision 1.1.2.11  2001/10/10 14:52:11  pudge
 	Minor fixes to banlist and docs; temporary fix for odd problem with testing for "javascript" URLs.
 	
@@ -1063,11 +1071,6 @@ get/gets/set/sets/create/exists/delete
 	Add information about POD and exporting, add notice about document
 	subject to change
 	
-
-=head1 AUTHORS
-
-Brian Aker, Chris Nandor
-
 
 =head1 VERSION
 

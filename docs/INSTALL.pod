@@ -1,13 +1,19 @@
+#!perl -w
+# run this document through perl to check its syntax
+use Pod::Checker;
+podchecker(\*DATA);
+__END__
+
 =head1 NAME
 
 INSTALL - Slash Installation
 
-
 =head1 SYNOPSIS
 
-This document describes how to install Slash 2.1/2.2.  For instructions on
-installation of previous versions of Slash, see the INSTALL document
-included with those distributions.
+This document describes how to install Slash 2.1/2.2 (where you see
+"2.2" you may safely assume "2.1", except where specified).  For instructions on
+installation or upgrade of previous versions of Slash, see the INSTALL
+document included with those distributions.
 
 These instructions have only been tested on Linux. Installation under
 BSD and other Unix OSes should work similarly, but there are problems
@@ -22,7 +28,7 @@ PostgreSQL support in Slash 2 is currently alpha-quality.
 Slash can always be downloaded from SourceForge, from the FTP site,
 and via CVS.
 
-	http://sourceforge.net/projects/slashcode/
+	http://sf.net/projects/slashcode/
 	ftp://ftp.slashcode.com//pub/slashcode/
 	http://cvs.slashcode.com/
 
@@ -37,43 +43,6 @@ Please read those requirements if you have B<any> question about
 what might be required.
 
 Upgrading information is also toward the end of the document.
-
-
-=head1 VERSIONS
-
-Each version of slash has a code name, and the files on CVS for that
-version are tagged with that name.  The current release is always
-MAIN.  The versioning scheme is as Linux and Perl are,
-revision.version.subversion.  version is even for releases, and odd
-for development.  The codename applies to the development version
-and subsequent release.
-
-For example, 1.0.11 is a normal release, while 1.1.0 is the first
-development release for what will be the next release (either 1.2
-or 2.0).
-
-The CVS repository is tagged with version numbers, so to get release
-1.0.3, use tag "v1_0_3_0".  The last number (in this case a zero) will
-be incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until
-the next release.
-
-=head2 Codenames
-
-=over 4
-
-=item v1.0
-
-beast
-
-=item v2.0
-
-bender
-
-=item v2.2
-
-fry
-
-=back
 
 
 =head1 INSTALLATION
@@ -143,7 +112,7 @@ might not be appropriate for your site).
 B<Install perl.>
 
 perl is likely already installed on your machine; make sure its
-version is 5.005_03 or better.
+version is at least the minimum required (see L<"REQUIREMENTS">).
 
 
 =item 3.
@@ -194,9 +163,9 @@ B<IMPORTANT NOTES>:
 With some versions of the CPAN module, the module will try to
 download and install the latest version of Perl.  Watch what
 the module is doing; if it begins to download an entire perl
-distribution, hit ctrl-C until it stops, then try again with the
-CPAN module.  This should not be an issue in the latest version
-of Bundle::Slash.
+distribution, interrupt it (hit ctrl-C) until it stops, then try
+again with the CPAN module.  This should not be an issue in the latest
+version of Bundle::Slash.
 
 =item B<Uninstalling Old Modules>
 
@@ -217,7 +186,7 @@ F<~/.cpan/Bundle/>) and remove F<Slash.pm>.
 =item B<Additional Libraries>
 
 You must have certain libraries existing on your system before
-building, for Compress::Zlib and XML::Parser.  See L<"perl">.
+building, for Compress::Zlib and XML::Parser (see L<"REQUIREMENTS">).
 
 =item B<BSD>
 
@@ -244,7 +213,7 @@ user name in other places, so do not forget it.
 libnet is currently broken somewhat in its tests.  Please use
 C<install Net::Cmd> first, before you install anything else.
 If it fails only tests 8 and 9 of t/require, then it is OK;
-just do <force install Net::Cmd>, then continue on with the
+just do C<force install Net::Cmd>, then continue on with the
 rest of the modules installation.
 
 =back
@@ -431,11 +400,161 @@ of that system.
 
 =head1 UPGRADING
 
-=head2 Slash 2.0 -> Slash 2.1/2.2
+B<These upgrade procedures are still in testing.  Please read them
+entirely before beginning.  We are not responsible for any loss of
+data or functionality.>
 
-These procedures do not yet exist.  See L<README>.
+=head2 Slash 2.0 -> Slash 2.2
 
-=head2 Slash 2.0.x -> Slash 2.0.y
+=over 4
+
+=item 1.
+
+BACK EVERYTHING UP ON THE EXISTING SITE.
+
+=item 2.
+
+Install Bundle::Slash.  If you have done so previously, follow
+the instructions for removing the existing version of
+Bundle::Slash before proceeding.
+
+=item 3.
+
+Apply this patch to your installed Slash::Install module (probably
+easiest to hand-edit the file):
+
+  --- Install.pm~ Wed May  9 15:02:34 2001
+  +++ Install.pm  Fri Sep 28 12:44:41 2001
+  @@ -116,7 +116,7 @@
+   sub writeTemplateFile {
+          my($self, $filename, $template) = @_;
+          open(FILE, '>' . $filename) or die "$! unable to open file $filename to write to";
+  -       for (keys %$template) {
+  +       for (qw(section description title page lang name template seclev)) {
+                  next if ($_ eq 'tpid');
+                  print FILE "__${_}__\n";
+                  $template->{$_} =~ s/\015\012/\n/g;
+
+=item 4.
+
+Run C<template-check> on your site, and make a note of every change
+you've made to the standard templates.  You will need to make those
+changes again, manually, later.
+
+This is unfortunately unavoidable, because templates include code
+that changes significantly between releases.  It is recommended
+that you compile your changes into a THEME so they may easily be
+updated and applied.
+
+=item 5.
+
+Stop Apache and slashd on the target machine(s).
+
+=item 6
+
+Install Slash.
+
+B<If installing on a different machine ...>
+
+=over 4
+
+=item 1
+
+Install slash 2.2 as normal.  Do not yet run install-slashsite.
+
+=item 2
+
+Make sure that from this machine, you can access not only the database
+used for this installation, but the one used for the old installation.
+You may wish to, instead of accessing that database directly if it
+on another machine, dumping it and adding it to your new database server
+under a different name.
+
+=item 3
+
+Add a virtual user to DBIx::Password for the old installation.
+
+=back
+
+
+B<If installing on the same machine ...>
+
+=over 4
+
+=item 1
+
+Create a new database for the new installation.  You cannot
+use the same database for both installations.
+
+=item 2
+
+Add a new virtual user to DBIx::Password for the new database,
+and update (and flush) MySQL privileges appropriately.  You cannot
+use the same virtual user for both installations.
+
+=item 3
+
+It is highly recommended that you move F</usr/local/slash>
+(or whatever your installation directory is) to a new location,
+such as F</usr/local/slash-old>, and install a clean slash 2.2
+installation.  However, this is not necessary to do; you may install
+slash 2.2 on top of the slash 2.0 installation.
+
+The reason to not move anything is that you can keep any customizations
+done (images, additional scripts and plugins, static files, etc.).
+The reason to move it is so that everything is clean.  It is highly
+recommended that you move it, and then manually copy back the pieces
+you want.
+
+=item 4
+
+In any event, either move the old directory, or don't, and
+then install slash 2.2 as normal.  Do not yet run install-slashsite.
+
+=back
+
+
+=item 7.
+
+If you have plugins or themes from the old installation to install,
+copy them over now.  Warning: some plugins and themes might need to be
+ported first.  You may wish to deal with them later if they are not
+yet ported to slash 2.2.
+
+=item 8.
+
+Run install-slashsite.  Use the new virtual user.
+
+=item 9.
+
+Copy over any files (images, FAQs, etc.) that need to be copied, if necessary.
+
+=item 10.
+
+Run update script, F<utils/slash2toslash2.2>.  B<Read its instructions!>
+
+=item 11.
+
+Update templates.
+
+=item 12.
+
+Doublecheck Apache configs (httpd/slash.conf, site/sitename/sitename.conf).
+These configs have changed from the last version.  Read the comments and set
+them up as desired.
+
+=item 13.
+
+Start Apache.
+
+=item 14.
+
+Start slashd.
+
+=back
+
+
+=head2 Slash 2.2.x -> Slash 2.2.y
 
 Read all of this section before doing any of it.
 
@@ -515,83 +634,11 @@ template with the new template.
 
 =back
 
-=item Data
-
-Currently, there are no differences in the schema between versions of Slash 2.0.
-There are a few data differences.
-
-=over 4
-
-=item Slash 2.0.0-pre1 -E<gt> Slash-2.0.0 release
-
-
-=over 4
-
-=item Journal Data
-
-In the vars table, "journal_default_display" is set to "0".  It should default
-to "10".
-
-Also, "journal_user_count" is no longer in use and may be deleted.
-
-See F<plugins/Journal/dump>.
-
-=item Search Data
-
-"search_default_display" should be defined in the vars table, with a default
-of "30".
-
-See F<plugins/Search/dump>.
-
-=back
-
-=back
-
-=item Templates
-
-Listed below are additions/deletions of templates from version to version.
-Feel free to delete (or not) ones that are no longer used, but please do
-add to your site templates that have been added to the distribution.  Add
-or delete, for your site, all the changes from your current version up
-through the version you're upgrading to.
-
-=over 4
-
-=item Slash 2.0.0-pre2 -E<gt> Slash 2.0.0
-
-=over 4
-
-=item Added
-
-=over 4
-
-=item plugins/Journal/templates/pagination;journal;default
-
-=item plugins/Search/templates/pagination;search;default
-
-=item themes/slashcode/templates/dispLinkComment;misc;default
-
-=back
-
-=item Deleted
-
-=over 4
-
-=item plugins/Journal/templates/journalitem;journal;default
-
-=item plugins/Search/templates/linksearch;search;default
-
-=back
-
-=back
-
-=back
-
 =back
 
 =head2 Slash 1.0 -E<gt> Slash 2.0
 
-Please read the complete documentation of F<utils/slash1toslash2>.
+Please read the complete documentation of F<utils/slash1toslash2.2>.
 It is a program that will convert your database from Slash 1.0
 to a new Slash 2.0 database.  The program documentation (which can
 be read with F<perldoc>) details exactly what process it follows
@@ -656,7 +703,7 @@ If they are not present on the system already, download and
 install them before installing the modules.
 
 	http://www.gzip.org/zlib/
-	http://sourceforge.net/projects/expat/
+	http://sf.net/projects/expat/
 
 The following required distributions are all included in
 the Bundle::Slash distribution.
@@ -756,6 +803,43 @@ overkill for Slashdot).  slashcode.com runs on two web servers and one
 NFS/database server.  Many sites can run fine on just one machine for
 everything (we use a minimum of two web server machines on every site
 for load balancing and redundancy).
+
+
+=head1 VERSIONS
+
+Each version of slash has a code name, and the files on CVS for that
+version are tagged with that name.  The current release is always
+MAIN.  The versioning scheme is as Linux and Perl are,
+revision.version.subversion.  version is even for releases, and odd
+for development.  The codename applies to the development version
+and subsequent release.
+
+For example, 1.0.11 is a normal release, while 1.1.0 is the first
+development release for what will be the next release (either 1.2
+or 2.0).
+
+The CVS repository is tagged with version numbers, so to get release
+1.0.3, use tag "v1_0_3_0".  The last number (in this case a zero) will
+be incremented during development ("v1_0_3_1", "v1_0_3_2", etc.) until
+the next release.
+
+=head2 Codenames
+
+=over 4
+
+=item v1.0
+
+beast
+
+=item v2.0
+
+bender
+
+=item v2.2
+
+fry
+
+=back
 
 
 =head1 VERSION

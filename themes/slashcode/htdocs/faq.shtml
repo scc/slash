@@ -156,10 +156,10 @@ used your code.
 <H3><A NAME="Slashcodecom5">OK, where do I download it from?</A></H3>
 
 <P>
-<A HREF="http://sourceforge.net/projects/slashcode/">Our project page on SourceForge</A> has links
+<A HREF="http://sf.net/projects/slashcode/">Our project page on SourceForge</A> has links
 to all the latest files, through HTTP.  It is available on CVS
 at <A HREF="http://cvs.slashcode.com/">cvs.slashcode.com</A> and FTP
-at <A HREF="ftp://slashcode.sourceforge.net/pub/slashcode/">slashcode.sourceforge.net</A>.
+at <A HREF="ftp://ftp.slashcode.com/pub/slashcode/">ftp.slashcode.com</A>.
 </P>
 
 
@@ -198,20 +198,20 @@ or setup, read the <A HREF="#Troubleshooting"
 
 <UL>
 	<LI>Bug reports - Submit bug reports
-	at <A HREF="http://sourceforge.net/tracker/?atid=104421&amp;group_id=4421">SourceForge</A>.</LI>
+	at <A HREF="http://sf.net/tracker/?atid=104421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>Mailing lists -
 	Join the various
-	<A HREF="http://sourceforge.net/mail/?group_id=4421">mailing lists</A>.
+	<A HREF="http://sf.net/mail/?group_id=4421">mailing lists</A>.
         </LI>
 
 	<LI>Patches - 
 	Please submit patches at
-	<A HREF="http://sourceforge.net/tracker/?atid=304421&amp;group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sf.net/tracker/?atid=304421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>Feature Requests - 
 	Please submit feature requests at
-	<A HREF="http://sourceforge.net/tracker/?atid=354421&amp;group_id=4421">SourceForge</A>.</LI>
+	<A HREF="http://sf.net/tracker/?atid=354421&amp;group_id=4421">SourceForge</A>.</LI>
 
 	<LI>IRC -
 	You'll often find us on <A HREF="http://slashnet.org/">SlashNET</A>
@@ -226,7 +226,7 @@ or setup, read the <A HREF="#Troubleshooting"
 	<A HREF="http://slashcode.com/submit.pl">story submission</A> link to
 	tell us about your new Slash sites, your ideas for the Slashcode
 	site, questions for Ask Slashcode.  DO NOT use this for bug reports.  Use
-	<A HREF="http://sourceforge.net/bugs/?group_id=4421">SourceForge</A> for bug
+	<A HREF="http://sf.net/bugs/?group_id=4421">SourceForge</A> for bug
 	reports.  Also try not to use it for general "I can't do this!" help;
 	you'll get a much better response for those on the mailing list.</LI>
 

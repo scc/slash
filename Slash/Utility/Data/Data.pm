@@ -1590,6 +1590,12 @@ The user's ID whose email address you wish to randomize.
 
 =back
 
+=item Return value
+
+The email address, if successful.
+
+=back
+
 =cut
 
 sub getArmoredEmail {

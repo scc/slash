@@ -4,7 +4,7 @@ Version: 2.0.0_pre1
 Release: 1
 Copyright: GPL
 Group: Applications/Internet
-Source: ftp://slashcode.sourceforge.net/pub/slashcode/slash-2.0.0-pre1.tar.gz
+Source: ftp://ftp.slashcode.com/pub/slashcode/slash-2.0.0-pre1.tar.gz
 BuildRoot: /var/tmp/%{name}-buildroot
 
 %description

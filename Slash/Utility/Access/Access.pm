@@ -118,7 +118,7 @@ Returns an error message to be printed out by calling script
 =back
 
 =cut
-##################################################################
+
 sub formkeyError {
 	my ($value, $formname, $limit, $nocomm) = @_;
 
