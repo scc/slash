@@ -290,7 +290,7 @@ sub displayArticle {
 		push @{$collection->{article}}, {
 			article		=> strip_mode($article->[1], $article->[4]),
 			date		=> $article->[0],
-			description	=> $article->[2],
+			description	=> strip_notags($article->[2]),
 			topic		=> $topics->{$article->[5]},
 			discussion	=> $article->[6],
 			id		=> $article->[3],
