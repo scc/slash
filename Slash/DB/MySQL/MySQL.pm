@@ -3726,6 +3726,11 @@ sub getStory {
 		for my $ary_ref (@$append) {
 			$answer->{$ary_ref->[0]} = $ary_ref->[1];
 		}
+		if (!$answer or ref($answer) ne 'HASH') {
+			# If there's no data for this sid, then there's no data
+			# for us to return, and we shouldn't touch the cache.
+			return undef;
+		}
 		# If this is the first data we're writing into the cache,
 		# mark the time -- this data, and any other stories we
 		# write into the cache for the next n seconds, will be
