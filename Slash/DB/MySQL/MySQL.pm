@@ -632,8 +632,8 @@ sub getUserAuthenticate {
 	# if $kind is undef or 0, try as encrypted
 	#	(the most common case), then as plaintext
 	my($EITHER, $PLAIN, $ENCRYPTED) = (0, 1, 2);
-	$kind ||= 0;
-
+	my($UID, $PASSWD, $NEWPASSWD) = (0, 1, 2);
+	$kind ||= $EITHER;
 
 	# RECHECK LOGIC!!  -- pudge
 
@@ -648,33 +648,35 @@ sub getUserAuthenticate {
 
 	# try ENCRYPTED -> ENCRYPTED
 	if ($kind == $EITHER || $kind == $ENCRYPTED) {
-		if ($passwd eq $pass[1]) {
-			$uid = $pass[0];
+		if ($passwd eq $pass[$PASSWD]) {
+			$uid = $pass[$UID];
 			$cookpasswd = $passwd;
 		}
 	}
 
-	# try plaintext -> ENCRYPTED
+	# try PLAINTEXT -> ENCRYPTED
 	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($cryptpasswd eq $pass[1]) {
-			$uid = $pass[0];
+		if ($cryptpasswd eq $pass[$PASSWD]) {
+			$uid = $pass[$UID];
 			$cookpasswd = $cryptpasswd;
 		}
 	}
 
-	# try newpass?
+	# try PLAINTEXT -> NEWPASS
 	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		if ($passwd eq $pass[2]) {
+		if ($passwd eq $pass[$NEWPASSWD]) {
 			$self->sqlUpdate('users', {
 				newpasswd	=> '',
 				passwd		=> $cryptpasswd
 			}, "uid=$user_db");
-			$uid = $pass[0];
-			$cookpasswd = $cryptpasswd;
 			$newpass = 1;
+
+			$uid = $pass[$UID];
+			$cookpasswd = $cryptpasswd;
 		}
 	}
 
+	# return UID alone in scalar context
 	return wantarray ? ($uid, $cookpasswd, $newpass) : $uid;
 }
 
