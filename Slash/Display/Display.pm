@@ -305,15 +305,16 @@ sub _template {
 			: undef					# unlimited cache
 		: 0;						# cache off
 
-	return $cfg->{template} = Template->new(
-		TRIM		=> 1,
-		PRE_CHOMP	=> 1,
-		POST_CHOMP	=> 1,
+	return $cfg->{template} = Template->new({
 		LOAD_FILTERS	=> $filters,
-		CACHE_SIZE	=> $cache_size,
-		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
 		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
-	);
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
+			TRIM		=> 1,
+			PRE_CHOMP	=> 1,
+			POST_CHOMP	=> 1,
+			CACHE_SIZE	=> $cache_size,
+		})],
+	});
 }
 
 =back

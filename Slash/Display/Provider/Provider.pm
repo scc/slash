@@ -74,21 +74,22 @@ sub fetch {
 		undef $text;
 	}
 
-	print STDERR "fetch($name)\n" if $DEBUG;
-
 	# caching disabled so load and compile but don't cache
 	if (defined $size && !$size) {
+		print STDERR "fetch($name) [nocache]\n" if $DEBUG;
 		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless $error;
 		$data = $data->{ data } unless $error;
 
 	# cached entry exists, so refresh slot and extract data
 	} elsif ($name && ($slot = $self->{ LOOKUP }{ $name })) {
+		print STDERR "fetch($name) [cached:$size]\n" if $DEBUG;
 		($data, $error) = $self->_refresh($slot);
 		$data = $slot->[ DATA ] unless $error;
 
 	# nothing in cache so try to load, compile and cache
 	} else {
+		print STDERR "fetch($name) [uncache:$size]\n" if $DEBUG;
 		($data, $error) = $self->_load($name, $text);
 		($data, $error) = $self->_compile($data) unless $error;
 		$data = $self->_store($name, $data) unless $error;

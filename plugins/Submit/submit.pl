@@ -275,15 +275,17 @@ sub saveSub {
 
 #################################################################
 sub processSub {
-	my($email) = @_;
+	my($home) = @_;
 
-	if ($email =~ /@/) {
-		$email = "mailto:$email"; 
-	} elsif (!/http/) {
-		$email = "http://$email";
+	my $proto = qr[^(?:mailto|http|https|ftp|gopher|telnet):];
+
+	if ($home =~ /\@/ && $home !~ $proto) {
+		$home = "mailto:$home"; 
+	} elsif ($home !~ $proto) {
+		$home = "http://$home";
 	}
 
-	return $email;
+	return $home;
 }
 
 #################################################################
@@ -295,7 +297,7 @@ sub url2html {
 	# this is kinda experimental ... esp. the $extra line
 	# we know it can break real URLs, but probably will preserve
 	# real URLs more often than it will break them
-	$introtext =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
+	$introtext =~  s{(?<!["=>])(http|https|ftp|gopher|telnet)://([$URI::uric#]+)}{
 		my($proto, $url) = ($1, $2);
 		my $extra = '';
 		$extra = $1 if $url =~ s/([?!;:.,']+)$//;
