@@ -266,9 +266,8 @@ sub getPluginList {
 	return \%plugins;
 }
 
-
 sub reloadArmorFile {
-	my ($self, $armors) = @_;
+	my($self, $armors) = @_;
 	my $count = 0;
 
 	$self->sqlDo('DELETE FROM spamarmors');
@@ -279,7 +278,6 @@ sub reloadArmorFile {
 
 	return $count;
 }
-
 
 1;
 

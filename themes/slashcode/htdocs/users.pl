@@ -595,8 +595,7 @@ sub saveUser {
 	my $constants = getCurrentStatic();
 
 	my $uid = $user->{seclev} >= 100 ? shift : $user->{uid};
-	my $user_email = $slashdb->getUser(
-		$uid,
+	my $user_email = $slashdb->getUser($uid,
 		['nickname', 'realemail', 'fakeemail', 'emaildisplay']
 	);
 	my $user_fakeemail = ($user_email->{emaildisplay} == 1) ?

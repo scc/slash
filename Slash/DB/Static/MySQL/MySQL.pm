@@ -548,8 +548,8 @@ sub checkUserExpiry {
 	# Now grab all UIDs that look to be expired, we explicitly exclude 
 	# authors from this search.
 	$ret = $self->sqlSelectAll('distinct uid', 'users_param',
-				   "(name='expiry_days' OR name='expiry_comm')
-				   AND value < 0"  );
+		"(name='expiry_days' OR name='expiry_comm')
+		AND value < 0");
 
 	# We only want the list of UIDs that aren't authors and have not already
 	# expired. The extra perl code would be completely unavoidable if we had
@@ -561,18 +561,6 @@ sub checkUserExpiry {
 	} @{$ret};
 
 	return \@returnable;
-}
-
-
-sub getRandomSpamArmor {
-	my ($self) = @_;
-
-	my $ret = $self->sqlSelectAllHashref(
-		'armor_id', '*', 'spamarmors', 'active=1'
-	);
-	my @armor_keys = keys %{$ret};
-
-	return $ret->{$armor_keys[int(rand ($#armor_keys + 1))]};
 }
 
 

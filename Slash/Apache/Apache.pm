@@ -48,7 +48,7 @@ sub SlashVirtualUser ($$$) {
 
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
-	# If this is not here this will go porly.
+	# If this is not here this will go poorly.
 	$cfg->{slashdb}->{_dbh}->disconnect;
 }
 

@@ -44,10 +44,56 @@ my %types = (
 
 #========================================================================
 
+=head2 xmlDisplay(TYPE, PARAM [, OPTIONS])
+
+Creates XML data.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TYPE
+
+The XML type, which determines which XML creation routine to call.
+Right now, supports only "rss" which calls create_rss().
+
+=item PARAM
+
+A hashref of parameters to pass to the XML creation routine.
+
+=item OPTIONS
+
+Hashref of options.  Currently supported options are below.
+If OPTIONS is the value C<1> instead of a hashref, that will
+be the same as if the hashref were C<{ Return =E<gt> 1 }>.
+
+=over 4
+
+=item Return
+
+Boolean for whether to print (false) or return (true) the
+processed template data.  Default is to print output via
+Apache, with full HTML headers.
+
+=back
+
+=back
+
+=item Return value
+
+If OPTIONS-E<gt>{Return} is true, the XML data.
+Otherwise, returns true/false for success/failure.
+
+=back
+
+=cut
+
 sub xmlDisplay {
 	my($type, $param, $opt) = @_;
 
-	return unless exists $types{$type};
+	return unless $param && exists $types{$type};
 
 	if (! ref $opt) {
 		$opt = $opt == 1 ? { Return => 1 } : {};
@@ -73,6 +119,110 @@ sub xmlDisplay {
 
 #========================================================================
 
+=head1 NON-EXPORTED FUNCTIONS
+
+=head2 create_rss(PARAM)
+
+Creates RSS.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PARAM
+
+Hashref of parameters.  Currently supported options are below.
+
+=over 4
+
+=item version
+
+Defaults to "1.0".  May be >= "1.0", >= "0.91", or "0.9".
+
+=item rdfencoding
+
+Defaults to "rdfencoding" in vars.
+
+=item title
+
+Defaults to "sitename" in vars.
+
+=item description
+
+Defaults to "slogan" in vars.
+
+=item link
+
+Defaults to "absolutedir" in vars.
+
+=item date
+
+Defaults to current date.  See date2iso8601().
+
+=item subject
+
+Defaults to "rdfsubject" in vars.
+
+=item language
+
+Defaults to "rdflanguage" in vars.
+
+=item creator
+
+Defaults to "adminmail" in vars.
+
+=item publisher
+
+Defaults to "rdfpublisher" in vars.
+
+=item rights
+
+Defaults to "rdfrights" in vars.
+
+=item updatePeriod
+
+Defaults to "rdfupdateperiod" in vars.
+
+=item updateFrequency
+
+Defaults to "rdfupdatefrequency" in vars.
+
+=item updateBase
+
+Defaults to "rdfupdatebase" in vars.
+
+=item image
+
+If scalar, then just prints the default image data if scalar is true.
+If hashref, then may have "title", "url", and "link" passed.
+
+=item textinput
+
+If scalar, then just prints the default textinput data if scalar is true.
+If hashref, then may have "title", "description", "name", and "link" passed.
+
+=item items
+
+An arrayref of hashrefs.  If the "story" key of the hashref is true,
+then the item is passed to rss_story().  Otherwise, "title" and "link" must
+be defined keys, and any other single-level key may be defined
+(no multiple level hash keys).
+
+=back
+
+=back
+
+=item Return value
+
+The complete RSS data as a string.
+
+=back
+
+=cut
+
+
 sub create_rss {
 	my($param) = @_;
 
@@ -80,7 +230,7 @@ sub create_rss {
 
 	my $constants = getCurrentStatic();
 
-	my $version  = $param->{version} || '1.0';
+	my $version  = $param->{version}     || '1.0';
 	my $encoding = $param->{rdfencoding} || $constants->{rdfencoding};
 
 	my $rss = XML::RSS->new(
@@ -176,8 +326,8 @@ sub create_rss {
 	if ($param->{textinput}) {
 		# set defaults
 		my %textinput = (
-			title		=> "Search " . $constants->{sitename},
-			description	=> "Search " . $constants->{sitename} . " stories",
+			title		=> 'Search ' . $constants->{sitename},
+			description	=> 'Search ' . $constants->{sitename} . ' stories',
 			name		=> 'query',
 			'link'		=> $constants->{absolutedir} . '/search.pl',
 		);
@@ -198,7 +348,11 @@ sub create_rss {
 
 	my @items;
 	for my $item (@{$param->{items}}) {
-		if ($item->{story} || ($item->{title} && $item->{'link'})) {
+		if ($item->{story} || (
+			defined($item->{title})  && $item->{title} ne ""
+				&&
+			defined($item->{'link'}) && $item->{'link'} ne ""
+		)) {
 			my $encoded_item = {};
 
 			# story is hashref to be deleted, containing
@@ -225,24 +379,86 @@ sub create_rss {
 }
 
 #========================================================================
-# get a standard ISO 8601 time string
+
+=head2 date2iso8601([TIME])
+
+Return a standard ISO 8601 time string.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item TIME
+
+Some sort of string in GMT that can be parsed by Date::Manip.
+If no TIME given, uses current time.
+
+=back
+
+=item Return value
+
+The time string.
+
+=item Dependencies
+
+Date::Manip.
+
+=back
+
+=cut
+
 sub date2iso8601 {
 	my($time) = @_;
 	if ($time) {	# force to GMT
-		$time .= ' GMT';
+		$time .= ' GMT' unless $time =~ / GMT$/;
 	} else {	# get current seconds
 		$time = 'epoch ' . time();
 	}
 
 	# calculate timezone differential from GMT
 	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
-	($diff = sprintf "%+0.4d", $diff) =~ s/(\d{2})$/:$1/;
+	($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
 
 	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
 }
 
 #========================================================================
-# set up a story item
+
+=head2 rss_story(ITEM, ENCODED_ITEM, VERSION)
+
+Set up a story item for RSS.  Called from create_rss().
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item ITEM
+
+The item hashref passed in the items param key passed to xmlDisplay().
+
+=item ENCODED_ITEM
+
+The prepared encoded data from ITEM.
+
+=item VERSION
+
+The VERSION as defined in create_rss().  Does the Right Thing for >= "1.0",
+>= "0.91", and "0.9".
+
+=back
+
+=item Return value
+
+The encoded item.
+
+=back
+
+=cut
+
 sub rss_story {
 	my($item, $encoded_item, $version) = @_;
 
@@ -276,7 +492,35 @@ sub rss_story {
 }
 
 #========================================================================
-# set up an item description
+
+=head2 rss_item_description(DESC)
+
+Set up an item description.  If rdfitemdesc in the vars table is "1",
+then prints an item's description.  If it is some other true value,
+it will chop the description to that length.  If it is false, then no
+description for the item will be printed.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item DESC
+
+The description.
+
+=back
+
+=item Return value
+
+The fixed description.
+
+=back
+
+=cut
+
+
 sub rss_item_description {
 	my($desc) = @_;
 
@@ -296,6 +540,41 @@ sub rss_item_description {
 }
 
 #========================================================================
+
+=head2 encode(VALUE [, KEY])
+
+Encodes the data to put it into the XML.  Normally will encode
+assuming the parsed data will be printed in HTML.  See KEY.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item VALUE
+
+Value to be encoded.
+
+=item KEY
+
+If KEY is "link", then data will be encoded so as NOT to assume
+the parsed data will be printed in HTML.
+
+=back
+
+=item Return value
+
+The encoded data.
+
+=item Dependencies
+
+See xmlencode() and xmlencode_plain() in Slash::Utility.
+
+=back
+
+=cut
+
 sub encode {
 	my($value, $key) = @_;
 	$key ||= '';

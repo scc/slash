@@ -395,7 +395,6 @@ sub submitComment {
 		'-expiry_comm'	=> 'expiry_comm-1',
 	}) if allowExpiry();
 
-
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
 		slashDisplay('errors', {

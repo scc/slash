@@ -279,7 +279,8 @@ sub sqlSelect {
 	}
 	my @r = $sth->fetchrow;
 	$sth->finish;
-	if(wantarray()) {
+
+	if (wantarray()) {
 		return @r;
 	} else {
 		return $r[0];

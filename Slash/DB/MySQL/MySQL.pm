@@ -221,10 +221,10 @@ sub createComment {
 	}
 
 	$self->sqlInsert('comment_text',{
-			cid => $cid,
-			comment =>  $comment->{postercomment},
+			cid	=> $cid,
+			comment	=>  $comment->{postercomment},
 	});
-	if(getCurrentStatic('mysql_hash_table')) {
+	if (getCurrentStatic('mysql_hash_table')) {
 		my $insline = "INSERT into comments_hash (sid,cid,pid,date,ipid,subnetid,subject,uid,points,signature) values ($sid_db,$cid," .
 			$self->sqlQuote($comment->{pid}) . ",now(),'$user->{ipid}','$user->{subnetid}'," .
 			$self->sqlQuote($comment->{postersubj}) . ", $uid, $pts, '$signature')";
@@ -2419,8 +2419,8 @@ sub getSlashConf {
 
 	# the rest of this function is where is where we fix up
 	# any bad or missing data in the vars table
-	$conf{rootdir}		||= "http://$conf{basedomain}";
-	$conf{absolutedir}	||= $conf{rootdir};
+	$conf{rootdir}		||= "//$conf{basedomain}";
+	$conf{absolutedir}	||= "http://$conf{basedomain}";
 	$conf{basedir}		||= $conf{datadir} . "/public_html";
 	$conf{imagedir}		||= "$conf{rootdir}/images";
 	$conf{rdfimg}		||= "$conf{imagedir}/topics/topicslash.gif";
@@ -3492,16 +3492,17 @@ sub sqlSelectColumns {
 	return $rows;
 }
 
-
+########################################################
 sub getRandomSpamArmor {
-	my ($self) = @_;
+	my($self) = @_;
 
 	my $ret = $self->sqlSelectAllHashref(
 		'armor_id', '*', 'spamarmors', 'active=1'
 	);
 	my @armor_keys = keys %{$ret};
 
-	return $ret->{$armor_keys[int(rand ($#armor_keys + 1))]};
+	# array index automatically int'd
+	return $ret->{$armor_keys[rand($#armor_keys + 1)]};
 }
 
 ########################################################
