@@ -47,7 +47,7 @@ sub main {
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section} ne 'index' ? $section->{section} : '');
 
-	my $limit ||= $section->{section} eq 'index' ?
+	my $limit = $section->{section} eq 'index' ?
 	    $user->{maxstories} : $section->{artcount};
 
 	my $stories = $slashdb->getStoriesEssentials(

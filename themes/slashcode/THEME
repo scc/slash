@@ -183,6 +183,7 @@ template=templates/topTopics;topics;default
 template=templates/topics;menu;default
 template=templates/undo_mod;comments;default
 template=templates/userInfo;users;default
+template=templates/showInfoConflict;users;default
 template=templates/userlogin;misc;default
 template=templates/users;menu;default
 template=templates/vote;pollBooth;default

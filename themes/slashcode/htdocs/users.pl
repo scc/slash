@@ -27,11 +27,6 @@ sub main {
 	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0 ;
 	my $postflag = $user->{state}{post};
 	my $op = lc($form->{op});
-	$op ||= isAnon($user->{uid}) ? 'userlogin' : 'userinfo';
-	# arhghg
-	$op ||= 'userinfo' if $form->{nick} || $form->{uid};
-	$form->{userfield} ||= $form->{nick};
-	$form->{userfield} ||= $form->{uid};
 
 	# savepasswd is a special case, because once it's called, you
 	# have to reload the form, and you don't want to do any checks if
@@ -261,12 +256,15 @@ sub main {
 			$slashdb->updateFormkey($formkey, length($ENV{QUERY_STRING}));
 		}
 		$op = 'changepasswd';
+		$form->{userfield} = $form->{uid};
 	}
 
 	header(getMessage('user_header'));
 	print getMessage('note', { note => $note }) if defined $note;
 	print createMenu($formname) if ! $user->{is_anon};
 
+
+	$op ||= isAnon($user->{uid}) ? 'userlogin' : 'userinfo';
 
 	if ($user->{is_anon} && $ops->{$op}{seclev} > 0) {
 		$op = 'default';
@@ -430,6 +428,8 @@ sub mailPasswd {
 }
 
 #################################################################
+# arhgghgh. I love torture. I love pain. This subroutine satisfies 
+# these needs of mine
 sub showInfo {
 	my($id) = @_;
 
@@ -438,7 +438,7 @@ sub showInfo {
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 
-	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
+	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my($title, $admin_block, $fieldkey) = ('', '', '');
 	my $comments;
 	my $commentcount = 0;
@@ -447,50 +447,60 @@ sub showInfo {
 
 	my($points, $lastgranted, $nickmatch_flag, $uid, $nick);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
-
-	if ($form->{userfield} and $user->{is_admin}) {
-		if ($form->{userfield} =~ /^\d+$/) {
+	
+	if (! $id && ! $form->{userfield}) {
+		if ($form->{uid} && ! $id ) {
 			$fieldkey = 'uid';
-			$id ||= $form->{userfield};
+			($uid,$id) = ($form->{uid}, $form->{uid});
+			$requested_user = $slashdb->getUser($id);
+			$nick = $requested_user->{nickname};
+
+		} elsif ($form->{nick} && ! $id) {
+			$fieldkey = 'nickname';
+			($nick,$id) = ($form->{nick}, $form->{nick});
+			$uid = $slashdb->getUserUID($id);
+			$requested_user = $slashdb->getUser($uid);
+
+		} else {
+			$fieldkey = 'uid';
+			($id,$uid) = ($user->{uid}, $user->{uid});
+			$requested_user = $slashdb->getUser($uid);
+		}
+	} elsif ($user->{is_admin}) {
+		$id ||= $form->{userfield} ? $form->{userfield} : $user->{uid};
+		if ($id =~ /^\d+$/) {
+			$fieldkey = 'uid';
 			$requested_user = $slashdb->getUser($id);
 			$uid = $requested_user->{uid};
 			$nick = $requested_user->{nickname};
+			if ( (my $conflict_id = $slashdb->getUserUID($id)) && ($form->{userfield} ne $form->{uid})) {
+				slashDisplay('showInfoConflict', { op => 'userinfo', id => $uid, nick => $nick, conflict_id => $conflict_id});
+				return(1);
+			}
 
-		} elsif (length($form->{userfield}) == 32) {
+		} elsif (length($id) == 32) {
 			$fieldkey = 'ipid';
 			$requested_user->{nonuid} = 1;
-			$requested_user->{ipid} = $form->{userfield};
-			$id ||= $form->{userfield};
+			$requested_user->{ipid} = $id;
 
-		} elsif ($form->{userfield} =~ /^(\d+\.\d+.\d+\.0)$/) {
+		} elsif ($id =~ /^(\d+\.\d+.\d+\.0)$/) {
 			$fieldkey = 'subnetid';
-			$requested_user->{nonuid} = 1;
+			$requested_user->{nonuid} = $1;
 			$requested_user->{subnetid} = md5_hex($1);
-			$id ||= $form->{userfield};
 
-		} elsif ($form->{userfield} =~ /^([\d+\.]+)$/) {
+		} elsif ($id =~ /^([\d+\.]+)$/) {
 			$fieldkey = 'ipid';
 			$requested_user->{nonuid} = 1;
 			$id ||= $1;
 			$requested_user->{ipid} = md5_hex($1);
 		}
 	} else {
-		if (! $id && ! $form->{userfield} && $form->{op} eq 'userinfo') {
-			$fieldkey = 'uid';
-			$id = $user->{uid};
-			$uid = $id;
-			$requested_user = $user;
-
-		} else {
-			$fieldkey = 'nickname';
-			$id = $form->{userfield} ? $form->{userfield} : $user->{nickname};
-			$uid = $slashdb->getUserUID($id);
-			$requested_user = $slashdb->getUser($uid);
-		}
+		$fieldkey = 'uid';
+		($id,$uid) = ($user->{uid}, $user->{uid});
+		$requested_user = $slashdb->getUser($uid);
 	}
 
 	if ($requested_user->{nonuid}) {
-
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
 
@@ -581,7 +591,7 @@ sub showInfo {
 		});
 
 	} else {
-		if (! defined $uid) {
+		if (! defined $uid && defined $nick && ! $requested_user->{nonuid} ) {
 			print getError('userinfo_nicknf_err', { nick => $nick });
 			return;
 		}
@@ -733,14 +743,19 @@ sub adminDispatch {
 	} elsif ($form->{userinfo}) {
 		showInfo();
 
-	} elsif ($form->{edituser}) {
-		editUser();
+	} elsif ($form->{uid}) {
+		if ($form->{edituser}) {
+			editUser();
 
-	} elsif ($form->{edithome}) {
-		editHome();
+		} elsif ($form->{edithome}) {
+			editHome();
 
-	} elsif ($form->{editcomm}) {
-		editComm();
+		} elsif ($form->{editcomm}) {
+			editComm();
+
+		} elsif ($form->{changepasswd}) {
+			changePasswd();
+		}
 
 	} else {
 		showInfo();
@@ -824,15 +839,23 @@ sub changePasswd {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	return if $user->{is_anon};
+	return if (! $user->{is_admin} && $id != $user->{uid});
 
 	my $user_edit = {};
 	my $title ;
 	my $suadmin_flag = ($user->{seclev} >= 10000) ? 1 : 0;
 
-	$user_edit = $id eq '' ? $user : $slashdb->getUser($id);
-
-	return if isAnon($user_edit->{uid});
+	if ($form->{userfield}) {
+		$id ||= $form->{userfield};
+		if ($id =~ /^\d+$/) {
+			$user_edit = $slashdb->getUser($id);
+		} else {
+			$user_edit = $slashdb->getUser($slashdb->getUserUID($id));
+		}
+	} else {
+		$user_edit = $id eq '' ? $user : $slashdb->getUser($id);
+		$id = $user_edit->{uid};
+	}
 
 	print getMessage('note', { note => $form->{note}}) if $form->{note};
 
@@ -860,10 +883,8 @@ sub editUser {
 
 	my($user_edit, $session) = ({}, {});
 	my($admin_block, $title, $session_select);
-	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
+	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $fieldkey;
-
-	return if $user->{is_anon};
 
 	if ($form->{userfield}) {
 		$id ||= $form->{userfield};
@@ -912,10 +933,8 @@ sub editHome {
 	my $fieldkey;
 	#Is it a good idea to set this, this low (100)
 	# no, it is not -- pudge
-	my $admin_flag = ($user->{seclev} >= 1000) ? 1 : 0;
+	my $admin_flag = ($user->{is_admin}) ? 1 : 0;
 	my $admin_block = '';
-
-	return if $user->{is_anon};
 
 	if ($form->{userfield}) {
 		$id ||= $form->{userfield};
@@ -931,7 +950,6 @@ sub editHome {
 		$fieldkey = 'uid';
 	}
 
-	return if isAnon($user->{uid});
 	return if isAnon($user_edit->{uid}) && ! $admin_flag;
 	$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 
@@ -984,7 +1002,7 @@ sub editComm {
 	my $admin_block = '';
 	my $fieldkey;
 
-	my $admin_flag = ($user->{seclev} >= 100) ? 1 : 0;
+	my $admin_flag = $user->{is_admin} ? 1 : 0;
 
 	if ($form->{userfield}) {
 		$id ||= $form->{userfield};
@@ -1000,7 +1018,6 @@ sub editComm {
 		$fieldkey = 'uid';
 	}
 
-	return if isAnon($user->{uid});
 	return if isAnon($user_edit->{uid}) && ! $admin_flag;
 	$admin_block = getUserAdmin($id, $fieldkey, 1, 1) if $admin_flag;
 
@@ -1057,50 +1074,31 @@ sub saveUserAdmin {
 	my $user = getCurrentUser();
 	my $constants = getCurrentStatic();
 
-	return if $user->{seclev} < 100;
-
 	my($user_edits_table, $user_edit) = ({}, {});
 	my $save_success = 0;
 	my $author_flag;
 	my $note = '';
+	my $id;
 	my $user_editfield_flag;
 
-	my $id = $user->{seclev} >= 100 ? shift : $user->{uid};
-	if (! $id) {
-		$id = $form->{userfield} ? $form->{userfield} : $user->{uid};
-	}
-
-	if ($form->{userfield} =~ /^\d+$/) {
+	if ($form->{uid}) {
 		$user_editfield_flag = 'uid';
+		$id = $form->{uid};
 		$user_edit = $slashdb->getUser($id);
 
-	} elsif ($form->{userfield} =~ /^\d+\.\d+\.\d+\.0$/) {
+	} elsif ($form->{subnetid}) {
 		$user_editfield_flag = 'subnetid';
 		$user_edit->{uid} = $constants->{anonymous_coward_uid};
-		$id = md5_hex($id);
-		$user_edit->{subnetid} = $id;
+		($id,$user_edit->{subnetid})  = ($form->{subnetid}, $form->{subnetid});
 		$user_edit->{nonuid} = 1;
 
-	} elsif ($form->{userfield} =~ /^(\d+\.\d+\.\d+\.)\d+$/) {
+	} elsif ($form->{ipid}) {
 		$user_editfield_flag = 'ipid';
-		$user_edit->{ipid} = md5_hex($id);
+		($id,$user_edit->{ipid})  = ($form->{ipid}, $form->{ipid});
 		$user_edit->{subnetid} = $1 . "0" ;
 		$user_edit->{subnetid} = md5_hex($user_edit->{subnetid});
 		$user_edit->{uid} = $constants->{anonymous_coward_uid};
 		$user_edit->{nonuid} = 1;
-
-	} elsif (length($form->{userfield}) == 32) {
-		# there's just no way to know which it is
-		$user_editfield_flag = 'ipid';
-
-		$user_edit->{ipid} = $form->{userfield};
-		$user_edit->{subnetid} = $form->{userfield};
-		$user_edit->{uid} = $constants->{anonymous_coward_uid};
-		$user_edit->{nonuid} = 1;
-
-	} elsif (length($form->{userfield})) {
-		$user_editfield_flag = 'nickname';
-		$user_edit = $slashdb->getUser($slashdb->getUserUID($id));
 
 	} else { # a bit redundant, I know
 		$user_edit = $user;
@@ -1130,7 +1128,7 @@ sub saveUserAdmin {
 
 	$note .= getMessage('saveuseradmin_saved', { field => $user_editfield_flag, id => $id}) if $save_success;
 
-	if ($user->{seclev} >= 100 && ($user_editfield_flag eq 'uid' ||
+	if ($user->{is_admin} && ($user_editfield_flag eq 'uid' ||
 		$user_editfield_flag eq 'nickname')) {
 
 		$user_edits_table->{seclev} = $form->{seclev};
@@ -1170,31 +1168,12 @@ sub savePasswd {
 	my $user_edits_table = {};
 	my $suadmin_flag = $user->{seclev} >= 10000 ? 1 : 0;
 
-	if ($user->{seclev} >= 100) {
-		$uid = shift;
-		if (! $uid) {
-			$uid = $form->{uid} ? $form->{uid} : $user->{uid};
-		}
+	if ($user->{is_admin}) {
+		$uid = $form->{uid} ? $form->{uid} : $user->{uid};
 	} else {
 		$uid = ($user->{uid} == $form->{uid}) ? $form->{uid} : $user->{uid};
 	}
-
-	return if isAnon($uid);
-
-	if ($form->{userfield} =~ /^\d+$/) {
-		$user_editfield_flag = 'uid';
-		$user_edit = $slashdb->getUser($uid);
-		if ($form->{userfield} != $form->{uid}) {
-			return();
-		}
-	} else {
-		$user_editfield_flag = 'nickname';
-		if ($slashdb->getUserUID($form->{userfield}) == $form->{uid}) {
-			$user_edit = $slashdb->getUser($slashdb->getUserUID($uid));
-		} else {
-			return();
-		}
-	}
+	$user_edit = $slashdb->getUser($uid);
 
 	if (!$user_edit->{nickname}) {
 		$note .= getError('cookie_err', 0, 1);
@@ -1232,32 +1211,15 @@ sub saveUser {
 	my $uid;
 	my $user_editfield_flag;
 
-	if ($user->{seclev} >= 100) {
-		$uid = shift;
+	if ($user->{is_admin}) {
 		$uid = $form->{uid} ? $form->{uid} : $user->{uid} if !$uid;
 	} else {
 		$uid = ($user->{uid} == $form->{uid}) ?
 			$form->{uid} : $user->{uid};
 	}
-
-	return if isAnon($uid);
+	my $user_edit = $slashdb->getUser($uid);
 
 	my($note, $author_flag, $formname);
-	my $user_edit = {};
-
-	if ($form->{userfield} =~ /^\d+$/) {
-		$user_editfield_flag = 'uid';
-		$user_edit = $slashdb->getUser($uid);
-		if ($form->{uid} && ($form->{userfield} != $form->{uid})) {
-			return();
-		}
-	} else {
-		if ($slashdb->getUserUID($form->{userfield}) == $form->{uid}) {
-			$user_edit = $slashdb->getUser($slashdb->getUserUID($uid));
-		} else {
-			return();
-		}
-	}
 
 	$note .= getMessage('savenickname_msg', {
 		nickname => $user_edit->{nickname},
@@ -1314,7 +1276,7 @@ sub saveUser {
 		$user_edits_table->{$_} = '' unless defined $user_edits_table->{$_};
 	}
 
-	if ($user->{seclev} >= 100) {
+	if ($user->{is_admin}) {
 		$user_edits_table->{seclev} = $form->{seclev};
 		$user_edits_table->{author} = $author_flag;
 	}
@@ -1354,16 +1316,12 @@ sub saveComm {
 	my $form = getCurrentForm();
 	my($uid, $user_fakeemail);
 
-	if ($user->{seclev} >= 100) {
-		$uid = shift;
-		if (! $uid) {
-			$uid = $form->{uid} ? $form->{uid} : $user->{uid};
-		}
+	if ($user->{is_admin}) {
+		$uid = $form->{uid} ? $form->{uid} : $user->{uid};
 	} else {
 		$uid = ($user->{uid} == $form->{uid}) ?
 			$form->{uid} : $user->{uid};
 	}
-	return if isAnon($uid);
 
 	# Do the right thing with respect to the chosen email display mode
 	# and the options that can be displayed.
@@ -1421,21 +1379,20 @@ sub saveHome {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $uid;
+	my($extid, $exaid, $exsect) = '';
 
-	if ($user->{seclev} >= 100) {
-		$uid = shift;
-		$uid = $form->{uid} ? $form->{uid} : $user->{uid} if !$uid;
+	if ($user->{is_admin}) {
+		$uid = $form->{uid} ? $form->{uid} : $user->{uid} ;
 	} else {
 		$uid = ($user->{uid} == $form->{uid}) ?
 			$form->{uid} : $user->{uid};
 	}
-	return if isAnon($uid);
+	my $edit_user = $slashdb->getUser($uid);
 
 	my $name = $user->{seclev} && $form->{name} ?
 		$form->{name} : $user->{nickname};
 
 	$name = substr($name, 0, 20);
-	return if isAnon($uid);
 
 	# users_cookiemsg
 	if (isAnon($uid) || !$name) {
@@ -1443,8 +1400,7 @@ sub saveHome {
 		print $cookiemsg;
 	}
 
-	my($extid, $exaid, $exsect) = '';
-	my $exboxes = $slashdb->getUser($uid, 'exboxes');
+	my $exboxes = $edit_user->{exboxes};
 
 	$exboxes =~ s/'//g;
 	my @b = split m/,/, $exboxes;
