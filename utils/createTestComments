@@ -30,7 +30,9 @@ my (%opts, %family_tree);
 usage('Options used incorrectly') unless getopts('hI:RTu:U:v', \%opts);
 usage() if ($opts{'h'} || !keys %opts);
 version() if $opts{'v'};
+usage('Invalid UID specified') unless $opts{U} =~ /^\d+$/;
 usage('No user specified') unless $opts{U};
+usage('Can\'t use both -U and -R!') if exists $opts{U} && exists $opts{R};
 usage('No story ID specified') unless $opts{I};
 $opts{'u'} ||= 'slash';
 $opts{num_comments} = $ARGV[0];
@@ -79,7 +81,7 @@ usage('Invalid number of comments')
 	                "sid=$story_id"
 	        );
  
-	        map { $family_tree{$_->{cid}} = $_->{pid} } @{$comments};
+	        map { $family_tree{$_->{cid}} = $_->{pid} } keys %{$comments};
 	}
  
 	my $t0 = new Benchmark;
