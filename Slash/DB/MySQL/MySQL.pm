@@ -2934,9 +2934,9 @@ sub _genericGetsCache {
 #		$row->{'_modtime'} = time();
 #		$self->{$table_cache}{ $row->{$table_prime} } = $row;
 #	}
+#	$sth->finish;
 	$self->{$table_cache} = _genericGets(@_);
 	$self->{$table_cache_full} = 1;
-	$sth->finish;
 	$self->{$table_cache_time} = time();
 
 	my %return = %{$self->{$table_cache}};
