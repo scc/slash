@@ -176,8 +176,8 @@ sub createDiscussions{
 	$sid = $dbh->quote($sid);
 	my ($story_time) = sqlSelect("time", "stories", "sid=$sid");
 	$story_time ||= "now()";
-	unless ($dbh->sqlSelect("title", "discussions", "sid=$sid")) {
-		$dbh->sqlInsert("discussions", {
+	unless ($self->sqlSelect("title", "discussions", "sid=$sid")) {
+		$self->sqlInsert("discussions", {
 				sid => $sid,
 				title => '',
 				ts  => $story_time,
@@ -186,10 +186,22 @@ sub createDiscussions{
 	}
 }
 
+#################################################################
+sub getDiscussions{
+	my ($self) = @_;
+  my $discussion = $self->sqlSelectAll("discussions.sid,discussions.title,discussions.url"
+			. "discussions,stories "
+			. "where displaystatus > -1 and discussions.sid=stories.sid and time <= now() "
+			. "order by time desc LIMIT 50"
+	);
+	
+	return $discussion;
+}
+
 ########################################################
 sub getUserKarma {
 	my ($self, $uid) = @_;
-	my ($karma) =	sqlSelect("karma", "users_info", "uid=$uid");
+	my ($karma) =	$self->sqlSelect("karma", "users_info", "uid=$uid");
 
 	return $karma;
 }
@@ -197,7 +209,7 @@ sub getUserKarma {
 sub getNewStories {
 	my ($self, $sid) = @_;
 	return unless ($sid);
-	my($s, $title, $commentstatus) = $dbh->sqlSelect(
+	my($s, $title, $commentstatus) = $self->sqlSelect(
 		"section,title,commentstatus","newstories","sid=" . $dbh->quote($sid)
 	);
 
@@ -1262,11 +1274,6 @@ sub setUsersKey{
 	my ($self, $uid, $hashref) = @_;
 	# Replace is a naughy thing
 	$self->sqlReplace("users_key", $hashref);
-}
-########################################################
-sub setUsersInfo{
-	my ($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid . " AND uid not $anonymous", 1);
 }
 ########################################################
 sub setUsersComments{
