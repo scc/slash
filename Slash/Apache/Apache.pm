@@ -125,7 +125,6 @@ sub IndexHandler {
 	$dynamic = 0 if ( -e "$constants->{datadir}/dboff");
 
 	if ($uri eq '/') {
-		my $filename  = $r->filename;
 		my $basedir   = $constants->{basedir};
 
 		# $USER_MATCH defined above
@@ -154,7 +153,6 @@ sub IndexHandler {
 	}
 
 	if ($uri eq '/hof.pl') {
-		my $filename  = $r->filename;
 		my $basedir   = $constants->{basedir};
 
 		$r->uri('/hof.shtml');
@@ -164,7 +162,6 @@ sub IndexHandler {
 	}
 
 	if($uri !~ /\.shtml/ && !$dynamic) {
-		my $filename  = $r->filename;
 		my $basedir   = $constants->{basedir};
 
 		$r->uri('/index.shtml');
