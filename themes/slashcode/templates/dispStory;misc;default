@@ -4,6 +4,7 @@ __description__
 Display a story (normally called from within displayStory())
 
 * width = width for titlebar
+* title = title for titlebar
 * story = story data structure
 * section = section data structure
 * topic = topic data structure
