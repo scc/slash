@@ -78,7 +78,7 @@ __template__
 	<TR><TD>
 		<P>Have you read the
 		<A HREF="[% constants.rootdir %]/moderation.shtml">Moderator Guidelines</A>
-		yet? (<B>Updated 9.9</B>)
+		yet?
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="moderate">
 	[% IF user.is_admin && constants.authors_unlimited %]
 		<BR><B>NOTE: Checked comments will be deleted.</B>
