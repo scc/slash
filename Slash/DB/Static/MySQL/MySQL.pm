@@ -370,8 +370,8 @@ sub getSectionInfo {
 	my($self) = @_;
 	my $story_table = getCurrentStatic('mysql_heap_table') ?
 		'story_heap' : 'stories';
-	my $sections = $self->sqlSelectAllHashRef(
-		'section', 'section', "sections",
+	my $sections = $self->sqlSelectAllHashrefArray(
+		'section', "sections",
 		"isolate=0 and (section != '' and section != 'articles')
 		ORDER BY section"
 	);
