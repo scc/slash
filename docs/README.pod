@@ -8,7 +8,7 @@ README - Slash Readme
 Slash -- Slashdot Like Automated Storytelling Homepage -- is the code
 that runs Slashdot.  More than that, however, Slash is an architecture
 for putting together web sites.  It comes with functionality for posting
-articles, conducting polls, having discussions, and more.  But it can be
+articles, conducting polls, having discussions, and more; but it can be
 extended in innumerable ways.
 
 Slash is written in Perl, and is built on top of Apache and mod_perl. It
@@ -86,8 +86,12 @@ The details of the API available in Slash.
 	perldoc Slash::Display
 	perldoc Slash::DB
 
-The modules represent the public API of Slash.  The other Slash
-modules have embedded POD to be read with perldoc, too.
+The modules represent the bulk of the public API of Slash.
+The other Slash modules have embedded POD to be read with perldoc, too.
+Some of the documentation here is woefully incomplete.
+
+	use Source 'Luke';
+
 
 =item HOWTOs
 
@@ -103,7 +107,7 @@ F<docs/HOWTO-Themes.pod>
 
 =item Schema
 
-The layout and description of the database.
+The layout and description of the database.  [There are out of date.]
 
 F<docs/slasherd_bender.fig>
 
