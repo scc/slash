@@ -50,6 +50,19 @@ sub getBackendStories {
 }
 
 ########################################################
+# This is only call if ssi is set
+sub updateCommentTotals {
+	my($self, $sid, $comments) = @_;
+	my $hp = join ',', @{$comments->[0]{totals}};
+	$self->sqlUpdate("stories", {
+			hitparade	=> $hp,
+			writestatus	=> 0,
+			commentcount	=> $comments->[0]{totals}[0]
+		}, 'sid=' . $self->{_dbh}->quote($sid)
+	);
+}
+
+########################################################
 # For slashd
 sub setStoryIndex {
 	my($self, @sids) = @_;
