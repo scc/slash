@@ -50,10 +50,10 @@ sub sqlConnect {
 				print STDERR "Major Mojo Bad things\n";
 				print STDERR "unable to connect to MySQL: $@ : $DBI::errstr\n";
 				die "Database would not let us connect $DBI::errstr";	 # The Suicide Die
-			} else {
-				my $time = localtime();
-				print STDERR "Rebuilt at $time\n";
-			}
+			}# else {
+			#	my $time = localtime();
+			#	print STDERR "Rebuilt at $time\n";
+			#}
 		}
 	}
 }
