@@ -236,7 +236,7 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
-	if($uri =~ m[^/~(.*)]) {
+	if ($uri =~ m[^/~(.*)]) {
 		my $clean = $1;
 		$clean =~ s/\///g;
 		$r->args("nick=$clean");

@@ -194,7 +194,7 @@ sub slashDisplay {
 	_populate($data);
 
 	# let us pass in a context if we have one
-	my $template = $CONTEXT || _template();
+	my $template = $CONTEXT || get_template();
 
 	if ($CONTEXT) {
 		$ok = eval { $out = $template->include($name, $data) };
@@ -217,6 +217,95 @@ sub slashDisplay {
 	$user->{currentPage}	= $origPage;
 
 	return $opt->{Return} ? $out : $ok;
+}
+
+#========================================================================
+
+=head1 NON-EXPORTED FUNCTIONS
+
+=head2 get_template(CONFIG1, CONFIG2)
+
+Return a Template object.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item CONFIG1
+
+A hashref of options to pass to Template->new
+(will override any defaults).
+
+=item CONFIG2
+
+A hashref of options to pass to Slash::Display::Provider->new
+(will override any defaults).
+
+=back
+
+=item Return value
+
+A Template object.  See L<"TEMPLATE ENVIRONMENT">.
+
+=back
+
+=cut
+
+require Template::Filters;
+
+my $strip_mode = sub {
+	my($context, @args) = @_;
+	return sub { strip_mode($_[0], @args) };
+};
+
+my $filters = Template::Filters->new({
+	FILTERS => {
+		fixparam	=> \&fixparam,
+		fixurl		=> \&fixurl,
+		strip_attribute	=> \&strip_attribute,
+		strip_code	=> \&strip_code,
+		strip_extrans	=> \&strip_extrans,
+		strip_html	=> \&strip_html,
+		strip_literal	=> \&strip_literal,
+		strip_nohtml	=> \&strip_nohtml,
+		strip_plaintext	=> \&strip_plaintext,
+		strip_mode	=> [ $strip_mode, 1 ]
+	}
+});
+
+sub get_template {
+	my($cfg1, $cfg2) = @_;
+	my $cfg = {};
+	$cfg1 = ref($cfg1) eq 'HASH' ? $cfg1 : {};
+	$cfg2 = ref($cfg2) eq 'HASH' ? $cfg2 : {};
+
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		return $cfg->{template} if $cfg->{template};
+	}
+
+	my $constants = getCurrentStatic();
+	my $cache_size = $constants->{cache_enabled}		# cache at all?
+		? $constants->{template_cache_size}
+			? $constants->{template_cache_size}	# defined cache
+			: undef					# unlimited cache
+		: 0;						# cache off
+
+	return $cfg->{template} = Template->new({
+		TRIM		=> $constants->{template_trim},
+		LOAD_FILTERS	=> $filters,
+		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
+		%$cfg1,
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
+			PRE_CHOMP	=> $constants->{template_pre_chomp},
+			POST_CHOMP	=> $constants->{template_post_chomp},
+			CACHE_SIZE	=> $cache_size,
+			%$cfg2,
+		})],
+	});
 }
 
 =head1 PRIVATE FUNCTIONS
@@ -261,71 +350,6 @@ sub _populate {
 		unless exists $data->{env}; 
 }
 
-#========================================================================
-
-=head2 _template()
-
-Return a Template object.
-
-=over 4
-
-=item Return value
-
-A Template object.  See L<"TEMPLATE ENVIRONMENT">.
-
-=back
-
-=cut
-
-require Template::Filters;
-
-my $strip_mode = sub {
-	my($context, @args) = @_;
-	return sub { strip_mode($_[0], @args) };
-};
-
-my $filters = Template::Filters->new({
-	FILTERS => {
-		fixparam	=> \&fixparam,
-		fixurl		=> \&fixurl,
-		strip_attribute	=> \&strip_attribute,
-		strip_code	=> \&strip_code,
-		strip_extrans	=> \&strip_extrans,
-		strip_html	=> \&strip_html,
-		strip_literal	=> \&strip_literal,
-		strip_nohtml	=> \&strip_nohtml,
-		strip_plaintext	=> \&strip_plaintext,
-		strip_mode	=> [ $strip_mode, 1 ]
-	}
-});
-
-sub _template {
-	my $cfg = {};
-
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
-		$cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-		return $cfg->{template} if $cfg->{template};
-	}
-
-	my $constants = getCurrentStatic();
-	my $cache_size = $constants->{cache_enabled}		# cache at all?
-		? $constants->{template_cache_size}
-			? $constants->{template_cache_size}	# defined cache
-			: undef					# unlimited cache
-		: 0;						# cache off
-
-	return $cfg->{template} = Template->new({
-		LOAD_FILTERS	=> $filters,
-		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
-		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new({
-			TRIM		=> $constants->{template_trim},
-			PRE_CHOMP	=> $constants->{template_pre_chomp},
-			POST_CHOMP	=> $constants->{template_post_chomp},
-			CACHE_SIZE	=> $cache_size,
-		})],
-	});
-}
 
 =head1 TEMPLATE ENVIRONMENT
 

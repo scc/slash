@@ -1990,8 +1990,7 @@ sub createDiscussion {
 sub createStory {
 	my($self, $story) = @_;
 	unless ($story) {
-		my $form = getCurrentForm() unless ($story);
-		$story ||= $form;
+		$story ||= getCurrentForm();
 	}
 	#Create a sid 
 	my($sec, $min, $hour, $mday, $mon, $year) = localtime;

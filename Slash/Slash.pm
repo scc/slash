@@ -422,9 +422,6 @@ sub sendEmail {
 		body	=> $content,
 		from	=> $constants->{mailfrom}
 	);
-	for my $key (qw( smtp subject to from )) {
-		$data{$key} =~ s{^\s+}{};
-	}
 
 	if ($pr && $pr eq 'bulk') {
 		$data{precedence} = 'bulk';

@@ -32,6 +32,7 @@ and C<_refresh>.
 use strict;
 use vars qw($VERSION $DEBUG);
 use base qw(Template::Provider);
+use File::Spec::Functions;
 use Slash::Utility;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -58,7 +59,7 @@ sub _get_anon_name {
 
 sub fetch {
 	my($self, $text) = @_;
-	my($name, $data, $error, $slot, $size);
+	my($name, $data, $error, $slot, $size, $compname, $compfile);
 	$size = $self->{ SIZE };
 
 	# if reference, then get a unique name to cache by
@@ -66,20 +67,31 @@ sub fetch {
 		$text = $$text;
 		print STDERR "fetch text : $text\n" if $DEBUG > 2;
 		$name = _get_anon_name($text);
+		$compname = $name if $self->{COMPILE_DIR};
 
 	# if regular scalar, get proper template ID ("name") from DB
 	} else {
-		my $slashdb = getCurrentDB();
-		$name = $slashdb->getTemplateByName($text, 'tpid');
 		print STDERR "fetch text : $text\n" if $DEBUG > 1;
+		my $slashdb = getCurrentDB();
+
+		my $temp = $slashdb->getTemplateByName($text, [qw(tpid page section)]);
+		$compname = "$text;$temp->{page};$temp->{section}"
+			if $self->{COMPILE_DIR};
+		$name = $temp->{tpid};
 		undef $text;
+	}
+
+	if ($self->{COMPILE_DIR}) {
+		my $ext = $self->{COMPILE_EXT} || '.ttc';
+		$compfile = catfile($self->{COMPILE_DIR}, $compname . $ext);
+		warn "compiled output: $compfile\n" if $DEBUG;
 	}
 
 	# caching disabled so load and compile but don't cache
 	if (defined $size && !$size) {
 		print STDERR "fetch($name) [nocache]\n" if $DEBUG;
 		($data, $error) = $self->_load($name, $text);
-		($data, $error) = $self->_compile($data) unless $error;
+		($data, $error) = $self->_compile($data, $compfile) unless $error;
 		$data = $data->{ data } unless $error;
 
 	# cached entry exists, so refresh slot and extract data
@@ -92,7 +104,7 @@ sub fetch {
 	} else {
 		print STDERR "fetch($name) [uncached:$size]\n" if $DEBUG;
 		($data, $error) = $self->_load($name, $text);
-		($data, $error) = $self->_compile($data) unless $error;
+		($data, $error) = $self->_compile($data, $compfile) unless $error;
 		$data = $self->_store($name, $data) unless $error;
 	}
 
@@ -101,14 +113,14 @@ sub fetch {
 
 sub _load {
 	my($self, $name, $text) = @_;
-	my($data, $error, $now, $time, $slashdb);
+	my($data, $error, $now, $time);
 	$now = time;
 	$time = 0;
 
 	print STDERR "_load(@_[1 .. $#_])\n" if $DEBUG;
 
 	if (! defined $text) {
-		$slashdb = getCurrentDB();
+		my $slashdb = getCurrentDB();
 		# in arrayref so we also get _modtime
 		my $temp = $slashdb->getTemplate($name, ['template']);
 		$text = $temp->{template};
@@ -134,15 +146,16 @@ sub _load {
 # without reimplementing the whole method?
 sub _refresh {
 	my($self, $slot) = @_;
-	my($head, $file, $data, $error, $slashdb);
-	$slashdb = getCurrentDB();
+	my($head, $file, $data, $error);
 
 	print STDERR "_refresh([ @$slot ])\n" if $DEBUG;
 
 	# compare load time with current _modtime from API to see if
 	# its modified and we need to reload it
 	if ($slot->[ DATA ]{modtime}) {
+		my $slashdb = getCurrentDB();
 		my $temp = $slashdb->getTemplate($slot->[ NAME ], ['tpid']);
+
 		if ($slot->[ DATA ]{modtime} < $temp->{_modtime}) {
 			print STDERR "refreshing cache file ", $slot->[ NAME ], "\n"
 				if $DEBUG;

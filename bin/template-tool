@@ -13,6 +13,7 @@
 #
 # Cliff++; -CaptTofu
 use strict;
+use File::Spec::Functions;
 use Slash;
 use Slash::Utility;
 use Slash::DB;
@@ -40,16 +41,14 @@ usage('deletion with other op flags') if ( $opts{'r'} && ($opts{'d'} || $opts{'l
 usage('too many ids to save') if (@ARGV > 2 && $opts{'s'} && $opts{'i'});
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
-my $slash = Slash::DB->new($opts{'u'});
+createEnvironment($opts{'u'});
+my $slashdb = getCurrentDB();
 my $install = Slash::Install->new($opts{'u'});
 
-createCurrentDB($slash);
-
 # datastruct of ALL templates, keyed by uid
-my $templates = $slash->getTemplates();
+my $templates = $slashdb->getTemplates();
 
-
-my ($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0,0,0,0);
+my($sectionpage_flag, $section_flag, $page_flag, $all_flag) = (0, 0, 0, 0);
 
 ##################################
 # version
@@ -67,7 +66,7 @@ if ($opts{'c'}) {
 		if $opts{i} && ($opts{P} || $opts{S});
 	# (-i) Sanity check. We only want an @ARGV full of numeric arguments.
 	map {
-		die "Non-numeric options given with -i!\n" if /^\d+$/;
+		die "Non-numeric options given with -i!\n" unless /^\d+$/;
 	} @ARGV if $opts{i};
 	compile_template();
 	exit();
@@ -100,33 +99,32 @@ if ($opts{'s'}) {
 		my $template = $install->readTemplateFile($_);
 		next unless $template;
 		print "Preparing to insert $template->{name} using filename $_\n";
-		my $tpid = $slash->getTemplateByName($template->{name}, 'tpid', 1, $template->{page}, $template->{section});
-		if(defined($tpid)) {
-			if( $slash->setTemplate($tpid, $template)) {
+		my $tpid = $slashdb->getTemplateByName($template->{name}, 'tpid', 1, $template->{page}, $template->{section});
+		if (defined $tpid) {
+			if ($slashdb->setTemplate($tpid, $template)) {
 				print "updated template $_ tpid $tpid\n";
 			} else {
 				print "wasn't able to update template $_ $tpid\n";
-				print "Error: " . $slash->{_dbh}->DBI::err_str . "\n";
+				print "Error: " . $slashdb->{_dbh}->DBI::err_str . "\n";
 			}
 		} else {
-			if($slash->createTemplate($template)) {
+			if ($slashdb->createTemplate($template)) {
 				print "created template $_\n";
 			} else {
 				print "wasn't able to update template $_ $tpid\n";
-				print "Error: " . $slash->{_dbh}->DBI::err_str . "\n";
+				print "Error: " . $slashdb->{_dbh}->DBI::err_str . "\n";
 			}
 		}
 	}
 } else {
 	my $templatelist = {};
-	my ($sectionpage_match,$no_sectionpage,$template_counter) = (0,0,0);
+	my($sectionpage_match, $no_sectionpage, $template_counter) = (0, 0, 0);
 	my $filename;
 
 	if ($opts{'f'}) {
 		$filename = $opts{'f'};
-		$filename .= $opts{'D'} . '/' . $filename if $opts{'D'};
-	} 
-	elsif($opts{'D'}) {
+		$filename = catfile($opts{'D'}, $filename) if $opts{'D'};
+	} elsif ($opts{'D'}) {
 		$filename = $opts{'D'};
 	}
 
@@ -151,11 +149,12 @@ if ($opts{'s'}) {
 			$no_sectionpage = 1;
 		} 
 
-		if($sectionpage_match || $no_sectionpage) {
+		if ($sectionpage_match || $no_sectionpage) {
 			if (@ARGV) {
 				for (@ARGV) {
-					if($opts{'i'}) {
-						$templatelist->{$key} = $templates->{$key} if $key == $_;
+					if ($opts{'i'}) {
+						$templatelist->{$key} = $templates->{$key}
+							if $key == $_;
 
 					} else {
 						my $templatename = $_;
@@ -165,142 +164,30 @@ if ($opts{'s'}) {
 						}
 					}
 				}
-			} 
-			elsif (! $opts{'i'}) {
+			}  elsif (! $opts{'i'}) {
 				$templatelist->{$key} = $templates->{$key};
 				$template_counter++;
 			}
-			($sectionpage_match,$no_sectionpage) = (0,0);
+			($sectionpage_match, $no_sectionpage) = (0, 0);
 		}
 	}
 
 	if ($opts{'l'}) {
 		list_templates($templatelist, $filename);
-	} 
-	elsif ($opts{'d'}) {
+	} elsif ($opts{'d'}) {
 		if ($template_counter > 1 && $opts{'f'}) {
 			usage('too many templates per file');
 		} else {
 			dump_templates($templatelist,$filename);
 		}
-	}
-	elsif ($opts{'r'}) {
+	} elsif ($opts{'r'}) {
 		delete_templates($templatelist);
 	}
 }
 
 ###############################################
-#sub save_template {
-#	my ($tpid, $section, $page, $name, $file) = @_;
-#	my @files;
-#	my $dirflag = 0;
-#	$dirflag = 1 if -d $file;
-#	
-#	if ($name eq '' && ! $tpid  && $dirflag) {
-#		opendir(DIR, $file);
-#		while(my $tmpfile = readdir(DIR)) {
-#			next if $tmpfile =~ /\./;
-#			print "processing $tmpfile\n";
-#			push(@files, $file . '/' . $tmpfile);
-#		}
-#	} 
-#	# this should be only one file
-#	elsif (-f $file) {
-#		push @files, $file;
-#
-#	} 
-#
-#	for my $tmpfile (@files) {
-#		my ($tsection,$tpage,$tname,$data);
-#		my ($psection,$ppage,$pname);
-#		my $filename_flag = 0;
-#		my $tmp = {};
-#		my $exists = 0;
-#
-#		# you can't save a template without a section and page or without a name
-#		# the file has the section, page, and name in it's filename and we don't 
-#		# have a template id, so get any unset attributes from the file name
-#		if($tpid) {
-#			$tname = $name if $name ne '';	
-#			$tpage = $page if $page ne '';
-#			$tsection = $section if $section ne '';
-#		}
-#		elsif ($tmpfile =~ /(\w+)\;(\w+)\;(.*)$/i) {
-#			$filename_flag = 1;
-#			($pname,$ppage,$psection) = ($1,$2,$3);
-#			$tname = $name eq '' ? $1 : $name ;
-#			$tpage = $page eq '' ? $2 : $page ;
-#			$tsection = $section eq '' ? $3 : $section ;
-#		}
-#		elsif ($name ne '') {
-#			$tname = $name;
-#			$tsection = $section ne '' ? $section : 'default';	
-#			$tpage = $page ne '' ? $page : 'misc';
-#		} else {
-#			usage('There was an error saving the template.');
-#		}
-#
-#		print "opening $tmpfile\n";
-#		open(FILE, "<$tmpfile");
-#		{ local $/; $data = <FILE> }
-#		close(FILE);
-#
-#		if($tpid) {
-#			$tmp = $slash->getTemplate($tpid);
-#			if ($tmp && $tmp->{tpid} == $tpid) {
-#				$exists = 1 ;
-#				$tname = $name eq '' ? $tmp->{name} : $name ;
-#				$tpage = $page eq '' ? $tmp->{page} : $page ;
-#				$tsection = $section eq '' ? $tmp->{section} : $section ;
-#			}
-#			
-#		} else {
-#			if ($filename_flag && $dirflag) {
-#				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1 ,$ppage,$psection);
-#				if (	$tmp &&
-#					$tmp->{page} eq $ppage && 
-#					$tmp->{section} eq $psection && 
-#					$tmp->{name} eq $pname ) 
-#				{
-#					$exists = 1; 
-#				}
-#			} else {
-#				$tmp = $slash->getTemplateByName($tname, [ 'section','page','name','tpid' ], 1, $tpage,$tsection);
-#				if (	$tmp &&
-#					$tmp->{page} eq $tpage && 
-#					$tmp->{section} eq $tsection && 
-#					$tmp->{name} eq $tname ) 
-#				{
-#					$exists = 1; 
-#				}
-#			}
-#
-#		}
-#
-#		if($exists) {
-#			print "updating $tname, tpid $tmp->{tpid}\n";
-#			$slash->setTemplate($tmp->{tpid}, { 	
-#						page 	=> $tpage,
-#						section => $tsection,
-#						template => $data 
-#						});
-#		} else {
-#			print "creating $tname\n";
-#			my $seclev = 100;
-#			$slash->createTemplate({ tpid		=> '',
-#						name 		=> $tname,
-#						page 		=> $tpage,
-#						section		=> $tsection,
-#						template	=> $data,
-#						seclev		=> $seclev
-#						});
-#		}
-#	}
-#}
-
-###############################################
 sub dump_templates {
-	my ($templatelist, $directory) = @_;
+	my($templatelist, $directory) = @_;
 	my $filename;
 
 	for my $template (keys %$templatelist) {
@@ -309,7 +196,7 @@ sub dump_templates {
 				$templatelist->{$template}{'page'} . ';' .  
 				$templatelist->{$template}{'section'};
 
-			$filename = $directory . "/" . $filename;
+			$filename = catfile($directory, $filename);
 		} else {
 			$filename = $directory;
 		} 
@@ -322,22 +209,24 @@ sub dump_templates {
 
 ###############################################
 sub list_templates {
-	my ($templatelist, $file) = @_;
+	my($templatelist, $file) = @_;
 
 	# all path creation should use File::Spec::Functions,
 	# File::Basename, etc. -- pudge
-	if($file) {	
-		$file .= $file . '/templatelist.txt' if -d $file;
+	if ($file) {
+		$file = catfile($file, 'templatelist.txt') if -d $file;
 
 		print "printing template descriptions to $file\n";
-		open(FILE, ">$file") or die "$! unable to open file $file to dump to\n";
-		select(FILE);
+		my $fh = gensym();
+		open($fh, "> $file") or die "$! unable to open file $file to dump to\n";
+		select($fh);
 	}
 
 	for my $template (keys %$templatelist) {
 
 		# stinking lousy control-Ms
-		$templatelist->{$template}{description} =~ s/\015\012/\n/g if $templatelist->{$template}{description};
+		$templatelist->{$template}{description} =~ s/\015\012/\n/g
+			if $templatelist->{$template}{description};
 
 		print <<EOT; 
 --------------------------------------------------------
@@ -355,15 +244,15 @@ EOT
 }
 ###############################################
 sub delete_templates {
-	my ($templatelist) = @_;
+	my($templatelist) = @_;
 	my $list = join(" ",keys(%$templatelist));
 	print "are you sure you want to delete templates tpid(s) $list ? y/Y ";
 	my $answer = <STDIN>;
 	chomp($answer);
  
-	if($answer eq 'Y' || $answer eq 'y') { 
+	if ($answer eq 'Y' || $answer eq 'y') { 
 		for my $template (keys %$templatelist) {
-			$slash->deleteTemplate($template);
+			$slashdb->deleteTemplate($template);
 		}
 	} else {
 		print "\n...canceled template deletion.\n";
@@ -372,78 +261,58 @@ sub delete_templates {
 
 ###############################################
 sub compile_template {
-	# at some point, it would probably be best to get the
-	# template object from Slash::Display.  we should talk
-	# more about this.  -- pudge
-	# Reproduce Slash::Display environment while adding our own options.
-	require Slash::Display;				# could just duplicate $filters.
-	require Slash::Display::Provider;			
+	require Slash::Display;
 
-	my $template_provider = Slash::Display::Provider->new({
-		TRIM 		=> 1,
-		PRE_CHOMP 	=> 1,
-		POST_CHOMP	=> 1,
+	my $template_provider = Slash::Display::get_template({}, {
 		COMPILE_EXT	=> '.ttc',
-		COMPILE_DIR	=> $opts{O} || '.',
+		COMPILE_DIR	=> $opts{O} || curdir(),
 	});
-
-	require Template::Stash;
-
-	my %list_ops = ( 
-		'rand' => sub {
-			my $list = shift;
-			return $list->[rand @$list];
-		}
-	);
-
-	my %scalar_ops = (
-        'uc'		=> sub { uc $_[0] },
-        'lc'		=> sub { lc $_[0] },
-        'ucfirst'	=> sub { ucfirst $_[0] },
-        'lcfirst'	=> sub { lcfirst $_[0] },
-	);
-
-	@{$Template::Stash::LIST_OPS}  {keys %list_ops}   = values %list_ops;
-	@{$Template::Stash::SCALAR_OPS}{keys %scalar_ops} = values %scalar_ops;
 
 	my $page = $opts{P} || 'misc';
 	my $section = $opts{S} || 'default';
+	my $user = getCurrentUser();
 
-	for (@ARGV) {
+	for (@ARGV) { warn $_;
 		my($data, $template, $compiled_template, $error);
 
+		# get template text or pass template data
 		if ($opts{i}) {
-			$template = $slash->getTemplate($_, 'template');
+			my $data = $slashdb->getTemplate($_, ['name', 'page', 'section']);
+			@{$user}{qw(currentPage currentSection)} =
+				@{$data}{qw(page section)};	
+			$template = $data->{name};
+
+		# this doesn't work, -f takes arg, filename
+		# is not in @ARGV
 		} elsif ($opts{f}) {
 			# The logic here is that $template would be set to the contents
 			# of the file named $_.
 			local $/ = undef;
-			if (open(INFILE, "$_")) {
-				$template = <INFILE>;
-				close(INFILE);
+			my $in = gensym();
+			if (open($in, $_)) {
+				$$template = <$in>;
+				close($in) or warn "Can't close file $_: $!\n";
 			} else {
-				print "Can't open file $_ for reading: $!\n";
+				warn "Can't open file $_ for reading: $!\n";
 			}
+
 		} else {
-			$template = $slash->getTemplateByName(	$_, 'template', 0,
-													$page, $section );
+			if (/;/) {
+				($template, @{$user}{qw(currentPage currentSection)}) =
+					split /;/, $_;
+			} else {
+				$template = $_;
+				@{$user}{qw(currentPage currentSection)} =
+					($page, $section);
+			}
 		}
-		die "Requested template '${_}' (${section}|$page) is empty!\n"
+
+		die "Requested template '$_' ($section|$page) is empty!\n"
 			if !$template;
 
-		# Load us a custom \%data for compilation.
-		$data = {
-			text	=> $template,
-			name	=> $_,
-			time	=> 0,
-			load	=> 0,
-		};
-		# Now perform the actual compilation...
-		# -- Yes, Krow. I know I'm not supposed to access private members this 
-		# way, but I'm being quick'n'dirty here.
-		($compiled_template, $error) =
-			$template_provider->_compile($data, "${_}_${section}_$page.ttc");
-		print "ERROR: $error\n" if $error;
+		my $out;
+		my $ok = $template_provider->process($template, {}, \$out);
+		warn $template_provider->error unless $ok;
 	}
 }
 
@@ -516,8 +385,9 @@ EOT
 }
 
 sub boiler {
-	open(FILE, ">$opts{'g'}") or die "Could not open file for blank template";
-	print FILE <<EOT;
+	my $fh = gensym();
+	open($fh, "> $opts{'g'}") or die "Could not open file for blank template";
+	print $fh <<EOT;
 __section__
 default
 __description__
