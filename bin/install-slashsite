@@ -29,7 +29,7 @@ my $PROGNAME = basename($0);
 
 my %opts;
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:P:R', \%opts);
+usage('Options used incorrectly') unless getopts('hvu:a:e:g:o:p:n:H:L:T:P:R', \%opts);
 usage() if !$opts{'u'} and ($opts{'h'} or !keys %opts);
 # if invoked with both -u and -h, call usage() later, after we load Slash::Install
 version() if $opts{'v'};
@@ -136,31 +136,44 @@ something else here. [$host_noport] ";
 }
 
 # themes
-print "\nWhich theme do you want to use?\n";
 my $x;
 #---------------------------------------------------
+$theme = 0;
+my $theme_num = 0;
 my $themes = $install->getThemeList($PREFIX);
-for (sort keys %$themes) {
-	if ((keys %$themes) > 1) {
-		print "( )$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
+if ($opts{'T'}) {
+	$theme = $opts{'T'};
+	if (!exists $themes->{$theme}) {
+		print "Error: the theme you specified on the command line, '$theme', does not exist. (Note: case matters.)\n";
+		$theme = '';
 	} else {
-		print "(*)$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
+		$theme_num = $themes->{$theme}{order};
 	}
 }
-my $atheme;
-if ((keys %$themes) > 1) {
-	chomp($atheme = <STDIN>);
-	$atheme ||= '1';
-} else {
-	print "\nSkipping theme select since you only have one theme!\n";
-	$atheme = '1';
-}
+if (!$theme) {
+	print "\nWhich theme do you want to use?\n";
+	for (sort keys %$themes) {
+		if ((keys %$themes) > 1) {
+			print "( )$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
+		} else {
+			print "(*)$themes->{$_}{'order'}.\t$_ $themes->{$_}{'description'}\n";
+		}
+	}
+	if ((keys %$themes) > 1) {
+		chomp($theme_num = <STDIN>);
+		$theme_num ||= '1';
+	} else {
+		print "\nSkipping theme select since you only have one theme!\n";
+		$theme_num = '1';
+	}
 
-for (keys %$themes) {
-	if ($themes->{$_}->{order} == $atheme) {
-		$theme = $_;
+	for (keys %$themes) {
+		if ($themes->{$_}{order} == $theme_num) {
+			$theme = $_;
+		}
 	}
 }
+print "Theme selected: $theme\n";
 
 #---------------------------------------------------
 my $plugins = $install->getPluginList($PREFIX);
@@ -210,7 +223,7 @@ for my $plugin (@plugins) {
 	}
 }
 # Show the user what was picked
-print "Selected: " . join(" ", sort keys %{$themes->{$theme}{plugin}}) . "\n";
+print "Plugins selected: " . join(" ", sort keys %{$themes->{$theme}{plugin}}) . "\n\n";
 
 
 if ($opts{'L'}) {

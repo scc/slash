@@ -219,7 +219,10 @@ sub main {
 			"slashd with the init script?"
 		));
 	}
-	local $SIG{TERM} = sub { slashdLog("Exiting Slashd (SIGTERM) with pid $$") };
+	local $SIG{TERM} = sub {
+		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
+		exit 0;
+	};
 
 	my $cron = init_cron();
 	process_tasks($cron);

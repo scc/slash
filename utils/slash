@@ -40,7 +40,7 @@ fi
 
 GRAB_CONFIG=`$WHICH_CAT $SLASHSITE | $WHICH_CUT -d"#" -f1` 
 if [ -z "`echo $GRAB_CONFIG | grep :`" ]; then
-	echo "[0;31mNOT[1;m Starting slashd:[0;31m No[1;m sites in $SLASHSITE";
+	echo "[0;31mNOT[1;m Starting/stopping slashd:[0;31m No[1;m sites in $SLASHSITE";
 	exit 0;
 fi
 
@@ -83,9 +83,11 @@ case "$1" in
 			USERNAME=`echo $server_name |$WHICH_CUT -d":" -f2`
 			if [ -f $RUNNING_PID/slashd.$SERVER_NAME.pid ] ;then
 				echo -n "Stopping slashd $SERVER_NAME: "
-				kill `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
-				sleep 2
-				kill -9 `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
+				if ! kill `cat $RUNNING_PID/slashd.$SERVER_NAME.pid` ;then
+					echo -n "...using kill -9..."
+					sleep 3
+					kill -9 `cat $RUNNING_PID/slashd.$SERVER_NAME.pid`
+				fi
 				rm -f $RUNNING_PID/slashd.$SERVER_NAME.pid
 				echo "ok."
 			else
