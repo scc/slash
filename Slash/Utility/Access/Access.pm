@@ -446,7 +446,7 @@ sub filterOk {
 		} elsif ($ratio > 0) {
 			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
 		}
-		$report .= " nm=$number_match";
+		$report .= " nm=$number_match uid=$user->{uid} ipid=$user->{ipid} karma=$user->{karma}";
 
 		$regex = $raw_regex . $number_match;
 		my $tmp_regex = $regex;
@@ -523,9 +523,9 @@ sub compressOk {
 				$slashdb->createAbuse("content compress", $formname, $content);
 				my $len2 = length(strip_nohtml($content));
 				my $report = "compressOk_report len1=$length len2=$len2";
-				$report .= " comlen=$comlen";
+				$report .= " comlen=$comlen field=$field";
 				$report .= sprintf(" ratio=%0.3f max=$_", $comlen/$length);
-				$report .= " uid=$user->{uid} ipid=$user->{ipid}";
+				$report .= " uid=$user->{uid} karma=$user->{karma} ipid=$user->{ipid}";
 print STDERR "$report\n";
 				return 0;
 			}
