@@ -44,7 +44,6 @@ $slashdb->setVar("totalhits", $sdTotalHits);
 
 $slashdb->cleanFormKeys();
 
-
 $slashdb->updateStamps();
 
 my $email = <<EOT;
