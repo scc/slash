@@ -29,18 +29,17 @@ sub getBackendStories {
 	my($self, $section) = @_;
 
 	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
-		image,commentcount,section,introtext,bodytext,hitparade,
+		image,commentcount,stories.section as section,introtext,bodytext,hitparade,
 		topics.tid as tid
-		    FROM stories,topics
-		   WHERE ((displaystatus = 0 and \"$section\"=\"\")
-		      OR (section=\"$section\" and displaystatus > -1))
+		    FROM stories,story_text,topics
+		   WHERE stories.sid=story_text.sid
+		     AND stories.tid=topics.tid
+		     AND ((displaystatus = 0 and \"$section\"=\"\")
+			      OR (stories.section=\"$section\" and displaystatus > -1))
 		     AND time < now()
 		     AND writestatus > -1
-		     AND stories.tid=topics.tid
 		ORDER BY time DESC
 		   LIMIT 10");
-
-		  # AND time < date_add(now(), INTERVAL 4 HOUR)
 
 	$cursor->execute;
 	my $returnable = [];
@@ -52,24 +51,24 @@ sub getBackendStories {
 
 ########################################################
 # This is only called if ssi is set
-sub updateCommentTotals {
-	my($self, $sid, $comments) = @_;
-	my $hp = join ',', @{$comments->[0]{totals}};
-	$self->sqlUpdate("stories", {
-			hitparade	=> $hp,
-			writestatus	=> 0,
-			commentcount	=> $comments->[0]{totals}[0]
-		}, 'sid=' . $self->{_dbh}->quote($sid)
-	);
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlUpdate("story_heap", {
-				hitparade	=> $hp,
-				writestatus	=> 0,
-				commentcount	=> $comments->[0]{totals}[0]
-			}, 'sid=' . $self->{_dbh}->quote($sid)
-		);
-	}
-}
+#sub updateCommentTotals {
+#	my($self, $sid, $comments) = @_;
+#	my $hp = join ',', @{$comments->[0]{totals}};
+#	$self->sqlUpdate("stories", {
+#			hitparade	=> $hp,
+#			writestatus	=> 0,
+#			commentcount	=> $comments->[0]{totals}[0]
+#		}, 'sid=' . $self->{_dbh}->quote($sid)
+#	);
+#	if (getCurrentStatic('mysql_heap_table')) {
+#		$self->sqlUpdate("story_heap", {
+#				hitparade	=> $hp,
+#				writestatus	=> 0,
+#				commentcount	=> $comments->[0]{totals}[0]
+#			}, 'sid=' . $self->{_dbh}->quote($sid)
+#		);
+#	}
+#}
 
 ########################################################
 # For slashd
