@@ -328,6 +328,3 @@ INSERT INTO users_prefs (uid, willing, dfid, tzcode, noicons, light, mylinks) VA
 #
 # Dumping data for table 'vars'
 #
-
-INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward');
-INSERT INTO vars (name, value, description) VALUES ('discussion_default_topic', 1, 'Default topic of user-created discussions.');

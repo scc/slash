@@ -355,6 +355,7 @@ INSERT INTO vars (name, value, description) VALUES ('defaulttopic','1','Default 
 INSERT INTO vars (name, value, description) VALUES ('delete_old_stories', '0', 'Delete stories and discussions that are older than the archive delay.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_archive','15','Number of days till discussions are set to read only.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');
+INSERT INTO vars (name, value, description) VALUES ('discussion_default_topic', '1', 'Default topic of user-created discussions.');
 INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');
 INSERT INTO vars (name, value, description) VALUES ('discussions_speed_limit','300','seconds delay before repeat discussion');
 INSERT INTO vars (name, value, description) VALUES ('do_expiry','1','Flag which controls whether we expire users.');
@@ -459,4 +460,3 @@ INSERT INTO vars (name, value, description) VALUES ('user_submitter_display_defa
 INSERT INTO vars (name, value, description) VALUES ('users_show_info_seclev','0','Minimum seclev to view a user\s info');
 INSERT INTO vars (name, value, description) VALUES ('users_speed_limit','20','How fast a user can change their prefs');
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
-INSERT INTO vars (name, value, description) VALUES ('discussion_default_topic', '1', 'Default topic of user-created discussions.');
