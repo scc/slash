@@ -141,18 +141,18 @@ EOT
 			$topics{$story_hash->{$data->{sid}}{tid}};
 		# Admins must disable stories via their own criterion.
 		$data->{'type'} = 0;
-		$data->{flags} = 'hitparade_dirty';
+		$data->{writestatus} = 'dirty';
 		if (!$opts{I}) {
 			# Reset the flag only if necessary. Pretty much we
 			# want to set things dirty and let slashd clean up
 			# as much of it as it can.
-			$data->{flags} =
-				$story_hash->{$data->{sid}}{flags} || ''
+			$data->{writestats} =
+				$story_hash->{$data->{sid}}{writestatus} || ''
 			unless $story_hash->{$data->{sid}}{writestatus} == 1;
 		}
 
 		$data->{'ALLOWED_FIELDS'} = [qw(
-			id sid title url topic ts type flags
+			id sid title url topic ts type writestatus
 		)];
 			
 		return $data
@@ -227,11 +227,11 @@ EOT
 		#
 		#$data->{discussion} = $discussions{$data->{sid}};
 		$data->{hits} = $hitlist->{$data->{sid}}{hits} || 0;
-		$data->{flags} = 'data_dirty';
-		# We only care about accurate representation of flags when 
+		$data->{writestatus} = 'dirty';
+		# We only care about accurate representation of writestats when 
 		# we do a full import.
 		if (!$opts{I}) {
-			$data->{flags}='delete_me' if $data->{writestatus}==5 ||
+			$data->{writestatus}='delete' if $data->{writestatus}==5 ||
 						      $data->{writestatus}==10;
 		}
 		# Use to properly assign topics to story-based discussions.
@@ -253,9 +253,10 @@ EOT
 		# extratext just goes awaaaayyy.....
 		delete $data->{extratext};
 		# ...and writestatus, hitparade and commentcount join 'em!
-		delete $data->{writestatus};
-		delete $data->{hitparade};
-		delete $data->{commentcount};
+		# And we have them all again, so keep them -Brian
+#		delete $data->{writestatus};
+#		delete $data->{hitparade};
+#		delete $data->{commentcount};
 
 		return $data;
 	},
@@ -1140,7 +1141,7 @@ EOT
 	# Now update discussion_hitparade...
 	print "Updating story comment counts...";
 	$sth_d = $dbh_new->prepare(<<EOT);
-SELECT id FROM discussions WHERE FIND_IN_SET(flags, 'hitparade_dirty')
+SELECT id FROM discussions flags == 'dirty')
 EOT
 
 	$sth_d->execute();
@@ -1188,7 +1189,7 @@ EOT
 	
 	# Make sure we clean our flags.
 	$dbh_new->do(
-		"UPDATE discussions SET flags='' WHERE flags='hitparade_dirty'"
+		"UPDATE discussions SET flags='ok' WHERE flags='dirty'"
 	);
 }
 
