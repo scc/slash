@@ -67,3 +67,9 @@ if($story->{'nuts'} eq 'flavored') {
 } else {
 	print "ok 9\n";
 }
+print "Testing getSectionBank\n";
+my $section  = $object->getSectionBank();
+for (keys %$section) {
+	print "\t$_ : $section->{$_}\n";
+}
+print "ok 10\n";

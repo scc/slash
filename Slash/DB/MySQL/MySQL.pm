@@ -362,13 +362,13 @@ sub getBlockBank {
 ########################################################
 sub getSectionBank {
 	my ($self, $sectionbank) = @_;
-	unless ($sectionbank) {
-		my $sth = $self->sqlSelectMany('*', 'sections');
-		while (my $S = $sth->fetchrow_hashref) {
-			$sectionbank->{ $S->{section} } = $S;
-		}
-		$sth->finish;
+	my $sectionbank = {};
+	my $sth = $self->sqlSelectMany('*', 'sections');
+	while (my $S = $sth->fetchrow_hashref) {
+		$sectionbank->{ $S->{section} } = $S;
 	}
+	$sth->finish;
+	return $sectionbank;
 }
 
 ########################################################
@@ -460,6 +460,16 @@ sub setStoryBySid {
 	$storyBank{$sid}{$key} = $value;
 }
 
+sub getSubmissionLast {
+my ($self, $id, $formname) = @_;
+  my($last_submitted) = $self->sqlSelect(
+		"max(submit_ts)",
+		"formkeys",
+		"id = '$id' AND formname = '$formname'");
+	$last_submitted ||= 0;
+
+	return $last_submitted;
+}
 
 ########################################################
 # Below are the block methods. These will be cleaned
@@ -508,6 +518,108 @@ sub getColorBlock {
 
 	return  $block_hash_ref;
 }
+
+########################################################
+sub getLock {
+	my ($self, $subj, $return_array) = @_;
+	my $sth = $self->sqlSelectMany('lasttitle,aid', 'sessions');
+	my @session;
+	while (my($thissubj, $aid) = $sth->fetchrow) {
+		push( @$return_array, [$thissubj, $aid]);	
+	}
+	$sth->finish;
+}
+
+
+########################################################
+sub insertFormkey {
+	my($self, $formname, $id, $sid, $formkey, $uid, $remote ) = @_;
+
+
+	# insert the fact that the form has been displayed, but not submitted at this point
+	$self->sqlInsert("formkeys", {
+		formkey		=> $formkey,
+		formname 	=> $formname,
+		id 		=> $id,
+		sid		=> $sid,
+		uid		=> $uid,
+		host_name	=> $remote,
+		value		=> 0,
+		ts		=> time()
+	});
+}
+########################################################
+sub checkFormkey {
+	my($self, $formkey_earliest, $formname, $formkey_id, $formkey) = @_;
+
+	# make sure that there's a valid form key, and we only care about formkeys
+	# submitted $formkey_earliest seconds ago
+	my($is_valid_formkey) = $self->sqlSelect("count(*)", "formkeys",
+		"ts >= $formkey_earliest AND formname = '$formname' and " .
+		"id='$formkey_id' and formkey=" .
+		$self->{dbh}->quote($formkey));
+
+	return($is_valid_formkey);
+}
+
+##################################################################
+sub checkTimesPosted {
+	my($self, $formname, $max, $id, $formkey_earliest) = @_;
+	my($times_posted) = $self->sqlSelect(
+		"count(*) as times_posted",
+		"formkeys",
+		"id = '$id' AND submit_ts >= $formkey_earliest AND formname = '$formname'");
+
+	return $times_posted >= $max ? 0 : 1;
+}
+##################################################################
+# the form has been submitted, so update the formkey table
+# to indicate so
+sub formSuccess {
+	my($self, $formkey, $cid, $length) = @_;
+
+	# update formkeys to show that there has been a successful post,
+	# and increment the value from 0 to 1 (shouldn't ever get past 1)
+	# meaning that yes, this form has been submitted, so don't try i t again.
+	$self->sqlUpdate("formkeys", {
+			-value          => 'value+1',
+			cid             => $cid,
+			submit_ts       => time(),
+			content_length  => $length,
+			}, "formkey=" . $self->{dbh}->quote($formkey)
+	);
+}
+##################################################################
+sub formFailure {
+	my ($self, $formkey) = @_;
+	sqlUpdate("formkeys", {
+			value   => -1,
+			}, "formkey=" . $self->{dbh}->quote($formkey)
+	);
+}
+##################################################################
+# logs attempts to break, fool, flood a particular form
+sub formAbuse {
+  my ($self, $reason, $remote_addr, $script_name, $query_string) = @_;
+	# logem' so we can banem'
+	$self->sqlInsert("abusers", {
+		host_name => $remote_addr,
+		pagename  => $script_name,
+		querystring => $query_string,
+		reason    => $reason,
+		-ts   => 'now()',
+	});
+
+##################################################################
+# logs attempts to break, fool, flood a particular form
+getSubmissionCount{
+	my ($self) = @_;
+	$self->sqlSelect("count(*)", "submissions", "del=0");
+}
+
+return;
+}
+
 1;
 
 =head1 NAME

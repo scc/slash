@@ -82,7 +82,9 @@ sub main {
 		$I{F}{op} eq "Preview" || $I{F}{op} eq "Reply") {
 
 		if ($I{F}{op} eq 'Reply') {
-			insertFormkey("comments",$id,$I{F}{sid});	
+			my $formkey = getFormkey();
+			$I{dbobject}->insertFormkey("comments", $id, $I{F}{sid}, $formkey, $I{U}{uid}, $ENV{REMOTE_ADDR});	
+			$I{F}{formkey} = $formkey;
 		}
 
 		# find out their Karma
@@ -198,7 +200,7 @@ EOT
 		print "\n</TABLE><P>\n\n";
 	}
 
-	if (!checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest)) {
+	if (!$I{dbobject}->checkTimesPosted("comments", $I{max_posts_allowed}, $id, $formkey_earliest)) {
 		my $max_posts_warn =<<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day :
 $I{max_submissions_allowed}</B></P>
@@ -716,7 +718,7 @@ EOT
 		);
 
 		# successful submission		
-		formSuccess($I{F}{formkey},$maxCid,length($I{F}{postercomment}));
+		$I{dbobject}->formSuccess($I{F}{formkey},$maxCid,length($I{F}{postercomment}));
 
 		my($tc, $mp, $cpp) = $I{dbobject}->getVars(
 			"totalComments",

@@ -84,9 +84,9 @@ my %my_conf = (
 
 # comment posting and story submission abuse settings
 	post_limit		=> 10,	# seconds delay before repeat posting
-	max_posts_allowed	=> 30,	# maximum number of posts per day allowed
+	max_posts_allowed	=> 100,	# maximum number of posts per day allowed
 	max_submissions_allowed => 20,	# maximum number of submissions per timeframe allowed
-	submission_speed_limit	=> 300,	# how fast they can submit
+	submission_speed_limit	=> 1,	# how fast they can submit
 	formkey_timeframe 	=> 14400, # the time frame that we check for a formkey
 
 	# see Slash::fixHref()

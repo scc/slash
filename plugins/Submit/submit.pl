@@ -27,6 +27,7 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
 
 #################################################################
 sub main {
@@ -34,7 +35,6 @@ sub main {
 	getSlash();
 
 	my $id = getFormkeyId($I{U}{uid});
-
 	my($section, $op, $seclev, $aid) = (
 		$I{F}{section}, $I{F}{op}, $I{U}{aseclev}, $I{U}{aid}
 	);
@@ -76,7 +76,11 @@ sub main {
 
 		# insert the fact that the form has been displayed,
 		# but not submitted at this point
-		insertFormkey("submissions",$id,"submission");	
+		my $formkey = getFormkey();
+		$I{dbobject}->insertFormkey("submissions", $id, "submission", $formkey, $I{U}{uid}, $ENV{REMOTE_ADDR});
+		$I{F}{formkey} = $formkey;
+
+
 
 		displayForm($I{F}{from}, $I{F}{email}, $I{F}{section}, $id);
 
@@ -453,7 +457,7 @@ sub displayForm {
 	my($user, $fakeemail, $section, $id) = @_;
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	if (!checkTimesPosted("submissions", $I{max_submissions_allowed}, $id, $formkey_earliest)) {
+	if (!$I{dbobject}->checkTimesPosted("submissions", $I{max_submissions_allowed}, $id, $formkey_earliest)) {
 		my $max_posts_warn = <<EOT;
 <P><B>Warning! you've exceeded max allowed submissions for the day : $I{max_submissions_allowed}</B></P>
 EOT
@@ -526,7 +530,7 @@ EOT
 
 #################################################################
 sub saveSub {
-	my $id = shift;
+	my ($id) = @_;
 
 	# if formkey works
 	if (checkSubmission("submissions", $I{submission_speed_limit}, $I{max_submissions_allowed}, $id)) {
@@ -554,6 +558,7 @@ sub saveSub {
 
 		my $subid = "$hour$min$sec.$mon$mday$year";
 
+		print STDERR "Died here:$I{F}{section}:\n";
 		sqlInsert("submissions", {
 			email	=> $I{F}{email},
 			uid	=> $I{U}{uid},
@@ -565,11 +570,13 @@ sub saveSub {
 			tid	=> $I{F}{tid},
 			section	=> $I{F}{section}
 		});
+		print STDERR "Died after here\n";
 
-		formSuccess($I{F}{formkey},0,length($I{F}{subj}));
+		$I{dbobject}->formSuccess($I{F}{formkey},0,length($I{F}{subj}));
 	}
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+# Why do we want to destroy our database handle? -Brian
+#$I{dbh}->disconnect if $I{dbh};
 1;
