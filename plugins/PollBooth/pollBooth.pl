@@ -80,7 +80,7 @@ sub editpoll {
 		if $qid;
 
 	my $answers;
-	if($question) {
+	if ($question) {
 		$question->{voters} ||= 0;
 		$answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']) if $qid;
 	} else {

@@ -656,18 +656,18 @@ sub tildeEd {
 	my $aids = $slashdb->getAuthorNames();
 	my $n = 0;
 	for my $aid (@$aids) {
-		$aidref->{$aid}{checked} = ($exaid =~ /\Q$aid\E/) ? ' CHECKED' : '';
+		$aidref->{$aid}{checked} = ($exaid =~ /'\Q$aid\E'/) ? ' CHECKED' : '';
 	}
 
 	my $topics = $slashdb->getDescriptions('topics');
 	while (my($tid, $alttext) = each %$topics) {
-		$tidref->{$tid}{checked} = ($extid =~ /\Q$tid\E/) ? ' CHECKED' : '';
+		$tidref->{$tid}{checked} = ($extid =~ /'\Q$tid\E'/) ? ' CHECKED' : '';
 		$tidref->{$tid}{alttext} = $alttext;
 	}
 
 	my $sections = $slashdb->getDescriptions('sections');
 	while (my($section, $title) = each %$sections) {
-		$sectionref->{$section}{checked} = ($exsect =~ /\Q$section\E/) ? ' CHECKED' : '';
+		$sectionref->{$section}{checked} = ($exsect =~ /'\Q$section\E'/) ? ' CHECKED' : '';
 		$sectionref->{$section}{title} = $title;
 	}
 

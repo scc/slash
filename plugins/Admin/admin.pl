@@ -63,10 +63,13 @@ sub main {
 
 	} elsif ($op eq 'save-keyword') {
 		saveKeyword();
+
 	} elsif ($op eq 'edit-keyword') {
 		editKeyword();
+
 	} elsif ($op eq 'delete-keyword') {
 		deleteKeyword();
+
 	} elsif ($op eq 'save') {
 		saveStory();
 
@@ -730,7 +733,7 @@ sub keywordSave {
 
 	return if getCurrentUser('seclev') < 500;
 
-	if($form->{id}) {
+	if ($form->{id}) {
 		$slashdb->setKeyword($form->{id}, $form);
 	} else {
 		$form->{id} = $slashdb->createKeyword($form);
