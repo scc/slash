@@ -165,7 +165,7 @@ sub sqlConnect {
 sub setComment{
 	my($self, $form, $user, $pts, $default_user) = @_;
 
-	$self->{dbh}->do("LOCK TABLES comments WRITE");
+	$self->sqlDo("LOCK TABLES comments WRITE");
 	my($maxCid) = $self->sqlSelect(
 		"max(cid)", "comments", "sid=" . $self->{dbh}->quote($form->{sid})
 	);
@@ -185,8 +185,8 @@ sub setComment{
 		return;
 	}
 
-	if ($self->{dbh}->do($insline)) {
-		$self->{dbh}->do("UNLOCK TABLES");
+	if ($self->sqlDo($insline)) {
+		$self->sqlDo("UNLOCK TABLES");
 
 		# Update discussion
 		my($dtitle) = $self->sqlSelect(
@@ -233,7 +233,7 @@ sub setComment{
 		return $maxCid;
 
 	} else {
-		$self->{dbh}->do("UNLOCK TABLES");
+		$self->sqlDo("UNLOCK TABLES");
 		apacheLog("$DBI::errstr $insline");
 		return -1;
 	}
@@ -271,7 +271,7 @@ sub unsetModeratorlog{
 	while (my($cid, $val, $active, $max, $min) = $cursor->fetchrow){
 		# We undo moderation even for inactive records (but silently for
 		# inactive ones...)
-		$self->{dbh}->do("delete from moderatorlog where
+		$self->sqlDo("delete from moderatorlog where
 			cid=$cid and uid=$uid and sid=" .
 			$self->{dbh}->quote($sid)
 		);
@@ -353,7 +353,7 @@ sub getNewStories {
 sub getAdminInfo {
 	my($self , $session, $admin_timeout) = @_;
 
-	$self->{dbh}->do("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
+	$self->sqlDo("DELETE from sessions WHERE now() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)");
 
 	my($aid, $seclev, $section, $url) = $self->sqlSelect(
 		'sessions.aid, authors.seclev, section, url',
@@ -364,7 +364,7 @@ sub getAdminInfo {
 	unless ($aid) {
 		return('', 0, '', '');
 	} else {
-		$self->{dbh}->do("DELETE from sessions WHERE aid = '$aid' AND session != " .
+		$self->sqlDo("DELETE from sessions WHERE aid = '$aid' AND session != " .
 			$self->{dbh}->quote($session)
 		);
 		$self->sqlUpdate('sessions', {-lasttime => 'now()'},
@@ -387,7 +387,7 @@ sub setAdminInfo {
 			'aid=' . $self->{dbh}->quote($aid)
 		);
 
-		$self->{dbh}->do('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($aid) );
+		$self->sqlDo('DELETE FROM sessions WHERE aid=' . $self->{dbh}->quote($aid) );
 
 		my $sid = $self->generatesession($aid);
 		$self->sqlInsert('sessions', { session => $sid, aid => $aid,
@@ -725,7 +725,7 @@ sub getCommentCid {
 ########################################################
 sub removeComment{
 	my($self, $sid, $cid) = @_;
-	  $self->{dbh}->do("delete from comments WHERE sid=" .
+	  $self->sqlDo("delete from comments WHERE sid=" .
 		    $self->{dbh}->quote($sid) . " and cid=" . $self->{dbh}->quote($cid)
 		);
 
@@ -785,7 +785,7 @@ sub setSection {
 	#This is a poor attempt at a transaction I might add. -Brian
 	#I need to do this diffently under Oracle
 	if ($count) {
-		$self->{dbh}->do("INSERT into sections (section) VALUES( '$section')"
+		$self->sqlDo("INSERT into sections (section) VALUES( '$section')"
 		);
 	} 
 	$self->sqlUpdate("sections", {
@@ -826,7 +826,7 @@ sub getSectionTitle {
 ########################################################
 sub deleteSection{
 	my ($self, $section) = @_;
-	$self->{dbh}->do("DELETE from sections WHERE section='$section'");
+	$self->sqlDo("DELETE from sections WHERE section='$section'");
 }
 ########################################################
 sub getSectionBlock {
@@ -1537,7 +1537,7 @@ sub countUsersIndexExboxesByBid{
 #	$strsql .= " AND lastmod<>$I{U}{uid}"
 #		unless $I{U}{aseclev} > 99 && $I{authors_unlimited};
 #
-#	if ($val ne "+0" && $I{dbh}->do($strsql)) {
+#	if ($val ne "+0" && $IsqlDo($strsql)) {
 #		$I{dbobject}->setModeratorLog($cid, $sid, $I{U}{uid}, $modreason, $val);
 #
 #		# Adjust comment posters karma
@@ -1611,7 +1611,7 @@ my ($self) = @_;
 # them and then null them? -Brian
 #  my($stuff) = $self->sqlSelect("story", "submissions", "subid='quickies'");
 #	$stuff = "";
-	$self->{dbh}->do("DELETE FROM submissions WHERE subid='quickies'");
+	$self->sqlDo("DELETE FROM submissions WHERE subid='quickies'");
 	my $stuff;
 
 	my $submission = $self->sqlSelectAll("subid,subj,email,name,story",

@@ -5,6 +5,7 @@ use ExtUtils::MakeMaker;
 
 use Apache::ExtUtils qw (command_table);
 use Apache::src ();
+use Apache::Constants;
 
 my @directives = (
 	{ name			=> 'SlashVirtualUser',

@@ -19,11 +19,11 @@ $Slash::Utility::VERSION = '0.01';
 # writes error message to apache's error_log if we're running under mod_perl
 # Called wherever we have errors.
 sub apacheLog {
+	my $r = Apache->request;
 	if ($ENV{SCRIPT_NAME}) {
-		my $r = Apache->request;
 		$r->log_error("$ENV{SCRIPT_NAME}:@_");
 	} else {
-		print @_, "\n";
+		$r->log_error("Error in library:@_");
 	}
 	return 0;
 }

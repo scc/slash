@@ -31,7 +31,6 @@ sub sqlSelectMany {
 	} else {
 		$sth->finish;
 		apacheLog($sql);
-		die;
 		return undef;
 	}
 }
@@ -45,7 +44,7 @@ sub sqlSelect {
 	$sql .= "$other" if $other;
 	
 	$self->sqlConnect();
-	my $sth = $self->{dbh}->prepare_cached($sql) or die "Sql has gone away\n";
+	my $sth = $self->{dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
 		apacheLog($sql);
 		# print "\n<P><B>SQL Error</B><BR>\n";
@@ -66,7 +65,7 @@ sub sqlSelectArrayRef {
 	$sql .= "$other" if $other;
 	
 	$self->sqlConnect();
-	my $sth = $self->{dbh}->prepare_cached($sql) or die "Sql has gone away\n";
+	my $sth = $self->{dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
 		apacheLog($sql);
 		return undef;
@@ -92,6 +91,7 @@ sub selectCount  {
 
 	my $sql = "SELECT count(*) AS count FROM $table $where";
 	# we just need one stinkin value - count
+	$self->sqlConnect();
 	my $sth = $self->{dbh}->selectall_arrayref($sql);
 	return $sth->[0][0];  # count
 }
@@ -163,6 +163,7 @@ sub sqlUpdate
 	}
 	chop $sql;
 	$sql .= "\nWHERE $where\n";
+	$self->sqlConnect();
 	return $self->{dbh}->do($sql) or apacheLog($sql);
 }
 
@@ -219,6 +220,7 @@ sub sqlTableExists {
 	my $table = shift or return;
 
 	my $sth = $self->{dbh}->prepare_cached(qq!SHOW TABLES LIKE "$table"!);
+	$self->sqlConnect();
 	$sth->execute;
 	my $te = $sth->rows;
 	$sth->finish;
@@ -231,6 +233,7 @@ sub sqlSelectColumns {
 	my $table = shift or return;
 
 	my $sth = $self->{dbh}->prepare_cached("SHOW COLUMNS FROM $table");
+	$self->sqlConnect();
 	$sth->execute;
 	my @ret;
 	while (my @d = $sth->fetchrow) {
@@ -252,11 +255,18 @@ sub generatesession {
 #################################################################
 sub getSectionBlocksByBid {
 	my ($self, $bid) = @_;
+	$self->sqlConnect();
 	$self->sqlSelect(
 		"title,block,url", "blocks, sectionblocks",
 		"blocks.bid = sectionblocks.bid AND blocks.bid = "
 		. $self->{dbh}->quote($bid)
 	);
+}
+#################################################################
+sub sqlDo {
+	my ($self, $sql) = @_;
+	$self->sqlConnect();
+	$self->{dbh}->do($sql);
 }
 1;
 
