@@ -21,6 +21,8 @@ __template__
 [% END %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="GET">
+	<FONT size=-1>(Note: words under four characters are not indexed)</font>
+	<br>
 	<INPUT TYPE="TEXT" SIZE="40" NAME="query" VALUE="[% form.query %]">
 	<INPUT TYPE="SUBMIT" VALUE="Search">
 
@@ -44,6 +46,7 @@ __template__
 			[% Slash.createSelect("section", sections, form.section, 1) %]
 		[% END %]
 	[% END %]
+	[% Slash.createSelect("sort", sort, form.sort, 1) %]
 
 	<P>
 </FORM>

@@ -17,7 +17,7 @@ __template__
 	[% x = start ? start : 1 %]
 	[% FOREACH comment=comments %]
 		[% user_email = Slash.db.getUser(comment.8, ['fakeemail', 'nickname']) %]
-		[% IF comment.11 %]
+		[% IF comment.10 %]
 			<BR><B>[% comment.11 %]</B>
 		[% ELSE %]
 			<BR><B>[% x %]</B>
@@ -28,7 +28,7 @@ __template__
 			by <A HREF="mailto:[% user_email.fakeemail | fixparam %]">[% user_email.nickname %]</A> on [% Slash.timeCalc(comment.7) %]<BR>
 			<FONT SIZE="2">attached to 
 			<A HREF="[% comment.1 %]">[% comment.3 %]</A> 
-			posted on [% Slash.timeCalc(comment.6) %] by [% Slash.db.getAuthor(comment.2, 'nickname') %]</FONT><BR>
+			posted on [% Slash.timeCalc(comment.6) %]</FONT><BR>
 		[% x = x + 1 %]
 	[% END %]
 	[% PROCESS pagination %]

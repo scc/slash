@@ -64,11 +64,11 @@ sub _keysearch {
 # This has been changed. Since we no longer delete comments
 # it is safe to have this run against stories.
 sub findComments {
-	my($self, $form, $start, $limit) = @_;
+	my($self, $form, $start, $limit, $sort) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
 	my $query = $self->sqlQuote($form->{query});
-	my $columns = "section, discussions.url, discussions.uid as author, discussions.title as title, pid, subject, ts, date, comments.uid as uid, comments.cid as cid ";
+	my $columns = "section, discussions.url, discussions.uid, discussions.title, pid, subject, ts, date, comments.uid as uid, comments.cid as cid ";
 	$columns .= ", TRUNCATE((MATCH (comments.subject) AGAINST($query)), 1) as score "
 		if $form->{query};
 
@@ -90,7 +90,7 @@ sub findComments {
 			if $form->{section};
 
 	my $other;
-	if ($form->{query}) {
+	if ($form->{query} && $sort ne 'date') {
 		$other = " ORDER BY score DESC ";
 	} else {
 		$other = " ORDER BY cid DESC ";
@@ -163,7 +163,7 @@ sub findComments {
 
 ####################################################################################
 sub findUsers {
-	my($self, $form, $start, $limit, $users_to_ignore) = @_;
+	my($self, $form, $start, $limit, $sort, $users_to_ignore) = @_;
 	# userSearch REALLY doesn't need to be ordered by keyword since you
 	# only care if the substring is found.
 	my $query = $self->sqlQuote($form->{query});
@@ -180,7 +180,7 @@ sub findUsers {
 
 
 	my $other;
-	if ($form->{query}) {
+	if ($form->{query} && $sort ne 'date') {
 		$other = " ORDER BY score "
 	} else {
 		$other = " ORDER BY users.uid "
@@ -199,7 +199,7 @@ sub findUsers {
 
 ####################################################################################
 sub findStory {
-	my($self, $form, $start, $limit) = @_;
+	my($self, $form, $start, $limit, $sort) = @_;
 	$start ||= 0;
 
 	my $query = $self->sqlQuote($form->{query});
@@ -211,7 +211,7 @@ sub findStory {
 	$tables .= ",story_text" if $form->{query};
 
 	my $other;
-	if ($form->{query}) {
+	if ($form->{query} && $sort ne 'date') {
 		$other = " ORDER BY score DESC";
 	} else {
 		$other = " ORDER BY time DESC";
@@ -250,7 +250,7 @@ sub findStory {
 
 ################################################################################
 sub findRetrieveSite {
-	my($self, $query, $start, $limit) = @_;
+	my($self, $query, $start, $limit, $sort) = @_;
 	$query = $self->sqlQuote($query);
 	$limit = " LIMIT $start, $limit" if $limit;
 
@@ -268,7 +268,7 @@ sub findRetrieveSite {
 
 ####################################################################################
 sub findJournalEntry {
-	my($self, $form, $start, $limit) = @_;
+	my($self, $form, $start, $limit, $sort) = @_;
 	$start ||= 0;
 
 	my $query = $self->sqlQuote($form->{query});
@@ -277,7 +277,7 @@ sub findJournalEntry {
 		if $form->{query};
 	my $tables = "journals, journals_text, users";
 	my $other;
-	if($form->{query}) {
+	if ($form->{query} && $sort ne 'date') {
 		$other = " ORDER BY score DESC";
 	} else {
 		$other = " ORDER BY date DESC";

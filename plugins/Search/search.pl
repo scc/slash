@@ -77,6 +77,7 @@ sub main {
 				tref		=> $slashdb->getTopic($form->{topic}),
 				op		=> $form->{op},
 				authors		=> _authors(),
+				'sort'		=> _sort(),
 			});
 			if ($ops{$form->{op}}) {
 				$ops{$form->{op}}->($form, $constants, $slashdb, $searchDB);
@@ -112,6 +113,16 @@ sub _topics {
 }
 
 #################################################################
+sub _sort {
+	my $sort;
+	$sort->{''} = 'Default Order';
+	$sort->{'date'} = 'Order By Date';
+	$sort->{'score'} = 'Order By Score';
+
+	return $sort;
+}
+
+#################################################################
 # Ugly isn't it?
 sub _sections {
 	my $slashdb = getCurrentDB();
@@ -142,7 +153,7 @@ sub commentSearch {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $comments = $searchDB->findComments($form, $start, $constants->{search_default_display} + 1);
+	my $comments = $searchDB->findComments($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -179,7 +190,7 @@ sub userSearch {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $users = $searchDB->findUsers($form, $start, $constants->{search_default_display} + 1);
+	my $users = $searchDB->findUsers($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -215,7 +226,7 @@ sub storySearch {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1);
+	my $stories = $searchDB->findStory($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -256,7 +267,7 @@ sub commentSearchRSS {
 	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$comments = [ ];
 	} else {
-		$comments = $searchDB->findComments($form, $start, 15);
+		$comments = $searchDB->findComments($form, $start, 15, $form->{sort});
 	}
 
 	my @items;
@@ -288,7 +299,7 @@ sub userSearchRSS {
 	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$users = [ ];
 	} else {
-		$users = $searchDB->findUsers($form, $start, 15);
+		$users = $searchDB->findUsers($form, $start, 15, $form->{sort});
 	}
 
 	my @items;
@@ -320,7 +331,7 @@ sub storySearchRSS {
 	if ($constants->{panic} >= 1 or $constants->{search_google}) {
 		$stories = [ ];
 	} else {
-		$stories = $searchDB->findStory($form, $start, 15);
+		$stories = $searchDB->findStory($form, $start, 15, $form->{sort});
 	}
 
 	my @items;
@@ -349,7 +360,7 @@ sub findRetrieveSite {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $feeds = $searchDB->findRetrieveSite($form->{query}, $start, $constants->{search_default_display} + 1);
+	my $feeds = $searchDB->findRetrieveSite($form->{query}, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	# check for extra feeds ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -387,7 +398,7 @@ sub findRetrieveSiteRSS {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $feeds = $searchDB->findFeeds($form->{query}, $start, 15);
+	my $feeds = $searchDB->findFeeds($form->{query}, $start, 15, $form->{sort});
 
 	# I am aware that the link has to be improved.
 	my @items;
@@ -416,7 +427,7 @@ sub findJournalEntry {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $entries = $searchDB->findJournalEntry($form, $start, $constants->{search_default_display} + 1);
+	my $entries = $searchDB->findJournalEntry($form, $start, $constants->{search_default_display} + 1, $form->{sort});
 
 	# check for extra articles ... we request one more than we need
 	# and if we get the extra one, we know we have extra ones, and
@@ -456,7 +467,7 @@ sub findJournalEntryRSS {
 	my($form, $constants, $slashdb, $searchDB) = @_;
 
 	my $start = $form->{start} || 0;
-	my $entries = $searchDB->findJournalEntry($form, $start, 15);
+	my $entries = $searchDB->findJournalEntry($form, $start, 15, $form->{sort});
 
 	my @items;
 	for my $entry (@$entries) {
