@@ -94,7 +94,7 @@ The fortune command.
 #################################################################
 sub getUptime {
 	my $x = `/usr/bin/uptime`;
-	$x = "<B>date:</B> $x";
+	$x = "<B>time:</B> $x";
 	$x =~ s/up/\n<BR><B>uptime:<\/B>/g;
 	$x =~ s/load average:/\n<BR><B>load average:<\/B>/;
 	my $ps = `/bin/ps aux | /usr/bin/wc -l`;
