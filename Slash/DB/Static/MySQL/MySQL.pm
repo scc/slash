@@ -105,9 +105,34 @@ sub archiveComments {
 
 	$self->sqlDo("update discussions SET type='archived'  WHERE to_days(now()) - to_days(ts) > $constants->{discussion_archive} AND type = 'open' ");
 	# Optimize later to use heap table -Brian
-	for ($self->sqlSelect('cid', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 'recycle' AND discussion.pid = 0")) {
-		$self->deleteComments('', $_);
+	for ($self->sqlSelect('cid, discussion.id', 'comments,discussions', "WHERE to_days(now()) - to_days(date) > $constants->{discussion_archive} AND discussion.id = comments.sid AND discussion.type = 'recycle' AND discussion.pid = 0")) {
+		my $local_count = $self->_deleteThread($_->[0]);
+		$self->setDiscussionDelCount($_->[1], $local_count);
+	}  
+
+}
+
+sub _deleteThread {
+	my($self, $cid, $level, $comments_deleted) = @_;
+	$level ||= 0;
+
+	my $count = 1;
+	my @delList;
+	$comments_deleted = \@delList if !$level;
+
+	my $delkids = $self->getCommentChildren($cid);
+
+	# Delete children of $cid.
+	push @{$comments_deleted}, $cid;
+	for (@{$delkids}) {
+		my($cid) = @{$_};
+		push @{$comments_deleted}, $cid;
+		$count += $self->_deleteThread($cid, $level+1, $comments_deleted);
 	}
+	# And now delete $cid.
+	$count += $self->deleteComment($cid);
+
+	return $count;
 }
 
 ########################################################

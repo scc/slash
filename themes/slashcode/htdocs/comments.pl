@@ -419,7 +419,7 @@ sub createDiscussion {
 			});
 		} else {
 			$id = $slashdb->createDiscussion(
-				$form->{title}, $form->{url}, $form->{topic}, 1
+				$form->{title}, $form->{url}, $form->{topic}, "recycle"
 			);
 		}
 
