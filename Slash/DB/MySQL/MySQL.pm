@@ -1645,6 +1645,22 @@ sub checkReadOnly {
 }
 
 ##################################################################
+sub getUIDList {
+	my ($self, $column, $id) = @_;
+
+	my $fields = { ipid => 'ipid', subnetid => 'subnetid' };
+	my $where = "WHERE $fields->{$column} = '$id'";
+	$self->sqlSelectAll("DISTINCT uid ", "comments $where");
+}
+
+##################################################################
+sub getNetIDList {
+	my ($self, $id) = @_;
+	my $where = "WHERE uid = '$id'";
+	$self->sqlSelectAll("DISTINCT ipid", "comments $where");
+}
+
+##################################################################
 sub getReadOnlyReason {
 	my($self, $formname, $user) = @_;
 

@@ -19,6 +19,41 @@ en_US
 __name__
 getUserAdmin
 __template__
+
+[% IF checked.ip || checked.subnet %]
+<BR>
+<TABLE BORDER="0">
+	<TR>
+		<TD><B>UIDs used by this address id:</B></TD>
+	</TR>
+		[% FOREACH tmpuid = uidstruct.keys %]
+	<TR>
+		<TD><A HREF="[% env.script_name %]?op=userinfo&userfield_flag=uid&userfield=[% tmpuid %]">
+		[% tmpuid %] &nbsp; [% uidstruct.$tmpuid %]
+		</A>	
+		</TD>
+	</TR>
+	[% END %]
+</TABLE>
+[% END %]
+
+[% IF checked.uid|| checked.nickname%]
+<BR>
+<TABLE BORDER="0">
+	<TR>
+		<TD><B>IPIDs used by this user:</B></TD>
+	</TR>
+		[% FOREACH tmpip = iplist %]
+	<TR>
+		<TD><A HREF="[% env.script_name %]?op=userinfo&userfield_flag=ip&userfield=[% tmpip.0 %]">
+		[% tmpip.0 %]
+		</A>	
+		</TD>
+	</TR>
+	[% END %]
+</TABLE>
+[% END %]
+
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 [% IF authoredit_flag %]
 	<TR>

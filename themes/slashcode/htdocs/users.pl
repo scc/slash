@@ -26,7 +26,6 @@ sub main {
 	my $user = {};
 	
 	if ($suadminflag) {
-		print STDERR "user $form->{userfield}\n";
 		if ($form->{userfield_flag} eq 'uid') {
 			$user = $slashdb->getUser($form->{userfield});
 		} elsif ($form->{userfield_flag} eq 'nickname') {
@@ -50,7 +49,7 @@ sub main {
 
 	if ($op eq 'userlogin' && !$curuser->{is_anon}) {
 		my $refer = $form->{returnto} || $constants->{rootdir};
-		print STDERR "refer $refer\n";
+		# print STDERR "refer $refer\n";
 		redirect($refer);
 		return;
 
@@ -64,13 +63,13 @@ sub main {
 
 	header(getMessage('user_header'));
 	print getMessage('note', { note => $note }) if defined $note;
-	print STDERR "note $note\n";
+	# print STDERR "note $note\n";
 	print createMenu('users') if ! $curuser->{is_anon};
 
 	my %ops = (
 		admin		=> \&adminDispatch,
-		userlogin	=> \&userInfo,
-		userinfo	=> \&userInfo,
+		userlogin	=> \&showInfo,
+		userinfo	=> \&showInfo,
 		saveuseradmin	=> \&saveUserAdmin,
 		savehome	=> \&saveHome,
 		savecomm	=> \&saveComm,
@@ -116,17 +115,14 @@ sub main {
 		# $op = 'userinfo' if $post_calls->{$op} ; # && ! $postflag ;
 	}
 
-
 	print STDERR "----------------\nOP $op\n-----------------\n";
 
 	# here goes it
 	$ops{$op}->();
 
 	writeLog($user->{nickname});
-
 	footer();
 }
-
 
 #################################################################
 sub checkList {
@@ -204,7 +200,6 @@ sub newUser {
 	displayForm();
 }
 
-
 #################################################################
 sub mailPassword {
 	my($uid) = @_;
@@ -261,7 +256,6 @@ sub showInfo {
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
 	if ( $form->{userfield_flag} eq 'uid' ) {
-		print STDERR "uid userfield flag $form->{userfield_flag}\n";
 		$id ||= $form->{userfield};
 		$user = $slashdb->getUser($id);
 		$uid = $user->{uid};
@@ -270,7 +264,6 @@ sub showInfo {
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
 
 	} elsif ( $form->{userfield_flag} eq 'nickname') { 
-		print STDERR "nick name userfield flag $form->{userfield_flag}\n";
 		$id ||= $form->{userfield};
 		$nick = $id;
 		$uid = $slashdb->getUserUID($nick);
@@ -286,7 +279,6 @@ sub showInfo {
 		print getMessage('userinfo_netID_msg', { id => $user->{ipid}});
 		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
 		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
-		print STDERR "ipid name userfield flag $form->{userfield_flag} ipid $user->{ipid}\n";
 		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
 
 	} elsif ( $form->{userfield_flag} eq 'subnet' ) {
@@ -298,7 +290,6 @@ sub showInfo {
 			$user->{subnetid} = $id;
 		}
 
-		print STDERR "subnetid name userfield flag $form->{userfield_flag} ipid $user->{subnetid}\n";
 		$user->{nonid} = 1;
 
 		print getMessage('userinfo_netID_msg', { id => $user->{subnetid}});
@@ -312,7 +303,6 @@ sub showInfo {
 		$user = $slashdb->getUser($uid);
 		$admin_block = $admin_flag ? getUserAdmin($uid, 1, 1) : '';
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
-		print STDERR "form nick $form->{nick}\n";
 
 	} else {
 		$user = $curuser;
@@ -320,10 +310,7 @@ sub showInfo {
 		$nick = $curuser->{nickname};
 		$admin_block = $admin_flag ? getUserAdmin($curuser->{uid}, 1, 1) : '';
 		$comments = $slashdb->getCommentsByUID($uid, $form->{min});
-		print STDERR "no input uid $uid nick $nick\n";
-
 	}
-	print STDERR "showInfo id $id uid $uid, nick $nick\n";
 
 	for (@$comments) {
 		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
@@ -409,205 +396,6 @@ sub showInfo {
 
 }
 
-#################################################################
-sub netIDInfo {
-	my($id) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-	my $curuser = getCurrentUser();
-
-	return if ($curuser->{is_anon} || $curuser->{seclev} < 100);
-
-	if (! $id) {
-		$id = $form->{userfield} ? $form->{userfield} : $curuser->{uid};
-	}
-
-	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
-	my $title = '';
-	my $comments;
-	my $commentstruct = [];
-	my $edituser = {};
-	my $admin_block = '';
-
-	$form->{min} = 0 unless $form->{min};
-
-	if ($form->{userfield_flag} eq 'ip') {
-		$edituser->{ipid} = $id =~ /\d+\.\d+\.\d+\.?\d+?/ ?
-		md5_hex($id) : $id;
-
-		print getMessage('userinfo_netID_msg', { id => $edituser->{ipid}});
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $edituser->{ipid}});
-		$admin_block = getUserAdmin($edituser->{ipid}, 1, 0);
-		$comments = $slashdb->getCommentsByNetID($edituser->{ipid}, $form->{min});
-	} elsif ($form->{userfield_flag} eq 'subnet') {
-		if ($id =~ /(\d+\.\d+\.\d+)\.?\d+?/) {
-			$edituser->{subnetid} = $1 . ".0";
-			$edituser->{subnetid} = md5_hex($edituser->{subnetid});
-		} else {
-			$edituser->{subnetid} = $id;
-		}
-		print getMessage('userinfo_netID_msg', { id => $edituser->{subnetid}});
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $edituser->{subnetid}});
-		$admin_block = getUserAdmin($edituser->{subnetid}, 1, 0);
-		$comments = $slashdb->getCommentsByNetID($edituser->{subnetid}, $form->{min});
-	} else {
-			$edituser = getCurrentUser();
-			print getMessage('userinfo_netID_msg', { id => $edituser->{ipid}});
-
-			$title = getTitle('user_netID_user_title', { id => $edituser->{uid}, md5id => $edituser->{ipid}});
-			$admin_block = getUserAdmin($edituser->{uid}, 1, 0);
-			$comments = $slashdb->getCommentsByNetID($edituser->{ipid}, $form->{min});
-	}
-
-	for (@$comments) {
-		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
-
-		my $replies = $slashdb->countCommentsBySidPid($sid, $cid);
-
-		# This is ok, since with all luck we will not be hitting the DB
-		my $story = $slashdb->getStory($sid);
-		my $question = $slashdb->getPollQuestion($sid, 'question');
-
-		push @$commentstruct, {
-			pid 		=> $pid,
-			sid 		=> $sid,
-			cid 		=> $cid,
-			subj		=> $subj,
-			cdate		=> $cdate,
-			pts		=> $pts,
-			story		=> $story,
-			question	=> $question,
-			replies		=> $replies,
-		};
-	}
-
-	slashDisplay('netIDInfo', {
-		title			=> $title,
-		id			=> $id,
-		edituser		=> $edituser,
-		commentstruct		=> $commentstruct || [],
-		admin_flag		=> $admin_flag,
-		admin_block		=> $admin_block,
-	});
-
-}
-
-#################################################################
-sub userInfo {
-	my($id) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $form = getCurrentForm();
-	my $constants = getCurrentStatic();
-	my $curuser = getCurrentUser();
-
-	my $user = {};
-	my($nick, $uid);
-
-	if (! $id) {
-		$id = $form->{userfield} ? $form->{userfield} : $curuser->{uid};
-	}
-
-	if ($form->{userfield_flag} eq 'uid') {
-		$user = $slashdb->getUser($id);
-		$uid = $user->{uid};
-		$nick = $user->{nickname};
-
-	} elsif ($form->{userfield_flag} eq 'nickname') {
-		$nick = $id;
-		$uid = $slashdb->getUserUID($id);
-		$user = $slashdb->getUser($uid);
-
-	} elsif ($form->{nick}) {
-		$nick = $form->{nick};
-		$uid = $slashdb->getUserUID($nick);
-		$user = $slashdb->getUser($uid);
-
-	} else {
-		$user = $curuser;
-		$uid = $curuser->{uid};
-		$nick = $curuser->{nickname};
-	}
-
-	$nick = strip_literal($nick || $user->{nickname});
-
-	if (! defined $uid) {
-		print getMessage('userinfo_nicknf_msg', { nick => $nick });
-		return;
-	}
-
-	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
-	my $admin_block = $admin_flag ? getUserAdmin($user->{uid}, 1, 1) : '';
-
-	my($title, $commentstruct, $points, $lastgranted, $nickmatch_flag);
-	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
-
-	$form->{min} = 0 unless $form->{min};
-
-	$karma_flag = 1 if $user->{seclev} || $user->{uid} == $uid;
-
-	if ($user->{uid} == $curuser->{uid}) {
-		$nickmatch_flag = 1;
-		$points = $user->{points};
-		if ($points) {
-			$lastgranted = $slashdb->getUser($uid, 'lastgranted');
-			if ($lastgranted) {
-				$lastgranted = timeCalc(
-					DateCalc($lastgranted,
-					'+ ' . ($constants->{stir}+1) . ' days'),
-					'%Y-%m-%d'
-				);
-			}
-		}
-
-		$mod_flag = 1 if $user->{uid} == $uid && $points > 0;
-		$title = getTitle('userInfo_main_title', { nick => $nick, uid => $uid });
-
-	} else {
-		$title = getTitle('userInfo_user_title', { nick => $nick, uid => $uid });
-	}
-
-	my $comments = $slashdb->getCommentsByUID($uid, $form->{min});
-
-	for (@$comments) {
-		my($pid, $sid, $cid, $subj, $cdate, $pts) = @$_;
-
-		my $replies = $slashdb->countCommentsBySidPid($sid, $cid);
-
-		# This is ok, since with all luck we will not be hitting the DB
-		my $story = $slashdb->getStory($sid);
-		my $question = $slashdb->getPollQuestion($sid, 'question');
-
-		push @$commentstruct, {
-			pid 		=> $pid,
-			sid 		=> $sid,
-			cid 		=> $cid,
-			subj		=> $subj,
-			cdate		=> $cdate,
-			pts		=> $pts,
-			story		=> $story,
-			question	=> $question,
-			replies		=> $replies,
-		};
-	}
-
-	slashDisplay('userInfo', {
-		title			=> $title,
-		nick			=> $nick,
-		userbio			=> $user,
-		points			=> $points,
-		lastgranted		=> $lastgranted,
-		commentstruct		=> $commentstruct || [],
-		nickmatch_flag		=> $nickmatch_flag,
-		mod_flag		=> $mod_flag,
-		karma_flag		=> $karma_flag,
-		admin_block		=> $admin_block,
-		admin_flag 		=> $admin_flag,
-	});
-}
-
 #####################################################################
 sub validateUser {
 	my $user = getCurrentUser();
@@ -632,7 +420,7 @@ sub validateUser {
 
 		} else {
 			print getMessage('no_registration_needed') if !$user->{reg_id};
-			userInfo($user->{uid});
+			showInfo($user->{uid});
 		}
 	# Maybe this should be taken care of in a more centralized location?
 	} elsif ($user->{reg_id} eq $form->{id}) {
@@ -687,7 +475,6 @@ sub editKey {
 sub adminDispatch {
 	my $form = getCurrentForm();
 
-	print STDERR "adminDispatch\n";
 	if ($form->{op} eq 'authoredit') {	
 		editUser($form->{authoruid});
 
@@ -695,7 +482,6 @@ sub adminDispatch {
 		saveUserAdmin();
 
 	} elsif ($form->{userinfo}) {
-		print STDERR "calling showInfo\n";
 		showInfo();
 
 	} elsif ($form->{edituser}) {
@@ -716,7 +502,6 @@ sub adminDispatch {
 sub editUser {
 	my($id) = @_;
 
-	print STDERR "editUser id $id\n";
 
 	my $form = getCurrentForm();
 	my $slashdb = getCurrentDB();
@@ -958,17 +743,15 @@ sub saveUserAdmin {
 
 	return if $curuser->{seclev} < 100;
 
+	my ($users_table, $user) = ({}, {});
+	my $save_success = 0;
+	my $author_flag;
+	my $note = '';
+
 	my $id = $curuser->{seclev} >= 100 ? shift : $curuser->{uid};
 	if (! $id) {
 		$id = $form->{userfield} ? $form->{userfield} : $curuser->{uid};
 	}
-
-	print STDERR "saveUserAdmin id $id form userfield_flag $form->{userfield_flag}\n";
-
-
-	my $user = {};
-	my $save_success = 0;
-	my $note = '';
 
 	if ($form->{userfield_flag} eq 'uid') {
 		if ($id =~ /^\d+$/) {
@@ -998,10 +781,6 @@ sub saveUserAdmin {
 		$user = $curuser;
 	}
 
-
-	my($author_flag);
-	my $users_table = {};
-
 	for my $formname ('comments', 'submit') {
 		my $keyname = "readonly_" . $formname;
 		my $reason_keyname = $formname . "_ro_reason";
@@ -1017,14 +796,12 @@ sub saveUserAdmin {
 
 	# $note .= getMessage('saveuseradmin_saved', { field => $form->{userfield_flag}, id => $id}) if $save_success;
 
-	print STDERR "curuser seclev $curuser->{seclev} userfield_flag $form->{userfield_flag}\n";
 	if ($curuser->{seclev} >= 100 && ($form->{userfield_flag} eq 'uid' ||
 		$form->{userfield_flaq} eq 'nickname')) {
 
 		$users_table->{seclev} = $form->{seclev};
 		$users_table->{author} = $author_flag;
 
-		print STDERR "setUser id $id\n";
 		$slashdb->setUser($id, $users_table);
 		#	$note .= getMessage('saveuseradmin_saveduser', { field => $form->{userfield_flag}, id => $id });
 		#} else {
@@ -1034,7 +811,7 @@ sub saveUserAdmin {
 
 	print getMessage('note', { note => $note }) if defined $note;
 
-	userInfo($id);
+	showInfo($id);
 }
 
 #################################################################
@@ -1044,7 +821,6 @@ sub saveUser {
 	my $curuser = getCurrentUser();
 	my $constants = getCurrentStatic();
 	my $uid;
-	print STDERR "saveUser\n";
 
 	if ($curuser->{seclev} >= 100) {
 		$uid = shift;
@@ -1190,9 +966,6 @@ sub saveUser {
 	}
 
 	$slashdb->setUser($uid, $users_table);
-
-	print STDERR "note $note\n";
-	print STDERR "passwd $form->{pass1} passwd2 $form->{pass2}\n";
 
 	return $note;
 }
@@ -1417,15 +1190,14 @@ sub getUserAdmin {
 
 	my $user;
 
-	my $checked = {};
-	my $authors;
+	my ($checked, $uidstruct, $readonly, $readonly_reasons) = 
+		({}, {}, {}, {});
+	my ($uidlist, $iplist);
+	my ($authors, $author_flag);
 
 	my ($formname, $author_select ) = ('', '');
 
 	my $authoredit_flag = ($curuser->{seclev} >= 10000) ? 1 : 0; 
-
-	my ($readonly, $readonly_reasons) = ({},{});
-	my $author_flag = '';
 
 	if ($form->{userfield_flag} eq 'uid') {
 		if (! isAnon($id)) {
@@ -1435,10 +1207,13 @@ sub getUserAdmin {
 		}
 		$user->{id} = $user->{uid};
 		$checked->{uid} = ' CHECKED';
+		$iplist = $slashdb->getNetIDList($user->{uid});
+
 	} elsif ($form->{userfield_flag} eq 'nick') {
 		$user = $slashdb->getUser(getUserUID($id));
 		$user->{id} = $user->{nick};
 		$checked->{nickname} = ' CHECKED';
+		$iplist = $slashdb->getNetIDList($user->{uid});
 
 	} elsif ($form->{userfield_flag} eq 'ip') {
 		$id = $id =~ /^\d+\.\d+\.\d+\.?\d+?$/ ? md5_hex($id) : $id;
@@ -1446,6 +1221,8 @@ sub getUserAdmin {
 		$user->{nonuid} = 1;
 		$user->{id} = $id;
 		$checked->{ip} = ' CHECKED';
+		$uidlist = $slashdb->getUIDList('ipid', $user->{ipid});
+
 	} elsif ($form->{userfield_flag} eq 'subnet') {
 		if ($id =~ /^(\d+\.\d+\.\d+\.)\.?\d+?/) {
 			$id = $1 . ".0";
@@ -1457,10 +1234,17 @@ sub getUserAdmin {
 		$user->{nonuid} = 1;
 		$user->{id} = $id;
 		$checked->{subnet} = ' CHECKED';
+		$uidlist = $slashdb->getUIDList('subnetid', $user->{subnetid});
+
 	} else {
 		$user = getCurrentUser();
 		$user->{id} = $user->{uid};
 		$checked->{uid} = ' CHECKED';
+		$iplist = $slashdb->getNetIDList($user->{uid});
+	}
+
+	for(@$iplist) {
+		print STDERR "iplist $_->[0]\n";
 	}
 
 	$authors = $slashdb->getDescriptions('authors');
@@ -1475,10 +1259,16 @@ sub getUserAdmin {
 		$readonly_reasons->{$formname} = $slashdb->getReadOnlyReason($formname, $user) if $readonly->{$formname};
 	}
 
+	for(@$uidlist) {
+		$uidstruct->{$_->[0]} = $slashdb->getUser($_->[0], 'nickname');
+	}
+
 	$author_flag = ($user->{author} == 1) ? ' CHECKED' : '';
 
 	return slashDisplay('getUserAdmin', {
 		edituser		=> $user,
+		iplist			=> $iplist,
+		uidstruct		=> $uidstruct,
 		seclev_field		=> $seclev_field,
 		checked 		=> $checked,
 		author_select		=> $author_select,
