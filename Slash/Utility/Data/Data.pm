@@ -638,7 +638,7 @@ sub stripBadHtml {
 	}{$1&gt;}gx;
 
 
-	# Encode stray >
+	# Encode stray <
 	1 while $str =~ s{
 		<			# open bracket
 		(

@@ -172,7 +172,8 @@ sub handler {
 
 	# this needs to get called once per child ... might as well
 	# have it called here. -- pudge
-	srand(time ^ ($$ + ($$ << 15))) unless $srand_called ||= 1;
+	srand(time ^ ($$ + ($$ << 15))) unless $srand_called;
+	$srand_called ||= 1;
 
 	createCurrentUser(prepareUser($uid, $form, $uri, $cookies, $method));
 	createCurrentForm($form);
