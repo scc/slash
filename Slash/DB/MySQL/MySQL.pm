@@ -2706,7 +2706,7 @@ sub getStoryByTime {
 	my $returnable = $self->sqlSelectHashref(
 			'title, sid, section',
 			'stories',
-			"time $sign '$time' AND writestatus != 'delete' AND writestatus != 'archived' AND time < now() $where",
+			"time $sign '$time' AND writestatus != 'delete' AND time < now() $where",
 			"ORDER BY time $order LIMIT 1"
 	);
 
@@ -3445,7 +3445,7 @@ sub getStoriesEssentials {
 	my $where = "time < NOW() ";
 	# Added this to narrow the query a bit more, I need
 	# see about the impact on this -Brian
-	$where .= "AND writestatus != 'delete' AND writestatus != 'archived' ";
+	$where .= "AND writestatus != 'delete' ";
 	$where .= "AND displaystatus=0 " unless $section;
 	$where .= "AND (displaystatus>=0 AND section='$section') "
 		if $section;
@@ -4914,7 +4914,7 @@ F
 stories.sid = discussions.sid
 AND ((displaystatus = 0 and $section_dbi="")
 OR (stories.section=$section_dbi and displaystatus > -1))
-AND time < NOW()  stories.writestatus != 'delete' AND stories.writestatus != 'archived'
+AND time < NOW()  stories.writestatus != 'delete' 
 W
 GROUP BY stories.sid
 ORDER BY time DESC
