@@ -104,6 +104,10 @@ if ($opts{'s'}) {
 		if (defined $temp2 && $temp2->{page} eq $template->{page}
 			&& $temp2->{section} eq $template->{section}
 		) {
+			if ($template->{instructions} =~ /placeholder/) {
+				print "Not overwritting template $_ with placeholder.\n";
+				next;
+			}
 			if ($slashdb->setTemplate($temp2->{tpid}, $template)) {
 				print "updated template $_ tpid $temp2->{tpid}\n";
 			} else {
