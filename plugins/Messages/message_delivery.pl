@@ -44,7 +44,9 @@ $task{$me}{code} = sub {
 
 	messagedLog("$me end");
 	if ($successes or $failures) {
-		slashdLog("$me sent $successes successfully, $failures failed");
+		return "sent $successes ok, $failures failed";
+	} else {
+		return ;
 	}
 };
 
