@@ -15,12 +15,11 @@ use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
+use vars qw($VERSION);
 
-($Slash::DB::Static::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: Bite my shiny, metal ass! 
-
-1;
 
 ########################################################
 # for slashd
@@ -520,6 +519,7 @@ sub giveKarma {
 }
 
 1;
+
 __END__
 
 =head1 NAME

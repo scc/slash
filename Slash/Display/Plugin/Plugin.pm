@@ -26,14 +26,13 @@ with the C<db> method.  Invoke with C<[% USE Slash %]>.
 =cut
 
 use strict;
-use vars qw($REVISION $VERSION $AUTOLOAD);
+use vars qw($VERSION $AUTOLOAD);
 use Slash ();
 use Slash::Utility ();
 use Template::Plugin ();
 use base qw(Template::Plugin);
 
-($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: Forget your stupid theme park!  I'm gonna make my own!
 # With hookers!  And blackjack!  In fact, forget the theme park!

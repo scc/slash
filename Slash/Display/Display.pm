@@ -42,15 +42,14 @@ L<Template> for more information about templates.
 
 use strict;
 use base 'Exporter';
-use vars qw($REVISION $VERSION @EXPORT $CONTEXT);
+use vars qw($VERSION @EXPORT $CONTEXT);
 use Exporter ();
 use Slash::Display::Provider ();
 use Slash::Utility;
 use Template;
 
-($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
-@EXPORT		= qw(slashDisplay);
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+@EXPORT	   = qw(slashDisplay);
 
 # BENDER: Well I don't have anything else planned for today, let's get drunk!
 
@@ -184,7 +183,7 @@ sub slashDisplay {
 	# page, section, we bite the bullet and do it
 	$tempdata = $slashdb->getTemplateByName($name, [qw(tpid page section)]);
 
-	$tempname = "ID$tempdata->{tpid} , " .
+	$tempname = "ID $tempdata->{tpid}, " .
 		"$name;$tempdata->{page};$tempdata->{section}";
 	@comments = (
 		"\n\n<!-- start template: $tempname -->\n\n",
@@ -327,8 +326,6 @@ sub _template {
 		})],
 	});
 }
-
-=back
 
 =head1 TEMPLATE ENVIRONMENT
 

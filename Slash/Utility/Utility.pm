@@ -36,10 +36,9 @@ use HTML::Entities;
 use URI;
 use XML::Parser;
 require Exporter;
-use vars qw($REVISION $VERSION @ISA @EXPORT);
+use vars qw($VERSION @ISA @EXPORT);
 
-($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(
@@ -2544,6 +2543,7 @@ sub createEnvironment {
 
 1;
 
+__END__
 
 =head1 SEE ALSO
 

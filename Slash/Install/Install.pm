@@ -5,7 +5,7 @@
 
 package Slash::Install;
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+use vars qw($VERSION @ISA);
 use DBIx::Password;
 use Slash;
 use Slash::DB::Utility;
@@ -16,9 +16,8 @@ use File::Path;
 
 # BENDER: Like most of life's problems, this one can be solved with bending.
 
-@Slash::Install::ISA = qw(Slash::DB::Utility);
-@Slash::Install::EXPORT = qw();
-$Slash::Install::VERSION = '0.01';
+@ISA       = qw(Slash::DB::Utility);
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 sub new {
 	my ($class, $user) = @_;
@@ -264,6 +263,7 @@ sub getPluginList {
 }
 
 1;
+
 __END__
 
 =head1 NAME

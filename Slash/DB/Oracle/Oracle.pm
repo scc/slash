@@ -6,14 +6,14 @@
 package Slash::DB::Oracle;
 
 use strict;
+use vars qw($VERSION @ISA);
 
-@Slash::DB::Oracle::ISA = qw( Slash::DB::Utility );
-	
-($Slash::DB::Oracle::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-
-
+@ISA = qw( Slash::DB::Utility );
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 1;
+
+__END__
 
 =head1 NAME
 

@@ -9,8 +9,10 @@ use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
+use vars qw($VERSION);
 
-($Slash::DB::Static::Oracle::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
 1;
 
 __END__

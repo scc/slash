@@ -1,6 +1,6 @@
 package Bundle::Slash;
 
-$Bundle::Slash::VERSION = '1.12';
+$Bundle::Slash::VERSION = '1.13';
 
 1;
 
@@ -40,6 +40,8 @@ Date::Manip
 Mail::Sendmail
 
 Apache::DBI
+
+Apache::Cookie
 
 Image::Size
 

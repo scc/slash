@@ -8,9 +8,10 @@ use strict;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
+use vars qw($VERSION @ISA);
 
-@Slash::DB::PostgreSQL::ISA = qw( Slash::DB::Utility );
-($Slash::DB::PostgreSQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+@ISA = qw( Slash::DB::Utility );
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: I hate people who love me.  And they hate me.
 
@@ -487,8 +488,6 @@ sub sqlSelectColumns {
 	return $rows;
 }
 
-1;
-
 ########################################################
 # This could be optimized by not making multiple calls
 # to getKeys or by fixing getKeys() to return multiple
@@ -518,6 +517,8 @@ sub _genericGetCacheName {
 	}
 	return $cache;
 }
+
+1;
 
 __END__
 

@@ -16,10 +16,9 @@ use DynaLoader ();
 use Slash::DB;
 use Slash::Utility;
 use URI ();
-use vars qw($REVISION $VERSION @ISA @QUOTES);
+use vars qw($VERSION @ISA @QUOTES);
 
-($REVISION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-$VERSION = '0.01';
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @ISA = qw(DynaLoader);
 
 bootstrap Slash::Apache::User $VERSION;
@@ -195,9 +194,9 @@ sub random {
 
 sub authors {
 	my($r) = @_;
-	$r->header_out('X-Author-Krow' => "You can't grep a dead tree");
+	$r->header_out('X-Author-Krow' => "You can't grep a dead tree.");
 	$r->header_out('X-Author-Pudge' => "Bite me.");
-	$r->header_out('X-Author-CaptTofu' => "I like Tofu");
+	$r->header_out('X-Author-CaptTofu' => "I like Tofu.");
 }
 
 ########################################################
@@ -225,24 +224,24 @@ sub userLogin {
 sub DESTROY { }
 
 @QUOTES = (
-'Fry, of all the friends I\'ve had ... you\'re the first.',
-'I hate people who love me.  And they hate me.',
-'Oh no! Not the magnet! ',
-'Bender\'s a genius! ',
-'Well I don\'t have anything else planned for today, let\'s get drunk!',
-'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!',
-'Oh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.',
-'Oh, so, just \'cause a robot wants to kill humans that makes him a radical?',
-'There\'s nothing wrong with murder, just as long as you let Bender whet his beak.Naw, she\'ll probably have me do it.',
-'Bite my shiny, metal ass!',
-'The laws of science be a harsh mistress.',
-'In the event of an emergency, my ass can be used as a flotation device.',
-'Like most of life\'s problems, this one can be solved with bending.',
-'Honey, I wouldn\'t talk about taste if I was wearing a lime green tank top.',
-'A woman like that you gotta romance first!',
-'OK, but I don\'t want anyone thinking we\'re robosexuals.',
-'Hey Fry, I\'m steering with my ass!',
-'Care to contribute to the Anti-Mugging-You Fund?',
+	'Fry, of all the friends I\'ve had ... you\'re the first.',
+	'I hate people who love me.  And they hate me.',
+	'Oh no! Not the magnet! ',
+	'Bender\'s a genius! ',
+	'Well I don\'t have anything else planned for today, let\'s get drunk!',
+	'Forget your stupid theme park!  I\'m gonna make my own!  With hookers!  And blackjack!  In fact, forget the theme park!',
+	'Oh, no room for Bender, huh?  Fine.  I\'ll go build my own lunar lander.  With blackjack.  And hookers.  In fact, forget the lunar lander and the blackjack!  Ah, screw the whole thing.',
+	'Oh, so, just \'cause a robot wants to kill humans that makes him a radical?',
+	'There\'s nothing wrong with murder, just as long as you let Bender whet his beak.',
+	'Bite my shiny, metal ass!',
+	'The laws of science be a harsh mistress.',
+	'In the event of an emergency, my ass can be used as a flotation device.',
+	'Like most of life\'s problems, this one can be solved with bending.',
+	'Honey, I wouldn\'t talk about taste if I was wearing a lime green tank top.',
+	'A woman like that you gotta romance first!',
+	'OK, but I don\'t want anyone thinking we\'re robosexuals.',
+	'Hey Fry, I\'m steering with my ass!',
+	'Care to contribute to the Anti-Mugging-You Fund?',
 );
 
 

@@ -8,9 +8,9 @@ use strict;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
+use vars qw($VERSION);
 
-@Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
-($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: I hate people who love me.  And they hate me.
 

@@ -8,12 +8,12 @@ use strict;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
+use vars qw(@ISA $VERSION);
 
-@Slash::DB::Static::PostgreSQL::ISA = qw( Slash::DB::Utility );
-($Slash::DB::Static::PostgreSQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+@ISA = qw( Slash::DB::Utility );
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: I hate people who love me.  And they hate me.
-
 
 1;
 

@@ -8,8 +8,9 @@ package Slash::DB::Utility;
 use strict;
 use Slash::Utility;
 use DBIx::Password;
+use vars qw($VERSION);
 
-($Slash::DB::Utility::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # BENDER: Oh no! Not the magnet! 
 
@@ -352,8 +353,9 @@ sub sqlDo {
 	return $rows;
 }
 
-
 1;
+
+__END__
 
 =head1 NAME
 

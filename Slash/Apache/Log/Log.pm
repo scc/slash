@@ -9,8 +9,9 @@ use strict;
 use Slash::DB;
 use Slash::Utility;
 use Apache::Constants qw(:common);
+use vars qw($VERSION);
 
-$Slash::Apache::Log::VERSION = '0.01';
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 # AMY: Leela's gonna kill me.
 # BENDER: Naw, she'll probably have me do it.
@@ -41,10 +42,10 @@ sub handler {
 	return OK;
 }
 
-sub DESTROY{
-}
+sub DESTROY { }
 
 1;
+
 __END__
 
 =head1 NAME

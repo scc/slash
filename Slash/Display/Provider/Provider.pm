@@ -30,14 +30,12 @@ and C<_refresh>.
 =cut
 
 use strict;
-use vars qw($REVISION $VERSION $DEBUG);
+use vars qw($VERSION $DEBUG);
 use base qw(Template::Provider);
 use Slash::Utility;
-use Template::Provider;
 
-($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-($VERSION)	= $REVISION =~ /^(\d+\.\d+)/;
-$DEBUG		= $Template::Provider::DEBUG || 0 unless defined $DEBUG;
+($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+$DEBUG     = $Template::Provider::DEBUG || 0 unless defined $DEBUG;
 
 # BENDER: Oh, no room for Bender, huh?  Fine.  I'll go build my own lunar
 # lander.  With blackjack.  And hookers.  In fact, forget the lunar lander
