@@ -1,176 +1,151 @@
-=head1 Tables in slashdot  
+=head1 Tables in Slash 2.0
 
-The following is a listing of tables that make up the slashdot schema. Some, or all ofthe data in a table is displayed, where feasable, to give a better idea of a table's purpose. 
+The following is a listing of tables that make up the Slash schema.
+Some, or all of the data in a table is displayed, where feasible, to give
+a better idea of a table's purpose.
 
 
-=head2
-B<abusers>
+=head2 abusers
 
 A log of people who try too many times to beat the post limit
 
 =over 4
-=item * 
-abuser_id
+
+=item * abuser_id
 
 auto increment id
 
-=item * 
-host_name
+=item * host_name
 
 host name of abuser
 
-=item * 
-pagename
+=item * pagename
 
 page where abuser made attempt
 
-=item * 
-ts
+=item * ts
 
 time abuser made attempt
 
-=item * 
-reason
+=item * reason
 
 reason for being logged
 
-=item * 
-querystring
+=item * querystring
 
 form querystring
 
 =back
 
-=head2
-B<accesslog>
 
+=head2 accesslog
 
 logs page views to the site, logging occurs on a delayed
 insert
 
 =over 4
-=item * 
-id 
+
+=item * id
 
 auto increment id
 
-=item * 
-host_addr 
+=item * host_addr
 
 host address of person hitting site
 
-=item * 
-op 
+=item * op
 
 the page op
 
-=item * 
-dat  
+=item * dat
 
-=item * 
-uid 
+data
+
+=item * uid
 
 user id (fk from users)
 
-=item * 
-ts 
+=item * ts
 
 time stamp of access
 
-=item * 
-query_string 
+=item * query_string
 
 form querystring
 
 =back
 
-=head2
-B<authors>
 
-=over 4
+=head2 authors
 
 No longer exists - only listed here as a reference to the fact
 that authors are now users with the 'author' flag set.
 
-=back
 
 
-=head2
-B<blocks>
+=head2 blocks
 
-Contains content that has been pulled from remote sites via portald, 
-and other pieces of code that are evaled. Contains the color block 
-which is simply 8 colors comma separated which in  turn is split in 
+Contains content that has been pulled from remote sites via portald,
+and other pieces of text to use. Contains the color block
+which is simply 8 colors comma separated which in turn is split in
 the code to produce site/section foreground and background colors.
 
 =over 4
 
-=item * 
-bid 
+=item * bid
 
-the name of the block (even though this seems as 
-if it should be an   integer, it's actually a name )  
+the name of the block (even though this seems as
+if it should be an   integer, it's actually a name )
 
-=item * 
-block 
+=item * block
 
-the actual contents of the block. This can be eval code,
-html, or a mix of both.
+the actual contents of the block. This can be HTML, plain text
+or almost anything else.
 
-=item * 
-seclev 
+=item * seclev
 
 the seclev an admin user must be in order to edit it.
 
-=item * 
-type 
+=item * type
 
 portal or not.
 
-=item * 
-description 
+=item * description
 
 a text description of what the block is for or does.
 
-=item * 
-section 
+=item * section
 
-the section the block appears in ie "index". 
+the section the block appears in ie "index".
 
-=item * 
-ordernum 
+=item * ordernum
 
 the order on the section in which it appears.
 
-=item * 
-title 
+=item * title
 
 the title of the block.
 
-=item * 
-portal 
+=item * portal
 
 true/false, is a portal block or not
 
-=item * 
-url 
+=item * url
 
 the url of a site if a portal block
 
-=item * 
-rdf 
+=item * rdf
 
 the url of the rdf document that portald fetches.
 
-=item * 
-retrieve 
+=item * retrieve
 
 whether portald will attempt to retrieve a block or not.
+
 =back
 
-=head2
 
-B<code_param>
+=head2 code_param
 
 a conglomeration of what was formerly other tables such as
 postmodes, commentmodes, sortcodes, threshcodes, statuscodes, displaycodes,
@@ -179,557 +154,470 @@ used by different parts of the codes, namely key/value tables.
 
 =over 4
 
-=item *
-param_id 
+=item * param_id
 
 auto_increment id
 
-=item *
-type  
+=item * type
 
 the name of the key, what was formerly the name of the table
 
-=item *
-code 
+=item * code
 
 the numerical code, key to the value
 
-=item *
-name 
+=item * name
 
 the value that corresponds to the code
 
 =back
 
-=head2
 
-B<commentmodes>
+=head2 commentmodes
 
 How comments appear.
 
-=over 4
-
  +-----------+-------------+-------------+
- | mode      | name        | description | 
+ | mode      | name        | description |
  +-----------+-------------+-------------+
- | flat      | Flat        |             | 
+ | flat      | Flat        |             |
  | nested    | Nested      |             |
- | thread    | Threaded    |             | 
+ | thread    | Threaded    |             |
  | nocomment | No Comments |             |
  +-----------+-------------+-------------+
 
-=back
 
 =head2
 
 B<comments/newcomments>
 
-These are the actual comments of posters on slashdot.  
-These are unique by a sid and cid combination, sid 
+These are the actual comments of posters on Slash.
+These are unique by a sid and cid combination, sid
 being the fk to sid in stories.
 
 =over 4
 
-=item *
-sid 
+=item * sid
 
-story id 
+story id
 
-=item *
-cid 
+=item * cid
 
-comment id 
+comment id
 
-=item *
-pid 
+=item * pid
 
-parent's cid 
+parent's cid
 
-=item *
-date 
+=item * date
 
-datestamphost_name - where they're coming from. 
+datestamp
 
-=item *
-subject 
+=item * host_name
 
-the subject 
+where they're coming from.
 
-=item *
-comment 
+=item * subject
 
-the actual comment 
+the subject
 
-=item *
-uid 
+=item * comment
 
-user ID 
+the actual comment
 
-=item *
-points 
+=item * uid
 
-standing of their comment 
+user ID
 
-=item *
-lastmod 
+=item * points
 
-last 
+standing of their comment
 
-moderators uid  
+=item * lastmod
 
-=item *
-reason 
+last moderator's uid
 
-reason 
+=item * reason
+
+reason
 
 =back
 
-=head2
 
-B<dateformats>
+=head2 dateformats
 
-Key/value table of how dates are to be displayed for a user.  
+Key/value table of how dates are to be displayed for a user.
 
-
-=over 4
-
- +----+-------------------------+---------------------------------+  
- | id | format                  | description                     | 
  +----+-------------------------+---------------------------------+
- |  0 | %W %M %d, @%h:%i%p      | Sunday March 21, @10:00AM       | 
- |  1 | %W %M %d, @%H:%i        | Sunday March 21, @23:00         |  
- |  2 | %k:%i %d %M %Y          | 23:00 21 March 1999             | 
- |  3 | %k:%i %W %d %M %Y       | 23:00 Sunday 21 March 1999      |  
- |  4 | %h:%i %p -- %W %M %d %Y | 9:00 AM -- Sunday March 21 1999 | 
- |  5 | %a %M %d, %k:%i         | Sun March 21, 23:00             |  
- |  6 | %a %M %d, %h:%i %p      | Sun March 21, 10:00 AM          | 
- |  7 | %m-%d-%y %k:%i          | 3-21-99 23:00                   |  
- |  8 | %d-%m-%y %k:%i          | 21-3-99 23:00                   | 
- |  9 | %m-%d-%y %h:%i %p       | 3-21-99 10:00 AM                |  
- | 15 | %d/%m/%y %k:%i          | 21/03/99 23:00                  | 
- | 10 | %h:%i %p  %M %D, %Y     | 10:00 AM  March 21st, 1999      |  
- | 11 | %k:%i  %D %M, %Y        | 23:00  21st March, 1999         | 
- | 12 | %a %b %d, '%y %h:%i %p  | Sun Mar 21, '99 10:00 AM        |  
- | 13 | %h ish                  | 6 ish                           | 
- | 14 | %y-%m-%d %k:%i          | 99-03-19 14:14                  |  
- | 16 | %a %d %b %h:%i%p        | Sun 21 Mar 10:00AM              | 
+ | id | format                  | description                     |
+ +----+-------------------------+---------------------------------+
+ |  0 | %W %M %d, @%h:%i%p      | Sunday March 21, @10:00AM       |
+ |  1 | %W %M %d, @%H:%i        | Sunday March 21, @23:00         |
+ |  2 | %k:%i %d %M %Y          | 23:00 21 March 1999             |
+ |  3 | %k:%i %W %d %M %Y       | 23:00 Sunday 21 March 1999      |
+ |  4 | %h:%i %p -- %W %M %d %Y | 9:00 AM -- Sunday March 21 1999 |
+ |  5 | %a %M %d, %k:%i         | Sun March 21, 23:00             |
+ |  6 | %a %M %d, %h:%i %p      | Sun March 21, 10:00 AM          |
+ |  7 | %m-%d-%y %k:%i          | 3-21-99 23:00                   |
+ |  8 | %d-%m-%y %k:%i          | 21-3-99 23:00                   |
+ |  9 | %m-%d-%y %h:%i %p       | 3-21-99 10:00 AM                |
+ | 15 | %d/%m/%y %k:%i          | 21/03/99 23:00                  |
+ | 10 | %h:%i %p  %M %D, %Y     | 10:00 AM  March 21st, 1999      |
+ | 11 | %k:%i  %D %M, %Y        | 23:00  21st March, 1999         |
+ | 12 | %a %b %d, '%y %h:%i %p  | Sun Mar 21, '99 10:00 AM        |
+ | 13 | %h ish                  | 6 ish                           |
+ | 14 | %y-%m-%d %k:%i          | 99-03-19 14:14                  |
+ | 16 | %a %d %b %h:%i%p        | Sun 21 Mar 10:00AM              |
  +----+-------------------------+---------------------------------+
 
-=back
 
-=head2
-
-B<content_filters>
+=head2 content_filters
 
 This table contains as many filters as a site admin wants to filter different
-fields in user forms such as comment posting. 
+fields in user forms such as comment posting.
 
 =over 4
 
-=item *
-filter_id 
+=item * filter_id
 
 auto_increment id
 
-=item *
-regex 
+=item * regex
 
 base regex of filter ie. if you wanted to filter /dog/, this would be 'dog'.
 
-=item *
-modifier 
+=item * modifier
 
-global, case insensitive... if you wanted /dog/g, this would be 'g'. 
+global, case insensitive... if you wanted /dog/g, this would be 'g'.
 
-=item *
-field 
+=item * field
 
 which form element is filtered, such as 'postercomment'.
 
-=item *
-ratio 
+=item * ratio
 
-the percentage of a particular pattern that's allowable. 
-If the site admin doesn't want more than 20% to be spaces, this 
+the percentage of a particular pattern that's allowable.
+If the site admin doesn't want more than 20% to be spaces, this
 would be '.2'.
 
-=item *
-minimum_match 
+=item * minimum_match
 
-the minimum number of matches for this regex 
-(if not using percent) if the desired regex was to be 
+the minimum number of matches for this regex
+(if not using percent) if the desired regex was to be
 /(dog)[10,]/, then this would be '10'.
 
-=item *
-minimum_length 
+=item * minimum_length
 
-the minimum length of content that whatever is being 
-posted must be in order for a particular filter to be run against the 
+the minimum length of content that whatever is being
+posted must be in order for a particular filter to be run against the
 content being posted.
 
-=item *
-err_message 
+=item * err_message
 
-the message that's printed out to the user upon the failure 
-to submit due to the filter matching what was in the field. 
+the message that's printed out to the user upon the failure
+to submit due to the filter matching what was in the field.
 
 =back
 
-=head2
 
-B<discussions>
+=head2 discussions
 
-A table that basically allows discussions (comments on a particular subject) to be 
-attached to an sid that might not necessarily be a story sid. This allows for a 
-not-too-publicised functionality of going to the comments.pl script without any 
-query string, getting a list of current discussions and posting a comment on a 
+A table that basically allows discussions (comments on a particular subject) to be
+attached to an sid that might not necessarily be a story sid. This allows for a
+not-too-publicized functionality of going to the comments.pl script without any
+query string, getting a list of current discussions and posting a comment on a
 concocted sid and creating a new discussion.
 
-=over 4
-
- +---------------+-------------------+-------------+  
+ +---------------+-------------------+-------------+
  | sid           | title             | url 	  |
- +---------------+-------------------+-------------+  
- | 00/0SPT/MhsFY | Test Discussion | http://slashdot.org/temp.html| 
+ +---------------+-------------------+-------------+
+ | 00/0SPT/MhsFY | Test Discussion | http://slashdot.org/temp.html|
  | 00elQkla9rH/M | North Dakota has low admission standards |http://www.slashdot.org/articles/99/06/07/1234239.shtml |
  | trolltalk     | we are dweebs     | http://www.slashdot.org/articles/00/01/01/1234567.shtml |
- +---------------+-------------------+-------------+  
+ +---------------+-------------------+-------------+
 
-=back
 
-=head2
-
-B<formkeys>
+=head2 formkeys
 
 Used to issue unique formkeys to each and every form that the site admin
 wishes to prevent multiple submissions using the same form (so they don't
-just using the back button, changing a little text and resubmitting). This 
-makes it inconvenient to troll the site, namely comment and submissions 
+just using the back button, changing a little text and resubmitting). This
+makes it inconvenient to troll the site, namely comment and submissions
 posting.
 
 =over 4
 
-=item *
-formkey 
+=item * formkey
 
 unique key issued to a form
 
-=item *
-formname 
+=item * formname
 
 the name of the form that the key was issued to
 
-=item *
-id 
+=item * id
 
 uid if logged in, -1 plus random string if not
 
-=item *
-uid 
+=item * uid
 
-uid 
+uid
 
-=item *
-host_name 
+=item * host_name
 
 cgi env host
 
-=item *
-value 
+=item * value
 
 whether or not the person has completed their submission.
-1 means they have, 0 means they only got to the point where the 
+1 means they have, 0 means they only got to the point where the
 form was issued a formkey
 
-=item *
-cid 
+=item * cid
 
 comment id, if testing a comment being posted
 
-=item *
-ts 
+=item * ts
 
 time stamp of when formkey was issued
- 
-=item *
-submit_ts 
 
-time stamp of when the submission of the form was 
-successful. This and ts are used to determine the speed of the 
+=item * submit_ts
+
+time stamp of when the submission of the form was
+successful. This and ts are used to determine the speed of the
 posting.
 
-=item *
-content_length 
+=item * content_length
 
 the int length of the field being tested
 
 =back
 
 
-=head2
-B<menus>
+=head2 menus
 
 Table of menu items, using the template library for it's value
 
 =over 4
 
-=item *
-id 
+=item * id
 
 auto_increment id
 
-=item *
-menu 
+=item * menu
 
 menu category
 
-=item *
-label 
+=item * label
 
-menu item lable
+menu item label
 
-=item *
-value 
+=item * value
 
 template value, url of menu link
 
-=item *
-seclev 
+=item * seclev
 
 security level a user must be for menu to be visible
 
-=item *
-menuorder 
+=item * menuorder
 
 order menu appear amongst other menu items
 
 =back
 
-=head2
 
-metamodlog
+=head2 metamodlog
 
 Logs meta-moderations.
 
 =over 4
 
-=item *
-id 
+=item * id
 
 auto_increment id
 
-=item *
-mmid 
+=item * mmid
 
 meta moderator id, fk to users.uid
 
-=item *
-val 
+=item * val
 
 value
 
-=item *
-ts 
+=item * ts
 
 timestamp
 
-=item *
-flag 
+=item * flag
 
 flag
 
-=back 
+=back
 
-=head2
 
-B<moderatorlog>
+=head2 moderatorlog
 
-When, why, who moderated something 
+When, why, who moderated something
 
-=item *
-id 
+=over 4
+
+=item * id
 
 auto_increment id
 
-=item *
-uid 
+=item * uid
 
 user id, fk to users
 
-=item *
-val 
+=item * val
 
 value
 
-=item *
-sid 
+=item * sid
 
 story id
 
-=item *
-ts 
+=item * ts
 
 time stamp
 
-=item *
-cid 
+=item * cid
 
 comment id
 
-=item *
-reason 
+=item * reason
 
 numerical reason corresponding to names such as "troll", "insightful",
 "overrated", etc...
 
-=item *
-active -  
+=item * active
 
 =back
 
-=head2
-B<pollanswers>
 
-A name of a poll subject, answer id (yes or no...),  
-total number votes per question id.    
+=head2 pollanswers
 
-=over 4
+A name of a poll subject, answer id (yes or no...),
+total number votes per question id.
 
  +----------+-----+---------+-------+
  | qid      | aid | answer  | votes |
- +----------+-----+---------+-------+ 
+ +----------+-----+---------+-------+
  | corel    |   1 | No      |   621 |
- | corel    |   0 | Yes     |  2711 | 
+ | corel    |   0 | Yes     |  2711 |
  | bestdist |   0 | Caldera |    49 |
  +----------+-----+---------+-------+
 
-=back
 
-=head2
+=head2 pollquestions
 
-B<pollquestions>
-
-The  
+The poll questions.
 
 =over 4
 
-=item *
-qid
+=item * qid
 
 question ID
 
-=item *
-question
+=item * question
 
 question
 
-=item *
-voters
+=item * voters
 
 total number of votes for this question
 
-=item *
-date
+=item * date
 
 =back
 
-=head2
 
-B<pollvoters>
+=head2 pollvoters
 
 =over 4
 
-=item *
-qid 
+=item * qid
 
 question id (foreign key)
 
-=item *
-id 
+=item * id
 
-ip address 
+ip address
 
-=item *
-time
+=item * time
 
-user id 
+user id
 
 =back
 
-=head2
-
-B<postmodes>           
-
-=over 4
+=head2 postmodes
 
  +-----------+-----------------------------+
- | code      | name                        | 
+ | code      | name                        |
  +-----------+-----------------------------+
- | plaintext | Plain Old Text              | 
+ | plaintext | Plain Old Text              |
  | html      | HTML Formatted              |
- | exttrans  | Extrans (html tags to text) | 
+ | exttrans  | Extrans (html tags to text) |
  +-----------+-----------------------------+
 
-=back
 
-=head2
+=head2 sections
 
-B<sections>
-
-The primary sections of slashdot 
+The primary sections of Slash
 
 =over 4
 
-=item *
-section 
+=item * section
 
-the name of the section 
+the name of the section
 
-=item *
-artcount 
+=item * artcount
 
 how many articles are running in this section
 
-=item *
-title 
+=item * title
 
 title of the section
 
-=item *
-qid 
+=item * qid
 
-question id for polls 
+question id for polls
 
-=item *
-isolate 
+=item * isolate
 
-true/falseissue - true/false extras - true/false 
+true/false
 
- +-------------+----------+--------------------+-----------+---------+-------+--------+
- | section     | artcount | title              | qid       | isolate | issue | extras | 
- +-------------+----------+--------------------+-----------+---------+-------+--------+
- | articles    |       30 | Articles           |           |       0 |     0 |      0 | 
- | features    |       21 | Features           | eyesight  |       0 |     1 |      0 |
- | books       |       15 | Book Reviews       | crash     |       0 |     1 |      1 | 
- | askslashdot |       30 | Ask Slashdot       |           |       0 |     1 |      0 |
- | tacohell    |       15 | Taco Hell          | favdistro |       1 |     1 |      0 | 
- | slash       |       15 | Slash              | firstpost |       1 |     1 |      0 |
- |             |       30 | All Sections       |           |       0 |     0 |      0 | 
- | redhat      |       15 | Red Hat Portal     | pointer   |       1 |     1 |      0 |
- | radio       |       15 | Geeks in Space     |           |       0 |     1 |      0 | 
- | interviews  |       15 | Interviews         | crash     |       0 |     1 |      0 |
- | yro         |       30 | Your Rights Online |           |       0 |     1 |      0 | 
- +-------------+----------+--------------------+-----------+---------+-------+--------+
+=item * issue
+
+true/false
+
+=item * extras
+
+true/false
 
 =back
 
-=head2
+ +-------------+----------+--------------------+-----------+---------+-------+--------+
+ | section     | artcount | title              | qid       | isolate | issue | extras |
+ +-------------+----------+--------------------+-----------+---------+-------+--------+
+ | articles    |       30 | Articles           |           |       0 |     0 |      0 |
+ | features    |       21 | Features           | eyesight  |       0 |     1 |      0 |
+ | books       |       15 | Book Reviews       | crash     |       0 |     1 |      1 |
+ | askslashdot |       30 | Ask Slashdot       |           |       0 |     1 |      0 |
+ | tacohell    |       15 | Taco Hell          | favdistro |       1 |     1 |      0 |
+ | slash       |       15 | Slash              | firstpost |       1 |     1 |      0 |
+ |             |       30 | All Sections       |           |       0 |     0 |      0 |
+ | redhat      |       15 | Red Hat Portal     | pointer   |       1 |     1 |      0 |
+ | radio       |       15 | Geeks in Space     |           |       0 |     1 |      0 |
+ | interviews  |       15 | Interviews         | crash     |       0 |     1 |      0 |
+ | yro         |       30 | Your Rights Online |           |       0 |     1 |      0 |
+ +-------------+----------+--------------------+-----------+---------+-------+--------+
 
-B<sessions>            
 
-What authors are logged into the site.  
+=head2 sessions
 
-=over 4
+What authors are logged into the site.
 
  +---------------+----------+---------------------+---------------------+-----------+
  | session       | uid	   | logintime           | lasttime            | lasttitle |
@@ -737,628 +625,538 @@ What authors are logged into the site.
  | CmVB1EnqOeXRQ | 123456   | 2000-09-23 22:25:11 | 2000-09-23 23:16:48 | NULL      |
  +---------------+----------+---------------------+---------------------+-----------+
 
-=back
 
-=head2
-
-B<site_info>
+=head2 site_info
 
 contains values for the site set at the time of installation
 
 =over 4
 
-=item *
-param_id 
+=item * param_id
 
 auto_increment id.
 
-=item *
-name 
+=item * name
 
 name of value.
 
-=item *
-value 
+=item * value
 
 the value of the name.
 
-=item *
-description 
+=item * description
 
 description of what the value is.
 
 =back
 
 
-=head2
+=head2 sortcodes
 
-B<sortcodes>           
-
-This table defines sort codes 
-
-=over 4
+This table defines sort codes
 
  +------+-------------------------------+
- | code | name                          | 
+ | code | name                          |
  +------+-------------------------------+
- |    0 | Oldest First                  | 
+ |    0 | Oldest First                  |
  |    1 | Newest First                  |
- |    3 | Highest Scores First          | 
+ |    3 | Highest Scores First          |
  |    4 | Oldest First (Ignore Threads) |
- |    5 | Newest First (Ignore Threads) | 
+ |    5 | Newest First (Ignore Threads) |
  +------+-------------------------------+
 
-=back
 
-=head2
+=head2 statuscodes
 
-B<statuscodes>
-
-This table defines status codes. Statuscodes determine 
-what frequency slashd re-writes static pages.   
-
-=over 4
+This table defines status codes. Statuscodes determine
+what frequency slashd re-writes static pages.
 
  +------+------------+
  | code | name       |
  +------+------------+
- |    1 | Refreshing | 
+ |    1 | Refreshing |
  |    0 | Normal     |
- |   10 | Archive    | 
+ |   10 | Archive    |
  +------+------------+
 
-=back
 
-=head2
+=head2 stories/newstories
 
-B<stories/newstories>
-
-the table containing stories. "stories" contains all the stories 
+the table containing stories. "stories" contains all the stories
 from the inception of the site  whereas "newstories" is a cache
 of stories (for performance) which the age of which is controlled
 by archive_delay.
 
 =over 4
 
-=item *
-sid 
+=item * sid
 
 story id (primary key)
 
-=item *
-tid 
+=item * tid
 
-topic id (foreign key to topics) 
+topic id (foreign key to topics)
 
-=item *
-uid 
+=item * uid
 
 uid (foreign key to users, user has author flag)
 
-=item *
-commentcount 
+=item * commentcount
 
-number comments per story 
+number comments per story
 
-=item *
-title 
+=item * title
 
 title of the story
 
-=item *
-dept 
+=item * dept
 
-story department 
+story department
 
-=item *
-time 
+=item * time
 
 time the story was submitted
 
-=item *
-introtext 
+=item * introtext
 
-the text that displays on the front page for the story 
+the text that displays on the front page for the story
 
-=item *
-bodytext 
+=item * bodytext
 
 the main text of the story
 
-=item *
-writestatus 
+=item * writestatus
 
-status code determines how often static page is re-writen.
+status code determines how often static page is re-written.
 
-=item *
-hits 
+=item * hits
 
 number of hits per story
 
-=item *
-section 
+=item * section
 
-the section the story goes in 
+the section the story goes in
 
-=item *
-displaystatus 
+=item * displaystatus
 
 true/false if the story is to be displayed. Uses table displaycodes
 
-=item *
-commentstatus 
+=item * commentstatus
 
-true/false if comments 
+true/false if comments
 
-=item *
-hitparade 
+=item * hitparade
 
-sums of all comment counts for this story 
+sums of all comment counts for this story
 
-=item *
-relatedtext 
+=item * relatedtext
 
 content related to the story
 
-=item *
-extratext 
+=item * extratext
 
 could be anything
 
 =back
 
-=head2
 
-B<storiestuff>
+=head2 storiestuff
 
-Is this a table of all the stories that have run and how many 
+Is this a table of all the stories that have run and how many
 hits they received.
 
-=over 4
-
  +----------------+------+
- | sid            | hits | 
+ | sid            | hits |
  +----------------+------+
- | 980814/1039204 | 1313 | 
+ | 980814/1039204 | 1313 |
  | 980814/1040217 |  448 |
- | 980814/1043206 | 6608 | 
+ | 980814/1043206 | 6608 |
  | 980814/1058231 | 1474 |
- | 980814/112203  |  581 | 
+ | 980814/112203  |  581 |
  +----------------+------+
 
-=back
 
-=head2
+=head2 submissions
 
-B<submissions>
-
-submissions from users that an author either approves and it becomes a story, or 
-disapproved. "I'm just a submission, and I'm sitting here a-wishin, hoping some 
+submissions from users that an author either approves and it becomes a story, or
+disapproved. "I'm just a submission, and I'm sitting here a-wishin, hoping some
 day I'll be a story.. oh I pray that I will, but today I am still .. just a submission"
 
 =over 4
 
-=item *
-subid 
+=item * subid
 
-submission id 
+submission id
 
-=item *
-email 
+=item * email
 
 email address of the submitter
 
-=item *
-name 
+=item * name
 
 name of the submitter
 
-=item *
-time 
+=item * time
 
 time of the submission
 
-=item *
-subj 
+=item * subj
 
-subject of the story 
+subject of the story
 
-=item *
-story 
+=item * story
 
 text about the story, url ... etc... whatever the submitter inputs
 
-=item *
-tid 
+=item * tid
 
-topic id (varchar) 
+topic id (varchar)
 
-=item *
-note 
+=item * note
 
-(input by admin) Hold/Quik tells what to do with the story (grouping) 
+(input by admin) Hold/Quik tells what to do with the story (grouping)
 
-=item *
-section 
+=item * section
 
-section the submission would go in (varchar) 
+section the submission would go in (varchar)
 
-=item *
-comment 
+=item * comment
 
 comment of admin (what they're doing with the submission)
 
-=item *
-uid 
+=item * uid
 
-user id of the submitter 
+user id of the submitter
 
-=item *
-del 
+=item * del
 
-0 unedited, 1 deleted, 2 posted 
+0 unedited, 1 deleted, 2 posted
 
 =back
 
-=head2
 
-B<templates>
+=head2 templates
 
 Contains templates that make up much of the look and feel of the site
 
-=item *
-tpid 
+=over 4
+
+=item * tpid
 
 auto_increment id
 
-=item *
-name 
+=item * name
 
 name of template
 
-=item *
-page 
+=item * page
 
 page that template belongs to
 
-=item *
-section 
+=item * section
 
-section template belongs to 
+section template belongs to
 
 =back
 
-=head2
 
-topics
+=head2 topics
 
 The topics of the site
 
 =over 4
 
-=item *
-tid 
+=item * tid
 
-topic id (varchar)  
+topic id (varchar)
 
-=item *
-image 
+=item * image
 
-image associated with the topic when posted 
-(ie. billborg.gif for MS) 
+image associated with the topic when posted
+(ie. billborg.gif for MS)
 
-=item *
-alttext 
+=item * alttext
 
-text to put in alt 
+text to put in alt
 
-=item *
-tagwidth 
+=item * tagwidth
 
 width of image height - height of image
 
 =back
 
-=head2
 
-B<tzcodes>
+=head2 tzcodes
 
-This table is time zone codes - translates timezone codes into 
-the canonical names ofthe time zones, and has the minute offsets.
+This table is time zone codes - translates timezone codes into
+the canonical names of the time zones, and has the minute offsets.
 
-=over 4
- 
  +---------------------------------+
- | tz  | offset | description      | 
- | est | -18000 | Eastern Standard |   
+ | tz  | offset | description      |
+ | est | -18000 | Eastern Standard |
  +---------------------------------+
 
-=back
 
-=head2
+=head2 users
 
-users
-
-primary users table containing basic site wide information on 
-a user (uid) 
+primary users table containing basic site wide information on
+a user (uid)
 
 =over 4
 
-=item *
-uid 
+=item * uid
 
 user id, indentifies user across all user tables
 
-=item *
-nickname 
+=item * nickname
 
-the name as displayed in their comments  
+the name as displayed in their comments
 
-=item *
-realemail 
+=item * realemail
 
 their true email
 
-=item *
-fakeemail 
+=item * fakeemail
 
-their email as displayed in comments 
+their email as displayed in comments
 
-=item *
-homepage 
+=item * homepage
 
 their URL
 
-=item *
-passwd 
+=item * passwd
 
-plaintext password  
+plaintext password
 
-=item *
-sig 
+=item * sig
 
 signature text
 
-=item *
-seclev - security level, 100 and above admin
+=item * seclev
 
-=item *
-matchname - the nickname with no spaces and all lower cases, to prevent
+security level, 100 and above admin
+
+=item * matchname
+
+the nickname with no spaces and all lower cases, to prevent
 duplicate nicknames from being issued
 
-=item *
-newpasswd - used to reset the users password. Initially, stored as clear
+=item * newpasswd
+
+used to reset the users password. Initially, stored as clear
 text, sent to the user, the user logs in, newpasswd is MD5 encrypted, copied
 to passwd, and then cleared.
 
 =back
 
-=head2
 
-B<users_info>
+=head2 users_info
 
-A table containing more information about a user, including 
-meta moderation information 
+A table containing more information about a user, including
+meta moderation information
 
 =over 4
 
-=item *
-uid 
+=item * uid
 
 user id
 
-=item *
-realname 
+=item * realname
 
-their real name (legal name)  
+their real name (legal name)
 
-=item *
-bio 
+=item * bio
 
 spiel of who they are
 
-=item *
-totalmods 
+=item * totalmods
 
-total number of moderations ever moderated 
+total number of moderations ever moderated
 
-=item *
-tokens 
+=item * tokens
 
-part of moderations. Tracks when it's time for a user 
-to get more moderator points 
+part of moderations. Tracks when it's time for a user
+to get more moderator points
 
-=item *
-lastgranted 
+=item * lastgranted
 
 date that your were last given moderator access
 
-=item *
-karma 
+=item * karma
 
-points for moderating. 
+points for moderating.
 
-=item *
-maillist 
+=item * maillist
 
 uses emailcodes to determine if they get emailed
 
-=item *
-totalcomments 
+=item * totalcomments
 
-total amount of comments ever posted 
+total amount of comments ever posted
 
-=item *
-lastmm 
+=item * lastmm
 
-last meta moderation 
+last meta moderation
 
-=item *
-lastaccess 
+=item * lastaccess
 
-last access of site 
+last access of site
 
-=item *
-lastmmid 
+=item * lastmmid
 
-last uid to meta-moderate this user 
+last uid to meta-moderate this user
 
-=item *
-m2fair 
+=item * m2fair
 
 number of fair meta-moderations
 
-=item *
-m2unfair 
+=item * m2unfair
 
-number of unfair meta-moderationss
+number of unfair meta-moderations
 
-=item *
-m2fairvotes 
+=item * m2fairvotes
 
 number of times this user has had moderations voted as fair
 
-=item *
-m2unfairvotes 
+=item * m2unfairvotes
 
 number of times this user has had moderations voted as unfair
 
-=item *
-upmods 
+=item * upmods
 
-number of positive moderations 
+number of positive moderations
 
-=item *
-downmods 
+=item * downmods
 
 number of negative moderations
 
-=item *
-session_login 
+=item * session_login
 
 boolean for whether cookie should be session-based
 
 =back
 
-=head2
 
-B<users_comments>
+=head2 users_comments
 
-User information pertaining mostly to the display of comments  
+User information pertaining mostly to the display of comments
 
 =over 4
 
-=item *
-uid 
+=item * uid
 
 user id
 
-=item *
-points 
+=item * points
 
-moderator points 
+moderator points
 
-=item *
-posttype - html/plaintext
+=item * posttype
 
-=item *
-defaultpoints - number of points for posting a comment 
+html/plaintext
 
-=item *
-highlightthresh - whether you want nested comments to 
-appear as links or as fullcomments 
+=item * defaultpoints
 
-=item *
-maxcommentsize - max comment size that a user wants to read 
-(that'll be a link ordisplayed) 
+number of points for posting a comment
 
-=item *
-hardthresh - 1 or 0, forces thresholds  
+=item * highlightthresh
 
-=item *
-clbig - if comment length is larger than clbig, then points are given  
+whether you want nested comments to
+appear as links or as full comments
 
-=item *
-clsmall - if comment length is smaller than clsmall, points taken away
+=item * maxcommentsize
 
-=item *
-reparent - 1 or 0, brings up comment away from parent if moderated high 
+max comment size that a user wants to read
+(that'll be a link or displayed)
 
-=item *
-nosigs - 1 or 0 other peoples signatures or not
+=item * hardthresh
 
-=item *
-commentspill - how many comments that appear per page 
+1 or 0, forces thresholds
 
-=item *
-commentsort - uses table sortcodes to determine the order in which 
-comments aredisplayed 
+=item * clbig
 
-=item *
-commentlimit - how many comments you want to see 
+if comment length is larger than clbig, then points are given
 
-=item *
-noscores - 1 or 0, whether scores on comments appear 
+=item * clsmall
 
-=item *
-mode - Comment display style - flat,threaded or nested. 
+if comment length is smaller than clsmall, points taken away
 
-=item *
-threshold - -1 to 5 - how many comments are displayed according 
-to their moderation 
+=item * reparent
+
+1 or 0, brings up comment away from parent if moderated high
+
+=item * nosigs
+
+1 or 0 other peoples' signatures or not
+
+=item * commentspill
+
+how many comments that appear per page
+
+=item * commentsort
+
+uses table sortcodes to determine the order in which
+comments are displayed
+
+=item * commentlimit
+
+how many comments you want to see
+
+=item * noscores
+
+1 or 0, whether scores on comments appear
+
+=item * mode
+
+Comment display style - flat,threaded or nested.
+
+=item * threshold
+
+-1 to 5 - how many comments are displayed according
+to their moderation
 
 =back
 
-=head2
 
-B<users_index>
+=head2 users_index
 
 User information pertaining mostly to index/article page display
 
 =over 4
 
-=item *
-uid 
+=item * uid
 
 user id
 
-=item *
-extid 
+=item * extid
 
-exclude topics - person doesn't see a topic  
+exclude topics - person doesn't see a topic
 
-=item *
-exaid 
+=item * exaid
 
-exclude authors - person doesn't see an author 
+exclude authors - person doesn't see an author
 
-=item *
-exsect 
+=item * exsect
 
-exclude sections - person doesn't see a section 
+exclude sections - person doesn't see a section
 
-=item *
-exboxes 
-
+=item * exboxes
 
 list of slashboxes - comma separated topic blocks
-What will appear on auser's page 
+What will appear on a user's page
 
-=item *
-maxstories 
+=item * maxstories
 
-number of stories that appearnoboxes - 1 or 0 boxes or not
+number of stories that appear
 
-=item *
-noboxes 
+=item * noboxes
 
-flag that determines whether the user wants no boxes on the right 
+flag that determines whether the user wants no boxes on the right
 
 =back
 
-=head2
 
-B<users_param>
+=head2 users_param
 
 key value table for user values that don't go into the other user tables
 such as the author flag, which determines that a user is an author (appears
@@ -1366,97 +1164,89 @@ on authors page)
 
 =over 4
 
-=item *
-param_id
+=item * param_id
 
 auto increment ID
 
-=item *
-uid
+=item * uid
 
 User ID
 
-=item *
-name
+=item * name
 
 name of key
 
-=value *
+=item * value
+
 value of key
 
-=head2
+=back
 
-users_prefs
+
+=head2 users_prefs
 
 User information used site wide, things that changes less than often
 
 =over 4
 
-=item *
-uid 
+=item * uid
 
 user id
 
-=item *
-willing 
+=item * willing
 
-1 or 0 , Willing to be a moderator or not 
+1 or 0 , Willing to be a moderator or not
 
-=item *
-dfid 
+=item * dfid
 
-uses dateformat table. How you want dates (such as 
-article time stamps) to appear 
+uses dateformat table. How you want dates (such as
+article time stamps) to appear
 
-=item *
-tzcode 
+=item * tzcode
 
-usestzcode table. Your time zone table 
+uses tzcode table. Your time zone table
 
-=item *
-noicons 
+=item * noicons
 
-1 or 0 topical icons or not 
+1 or 0 topical icons or not
 
-=item *
-light 
+=item * light
 
 light mode yes/no 1 or 0, does the user want the site to load
 by default in light mode
 
-=item *
-mylinks 
+=item * mylinks
 
-block of personal stuff that appears on prefs page. 
+block of personal stuff that appears on prefs page.
 
-=item *
-lang 
+=item * lang
 
 language code
 
 =back
 
-=head2
 
-vars
+=head2 vars
 
 This table is a list of vars for the site.  Central location for sitewide variables.
 
 =over 4
 
-=item *
-name 
+=item * name
 
-name of a var 
+name of a var
 
-=item *
-value 
+=item * value
 
-the value of the var 
+the value of the var
 
-=item *
-description 
+=item * description
 
 the description of the var
 
 =back
+
+
+=head1 VERSION
+
+$Id$
