@@ -36,6 +36,12 @@ sub SlashVirtualUser ($$$) {
 #	);
 #	@{$anonymous_coward}{keys %$actz} = values %$actz;
 
+	# Lets just do this once
+	my $timezones = $cfg->{slashdb}->getDescriptions('tzcodes');
+	$anonymous_coward->{offset} = $timezones->{ $anonymous_coward->{tzcode} };
+	my $dateformats = $cfg->{slashdb}->getDescriptions('datecodes');
+	$anonymous_coward->{'format'} = $dateformats->{ $anonymous_coward->{dfid} };
+
 	$cfg->{anonymous_coward} = $anonymous_coward; 
 	$cfg->{menus} = $cfg->{slashdb}->getMenus();
 }
