@@ -55,9 +55,7 @@ DBIx::Password
 
 Apache::DBI
 
-Apache::Cookie		- libapreq; also includes Apache::Request
-
-Apache::Request
+Apache::Request		- libapreq; also includes Apache::Cookie
 
 AppConfig		- Should be installed with TT, but sometimes not?
 

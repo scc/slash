@@ -287,7 +287,6 @@ sql/mysql/defaults.sql
 sql/mysql/slashschema_create.sql
 sql/oracle/slashschema_create.sql
 sql/postgresql/slashschema_create.sql
-sql/updates/MAIN2bender
 themes/slashcode/THEME
 themes/slashcode/htdocs/404.pl
 themes/slashcode/htdocs/about.shtml

@@ -29,11 +29,11 @@ usage('Need new virtual user') unless $opts{'u'};
 $process_menus++ if $opts{'M'};
 
 # Determine plugins to force conversion for.
-for (split /,/, $opts{P}) {
+for (split /,/, ($opts{P} || '')) {
 	$forced_plugins{$_} = 1;
 }
 # Determine tables to be left alone.
-for (split /,/, $opts{X}) {
+for (split /,/, ($opts{X} || '')) {
 	$sacred_tables{$_} = 1;
 }
 
@@ -158,6 +158,7 @@ my (%conversions) = (
 	'blocks'		=> sub {
 		my($data) = @_;
 
+		$data->{seclev} ||= 0;
 		$data->{portal} ||= 0;
 		$data->{retrieve} ||= 0;
 		$data->{title} ||= '';

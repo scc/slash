@@ -29,7 +29,8 @@ SLASHSITE=$DATADIR/slash.sites
 RUNNING_PID=$DATADIR
 
 # To figure out where things are...
-export TZ=GMT
+export TZ
+TZ=GMT
 WHICH_CAT=`which cat`
 WHICH_CUT=`which cut`
 
