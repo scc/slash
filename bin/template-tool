@@ -332,7 +332,7 @@ sub list_templates {
 		print <<EOT; 
 --------------------------------------------------------
 Tpid: $templatelist->{$template}{tpid} Name: $templatelist->{$template}{name}
-Page: $templatelist->{$template}{section} Section: $templatelist->{$template}{page}
+Page: $templatelist->{$template}{page} Section: $templatelist->{$template}{section}
 
 EOT
 
