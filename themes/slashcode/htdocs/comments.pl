@@ -870,18 +870,18 @@ sub moderateCid {
 	# Write the proper records to the moderatorlog.
 	$slashdb->setModeratorLog($comment, $user->{uid}, $val, $modreason, $active);
 
-	# Increment moderators total mods and deduct their point for playing.
-	# Word of note, if we are HERE, then the user either has points, or
-	# is an author (and 'author_unlimited' is set) so point checks SHOULD
-	# be unnecessary here.
-	$user->{points}-- if $user->{points} > 0;
-	$user->{totalmods}++;
-	$slashdb->setUser($user->{uid}, {
-		totalmods 	=> $user->{totalmods},
-		points		=> $user->{points},
-	});
-
 	if ($active) {
+		# Increment moderators total mods and deduct their point for playing.
+		# Word of note, if we are HERE, then the user either has points, or
+		# is an author (and 'author_unlimited' is set) so point checks SHOULD
+		# be unnecessary here.
+		$user->{points}-- if $user->{points} > 0;
+		$user->{totalmods}++;
+		$slashdb->setUser($user->{uid}, {
+			totalmods 	=> $user->{totalmods},
+			points		=> $user->{points},
+		});
+
 		# Adjust comment posters karma and moderation stats.
 		if ($comment->{uid} != $constants->{anonymous_coward_uid}) {
 			my $cuser = $slashdb->getUser($comment->{uid});
@@ -919,7 +919,7 @@ sub moderateCid {
 		$dispArgs->{type} = 'moderated';
 
 		# Send messages regarding this moderation to user who posted
-		# comment if the havey that bit set.
+		# comment if they have that bit set.
 		my $messages = getObject('Slash::Messages');
 		if ($messages) {
 			my $comm = $slashdb->getCommentReply($sid, $cid);
