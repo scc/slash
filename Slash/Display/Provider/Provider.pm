@@ -74,7 +74,8 @@ sub _load {
 
 	if (! defined $text) {
 		$slashdb = getCurrentDB();
-		my $temp = $slashdb->getTemplate($name, [qw[template _modtime]]);
+		# in arrayref so we also get _modtime
+		my $temp = $slashdb->getTemplate($name, ['template']);
 		$text = $temp->{template};
 		$time = $temp->{_modtime};
 	}
