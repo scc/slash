@@ -874,6 +874,30 @@ sub getSectionBlockByBid {
 	return $block;
 }
 
+########################################################
+sub saveTopic {
+	my ($self) = @_;
+	my $form = getCurrentForm();
+	my($rows) = $self->sqlSelect('count(*)', 'topics', 'tid=' . $self->{dbh}->quote($form->{tid}));
+	if($rows == 0 ) {
+		$self->sqlInsert('topics', {
+			tid	=> $form->{tid},
+			image	=> $form->{image},
+			alttext	=> $form->{alttext},
+			width	=> $form->{width},
+			height	=> $form->{height}
+		}
+		);
+	}
+
+	$self->sqlUpdate('topics', {
+			image	=> $form->{image}, 
+			alttext	=> $form->{alttext}, 
+			width	=> $form->{width},
+			height	=> $form->{height}
+		}, 'tid=' . $self->{dbh}->quote($form->{tid})
+	);
+}
 ##################################################################
 sub saveBlock {
 	my ($self, $bid) = @_;
@@ -2190,6 +2214,40 @@ sub getUrlFromTitle {
 	);
 	my $rootdir = getCurrentStatic('rootdir');
 	return "$rootdir/article.pl?sid=$sid";
+}
+##################################################################
+# Should this really be in here?
+sub getTime{
+	my ($self) = @_;
+	my ($now) = $self->sqlSelect('now()');
+
+	return $now;
+}
+
+##################################################################
+sub getStoryList {
+	my ($self) = @_;
+
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
+
+	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, aid,
+			date_format(time,"%k:%i") as t,tid,section,
+			displaystatus,writestatus,
+			date_format(time,"%W %M %d"),
+			date_format(time,"%m/%d")
+			FROM stories,storiestuff 
+			WHERE storiestuff.sid=stories.sid];
+	$sql .= "	AND section='$user->{asection}'" if $user->{asection};
+	$sql .= "	AND section='$form->{section}'"  if $form->{section} && !$user->{asection};
+	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $form->{section} eq ""; 
+	$sql .= "	ORDER BY time DESC";
+
+	my $cursor = $self->{dbh}->prepare($sql);
+	$cursor->execute;
+	my $list = $cursor->fetchall_arrayref;
+
+	return $list;
 }
 
 1;

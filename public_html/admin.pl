@@ -809,28 +809,10 @@ sub topicDelete {
 ##################################################################
 sub topicSave {
 	if ($I{F}{tid}) {
-		my($rows) = sqlSelect('count(*)', 'topics', 'tid=' . $I{dbh}->quote($I{F}{tid}));
+		$I{dbobject}->saveTopic();
 		if (!$I{F}{width} && !$I{F}{height}) {
 		    @{ $I{F} }{'width', 'height'} = imgsize("$I{basedir}/images/topics/$I{F}{image}");
 		}
-		if($rows == 0 ) {
-			sqlInsert('topics', {
-				tid	=> $I{F}{tid},
-				image	=> $I{F}{image},
-				alttext	=> $I{F}{alttext},
-				width	=> $I{F}{width},
-				height	=> $I{F}{height}
-			}
-			);
-		}
-
-		sqlUpdate('topics', {
-				image	=> $I{F}{image}, 
-				alttext	=> $I{F}{alttext}, 
-				width	=> $I{F}{width},
-				height	=> $I{F}{height}
-			}, 'tid=' . $I{dbh}->quote($I{F}{tid})
-		);
 	}
 	print "<B>Saved $I{F}{tid}!</B><BR>" if ! DBI::errstr;
 	$I{F}{nexttid} = $I{F}{tid};
@@ -1048,8 +1030,11 @@ EOT
 		$A = $I{dbobject}->getAuthor($I{F}{aid});
 		$sid = $I{F}{sid};
 
-		$S->{sqltime} = $I{F}{'time'};
-		($S->{sqltime}) = sqlSelect('now()') if !$I{F}{'time'} || $I{F}{fastforward};
+		if (!$I{F}{'time'} || $I{F}{fastforward}) {
+			$S->{sqltime} = $I{dbobject}->getTime();
+		} else {
+			$S->{sqltime} = $I{F}{'time'};
+		}
 
 		print '<TABLE><TR><TD>';
 		my $tmp = $I{currentSection};
@@ -1089,7 +1074,7 @@ EOT
 		$S->{displaystatus} = $I{dbobject}->getVar('defaultdisplaystatus');
 		$S->{commentstatus} = $I{dbobject}->getVar('defaultcommentstatus');
 
-		($S->{sqltime}) = sqlSelect('now()');
+		$S->{sqltime} = $I{dbobject}->getTime();
 		$S->{tid} ||= 'news';
 		$S->{section} ||= 'articles';
 		$S->{aid} = $I{U}{aid};
@@ -1206,20 +1191,7 @@ EOT
 ##################################################################
 sub listStories {
 	my($x, $first) = (0, $I{F}{'next'});
-	my $sql = q[SELECT storiestuff.hits, commentcount, stories.sid, title, aid,
-			date_format(time,"%k:%i") as t,tid,section,
-			displaystatus,writestatus,
-			date_format(time,"%W %M %d"),
-			date_format(time,"%m/%d")
-			FROM stories,storiestuff 
-			WHERE storiestuff.sid=stories.sid];
-	$sql .= "	AND section='$I{U}{asection}'" if $I{U}{asection};
-	$sql .= "	AND section='$I{F}{section}'"  if $I{F}{section} && !$I{U}{asection};
-	$sql .= "	AND time < DATE_ADD(now(), interval 72 hour) " if $I{F}{section} eq ""; 
-	$sql .= "	ORDER BY time DESC";
-
-	my $cursor = $I{dbh}->prepare($sql);
-	$cursor->execute;
+	my $storylist = $I{dbobject}->getStoryList();
 
 	my $yesterday;
 	my $storiestoday = 0;
@@ -1231,8 +1203,9 @@ sub listStories {
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
 EOT
 
-	while (my($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
-		$displaystatus, $writestatus, $td, $td2) = $cursor->fetchrow) {
+	for (@$storylist) {
+		my($hits, $comments, $sid, $title, $aid, $time, $tid, $section,
+				$displaystatus, $writestatus, $td, $td2) = @$_;
 
 		$x++;
 		$storiestoday++;
