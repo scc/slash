@@ -1296,17 +1296,16 @@ An object.
 
 sub getObject {
 	my($value, $user, @args) = @_;
-	my $objects;
+	my($r, $cfg, $objects);
 
 	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r    =   Apache->request;
-		my $cfg  =   Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$r       =   Apache->request;
+		$cfg     =   Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$objects =   $cfg->{'objects'};
-		$user    ||= $cfg->{VirtualUser};
-	} else {
-		$objects = {};
-		$user    ||= getCurrentVirtualUser();
 	}
+
+	$objects ||= {};
+	$user    ||= getCurrentVirtualUser();
 	return unless $user;
 
 	if ($objects->{$value}) {
@@ -1314,10 +1313,13 @@ sub getObject {
 	} else {
 		eval "require $value";
 		if ($@) {
-			errorLog($@);
+			warn $@;
 			return;
 		}
 		$objects->{$value} = $value->new($user, @args);
+		if ($ENV{GATEWAY_INTERFACE}) {
+			$cfg->{'objects'} = $objects;
+		}
 		return $objects->{$value};
 	}
 }

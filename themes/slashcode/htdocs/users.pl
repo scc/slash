@@ -363,10 +363,10 @@ sub validateUser {
 
 	if ($user->{reg_id} eq $form->{reg_id}) {
 		# We have a user and the registration IDs match. We are happy!
-		my ($maxComm, $maxDays) = (	$constants->{expiry_max_comm},
-									$constants->{expiry_max_days} );
-		my ($userComm, $userDays) = ($user->{user_expiry_comm},
-									 $user->{user_expiry_days});		
+		my($maxComm, $maxDays) = ($constants->{expiry_max_comm},
+			$constants->{expiry_max_days});
+		my($userComm, $userDays) = ($user->{user_expiry_comm},
+			$user->{user_expiry_days});		
 		my $exp = $constants->{expiry_exponent};
 
 		my $new_comment_expiry = ($userComm > $maxComm) ?

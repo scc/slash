@@ -522,8 +522,9 @@ sub createAccessLog {
 }
 
 ########################################################
+# pass in additional optional descriptions
 sub getDescriptions {
-	my($self, $codetype, $optional, $flag) =  @_;
+	my($self, $codetype, $optional, $flag, $altdescs) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $cache = '_getDescriptions_' . $codetype;
@@ -534,7 +535,10 @@ sub getDescriptions {
 		return $self->{$cache} if $self->{$cache}; 
 	}
 
-	my $sth = $descriptions{$codetype}->(@_);
+	$altdescs ||= {};
+	my $descref = $altdescs->{$codetype} || $descriptions{$codetype};
+
+	my $sth = $descref->(@_);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -2728,7 +2732,8 @@ sub getTemplateByName {
 	my $table_cache_id= '_templates_cache_id';
 
 	#First, we get the cache
-	$self->{$table_cache_id} ||= _getTemplateNameCache($self);
+	$self->{$table_cache_id} = getCurrentStatic('cache_enabled')
+		? $self->{$table_cache_id} : _getTemplateNameCache($self);
 
 	#Now, lets determine what we are after
 	unless ($page) {

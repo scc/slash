@@ -19,20 +19,30 @@ use Slash::Utility;
 
 my $virtual_user = $ARGV[0];
 createEnvironment($ARGV[0]);
+
 my $constants = getCurrentStatic();
-my $slashdb = getCurrentDB();
-my $messages = getObject('Slash::Messages');
+my $slashdb   = getCurrentDB();
+my $messages  = getObject('Slash::Messages');
 
-my $count = $slashdb->countDaily();
+sendAdminMail();
+mailingList();
 
-my $sdTotalHits = $slashdb->getVar('totalhits', 'value');
+# Now lets clean up the database
+$slashdb->deleteDaily();
 
-$sdTotalHits = $sdTotalHits + $count->{'total'};
-$slashdb->setVar("totalhits", $sdTotalHits);
+exit;
 
-$slashdb->updateStamps();
+sub sendAdminMail {
+	my $count = $slashdb->countDaily();
 
-my $email = <<EOT;
+	my $sdTotalHits = $slashdb->getVar('totalhits', 'value');
+
+	$sdTotalHits = $sdTotalHits + $count->{'total'};
+	$slashdb->setVar("totalhits", $sdTotalHits);
+
+	$slashdb->updateStamps();
+
+	my $email = <<EOT;
 $constants->{sitename} Stats for yesterday
 
      total $count->{'total'}
@@ -42,11 +52,11 @@ total hits $sdTotalHits
    indexes 
 EOT
 
-for (keys %{$count->{'index'}}) {
-	$email .= "\t   $_=$count->{'index'}{$_}\n"
-}
+	for (keys %{$count->{'index'}}) {
+		$email .= "\t   $_=$count->{'index'}{$_}\n"
+	}
 
-$email .= "\n-----------------------\n";
+	$email .= "\n-----------------------\n";
 
 # DOESN'T WORK
 # for my $key (sort { $count->{'articles'}{$b} <=> $count->{'articles'}{$a} } keys %{$count->{'articles'}}) {
@@ -58,20 +68,15 @@ $email .= "\n-----------------------\n";
 # 		" by $story->{'author'}\n" if $value > 100;
 # }
 
-$email .= "\n-----------------------\n";
-$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
-$email .= "\n-----------------------\n";
+	$email .= "\n-----------------------\n";
+	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
+	$email .= "\n-----------------------\n";
 
-# Send a message to the site admin.
-for (@{$constants->{stats_reports}}) {
-	sendEmail($_, "$constants->{sitename} Stats Report", $email, 0, 'bulk');
+	# Send a message to the site admin.
+	for (@{$constants->{stats_reports}}) {
+		sendEmail($_, "$constants->{sitename} Stats Report", $email, 0, 'bulk');
+	}
 }
-mailingList();
-
-# Now lets clean up the database
-$slashdb->deleteDaily();
-
-1;
 
 sub generateDailyMail {
 	my $data = $slashdb->getDailyMail();
@@ -108,6 +113,25 @@ sub generateDailyMail {
 	return($newsletter, $headlines);
 }
 
+sub mailingList {
+	my($newsletter, $headlines) = generateDailyMail();
+	return unless $headlines;
+
+	# need to change for specific prefs, later
+	my $h_users = $slashdb->getHeadlineUsers();
+	my $n_users = $slashdb->getNewsletterUsers();
+
+	for (@{$h_users}) {
+		my $head_subj = "24 Hours of $constants->{sitename} Headlines For $_->[0]";
+		$messages->quicksend($_->[1], $head_subj, $headlines,  1);
+	}
+
+	for (@{$n_users}) {
+		my $news_subj = "24 Hours of $constants->{sitename} Stories For $_->[0]";
+		$messages->quicksend($_->[1], $news_subj, $newsletter, 0);
+	}
+
+}
 
 sub urlize {
 	local($_) = @_;
@@ -117,38 +141,4 @@ sub urlize {
 	return $_;
 }
 
-sub mailingList {
-	my($newsletter, $headlines) = generateDailyMail();
-	return unless $headlines;
-
-	# need to change for specific prefs, later
-	my $users = $slashdb->getMailingList();
-
-	for (@{$users}) {
-		my $news_subj = "24 Hours of $constants->{sitename} Stories For $_->[1]";
-		$messages->quicksend($_->[2], $news_subj, $newsletter, 0);
-	}
-
-	for (@{$users}) {
-		my $head_subj = "24 Hours of $constants->{sitename} Headlines For $_->[1]";
-		$messages->quicksend($_->[2], $head_subj, $headlines,  1);
-	}
-}
-
-sub prog2file {
-	my($command, $arguments, $f) = @_;
-
-	my $d = `$command virtual_user=$virtual_user $arguments`;
-	my $dir = dirname($f);
-	mkpath($dir, 0, 0755) unless -e $dir;
-	if (length($d) > 0) {
-		local *F;
-		open F, ">$f" or die "Can't open $f: $!";
-		print F $d;
-		close F;
-		return 1;
-
-	} else {
-		return 0;
-	}
-}
+1;

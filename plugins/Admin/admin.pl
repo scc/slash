@@ -5,9 +5,10 @@
 # $Id$
 
 use strict;
-use POSIX;
-use Image::Size;
 use Date::Manip;
+use Image::Size;
+use POSIX;
+
 use Slash;
 use Slash::Display;
 use Slash::Utility;
@@ -1131,6 +1132,7 @@ sub write_to_temp_file {
 sub get_ispell_comments {
 	my($text) = @_;
 	$text = strip_nohtml($text);
+	# don't split to scalar context, it clobbers @_
 	my $n_text_words = scalar(my @junk = split /\W+/, $text);
 	my $slashdb = getCurrentDB();
 

@@ -41,19 +41,19 @@ __template__
 		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
 		<TD VALIGN="MIDDLE">&nbsp;<INPUT TYPE="SUBMIT" NAME="useredit" VALUE="Edit User"></TD>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
 
 [% IF authoredit_flag && seclev_field %]
 	<TR>
 		<TD><B>Seclev</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="TEXT" NAME="seclev" value="[% edituser.seclev %]"></TD>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
 	<TR>
 		<TD><B>Author flag (user is an author)</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TR>
+	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
 	<TR>
 		<TD><B>Read-only</B></TD><TD COLSPAN="3">&nbsp;</TD>
 	</TR>

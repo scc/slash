@@ -9,3 +9,25 @@ CREATE TABLE message_drop (
 	message BLOB DEFAULT '' NOT NULL,
 	PRIMARY KEY (id)
 ) TYPE=MYISAM;
+
+DROP TABLE IF EXISTS message_web;
+CREATE TABLE message_web (
+	id      INT(11) NOT NULL,
+	user    INT(11) NOT NULL,
+	fuser   INT(11) DEFAULT '0' NOT NULL,
+	code    INT(11) DEFAULT '0' NOT NULL,
+	updated TIMESTAMP NOT NULL,
+	readed  TINYINT(1) DEFAULT '0' NOT NULL,
+	date    TIMESTAMP NOT NULL,
+	KEY (fuser),
+	KEY (user),
+	PRIMARY KEY (id)
+);
+
+DROP TABLE IF EXISTS message_web_text;
+CREATE TABLE message_web_text (
+	id      INT(11) NOT NULL,
+	subject BLOB DEFAULT '' NOT NULL,
+	message BLOB DEFAULT '' NOT NULL,
+	PRIMARY KEY (id)
+);

@@ -6,7 +6,7 @@
 
 use strict;
 use File::Basename;
-use File::Spec;
+use File::Spec::Functions;
 use FindBin '$Bin';
 use Getopt::Std;
 use Slash 2.001;
@@ -29,17 +29,17 @@ my $messages = getObject('Slash::Messages');
 my $constants = getCurrentStatic();
 main();
 
+use Data::Dumper;
+
 sub main {
 	my $count = $constants->{message_process_count} || 10;
-	my @msgs  = $messages->gets($count);
-	print Dumper \@msgs;
-	return;
-	my @good  = $messages->process(@msgs);
+	my $msgs  = $messages->gets($count);
+	my @good  = $messages->process(@$msgs);
 
-	my %msgs  = map { ($_->{id}, $_) } @msgs;
+	my %msgs  = map { ($_->{id}, $_) } @$msgs;
 
 	for (@good) {
-		messagedLog("msg #{$_} sent successfully.");
+		messagedLog("msg \#$_ sent successfully.");
 		delete $msgs{$_};
 	}
 

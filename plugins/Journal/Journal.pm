@@ -6,15 +6,23 @@
 package Slash::Journal;
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use DBIx::Password;
 use Slash;
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION @ISA);
 
-@ISA = qw(Slash::DB::Utility Slash::DB::MySQL);
+use vars qw($VERSION @EXPORT);
+use base 'Exporter';
+use base 'Slash::DB::Utility';
+use base 'Slash::DB::MySQL';
+
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+@EXPORT = qw(
+	MSG_CODE_JOURNAL_FRIEND
+);
+
+use constant MSG_CODE_JOURNAL_FRIEND => 5;
 
 # On a side note, I am not sure if I liked the way I named the methods either.
 # -Brian
@@ -92,7 +100,7 @@ sub create {
 sub remove {
 	my ($self, $id) = @_;
 	my $uid = $ENV{SLASH_USER};
-	$self->sqlDo("DELETE FROM  journals WHERE uid=$uid AND id=$id");
+	$self->sqlDo("DELETE FROM journals WHERE uid=$uid AND id=$id");
 }
 
 sub friends {
@@ -109,17 +117,18 @@ sub friends {
 	return $friends;
 }
 
-sub reverse_friends {
+sub message_friends {
 	my($self) = @_;
-	my $uid = $ENV{SLASH_USER};
-	my $sql;
-	$sql .= " SELECT u.nickname, j.uid";
-	$sql .= " FROM journal_friends as j, users as u";
-	$sql .= " WHERE j.friend = $uid AND j.uid = u.uid";
-	$sql .= " GROUP BY u.nickname ORDER BY uid ASC";
-	$self->sqlConnect;
-	my $friends = $self->{_dbh}->selectall_arrayref($sql);
+	my $code  = MSG_CODE_JOURNAL_FRIEND;
+	my $uid   = $ENV{SLASH_USER};
+	my $cols  = "journal_friends.uid";
+	my $table = "journal_friends,users_param";
+	my $where = "journal_friends.friend=$uid AND " .
+		"journal_friends.uid=users_param.uid AND " .
+		"users_param.name='messagecodes_$code' AND " .
+		"users_param.value=1";
 
+	my $friends  = $self->sqlSelectArrayRef($cols, $table, $where);
 	return $friends;
 }
 

@@ -13,7 +13,7 @@ msg_email
 __template__
 [% msg.message %]
 
-----------------------------------------------------------------------
+======================================================================
 
 You have received this message because you subscribed to it
 on [% constants.sitename %].  To stop receiving this and other

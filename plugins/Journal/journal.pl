@@ -65,8 +65,7 @@ sub main {
 		}
 		$r->status(200);
 	} else {
-		my $uid = $form->{'uid'};
-		if ($op eq 'display') {
+		if ($op eq 'display' || $op eq 'list') {
 			my $slashdb = getCurrentDB();
 			my $nickname = $slashdb->getUser($form->{uid}, 'nickname') if $form->{uid};
 			$nickname ||= getCurrentUser('nickname');
@@ -299,23 +298,27 @@ sub saveArticle {
 
 		# create messages
 		my $messages = getObject('Slash::Messages');
-		my $friends = $journal->reverse_friends;
+		if ($messages) {
+			my $friends   = $journal->message_friends;
+			my $user      = getCurrentUser();
+			my $constants = getCurrentStatic();
 
-		my $user = getCurrentUser();
-		my $constants = getCurrentStatic();
-
-		my $data = {
-			template_name	=> 'messagenew',
-			description	=> $description,
-			article		=> $form->{article},
-			posttype	=> $form->{posttype},
-			id		=> $id,
-			uid		=> $user->{uid},
-			nickname	=> $user->{nickname}
-		};
+			my $data = {
+				template_name	=> 'messagenew',
+				subject		=> { template_name => 'messagenew_subj' },
+				journal		=> {
+					description	=> $description,
+					article		=> $form->{article},
+					posttype	=> $form->{posttype},
+					id		=> $id,
+					uid		=> $user->{uid},
+					nickname	=> $user->{nickname},
+				}
+			};
 			
-		for (@$friends) {
-			$messages->create($_->[1], 5, $data);
+			for (@$friends) {
+				$messages->create($_, MSG_CODE_JOURNAL_FRIEND, $data);
+			}
 		}
 	}
 	listArticle(@_);

@@ -455,12 +455,12 @@ sub stripByMode {
 		# Preserve leading indents / spaces
 		$str =~ s/\t/    /g;  # can mess up internal tabs, oh well
 
-		if ($fmode == CODE) {
+		if ($fmode == CODE) {  # CODE and TT are the same ... ?
 			$str =~ s{((?:  )+)(?: (\S))?} {
 				("&nbsp; " x (length($1)/2)) .
 				($2 ? "&nbsp;$2" : "")
 			}eg;
-			$str = '<CODE>' . $str . '</CODE>';
+			$str = '<TT>' . $str . '</TT>';
 
 		} else {
 			$str =~ s{<BR>\n?( +)} {
@@ -570,6 +570,9 @@ C<approveTag> function.
 
 sub stripBadHtml {
 	my($str) = @_;
+
+	# not staying here, just for now
+	$str =~ s|<LITERAL>(.*?)</LITERAL>|'<P>' . strip_code($1) . '</P>'|egis;
 
 	$str =~ s/<(?!.*?>)//gs;
 	$str =~ s/<(.*?)>/approveTag($1)/sge;

@@ -37,14 +37,14 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 <BR>
 	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% user_edit.realname %]" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; user_edit.realname; END %]" SIZE="40"><BR>
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% user_edit.uid %]">
 		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; user_edit.nickname; END %]"><BR>
 <BR>
 	<B>Your Email Address</B><BR>
 	<SMALL>(required but never displayed publicly. This is where your passwd is mailed. 
 	If you change this address, a notification will be sent)</SMALL><BR>
-	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% user_edit.realemail %]" SIZE="40"><BR>
+	<INPUT TYPE="TEXT" NAME="realemail" VALUE="[% FILTER strip_attribute; user_edit.realemail; END %]" SIZE="40"><BR>
 <BR>
 [% emaildisplay.${user.emaildisplay} = 'CHECKED' -%]
 	<B>Email Display</B><BR>
@@ -60,7 +60,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 <BR>
 	
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% user_edit.homepage %]" SIZE="60"><BR>
+		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% FILTER strip_attribute; user_edit.homepage; END %]" SIZE="60"><BR>
 
 	<P><B>Headline Mailing List</B>
 	[% maillist %]
