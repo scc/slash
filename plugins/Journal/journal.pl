@@ -147,6 +147,7 @@ sub displayArticle {
 	my $slashdb = getCurrentDB();
 	my $uid;
 	my $nickname;
+
 	if($form->{uid}) {
 		$nickname = $slashdb->getUser($form->{uid}, 'nickname');
 		$uid = $form->{uid};
@@ -236,21 +237,34 @@ sub editArticle {
 	my ($form, $journal) = @_;
 	# This is where we figure out what is happening
 	my $article = {};
+
 	if($form->{state}){
 		$article->{date} = scalar(localtime(time()));
-		$article->{article} = $form->{article};
-		$article->{description} = $form->{description};
+		$article->{article} = strip_mode($form->{article}, $form->{posttype});
+		$article->{description} = strip_nohtml($form->{description});
 		$article->{id} = $form->{id};
 	}  else {
 		$article = $journal->get($form->{id}) if $form->{id};
 	}
+	
 	my $disp_article = [$article->{date}, $article->{article}, $article->{description}] if ($article->{article});
+
 	slashDisplay('journalentry', {
 		article => $disp_article,
 		author => getCurrentUser('nickname'),
 	}) if ($article->{article});
+
+	my $slashdb = getCurrentDB();
+	my $formats = $slashdb->getDescriptions('postmodes');
+	my $posttype = getCurrentUser('posttype');
+
+	my $format_select = $form->{posttype}
+			? createSelect('posttype', $formats, $form->{posttype}, 1)
+			: createSelect('posttype', $formats, $posttype, 1);
+
 	slashDisplay('journaledit', {
-		form => $article,
+		article => $article,
+		format_select => $format_select,
 	});
 }
 

@@ -45,6 +45,8 @@ sub gets {
 
 sub create {
 	my ($self, $description, $article) = @_;
+	return unless $description;
+	return unless $article;
 	my $uid = $ENV{SLASH_USER};
 	$self->sqlInsert("journals", {
 		uid => $uid,
@@ -94,7 +96,7 @@ sub top {
 	my ($self, $limit) = @_;
 	$limit ||= 10;
 	my $sql;
-	$sql .= "SELECT count(j.uid) as c, u.nickname, j.uid ";
+	$sql .= "SELECT count(j.uid) as c, u.nickname, j.uid, max(date)";
 	$sql .= " FROM journals as j,users as u WHERE ";
 	$sql .= " j.uid = u.uid";
 	$sql .= " GROUP BY u.nickname ORDER BY c DESC";
