@@ -312,10 +312,10 @@ CREATE TABLE newstories (
 
 CREATE TABLE pollanswers (
   qid char(20) DEFAULT '' NOT NULL,
-  uid int(11) DEFAULT '1' NOT NULL,
+  aid int(11) DEFAULT '0' NOT NULL,
   answer char(255),
   votes int(11),
-  PRIMARY KEY (qid,uid)
+  PRIMARY KEY (qid,aid)
 );
 
 #

@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w 
 use strict;
+use Digest::MD5 'md5_hex';
 use Slash::DB;
 
 # This is the uber install script.
@@ -7,26 +8,26 @@ use Slash::DB;
 
 
 my $prefix = "/usr/local/slash";
+my(	$user,
+	$owner,
+	$password,
+	$username,
+	$realname,
+	$email,
+	$dbh,
+	@create,
+	$sql,
+	@sql,
+	$hostname,
+	@directories,
+	@binaries,
+	$httpd,
+	$uname,
+	%slash_sites,
+	$sitename
+);
 
-my (	$user,
-			$owner,
-			$password,
-			$username,
-			$realname,
-			$email,
-			$dbh,
-			@create,
-			$sql,
-			@sql,
-			$hostname,
-			@directories,
-			@binaries,
-			$httpd,
-			$uname,
-			%slash_sites,
-			);
-
-my @standard_http = qw (
+my @standard_http = qw(
 	PerlModule Apache::SIG
 	PerlModule Apache::DBI
 	PerlModule Slash::Apache
@@ -39,42 +40,45 @@ my @standard_http = qw (
 	PerlSetupEnv On
 	PerlSetEnv TZ GMT
 );
+
 unless ($ARGV[0]) {
-	print "You need to give us a DBIx::Password virtual name\n";
-	exit 0;
+	print "You need to give us a DBIx::Password virtual name.\n";
+	exit;
 }
 
-eval { require DBIx::Password; };
+eval { require DBIx::Password };
 
-if($@) {
-	print "Doesn't look like you have Bundle::Slash installed.\n";
-	print "Run the CPAN tool and install Bundle::Slash.\n";
+if ($@) {
+	print "Doesn't look like you have Bundle::Slash installed.
+Run the CPAN tool and install Bundle::Slash.\n";
+	exit;
 }
 
 $user = $ARGV[0];
 
 $dbh = DBIx::Password->connect($user);
 
-unless($dbh) {
-	print "The virtual user \"$user\" doesn't exist.\n";
-	exit 0;
+unless ($dbh) {
+	print qq[The virtual user "$user" doesn't exist.\n];
+	exit;
 }
 
-open(APXS, "apxs -q SYSCONFDIR |");
-($httpd) = <APXS>;
-close(APXS);
+if (open(APXS, 'apxs -q SYSCONFDIR |')) {
+	($httpd) = <APXS>;
+	close(APXS);
+}
 
-unless($httpd) {
-	print "Ok, we couldn't find apxs so you won't have the option\n";
-	print "of us fixing your httpd.conf for you\n";
+unless ($httpd) {
+	print "Ok, we couldn't find apxs so you won't have the option
+of us fixing your httpd.conf for you.\n";
 } else {
-	$httpd .= "/httpd.conf";
+	$httpd .= '/httpd.conf';
 }
 
 # Defaulting to the only theme at the moment
-open(CREATE, "<$prefix/sql/mysql/schema.sql");
-
-while(<CREATE>) {
+open(CREATE, "< $prefix/sql/mysql/schema.sql")
+	or die "Can't open $prefix/sql/mysql/schema.sql: $!.\n";
+while (<CREATE>) {
 	chomp;
 	next if /^#/;
 	next if /^$/;
@@ -88,15 +92,11 @@ $sql = join '', @create;
 
 
 
-print "What is name of your slashsite (aka www.slashdot.org)?\n";
-$hostname = <STDIN>;
-chomp($hostname);
+print "What is name of your slashsite (e.g., www.slashdot.org)?\n";
+chomp($hostname = <STDIN>);
 print "What user would you like to run your slashcode site as (nobody is default)?\n";
-$owner = <STDIN>;
-chomp($owner);
-unless($owner) {
-	$owner = 'nobody';
-}
+chomp($owner = <STDIN>);
+$owner ||= 'nobody';
 
 # We also need to really be determining driver here and 
 # picking the right schema. Having it loop through
@@ -104,8 +104,8 @@ unless($owner) {
 print "Which theme do you want to use (skipping since we only have one theme)?\n";
 my $theme = "$prefix/themes/slashcode";
 
-open(DUMP,"<$theme/sql/mysql/datadump.sql");
-
+open(DUMP,"< $theme/sql/mysql/datadump.sql")
+	or die "Can't open $theme/sql/mysql/datadump.sql: $!.\n";
 while(<DUMP>) {
 	next unless /^INSERT/;
 	chomp;
@@ -114,31 +114,29 @@ while(<DUMP>) {
 }
 close(DUMP);
 
-open(DUMP,"<$theme/sql/mysql/prep.sql");
-
+open(DUMP,"< $theme/sql/mysql/prep.sql")
+	or die "Can't open $theme/sql/mysql/prep.sql: $!.\n";
 while(<DUMP>) {
 	chomp;
 	push @sql, $_;
 }
 close(DUMP);
 
-for(@sql) {
+for (@sql) {
 	next unless $_;
-	unless($dbh->do($_)) {
+	unless ($dbh->do($_)) {
 		print "Failed on :$_:\n";
 	}
 }
 
-print "Ok, I am planning on user $hostname as the unique name for the slashcode site. If this is not ok, you need to fill in something else here. [$hostname]\n";
-my $sitename = <STDIN>;
-chomp($sitename);
-unless($sitename) {
-	$sitename = $hostname;
-}
+print "OK, I am planning on user $hostname as the unique name for the slashcode site.
+If this is not ok, you need to fill in something else here. [$hostname]\n";
+chomp($sitename = <STDIN>);
+$sitename ||= $hostname;
 
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename/logs' WHERE name = 'logdir' ");
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename/htdocs' WHERE name = 'basedir' ");
-$dbh->do("UPDATE vars SET value = '$prefix/$sitename' WHERE name = 'datadir' ");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename/logs' WHERE name = 'logdir'");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename/htdocs' WHERE name = 'basedir'");
+$dbh->do("UPDATE vars SET value = '$prefix/$sitename' WHERE name = 'datadir'");
 
 system("mkdir $prefix/$sitename");
 system("mkdir $prefix/$sitename/logs");
@@ -151,34 +149,33 @@ $dbh->disconnect;
 
 my $slashdb = Slash::DB->new($ARGV[0]);
 
-print "Ok, we need to create an admin account, give us a name (8 characters only please)\n";
-$username = <STDIN>;
-chomp($username);
+print "Ok, we need to create an admin account, give us a name (8 characters only please).\n";
+chomp($username = <STDIN>);
 print "What is the email address of the account?\n";
-$email = <STDIN>;
-chomp($email);
+chomp($email = <STDIN>);
 
 my $uid = $slashdb->createUser($username, $email, $username);
 
 print "What is the password for the account?\n";
-$password = <STDIN>;
-chomp($password);
+chomp($password = <STDIN>);
 
-$slashdb->setUser($uid, {newpasswd => $password, seclev => 10000});
+$slashdb->setUser($uid, { passwd => md5_hex($password), seclev => 10000 });
 
 # Now, lets update slash.sites
-open (SLASHSITES, "$prefix/slash.sites");
-while(<SLASHSITES>) {
-	chomp;
-	my ($dbuser) = split /:/;
-	$slash_sites{$dbuser} = 1;
+if (open(SLASHSITES, "< $prefix/slash.sites")) {
+	while (<SLASHSITES>) {
+		chomp;
+		my($dbuser) = split /:/;
+		$slash_sites{$dbuser} = 1;
+	}
+	close(SLASHSITES);
 }
-close (SLASHSITES);
 
-unless($slash_sites{$user}) {
-	open (SLASHSITES, ">>$prefix/slash.sites");
-	print SLASHSITES ("$user:$owner\n");
-	close (SLASHSITES);
+unless (exists $slash_sites{$user}) {
+	open(SLASHSITES, ">> $prefix/slash.sites")
+		or die "Can't append to $prefix/slash.sites: $!.\n";
+	print SLASHSITES "$user:$owner\n";
+	close(SLASHSITES);
 }
 
 system("chown -R $owner $prefix/");
@@ -186,17 +183,16 @@ system("chown -R $owner $prefix/");
 # Now, lets do the httpd.conf
 
 sub standardadd {
-	open(CONF, ">>$httpd");
-	for(@standard_http) {
-		print CONF ("$_\n");
+	open(CONF, ">> $httpd");
+	for (@standard_http) {
+		print CONF "$_\n";
 	}
 	close(CONF);
 }
 
 sub siteadd {
-	open(CONF, ">>$httpd");
+	open(CONF, ">> $httpd");
 	close(CONF);
 }
 
-
-
+__END__
