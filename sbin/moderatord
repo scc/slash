@@ -20,12 +20,7 @@ my $slashdb = getCurrentDB();
 
 
 sub moderatordLog {
-	local *LOG;
-	my $dir = "$constants->{logdir}";
-	open LOG, ">>$dir/moderatord.log"
-		or die "Can't append to $dir/moderatord.log: $!";
-	print LOG localtime() . "\t", join("\t", @_), "\n";
-	close LOG;
+	doLog('moderatord', \@_);
 }
 
 sub comments2tokens {
@@ -69,6 +64,7 @@ sub comments2tokens {
 
 
 # MAIN CODE #
+doLogInit('moderatord');
 moderatordLog(getData('moderatord_log_header'));
 my $tc = $slashdb->getVar('totalComments', 'value');
 my $lc = $slashdb->getVar('lastComments', 'value');
@@ -97,3 +93,4 @@ if ($newcomments > 0) {
 	}
 }
 moderatordLog(getData('moderatord_log_footer'));
+doLogExit('moderatord');

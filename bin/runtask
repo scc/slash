@@ -36,15 +36,7 @@ exit 0;
 ############################################################
 
 sub slashdLog {
-	my @msg = @_;
-	chomp @msg;
-	my $fh = gensym();
-	my $file = catfile($constants->{logdir}, "slashd.log");
-	my $log_msg = scalar(localtime) . "\truntask @msg\n";
-	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @msg\n";
-	print $fh $log_msg;
-	print     $log_msg;
-	close $fh;
+	doLog('slashd', \@_, 1, 'runtask');
 }
 
 sub slashdLogDie {
@@ -131,10 +123,7 @@ sub verbosity {
 ############################################################
 
 sub slashdLogInit {
-	my $ld = $constants->{logdir};
-	mkpath $ld, 0, 0775;
-	my $file = catfile($ld, "slashd.log");
-	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
+	doLogInit('slashd', 1);
 }
 
 sub get_task_subref {
@@ -256,13 +245,6 @@ sub main {
 	$dir = "$constants->{datadir}/tasks";
 	slashdLogInit();
 	$ENV{TZ} = 'GMT' if $ENV{TZ} ne 'GMT';
-	local $SIG{TERM} = sub {
-		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
-		exit 0;
-	};
-
-# srand is almost always superfluous in perl 5.004 and later -- pudge
-#	srand(time() ^ ($$+($$<<15)));
 
 	my $subref = get_task_subref();
 	slashdLog("$task_name begin") if verbosity() >= 2;

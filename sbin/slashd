@@ -46,6 +46,9 @@ my $constants = getCurrentStatic();
 my $slashdb = getCurrentDB();
 my $user = getCurrentUser();
 
+# i am not sure we need this ... -- pudge
+#sub END { Carp::cluck("Exiting slashd") }
+
 main();
 exit 0;
 
@@ -58,14 +61,7 @@ exit 0;
 # The standard log command.
 
 sub slashdLog {
-	my @msg = @_;
-	chomp @msg;
-	my $fh = gensym();
-	my $file = catfile($constants->{logdir}, "slashd.log");
-	my $log_msg = scalar(localtime) . "\t@msg\n";
-	open($fh, ">> $file\0") or die "Can't append to $file: $!\nmsg: @msg\n";
-	print $fh $log_msg;
-	close $fh;
+	doLog('slashd', \@_);
 }
 
 # Log a warning and die.  Since slashd is meant to keep running
@@ -177,24 +173,8 @@ sub verbosity {
 #
 ############################################################
 
-sub slashdPid {
-	my $fh = gensym();
-	my $file = catfile($constants->{logdir}, "slashd.pid");
-	if (-e $file) {
-		die "$file already exists; you will"
-			. " need to remove it before slashd can start";
-	}
-	open $fh, "> $file\0" or die "Can't open $file: $!";
-	print $fh $$;
-	close $fh;
-}
-
 sub slashdLogInit {
-	my $ld = $constants->{logdir};
-	mkpath $ld, 0, 0775;
-	my $file = catfile($ld, "slashd.log");
-	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
-	my $oldfh = select(STDERR); $| = 1; select($oldfh);
+	doLogInit('slashd');
 }
 
 sub init_cron {
@@ -395,7 +375,6 @@ sub main {
 	# Initialize logging and all the low-level stuff.
 
 	slashdLogInit();
-	slashdPid();
 	slashdLog("Starting up Slashd (verbosity " . verbosity()
 		. ") with pid $$");
 	if ($ENV{TZ} ne 'GMT') {
@@ -405,11 +384,6 @@ sub main {
 			"slashd with the init script?"
 		));
 	}
-	local $SIG{TERM} = local $SIG{STOP} = sub {
-		slashdLog("Exiting Slashd (SIGTERM) with pid $$");
-		unlink(catfile($constants->{logdir}, "slashd.pid"));
-		exit 0;
-	};
 
 	# Initialize the scheduling stuff.
 

@@ -51,13 +51,7 @@ $task{$me}{code} = sub {
 };
 
 sub messagedLog {
-	chomp @_;
-	my $fh = gensym();
-	my $file = catfile(getCurrentStatic('logdir'), "messaged.log");
-	my $log_msg = scalar(localtime) . "\t@_\n";
-	open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @_\n";
-	print $fh $log_msg;
-	close $fh;
+	doLog('messaged', \@_);
 }
 
 1;

@@ -26,6 +26,7 @@ LONG DESCRIPTION.
 
 use strict;
 use Email::Valid;
+use File::Path;
 use File::Spec::Functions;
 use Mail::Bulkmail;
 use Mail::Sendmail;
@@ -40,6 +41,10 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	bulkEmail
 	doEmail
 	sendEmail
+	doLog
+	doLogInit
+	doLogPid
+	doLogExit
 );
 @EXPORT_OK = qw();
 
@@ -156,7 +161,7 @@ sub bulkEmail {
 	for my $file ($goodfile, $badfile, $errfile) {
 		my $fh = gensym();
 		open $fh, ">> $file\0" or errorLog("Can't open $file: $!"), return;
-		printf $fh "Ending bulkmail '%s': %s\n\n",
+		printf $fh "Ending bulkmail   '%s': %s\n\n",
 			$subject, scalar localtime;
 		close $fh;
 	}
@@ -175,6 +180,71 @@ sub doEmail {
 		my $addr = $slashdb->getUser($uid, 'realemail');
 		sendEmail($addr, $subject, $content, $pr);
 	}
+}
+
+sub doLogPid {
+	my($fname, $nopid) = @_;
+
+	my $fh      = gensym();
+	my $dir     = getCurrentStatic('logdir');
+	my $file    = catfile($dir, "$fname.pid");
+
+	unless ($nopid) {
+		if (-e $file) {
+			die "$file already exists; you will need " .
+			    "to remove it before $fname can start";
+		}
+
+		open $fh, "> $file\0" or die "Can't open $file: $!";
+		print $fh $$;
+		close $fh;
+	}
+
+	# do this for all things, not just ones needing a .pid
+	$SIG{TERM} = $SIG{INT} = sub {
+		doLog($fname, ["Exiting $fname ($_[0]) with pid $$"]);
+		unlink $file;  # fails silently even if $file does not exist
+		exit 0;
+	};
+}
+
+sub doLogInit {
+	my($fname, $nopid) = @_;
+
+	my $dir     = getCurrentStatic('logdir');
+	my $file    = catfile($dir, "$fname.log");
+
+	mkpath $dir, 0, 0775;
+	doLogPid($fname, $nopid);
+	open(STDERR, ">> $file\0") or die "Can't append STDERR to $file: $!";
+}
+
+sub doLogExit {
+	my($fname) = @_;
+
+	my $dir     = getCurrentStatic('logdir');
+	my $file    = catfile($dir, "$fname.pid");
+
+	doLog($fname, ["Exiting $fname (exit) with pid $$"]);
+	unlink $file;  # fails silently even if $file does not exist
+	exit 0;
+}
+
+sub doLog {
+	my($fname, $msg, $stdout, $name) = @_;
+	chomp(my @msg = @$msg);
+
+	$name     ||= '';
+	$name      .= ' ';
+	my $fh      = gensym();
+	my $dir     = getCurrentStatic('logdir');
+	my $file    = catfile($dir, "$fname.log");
+	my $log_msg = scalar(localtime) . "\t$name@msg\n";
+
+	open $fh, ">> $file\0" or die "Can't append to $file: $!\nmsg: @msg\n";
+	print $fh $log_msg;
+	print     $log_msg if $stdout;
+	close $fh;
 }
 
 1;
