@@ -28,6 +28,9 @@ my %descriptions = (
 	'statuscodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
 
+	'blocktype'
+		=> sub { $_[0]->sqlSelectMany('name,name', 'code_param', "type='blocktype'") },
+
 	'tzcodes'
 		=> sub { $_[0]->sqlSelectMany('tz,off_set', 'tzcodes') },
 
@@ -1404,6 +1407,7 @@ sub saveTopic {
 }
 
 ##################################################################
+# Another hated method -Brian
 sub saveBlock {
 	my($self, $bid) = @_;
 	my($rows) = $self->sqlSelect('count(*)', 'blocks',
@@ -1424,6 +1428,10 @@ sub saveBlock {
 	# this is to make sure that a  static block doesn't get
 	# saved with retrieve set to true
 	$form->{retrieve} = 0 if $form->{type} ne 'portald';
+
+	# If a block is a portald block then portal=1. type
+	# is done so poorly -Brian
+	$form->{portal} = 1 if $form->{type} eq 'portald';
 
 	$form->{block} = $self->autoUrl($form->{section}, $form->{block})
 		unless $form->{type} eq 'template';

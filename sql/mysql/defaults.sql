@@ -29,6 +29,9 @@
 # Dumping data for table 'code_param'
 #
 
+INSERT INTO code_param (type, code, name) VALUES ('blocktype',1,'color');
+INSERT INTO code_param (type, code, name) VALUES ('blocktype',2,'static');
+INSERT INTO code_param (type, code, name) VALUES ('blocktype',3,'portald');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',0,'Comments Enabled');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',1,'Read-Only');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',-1,'Comments Disabled');

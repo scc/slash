@@ -541,6 +541,7 @@ sub blockEdit {
 	my($blockref, $saveflag, $block_select, $retrieve_checked,
 		$portal_checked, $block_select1, $block_select2);
 	my($blockedit_flag, $blockdelete_flag, $blockform_flag) = (0, 0, 0);
+	$blockref = {};
 
 	if ($bid) {
 		$blockref = $slashdb->getBlock($bid, '', 1);
@@ -558,6 +559,8 @@ sub blockEdit {
 		$block_select2 = createSelect('bid2', $blocks, $bid, 1);
 
 	}
+	my $blocktype = $slashdb->getDescriptions('blocktype', '', 1);
+	my $blocktype_select = createSelect('type', $blocktype, $blockref->{type}, 1);
 
 	# if the pulldown has been selected and submitted
 	# or this is a block save and the block is a portald block
@@ -586,6 +589,7 @@ sub blockEdit {
 		blockform_flag		=> $blockform_flag,
 		portal_checked		=> $portal_checked,
 		retrieve_checked	=> $retrieve_checked,
+		blocktype_select	=> $blocktype_select,
 		sectionbid		=> $sectionbid,
 	});
 }

@@ -37,7 +37,7 @@ __template__
 </P>
 <TABLE>
 	<TR>
-		<TD><B>Static Blocks</B></TD><TD>
+		<TD><B>Static and Color Blocks</B></TD><TD>
 		[% block_select1 %]
 
 		</TD>
@@ -70,7 +70,7 @@ __template__
 	<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="[% blockref.seclev %]" SIZE="6"></TD>
 	</TR>
 	<TR>
-		<TD><B>Type</B></TD><TD><INPUT TYPE="TEXT" NAME="type" VALUE="[% blockref.type %]" SIZE="10"></TD>
+		<TD><B>Type</B></TD><TD>[% blocktype_select %]</TD>
 	</TR>
 	<TR>
 		<TD><B>Section</B></TD>
