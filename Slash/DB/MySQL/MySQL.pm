@@ -650,7 +650,7 @@ sub createSubmission {
 sub getStoryDiscussions {
 	my($self, $section) = @_;
 	my $where = "displaystatus != -1 AND discussions.sid=stories.sid AND time <= NOW() AND writestatus != 'delete' AND writestatus != 'archived'";
-	$where .= "section = '$section'"
+	$where .= " AND section = '$section'"
 		if $section;
 
 	my $discussion = $self->sqlSelectAll("discussions.sid, discussions.title, discussions.url",
@@ -667,7 +667,7 @@ sub getStoryDiscussions {
 sub getDiscussions {
 	my($self, $section) = @_;
 	my $where = "type != 'archived' AND ts <= now()";
-	$where .= "section = '$section'"
+	$where .= " AND section = '$section'"
 		if $section;
 
 	my $discussion = $self->sqlSelectAll("id, title, url",
@@ -1049,7 +1049,6 @@ sub getCommentsByNetOrSubnetID {
 			. " FROM comments WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min ";
 
-<<<<<<< MySQL.pm
 	my $sth = $self->{_dbh}->prepare($sqlquery);
 	$sth->execute;
 	my($comments) = $sth->fetchall_arrayref;
