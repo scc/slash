@@ -142,7 +142,7 @@ sub vote {
 
 	# get valid answer IDs
 	my(%all_aid) = map { ($_->[0], 1) }
-		@{sqlSelectAll("aid", "pollanswers", "qid=$qid_dbi")} if $qid;
+		@{$I{dbobject}->getPollAnswer($qid,'aid')} if $qid;
 
 	if (! keys %all_aid) {
 		print "Invalid poll!<BR>";
@@ -156,11 +156,7 @@ sub vote {
 		$notes = "You may not vote anonymously.  " .
 		    qq[Please <A HREF="$I{rootdir}/users.pl">log in</A>.];
 	} elsif ($aid > 0) {
-		my($id) = sqlSelect("id","pollvoters",
-			"qid=$qid_dbi AND 
-			 id="  . $I{dbh}->quote($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) . " AND
-			 uid=" . $I{dbh}->quote($I{U}{uid})
-		);
+		my $id  = $I{dbobject}->getPollVoter($qid, 'id', 'pollvoters');
 
 		if ($id) {
 			$notes = "$I{U}{nickname} at $ENV{REMOTE_ADDR} has already voted.";
@@ -170,24 +166,13 @@ sub vote {
 
 		} elsif (exists $all_aid{$aid}) {
 			$notes = "Your vote ($aid) has been registered.";
-			sqlInsert("pollvoters", {
-				qid	=> $qid, 
-				id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
-				-'time'	=> "now()" ,
-				uid	=> $I{U}{uid}
-			});
-
-			$I{dbh}->do("update pollquestions set 
-				voters=voters+1 where qid=$qid_dbi");
-			$I{dbh}->do("update pollanswers set votes=votes+1 where 
-				qid=$qid_dbi and aid=" . $I{dbh}->quote($aid));
+			$I{dbobject}->createPollVoter($qid, $aid);
 		} else {
 			$notes = "Your vote ($aid) was rejected.";
 		}
 	} 
 
-	my($totalvotes, $question) = sqlSelect(
-		"voters,question", "pollquestions", "qid=$qid_dbi");
+	my($question->{'totalvotes'}, $question->{'question'}) = $I{dbobject}->getPollQuestion($qid, 'voters', 'question');
 
 	my($maxvotes) = sqlSelect("max(votes)", "pollanswers", "qid=$qid_dbi");
 
@@ -196,14 +181,14 @@ sub vote {
 	<TR><TD> </TD><TD COLSPAN="1">
 EOT
 
-	titlebar("99%", $question);
+	titlebar("99%", $question->{'question'});
 	print qq!\t<FONT SIZE="2">$notes</FONT></TD></TR>!;
 
 	my $a = sqlSelectMany("answer,votes", "pollanswers", "qid=$qid_dbi ORDER by aid");
 
 	while (my($answer, $votes) = $a->fetchrow) {
 		my $imagewidth	= $maxvotes ? int (350 * $votes / $maxvotes) + 1 : 0;
-		my $percent	= $totalvotes ? int (100 * $votes / $totalvotes) : 0;
+		my $percent	= $question->{'totalvotes'} ? int (100 * $votes / $question->{'totalvotes'}) : 0;
 		pollItem($answer, $imagewidth, $votes, $percent);
 	}
 
@@ -214,7 +199,7 @@ EOT
 
 	print <<EOT;
 	<TR><TD COLSPAN="2" ALIGN="RIGHT">
-		<FONT SIZE="4"><B>$totalvotes total votes.</B></FONT>
+		<FONT SIZE="4"><B>$question->{'totalvotes'} total votes.</B></FONT>
 	</TD></TR><TR><TD COLSPAN="2"><P ALIGN="CENTER">
 		[
 			<A HREF="$ENV{SCRIPT_NAME}?qid=$qid_htm">Voting Booth</A> |

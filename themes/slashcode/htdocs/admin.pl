@@ -562,7 +562,7 @@ EOT
 
 	my $sectionbid = $I{dbobject}->getSectionBlockByBid($bid, 'section');
 	print <<EOT;
-<B><A HREF="$I{rootdir}/sections.pl?section=$sectionbid->{'section'}&op=editsection">$sectionbid->{'section'}</A></B>
+<B><A HREF="$I{rootdir}/sections.pl?section=$sectionbid&op=editsection">$sectionbid</A></B>
 (<A HREF="$I{rootdir}/users.pl?op=preview&bid=$bid">preview</A>)
 EOT
 }
@@ -616,7 +616,7 @@ sub colorEdit {
 EOT
 	} else {
 		my $block = $I{dbobject}->getBlockByBid($I{F}{color_block}, 'block'); 
-		($colorblock) = $block->{'block'};
+		($colorblock) = $block;
 	}
 
 	my @colors = split m/,/, $colorblock;

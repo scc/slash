@@ -305,6 +305,22 @@ sub getContentFilters {
 }
 
 ########################################################
+sub createPollVoter {
+	my($self, $qid, $aid) = @_;
+
+	$self->sqlInsert("pollvoters", {
+		qid	=> $qid, 
+		id	=> $ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR},
+		-'time'	=> "now()" ,
+		uid	=> $ENV{REMOTE_USER}
+	});
+
+	$self->{dbh}->do("update pollquestions set 
+		voters=voters+1 where qid=$qid");
+	$self->{dbh}->do("update pollanswers set votes=votes+1 where 
+		qid=$qid and aid=" . $I{dbh}->quote($aid));
+}
+########################################################
 sub createSubmission {
 	my($self) = @_;
 	my $form = getCurrentForm();
@@ -1017,14 +1033,6 @@ sub deleteContentFilter {
 	$self->sqlDo("DELETE from content_filters WHERE filter_id = $id");
 }
 
-########################################################
-sub getSectionBlockByBid {
-	my($self, $bid, @val) = @_;
-	my $values = join ',', @val;
-	my $block = $self->sqlSelectHashref($values, 'sectionblocks', "bid='$bid'");
-
-	return $block;
-}
 
 ########################################################
 sub saveTopic {
@@ -1140,38 +1148,6 @@ sub saveColorBlock {
 	}
 }
 ########################################################
-sub getBlockByBid {
-	my($self, $bid, @val) = @_;
-	my $values = join ',', @val;
-	my $block = $self->sqlSelectHashref($values, 'blocks', "bid='$bid'");
-
-	return $block;
-}
-########################################################
-sub getTopicByTid {
-	my($self, $tid, @val) = @_;
-	my $values = join ',', @val;
-	my $topic = $self->sqlSelectHashref($values, 'topics', "tid='$tid'");
-
-	return $topic;
-}
-########################################################
-sub getContentFilter {
-	my($self, $id, @val) = @_;
-	my $values = join ',', @val;
-	my $filter = $self->sqlSelectHashref($values, 'content_filters', "filter_id='$id'");
-
-	return $filter;
-}
-########################################################
-sub getSubmission {
-	my($self, $id, @val) = @_;
-	my $values = join ',', @val;
-	my $filter = $self->sqlSelectHashref($values, 'submissions', "subid='$id'");
-
-	return $filter;
-}
-########################################################
 sub getSectionBlock {
 	my($self, $section) = @_;
 	my $block = $self->sqlSelectAll("section,bid,ordernum,title,portal,url,rdf,retrieve",
@@ -1228,13 +1204,18 @@ sub getAuthorNameByAid {
 	return  $author_hash_ref;
 }
 
+
 ########################################################
-sub getPollQuestion {
+sub getPollVoters {
 	my($self, $id, @val) = @_;
 	my $values = join ',', @val;
-	my $question = $self->sqlSelectHashref($values, 'pollquestions', "qid=" . $self->{dbh}->quote($id));
+	my $voters = $self->sqlSelectHashref($values, 'pollvoters', 
+			"qid=" . $self->{dbh}->quote($id) .
+			"AND id=" . $self->{dbh}->($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR}) .
+			"AND uid=" . $ENV{REMOTE_USER}
+			);
 
-	return $question;
+	return $voters;
 }
 ########################################################
 sub savePollQuestion {
@@ -2561,9 +2542,62 @@ sub getKeys{
 	return \@keys;
 }
 
-##################################################################
 
+########################################################
+# This is protected and don't call it from your
+# scripts directly.
+sub _genericGet {
+	my($table, $table_prime, $self, $id, @val) = @_;
+	my $members = @val;
+	my $answer;
+	if($members == 1) {
+		($answer) = $self->sqlSelect('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+	} elsif ($members > 1) {
+		my $values = join ',', @val;
+		$answer = $self->sqlSelectHashref($values, $table, "$table_prime=" . $self->{dbh}->quote($id));
+	} else {
+		$answer = $self->sqlSelectHashref('*', $table, "$table_prime=" . $self->{dbh}->quote($id));
+	} 
 
+	return $answer;
+}
+
+########################################################
+sub getPollQuestion {
+	my $answer = _genericGet('pollquestions', 'qid', @_);
+	return $answer;
+}
+
+########################################################
+sub getPollAnswer {
+	my $answer = _genericGet('pollanswers', 'qid', @_);
+	return $answer;
+}
+########################################################
+sub getBlockByBid {
+	my $answer = _genericGet('blocks', 'bid', @_);
+	return $answer;
+}
+########################################################
+sub getTopicByTid {
+	my $answer = _genericGet('topics', 'tid', @_);
+	return $answer;
+}
+########################################################
+sub getContentFilter {
+	my $answer = _genericGet('content_filters', 'filter_id', @_);
+	return $answer;
+}
+########################################################
+sub getSubmission {
+	my $answer = _genericGet('submissions', 'subid', @_);
+	return $answer;
+}
+########################################################
+sub getSectionBlockByBid {
+	my $answer = _genericGet('sectionblocks', 'bid', @_);
+	return $answer;
+}
 1;
 
 =head1 NAME
