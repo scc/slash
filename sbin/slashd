@@ -27,10 +27,12 @@
 use sigtrap;
 use strict;
 use Carp;
+use Date::Manip;
 use File::Basename;
 use File::Path;
 use LWP::UserAgent;
 use HTTP::Request;
+use Time::Local;
 use URI::Escape;
 use XML::Parser::Expat;
 use XML::RSS;
@@ -89,14 +91,11 @@ sub copy {
 }
 
 
-# sub xmlEncodeStr  {
-# 	my $s = shift;
-# 	$s =~ s/&/&amp;/g;
-# 	$s =~ s/</&lt;/g;
-# 	$s =~ s/>/&gt;/g;
-# 
-# 	return $s;
-# }
+# should we add code here to wrap in CDATA if there are
+# "bad" characters? -- pudge
+sub xmlEncodeStr  {
+	XML::Parser::Expat->xml_escape($_[0])
+}
 
 sub geturl {
 	my $ua = new LWP::UserAgent;
@@ -247,6 +246,29 @@ sub newfooter {
 }
 
 #################################
+sub site2file {
+	my($section) = @_;
+	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	return $file;
+}
+
+#################################
+sub date2iso8601 {
+	my($time) = @_;
+	if ($time) {	# force to GMT
+		$time .= ' GMT';
+	} else {	# get current seconds
+		$time = 'epoch ' . time();
+	}
+
+	# calculate timezone differential from GMT
+	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
+	($diff = sprintf "%+0.4d", $diff) =~ s/(\d{2})$/:$1/;
+
+	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
+}
+
+#################################
 sub newrdf {	# RSS 0.9
 	my($section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
@@ -261,14 +283,14 @@ sub newrdf {	# RSS 0.9
 		: "$constants->{sitename}: $SECT->{title}";
 
 	$rss->channel(
-		title		=> XML::Parser::Expat->xml_escape($title),
+		title		=> xmlEncodeStr($title),
 		'link'		=> $constants->{absolutedir} . ($section ? "/index.pl?section=$section" : '/'),
 #		language	=> $constants->{rdflanguage},
 		description	=> $constants->{slogan},
 	);
 
 	$rss->image(
-		title		=> XML::Parser::Expat->xml_escape($constants->{sitename}),
+		title		=> xmlEncodeStr($constants->{sitename}),
 		url		=> $constants->{rdfimg},
 		'link'		=> $constants->{absolutedir} . '/',
 	);
@@ -276,19 +298,18 @@ sub newrdf {	# RSS 0.9
 
 	for my $section (@$stories_and_topics) {
 		$rss->add_item(
-			title	=> XML::Parser::Expat->xml_escape($section->{title}),
+			title	=> xmlEncodeStr($section->{title}),
 			'link'	=> "$constants->{absolutedir}/article.pl?sid=$section->{sid}",
 		);
 	}
 
-	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	my $file = site2file($section);
 	$rss->save("$constants->{basedir}/$file.rdf");
 }
 
 #################################
 sub newrss {	# RSS 1.0
 	my($section) = @_;
-	my $stories_and_topics = $slashdb->getBackendStories($section);
 	my $rss = XML::RSS->new(
 		version => '1.0',
 		$constants->{rdfencoding}
@@ -309,62 +330,72 @@ sub newrss {	# RSS 1.0
 		: $constants->{sitename};
 
 	$rss->channel(
-		title		=> XML::Parser::Expat->xml_escape($title),
-		description	=> $constants->{slogan},
+		title		=> xmlEncodeStr($title),
+		description	=> xmlEncodeStr($constants->{slogan}),
 		'link'		=> $constants->{absolutedir} .
 			($section ? "/index.pl?section=$section" : '/'),
 
 		dc => {
-			date		=> 'somedate',
-			subject		=> 'rdfsubject',
+			date		=> date2iso8601(),
+			subject		=> xmlEncodeStr($constants->{rdfsubject}),
 			language	=> $constants->{rdflanguage},
-			creator		=> $constants->{adminmail},
-			publisher	=> 'rdfpublisher',
-			rights		=> 'rdfcopyright',
-			language	=> $constants->{rdflanguage},
+			creator		=> xmlEncodeStr($constants->{adminmail}),
+			publisher	=> xmlEncodeStr($constants->{rdfpublisher}),
+			rights		=> xmlEncodeStr($constants->{rdfrights}),
 		},
 
 		syn => {
-			updatePeriod	=> 'rdfupdate',
-			updateFrequency	=> 'rdffrequency',
-			updateBase	=> 'somedate',
+			updatePeriod	=> $constants->{rdfupdateperiod},
+			updateFrequency	=> $constants->{rdfupdatefrequency},
+			updateBase	=> $constants->{rdfupdatebase},
 		},
 	);
 
 	$rss->image(
-		title		=> XML::Parser::Expat->xml_escape($constants->{sitename}),
+		title		=> xmlEncodeStr($constants->{sitename}),
 		url		=> $constants->{rdfimg},
 		'link'		=> $constants->{absolutedir} . '/',
 	);
 
 	$rss->textinput(
-		title		=> 'Search ' . XML::Parser::Expat->xml_escape($constants->{sitename}),
-		description	=> 'Search ' . XML::Parser::Expat->xml_escape($constants->{sitename}) . ' stories',
+		title		=> 'Search ' . xmlEncodeStr($constants->{sitename}),
+		description	=> 'Search ' . xmlEncodeStr($constants->{sitename}) . ' stories',
 		name		=> 'query',
 		'link'		=> "$constants->{absolutedir}/search.pl"
 	);
 
+	my $stories_and_topics = $slashdb->getBackendStories($section);
 	for my $story (@$stories_and_topics) {
+		my $desc;
+		if ($constants->{rdfitemdesc} == 1) {
+			$desc = $story->{introtext};
+		} elsif ($constants->{rdfitemdesc}) {
+			$desc = balanceTags(
+				chopEntity($story->{introtext}, $constants->{rdfitemdesc})
+			);
+		}
+
 		$rss->add_item(
-			title		=> XML::Parser::Expat->xml_escape($story->{title}),
+			title		=> xmlEncodeStr($story->{title}),
 			'link'		=> "$constants->{absolutedir}/article.pl?sid=$story->{sid}",
-			description	=> 'sometext ... define elsewhere',
+			$desc ? (description => xmlEncodeStr($desc)) : (),
 
 			dc => {
+				date		=> date2iso8601($story->{'time'}),
 				subject		=> $story->{tid},
 				creator		=> $slashdb->getUser($story->{uid}, 'nickname'),
 			},
 
 			slash => {
 				section		=> $story->{section},
-				department	=> $story->{dept},
+				department	=> xmlEncodeStr($story->{dept}),
 				comments	=> $story->{commentcount},
 				hitparade	=> $story->{hitparade},
 			},
 		);
 	}
 
-	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	my $file = site2file($section);
 	$rss->save("$constants->{basedir}/$file.rss");
 }
 
@@ -393,7 +424,7 @@ EOT
         my $body;
 	for my $section (@$stories_and_topics) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			XML::Parser::Expat->xml_escape(strip_nohtml($section->{title})) . 
+			xmlEncodeStr(strip_nohtml($section->{title})) . 
 			"</option>\n";
 		$z++;
         }     
@@ -405,7 +436,7 @@ EOT
 </wml>
 EOT
 
-	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+	my $file = site2file($section);
         save2file("$constants->{basedir}/$file.wml", $x);
 }
 
@@ -421,7 +452,7 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 EOT
 
 	for my $section (@$stories_and_topics) {
-		my @str = (XML::Parser::Expat->xml_escape($section->{title}), XML::Parser::Expat->xml_escape($section->{dept}));
+		my @str = (xmlEncodeStr($section->{title}), xmlEncodeStr($section->{dept}));
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
@@ -439,7 +470,8 @@ EOT
 	}
 
 	$x .= "</backslash>\n";
-	(my $file = $section || lc $constants->{sitename}) =~ s/\W+//g;
+
+	my $file = site2file($section);
 	save2file("$constants->{basedir}/$file.xml", $x);
 }
 
@@ -535,7 +567,6 @@ sub writePollBooth {
 	save2file("$constants->{basedir}/pollbooth.html", $poll);
 	$user->{currentSection} = "";
 }
-
 
 main();
 

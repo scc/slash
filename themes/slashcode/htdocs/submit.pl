@@ -28,7 +28,7 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
-require URI;
+use URI;
 
 #################################################################
 sub main {
@@ -120,22 +120,7 @@ sub previewForm {
 	my $sub = $slashdb->getSubmission($subid,
 		[qw(email name subj tid story time comment)]);
 
-	$sub->{story} =~ s/\n\n/\n<P>/gi;
-	$sub->{story} .= ' ';
-	$sub->{story} =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
-		my($proto, $url) = ($1, $2);
-		my $extra = '';
-		$extra = ',' if $url =~ s/,$//;
-		$extra = ')' . $extra if $url !~ /\(/ && $url =~ s/\)$//;
-		qq[<A HREF="$proto://$url">$proto://$url</A>$extra];
-	}ogie;
-	$sub->{story} =~ s/\s+$//;
-
-	if ($sub->{email} =~ /@/) {
-		$sub->{email} = "mailto:$sub->{email}"; 
-	} elsif ($sub->{email} !~ /http/) {
-		$sub->{email} = "http://$sub->{email}";
-	}
+	$sub->{email} = processSub($sub->{email});
 
 	$slashdb->setSession($user->{uid}, { lasttitle => $sub->{subj} });
 
@@ -269,12 +254,12 @@ sub displayForm {
 	}
 
 	slashDisplay('displayForm', {
+		fixedstory	=> strip_html(url2html($form->{story})),
 		savestory	=> $form->{story} && $form->{subj},
 		username	=> $form->{from} || $username,
-		fakeemail	=> $form->{email} || $fakeemail,
+		fakeemail	=> processSub($form->{email} || $fakeemail),
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $slashdb->getTopic($form->{tid}),
-		literalstory	=> strip_literal($form->{story}),
 		width		=> '100%',
 		title		=> $title,
 	});
@@ -297,6 +282,7 @@ sub saveSub {
 			return;
 		}
 
+		$form->{story} = strip_html(url2html($form->{story}));
 		$slashdb->createSubmission();
 
 		slashDisplay('saveSub', {
@@ -307,6 +293,39 @@ sub saveSub {
 			submissioncount	=> $slashdb->getSubmissionCount(),
 		});
 	}
+}
+
+#################################################################
+sub processSub {
+	my($email) = @_;
+
+	if ($email =~ /@/) {
+		$email = "mailto:$email"; 
+	} elsif (!/http/) {
+		$email = "http://$email";
+	}
+
+	return $email;
+}
+
+#################################################################
+sub url2html {
+	my($introtext) = @_;
+	$introtext =~ s/\n\n/\n<P>/gi;
+	$introtext .= " ";
+
+	# this is kinda experimental ... esp. the $extra line
+	# we know it can break real URLs, but probably will preserve
+	# real URLs more often than it will break them
+	$introtext =~  s{(?<!["=>])(http|ftp|gopher|telnet)://([$URI::uric#]+)}{
+		my($proto, $url) = ($1, $2);
+		my $extra = '';
+		$extra = $1 if $url =~ s/([?!;:.,']+)$//;
+		$extra = ')' . $extra if $url !~ /\(/ && $url =~ s/\)$//;
+		qq[<A HREF="$proto://$url">$proto://$url</A>$extra];
+	}ogie;
+	$introtext =~ s/\s+$//;
+	return $introtext;
 }
 
 #################################################################

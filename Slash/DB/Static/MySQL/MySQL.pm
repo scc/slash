@@ -24,7 +24,7 @@ sub getBackendStories {
 	my($self, $section) = @_;
 
 	my $cursor = $self->{_dbh}->prepare("SELECT stories.sid,title,time,dept,uid,alttext,
-		image,commentcount,section,introtext,bodytext,
+		image,commentcount,section,introtext,bodytext,hitparade,
 		topics.tid as tid
 		    FROM stories,topics
 		   WHERE ((displaystatus = 0 and \"$section\"=\"\")

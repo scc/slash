@@ -377,7 +377,7 @@ sub createSubmission {
 			email	=> $form->{email},
 			uid	=> $ENV{SLASH_USER},
 			name	=> $form->{from},
-			story	=> strip_html($form->{story}),
+			story	=> $form->{story},
 			-'time'	=> 'now()',
 			subid	=> $subid,
 			subj	=> $form->{subj},
@@ -1702,7 +1702,7 @@ sub countStoriesAuthors {
 	my($self) = @_;
 	my $authors = $self->sqlSelectAll("count(*) as c, nickname, homepage",
 		"stories, users","users.uid=stories.uid",
-		"GROUP BY uid ORDER BY c DESC LIMIT 10"
+		"GROUP BY stories.uid ORDER BY c DESC LIMIT 10"
 	);
 	return $authors;
 }
@@ -2195,17 +2195,20 @@ sub getSlashConf {
 	};
 
 	$conf{fixhrefs} = [];  # fix later
-	$conf{stats_reports} = $fixup->($conf{stats_reports})
-		|| [$conf{adminmail}];
+	$conf{stats_reports} = $fixup->($conf{stats_reports}) ||
+		[$conf{adminmail}];
 
-	$conf{submit_categories} = $fixup->($conf{submit_categories})
-		|| [];
+	$conf{submit_categories} = $fixup->($conf{submit_categories}) ||
+		[];
 
-	$conf{approvedtags} = $fixup->($conf{approvedtags})
-		|| [qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
+	$conf{approvedtags} = $fixup->($conf{approvedtags}) ||
+		[qw(B I P A LI OL UL EM BR TT STRONG BLOCKQUOTE DIV)];
 
-	$conf{reasons} = $fixup->($conf{reasons})
-		|| [
+	$conf{lonetags} = $fixup->($conf{lonetags}) ||
+		undef;
+
+	$conf{reasons} = $fixup->($conf{reasons}) ||
+		[
 			'Normal',	# "Normal"
 			'Offtopic',	# Bad Responses
 			'Flamebait',

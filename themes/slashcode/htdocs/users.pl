@@ -229,7 +229,7 @@ sub newUser {
 		if ($uid = $slashdb->createUser($matchname, $form->{email}, $form->{newuser})) {
 			$title = getTitle('newUser_title');
 
-			$form->{pubkey} = strip_html($form->{pubkey});
+			$form->{pubkey} = strip_html($form->{pubkey}, 1);
 			print getMessage('newuser_msg', { title => $title });
 			mailPassword($uid);
 
@@ -302,9 +302,7 @@ sub userInfo {
  	$karma_flag = 1 if $userbio->{seclev} || $userbio->{uidbio} == $uid;
 
 	my $public_key = $userbio->{pubkey};
-	if ($public_key) {
-		$public_key = strip_html($public_key);
-	}
+	$public_key = strip_html($public_key, 1) if $public_key;
 
 	if ($userbio->{nickname} eq $orignick) {
 		$nickmatch_flag = 1;
@@ -375,9 +373,7 @@ sub editKey {
 	my $slashdb = getCurrentDB();
 
 	my $pubkey = $slashdb->getUser($uid, 'pubkey');
-
-	my $key = strip_literal($pubkey);
-	my $editkey = slashDisplay('editKey', { key => $key }, 1);	
+	my $editkey = slashDisplay('editKey', { pubkey => $pubkey }, 1);	
 	return $editkey;
 }
 

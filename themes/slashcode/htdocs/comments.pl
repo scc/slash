@@ -26,6 +26,7 @@
 use strict;
 use Date::Manip;
 use Compress::Zlib;
+use HTML::Entities;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
@@ -210,91 +211,32 @@ sub validateComment {
 		my $err_msg = slashDisplay('errors', {
 			type 		=> 'troll message',
 		}, 1);
-		return (undef, undef, $err_msg);
+		return(undef, undef, $err_msg);
 	}
 
 	if (!$c->{allow_anonymous} && ($u->{uid} < 1 || $f->{postanon})) { 
 		my $err_msg = slashDisplay('errors', {
 			type	=> 'anonymous disallowed', 
 		}, 1);
-		return (undef, undef, $err_msg);
+		return(undef, undef, $err_msg);
 	}
 
-	unless ($comm && $subj) {
+	unless ($$comm && $$subj) {
 		my $err_msg = slashDisplay('errors', {
 			type	=> 'no body',
 		}, 1);
-		return (undef, undef, $err_msg);
+		return(undef, undef, $err_msg);
 	}
 
-	$subj =~ s/\(Score(.*)//i;
-	$subj =~ s/Score:(.*)//i;
+	$$subj =~ s/\(Score(.*)//i;
+	$$subj =~ s/Score:(.*)//i;
 
-	{  # fix unclosed tags
-		my(%tags, @stack, $match, %lone, $tag, $close, $whole);
-
-		# set up / get preferences
-		if ($c->{lonetags}) {
-			$match = join '|', @{$c->{approvedtags}};
-		} else {
-			$c->{lonetags} = [qw(BR P LI)];
-			$match = join '|', grep !/^(?:BR|P|LI)$/,
-				@{$c->{approvedtags}};
-		}
-		%lone = map { ($_, 1) } @{$c->{lonetags}};
-
-		# If the quoted slash in the next line bothers you, then feel free to
-		# remove it. It's just there to prevent broken syntactical highlighting
-		# on certain editors (vim AND xemacs).  -- Cliff
-		# maybe you should use a REAL editor, like BBEdit.  :) -- pudge 
-		while ($comm =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
-			($tag, $close, $whole) = ($3, $2, $1);
-
-			if ($close) {
-				if (@stack && $tags{$tag}) {
-					# Close the tag on the top of the stack
-					if ($stack[-1] eq $tag) {
-						$tags{$tag}--;
-						pop @stack;
-
-					# Close tag somewhere else in stack
-					} else {
-						my $p = pos($comm) - length($whole);
-						if (exists $lone{$stack[-1]}) {
-							pop @stack;
-						} else {
-							substr($comm, $p, 0) = "</$stack[-1]>";
-						}
-						pos($comm) = $p;  # don't remove this from stack, go again
-					}
-
-				} else {
-					# Close tag not on stack; just delete it
-					my $p = pos($comm) - length($whole);
-					$comm =~ s|^(.{$p})\Q$whole\E|$1|si;
-					pos($comm) = $p;
-				}
-
-
-			} else {
-				$tags{$tag}++;
-				push @stack, $tag;
-
-				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-					my $err_msg = slashDisplay('errors', {
-						type =>	'nesting_toodeep',
-					}, 1);
-					return (undef, undef, $err_msg);
-				}
-			}
-
-		}
-
-		$comm =~ s/\s+$//;
-
-		# add on any unclosed tags still on stack
-		$comm .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
-
+	unless (defined($$comm = balanceTags($$comm, 1))) {
+		my $err_msg = slashDisplay('errors', {
+			type =>	'nesting_toodeep',
+		}, 1);
+		editComment('', $f, $u, $db, $c, $err_msg), return unless $preview;
+		return(undef, undef, $err_msg);
 	}
 
 	my $dupRows = $db->countComments($f->{sid}, '', $f->{postercomment});
@@ -347,14 +289,17 @@ sub validateComment {
 		my $err_message		= $_->[7];
 		my $maximum_length	= $_->[8];
 		my $isTrollish		= 0;
-		
-		next if ($minimum_length && length($f->{$field}) < $minimum_length);
-		next if ($maximum_length && length($f->{$field}) > $maximum_length);
+		my $text_to_test	= decode_entities($f->{$field});
+		$text_to_test		=~ s/\xA0/ /g;
+		$text_to_test		=~ s/\<br\>/\n/gi;
+
+		next if ($minimum_length && length($text_to_test) < $minimum_length);
+		next if ($maximum_length && length($text_to_test) > $maximum_length);
 
 		if ($minimum_match) {
 			$number_match = "{$minimum_match,}";
 		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($f->{$field}) * $ratio) . ",}";
+			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
 		}
 
 		$regex = $raw_regex . $number_match;
@@ -364,15 +309,15 @@ sub validateComment {
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
 		if ($modifier eq 'g') {
-			$isTrollish = 1 if $f->{$field} =~ /$regex/g;
+			$isTrollish = 1 if $text_to_test =~ /$regex/g;
 		} else {
-			$isTrollish = 1 if $f->{$field} =~ /$regex/;
+			$isTrollish = 1 if $text_to_test =~ /$regex/;
 		}
 
-		if ((length($f->{$field}) >= $minimum_length)
+		if ((length($text_to_test) >= $minimum_length)
 			&& $minimum_length && $isTrollish) {
 
-			if (((length($f->{$field}) <= $maximum_length)
+			if (((length($text_to_test) <= $maximum_length)
 				&& $maximum_length) || $isTrollish) {
 
 				my $err_msg = slashDisplay('errors', {

@@ -1704,7 +1704,9 @@ sub dispComment {
 
 	if ($form->{mode} ne 'archive' && length($comment->{comment}) > $user->{maxcommentsize}
 		&& $form->{cid} ne $comment->{cid}) {
-		$comment_shrunk = substr $comment->{comment}, 0, $user->{maxcommentsize};
+		$comment_shrunk = balanceTags(
+			chopEntity($comment->{comment}, $user->{maxcommentsize})
+		);
 	}
 
 	for (0 .. @{$constants->{reasons}} - 1) {

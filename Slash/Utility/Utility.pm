@@ -27,6 +27,7 @@ use Apache;
 use Date::Manip;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
+use URI;
 require Exporter;
 use vars qw($REVISION $VERSION @ISA @EXPORT);
 
@@ -38,6 +39,7 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 @EXPORT = qw(
 	addToMenu
 	bakeUserCookie
+	balanceTags
 	changePassword
 	chopEntity
 	createCurrentAnonymousCoward
@@ -1732,6 +1734,13 @@ The escaped data.
 sub fixurl {
 	my($url, $parameter) = @_;
 
+	# this is a temporary hack, to make sure we strip auth
+	# info if called from submit.pl.  If the path to get
+	# here from submit.pl changes (different number of
+	# calling functions), then this will break; that's
+	# why it is temporary -- pudge
+	my $stripauth = (caller(4))[1] =~ /submit\.pl/;
+
 	if ($parameter) {
 		$url =~ s/([^$URI::unreserved])/$URI::Escape::escapes{$1}/oge;
 		return $url;
@@ -1742,6 +1751,12 @@ sub fixurl {
 		# add '#' to allowed characters
 		$url =~ s/([^$URI::uric#])/$URI::Escape::escapes{$1}/oge;
 		$url = fixHref($url) || $url;
+
+		if ($stripauth) {
+			my $uri = new URI $url;
+			$uri->authority($uri->host);
+			$url = $uri->as_string;
+		}
 
 		# we don't like SCRIPT a the beginning of a URL
 		my $decoded_url = decode_entities($url);
@@ -1754,7 +1769,7 @@ sub fixurl {
 =head2 chopEntity(STRING)
 
 Chops a string to a specified length, without splitting in the middle
-of an HTML entity (so we will err on the short side).
+of an HTML entity or HTML tag (so we will err on the short side).
 
 =over 4
 
@@ -1780,7 +1795,108 @@ sub chopEntity {
 	my($text, $length) = @_;
 	$text = substr($text, 0, $length) if $length;
 	$text =~ s/&#?[a-zA-Z0-9]*$//;
+	$text =~ s/<[^>]*$//;
 	return $text;
+}
+
+#========================================================================
+
+=head2 balanceTags(HTML [, NO_DEEP_NESTING])
+
+Balances HTML tags; if tags are not closed, close them; if they are not
+open, remove close tags; if they are in the wrong order, reorder them
+(order of open tags determines order of close tags).
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item HTML
+
+The HTML to balance.
+
+=item NO_DEEP_NESTING
+
+Boolean for allowing deep nesting (four deep) or not.
+
+=back
+
+=item Return value
+
+The balances HTML.
+
+=item Dependencies
+
+The 'approvedtags' and 'lonetags' entries in the vars table.
+
+=back
+
+=cut
+
+sub balanceTags {
+	my($html, $hard) = @_;
+	my(%tags, @stack, $match, %lone, $tag, $close, $whole);
+
+	# set up / get preferences
+	if ($c->{lonetags}) {
+		$match = join '|', @{$c->{approvedtags}};
+	} else {
+		$c->{lonetags} = [qw(P LI BR)];
+		$match = join '|', grep !/^(?:P|LI|BR)$/,
+			@{$c->{approvedtags}};
+	}
+	%lone = map { ($_, 1) } @{$c->{lonetags}};
+
+	# If the quoted slash in the next line bothers you, then feel free to
+	# remove it. It's just there to prevent broken syntactical highlighting
+	# on certain editors (vim AND xemacs).  -- Cliff
+	# maybe you should use a REAL editor, like BBEdit.  :) -- pudge 
+	while ($html =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
+		($tag, $close, $whole) = ($3, $2, $1);
+
+		if ($close) {
+			if (@stack && $tags{$tag}) {
+				# Close the tag on the top of the stack
+				if ($stack[-1] eq $tag) {
+					$tags{$tag}--;
+					pop @stack;
+
+				# Close tag somewhere else in stack
+				} else {
+					my $p = pos($html) - length($whole);
+					if (exists $lone{$stack[-1]}) {
+						pop @stack;
+					} else {
+						substr($html, $p, 0) = "</$stack[-1]>";
+					}
+					pos($html) = $p;  # don't remove this from stack, go again
+				}
+
+			} else {
+				# Close tag not on stack; just delete it
+				my $p = pos($html) - length($whole);
+				$html =~ s|^(.{$p})\Q$whole\E|$1|si;
+				pos($html) = $p;
+			}
+
+		} else {
+			$tags{$tag}++;
+			push @stack, $tag;
+
+			if ($hard && ($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
+				return;
+			}
+		}
+
+	}
+
+	$html =~ s/\s+$//;
+
+	# add on any unclosed tags still on stack
+	$html .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
+
 }
 
 #========================================================================
