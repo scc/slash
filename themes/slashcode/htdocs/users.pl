@@ -624,9 +624,9 @@ sub showInfo {
 		}
 		if (!defined($comments)) {
 			# Last resort; here for backwards compatibility mostly.
-			$commentcount = $slashdb->countCommentsByIPOrSubnetID(
+			$commentcount = $slashdb->countCommentsByIPIDOrSubnetID(
 				$netid, $comments_wanted, $min_comment);
-			$comments = $slashdb->getCommentsByIPOrSubnetID(
+			$comments = $slashdb->getCommentsByIPIDOrSubnetID(
 				$netid, $comments_wanted, $min_comment
 			);
 		}

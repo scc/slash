@@ -2667,6 +2667,13 @@ sub countCommentsByIPID {
 }
 
 ##################################################################
+sub countCommentsByIPIDOrSubnetID {
+	my($self, $id) = @_;
+	return 0 if !$id;
+	return $self->countCommentsByGeneric("ipid='$id' OR subnetid='$id'");
+}
+
+##################################################################
 sub countCommentsBySidUID {
 	my($self, $sid, $uid) = @_;
 	return 0 if !$sid or !$uid;
@@ -3719,7 +3726,7 @@ sub calcModval {
 			$hr->{$hoursback}{valsum} += $val;
 		}
 	}
-#printf STDERR "cM %d %.3f", $be_portable, Time::HiRes::time()-$start_time;
+#printf STDERR "cM %d %.3f\n", $be_portable, Time::HiRes::time()-$start_time;
 	my $modval = 0;
 	for my $hoursback (keys %$hr) {
 		my $val = $hr->{$hoursback}{valsum};
