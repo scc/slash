@@ -645,9 +645,8 @@ sub getMetamodIDs {
 sub getMetaModerations {
 	my($self, $mmid) = @_;
 
-	my $mmid_quoted = $self->sqlQuote($mmid);
 	my $ret = $self->sqlSelectAllHashrefArray(
-		'*','metamodlog', "mmid=$mmid_quoted"
+		'*','metamodlog', "mmid=$mmid"
 	);
 
 	return $ret;

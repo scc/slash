@@ -54,10 +54,14 @@ sub reconcileM2 {
 	) if @{$m2ids};
 	for my $m2id (@{$m2ids}) {
 		my $m2_list = $slashdb->getMetaModerations($m2id->{mmid});
-		my %m2_votes;
+		my $modlog = $slashdb->getModeratorLog($m2id->{mmid});
+		my(%m2_votes);
 		my(@con, @dis);
 
-		map { $m2_votes{$_->{val}}++; } @{$m2_list};
+		for (@{$m2_list}) {
+			$m2_votes{$_->{val}}++;
+			$m2_results{$modlog->{uid}}->{m2_count}{$_->{uid}}++;
+		}
 
 		# %m2_votes now holds the tally. Which ever value is the
 		# highest is the consensus.
@@ -80,10 +84,11 @@ sub reconcileM2 {
 		}
 
 		# Try to penalize suspicious M2 behavior.
+		my $change;
 		if ($dis && $dis_avg < $constants->{m2_minority_trigger}) {
 			# Penalty cost is the dissension cost per head
 			# of each dissenter.
-			my $penalty = int(
+			$change = int(
 				($con/$dis) *
 				$constants->{m2_dissension_penalty}
 			);
@@ -110,8 +115,7 @@ sub reconcileM2 {
 		) if $constants->{moderatord_debug_info};
 
 		# Dole out reward among the consensus if there is a clear
-		# victory. Note that a user only gets the optional message
-		# if we have a clear victory.
+		# victory.
 		if ($con_avg > $constants->{m2_consensus_trigger}) {
 			my %slots;
 			my $pool = $constants->{m2_reward_pool};
@@ -134,37 +138,39 @@ sub reconcileM2 {
 			}
 
 			# Award moderator if moderation matches consensus.
-			my $modlog =
-				$slashdb->getModeratorLog($m2_list->[0]{mmid});
 			if ($modlog->{val} eq $rank[0]) {
+				$change = 1;
+
 				my $mod_karma =
 					$slashdb->getUser($modlog->{uid},
 							  'karma');
 				$slashdb->setUser($modlog->{uid}, {
-					karma => $mod_karma + 1,
+					karma => $mod_karma + $change,
 				});
 			}
+		}
 
-			# We only do the following if Messaging has been 
-			# installed.
-			if ($messages) {
-				my $comment = $slashdb->getComments(
-					$modlog->{sid}, $modlog->{cid}
-				);
+		# We only do the following if Messaging has been 
+		# installed.
+		if ($messages) {
+			my $comment = $slashdb->getComments(
+				$modlog->{sid}, $modlog->{cid}
+			);
 
-				# Get discussion metadata without caching it.
-				my $discuss = $slashdb->getDiscussion(
-					$modlog->{sid}
-				);
+			# Get discussion metadata without caching it.
+			my $discuss = $slashdb->getDiscussion(
+				$modlog->{sid}
+			);
 
-				push @{$m2_results{$modlog->{uid}}->{m2}}, {
-					title	=> $discuss->{title},
-					url	=> $discuss->{url},
-					subj	=> $comment->{subj},
-					vote	=> $modlog->{val},
-				};
-			}
-						
+			push @{$m2_results{$modlog->{uid}}->{m2}}, {
+				title	=> $discuss->{title},
+				url	=> $discuss->{url},
+				subj	=> $comment->{subj},
+				vote	=> $rank[0],
+				change	=> $change,
+				reason  =>
+					$constants->{reasons}[$modlog->{reason}]
+			};
 		}
 
 		# Mark remaining entries with a '0' which means that they have
@@ -194,6 +200,9 @@ sub reconcileM2 {
 				$messages->checkMessageCodes(MSG_CODE_M2, $_);
 			if (@{$msg_user}) {
 				$data->{m2} = $m2_results{$_}->{m2};
+				$data->{num_metamoderators} =
+					scalar
+					keys %{$m2_results{$_}->{m2_count}};
 				$messages->create($_, MSG_CODE_M2, $data);
 			}
 		}

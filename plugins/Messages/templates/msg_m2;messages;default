@@ -4,12 +4,17 @@ __description__
 Message body that is sent back to a user whenever a moderation from
 this user is metamoderated.
 
-* m2 = List of hashrefs containing the following keys:
-	title	- Title of the discussion in which the moderated comment
-		  appears.
-	url	- URL of the discussion in question
-	subj	- subject of moderated comment
-	vote	- moderation vote on that comment
+	num_m2mods = Number of metamoderators involved over ALL listed
+	results.
+
+	m2 = List of hashrefs containing the following keys:
+		title	- Title of the discussion in which the moderated comment
+			  appears.
+		url	- URL of the discussion in question
+		subj	- subject of moderated comment
+		vote	- moderation vote on that comment
+		reason  - Reason given for original moderation
+		change	- Amount of karma change as a result of the moderation.
 
 __title__
 Metamoderation Message Body
@@ -21,28 +26,50 @@ __name__
 msg_m2
 __template__
 
-[% vote_result = { '-1' => 'Unfair', '1' => 'Fair' } %]
+[% vote_result = { '-1' => 'Unfair', '1' => 'Fair' }; %]
 
 [% IF msg.mode == 1 %]<P>[% END %]
-Your moderations on the following messages have been metamoderated:
+Some of your past moderations have been meta moderated by [% num_m2mods %] other
+[% constants.sitename %] readers. Here are the exciting results:
 
 [% IF msg.mode == 1%]
 <UL>
-[% FOREACH m2item = m2 %]
-	<LI> "[% m2item.subj %]" from the discussion 
-	<A HREF="[% m2item.url %]">"[% m2item.title %]</A> which you moderated as
+[% FOREACH m2item = m2 -%]
+	[% 
+		reason = constants.reasons.${m2item.reason}; 
+		IF m2item.url;
+			discussion = "<A HREF=\"$m2item.url\">$m2item.title</A>";
+		ELSE;
+			discussion = "$m2item.title";
+		END;
+	-%]
+	<LI> "[% m2item.subj %]" from the discussion [% discussion %] which you
+	moderated as <B>[% reason %]</B> was voted 
 	<B>[% vote_result.${m2item.vote} %]</B>
+	[% IF change %]([% IF vote > 0 %]
+	For your outstanding moderation, you are granted
+	[%- ELSE -%]
+	For your poor moderation, you are penalized
+	[%- END -%]
+	[% change %] karma)[% END %]
+
 [% END %]
 </UL>
 [% ELSE %]
 [% FOREACH m2item = m2 -%]
+	[%- reason = constants.reasons.${m2item.reason} -%]
 	- "[% m2item.subj %]" from the discussion "[% m2item.title %]"
-	which you moderated as [% vote_result.${m2item.vote} %]
-
+	which you moderated as [% reason %] was voted [% vote_result.${m2item.vote} %]
+[% IF m2item.change -%]
+	([% IF m2item.vote > 0 -%]
+For your outstanding moderation you are granted [% ELSE -%]
+For your poor moderation, you are penalized [% END -%]
+[% m2item.change %] karma)[% END %]
+[% IF m2item.url %]	<[% m2item.url %]>
+[% END %]
 [% END %]
 [%- END -%]
-
-[%- IF msg.mode == 1 %]<P>[% END %]Thank you for metamoderating.
+[%- IF msg.mode == 1 %]<P>[% END %]Thank you for moderating.
 
 __seclev__
 500

@@ -3,7 +3,7 @@ default
 __description__
 Subject used for Metamoderation Update messages.
 __title__
-Metamoderation Update Message Subject
+Metamoderation Results Message Subject
 __page__
 messages
 __lang__
