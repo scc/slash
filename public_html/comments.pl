@@ -46,7 +46,8 @@ sub main {
 	#This is here to save a function call, even though the
 	# function can handle the situation itself
 	if ($I{F}{sid}) {
-		$stories = $I{dbobject}->getNewStory($I{F}{sid}, ['section','title','commentstatus'])
+		$stories = $I{dbobject}->getNewStory($I{F}{sid},
+			['section', 'title', 'commentstatus']);
 	} else {
 		$stories->{'title'} = "Comments";
 	}
@@ -160,7 +161,10 @@ sub editComment {
 
 	my $formkey_earliest = time() - $I{formkey_timeframe};
 
-	my $reply = $I{dbobject}->getCommentReply(getDateFormat("date", "time"), $I{F}{sid}, $I{F}{pid});
+	my $reply = $I{dbobject}->getCommentReply(
+		getDateFormat("date", "time"),
+		$I{F}{sid}, $I{F}{pid}
+	);
 
 	# Display parent comment if we got one
 	if ($I{F}{pid}) {
@@ -345,23 +349,27 @@ EOT
 # Validate comment, looking for errors
 sub validateComment {
 	my($comm, $subj, $preview) = @_;
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	if (isTroll()) {
 		print <<EOT;
 This account or IP has been temporarily disabled. This means that either
 this IP or user account has been moderated down more than 5 times in the
 last 24 hours.  If you think this is unfair, you should contact
-$I{adminmail}.  If you are being a troll, now is the time for you to
+$constants->{adminmail}.  If you are being a troll, now is the time for you to
 either grow up, or change your IP.
 EOT
 
 		return;
 	}
 
-	if (!$I{allow_anonymous} && ($I{U}{uid} < 1 || $I{F}{postanon})) { 
+	if (!$constants->{allow_anonymous} && ($user->{uid} < 1 || $form->{postanon})) { 
 		print <<EOT;
 Sorry, anonymous posting has been turned off.
-Please <A HREF="$I{rootdir}/users.pl">register and log in</A>.
+Please <A HREF="$constants->{rootdir}/users.pl">register and log in</A>.
 EOT
 
 		return;
@@ -377,29 +385,54 @@ EOT
 
 	$subj =~ s/\(Score(.*)//i;
 	$subj =~ s/Score:(.*)//i;
-	
+
 	{  # fix unclosed tags
-		my %tags;
-		my $match = 'B|I|A|OL|UL|EM|TT|STRONG|BLOCKQUOTE|DIV';
+		my(%tags, @stack, $match, %lone, $tag, $close, $whole);
+
+		# set up / get preferences
+		if ($constants->{lonetags}) {
+			$match = join '|', @{$constants->{approvedtags}};
+		} else {
+			$constants->{lonetags} = [qw(BR P LI)];
+			$match = join '|', grep !/^(?:BR|P|LI)$/,
+				@{$constants->{approvedtags}};
+		}
+		%lone = map { ($_, 1) } @{$constants->{lonetags}};
 
 		while ($comm =~ m|(<(/?)($match)\b[^>]*>)|igo) { # loop over tags
-			my($tag, $close, $whole) = (uc $3, $2, $1);
+			($tag, $close, $whole) = ($3, $2, $1);
 
 			if ($close) {
-				$tags{$tag}--;
+				if (@stack && $tags{$tag}) {
+					# Close the tag on the top of the stack
+					if ($stack[-1] eq $tag) {
+						$tags{$tag}--;
+						pop @stack;
 
-				# remove orphaned close tags if count < 0
-				while ($tags{$tag} < 0) {
+					# Close tag somewhere else in stack
+					} else {
+						my $p = pos($comm) - length($whole);
+						if (exists $lone{$stack[-1]}) {
+							pop @stack;
+						} else {
+							substr($comm, $p, 0) = "</$stack[-1]>";
+						}
+						pos($comm) = $p;  # don't remove this from stack, go again
+					}
+
+				} else {
+					# Close tag not on stack; just delete it
 					my $p = pos($comm) - length($whole);
-					$comm =~ s|^(.{$p})</$tag>|$1|si;
-					$tags{$tag}++;
+					$comm =~ s|^(.{$p})\Q$whole\E|$1|si;
+					pos($comm) = $p;
 				}
+
 
 			} else {
 				$tags{$tag}++;
+				push @stack, $tag;
 
 				if (($tags{UL} + $tags{OL} + $tags{BLOCKQUOTE}) > 4) {
-					editComment(), return unless $preview;
 					print <<EOT;
 You can only post nested lists and blockquotes four levels deep.
 Please fix your UL, OL, and BLOCKQUOTE tags.
@@ -407,30 +440,29 @@ EOT
 
 					return;
 				}
-			}	
+			}
+
 		}
 
-		for my $tag (keys %tags) {
-			# add extra close tags
-			while ($tags{$tag} > 0) {
-				$comm .= "</$tag>";
-				$tags{$tag}--;
-			}
-		}
+		$comm =~ s/\s+$//;
+
+		# add on any unclosed tags still on stack
+		$comm .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
+
 	}
 
-	my $dupRows = $I{dbobject}->countComments($I{F}{sid}, '', '', $I{F}{postercomment});
+	my $dupRows = $dbslash->countComments($form->{sid}, '', '', $form->{postercomment});
 
-	if ($dupRows || !$I{F}{sid}) { 
+	if ($dupRows || !$form->{sid}) { 
 		editComment(), return unless $preview;
 		print <<EOT;
-Something is wrong: parent=$I{F}{pid} dups=$dupRows discussion=$I{F}{sid}
+Something is wrong: parent=$form->{pid} dups=$dupRows discussion=$form->{sid}
 <UL>
 EOT
 
-		print "<LI>Didja forget a subject?</LI>\n" unless $I{F}{postersubj};
+		print "<LI>Didja forget a subject?</LI>\n" unless $form->{postersubj};
 		print "<LI>Duplicate.  Did you submit twice?</LI>\n" if $dupRows;
-		print "<LI>Space aliens have eaten your data.</LI>\n" unless $I{F}{sid};
+		print "<LI>Space aliens have eaten your data.</LI>\n" unless $form->{sid};
 		print <<EOT;
 <LI>Let us know if anything exceptionally strange happens</LI>
 </UL>
@@ -438,8 +470,8 @@ EOT
 		return;
 	}
 
-	if (length($I{F}{postercomment}) > 100) {
-		local $_ = $I{F}{postercomment};
+	if (length($form->{postercomment}) > 100) {
+		local $_ = $form->{postercomment};
 		my($w, $br); # Whitespace & BRs
 		$w++ while m/\w/g;
 		$br++ while m/<BR>/gi;
@@ -456,7 +488,7 @@ EOT
 	# minimum length (minimum length of that comment has to be to be tested), err_message 
 	# message displayed upon failure to post if regex matches contents.
 	# make sure that we don't select new filters without any regex data
-	my $filters = $I{dbobject}->getContentFilters();
+	my $filters = $dbslash->getContentFilters();
 
 	for (@$filters) {
 		my($number_match, $regex);
@@ -471,13 +503,13 @@ EOT
 		my $maximum_length	= $_->[8];
 		my $isTrollish		= 0;
 		
-		next if ($minimum_length && length($I{F}{$field}) < $minimum_length);
-		next if ($maximum_length && length($I{F}{$field}) > $maximum_length);
+		next if ($minimum_length && length($form->{$field}) < $minimum_length);
+		next if ($maximum_length && length($form->{$field}) > $maximum_length);
 
 		if ($minimum_match) {
 			$number_match = "{$minimum_match,}";
 		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($I{F}{$field}) * $ratio) . ",}";
+			$number_match = "{" . int(length($form->{$field}) * $ratio) . ",}";
 		}
 
 		$regex = $raw_regex . $number_match;
@@ -487,15 +519,15 @@ EOT
 		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
 
 		if ($modifier eq 'g') {
-			$isTrollish = 1 if $I{F}{$field} =~ /$regex/g;
+			$isTrollish = 1 if $form->{$field} =~ /$regex/g;
 		} else {
-			$isTrollish = 1 if $I{F}{$field} =~ /$regex/;
+			$isTrollish = 1 if $form->{$field} =~ /$regex/;
 		}
 
-		if ((length($I{F}{$field}) >= $minimum_length)
+		if ((length($form->{$field}) >= $minimum_length)
 			&& $minimum_length && $isTrollish) {
 
-			if (((length($I{F}{$field}) <= $maximum_length)
+			if (((length($form->{$field}) <= $maximum_length)
 				&& $maximum_length) || $isTrollish) {
 
 				editComment(), return unless $preview;
@@ -531,17 +563,17 @@ EOT
 	};
 
 	# Ok, one list ditch effort to skew out the trolls!
-	if (length($I{F}{postercomment}) >= 10) {
+	if (length($form->{postercomment}) >= 10) {
 		for (keys %$limits) {
 			# DEBUG
 			# print "ratio $_ lower $limits->{$_}->[0] upper $limits->{$_}->[1]<br>\n";
 			# if it's within lower to upper
-			if (length($I{F}{postercomment}) >= $limits->{$_}->[0]
-				&& length($I{F}{postercomment}) <= $limits->{$_}->[1]) {
+			if (length($form->{postercomment}) >= $limits->{$_}->[0]
+				&& length($form->{postercomment}) <= $limits->{$_}->[1]) {
 
 				# if is >= the ratio, then it's most likely a troll comment
-				if ((length(compress($I{F}{postercomment})) /
-					length($I{F}{postercomment})) <= $_) {
+				if ((length(compress($form->{postercomment})) /
+					length($form->{postercomment})) <= $_) {
 
 					editComment(), return unless $preview;
 					# blammo luser
@@ -622,7 +654,7 @@ sub submitComment {
 	}
 
 	# It would be nice to have an arithmatic if right here
-	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, getCurrenStatic('anonymous_coward_uid'));
+	my $maxCid = $I{dbobject}->setComment($I{F}, $I{U}, $pts, getCurrentStatic('anonymous_coward_uid'));
 	if ($maxCid == -1) {
 		print "<P>There was an unknown error in the submission.<BR>";
 	} elsif (!$maxCid) {
