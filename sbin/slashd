@@ -183,8 +183,8 @@ sub get_next_event {
 	my $min_time = 2**32-1;
 	my $min_file = '';
 	for my $file (keys %task) {
-		my $entry = $task{$file}{entry};
-		my $entry_time = $cron->get_next_execution_time($entry, $time);
+		my $timespec = $task{$file}{timespec};
+		my $entry_time = $cron->get_next_execution_time($timespec, $time);
 		if ($entry_time < $min_time) {
 			$min_time = $entry_time;
 			$min_file = $file;
