@@ -207,7 +207,7 @@ sub ident {
 	my ($class, $ident) = @_;
 	return "''" unless @$ident;
 
-	my $types = qr/(constants|form|user)/;
+	my $types = qr/^(constants|form|user)$/;
 	if ($ident->[0] =~ $types && (my $type = $1) && @$ident == 4 && $ident->[2] =~ /^'(.+)'$/s) {
 		(my $data = $1) =~ s/'/\\'/;
 		return "\$${type}->{'$data'}";
