@@ -20,7 +20,7 @@ __template__
 
 What you see on the right hand side is a preview of the block thingee
 labeled "[% FILTER strip_literal; block.title; END %]".  If you select it from the
-<A HREF="[% constants.rootdir %]/users.pl?op=preferences">Preferences Page</A>,
+<A HREF="[% constants.rootdir %]/users.pl?edithome=Edit%20Index%20Page">Preferences Page</A>,
 you will have that little block added to the right hand side of your
 <A HREF="[% constants.rootdir %]/index.pl">Custom [% constants.sitename %]</A> page.
 Exciting?  Not really, but its a great way to waste time.

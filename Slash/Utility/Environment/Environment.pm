@@ -1068,7 +1068,8 @@ sub prepareUser {
 	$cookies ||= {};
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
-	my $hostip = $ENV{REMOTE_ADDR} || '';
+	my $r = Apache->request;
+	my $hostip = $r->connection->remote_ip;
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 

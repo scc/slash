@@ -17,7 +17,7 @@ __template__
 		by [% nickname %] on [% time %]
 		[% UNLESS user.noscores %] (Score:[% points %][% IF reason %], [% constants.reasons.$reason %][% END %])[% END %]
 		<BR>
-		[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?op=userinfo&nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
+		[% UNLESS is_anon %](<A HREF="[% constants.rootdir %]/users.pl?userinfo=User%20Info&nick=[% FILTER fixparam; nickname; END %]">User #[% uid %] Info</A>)[% END %]
 		[% IF homepage && homepage.length > 8 %]<A HREF="[% homepage %]">[% homepage %]</A>[% END %]
 		<P>[% comment %]
 		</TD>

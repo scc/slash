@@ -21,49 +21,99 @@ __name__
 getUserAdmin
 __template__
 [% IF form_flag %]
-<FORM ACTION="[% env.script_name %]">
 [% END %]
 
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 [% IF authoredit_flag %]
 	<TR>
-		<TD COLSPAN=3"><B>Authors</B></TD>
+		<FORM ACTION="[% env.script_name %]">
+		<TD><B>Authors</B></TD>
 		<TD>[% author_select %]</TD>
-		<TD>&nbsp;<INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author"></TD>
+		<TD>&nbsp;<INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author">
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="authoredit"></TD>
+		</FORM>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TR>
 [% END %]
 	<TR>
-		<TD ALIGN="RIGHT"><B>User ID</B><BR><B>Nickname</B></TD>
-		<TD ALIGN="RIGHT"><INPUT TYPE="radio" NAME="userfield_flag" VALUE="userid"[% uid_checked %]><BR>
-		<INPUT TYPE="radio" NAME="userfield_flag" VALUE="nickname"[% nickname_checked %]></TD>
-		<TD VALIGN="TOP"><IMG SRC="[% constants.imagedir %]/admin_bracket.gif" WIDTH="22" HEIGHT="43"></TD>
-		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; form.userfield; END %]"></TD>
-		<TD VALIGN="MIDDLE">&nbsp;<INPUT TYPE="SUBMIT" NAME="useredit" VALUE="Edit User"></TD>
+		<FORM ACTION="[% env.script_name %]">
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="admin">
+		<TD>
+		<TABLE>
+			<TR>
+				<TD>
+				<TABLE>
+					<TR>
+						<TD><B>User ID</B></TD>
+						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="uid"[% checked.uid %]></TD>
+					</TR>
+					<TR>
+						<TD><B>Nickname</B></TD>
+						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="nickname"[% checked.nickname %]></TD>
+					</TR>
+				</TABLE>
+				</TD>
+				<TD>
+				<TABLE>
+					<TR>
+						<TD><B>IP</B></TD>
+						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="ip"[% checked.ip %]></TD>
+					</TR>
+					<TR>
+						<TD><B>Subnet</B></TD>
+						<TD><INPUT TYPE="radio" NAME="userfield_flag" VALUE="subnet"[% checked.subnet %]></TD>
+					</TR>
+				</TABLE>
+				</TD>
+			</TR>
+		</TABLE>
+		</TD>			
+		<TD VALIGN="MIDDLE"><INPUT TYPE="TEXT" NAME="userfield" VALUE="[% FILTER strip_attribute; edituser.id; END %]"></TD>
+		<TD VALIGN="MIDDLE">
+		<INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info">
+		<INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User">
+		</TD>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
 
-[% IF authoredit_flag && seclev_field %]
+[% IF authoredit_flag && seclev_field && ! edituser.nonuid  %]
 	<TR>
 		<TD><B>Seclev</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="TEXT" NAME="seclev" value="[% edituser.seclev %]"></TD>
+		<TD>&nbsp;</TD>
 	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
 	<TR>
 		<TD><B>Author flag (user is an author)</B></TD>
 		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
-	</TR>
-	<TR><TD COLSPAN=3 HEIGHT=10></TD></TR>
-	<TR>
-		<TD><B>Read-only</B></TD><TD COLSPAN="3">&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Comments</TD><TD><INPUT TYPE="checkbox" NAME="readonly_comments" [% readonly_comments %]>&nbsp;</TD><TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="comments_ro_reason" VALUE="[% comments_ro_reason %]"></TD><TD>&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD>Submissions</TD><TD><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly_submit%]>&nbsp;</TD><TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% submit_ro_reason %]"></TD><TD>&nbsp;</TD>
+		<TD>&nbsp;</TD>
 	</TR>
 [% END %]
+
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10></TD>
+	</TR>
+	<TR>
+		<TD COLSPAN="3"><B>Read-only</B></TD>
+	</TR>
+	<TR>
+		<TD>Comments</TD>
+		<TD><INPUT TYPE="checkbox" NAME="readonly_comments" [% readonly.comments %]>&nbsp;</TD>
+		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="comments_ro_reason" VALUE="[% readonly_reasons.comments %]"></TD>
+	</TR>
+	<TR>
+		<TD>Submissions</TD>
+		<TD><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly.submit%]>&nbsp;</TD>
+		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% readonly_reasons.submit %]"></TD>
+	</TR>
+	<TR>
+		<TD COLSPAN=3 HEIGHT=10>
+		Save Admin: <INPUT TYPE="SUBMIT" NAME="saveuseradmin" VALUE="Save Admin">
+		</TD>
+	</TR>
 
 </TABLE>
 [% IF form_flag %]

@@ -56,7 +56,7 @@ __template__
 		Posts without proper registration are posted as
 		<B>[% user.nickname %]</B>
 	</TD></TR>
-	<INPUT TYPE="HIDDEN" NAME="rlogin" VALUE="userlogin">
+	<INPUT TYPE="HIDDEN" NAME="op" VALUE="rlogin">
 
 	<TR><TD ALIGN="RIGHT">Nick</TD><TD>
 		<INPUT TYPE="TEXT" NAME="unickname" VALUE="[% form.nickname %]">
@@ -66,7 +66,7 @@ __template__
 
 	</TD></TR>
 [% ELSE;
-	userlink = "<A HREF=\"${constants.rootdir}/users.pl?op=userclose\">Log Out</A>";
+	userlink = "<A HREF=\"${constants.rootdir}/users.pl?userclose=Log%20Out\">Log Out</A>";
 END %]
 
 	<TR><TD WIDTH="130" ALIGN="RIGHT">Name: </TD><TD WIDTH="500">

@@ -178,7 +178,7 @@ INSERT INTO discussions (id, sid, title, url, ts) VALUES (2, '00/01/25/1236215',
 # Dumping data for table 'menus'
 #
 
-INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','User Info','[% constants.rootdir %]/users.pl',1,1);
+INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','User Info','[% constants.rootdir %]/users.pl?op=userinfo',1,1);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','New User','[% constants.rootdir %]/users.pl?op=newuseradmin',10000,2);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Customize Homepage','[% constants.rootdir %]/users.pl?op=edithome',1,3);
 INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('users','Edit User Info','[% constants.rootdir %]/users.pl?op=edituser',1,4);

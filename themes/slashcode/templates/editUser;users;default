@@ -38,6 +38,7 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 <BR>
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; user_edit.realname; END %]" SIZE="40"><BR>
+		<INPUT TYPE="HIDDEN" NAME="formname" VALUE="edituser">
 		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% user_edit.uid %]">
 		<INPUT TYPE="HIDDEN" NAME="name" VALUE="[% FILTER strip_attribute; user_edit.nickname; END %]"><BR>
 <BR>
@@ -85,7 +86,8 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 
 	</TD></TR></TABLE><P>
 
-	<INPUT TYPE="SUBMIT" NAME="op" VALUE="saveuser">
+	<INPUT TYPE="HIDDEN" NAME="op" VALUE="saveuser">
+	<INPUT TYPE="SUBMIT" NAME="saveuser" VALUE="Save User">
 	</FORM>
 
 

@@ -19,14 +19,15 @@ __template__
 	<TR>
 		<TD>
 		<B>Nick Name</B><BR>
-		<INPUT TYPE="TEXT" NAME="newuser" VALUE="">
+		<INPUT TYPE="TEXT" NAME="newusernick" VALUE="">
 		</TD>
 	</TR>
 	<TR>
 		<TD>
 		<B>Real Email</B> <BR>
 		<INPUT TYPE="TEXT" NAME="email" VALUE="" SIZE="40"><BR>
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="newuser">
+		<INPUT TYPE="SUBMIT" NAME="newuser" VALUE="Create Account">
+		<INPUT TYPE="HIDDEN" NAME="op" VALUE="newuser">
 		</TD>
 	</TR>
 </TABLE>

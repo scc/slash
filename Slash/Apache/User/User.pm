@@ -85,7 +85,7 @@ sub handler {
 	my $uid;
 	my $op = $form->{op} || '';
 
-	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
+	if (($op eq 'userlogin' || $op eq 'rlogin' ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $slashdb->getUserUID($form->{unickname});
 		($uid, my($newpass)) = userLogin($tmpuid, $form->{upasswd});
 

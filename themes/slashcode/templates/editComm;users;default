@@ -28,6 +28,11 @@ __template__
 [% INCLUDE titlebar width="100%" %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
+
+<INPUT TYPE="HIDDEN" NAME="formname"  VALUE="editcomm">
+<INPUT TYPE="HIDDEN" NAME="op"  VALUE="savecomm">
+<INPUT TYPE="HIDDEN" NAME="uid"  VALUE="user_edit.uid">
+
 <TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="[% user.bg.2 %]">
 	<TR>
 		<TD>
@@ -111,7 +116,7 @@ __template__
 	</TR>
 </TABLE>
 <P>
-<INPUT TYPE="SUBMIT" NAME="op" VALUE="savecomm">
+<INPUT TYPE="SUBMIT" NAME="savecomm" VALUE="Save">
 </FORM>
 
 __seclev__

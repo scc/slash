@@ -1,0 +1,29 @@
+__section__
+default
+__description__
+
+__title__
+
+__page__
+messages
+__lang__
+en_US
+__name__
+commentreply
+__template__
+[% USE Slash %]
+Your comment, [% cid1.subj %] at [% Slash.timeCalc(cid1.date, uid.format, uid.off_set) %]:
+
+    [% constants.absolutedir %]/comments.pl?blablah
+
+attached to story [% sid.subj %]:
+
+   [% constants.absolutedir %]/article.pl?blablah
+
+was replied to by [% rid.nickname %], [% cid2.subj %] at [% Slash.timeCalc(cid2.date, uid.format, uid.off_set) %]:
+
+    [% constants.absolutedir %]/comments.pl?blablah[% IF rid %]
+    [% constants.absolutedir %]/users.pl?userinfo=User%20Info&nick=[% FILTER fixparam; rid.nickname; END; END %]
+
+__seclev__
+500

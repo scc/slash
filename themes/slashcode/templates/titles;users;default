@@ -21,7 +21,7 @@ __template__
 	Preview [% FILTER strip_literal; blocktitle; END %]
 
 [% CASE 'newUser_title' %]
-	User [% form.newuser %] created.
+	User [% form.newusernick %] created.
 
 [% CASE 'mailPassword_email_title' %]
 	[% constants.sitename %] user password for [% nickname %]
@@ -31,6 +31,9 @@ __template__
 
 [% CASE 'userInfo_user_title' %]
 	User Info for [% nick %] ([% uid %])
+
+[% CASE 'user_netID_user_title' %]
+	User Info for [% md5id %] ([% id %])
 
 [% CASE 'editUser_title' %]
 	Editing [% user_edit.nickname %] ( [% user_edit.uid %]) [% user_edit.realemail %]

@@ -16,27 +16,36 @@ en_US
 __name__
 displayForm
 __template__
-<TABLE WIDTH="100%" CELLPADDING="10">
-	<TR>
-		<TD WIDTH="50%" VALIGN="TOP">
 		<P>
-		<FORM ACTION="[% env.script_name %]" METHOD="GET">
 
-
+<!-- titlebar -->
+<TABLE WIDTH="75%">
+	<TR>
+		<TD>
 [% INCLUDE titlebar width="100%" %]
+		</TD>
+	</TR>
+</TABLE>
+<!-- end titlebar -->
 
 [% IF form.unickname %]
+		<P>
 		Danger, Will Robinson!  You didn't login!  You apparently put
 		in the wrong password, or the wrong nickname, or else space
 		aliens have infested the server.  I'd suggest trying again,
 		or clicking that mail password button if you forgot your password.
+		</P>
 
 	[% IF constants.allow_anonymous %]
+		<P>
 	   	Logging in will allow you to post comments as yourself.  If you
 		don't login, you will only be able to post as [% constants.anon_name %].
+		</P>
 
 	[% ELSE %]
-	      	You can only post comments if you have a valid account
+		<P>
+	     You can only post comments if you have a valid account
+		</P>
 
 	[% END %]
 
@@ -44,37 +53,92 @@ __template__
 
 [% END %]
 
-		<P>
-		<B>Nick:</B> (maximum 20 characters long)<BR>
-		<INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% FILTER strip_attribute; form.unickname; END %]"><BR>
-
-		<B>Password:</B> (6-20 characters long)<BR>
-		<INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20" MAXLENGTH="20"><BR>
-
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="userlogin">
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="mailpasswd">
-
+<FORM ACTION="[% env.script_name %]" METHOD="GET">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="userlogin">
+<TABLE WIDTH="75%">
+	<TR>
+		<TD><B>Nickname</B></TD>
+		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% FILTER strip_attribute; form.unickname; END %]">
 		</TD>
-		<TD WIDTH="50%" VALIGN="TOP">
+	</TR>
+	<TR>
+		<TD><B>Password:</B> (6-20 characters long)</TD>
+		<TD><INPUT TYPE="PASSWORD" NAME="upasswd" SIZE="20" MAXLENGTH="20">
+		<INPUT TYPE="SUBMIT" NAME="userlogin" VALUE="Login"></TD>
+	</TR>
+</TABLE>
+</FORM>
 
-[% INCLUDE titlebar title=title2 width="100%" %]
+<FORM ACTION="[% env.script_name %]" METHOD="GET">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="mailpasswd">
 
-[% msg %]
-
-		(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
-		are allowed in nicknames, and all others will be stripped out.)
-
-		<INPUT TYPE="TEXT" NAME="newuser" SIZE="20" MAXLENGTH="20" VALUE="[% newnick %]">
-		<BR> and a <B>valid email address</B> address to send your registration
-		information. This address will <B>not</B> be displayed on [% constants.sitename %].
-		<INPUT TYPE="TEXT" NAME="email" SIZE="20" VALUE="[% FILTER strip_attribute; form.email; END %]"><BR>
-		<INPUT TYPE="SUBMIT" NAME="op" VALUE="newuser"> Click the button to
-		be mailed a password.<BR>
-
-		</FORM>
+<TABLE WIDTH="75%">
+	<TR>
+		<TD COLSPAN="2">
+[% INCLUDE titlebar title="Mail Password" width="100%" %]
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN="2">
+		<P>
+		Forget your password? Enter your nickname here to 
+		have the system mail your password to you
+		</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD><B>Nickname</B></TD>
+		<TD><INPUT TYPE="TEXT" NAME="unickname" SIZE="20" VALUE="[% FILTER strip_attribute; form.unickname; END %]">
+		<INPUT TYPE="SUBMIT" NAME="mailpasswd" VALUE="Mail Password">
 		</TD>
 	</TR>
 </TABLE>
+</FORM>
+
+<FORM ACTION="[% env.script_name %]" METHOD="GET">
+<INPUT TYPE="HIDDEN" NAME="op" VALUE="newuser">
+
+<TABLE WIDTH="75%">
+	<TR>
+		<TD COLSPAN="2">
+[% INCLUDE titlebar title=title2 width="100%" %]
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN="2">
+		<P>[% msg2 %]</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD COLSPAN="2"><P>(Note: only the characters <TT>0-9a-zA-Z_.+!*'(),-\$</TT>, plus space,
+		are allowed in nicknames, and all others will be stripped out.)<BR>
+		</TD>
+	</TR>
+	<TR>
+		<TD><B>Nickname of choice:</B></TD>
+		<TD><INPUT TYPE="TEXT" NAME="newusernick" SIZE="20" MAXLENGTH="20" VALUE="[% newnick %]"></TD>
+	</TR>
+	<TR>
+		<TD><B>Valid email address</B></TD>
+		<TD><INPUT TYPE="TEXT" NAME="email" SIZE="20" VALUE="[% FILTER strip_attribute; form.email; END %]"></TD>
+	</TR>
+	<TR>
+	 	<TD COLSPAN="2">
+		<P>address to send your registration information. This address will <B>not</B> 
+		be displayed on [% constants.sitename %].</P>
+		</TD>
+	</TR>
+	<TR>
+		<TD><INPUT TYPE="SUBMIT" NAME="newuser" VALUE="Create Account"></TD>
+		<TD>Click the button to create your account and be mailed a password.</TD>
+	</TR>
+	<TR>
+	 	<TD COLSPAN="2">
+		<P>[% msg1 %]</P>
+		</TD>
+	</TR>
+</TABLE>
+</FORM>
 
 __seclev__
 500

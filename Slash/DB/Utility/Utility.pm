@@ -473,7 +473,7 @@ sub sqlSelectAllHashrefArray {
 ########################################################
 sub sqlUpdate {
 	my($self, $table, $data, $where) = @_;
-	my $sql = "UPDATE $table SET";
+	my $sql = "UPDATE $table SET ";
 	foreach (keys %$data) {
 		if (/^-/) {
 			s/^-//;
@@ -486,7 +486,7 @@ sub sqlUpdate {
 	$sql .= "\nWHERE $where\n";
 	$self->sqlConnect();
 	my $rows = $self->sqlDo($sql);
-	#print STDERR "SQL: $sql\n";
+	# print STDERR "SQL: $sql\n";
 	return $rows;
 }
 

@@ -159,7 +159,7 @@ __template__
 </TABLE>
 </FORM>
 <B><A HREF="[% constants.rootdir %]/sections.pl?section=[% sectionbid %]&op=editsection">[% sectionbid %]</A></B>
-(<A HREF="[% constants.rootdir %]/users.pl?op=preview&bid=[% bid %]">preview</A>)
+(<A HREF="[% constants.rootdir %]/users.pl?previewbox=Preview&bid=[% bid %]">preview</A>)
 
 
 

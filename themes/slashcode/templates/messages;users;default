@@ -23,14 +23,23 @@ __template__
 <H2>[% n %]</H2>
 [% END %]
 
+[% CASE 'user_header' %]
+	[% constants.sitename %] Users
+
+[% CASE 'userclose' %]
+	you are now logged out.
+
 [% CASE 'userinfo_nicknf_msg' %]
 	[% nick %] not found.
+
+[% CASE 'userinfo_netID_msg' %]
+	[% md5_id %] ([% id %]) not found.
 
 [% CASE 'newuser_msg' %]
 	[% INCLUDE titlebar title=title width="100%" %]
 	<B>email</B>=[% form.email %]<BR>
 	<B>user id</B>=[% uid %]<BR>
-	<B>nick</B>=[% form.newuser %]<BR>
+	<B>nick</B>=[% form.newusernick %]<BR>
 	<B>passwd</B>=mailed to [% form.email %]<BR>
 	<P>Once you receive your password, you can log in and
 	<A HREF="[% constants.rootdir %]/users.pl">set your account up</A>
@@ -40,7 +49,7 @@ __template__
 Your new password is [% newpasswd %].  Your old password will still work until
 this password is used.  Go to the URL below to log in:
 
-[% constants.absolutedir %]/index.pl?op=userlogin&upasswd=[% newpasswd %]&unickname=[% tempnick %]
+[% constants.absolutedir %]/index.pl?op=userlogin&upasswd=[% newpasswd %]&unickname=[% tempnick %]&returnto=/users.pl?edituser=1
 
 Make sure you then CHANGE YOUR PASSWORD!
 
@@ -89,6 +98,21 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	[% constants.siteadmin_name %]
 	[% constants.adminmail %]
 
+[% CASE 'saveuseradmin_saved' %]
+	Saved [% field %] [% id %] Admin settings
+
+[% CASE 'saveuseradmin_saveduser' %]
+	Saved [% field %] [% id %] User settings
+
+[% CASE 'saveuseradmin_notsaved' %]
+	Unable to save [% field %] [% id %] Admin settings
+
+[% CASE 'saveuseradmin_notsaveduser' %]
+	Unable to save [% field %] [% id %] User settings
+ 
+[% CASE 'saveuseradmin_uid_notnumeric' %]
+	Unable to save [% field %] [% id %] : a uid must be all numeric 
+ 
 [% CASE 'cookiemsg' %]
 	<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
 	eliminates them, you are using a browser that doesn't support them, or you rejected it.

@@ -224,7 +224,7 @@ sub createComment {
 	}
 
 	$self->sqlInsert('comment_text', {
-			cid	=> $cid,
+			id	=> $cid,
 			comment	=>  $comment->{postercomment},
 	});
 
@@ -751,15 +751,15 @@ sub getCommentsByUID {
 }
 
 #################################################################
-sub getCommentsByIPID {
-	my($self, $ipid, $min) = @_;
+sub getCommentsByNetID {
+	my($self, $id, $min) = @_;
 
 	my $table = "comments";
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comment_heap';
 	}
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $table WHERE ipid=$ipid "
+			. " FROM $table WHERE ipid='$id' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -778,7 +778,7 @@ sub getCommentsBySubnetID{
 		$table = 'comment_heap';
 	}
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
-			. " FROM $table WHERE subnetid=$subnetid"
+			. " FROM $table WHERE subnetid='$subnetid' "
 			. " ORDER BY date DESC LIMIT $min,50 ";
 
 	my $sth = $self->{_dbh}->prepare($sqlquery);
@@ -940,7 +940,7 @@ sub deleteComment {
 	my($self, $sid, $cid) = @_;
 	if ($cid) {
 		$self->sqlDo("delete from comments WHERE cid=" . $self->sqlQuote($cid));
-		$self->sqlDo("delete from comment_text WHERE cid=" . $self->sqlQuote($cid));
+		$self->sqlDo("delete from comment_text WHERE id=" . $self->sqlQuote($cid));
 	} else {
 		my $table = "comments";
 		if (getCurrentStatic('mysql_heap_table')) {
@@ -1007,6 +1007,11 @@ sub setStoryCount {
 		-commentcount	=> "commentcount-$count",
 		writestatus	=> 1
 	}, 'sid=' . $self->{_dbh}->quote($sid));
+	$self->sqlUpdate('newstories', {
+		-commentcount	=> "commentcount-$count",
+		writestatus	=> 1
+	}, 'sid=' . $self->{_dbh}->quote($sid));
+
 	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlUpdate('newstories', {
 			-commentcount	=> "commentcount-$count",
@@ -1379,7 +1384,7 @@ sub deleteStory {
 # for slashd
 sub deleteStoryAll {
 	my($self, $sid) = @_;
-	my $db_sid =  $self->sqlQuote($sid);
+	my $db_sid = $self->sqlQuote($sid);
 
 	$self->sqlDo("DELETE from stories where sid=$db_sid");
 	$self->sqlDo("DELETE from story_text where sid=$db_sid");
@@ -1578,22 +1583,29 @@ sub checkExpired {
 
 ##################################################################
 sub checkReadOnly {
-	my($self, $formname, $id) = @_;
+	my($self, $formname, $user) = @_;
 
+	my $curuser = getCurrentUser();	
 	my $constants = getCurrentStatic();
-	my($ref, $user);
+
 	my $where = '';
 
-	if ($id) {
-		$user = $self->getUser($id);
-		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
+	if ($user->{uid} && $user->{uid} =~ /^\d+$/) {
+		if ($user->{uid} != $constants->{anonymous_coward_uid}) {
 			$where = "uid = $user->{uid}";
-		} else {
-			$where = "(ipid = '$id' OR subnetid = '$id')";
+		} else { 
+			$where = "ipid = '$curuser->{ipid}'";
 		}
+	} elsif ($user->{md5id}) {
+		$where = "(ipid = '$user->{md5id}' OR subnetid = '$user->{md5id}')";
+
+	} elsif ($user->{ipid}) {
+		$where = "ipid = '$user->{ipid}'";
+
+	} elsif ($user->{subnetid}) {
+		$where = "subnetid = '$user->{subnetid}'";
 	} else {
-		$user = $self->getCurrentUser();
-		$where = "(ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
+		$where = "ipid = '$curuser->{ipid}'";
 	}
 
 	$where .= " AND readonly = 1 AND formname = '$formname'"; 
@@ -1603,18 +1615,21 @@ sub checkReadOnly {
 
 ##################################################################
 sub getReadOnlyReason {
-	my($self, $formname, $id) = @_;
+	my($self, $formname, $user) = @_;
 
 	my $constants = getCurrentStatic();
-	my($ref, $user);
-	my($reason, $where) = ('', '');
+	my $ref = {};
+	my ($reason,$where) = ('','');
 
-	if ($id) {
-		$user = $self->getUser($id);
-		if ($user && $user->{uid} != $constants->{anonymous_coward_uid}) {
+	if ($user) {
+		if ($user->{uid} =~ /^\d+$/ && $user->{uid} != $constants->{anonymous_coward_uid}) {
 			$where = "WHERE uid = $user->{uid}";
-		} else {
-			$where = "WHERE (ipid = '$id' OR subnetid = '$id')";
+		} 
+		elsif ($user->{ipid}) {
+			$where = "WHERE ipid = '$user->{ipid}'"; 
+		}
+		elsif ($user->{subnetid}) { 
+			$where = "WHERE subnetid = '$user->{subnetid}'"; 
 		}
 	} else {
 		$user = $self->getCurrentUser();
@@ -1639,83 +1654,95 @@ sub getReadOnlyReason {
 
 ##################################################################
 sub setReadOnly {
-	my($self, $formname, $id, $flag, $reason) = @_;
-
-	my $user = $self->getUser($id);
+	my($self, $formname, $user, $flag, $reason) = @_;
 
 	my $constants = getCurrentStatic();
 
 	my $where = '';
-	if ($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
-		$where = "uid = $user->{uid}";
+
+	if($user) {
+		if ($user->{uid} =~ /^\d+$/ && $user->{uid} != $constants->{anonymous_coward_uid}) {
+			$where = "uid = $user->{uid}";
+		} 
+		elsif ($user->{ipid}) {
+			$where = "ipid = '$user->{ipid}'"; 
+		} 	
+		elsif ($user->{subnetid}) {
+			$where = "subnetid = '$user->{subnetid}'"; 
+		}
+
 	} else {
-		$where = "(ipid = '$id' OR subnetid = '$id')";
+		$user = getCurrentUser();
+		$where = "WHERE (ipid = '$user->{ipid}' OR subnetid = '$user->{subnetid}')";
 	}
 
-	$where .= " AND formname = '$formname'";
+	$where .= " AND formname = '$formname'"; 
 
-	if ($self->checkReadOnly($formname, $id) && $flag == 0) {
+
+	if ($self->checkReadOnly($formname, $user) && $flag == 0) {
 		if ($reason) {
-			$self->sqlUpdate("accesslist", {
+			if ( ($self->sqlUpdate("accesslist", {
 					-readonly => $flag,
 					reason => $reason,
 					}, $where
-			);
+			)) ) {
+				return(1);
+			} else {
+				return(0);
+			}
+
 		} else {
-			$self->sqlUpdate("accesslist", {
+			if ( ($self->sqlUpdate("accesslist", {
 					-readonly => $flag,
 					}, $where
-			);
+			)) ) {
+				return(1);
+			} else {
+				return(0);
+			}
 		}
 	} elsif ($flag == 1) {
 		$user->{ipid} = '' if ! $user->{ipid};
 		$user->{subnetid} = '' if ! $user->{subnetid};
 
-		if ($self->_checkAccessList($formname, $id)) {
+		# find out if they're in the list
+		my ($rows) = $self->sqlSelect(
+		 	"count(*)",
+		 	"accesslist", $where
+		);
+
+		if ($rows) {
 			if ($reason) {
 				$self->sqlUpdate("accesslist", {
 						-readonly => $flag,
 						reason => $reason,
 				}, $where );
 			} else {
-				$self->sqlUpdate("accesslist", {
+				if(($self->sqlUpdate("accesslist", {
 					-readonly => $flag,
-				}, $where );
+				}, $where ))) {
+
+					return(1);
+
+				} else {
+					return(0);
+				}	
 			}
 		} else {
-			$self->sqlInsert("accesslist", {
-				-uid		=> $user->{uid},
-				ipid		=> $user->{ipid},
-				subnetid	=> $user->{subnetid},
-				formname	=> $formname,
-				-ts		=> "now()",
-				-readonly	=> $flag,
-				reason		=> $reason
-			});
+			if (($self->sqlInsert("accesslist", {
+				-uid => $user->{uid},
+				ipid => $user->{ipid},
+				subnetid => $user->{subnetid}, 
+				formname => $formname,
+				-ts   => "now()",
+				-readonly => $flag,
+				reason => $reason, }))) {
+				return(1);
+			} else {	
+				return(0);
+			}
 		}
 	}
-}
-
-##################################################################
-sub _checkAccessList {
-	my($self, $formname, $id) = @_;
-
-	my $constants = getCurrentStatic();
-	my $user = $self->getUser($id);
-
-	my $where = '';
-
-	if ($user && $user->{uid} ne $constants->{anonymous_coward_uid}) {
-		$where = "uid = $user->{uid}";
-	} else {
-		$where = "(ipid = '$id' OR subnetid = '$id')";
-	}
-
-	$where .= " AND formname = '$formname'";
-
-	my($rows) = $self->sqlSelect("count(*)", "accesslist", $where);
-
-	return($rows);
 }
 
 ##################################################################
@@ -2256,7 +2283,7 @@ sub _getCommentText {
 		return $self->{_comment_text}{$cid};
 	}
 
-	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
+	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'id='. $cid);
 	return $self->{_comment_text}{$cid};
 }
 
