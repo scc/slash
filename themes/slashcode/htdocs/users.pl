@@ -1372,7 +1372,7 @@ sub saveUser {
 
 	if ($user_edit->{realemail} ne $form->{realemail}) {
 		$user_edits_table->{realemail} =
-			chopEntity(strip_attribute($form->{realemail}), 50);
+			chopEntity($form->{realemail}, 50);
 
 		$note .= getMessage('changeemail_msg', {
 			realemail => $user_edit->{realemail}

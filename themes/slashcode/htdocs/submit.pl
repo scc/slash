@@ -365,9 +365,14 @@ sub displayForm {
 	$topic->{imageclean} = $topic->{image};
 	$topic->{imageclean} = "$constants->{imagedir}/topics/$topic->{imageclean}" if $topic->{imageclean} =~ /^\w+\.\w+$/;
 
-	$fakeemail = $form->{email} if $form->{email};
 	my $known = "";
-	$known = "mailto" if $fakeemail eq $user->{fakeemail};
+	if ($form->{email}) {
+		$fakeemail = $form->{email};
+	} elsif ($fakeemail eq $user->{fakeemail}) {
+		$known = "mailto";
+		# we assume this is like if form.email is passed in
+		$fakeemail = strip_attribute($user->{fakeemail});
+	}
 
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),

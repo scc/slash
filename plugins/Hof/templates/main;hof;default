@@ -52,7 +52,7 @@ __template__
 [% FOREACH top = topcomments %]
 <B>[% top.score %]</B>
 	<A HREF="[% constants.rootdir %]/comments.pl?sid=[% top.sid %]&pid=[% top.pid %]#[% top.cid %]">[% top.subj %]</A>
-	by <A HREF="mailto:[% top.fakeemail %]">[% top.nickname %]</A> on [% top.cdate %]<BR>
+	by <A HREF="mailto:[% top.fakeemail | fixparam %]">[% top.nickname %]</A> on [% top.cdate %]<BR>
 
 	<FONT SIZE="2">attached to [% Slash.linkStory({ link => top.title, section => top.section, sid => top.sid }) %]
 	posted on [% top.sdate %] by [% top.anickname %]</FONT><BR><BR>

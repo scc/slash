@@ -913,8 +913,9 @@ sub editStory {
 		$sections, $topic_select, $section_select, $author_select,
 		$extracolumns, $displaystatus_select, $commentstatus_select, $description);
 	my $extracolref = {};
-	my ($fixquotes_check,   $autonode_check, 
-	    $fastforward_check, $shortcuts_check) = qw(off off off off);
+	my($fixquotes_check, $autonode_check, 
+		$fastforward_check, $shortcuts_check) =
+		qw(off off off off);
 
 	for (keys %{$form}) { $storyref->{$_} = $form->{$_} }
 
@@ -1018,10 +1019,10 @@ sub editStory {
 	$description = $slashdb->getDescriptions('commentcodes');
 	$commentstatus_select = createSelect('commentstatus', $description, $storyref->{commentstatus}, 1);
 
-	$fixquotes_check =   'on' if $form->{fixquotes};
-	$autonode_check =    'on' if $form->{autonode};
-	$fastforward_check = 'on' if $form->{fastforward};
-	$shortcuts_check =   'on' if $form->{shortcuts};
+	$fixquotes_check	= 'on' if $form->{fixquotes};
+	$autonode_check		= 'on' if $form->{autonode};
+	$fastforward_check	= 'on' if $form->{fastforward};
+	$shortcuts_check	= 'on' if $form->{shortcuts};
 
 	$slashdb->setSession($user->{uid}, { lasttitle => $storyref->{title} });
 

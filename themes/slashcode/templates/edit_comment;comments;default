@@ -75,11 +75,11 @@ END %]
 		<A HREF="[% constants.rootdir %]/users.pl">[% user.nickname %]</A> [ [% userlink %] ]</TD></TR>
 [% IF user.fakeemail %]
 	<TR><TD ALIGN="RIGHT">Email: </TD>
-		<TD>[% user.fakeemail %]</TD></TR>
+		<TD>[% user.fakeemail | strip_literal %]</TD></TR>
 [% END %]
 [% IF user.homepage %]
 	<TR><TD ALIGN="RIGHT">URL</TD>
-		<TD><A HREF="[% user.homepage %]">[% user.homepage %]</A></TD></TR>
+		<TD><A HREF="[% user.homepage %]">[% user.homepage | strip_literal %]</A></TD></TR>
 [% END %]
 
 	<TR><TD ALIGN="RIGHT">Subject: </TD>

@@ -1006,11 +1006,12 @@ sub _hard_dispComment {
 		if (length($homepage) > 50) {
 			$homepage = substr($homepage, 0, 20) . "..." . substr($homepage, -20, 20);
 		}
+		$homepage = strip_literal($homepage);
 		$userinfo_to_display .= qq[ | <A HREF="$comment->{homepage}">$homepage</A>]
 			if $homepage;
 
 		$userinfo_to_display .= sprintf(' | Last Journal: <A HREF="%s/~%s/journal/">%s</A>',
-			$constants->{rootdir}, $nick, timeCalc($comment->{journal_last_entry_date})
+			$constants->{rootdir}, fixparam($nick), timeCalc($comment->{journal_last_entry_date})
 		) if $comment->{journal_last_entry_date} =~ /[1-9]/;
 
 		$userinfo_to_display .= ')</FONT>';
@@ -1018,7 +1019,9 @@ sub _hard_dispComment {
 		# This is wrong, must be fixed before we ship -Brian
 		# i think it is right now -- pudge
 		if ($comment->{fakeemail}) {
-			$user_to_display = qq| <A HREF="mailto:$comment->{fakeemail}">$comment->{nickname}</A> (<B><FONT SIZE="2">$comment->{fakeemail})</FONT></B>|;
+			my $mail_literal = strip_literal($comment->{fakeemail});
+			my $mail_param = fixparam($comment->{fakeemail});
+			$user_to_display = qq| <A HREF="mailto:$mail_param">$comment->{nickname}</A> (<B><FONT SIZE="2">$mail_literal)</FONT></B>|;
 		} else {
 			$user_to_display = $comment->{nickname};
 		}
