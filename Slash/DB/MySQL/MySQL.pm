@@ -3501,6 +3501,7 @@ sub getStoriesEssentials {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
+	$limit ||= 15;
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "time < NOW() ";
