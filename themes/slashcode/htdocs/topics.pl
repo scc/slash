@@ -49,7 +49,7 @@ sub topTopics {
 			? 3 : $top->{cnt};
 
 		$top->{stories} = getOlderStories(
-			$slashdb->getStoriesEssentials($section, $limit, $top->{tid}),
+			$slashdb->getStoriesEssentials($limit, $section->{section}, $top->{tid}),
 			$section
 		);
 		if ($top->{image} =~ /^\w+\.\w+$/) {

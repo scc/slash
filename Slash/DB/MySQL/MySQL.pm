@@ -2871,7 +2871,7 @@ sub countStoriesBySubmitter {
 
 ########################################################
 sub getStoriesEssentials {
-	my($self, $section, $limit, $tid) = @_;
+	my($self, $limit, $section, $tid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
@@ -2879,17 +2879,15 @@ sub getStoriesEssentials {
 	my $story_table = $constants->{mysql_heap_table} ?
 		'story_heap' : 'stories';
 
-	$section ||= $user->{currentSection};
-
 	my $columns = 'sid, section, title, time, commentcount, time, hitparade';
 
 	my $where = "time < NOW() ";
 	# Added this to narrow the query a bit more, I need
 	# see about the impact on this -Brian
 	$where .= "AND writestatus != 'delete' AND writestatus != 'archived' ";
-	$where .= "AND displaystatus=0 " unless $form->{section};
-	$where .= "AND (displaystatus>=0 AND section='$section->{section}') "
-		if $form->{section};
+	$where .= "AND displaystatus=0 " unless $section;
+	$where .= "AND (displaystatus>=0 AND section='$section') "
+		if $section;
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars

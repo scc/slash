@@ -49,10 +49,10 @@ sub main {
 	my $limit ||= $section->{section} eq 'index' ?
 	    $user->{maxstories} : $section->{artcount};
 
-	my $stories_essentials = $slashdb->getStoriesEssentials($section, $limit);
+	my $stories = $slashdb->getStoriesEssentials($limit, ($form->{section} ne 'index') ? $form->{section} : '');
 
-	my $Stories = displayStories($stories_essentials);
-	my $StandardBlocks = displayStandardBlocks($section, $stories_essentials);
+	my $Stories = displayStories($stories);
+	my $StandardBlocks = displayStandardBlocks($section, $stories);
 
 	slashDisplay('index', {
 		is_moderator	=> scalar $slashdb->checkForMetaModerator($user),

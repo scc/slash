@@ -46,18 +46,22 @@ sub main {
 	# not fully used
 	my $ops = {
 		# initial form, no formkey needed due to 'preview' requirement
-		blank		=> {
+		blankform		=> {
 			seclev		=> 0,
 			checks		=> ['max_post_check', 'generate_formkey'],
-			function 	=> &blankForm,
+			function 	=> \&blankForm,
 		},
 		previewstory	=> {
 			seclev		=>  0,
 			checks		=> ['update_formkeyid'],
-			function 	=> &previewStory,
+			function 	=> \&previewStory,
+		},
+		pending	=> {
+			seclev		=>  1,
+			function 	=> \&yourPendingSubmissions,
 		},
 		submitstory	=> {
-			function	=> &saveStory,
+			function	=> \&saveSub,
 			seclev		=> 0,
 			post		=> 1,
 			checks		=> [ qw (max_post_check valid_check response_check
@@ -65,102 +69,78 @@ sub main {
 		},
 		list		=> {
 			seclev		=> $constants->{submiss_view} ? 0 : 100,
-			function	=> &submissionEd,
+			function	=> \&submissionEd,
 		},
 		viewsub		=> {
 			seclev		=> $constants->{submiss_view} ? 0 : 100,
-			function	=> &previewForm,
+			function	=> \&previewForm,
 		},
 		update		=> {
 			seclev		=> 100,
-			function	=> &submissionEd,
+			function	=> \&updateSubmissions,
 		},
 		genquickies	=> {
 			seclev		=> 100,
-		},
-		viewsub		=> {
-			seclev	=> 100,
+			function	=> \&genQuickies,
 		},
 	};
-	$ops{default} = $ops{blank};
+
+	$ops->{default} = $ops->{blankform};
 
 	my $op = lc($form->{op});
 	$op ||= 'default';
+	$op = 'default' if ( ($user->{seclev} < $ops->{$op}{seclev}) || ! $ops->{$op}{function});
 
 	$section = 'admin' if $user->{is_admin};
 	header(getData('header', { tbtitle => $tbtitle }), $section);
 
-	if ($ops->{$op}{checks}) {
-		for my $check (@{$ops->{$op}{checks}}) {
-			$ops->{$op}{update_formkey} = 1 if ($check eq 'formkey_check');
-			$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
-			last if $error_flag;
+	if ($user->{seclev} < 100) {
+		if ($ops->{$op}{checks}) {
+			for my $check (@{$ops->{$op}{checks}}) {
+				$ops->{$op}{update_formkey} = 1 if ($check eq 'formkey_check');
+				$error_flag = formkeyHandler($check, $formname, $formkeyid, $formkey);
+				last if $error_flag;
+			}
 		}
 	}
 
-	if ($op eq 'list' && ($user->{is_admin} || $constants->{submiss_view})) {
-		submissionEd();
-
-	} elsif ($op eq 'Update' && $user->{is_admin}) {
-		my @subids = $slashdb->deleteSubmission();
-		submissionEd(getData('updatehead', { subids => \@subids }));
-
-	} elsif ($op eq 'GenQuickies' && $user->{is_admin}) {
-		genQuickies();
-		submissionEd(getData('quickieshead'));
-
-	} elsif ($op eq 'PreviewStory') {
-		displayForm($form->{from}, $form->{email}, $form->{section},
-			$formkeyid, getData('previewhead')) if ! $error_flag;
-
-	} elsif ($op eq 'viewsub' && ($user->{is_admin} || $constants->{submiss_view})) {
-		previewForm();
-
-	} elsif ($op eq 'SubmitStory') {
-		$subsaved = saveSub($formkeyid) if ! $error_flag;
-		yourPendingSubmissions();
-
-	} else {
-		yourPendingSubmissions();
-		displayForm($user->{nickname}, $user->{fakeemail}, $form->{section},
-			$formkeyid, getData('defaulthead')) if ! $error_flag;
-	}
-
-	if ($ops->{$pop}{update_formkey} && $subsaved && ! $error_flag) {
+	if ($ops->{$op}{update_formkey} && $subsaved && ! $error_flag) {
 		my $updated = $slashdb->updateFormkey($formkey, $form->{tid}, length($form->{story}));
 	}
+
+	# call the method
+	$ops->{$op}{function}->($constants, $slashdb, $user, $form) if ! $error_flag;
 
 	footer();
 }
 
 #################################################################
-sub saveStory {
-	$subsaved = saveSub($formkeyid) if ! $error_flag;
-	yourPendingSubmissions();
+sub updateSubmissions {
+	my($constants, $slashdb, $user, $form) = @_;
+	my @subids = $slashdb->deleteSubmission();
+	submissionEd(getData('updatehead', { subids => \@subids }));
+}
+
+#################################################################
+sub blankForm {
+	my($constants, $slashdb, $user, $form) = @_;
+	yourPendingSubmissions(@_);
+	displayForm($user->{nickname}, $user->{fakeemail}, $form->{section}, getData('defaulthead'));
 }
 
 #################################################################
 sub previewStory {
-	yourPendingSubmissions();
-	displayForm($user->{nickname}, $user->{fakeemail}, $form->{section},
-		$formkeyid, getData('defaulthead')) if ! $error_flag;
-}
-
-#################################################################
-sub previewStory {
-	my $form = getCurrentForm();
+	my($constants, $slashdb, $user, $form) = @_;
 	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
 
-	displayForm($form->{from}, $form->{email}, $form->{section},
-		$formkeyid, getData('previewhead'));
+	displayForm($form->{from}, $form->{email}, $form->{section}, getData('previewhead'));
 }
 
 #################################################################
 sub yourPendingSubmissions {
-	my $slashdb = getCurrentDB();
-	my $user = getCurrentUser();
+	my($constants, $slashdb, $user, $form) = @_;
 
 	return if $user->{is_anon};
 
@@ -177,22 +157,20 @@ sub yourPendingSubmissions {
 
 #################################################################
 sub previewForm {
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
-	my $subid = $form->{subid};
+	my($constants, $slashdb, $user, $form) = @_;
 
-	my $sub = $slashdb->getSubmission($subid,
+	my $sub = $slashdb->getSubmission($form->{subid},
 		[qw(email name subj tid story time comment uid)]);
 
 	$sub->{email} = processSub($sub->{email});
 
-	$slashdb->setSession(getCurrentUser('uid'), { lasttitle => $sub->{subj} });
+	$slashdb->setSession(getCurrentUser('uid'), { lasttitle => $sub->{subj} })
+		if $user->{is_admin};
 
 	slashDisplay('previewForm', {
 		submission	=> $sub,
 		submitter	=> $sub->{uid},
-		subid		=> $subid,
+		subid		=> $form->{subid},
 		lockTest	=> lockTest($sub->{subj}),
 		section		=> $form->{section} || $constants->{defaultsection},
 	});
@@ -200,7 +178,7 @@ sub previewForm {
 
 #################################################################
 sub genQuickies {
-	my $slashdb = getCurrentDB();
+	my($constants, $slashdb, $user, $form) = @_;
 	my $submissions = $slashdb->getQuickies();
 	my $stuff = slashDisplay('genQuickies', { submissions => $submissions },
 		{ Return => 1, Nocomm => 1 });
@@ -338,7 +316,7 @@ sub displayRSS {
 
 #################################################################
 sub displayForm {
-	my($username, $fakeemail, $section, $id, $title, $error_message) = @_;
+	my($username, $fakeemail, $section, $title, $error_message) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -391,10 +369,7 @@ sub displayForm {
 
 #################################################################
 sub saveSub {
-	my($id) = @_;
-	my $slashdb = getCurrentDB();
-	my $constants = getCurrentStatic();
-	my $form = getCurrentForm();
+	my($constants, $slashdb, $user, $form) = @_;
 	$form->{from}	= strip_attribute($form->{from})  if $form->{from};
 	$form->{subj}	= strip_attribute($form->{subj})  if $form->{subj};
 	$form->{email}	= strip_attribute($form->{email}) if $form->{email};
@@ -460,6 +435,7 @@ sub saveSub {
 		anonsubmit	=> length($form->{from}) < 3,
 		submissioncount	=> $slashdb->getSubmissionCount(),
 	});
+	yourPendingSubmissions(@_);
 
 	return(1);
 }
