@@ -6,10 +6,6 @@ Displays currently logged-in admin users.
 * ids = admin uids
 * can_edit_admins = boolean for if current user can edit admins
 
-Please note the use of [% FILTER anchor %] when dealing with 
-<A HREF>...</A> links that split lines. If you wish to preserve indenting, 
-Split your lines within <A> tags or within template [% .. %] directives.
-
 __title__
 
 __page__
@@ -28,15 +24,11 @@ __template__
 	%]
 
 	<TR><TD BGCOLOR="[% user.bg.3 %]">
-		[% IF can_edit_admins %]
-			<A
-			HREF="[% constants.rootdir
-			%]/admin.pl?op=authors&thisaid=[% id %]">[%
-			FILTER anchor %]
-		[% END -%]
-		<FONT COLOR="[% user.fg.3 %]" SIZE="2"><B>[% id %]</B></FONT>
-		[%- IF can_edit_admins %][% END %]</A>
-		[% END %]
+		[% IF can_edit_admins %]<A 
+		HREF="[% constants.rootdir %]/admin.pl?op=authors&thisaid=[% 
+		id %]">[% END %]<FONT COLOR="[% user.fg.3 %]" 
+		SIZE="2"><B>[% id %]</B></FONT>[% IF can_edit_admins 
+		%]</A>[% END %]
 	</TD><TD BGCOLOR="[% user.bg.2 %]">
 		<FONT COLOR="[% user.fg.1 %]" SIZE="2">[% lastsecs %]
 		[% IF lastsecs and lasttitle %]&nbsp;/&nbsp;[% lasttitle %]
