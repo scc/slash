@@ -3098,11 +3098,12 @@ sub _getCommentTextOld {
 		if ($archive) {
 			my %return;
 			my $in_list = join(",", @$cid);
-			my $comment_array = $self->sqlSelectAll(
+			my $comment_array;
+			$comment_array = $self->sqlSelectAll(
 				"cid, comment",
 				"comment_text",
 				"cid IN ($in_list)"
-			);
+			) if @$cid;
 			# Now we cache them so we never fetch them again
 			for my $comment_hr (@$comment_array) {
 				$return{$comment_hr->[0]} = $comment_hr->[1];
@@ -4045,6 +4046,11 @@ sub getPollVotesMax {
 # Probably should make this private at some point
 sub _saveExtras {
 	my($self, $story) = @_;
+
+	# Update main-page write status if saved story is marked 
+	# "Always Display" or "Never Display".
+	$self->setVar('writestatus', 'dirty') if $story->{writestatus} < 1;
+
 	my $extras = $self->getSectionExtras($story->{section});
 	return unless $extras;
 	for (@$extras) {
