@@ -258,7 +258,7 @@ sub getUserInfoAuthenticate{
 		' uid = ' . $self->{dbh}->quote($uid) .
 		' AND passwd = ' . $self->{dbh}->quote($passwd)
 	);
-	return 0 unless ($user);
+	return undef unless ($user);
 	my $user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
 	while(my ($key, $val) = each %$user_extra) {
 		$user->{$key} = $val;
@@ -1044,7 +1044,7 @@ sub getPortals {
 	my ($self) = @_;
 	# As a side note portal seems to only be a 1 and 0 in
 	# in slash's database currently (even though since it
-	# is a tinyint it could easily be a negative number.
+	# is a tinyint it could easily be a negative number).
 	# It is a shame we are currently hitting the database
 	# for this since the same info can be found in $commonportals
 	my $strsql="SELECT block,title,blocks.bid,url
@@ -1246,7 +1246,58 @@ sub getCommentsTop{
 	return $stories;
 }
 ########################################################
+# This makes me nervous... we grab, and they get
+# deleted? I may move the delete to the setQuickies();
+sub getQuickies {
+my ($self) = @_;
+# This is doing nothing (unless I am just missing the point). We grab
+# them and then null them? -Brian
+#  my($stuff) = $self->sqlSelect("story", "submissions", "subid='quickies'");
+#	$stuff = "";
+	$self->{dbh}->do("DELETE FROM submissions WHERE subid='quickies'");
+	my $stuff;
 
+	my $submission = $self->sqlSelectAll("subid,subj,email,name,story",
+		"submissions", "note='Quik' and del=0"
+	);
+
+	return $submission;
+}
+
+########################################################
+sub setQuickies {
+my ($self, $content) = @_;
+	$self->sqlInsert("submissions", {
+			subid => 'quickies',
+			subj  => 'Generated Quickies',
+			email => '',
+			name  => '',
+			-'time' => 'now()',
+			section => 'articles',
+			tid => 'quickies',
+			story => $content,
+		});
+}
+########################################################
+sub getSubmission {
+	my ($self, $dateformat, $form, $user) = @_;
+	my $sql = "SELECT subid, subj, date_format($dateformat, 'm/d  H:i'), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info";
+	$sql .= "  WHERE submissions.uid=users_info.uid AND $form->{del}=del AND (";
+	$sql .= $form->{note} ? "note=" . $self->{dbh}->quote($form->{note}) : "isnull(note)";
+	$sql .= "		or note=' ' " unless $form->{note};
+	$sql .= ")";
+	$sql .= "		and tid='$form->{tid}' " if $form->{tid};
+	$sql .= "         and section=" . $self->{dbh}->quote($user->{asection}) if $user->{asection};
+	$sql .= "         and section=" . $self->{dbh}->quote($form->{section})  if $form->{section};
+	$sql .= "	  ORDER BY time";
+
+	my $cursor = $self->{dbh}->prepare($sql);
+	$cursor->execute;
+
+	my $submission = $cursor->fetchall_arrayref;
+
+	return $submission;
+}
 
 1;
 

@@ -1138,7 +1138,7 @@ EOT
 
 		$T = $I{dbobject}->getTopic($S->{tid});
 		$I{F}{aid} ||= $I{U}{aid};
-		$A = getAuthor($I{F}{aid});
+		$A = $I{dbobject}->getAuthor($I{F}{aid});
 		$sid = $I{F}{sid};
 
 		$S->{sqltime} = $I{F}{'time'};

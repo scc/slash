@@ -260,30 +260,13 @@ sub rmSub {
 
 #################################################################
 sub genQuickies {
-	my($stuff) = sqlSelect("story", "submissions", "subid='quickies'");
-	$I{dbh}->do("DELETE FROM submissions WHERE subid='quickies'");
-	$stuff = "";
-
-	my $c = sqlSelectMany("subid,subj,email,name,story",
-		"submissions", "note='Quik' and del=0"
-	);
-
-	while(my($subid, $subj, $email, $name, $story) = $c->fetchrow) {
+	my $submission = $I{dbobject}->getQuickies();
+	my $stuff;
+	for(@$submission) {
+		my($subid, $subj, $email, $name, $story) = @$_;
 		$stuff .= qq!\n\n<P><A HREF="mailto:$email">$name</A> writes $story\n\n!;
 	}
-
-	$c->finish;
-
-	sqlInsert("submissions", {
-		subid	=> 'quickies',
-		subj	=> 'Generated Quickies',
-		email	=> '',
-		name	=> '',
-		-'time'	=> 'now()',
-		section	=> 'articles',
-		tid	=> 'quickies',
-		story	=> $stuff,
-	});
+	$I{dbobject}->setQuickies($stuff);
 }
 
 #################################################################
@@ -361,19 +344,9 @@ EOT
 
 	print "</TABLE>\n";
 
-	my $sql = "SELECT subid, subj, date_format(" . getDateOffset("time", $I{U}) .
-		',"m/d  H:i"), tid,note,email,name,section,comment,submissions.uid,karma FROM submissions,users_info';
-	$sql .= "  WHERE submissions.uid=users_info.uid AND $I{F}{del}=del AND (";
-	$sql .= $I{F}{note} ? "note=" . $I{dbh}->quote($I{F}{note}) : "isnull(note)";
-	$sql .= "		or note=' ' " unless $I{F}{note};
-	$sql .= ")";
-	$sql .= "		and tid='$I{F}{tid}' " if $I{F}{tid};
-	$sql .= "         and section=" . $I{dbh}->quote($I{U}{asection}) if $I{U}{asection};
-	$sql .= "         and section=" . $I{dbh}->quote($I{F}{section})  if $I{F}{section};
-	$sql .= "	  ORDER BY time";
 
-	my $cursor = $I{dbh}->prepare($sql);
-	$cursor->execute;
+	my $date = getDateOffset("time", $I{U});
+	my $submission = $I{dbobject}->getSubmission($date, $I{F}, $I{U});
 
 	my @select = (qw(DEFAULT Hold Quik),
 		(ref $I{submit_categories} ? @{$I{submit_categories}} : ())
@@ -382,8 +355,10 @@ EOT
 
 
 	print qq!\n\n<TABLE WIDTH="95%" CELLPADDING="0" CELLSPACING="0" BORDER="0">\n!;
-	while (my($subid, $subj, $time, $tid, $note, $email, $name,
-		$section, $comment, $uid, $karma) = $cursor->fetchrow) {
+
+	for(@$submission) {
+		my($subid, $subj, $time, $tid, $note, $email, $name,
+		$section, $comment, $uid, $karma) = @$_; 
 
 		local $select{$note || 'DEFAULT'} = ' SELECTED';
 		my $str;
@@ -444,7 +419,6 @@ ADMIN
 
 USER
 
-	$cursor->finish;
 }	
 
 #################################################################
