@@ -3,6 +3,7 @@ package Slash::Journal;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 use DBIx::Password;
+use Slash;
 use Slash::DB::Utility;
 
 
@@ -14,7 +15,8 @@ sub new {
 	my ($class, $user) = @_;
 	my $self = {};
 	bless ($self,$class);
-	$self->{_dbh} = DBIx::Password->connect($user);
+	$self->{virtual_user} = $user;
+	$self->sqlConnect;
 
 	return $self;
 }
@@ -47,8 +49,15 @@ sub create {
 		-date => 'now()'
 	});
 	my($id) = $self->sqlSelect("LAST_INSERT_ID()");
+print STDERR "CREATED $id\n";
 	
 	return $id;
+}
+
+sub remove {
+	my ($self, $id) = @_;
+	my $uid = $ENV{SLASH_USER};
+	$self->sqlDo("DELETE FROM  journals WHERE uid=$uid AND id=$id");
 }
 
 sub friends {
@@ -59,6 +68,7 @@ sub friends {
 	$sql .= " FROM journals as jo, journal_friends as j,users as u ";
 	$sql .= " WHERE j.uid = $uid AND j.friend = u.uid AND j.friend = jo.uid";
 	$sql .= " GROUP BY u.nickname ORDER BY date DESC";
+	$self->sqlConnect;
 	my $friends = $self->{_dbh}->selectall_arrayref($sql);
 
 	return $friends;
@@ -67,13 +77,13 @@ sub friends {
 sub add {
 	my ($self, $friend) = @_;
 	my $uid = $ENV{SLASH_USER};
-	$self->{_dbh}->do("INSERT INTO journal_friends (uid,friend) VALUES ($uid, $friend)");
+	$self->sqlDo("INSERT INTO journal_friends (uid,friend) VALUES ($uid, $friend)");
 }
 
 sub delete {
 	my ($self, $friend) = @_;
 	my $uid = $ENV{SLASH_USER};
-	$self->{_dbh}->do("DELETE FROM  journal_friends WHERE uid=$uid AND friend=$friend");
+	$self->sqlDo("DELETE FROM  journal_friends WHERE uid=$uid AND friend=$friend");
 }
 
 sub top {
@@ -85,6 +95,7 @@ sub top {
 	$sql .= " j.uid = u.uid";
 	$sql .= " GROUP BY u.nickname ORDER BY c DESC";
 	$sql .= " LIMIT $limit";
+	$self->sqlConnect;
 	my $losers = $self->{_dbh}->selectall_arrayref($sql);
 
 	return $losers;
@@ -111,7 +122,7 @@ sub _genericGet {
 
 sub DESTROY {
 	my ($self) = @_;
-	$self->{_dbh}->disconnect;
+	$self->{_dbh}->disconnect unless ($ENV{GATEWAY_INTERFACE});
 }
 
 

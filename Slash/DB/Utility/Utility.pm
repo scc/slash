@@ -66,6 +66,7 @@ sub sqlSelectMany {
 	} else {
 		$sth->finish;
 		errorLog($sql);
+		$self->sqlConnect;
 		return undef;
 	}
 }
@@ -82,6 +83,7 @@ sub sqlSelect {
 	$self->sqlConnect();
 	if (!$sth->execute) {
 		errorLog($sql);
+		$self->sqlConnect;
 		return undef;
 	}
 	my @r = $sth->fetchrow;
@@ -102,6 +104,7 @@ sub sqlSelectArrayRef {
 	my $sth = $self->{_dbh}->prepare_cached($sql);
 	if (!$sth->execute) {
 		errorLog($sql);
+		$self->sqlConnect;
 		return undef;
 	}
 	my $r = $sth->fetchrow_arrayref;
@@ -145,6 +148,7 @@ sub sqlSelectHashref {
 	
 	unless ($sth->execute) {
 		errorLog($sql);
+		$self->sqlConnect;
 		return;
 	} 
 	my $H = $sth->fetchrow_hashref;
@@ -176,7 +180,11 @@ sub sqlSelectAll {
 
 	$self->sqlConnect();
 	my $H = $self->{_dbh}->selectall_arrayref($sql);
-	errorLog($sql) unless($H);
+	unless($H) {
+		errorLog($sql);
+		$self->sqlConnect;
+		return;
+	}
 	return $H;
 }
 
@@ -224,11 +232,22 @@ sub sqlInsert {
 }
 
 #################################################################
+sub sqlQuote {
+	my($self, $sql) = @_;
+	my $db_sql = $self->{_dbh}->quote($sql);
+
+	return $db_sql;
+}
+#################################################################
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
 	my $rows = $self->{_dbh}->do($sql);
-	errorLog($sql) unless $rows;
+	unless ($rows) {
+		errorLog($sql);
+		$self->sqlConnect;
+		return;
+	}
 
 	return $rows;
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use Apache::DBI;
 use Slash;
 use Slash::DB;
 use Slash::Utility;
@@ -15,6 +16,7 @@ sub main {
 		get => \&getArticle,
 		display => \&displayArticle,
 		save => \&saveArticle,
+		remove => \&removeArticle,
 		delete => \&deleteFriend,
 		add => \&addFriend,
 		top => \&displayTop,
@@ -35,6 +37,8 @@ sub main {
 	} else {
 		titlebar("100%","Journal System");
 	}
+
+	print createMenu('journal');
 
 	$ops{$op}->($form, $journal);
 
@@ -99,6 +103,12 @@ sub saveArticle {
 	} else {
 		$journal->create($form->{description},$form->{article});
 	}
+	listArticle(@_);
+}
+
+sub removeArticle {
+	my ($form, $journal) = @_;
+	$journal->remove($form->{id}) if $form->{id};
 	listArticle(@_);
 }
 

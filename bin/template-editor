@@ -9,7 +9,7 @@ use Slash::DB;
 use Getopt::Std;
 
 my %opts;
-usage() unless getopts('u:d:p:n:f:scl?', \%opts);
+usage() unless getopts('u:d:p:n:f:escl?', \%opts);
 usage() if $opts{'?'};
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
@@ -32,7 +32,20 @@ $opts{'d'} = '' unless $opts{'d'};
 
 my $slash = Slash::DB->new($opts{'u'});
 
-if($opts{'s'}) {
+if($opts{'e'}) {
+	for (@ARGV) {
+		my $template = $slash->getTemplate($_);
+		my ($values, $names);
+		for(keys %$template) {
+			$values .= $slash->{_dbh}->quote($template->{$_}) . ",";
+			$names .= "$_,";
+		}
+		chop($values);
+		chop($names);
+		my $sql = "INSERT INTO templates ($names) VALUES ($values)";
+		print "$sql\n";
+	}
+} elsif ($opts{'s'}) {
 	my @files;
 	if($opts{'d'} && ! $ARGV[0]) {
 		opendir(DIR, $opts{'d'});
@@ -125,14 +138,15 @@ if($opts{'s'}) {
 
 sub usage {
 	print "Usage:template-editor  [OPTIONS] template template....\n";
-	print "\t-d directory to dump all templates in\n";
 	print "\t-c create the directory if a dump is being done\n";
-	print "\t-u Virtual user to use(default is slash)\n";
+	print "\t-d directory to dump all templates in\n";
+	print "\t-e prints template out in a manner suitable for a sql dump file\n";
+	print "\t-l list templates and their descriptions\n";
 	print "\t-n <templatefilename> <templatename> to create a template\n";
+	print "\t-p only perform list and get actions if the template matches this pattern\n";
 	print "\t-s Save template\n";
 	print "\t-s -f <templatefilename> <templatename> to update a template\n";
-	print "\t-l list templates and their descriptions\n";
-	print "\t-p only perform list and get actions if the template matches this pattern\n";
+	print "\t-u Virtual user to use(default is slash)\n";
 	print "\t-? This message\n";
 	print "\n\tIf no template name is given a directory has to be specified\n\n";
 	exit();

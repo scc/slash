@@ -19,7 +19,7 @@ print "ok 1\n";
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
 
-my $object = Slash::Journal->new('simple');
+my $object = Slash::Journal->new('slash');
 print "ok 2\n";
 
 
