@@ -21,7 +21,7 @@ my(%topics, %discussions, %polls, %comments, %skip_polls, %poll_data);
 my(%vars, %story_authors);
 
 # Remember to doublecheck these match usage()!
-usage('Options used incorrectly') unless getopts('-IMhvu:U:P:X:', \%opts);
+usage('Options used incorrectly') unless getopts('IMhvu:U:P:X:', \%opts);
 usage() if $opts{'h'};
 version() if $opts{'v'};
 usage('Need v2 virtual user') unless $opts{'U'};
