@@ -75,6 +75,10 @@ if($opts{'s'}) {
 	} else {
 		for(@ARGV) {
 			my $template = $slash->getTemplate($_);
+			unless($template) {
+				print "The following template does not exist: $_\n";
+				next;
+			}
 			print "$template->{'tpid'}\n";
 			open(FILE, ">$opts{'d'}/$template->{'tpid'}");
 			print FILE $template->{'template'};
