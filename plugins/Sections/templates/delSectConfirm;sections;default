@@ -1,8 +1,10 @@
 __section__
 default
 __description__
-Cancel delete of a section
+Confirm section delete
 
+* width = passed to titlebar
+* title = passed to titlebar
 * section = section name
 __title__
 
@@ -11,8 +13,8 @@ sections
 __lang__
 eng
 __name__
-delSectionCancel
+delSectConfirm
 __template__
-<B>Canceled deletion of [% section %].</B><BR>
+[% INCLUDE titlebar %]
 __seclev__
 10000

@@ -1,7 +1,7 @@
 __section__
 default
 __description__
-This block is displayed right after moderation occurs.
+This block is displayed right before moderation occurs.
 
 No specially passed variables.
 __title__
@@ -11,9 +11,9 @@ comments
 __lang__
 eng
 __name__
-moderation_footer
+mod_header
 __template__
-</UL>
+<UL>
 
 
 __seclev__

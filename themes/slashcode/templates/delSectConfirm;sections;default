@@ -13,7 +13,7 @@ sections
 __lang__
 eng
 __name__
-delSectionConfirm
+delSectConfirm
 __template__
 [% INCLUDE titlebar %]
 __seclev__

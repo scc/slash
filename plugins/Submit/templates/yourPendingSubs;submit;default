@@ -14,7 +14,7 @@ submit
 __lang__
 eng
 __name__
-yourPendingSubmissions
+yourPendingSubs
 __template__
 [% INCLUDE titlebar %]
 
