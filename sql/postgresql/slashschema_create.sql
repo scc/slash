@@ -7,8 +7,8 @@ CREATE TABLE abusers (
   querystring varchar(60) DEFAULT '' NOT NULL,
   PRIMARY KEY (abuser_id)
 );
-CREATE INDEX host_name ON abusers(host_name);
-CREATE INDEX reason ON abusers(reason);
+CREATE INDEX idx_host_name ON abusers(host_name);
+CREATE INDEX idx_reason ON abusers(reason);
 
 
 
@@ -47,8 +47,8 @@ CREATE TABLE blocks (
   retrieve int2 DEFAULT '0',
   PRIMARY KEY (bid)
 );
-CREATE INDEX section ON blocks(section);
-CREATE INDEX type ON blocks(type);
+CREATE INDEX idx_section ON blocks(section);
+CREATE INDEX idx_type ON blocks(type);
 
 
 CREATE TABLE code_param (
@@ -84,10 +84,10 @@ CREATE TABLE comments (
   reason int2 DEFAULT '0',
   PRIMARY KEY (sid,cid)
 );
-CREATE INDEX display ON comments(id,points,uid);
-CREATE INDEX byname ON comments(uid,points);
-CREATE INDEX theusual ON comments(sid,uid,points,cid);
-CREATE INDEX countreplies ON comments(sid,pid);
+CREATE INDEX idx_display ON comments(sid,points,uid);
+CREATE INDEX idx_byname ON comments(uid,points);
+CREATE INDEX idx_theusual ON comments(sid,uid,points,cid);
+CREATE INDEX idx_countreplies ON comments(sid,pid);
 
 
 
@@ -104,8 +104,8 @@ CREATE TABLE content_filters (
   maximum_length int4 DEFAULT '0' NOT NULL,
   PRIMARY KEY (filter_id)
 );
-CREATE INDEX regex ON content_filters(regex);
-CREATE INDEX field ON content_filters(field);
+CREATE INDEX idx_regex ON content_filters(regex);
+CREATE INDEX idx_field ON content_filters(field);
 
 
 
@@ -145,10 +145,10 @@ CREATE TABLE formkeys (
   content_length int2 DEFAULT '0' NOT NULL,
   PRIMARY KEY (formkey)
 );
-CREATE INDEX formname ON formkeys(formname);
-CREATE INDEX id ON formkeys(id);
-CREATE INDEX ts ON formkeys(ts);
-CREATE INDEX submit_ts ON formkeys(submit_ts);
+CREATE INDEX idx_formname ON formkeys(formname);
+CREATE INDEX idx_id ON formkeys(id);
+CREATE INDEX idx_ts ON formkeys(ts);
+CREATE INDEX idx_submit_ts ON formkeys(submit_ts);
 
 
 
@@ -161,8 +161,8 @@ CREATE TABLE hitters (
   UNIQUE (host_addr),
   UNIQUE (hits)
 );
-CREATE INDEX host_addr ON hitters(host_addr);
-CREATE INDEX hits ON hitters(hits);
+CREATE INDEX idx_host_addr ON hitters(host_addr);
+CREATE INDEX idx_hits ON hitters(hits);
 
 
 
@@ -199,8 +199,8 @@ CREATE TABLE moderatorlog (
   reason int4 DEFAULT '0',
   PRIMARY KEY (id)
 );
-CREATE INDEX sid ON moderatorlog(sid,cid);
-CREATE INDEX sid_2 ON moderatorlog(sid,uid,cid);
+CREATE INDEX idx_sid ON moderatorlog(sid,cid);
+CREATE INDEX idx_sid_2 ON moderatorlog(sid,uid,cid);
 
 
 CREATE TABLE newcomments (
@@ -218,10 +218,10 @@ CREATE TABLE newcomments (
   PRIMARY KEY (sid,cid)
 );
 
-CREATE INDEX display_new ON newcomments(sid,points,uid);
-CREATE INDEX byname_new ON newcomments(uid,points);
-CREATE INDEX theusual_new ON newcomments(sid,uid,points,cid);
-CREATE INDEX countreplies_new ON newcomments(sid,pid);
+CREATE INDEX idx_display_new ON newcomments(sid,points,uid);
+CREATE INDEX idx_byname_new ON newcomments(uid,points);
+CREATE INDEX idx_theusual_new ON newcomments(sid,uid,points,cid);
+CREATE INDEX idx_countreplies_new ON newcomments(sid,pid);
 
 CREATE TABLE newstories (
   sid varchar(20) DEFAULT '' NOT NULL,
@@ -243,8 +243,8 @@ CREATE TABLE newstories (
   extratext text,
   PRIMARY KEY (sid)
 );
-CREATE INDEX time ON newstories(time);
-CREATE INDEX searchform ON newstories(displaystatus,time);
+CREATE INDEX idx_time_new ON newstories(time);
+CREATE INDEX idx_searchform_new ON newstories(displaystatus,time);
 
 
 
@@ -278,7 +278,7 @@ CREATE TABLE pollvoters (
   uid int4 NOT NULL,
   UNIQUE (qid,id,uid)
 );
-CREATE INDEX qid ON pollvoters(qid,id,uid);
+CREATE INDEX idx_qid ON pollvoters(qid,id,uid);
 
 
 
@@ -340,8 +340,8 @@ CREATE TABLE stories (
   UNIQUE (time),
   UNIQUE (displaystatus,time)
 );
-CREATE INDEX time ON stories(time);
-CREATE INDEX searchform ON stories(displaystatus,time);
+CREATE INDEX idx_time ON stories(time);
+CREATE INDEX idx_searchform ON stories(displaystatus,time);
 
 
 
@@ -370,7 +370,7 @@ CREATE TABLE submissions (
   del int2 DEFAULT '0' NOT NULL,
   PRIMARY KEY (subid)
 );
-CREATE INDEX subid ON stories(subid,section);
+CREATE INDEX idx_subid ON submissions(subid,section);
 
 
 
@@ -459,14 +459,11 @@ CREATE TABLE users (
   noicons int2 DEFAULT '0' NOT NULL,
   light int2 DEFAULT '0' NOT NULL,
   mylinks varchar(255) DEFAULT '' NOT NULL,
-  UNIQUE (uid,passwd,nickname),
-  UNIQUE (nickname,realemail),
-  UNIQUE (realemail),
   PRIMARY KEY (uid)
 );
-CREATE INDEX login ON users(uid,passwd,nickname);
-CREATE INDEX chk4user ON users(nickname,realemail);
-CREATE INDEX chk4email ON users(realemail);
+CREATE INDEX idx_login ON users(uid,passwd,nickname);
+CREATE INDEX idx_chk4user ON users(nickname,realemail);
+CREATE INDEX idx_chk4email ON users(realemail);
 
 CREATE TABLE users_param (
 	param_id SERIAL,
