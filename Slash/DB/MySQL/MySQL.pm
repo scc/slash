@@ -291,9 +291,20 @@ sub getMetamodComments {
 
 	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 
+	# We first check to see if we have any moderator records that need processing
+	# at the current count leve. If not, we then increment the count level and
+	# use that.
+	my $m2cntvar = $self->getVar('m2_count_slide', 'value');
+	my $thresh = $self->getVar('m2_consensus', 'value');
+	my($curM2count) =
+		$self->sqlSelect('min(id)','moderatorlog',"m2count<$m2cntvar") || 0;
+	my($maxM2count) = $self->sqlSelect('max(id)', 'moderatorlog');
+	if (!$curM2count || ($maxM2count - $curM2count < $num_comments)) {
+		$m2cntvar = ($m2cntvar <= $thresh) ? $m2cntvar + 1 : 1;
+		$self->setVar('m2_count_slide', $m2cntvar);
+	}
 	# Removed extraneous "users.uid!=$uid" from WHERE clause.
 	# Also removed "sig" from field list as we anonymize it below.
-	my $thresh = $self->getVar('m2_consensus', 'value');
 	my $sth = $self->sqlSelectMany(
 		"$comment_table.cid, $comment_table.sid as sid, date, subject, comment,
 		users.uid as uid, pid, moderatorlog.id as id,
@@ -308,7 +319,7 @@ sub getMetamodComments {
 		AND users.uid = $comment_table.uid AND users_info.uid = $comment_table.uid
 		AND moderatorlog.sid = discussions.id
 		AND comment_text.cid = $comment_table.cid
-		AND moderatorlog.reason < 8 AND moderatorlog.m2count < $thresh",
+		AND moderatorlog.reason < 8 AND moderatorlog.m2count < $m2cntvar",
 
 		"ORDER BY moderatorlog.id LIMIT $num_comments"
 	);

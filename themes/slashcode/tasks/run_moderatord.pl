@@ -47,14 +47,9 @@ sub reconcileM2 {
 	my $messages = getObject('Slash::Messages');
 
 	my $m2ids = $slashdb->getMetamodIDs();
-	slashdLog(
-		sprintf "$me - Iterating from %ld to %ld - (Batch of %d)",
-			$m2ids->[0]{id}, $m2ids->[-1]{id},
-			$constants->{m2_batchsize}
-	) if @{$m2ids} and verbosity() >= 3;
 	for my $m2id (@{$m2ids}) {
-		my $m2_list = $slashdb->getMetaModerations($m2id->{mmid});
-		my $modlog = $slashdb->getModeratorLog($m2id->{mmid});
+		my $m2_list = $slashdb->getMetaModerations($m2id);
+		my $modlog = $slashdb->getModeratorLog($m2id);
 		my(%m2_votes) = ('-1' => 0, '1' => 0);
 		my(@con, @dis);
 
@@ -95,9 +90,11 @@ sub reconcileM2 {
 				$constants->{m2_dissension_penalty}
 			));
 			for (@dis) {
+				my $userkarm =
+					$slashdb->getUser($_->[0], 'karma');
 				$slashdb->setUser($_->[0], {
 					-karma => "karma-$change",
-				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
+				}) if $userkarm > $constants->{minkarma}; 
 
 				# Also flag these specific M2 instances as 
 				# suspect for later analysis.
@@ -111,9 +108,8 @@ sub reconcileM2 {
 		# Ugh-ly.
 		slashdLog(
 			sprintf
-			"$me - %ld (mod #%ld): %s CON=%d (%6.4f) DIS=%d (%6.4f)",
-			$m2id->{id}, $m2id->{mmid}, 
-			($rank[0] == 1) ? 'Fair' : 'Unfair',
+			"$me    mod #%ld: %s CON=%d (%6.4f) DIS=%d (%6.4f)",
+			$m2id, ($rank[0] == 1) ? 'Fair' : 'Unfair',
 			$con, $con_avg, $dis, $dis_avg
 		) if verbosity() >= 3;
 
@@ -129,6 +125,7 @@ sub reconcileM2 {
 			while ($pool--) { $slots{$con[rand @con]}++; }
 
 			for (keys %slots) {
+				my $userkarm = $slashdb->getUser($_, 'karma');
 				# No user gets more than one point from the
 				# pool as a default, if you want a random
 				# distribution across users, uncomment
@@ -137,7 +134,7 @@ sub reconcileM2 {
 					# Uncomment only one of these at a time!
 					#-karma => "karma+$slots{$_}",
 					-karma => "karma+1",
-				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
+				}) if $userkarm < $constants->{goodkarma}; 
 			}
 
 			# Award moderator if moderation matches consensus.
@@ -149,7 +146,7 @@ sub reconcileM2 {
 							  'karma');
 				$slashdb->setUser($modlog->{uid}, {
 					karma => $mod_karma + $change,
-				}); # XXX should add WHERE karma < $constants->{maxkarma}, or test in perl
+				}) if $mod_karma < $constants->{goodkarma}; 
 			}
 		}
 
@@ -180,7 +177,7 @@ sub reconcileM2 {
 
 		# Mark remaining entries with a '0' which means that they have
 		# been processed.
-		$slashdb->clearM2Flag($m2id->{id});
+		$slashdb->clearM2Flag($m2id);
 	}
 
 	# Optional: Send message to original moderator indicating that

@@ -26,6 +26,7 @@ use Slash::Utility;
 use vars qw( %opts %task $me $task_name $virtual_user $constants $slashdb $user $dir );
 
 (my $VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+(my $SLASH_PREFIX) = '/usr/local/slash';
 my $PROGNAME = basename($0);
 
 main();
@@ -163,6 +164,7 @@ EOT
 		sort
 		grep { -e $_ and -f _ and -r _ }
 		glob "$dir/[a-zA-Z0-9_-][a-zA-Z0-9_-]*.pl";
+ 	{ local $"=' '; print STDERR "F: @files\n"; }
 	for my $fullname (@files) {
 		if (not $I_WANT_SLASHD_TO_BE_A_SILLY_LOCAL_SECURITY_HOLE
 			and (stat $fullname)[2] & 002) {
@@ -201,7 +203,7 @@ EOT
 
 sub parse_slash_sites {
 	my($wanted_virtual_user) = @_;
-	my $file = '/usr/local/slash/slash.sites';
+	my $file = "$SLASH_PREFIX/slash.sites";
 	my $line;
 	my($virtual_user, $unix_user, $sitename);
 	my $fh = gensym();
