@@ -113,9 +113,10 @@ sub archiveComments {
 		"discussions.id = comments.sid AND discussions.type = 'recycle' AND comments.pid = 0"
 	);
 
-	for (@comments) {
-		my $local_count = $self->_deleteThread($_->[0]);
-		$self->setDiscussionDelCount($_->[1], $local_count);
+	for my $comment (@comments) {
+		next if !$comment or !@$comment;
+		my $local_count = $self->_deleteThread($comment->[0]);
+		$self->setDiscussionDelCount($comment->[1], $local_count);
 	}  
 }
 
@@ -162,6 +163,8 @@ sub deleteDaily {
 	# Formkeys
 	my $delete_time = time() - $constants->{'formkey_timeframe'};
 	$self->sqlDo("DELETE FROM formkeys WHERE ts < $delete_time");
+	# Note, on Slashdot, the next line locks the accesslog for several
+	# minutes, up to 10 minutes if traffic has been heavy.
 	$self->sqlDo("DELETE FROM accesslog WHERE date_add(ts,interval 48 hour) < now()");
 }
 

@@ -27,14 +27,25 @@ my $messages  = getObject('Slash::Messages');
 
 doLogInit('dailyStuff');
 
+# Do this first, it's pretty quick.
 sendAdminMail();
-mailingList();
 
 # Now lets clean up the database
 dailyStuffLog('Daily Archiving/Deleting Begin');
-$slashdb->archiveComments();
+# Do this early.  It can take up to 5-10 minutes for Slashdot
+# or a Slashdot-sized site (depending on traffic) and if that
+# exceeds the delayed-insert queue length, the site will come
+# to a halt.  Best to have this happen at a predictable time.
 $slashdb->deleteDaily();
+# This should be pretty quick.
+$slashdb->archiveComments();
 dailyStuffLog('Daily Archiving/Deleting End');
+
+# On a site with a lot of users, this may take hours.
+dailyStuffLog('MailingList Begin');
+mailingList();
+dailyStuffLog('MailingList End');
+
 
 doLogExit('dailyStuff');
 

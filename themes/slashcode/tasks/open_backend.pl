@@ -13,17 +13,23 @@ $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	newxml(@_);
-	newrdf(@_);
-	newwml(@_);
-	newrss(@_);
+	my $stories = $slashdb->getBackendStories();
+	if ($stories and @$stories) {
+		newxml(@_, undef, $stories);
+		newrdf(@_, undef, $stories);
+		newwml(@_, undef, $stories);
+		newrss(@_, undef, $stories);
+	}
 
 	my $sections = $slashdb->getSections();
 	for (keys %$sections) {
 		my($section) = $sections->{$_}->{section};
-		newxml(@_, $section);
-		newrdf(@_, $section);
-		newrss(@_, $section);
+		$stories = $slashdb->getBackendStories($section);
+		if ($stories and @$stories) {
+			newxml(@_, $section, $stories);
+			newrdf(@_, $section, $stories);
+			newrss(@_, $section, $stories);
+		}
 	}
 
 	return ;
@@ -44,10 +50,8 @@ sub site2file {
 }
 
 sub newrdf {	# RSS 0.9
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
+	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
 
-	my $stories = $slashdb->getBackendStories($section);
-	return unless @$stories;
 	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
 	my $SECT    = $slashdb->getSection($section);
 	my $link    = $constants->{absolutedir} .
@@ -70,10 +74,8 @@ sub newrdf {	# RSS 0.9
 }
 
 sub newrss {	# RSS 1.0
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
+	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
 
-	my $stories = $slashdb->getBackendStories($section);
-	return unless @$stories;
 	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
 	my $SECT    = $slashdb->getSection($section);
 	my $link    = $constants->{absolutedir} .
@@ -95,9 +97,7 @@ sub newrss {	# RSS 1.0
 }
 
 sub newwml {
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
-	my $stories_and_topics = $slashdb->getBackendStories($section);
-	return unless @$stories_and_topics;
+	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
@@ -117,7 +117,7 @@ EOT
 
 	my $z = 0;
 	my $body;
-	for my $sect (@$stories_and_topics) {
+	for my $sect (@$stories) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$sect->{sid}">| .
 			xmlencode(strip_nohtml($sect->{title})) .
 			"</option>\n";
@@ -136,9 +136,7 @@ EOT
 }
 
 sub newxml {
-	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
-	my $stories_and_topics = $slashdb->getBackendStories($section);
-	return unless @$stories_and_topics;
+	my($virtual_user, $constants, $slashdb, $user, $section, $stories) = @_;
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
@@ -146,7 +144,7 @@ xmlns:backslash="$constants->{absolutedir}/backslash.dtd">
 
 EOT
 
-	for my $sect (@$stories_and_topics) {
+	for my $sect (@$stories) {
 		my @str = (xmlencode($sect->{title}), xmlencode($sect->{dept}));
 		my $author = $slashdb->getUser($sect->{uid}, 'nickname');
 		$x.= <<EOT;
