@@ -250,7 +250,7 @@ sub editArticle {
 		$article = $journal->get($form->{id}) if $form->{id};
 	}
 	
-	my $disp_article = [$article->{date}, $article->{article}, $article->{description}] if ($article->{article});
+	my $disp_article = [$article->{date},  strip_mode($article->{article}, $form->{posttype}), strip_nohtml($article->{description})] if ($article->{article});
 
 	slashDisplay('journalentry', {
 		article => $disp_article,
