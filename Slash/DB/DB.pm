@@ -22,10 +22,11 @@ sub new {
 	} else {
 		die "We don't support the database specified";
 	}
-	push(@Slash::DB::EXPORT, 'sqlConnect');
+#	push(@Slash::DB::EXPORT, 'sqlConnect');
 	bless($self, $class);
 	$self->{virtual_user} = $user;
 	$self->SUPER::sqlConnect();
+	$self->SUPER::init();
 	return $self;
 }
 

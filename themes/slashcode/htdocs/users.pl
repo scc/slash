@@ -33,18 +33,19 @@ use Slash::Utility;
 sub main {
 	*I = getSlashConf();
 	getSlash();
+	my $user = getCurrentUser();
 
 	my $op = $I{F}{op};
 print STDERR "OP $I{F}{op}\n";
 
-	if ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward_uid}) {
+	if ($op eq "userlogin" && !$user->{is_anon}) {
 		my $refer = $I{F}{returnto} || $I{rootdir};
 		redirect($refer);
 		return;
 	}
 
 	header("$I{sitename} Users");
-	print <<EOT if $I{U}{uid} != $I{anonymous_coward_uid} && $op ne "userclose";
+	print <<EOT if !$user->{is_anon} && $op ne "userclose";
  [
 	<A HREF="$ENV{SCRIPT_NAME}">User Info</A> |
 	<A HREF="$ENV{SCRIPT_NAME}?op=edituser">Edit User Info</A> |
@@ -61,7 +62,7 @@ EOT
 
 	} elsif ($op eq "edituser") {
 		# the users_prefs table
-		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
+		if (!$user->{is_anon}) {
 			editUser($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -69,7 +70,7 @@ EOT
 
 	} elsif ($op eq "edithome" || $op eq "preferences") {
 		# also known as the user_index table
-		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
+		if (!$user->{is_anon}) {
 			editHome($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -77,7 +78,7 @@ EOT
 
 	} elsif ($op eq "editcomm") {
 		# also known as the user_comments table
-		if ($I{U}{uid} != $I{anonymous_coward_uid}) {
+		if (!$user->{is_anon}) {
 			editComm($I{U}{nickname});
 		} else {
 			displayForm(); 
@@ -86,7 +87,7 @@ EOT
 	} elsif ($op eq "userinfo" || !$op) {
 		if ($I{F}{nick}) {
 			userInfo($I{F}{nick});
-		} elsif ($I{U}{uid} == $I{anonymous_coward_uid}) {
+		} elsif ($user->{is_anon}) {
 			displayForm();
 		} else {
 			userInfo($I{U}{nickname});
@@ -123,14 +124,14 @@ EOT
 		print "ok bubbye now.";
 		displayForm();
 
-	} elsif ($op eq "userlogin" && $I{U}{uid} != $I{anonymous_coward_uid}) {
+	} elsif ($op eq "userlogin" && !$user->{is_anon}) {
 		# print $query->redirect("$I{rootdir}/index.pl");
 		userInfo($I{U}{nickname});
 
 	} elsif ($op eq "preview") {
 		previewSlashbox();
 
-	} elsif ($I{U}{uid} != $I{anonymous_coward_uid}) {
+	} elsif (!$user->{is_anon}) {
 		userInfo($I{F}{nick});
 
 	} else {
@@ -353,51 +354,51 @@ sub editKey {
 #################################################################
 sub editUser {
 	my($name) = @_;
-	my $user = $I{dbobject}->getUserEditInfo($name);
+	my $user_edit = $I{dbobject}->getUserEditInfo($name);
 
-	return if $user->{uid} == $I{anonymous_coward_uid};
+	return if $user_edit->{uid} == $I{anonymous_coward_uid};
 
-	titlebar("100%", "Editing $name ($user->{uid}) $user->{realemail}");
+	titlebar("100%", "Editing $name ($user_edit->{uid}) $user_edit->{realemail}");
 	print qq!<TABLE ALIGN="CENTER" WIDTH="95%" BGCOLOR="$I{bg}[2]"><TR><TD>!;
 
-	$user->{homepage} ||= "http://";
+	$user_edit->{homepage} ||= "http://";
  
-	my $tempnick = $user->{nickname};
+	my $tempnick = $user_edit->{nickname};
 	$tempnick =~ s/ /+/g;
  
 	print <<EOT;
 You can automatically login by clicking
-<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$user->{passwd}&unickname=$tempnick">This Link</A>
+<A HREF="$I{rootdir}/index.pl?op=userlogin&upasswd=$user_edit->{passwd}&unickname=$tempnick">This Link</A>
 and Bookmarking the resulting page. This is totally insecure, but very convenient.
 
 <FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
 
 	<B>Real Name</B> (optional)<BR>
-		<INPUT TYPE="TEXT" NAME="realname" VALUE="$user->{realname}" SIZE="40"><BR>
-		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$user->{uid}">
-		<INPUT TYPE="HIDDEN" NAME="passwd" VALUE="$user->{passwd}">
-		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$user->{nickname}">
+		<INPUT TYPE="TEXT" NAME="realname" VALUE="$user_edit->{realname}" SIZE="40"><BR>
+		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="$user_edit->{uid}">
+		<INPUT TYPE="HIDDEN" NAME="passwd" VALUE="$user_edit->{passwd}">
+		<INPUT TYPE="HIDDEN" NAME="name" VALUE="$user_edit->{nickname}">
 
 	<B>Real Email</B> (required but never displayed publicly. 
 		This is where your passwd is mailed.  If you change your
 		email, notification will be sent)<BR>
-		<INPUT TYPE="TEXT" NAME="realemail" VALUE="$user->{realemail}" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="realemail" VALUE="$user_edit->{realemail}" SIZE="40"><BR>
 
 	<B>Fake Email</B> (optional:This email publicly displayed by
 		your comments, you may spam proof it, leave it blank, 
 		or just type in your address)<BR>
-		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="$user->{fakeemail}" SIZE="40"><BR>
+		<INPUT TYPE="TEXT" NAME="fakeemail" VALUE="$user_edit->{fakeemail}" SIZE="40"><BR>
 
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
-		<INPUT TYPE="TEXT" NAME="homepage" VALUE="$user->{homepage}" SIZE="60"><BR>
+		<INPUT TYPE="TEXT" NAME="homepage" VALUE="$user_edit->{homepage}" SIZE="60"><BR>
 
 	<P><B>Headline Mailing List</B>
 EOT
 
 	my $description = $I{dbobject}->getDescriptions('maillist');
-	createSelect('maillist', $description, $user->{maillist});
+	createSelect('maillist', $description, $user_edit->{maillist});
 
-	printf <<EOT, stripByMode($user->{sig}, 'literal'), stripByMode($user->{bio}, 'literal');
+	printf <<EOT, stripByMode($user_edit->{sig}, 'literal'), stripByMode($user_edit->{bio}, 'literal');
 	<P><B>Sig</B> (appended to the end of comments you post, 120 chars)<BR>
 		<TEXTAREA NAME="sig" ROWS="2" COLS="60">%s</TEXTAREA>
 
@@ -407,7 +408,7 @@ EOT
 
 EOT
 
-	editKey($user->{uid});
+	editKey($user_edit->{uid});
 
   	print <<EOT;
 	<P><B>Password</B> Enter new passwd twice to change it.

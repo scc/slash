@@ -163,6 +163,21 @@ sub sqlConnect {
 }
 
 ########################################################
+# Lets say views? How about a better update?
+# This is here because MySQL can suck
+sub init {
+	my ($self) = @_;
+	my @user_tables = qw(users users_comments users_index users_info users_key users_prefs); 
+	for my $table (@user_tables) {
+		my $keys = $self->getKeys($table);
+		for(@$keys) {
+			$self->{'_all_user_keys'}->{$_} = $table;
+		}
+	}
+	$self->{_user_tables} = \@user_tables;
+}
+
+########################################################
 sub setComment {
 	my($self, $form, $user, $pts, $default_user) = @_;
 
@@ -470,7 +485,7 @@ sub writelog {
 	$self->sqlInsert('accesslog', {
 		host_addr	=> $ENV{REMOTE_ADDR} || '0',
 		dat		=> $dat,
-		uid		=> getCurrentUser('uid'),
+		uid		=> $uid,
 		op		=> $op,
 		-ts		=> 'now()',
 		query_string	=> $ENV{QUERY_STRING} || '0',
@@ -536,7 +551,7 @@ sub getDescriptions {
 # Get user info from the users table.
 # If you don't pass in a $script, you get everything
 # which is handy for you if you need the entire user
-sub getUser {
+sub getUserInstance {
 	my($self, $uid, $script) = @_;
 
 	my $user;
@@ -2844,6 +2859,36 @@ sub getNewStory {
 ########################################################
 sub getVar {
 	my $answer = _genericGet('vars', 'name', @_);
+	return $answer;
+}
+########################################################
+sub getUserInfo {
+	my $answer = _genericGet('vars', 'name', @_);
+	return $answer;
+}
+########################################################
+# Now here is the thing. We want getUser to look like
+# a generic, despite the fact that it is not :)
+sub getUser {
+	my($self, $uid, @val) = @_;
+	my $members = @val;
+	my $answer;
+	if ($members == 1) {
+		my $table = $self->{_user_tables}->{$val[0]};
+		($answer) = $self->sqlSelect($val[0], $table, "$uid=" . $self->{dbh}->quote($uid));
+	} elsif ($members > 1) {
+		my $values = join ',', @val;
+		my %tables;
+		for(@val) {
+			$tables{$self->{_user_tables}->{$_}} = 1;
+		}
+		my $table = join ',', keys %tables;
+		$answer = $self->sqlSelectHashref($values, $table, "uid=" . $self->{dbh}->quote($uid));
+	} else {
+		my $table = join ',', @$self->{_user_tables};
+		$answer = $self->sqlSelectHashref('*', $table, "uid=" . $self->{dbh}->quote($uid));
+	} 
+
 	return $answer;
 }
 ########################################################

@@ -294,7 +294,7 @@ sub getUser {
 	my $form = getCurrentForm();
 
 	if (($uid != $I{anonymous_coward_uid})
-		&& ($user = $I{dbobject}->getUser($uid, $ENV{SCRIPT_NAME}))) { 
+		&& ($user = $I{dbobject}->getUserInstance($uid, $ENV{SCRIPT_NAME}))) { 
 	# should the below just be done in the library call for getUser?
 
 		# Get the Timezone Stuff
