@@ -44,6 +44,9 @@ my %descriptions = (
 	'maillist'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'maillist') },
 
+	'session_login'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'session_login') },
+
 	'displaycodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'displaycodes') },
 

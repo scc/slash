@@ -371,7 +371,10 @@ sub editUser {
 	my $temppass = fixparam($user_edit->{passwd});
  
 	my $description = $slashdb->getDescriptions('maillist');
-	createSelect('maillist', $description, $user_edit->{maillist});
+	my $maillist = createSelect('maillist', $description, $user_edit->{maillist}, 1);
+
+	my $session = $slashdb->getDescriptions('session_login');
+	my $session_select = createSelect('session_login', $session, $user_edit->{session_login}, 1);
 
 	slashDisplay('users-editUser', { 
 		user_edit 	=> $user_edit, 
@@ -380,7 +383,9 @@ sub editUser {
 		tempnick	=> $tempnick,	
 		bio 		=> stripByMode($user_edit->{bio}), 
 		sig 		=> stripByMode($user_edit->{sig}),
-		editkey 	=> editKey($user_edit->{uid})
+		editkey 	=> editKey($user_edit->{uid}),
+		maillist 	=> $maillist,
+		session 	=> $session_select 
 	});
 }
 

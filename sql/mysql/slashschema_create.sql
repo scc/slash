@@ -232,6 +232,16 @@ CREATE TABLE maillist (
 );
 
 #
+# Table structure for table 'maillist'
+#
+
+CREATE TABLE session_login (
+  code int(1) DEFAULT '0' NOT NULL,
+  name char(32),
+  PRIMARY KEY (code)
+);
+
+#
 # Table structure for table 'menus'
 #
 
