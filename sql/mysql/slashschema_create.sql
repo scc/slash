@@ -571,7 +571,6 @@ CREATE TABLE submissions (
 	PRIMARY KEY (subid),
 	FOREIGN KEY (tid) REFERENCES topics(tid),
 	FOREIGN KEY (uid) REFERENCES users(uid),
-	KEY realemailchk (realemail),
 	INDEX (del,section,note),
 	INDEX (uid),
 	KEY subid (subid,section),
@@ -645,7 +644,8 @@ CREATE TABLE users (
 	KEY login (uid,passwd,nickname),
 	KEY chk4user (nickname,realemail),
 	KEY nickname_lookup (nickname),
-	KEY chk4email (realemail)
+	KEY chk4email (realemail),
+	KEY chk4matchname (matchname)
 ) TYPE = myisam;
 
 #
