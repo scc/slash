@@ -72,7 +72,7 @@ sub SlashCompileTemplates ($$$) {
 	return unless $constants->{cache_enabled}
 		  && !$constants->{template_cache_size};
 
-	print STDERR "$$: Compiling All Templates Begin\n";
+	print STDERR "$cfg->{VirtualUser} ($$): Compiling All Templates Begin\n";
 
 	my $templates = $slashdb->getTemplateNameCache();
 
@@ -101,7 +101,7 @@ sub SlashCompileTemplates ($$$) {
 		});
 	}
 
-	print STDERR "$$: Compiling All Templates Done\n";
+	print STDERR "$cfg->{VirtualUser} ($$): Compiling All Templates Done\n";
 
 	$cfg->{template} = Slash::Display::get_template(0, 0, 1);
 	# let's make sure

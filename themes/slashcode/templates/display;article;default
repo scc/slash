@@ -102,7 +102,7 @@ IF section_block.block;
 		contents	= section_block.block
 		center		= 1;
 END %]
-</TD></TR><TR><TD COLSPAN="3">
+</TD></TR><TR><TD COLSPAN="4">
 
 [% BLOCK nextStory;
 	IF !s;
