@@ -441,17 +441,6 @@ CREATE TABLE templates (
 );
 
 #
-# Table structure for table 'threshcodes'
-#
-
-DROP TABLE IF EXISTS threshcodes;
-CREATE TABLE threshcodes (
-  thresh int(1) DEFAULT '0' NOT NULL,
-  description char(64),
-  PRIMARY KEY (thresh)
-);
-
-#
 # Table structure for table 'topics'
 #
 

@@ -12,7 +12,10 @@ use URI ();
 # For the getDecriptions() method
 my %descriptions = (
 	'sortcodes'
-		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='sortcodes'") },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[1]'") },
+
+	'default'
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='$_[1]'") },
 
 	'statuscodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='statuscodes'") },
@@ -33,7 +36,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('mode,name', 'commentmodes') },
 
 	'threshcodes'
-		=> sub { $_[0]->sqlSelectMany('thresh,description', 'threshcodes') },
+		=> sub { $_[0]->sqlSelectMany('code,name', 'code_param', "type='threshcodes'") },
 
 	'postmodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'postmodes') },
@@ -66,10 +69,10 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
 
 	'static_block'
-		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[1] >= seclev AND type != 'portald'") },
+		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[2] >= seclev AND type != 'portald'") },
 
 	'portald_block'
-		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[1] >= seclev AND type = 'portald'") },
+		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[2] >= seclev AND type = 'portald'") },
 
 	'color_block'
 		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
@@ -528,21 +531,20 @@ sub createAccessLog {
 
 ########################################################
 sub getDescriptions {
-	my $self = shift; # Shift off to keep things clean
-	my $codetype = shift; # Shift off to keep things clean
+	my ($self, $codetype) =  @_;
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
 	my $cache = '_getDescriptions_' . $codetype;
 
 	return $self->{$cache} if $self->{$cache};
 
-	my $sth = $descriptions{$codetype}->($self, @_);
+	my $sth = $descriptions{$codetype}->(@_);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 	$sth->finish;
 
-	$self->{$cache} = $codeBank_hash_ref;
+	$self->{$cache} = $codeBank_hash_ref if getCurrentStatic('cache_enabled');
 	return $codeBank_hash_ref;
 }
 

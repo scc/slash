@@ -256,6 +256,13 @@ INSERT INTO code_param VALUES (21,'sortcodes',5,'Newest First (Ignore Threads)')
 INSERT INTO code_param VALUES (22,'statuscodes',1,'Refreshing');
 INSERT INTO code_param VALUES (23,'statuscodes',0,'Normal');
 INSERT INTO code_param VALUES (24,'statuscodes',10,'Archive');
+INSERT INTO code_param VALUES ('','threshcodes',-1,'-1: Uncut and Raw');
+INSERT INTO code_param VALUES ('','threshcodes',0,'0: Almost Everything');
+INSERT INTO code_param VALUES ('','threshcodes',1,'1: Filter Most ACs');
+INSERT INTO code_param VALUES ('','threshcodes',2,'2: Score +2');
+INSERT INTO code_param VALUES ('','threshcodes',3,'3: Score +3');
+INSERT INTO code_param VALUES ('','threshcodes',4,'4: Score +4');
+INSERT INTO code_param VALUES ('','threshcodes',5,'5: Score +5');
 
 #
 # Dumping data for table 'commentmodes'
@@ -621,13 +628,6 @@ INSERT INTO templates VALUES ('comments-deleted-cids','The following \r\n[% IF c
 # Dumping data for table 'threshcodes'
 #
 
-INSERT INTO threshcodes VALUES (-1,'-1: Uncut and Raw');
-INSERT INTO threshcodes VALUES (0,'0: Almost Everything');
-INSERT INTO threshcodes VALUES (1,'1: Filter Most ACs');
-INSERT INTO threshcodes VALUES (2,'2: Score +2');
-INSERT INTO threshcodes VALUES (3,'3: Score +3');
-INSERT INTO threshcodes VALUES (4,'4: Score +4');
-INSERT INTO threshcodes VALUES (5,'5: Score +5');
 
 #
 # Dumping data for table 'topics'
