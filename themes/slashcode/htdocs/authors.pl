@@ -52,7 +52,7 @@ EOT
 	<A HREF="$url">$aid</A></H2>
 EOT
 		print qq![ <A HREF="$I{rootdir}/admin.pl?op=authors&aid=$aid">edit</A> ] !
-			if $I{U}{aseclev} > 1000;
+			if getCurrentUser('aseclev') > 1000;
 		print $copy;
 	}
 

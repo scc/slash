@@ -39,7 +39,7 @@ sub main {
 	$I{F}{op}		||= "";
 	$I{F}{min}		||= "0";
 	$I{F}{max}		||= "30";
-	$I{F}{threshold}	||= $I{U}{threshold};
+	$I{F}{threshold}	||= getCurrentUser('threshold');
 	$I{F}{'last'}		||= $I{F}{min} + $I{F}{max};
 
 	# get rid of bad characters
@@ -156,7 +156,7 @@ EOT
 		return unless $I{F}{query};
 	}
 
-	my $search = $I{dbobject}->getSearch($I{F}, $I{U});
+	my $search = $I{dbobject}->getSearch();
 	my $x = $I{F}{min};
 	for (@$search) {
 		my($section, $sid, $aid, $title, $pid, $subj, $ws, $sdate,

@@ -32,9 +32,10 @@ use Slash;
 sub main {
 	*I = getSlashConf();
 	getSlash();
+	my $user = getCurrentUser();
 
 	header("Section Editor", "admin");
-	if ($I{U}{aseclev} > 100) {
+	if ($user->{aseclev} > 100) {
 		# adminMenu();
 	} else { 
 		print <<EOT;
@@ -50,7 +51,7 @@ EOT
 	}
 
 	my $op = $I{F}{op};
-	my $seclev=$I{U}{aseclev};
+	my $seclev=$user->{aseclev};
 	if ($op eq "rmsub" && $seclev > 99) {
 
 	} elsif ($I{F}{addsection}) {
@@ -59,7 +60,7 @@ EOT
 
 	} elsif ($I{F}{deletesection} || $I{F}{deletesection_cancel} || $I{F}{deletesection_confirm}) {
 		delSection($I{F}{section});
-		listSections();
+		listSections($user);
 
 	} elsif ($op eq "editsection" || $I{F}{editsection}) {
 		titlebar("100%", "Editing $I{F}{section} Section");
@@ -69,19 +70,20 @@ EOT
 	} elsif ($I{F}{savesection}) {
 		titlebar("100%", "Saving $I{F}{section}");
 		saveSection($I{F}{section});
-		listSections();
+		listSections($user);
 
 	} elsif ((! defined $op || $op eq "list") && $seclev > 499) {
 		titlebar("100%", "Sections");
-		listSections();
+		listSections($user);
 	}
 	footer();
 }
 
 #################################################################
 sub listSections {
-	if ($I{U}{asection}) {
-		editSection($I{U}{aseclev}, $I{U}{asection});
+	my ($user) = @_;
+	if ($user->{asection}) {
+		editSection($user->{aseclev}, $user->{asection});
 		return;
 	}
 
@@ -109,7 +111,7 @@ EOT
 
 #################################################################
 sub delSection {
-	my($section) = shift;
+	my($section) = @_;
 	
 	if ($I{F}{deletesection}) {
 		print <<EOT;

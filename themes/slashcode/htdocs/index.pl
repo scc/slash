@@ -24,7 +24,7 @@
 ###############################################################################
 # pre stories cache update
 use strict;
-use vars qw(%I $form $user);
+use vars qw(%I);
 use Slash;
 use Slash::Utility;
 use Slash::DB;
@@ -33,37 +33,44 @@ use diagnostics;
 #################################################################
 # I really dislike Apache::Registry sometimes. If index.pl
 # was a real handler, this would be a lot more fun.
-
+# The lesson learned, is that a little extra time spent making
+# $user and $form not global saves on debugging headache like
+# global issues.
+#
+# It might behove us to rewrite Apache::Registry so that it
+# passes our variables into the script. Heck, we could combine
+# up some of the other logic at the same time (AKA the index
+# bits).	-Brian
 #################################################################
 sub main {
-	$user = getCurrentUser();
-	$form = getCurrentForm();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 	*I = getSlashConf();
 	getSlash();
 
-	if ($main::form->{op} eq 'userlogin' && $main::form->{upasswd} && $main::form->{unickname}) {
+	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
 		redirect($ENV{SCRIPT_NAME});
 		return;
 	}
 
-	# $main::form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
+	# $form->{mode} = $user->{mode}="dynamic" if $ENV{SCRIPT_NAME};
 
-	for ($main::form->{op}) {
+	for ($form->{op}) {
 		my $c;
-		upBid($main::form->{bid}), $c++ if /^u$/;
-		dnBid($main::form->{bid}), $c++ if /^d$/;
-		rmBid($main::form->{bid}), $c++ if /^x$/;
+		upBid($form->{bid}), $c++ if /^u$/;
+		dnBid($form->{bid}), $c++ if /^d$/;
+		rmBid($form->{bid}), $c++ if /^x$/;
 		redirect($ENV{SCRIPT_NAME}) if $c;
 	}
 
-	my $SECT = getSection($main::form->{section});
+	my $SECT = getSection($form->{section});
 	$SECT->{mainsize} = int($SECT->{artcount} / 3);
 
 	my $title = $SECT->{title};
 	$title = "$I{sitename}: $title" unless $SECT->{isolate};
 	
 	header($title, $SECT->{section});
-#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($user->);
+#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($user);
 		
 	my $block = getEvalBlock("index");
 	my $execme = prepEvalBlock($block);
@@ -85,13 +92,15 @@ sub main {
 	# zero the order count
 	$I{StoryCount} = 0;
 
-	$I{dbobject}->writelog('index', $main::form->{section} || 'index') unless $main::form->{ssi};
+	$I{dbobject}->writelog('index', $form->{section} || 'index') unless $form->{ssi};
 }
 
 #################################################################
+# Should this method be in the DB library?
 sub saveUserBoxes {
 	my(@a) = @_;
 
+	my $user = getCurrentUser();
 	$user->{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
 	$I{dbobject}->setUserBoxes($user->{uid}, $user->{exboxes}) 
 		if $user->{uid} != $I{anonymous_coward_uid};
@@ -99,7 +108,7 @@ sub saveUserBoxes {
 
 #################################################################
 sub getUserBoxes {
-	my $boxes = $user->{exboxes};
+	my $boxes = getCurrentUser('exboxes');
 	$boxes =~ s/'//g;
 	return split m/,/, $boxes;
 }
@@ -150,6 +159,7 @@ sub rmBid {
 #################################################################
 sub displayStandardBlocks {
 	my ($SECT, $olderStuff) = @_;
+	my $user = getCurrentUser();
 	return if $user->{noboxes};
 
 	my ($boxBank, $sectionBoxes) = $I{dbobject}->getPortalsCommon();
@@ -194,6 +204,7 @@ sub displayStandardBlocks {
 sub displayStories {
 	my $cursor = shift;
 	my($today, $x) = ('', 1);
+	my $user = getCurrentUser();
 	my $cnt = int($user->{maxstories} / 3);
 
 	#stackTrace(8);
@@ -249,7 +260,7 @@ sub displayStories {
 
 		}
 
-		if ($thissection ne $I{defaultsection} && !$main::form->{section}) {
+		if ($thissection ne $I{defaultsection} && !getCurrentForm('section')) {
 			my($SEC) = getSection($thissection);
 			print qq' | <A HREF="$I{rootdir}/$thissection/">$SEC->{title}</A>';
 		}

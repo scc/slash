@@ -2226,6 +2226,8 @@ sub getSearch {
 	my($self, $form, $user) = @_;
 	# select comment ID, comment Title, Author, Email, link to comment
 	# and SID, article title, type and a link to the article
+	$form = getCurrentForm() unless $form;
+	$user = getCurrentUser() unless $user;
 	my $sqlquery = "SELECT section, newstories.sid, aid, title, pid, subject, writestatus," .
 		getDateFormat("time","d", $user) . ",".
 		getDateFormat("date","t", $user) . ", 

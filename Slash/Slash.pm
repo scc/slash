@@ -110,6 +110,7 @@ sub getSlash {
 	# so there is no Apache?  cf. prog2file in slashd, when index.pl
 	# is called without Apache -- pudge
 	# Seperate method? -Brian
+	# Or maybe we don't need it... -Brian
 
 	#Ok, I hate single character variables, but 'r' is a bit
 	#of a tradition in apache stuff -Brian

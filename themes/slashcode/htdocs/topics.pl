@@ -113,7 +113,7 @@ sub listTopics {
 			print "\t</TR><TR>";
 		}
 
-		my $href = $I{U}{'aseclev'} > 500 ? <<EOT : '';
+		my $href = getCurrentUser('aseclev') > 500 ? <<EOT : '';
 </A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$_->{'tid'}">
 EOT
 

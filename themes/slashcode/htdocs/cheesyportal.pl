@@ -25,33 +25,36 @@
 ###############################################################################
 
 use strict;
-use vars '%I';
 use Slash;
+use Slash::DB;
+use Slash::Utility;
 
 ##################################################################
 sub main {
-	*I = getSlashConf();
 	getSlash();
+	my $user = getCurrentUser();
+	my $db = getCurrentDB();
+	my $constants = getCurrentStatic();
 
 	header("Cheesy Portal");
 	# Display Blocks
-	titlebar("100%", "Cheesy $I{sitename} Portal Page");
-	my $portals = $I{dbobject}->getPortals();
+	titlebar("100%", "Cheesy $constants->{sitename} Portal Page");
+	my $portals = $db->getPortals();
 
 	print qq!<MULTICOL COLS="3">\n!;
 	my $b;
 	for(@$portals) {
 		my($block, $title, $bid, $url) = @$_ ;
 		if ($bid eq "mysite") {
-			$b = portalbox($I{fancyboxwidth},
-				"$I{U}{nickname}'s Slashbox",
-				$I{U}{mylinks} ||  $block
+			$b = portalbox($current->{fancyboxwidth},
+				"$user->{nickname}'s Slashbox",
+				$user->{mylinks} ||  $block
 			);
 
 		} elsif ($bid =~ /_more$/) {
 		} elsif ($bid eq "userlogin") {
 		} else {
-			$b = portalbox($I{fancyboxwidth},
+			$b = portalbox($current->{fancyboxwidth},
 				$title, $block, "", $url
 			);
 		}
@@ -63,7 +66,7 @@ sub main {
 
 	footer();
 
-	$I{dbobject}->writelog("cheesyportal") unless $I{F}{ssi};
+	$db->writelog("cheesyportal") unless getCurrentForm('ssi');
 }
 
 main();

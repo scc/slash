@@ -201,51 +201,6 @@ sub newmotd {
 	setblock('motd', $t) if $t;
 }
 
-#################################
-# I suppose I'll let the secret out: for a few months, before the moderation
-# system came into being, this little function faked "First Posts" and then
-# deleted them when a real comment came along.  Worked pretty well, and nobody
-# figured it out.  I disabled it when the moderation came online feeling that
-# it was a cleaner solution. -CT
-sub fpsBeDamned {
-	my @subjects=('First!','First Post!','First Comment','
-			I got it!','Got it again!',
-			'FIRST COMMENT!!!', 'First one?', 'FIRST COMMENT!',
-			'first',
-			'mine','first!');
-
-	my @comments=('its just to easy!','damn I am so good!',
-			'who has the best kungfu?',
-			'did I get it?', 'I beat everyone!','got it!',
-			'hahahahahahahaha!',
-			'hehe');
-
-	my $c = sqlSelectMany("sid","stories","commentcount=0 and writestatus=1 " .
-		"and displaystatus=0 and (section='articles' or section='features')");
-
-	while (my($sid) = $c->fetchrow) {
-		sleep( rand(30) + 30 );
-		slashdLog("(Attaching first post to $sid)");
-		my $subj = $subjects[rand @subjects];
-		my $comment = $comments[rand @comments];
-		$slashdb->{dbh}->do("INSERT into comments values (
-			'$sid',1,0,
-			now(),
-			'FirstPost',0,
-			'$subj',
-			'$comment',
-			0,-1,0,-1)");
-		sqlUpdate("stories", { commentcount => 1 }, "sid='$sid'");
-	}
-
-	$c->finish;
-	if (my($sid, $cid) = sqlSelect("stories.sid,cid", "comments,stories", 
-			"comments.sid=stories.sid AND commentcount > 1
-			AND host_name='FirstPost' LIMIT 1")) {
-		slashdLog("(Removing the *cough* first post $sid)");
-		$slashdb->{dbh}->do("delete from comments where sid='$sid' AND host_name='FirstPost'");
-	}
-}
 
 #################################
 sub updateStoryIndex {
