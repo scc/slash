@@ -278,11 +278,7 @@ sub selectThreshold  {
 		}, 1, 1);
 	}
 
-	# Threshold value can be undefined by article.pl in certain instances.
-	# - Cliff
-	$user->{threshold} ||= 0;
-
-	createSelect('threshold', \%data, $user->{threshold}, 1, 1);
+	createSelect('threshold', \%data, getCurrentUser('threshold'), 1, 1);
 }
 
 ########################################################

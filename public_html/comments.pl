@@ -26,9 +26,7 @@
 use strict;
 use Date::Manip;
 use Compress::Zlib;
-#use vars '%I';
 use Slash;
-use Slash::DB;
 use Slash::Display;
 use Slash::Utility;
 use CGI ();
@@ -36,9 +34,6 @@ use CGI ();
 
 ##################################################################
 sub main {
-	#*I = getSlashConf();
-	getSlash();
-
 	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -269,7 +264,8 @@ sub validateComment {
 
 		# If the quoted slash in the next line bothers you, then feel free to
 		# remove it. It's just there to prevent broken syntactical highlighting
-		# on certain editors (vim AND xemacs). 
+		# on certain editors (vim AND xemacs).  -- Cliff
+		# maybe you should use a REAL editor, like BBEdit.  :) -- pudge 
 		while ($comm =~ m|(<(\/?)($match)\b[^>]*>)|igo) { # loop over tags
 			($tag, $close, $whole) = ($3, $2, $1);
 
@@ -316,8 +312,7 @@ sub validateComment {
 		$comm =~ s/\s+$//;
 
 		# add on any unclosed tags still on stack
-		$comm .= join '',
-					  map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
+		$comm .= join '', map { "</$_>" } grep {! exists $lone{$_}} reverse @stack;
 
 	}
 
@@ -768,4 +763,4 @@ sub isTroll {
 }
 
 main();
-0;
+1;

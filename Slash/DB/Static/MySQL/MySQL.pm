@@ -12,6 +12,9 @@ use Slash::Utility;
 use URI ();
 
 ($Slash::DB::Static::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+
+# BENDER: Bite my shiny, metal ass! 
+
 1;
 
 

@@ -51,10 +51,17 @@ sub new {
 	return $self;
 }
 
-sub DESTROY {
-  my($self) = @_;
+# hm.  should this really be here?  in theory, we could use anything
+# we wanted, including non-DBI modules, to provide the Slash::DB API.
+# but this might break that.  aside from this, Slash::DB makes no
+# assumptions about how the API is implemented (well, and the sqlConnect()
+# and init() calls above).  maybe instead, we could call
+# $self->SUPER::disconnect(),  and have a disconnect() there that calls
+# $self->{_dbh}->disconnect ... ?   -- pudge
 
-  $self->{_dbh}->disconnect if $self->{_dbh};
+sub DESTROY {
+	my($self) = @_;
+	$self->{_dbh}->disconnect if $self->{_dbh};
 }
 
 

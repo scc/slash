@@ -24,15 +24,12 @@
 #  $Id$
 ###############################################################################
 use strict;
-#use vars '%I';
 use Slash;
-use Slash::Utility;
 use Slash::Display;
+use Slash::Utility;
 
 #################################################################
 sub main {
-	#*I = getSlashConf();
-	getSlash();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 	my $op = getCurrentForm('op');

@@ -254,8 +254,9 @@ sub setModeratorLog {
 	});
 }
 
+########################################################
 sub getMetamodComments {
-	my ($self, $id, $uid, $num_comments) = @_;
+	my($self, $id, $uid, $num_comments) = @_;
 
 	my $sth = $self->sqlSelectMany(
 		'comments.cid,' . getDateFormat('date','time') .
@@ -2785,13 +2786,9 @@ sub getNewStory {
 
 ########################################################
 sub getVar {
-  my ($self, $name) = @_;
+	my($self, $name) = @_;
 	my $db_name = $self->{_dbh}->quote($name);
-
-	my $sql;
-	$sql .= qq| SELECT |;
-	$sql .= qq| value |;
-	$sql .= qq| FROM vars WHERE name=$db_name |;
+	my $sql = "SELECT value FROM vars WHERE name=$db_name";
 	my $var = $self->{_dbh}->selectrow_array($sql);
 
 	return $var;
@@ -2825,7 +2822,7 @@ sub setUser {
 	$cache = _genericGetCacheName($self, $tables);
 
 	for (keys %$hashref) {
-		my $clean_val =~ s/^-//;
+		(my $clean_val = $_) =~ s/^-//;
 		my $key = $self->{$cache}{$clean_val};
 		if ($key) {
 			push @{$update_tables{$key}}, $_;
@@ -2866,7 +2863,7 @@ sub getUser {
 	if (ref($val) eq 'ARRAY') {
 		my($values, %tables, @param, $where, $table);
 		for (@$val) {
-			my $clean_val =~ s/^-//;
+			(my $clean_val = $_) =~ s/^-//;
 			if ($self->{$cache}{$clean_val}) {
 				$tables{$self->{$cache}{$_}} = 1;
 				$values .= "$_,";
@@ -2889,8 +2886,7 @@ sub getUser {
 		}
 
 	} elsif ($val) {
-		my $clean_val = $val;
-		my $clean_val =~ s/^-//;
+		(my $clean_val = $val) =~ s/^-//;
 		my $table = $self->{$cache}{$clean_val};
 		if ($table) {
 			($answer) = $self->sqlSelect($val, $table, "uid=$id");
