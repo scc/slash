@@ -492,8 +492,10 @@ sub sqlUpdate {
 
 ########################################################
 sub sqlInsert {
-	my($self, $table, $data) = @_;
+	my($self, $table, $data, $delayed) = @_;
 	my($names, $values);
+	# oddly enough, this hack seems to work for all DBs -- pudge
+	$delayed = $delayed ? " /*! DELAYED */" : "";
 
 	foreach (keys %$data) {
 		if (/^-/) {
@@ -508,7 +510,7 @@ sub sqlInsert {
 	chop($names);
 	chop($values);
 
-	my $sql = "INSERT INTO $table ($names) VALUES($values)\n";
+	my $sql = "INSERT$delayed INTO $table ($names) VALUES($values)\n";
 	$self->sqlConnect();
 	return $self->sqlDo($sql);
 }

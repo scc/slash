@@ -843,7 +843,8 @@ sub saveUserAdmin {
 		#	$note .= getMessage('saveuseradmin_notsaveduser', { field => $form->{userfield_flag}, id => $id});
 		#}
 	}
-			my $exp = $slashdb->checkExpired($user->{uid});
+
+	my $exp = $slashdb->checkExpired($user->{uid});
 	if ($form->{expired} eq 'on' && ! ($slashdb->checkExpired($user->{uid})) && ! $user->{nonuid}) {
 			print STDERR"form expired $form->{expired} user expired $exp\n";
 			$slashdb->setExpired($user->{uid});
@@ -1354,16 +1355,16 @@ sub getUserAdmin {
 
 	print STDERR "userinfo flag $userinfo_flag\n";
 	return slashDisplay('getUserAdmin', {
-		useredit			=> $user,
+		useredit		=> $user,
 		userinfo_flag		=> $userinfo_flag,
-		userfield			=> $userfield,
-		iplist				=> $iplist,
-		uidstruct			=> $uidstruct,
+		userfield		=> $userfield,
+		iplist			=> $iplist,
+		uidstruct		=> $uidstruct,
 		seclev_field		=> $seclev_field,
-		checked 			=> $checked,
+		checked 		=> $checked,
 		author_select		=> $author_select,
-		form_flag			=> $form_flag,
-		readonly			=> $readonly,
+		form_flag		=> $form_flag,
+		readonly		=> $readonly,
 		readonly_reasons 	=> $readonly_reasons,
 		authoredit_flag 	=> $authoredit_flag
 	}, 1);

@@ -250,16 +250,16 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 1);
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 2);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2);
 
 #
 # Dumping data for table 'story_heap'
 #
 
 
-INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 1);
-INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 2);
+INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1430236',4,2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,0,'articles',0,0,'1,1,1,0,0,0,0', 1);
+INSERT INTO story_heap (sid, tid, uid, commentcount, title, dept, time, writestatus, hits, section, displaystatus, commentstatus, hitparade, discussion) VALUES ('00/01/25/1236215',4,2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,0,'articles',0,0,'0,0,0,0,0,0,0', 2);
 
 #
 # Dumping data for table 'story_text'

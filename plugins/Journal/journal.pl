@@ -283,7 +283,7 @@ sub listArticle {
 }
 
 sub saveArticle {
-	my($form, $journal) = @_;
+	my($form, $journal, $constants) = @_;
 	my $description = strip_nohtml($form->{description});
 
 	if ($form->{id}) {
@@ -299,7 +299,7 @@ sub saveArticle {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
 			$slashdb->createDiscussion('', $description, $slashdb->getTime(), 
-				"$rootdir/journal.pl?sid=$sid", $constants->{journal_default_topic}
+				"$rootdir/journal.pl?sid=$id", $constants->{journal_default_topic}
 			);
 		}
 

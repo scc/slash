@@ -97,7 +97,8 @@ sub xmlDisplay {
 
 	my $content = $class->create($param);
 	if (!$content) {
-		errorLog("$class->create returned no content");
+		# I don't think we really care, actually ... do we?
+# 		errorLog("$class->create returned no content");
 		return;
 	}
 
@@ -156,14 +157,15 @@ sub date2iso8601 {
 	if ($time) {	# force to GMT
 		$time .= ' GMT' unless $time =~ / GMT$/;
 	} else {	# get current seconds
-		$time = 'epoch ' . time();
+		my $t = defined $time ? 0 : time();
+		$time = "epoch $t";
 	}
 
 	# calculate timezone differential from GMT
 	my $diff = (timelocal(localtime) - timelocal(gmtime)) / 36;
 	($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
 
-	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
+	return scalar UnixDate($time, "%Y-%m-%dT%H:%M:%S$diff");
 }
 
 #========================================================================

@@ -800,7 +800,7 @@ sub getOlderStories {
 
 		my @wordy_split = split / /, $sr->{wordytime};
 		for my $i (0..5) {
-			$sr->{ qw( w m d h min ampm )[$_] } = $wordy_split[$_]
+			$sr->{ (qw( w m d h min ampm ))[$_] } = $wordy_split[$_]
 		}
 		$sr->{link} = linkStory({
 			link	=> $sr->{title},

@@ -47,6 +47,7 @@ sub newrdf {	# RSS 0.9
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 
 	my $stories = $slashdb->getBackendStories($section);
+	return unless @$stories;
 	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
 	my $SECT    = $slashdb->getSection($section);
 	my $link    = $constants->{absolutedir} .
@@ -72,6 +73,7 @@ sub newrss {	# RSS 1.0
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 
 	my $stories = $slashdb->getBackendStories($section);
+	return unless @$stories;
 	my $file    = site2file($virtual_user, $constants, $slashdb, $user, $section);
 	my $SECT    = $slashdb->getSection($section);
 	my $link    = $constants->{absolutedir} .
@@ -95,6 +97,7 @@ sub newrss {	# RSS 1.0
 sub newwml {
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
+	return unless @$stories_and_topics;
 
 	my $x = <<EOT;
 <?xml version="1.0"?>
@@ -114,9 +117,9 @@ EOT
 
 	my $z = 0;
 	my $body;
-	for my $section (@$stories_and_topics) {
-		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			xmlencode(strip_nohtml($section->{title})) .
+	for my $sect (@$stories_and_topics) {
+		$x .= qq|<option title="View" onpick="/wml.pl?sid=$sect->{sid}">| .
+			xmlencode(strip_nohtml($sect->{title})) .
 			"</option>\n";
 		$z++;
 	}
@@ -135,6 +138,7 @@ EOT
 sub newxml {
 	my($virtual_user, $constants, $slashdb, $user, $section) = @_;
 	my $stories_and_topics = $slashdb->getBackendStories($section);
+	return unless @$stories_and_topics;
 
 	my $x = <<EOT;
 <?xml version="1.0"?><backslash
@@ -142,19 +146,19 @@ xmlns:backslash="$constants->{rootdir}/backslash.dtd">
 
 EOT
 
-	for my $section (@$stories_and_topics) {
-		my @str = (xmlencode($section->{title}), xmlencode($section->{dept}));
+	for my $sect (@$stories_and_topics) {
+		my @str = (xmlencode($sect->{title}), xmlencode($sect->{dept}));
 		$x.= <<EOT;
 	<story>
 		<title>$str[0]</title>
-		<url>$constants->{rootdir}/article.pl?sid=$section->{sid}</url>
-		<time>$section->{'time'}</time>
-		<author>$section->{aid}</author>
+		<url>$constants->{rootdir}/article.pl?sid=$sect->{sid}</url>
+		<time>$sect->{'time'}</time>
+		<author>$sect->{aid}</author>
 		<department>$str[1]</department>
-		<topic>$section->{tid}</topic>
-		<comments>$section->{commentcount}</comments>
-		<section>$section->{section}</section>
-		<image>$section->{image}</image>
+		<topic>$sect->{tid}</topic>
+		<comments>$sect->{commentcount}</comments>
+		<section>$sect->{section}</section>
+		<image>$sect->{image}</image>
 	</story>
 
 EOT

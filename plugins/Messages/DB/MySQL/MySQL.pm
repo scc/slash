@@ -96,7 +96,7 @@ sub log {
 		fuser	=> (ref($msg->{fuser}) ? $msg->{fuser}{uid} : $msg->{fuser}),
 		code	=> $msg->{code},
 		mode	=> $mode,
-	});
+	}, 1);
 }
 
 sub _create_web {

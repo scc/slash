@@ -543,7 +543,7 @@ sub createAccessLog {
 		-ts		=> 'now()',
 		query_string	=> $ENV{QUERY_STRING} || '0',
 		user_agent	=> $ENV{HTTP_USER_AGENT} || '0',
-	}, 2);
+	}, 1);
 
 	if ($dat =~ /\//) {
 		$self->sqlUpdate('stories', { -hits => 'hits+1' },
@@ -1622,7 +1622,7 @@ sub createAbuse {
 
 ##################################################################
 sub setExpired {
-	my ($self, $uid) = @_;
+	my($self, $uid) = @_;
 
 	$self->sqlInsert('accesslist', {
 		uid			=> $uid,
@@ -1635,7 +1635,7 @@ sub setExpired {
 
 ##################################################################
 sub setUnexpired {
-	my ($self, $uid) = @_;
+	my($self, $uid) = @_;
 
 	my $sql = "WHERE uid = $uid AND reason = 'expired'";
 	$self->sqlDo("DELETE from accesslist $sql") if $uid;
@@ -1643,7 +1643,7 @@ sub setUnexpired {
 
 ##################################################################
 sub checkExpired {
-	my ($self, $uid) = @_;
+	my($self, $uid) = @_;
 
 	my $where = "uid = $uid AND readonly = 1 AND reason = 'expired'";
 
@@ -2420,7 +2420,7 @@ sub getStoriesEssentials {
 		# mon ("Jun")		day (20010621)	wordytime ("Sunday June 21 12:34 PM")
 		my @timesplit = split /\D+/, $row->{'time'};
 		for my $i (0..$#timesplit) {
-			$row->{ qw( yyyy MM dd hh mm ss )[$i] } = $timesplit[$i];
+			$row->{ (qw( yyyy MM dd hh mm ss ))[$i] } = $timesplit[$i];
 		}
 		formatDate([ $row ], 'time', 'day', '%Q');
 
@@ -3734,21 +3734,34 @@ sub getStories {
 sub fzGetStories {
 	my($self, $section) = @_;
 	my $slashdb = getCurrentDB();
-	my $stories = $slashdb->sqlSelectAllHashrefArray(
-		"stories.sid,title,time,dept,alttext,
-		 image,commentcount,stories.section,introtext,bodytext,
-		 topics.tid as tid, MAX(comments.date) AS lastcommentdate",
-		"stories LEFT OUTER JOIN comments ON stories.sid = comments.sid,
-		 topics, story_text",
-		"((displaystatus = 0 and \"$section\"=\"\")
-		 OR (stories.section=\"$section\" and displaystatus > -1))
-		 AND time < now() AND writestatus > -1
-		 AND stories.tid=topics.tid AND stories.sid=story_text.sid",
-		"GROUP BY stories.sid
-		 ORDER BY time DESC
-		 LIMIT 10"
-	);
-	return $stories;
+	my $section_dbi = $self->sqlQuote($section || '');
+
+	my($comments, $stories);
+	if (getCurrentStatic('mysql_heap_table')) {
+		$comments = "comment_heap";
+		$stories  = "story_heap";
+	} else {
+		$comments = "comments";
+		$stories  = "stories";
+	}
+
+	my $data = $slashdb->sqlSelectAllHashrefArray(<<S, <<F, <<W, <<E);
+$stories.sid, $stories.title, time, commentcount,
+MAX($comments.date) AS lastcommentdate
+S
+discussions LEFT OUTER JOIN $comments ON discussions.id = $comments.sid, $stories
+F
+$stories.sid = discussions.sid
+AND ((displaystatus = 0 and $section_dbi="")
+OR (stories.section=$section_dbi and displaystatus > -1))
+AND time < now() AND writestatus > -1
+W
+GROUP BY $stories.sid
+ORDER BY time DESC
+LIMIT 10
+E
+	# note that LIMIT could be a var -- pudge
+	return $data;
 }
 
 

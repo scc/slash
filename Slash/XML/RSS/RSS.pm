@@ -287,7 +287,10 @@ sub create {
 		}
 	}
 
-	return unless @items;
+	# technically, you *must* have items, but that can be
+	# checked by the caller, so we are just gonna return
+	# the incomplete RSS -- pudge
+# 	return unless @items;
 	for (@items) {
 		$rss->add_item(%$_);
 	}
