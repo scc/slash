@@ -226,7 +226,6 @@ sub main {
 	print getMessage('note', { note => $note }) if defined $note;
 	print createMenu($formname) if ! $curuser->{is_anon};
 
-
 			
 	if ( isAnon($curuser->{uid}) && $ops->{$op}{seclev} > 0) {
 		$op = 'default';
@@ -365,13 +364,11 @@ sub mailPasswd {
 		}
 	}
 
-	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
-
 	unless ($uid) {
 		print getError('mailpasswd_notmailed_err');
 		return;
 	}
-
+	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
 	my $newpasswd = $slashdb->getNewPasswd($uid);
 	my $tempnick = fixparam($user->{nickname});
 
@@ -428,24 +425,24 @@ sub showInfo {
 		$user->{fg} = $user->{fg};
 		$user->{bg} = $user->{bg};
 
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $user->{ipid}});
-		$admin_block = $admin_flag ? getUserAdmin($user->{ipid}, 1, 0) : '';
-		$comments = $slashdb->getCommentsByNetID($user->{ipid}, $form->{min});
-
-		$requested_user->{nonuid} = 1;
-		$requested_user->{fg} = $user->{fg};
-		$requested_user->{bg} = $user->{bg};
-
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $requested_user->{ipid}});
-		$admin_block = $admin_flag ? getUserAdmin($requested_user->{ipid}, 1, 0) : '';
-		$commentcount = $slashdb->countCommentsByIPID($requested_user->{ipid});
-		$comments = $slashdb->getCommentsByNetID($requested_user->{ipid}, $constants->{user_comment_display_default})
-			if $commentcount;
+		$title = getTitle('user_netID_user_title', {
+			id => $id,
+			md5id => $user->{ipid}
+		});
+		$admin_block = $admin_flag ?
+			getUserAdmin($user->{ipid}, 1, 0) : '';
+		$commentcount = $slashdb->countCommentsByIPID(
+			$requested_user->{ipid}
+		);
+		$comments = $slashdb->getCommentsByNetID(
+			$user->{ipid}, $form->{min}
+		) if $commentcount;
 	} elsif ($form->{userfield_flag} eq 'subnet') {
 		$id ||= $form->{userfield};
 		if ($id =~ /(\d+\.\d+\.\d+)\.?\d+?/) {
 			$requested_user->{subnetid} = $1 . ".0";
-			$requested_user->{subnetid} = md5_hex($requested_user->{subnetid});
+			$requested_user->{subnetid} =
+				md5_hex($requested_user->{subnetid});
 		} else {
 			$requested_user->{subnetid} = $id;
 		}
@@ -454,11 +451,19 @@ sub showInfo {
 		$requested_user->{fg} = $user->{fg};
 		$requested_user->{bg} = $user->{bg};
 
-		$title = getTitle('user_netID_user_title', { id => $id, md5id => $requested_user->{subnetid}});
-		$admin_block = $admin_flag ? getUserAdmin($requested_user->{subnetid}, 1, 0) : '';
-		$commentcount = $slashdb->countCommentsBySubnetID($requested_user->{subnetid});
-		$comments = $slashdb->getCommentsBySubnetID($requested_user->{subnetid}, $constants->{user_comment_display_default})
-			if $commentcount;
+		$title = getTitle('user_netID_user_title', {
+			id => $id,
+			md5id => $requested_user->{subnetid},
+		});
+		$admin_block = $admin_flag ?
+			getUserAdmin($requested_user->{subnetid}, 1, 0) : '';
+		$commentcount = $slashdb->countCommentsBySubnetID(
+			$requested_user->{subnetid}
+		);
+		$comments = $slashdb->getCommentsBySubnetID(
+			$requested_user->{subnetid},
+			$constants->{user_comment_display_default}
+		) if $commentcount;
 	} elsif ($form->{nick}) {
 		$uid = $slashdb->getUserUID($form->{nick});
 		$requested_user = $slashdb->getUser($uid);
@@ -466,13 +471,17 @@ sub showInfo {
 	} else {
 		$requested_user = $id ? $slashdb->getUser($id) : $user;
 		$uid = $requested_user->{uid};
-		$admin_block = $admin_flag ? getUserAdmin($requested_user->{uid}, 1, 1) : '';
+		$admin_block = $admin_flag ?
+			getUserAdmin($requested_user->{uid}, 1, 1) : '';
 	}
 
 	unless($requested_user->{nonuid}) {
-		$commentcount = $slashdb->countCommentsByUID($requested_user->{uid});
-		$comments = $slashdb->getCommentsByUID($requested_user->{uid}, $constants->{user_comment_display_default})
-			if $commentcount;
+		$commentcount =
+			$slashdb->countCommentsByUID($requested_user->{uid});
+		$comments = $slashdb->getCommentsByUID(
+			$requested_user->{uid},
+			$constants->{user_comment_display_default}
+		) if $commentcount;
 	}
 
 	for (@$comments) {
@@ -775,7 +784,7 @@ sub editUser {
 	my $constants = getCurrentStatic();
 
 	my($user, $session) = ({}, {});
-	my($admin_block, $title, $description, $maillist, $session_select);
+	my($admin_block, $title, $session_select);
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0;
 
 	return if $curuser->{is_anon};
@@ -799,9 +808,6 @@ sub editUser {
 
 	$title = getTitle('editUser_title', { user_edit => $user});
 
-	$description = $slashdb->getDescriptions('maillist');
-	$maillist = createSelect('maillist', $description, $user->{maillist}, 1);
-
 	$session = $slashdb->getDescriptions('session_login');
 	$session_select = createSelect('session_login', $session, $user->{session_login}, 1);
 
@@ -810,7 +816,6 @@ sub editUser {
 		admin_flag		=> $admin_flag,
 		title			=> $title,
 		editkey 		=> editKey($user->{uid}),
-		maillist 		=> $maillist,
 		session 		=> $session_select,
 		admin_block		=> $admin_block
 	});
@@ -919,16 +924,22 @@ sub editComm {
 	$title = getTitle('editComm_title');
 
 	$formats = $slashdb->getDescriptions('commentmodes');
-	$commentmodes_select = createSelect('umode', $formats, $user->{mode}, 1);
+	$commentmodes_select=createSelect('umode', $formats, $user->{mode}, 1);
 
 	$formats = $slashdb->getDescriptions('sortcodes');
-	$commentsort_select = createSelect('commentsort', $formats, $user->{commentsort}, 1);
+	$commentsort_select = createSelect(
+		'commentsort', $formats, $user->{commentsort}, 1
+	);
 
 	$formats = $slashdb->getDescriptions('threshcodes');
-	$uthreshold_select = createSelect('uthreshold', $formats, $user->{threshold}, 1);
+	$uthreshold_select = createSelect(
+		'uthreshold', $formats, $user->{threshold}, 1
+	);
 
 	$formats = $slashdb->getDescriptions('threshcodes');
-	$highlightthresh_select = createSelect('highlightthresh', $formats, $user->{highlightthresh}, 1);
+	$highlightthresh_select = createSelect(
+		'highlightthresh', $formats, $user->{highlightthresh}, 1
+	);
 
 	my $h_check = $user->{hardthresh}	? ' CHECKED' : '';
 	my $r_check = $user->{reparent}		? ' CHECKED' : '';
@@ -936,7 +947,12 @@ sub editComm {
 	my $s_check = $user->{nosigs}		? ' CHECKED' : '';
 
 	$formats = $slashdb->getDescriptions('postmodes');
-	$posttype_select = createSelect('posttype', $formats, $user->{posttype}, 1);
+	$posttype_select = createSelect(
+		'posttype', $formats, $user->{posttype}, 1
+	);
+
+	print STDERR "CHECK: [emaildisplay=$user->{emaildisplay}]\n";
+	print STDERR "CHECK: [domaintags=$user->{domaintags}]\n";
 
 	slashDisplay('editComm', {
 		title			=> $title,
@@ -1135,16 +1151,15 @@ sub saveUser {
 
 	if ($curuser->{seclev} >= 100) {
 		$uid = shift;
-		if (! $uid) {
-			$uid = $form->{uid} ? $form->{uid} : $curuser->{uid};
-		}
+		$uid = $form->{uid} ? $form->{uid} : $curuser->{uid} if !$uid;
 	} else {
-		$uid = ($curuser->{uid} == $form->{uid}) ? $form->{uid} : $curuser->{uid};
+		$uid = ($curuser->{uid} == $form->{uid}) ?
+			$form->{uid} : $curuser->{uid};
 	}
 
 	return if isAnon($uid);
 
-	my($note, $author_flag, $user_fakeemail, $formname);
+	my($note, $author_flag, $formname);
 	my $user = {};
 
 	if ($form->{userfield_flag} eq 'uid') {
@@ -1169,17 +1184,13 @@ sub saveUser {
 		$user = $slashdb->getUser($uid);
 	}
 
-	# We start with the 'Saved ...' message.
-	$user->{nickname} = substr($user->{nickname}, 0, 20);
-
-	$note .= getMessage('savenickname_msg', { nickname => $user->{nickname} }, 1);
+	$note .= getMessage('savenickname_msg', {
+		nickname => $user->{nickname},
+	}, 1);
 
 	if (!$user->{nickname}) {
 		$note .= getError('cookie_err', 0, 1);
 	}
-
-	$user_fakeemail = ($user->{emaildisplay} == 1) ?
-		$user->{fakeemail} : getArmoredEmail($uid);
 
 	# Check to ensure that if a user is changing his email address, that
 	# it doesn't already exist in the userbase.
@@ -1213,23 +1224,17 @@ sub saveUser {
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 	$author_flag		= $form->{author} ? 1 : 0;
-	# Do the right thing with respect to the chosen email display mode
-	# and the options that can be displayed.
-	my @email_choices = ('', $user_fakeemail, $form->{realemail});
 
 	# for the users table
 	my $users_table = {
 		sig		=> $form->{sig},
 		homepage	=> $form->{homepage},
-		maillist	=> $form->{maillist},
 		realname	=> $form->{realname},
 		bio		=> $form->{bio},
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
 		session_login	=> $form->{session_login},
-		emaildisplay	=> $form->{emaildisplay},
-		fakeemail	=> $email_choices[$form->{emaildisplay}],
 	};
 
 	# don't want undef, want to be empty string so they
@@ -1270,12 +1275,13 @@ sub saveUser {
 	editUser($uid);
 }
 
+
 #################################################################
 sub saveComm {
 	my $slashdb = getCurrentDB();
 	my $curuser = getCurrentUser();
 	my $form = getCurrentForm();
-	my $uid;
+	my($uid, $user_fakeemail);
 
 	if ($curuser->{seclev} >= 100) {
 		$uid = shift;
@@ -1283,40 +1289,47 @@ sub saveComm {
 			$uid = $form->{uid} ? $form->{uid} : $curuser->{uid};
 		}
 	} else {
-		$uid = ($curuser->{uid} == $form->{uid}) ? $form->{uid} : $curuser->{uid};
+		$uid = ($curuser->{uid} == $form->{uid}) ?
+			$form->{uid} : $curuser->{uid};
 	}
 	return if isAnon($uid);
 
-	my $name = $curuser->{seclev} && $form->{name} ? $form->{name} : $curuser->{nickname};
+	# Do the right thing with respect to the chosen email display mode
+	# and the options that can be displayed.
+	my $user = $slashdb->getUser($uid);
+	$user_fakeemail = ($user->{emaildisplay} == 1) ?
+		$user->{fakeemail} : getArmoredEmail($uid);
+	my @email_choices = ('', $user_fakeemail, $user->{realemail});
 
-	$name = substr($name, 0, 20);
+	my $name = $curuser->{seclev} && $form->{name} ?
+		$form->{name} : $curuser->{nickname};
 
 	my $savename = getMessage('savename_msg', { name => $name });
 	print $savename;
 
-	if (isAnon($uid) || !$name) {
-		print getError('cookie_err');
-	}
+	print getError('cookie_err') if isAnon($uid) || !$name;
 
 	# Take care of the lists
 	# Enforce Ranges for variables that need it
 	$form->{commentlimit} = 0 if $form->{commentlimit} < 1;
 	$form->{commentspill} = 0 if $form->{commentspill} < 1;
 
-	# for users_comments
+	# This has NO BEARING on the table the data goes into now. 
+	# setUser() does the right thing based on the key name.
 	my $users_comments_table = {
 		clbig		=> $form->{clbig},
 		clsmall		=> $form->{clsmall},
 		commentlimit	=> $form->{commentlimit},
 		commentsort	=> $form->{commentsort},
 		commentspill	=> $form->{commentspill},
-		displaytags	=> $form->{displaytags},
+		domaintags	=> $form->{domaintags},
+		emaildisplay	=> $form->{emaildisplay},
+		fakeemail	=> $email_choices[$form->{emaildisplay}],
 		highlightthresh	=> $form->{highlightthresh},
 		maxcommentsize	=> $form->{maxcommentsize},
 		mode		=> $form->{umode},
 		posttype	=> $form->{posttype},
 		threshold	=> $form->{uthreshold},
-		domaintags	=> $form->{domaintags},
 		nosigs		=> ($form->{nosigs}     ? 1 : 0),
 		reparent	=> ($form->{reparent}   ? 1 : 0),
 		noscores	=> ($form->{noscores}   ? 1 : 0),
@@ -1338,15 +1351,15 @@ sub saveHome {
 
 	if ($curuser->{seclev} >= 100) {
 		$uid = shift;
-		if (! $uid) {
-			$uid = $form->{uid} ? $form->{uid} : $curuser->{uid};
-		}
+		$uid = $form->{uid} ? $form->{uid} : $curuser->{uid} if !$uid;
 	} else {
-		$uid = ($curuser->{uid} == $form->{uid}) ? $form->{uid} : $curuser->{uid};
+		$uid = ($curuser->{uid} == $form->{uid}) ?
+			$form->{uid} : $curuser->{uid};
 	}
 	return if isAnon($uid);
 
-	my $name = $curuser->{seclev} && $form->{name} ? $form->{name} : $curuser->{nickname};
+	my $name = $curuser->{seclev} && $form->{name} ?
+		$form->{name} : $curuser->{nickname};
 
 	$name = substr($name, 0, 20);
 	return if isAnon($uid);
@@ -1411,7 +1424,8 @@ sub saveHome {
 			unless $form->{willing};
 	}
 
-	# Update users with the $users_index_table thing we've been playing with for this whole damn sub
+	# Update users with the $users_index_table thing we've been playing with
+	# for this whole damn sub
 	$slashdb->setUser($uid, $users_index_table);
 
 	editHome($uid);
