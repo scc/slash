@@ -5024,6 +5024,9 @@ sub createMenuItem {
 }
 
 ########################################################
+# It'd be faster for getMenus() to just "SELECT *" and parse
+# the results into a perl hash, than to "SELECT DISTINCT" and
+# then make separate calls to getMenuItems. XXX - Jamie
 sub getMenuItems {
 	my($self, $script) = @_;
 	my $sql = "SELECT * FROM menus WHERE page=" . $self->sqlQuote($script) . " ORDER by menuorder";
@@ -5034,6 +5037,22 @@ sub getMenuItems {
 	$sth->finish;
 
 	return \@menu;
+}
+
+########################################################
+sub getMiscUserOpts {
+       my($self) = @_;
+
+       my $user_seclev = getCurrentUser('seclev') || 0;
+       my $hr = $self->sqlSelectAllHashref("name", "*", "misc_user_opts",
+	       "seclev <= $user_seclev");
+       my $ar = [ ];
+       for my $row (
+	       sort { $hr->{$a}{optorder} <=> $hr->{$b}{optorder} } keys %$hr
+       ) {
+	       push @$ar, $hr->{$row};
+       }
+       return $ar;
 }
 
 ########################################################
