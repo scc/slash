@@ -1698,7 +1698,7 @@ sub countStory {
 sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 	my($self, $user) = @_;
 	return unless $user->{willing};
-	return if $user->{uid} < 1;
+	return if $user->{is_anon};
 	return if $user->{karma} < 0;
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
@@ -2752,12 +2752,20 @@ sub setUser {
 		users_info users_key users_prefs
 	)];
 
-	# encrypt password  --  done here OK?
-	# Probably safer to put it here
+	# special cases for password, exboxes
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
 		$hashref->{newpasswd} = '';
 		$hashref->{passwd} = encryptPassword($hashref->{passwd});
+	}
+
+	# hm, come back to exboxes later -- pudge
+	if (0 && exists $hashref->{exboxes}) {
+		if (ref $hashref->{exboxes} eq 'ARRAY') {
+			$hashref->{exboxes} = sprintf("'%s'", join "','", @{$hashref->{exboxes}});
+		} elsif (ref $hashref->{exboxes}) {
+			$hashref->{exboxes} = '';
+		} # if nonref scalar, just let it pass
 	}
 
 	$cache = _genericGetCacheName($self, $tables);

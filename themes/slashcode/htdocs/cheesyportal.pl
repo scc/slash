@@ -51,6 +51,8 @@ sub main {
 				$user->{mylinks} ||  $block
 			);
 
+		} elsif ($bid =~ /_more$/) {	# do nothing
+		} elsif ($bid eq "userlogin") {	# do nothing
 		} else {
 			$b = portalbox($constants->{fancyboxwidth},
 				$title, $block, "", $url

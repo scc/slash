@@ -25,36 +25,35 @@
 ###############################################################################
 use strict;
 use Slash;
-use Slash::Utility;
 use Slash::Display;
+use Slash::Utility;
 
 sub main {
 	my $constants = getCurrentStatic();
-	$ENV{REQUEST_URI} ||= "";
+	$ENV{REQUEST_URI} ||= '';
 
-	my $url = stripByMode(substr($ENV{REQUEST_URI}, 1), 'exttrans');
-
+	my $url = stripByMode(substr($ENV{REQUEST_URI}, 1), 'literal');
 	my $admin = $constants->{adminmail};
 
-	header("404 File Not Found", '', '404 File Not Found');
+	header('404 File Not Found', '', '404 File Not Found');
 
 	my($new_url, $errnum) = fixHref($url, 1);
 
 	if ($errnum && $errnum !~ /^\d+$/) {
 		slashDisplay('404-main', {
-			url => $new_url,
-			origin => $url,
-			message => $errnum,
+			url	=> $new_url,
+			origin	=> $url,
+			message	=> $errnum,
 		});
 	} else {
 		slashDisplay('404-main', {
-			error  => $errnum,
-			url => $new_url,
-			origin => $url,
+			error	=> $errnum,
+			url	=> $new_url,
+			origin	=> $url,
 		});
 	}
 
-	writeLog("404","404");
+	writeLog('404', '404');
 	footer();
 }
 

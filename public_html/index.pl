@@ -22,30 +22,16 @@
 #
 #  $Id$
 ###############################################################################
-# pre stories cache update
 use strict;
-use vars qw(%I);
 use Slash;
+use Slash::Display;
 use Slash::Utility;
-use Slash::DB;
 
-#################################################################
-# I really dislike Apache::Registry sometimes. If index.pl
-# was a real handler, this would be a lot more fun.
-# The lesson learned, is that a little extra time spent making
-# $user and $form not global saves on debugging headache like
-# global issues.
-#
-# It might behove us to rewrite Apache::Registry so that it
-# passes our variables into the script. Heck, we could combine
-# up some of the other logic at the same time (AKA the index
-# bits).	-Brian
-#################################################################
 sub main {
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
-	*I = getSlashConf();
-	getSlash();
 
 	if ($form->{op} eq 'userlogin' && $form->{upasswd} && $form->{unickname}) {
 		redirect($ENV{SCRIPT_NAME});
@@ -59,24 +45,22 @@ sub main {
 		upBid($form->{bid}), $c++ if /^u$/;
 		dnBid($form->{bid}), $c++ if /^d$/;
 		rmBid($form->{bid}), $c++ if /^x$/;
-		redirect($ENV{SCRIPT_NAME}) if $c;
+		redirect($ENV{SCRIPT_NAME}), return if $c;
 	}
 
-	my $SECT = getSection($form->{section});
-	$SECT->{mainsize} = int($SECT->{artcount} / 3);
+	my $section = getSection($form->{section});
+	$section->{artcount} = $user->{maxstories} unless $user->{is_anon};
+	$section->{mainsize} = int($section->{artcount} / 3);
 
-	my $title = $SECT->{title};
-	$title = "$I{sitename}: $title" unless $SECT->{isolate};
-	
-	header($title, $SECT->{section});
-#	print qq'Have you <A HREF="$I{rootdir}/metamod.pl">Meta Moderated</A> Today?<BR>' if $I{dbobject}->checkForModerator($user);
-		
-	my $block = getEvalBlock("index");
-	my $execme = prepEvalBlock($block);
+	my $title = getData('head', { section => $section });
+	header($title, $section->{section});
 
-	eval $execme;
-
-	print "\n<H1>Error while processing 'index' block:$@</H1>\n" if $@;
+	my $stories = $dbslash->getStories($section, $constants->{currentSection});
+	slashDisplay('index', {
+		is_moderator	=> scalar $dbslash->checkForModerator($user),
+		stories		=> scalar displayStories($stories),
+		boxes		=> scalar displayStandardBlocks($section, $stories)
+	});
 
 	footer();
 
@@ -85,12 +69,14 @@ sub main {
 
 #################################################################
 # Should this method be in the DB library?
+# absolutely.  we should hide the details there.  but this is in a lot of
+# places (modules, index, users); let's come back to it later.  -- pudge
 sub saveUserBoxes {
 	my(@a) = @_;
-
+	my $dbslash = getCurrentDB();
 	my $user = getCurrentUser();
 	$user->{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
-	$I{dbobject}->setUser($user->{uid}, { exboxes => $user->{exboxes} })
+	$dbslash->setUser($user->{uid}, { exboxes => $user->{exboxes} })
 		unless $user->{is_anon};
 }
 
@@ -113,7 +99,6 @@ sub upBid {
 			($a[$x-1], $a[$x]) = ($a[$x], $a[$x-1]) if $a[$x] eq $bid;
 		}
 	}
-
 	saveUserBoxes(@a);
 }
 
@@ -124,11 +109,10 @@ sub dnBid {
 	if ($a[@a-1] eq $bid) {
 		($a[0], $a[@a-1]) = ($a[@a-1], $a[0]);
 	} else {
-		for(my $x = @a-1; $x > -1; $x--) {
+		for (my $x = @a-1; $x > -1; $x--) {
 			($a[$x], $a[$x+1]) = ($a[$x+1], $a[$x]) if $a[$x] eq $bid;
 		}
 	}
-
 	saveUserBoxes(@a);
 }
 
@@ -136,144 +120,161 @@ sub dnBid {
 sub rmBid {
 	my($bid) = @_;
 	my @a = getUserBoxes();
-	foreach (my $x = @a; $x >= 0; $x--) {
+	for (my $x = @a; $x >= 0; $x--) {
 		splice @a, $x, 1 if $a[$x] eq $bid;
 	}
 	saveUserBoxes(@a);
 }
 
 #################################################################
-
-#################################################################
 sub displayStandardBlocks {
-	my ($SECT, $olderStuff) = @_;
+	my($section, $olderStuff) = @_;
+	my $dbslash = getCurrentDB();
+	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+
 	return if $user->{noboxes};
 
-	my ($boxBank, $sectionBoxes) = $I{dbobject}->getPortalsCommon();
+	my(@boxes, $return);
+	my($boxBank, $sectionBoxes) = $dbslash->getPortalsCommon();
+	my $getblocks = $section->{section} || 'index';
 
-	my $getblocks = $SECT->{section} || 'index';
-
-	my @boxes;
 	if ($user->{exboxes} && $getblocks eq 'index') {
-		$user->{exboxes} =~ s/'//g;
-		@boxes = split m/,/, $user->{exboxes};
+		@boxes = getUserBoxes();
 	} else {
-		@boxes = @{$sectionBoxes->{$getblocks}} if ref $sectionBoxes->{$getblocks};
+		@boxes = @{$sectionBoxes->{$getblocks}}
+			if ref $sectionBoxes->{$getblocks};
 	}
 
 	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
-			print portalbox(
-				$I{fancyboxwidth}, "$user->{nickname}'s Slashbox",
-				$user->{mylinks} || 'This is your user space.  Love it.',
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				getData('userboxhead'),
+				$user->{mylinks} || getData('userboxdefault'),
 				$bid
 			);
-		} elsif ($bid =~ /_more$/) {
-			print portalbox($I{fancyboxwidth}, "Older Stuff",
-				getOlderStories($olderStuff, $SECT),
-				$bid) if $olderStuff;
-		} elsif ($bid eq "userlogin" && !$user->{is_anon}) {
-			# Don't do nuttin'
-		} elsif ($bid eq "userlogin") {
-			my $SB = $boxBank->{$bid};
-			my $B = eval prepBlock $I{dbobject}->getBlock($bid, 'block');
-			#my $B = eval prepBlock $I{blockBank}{$bid};
-			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
+
+		} elsif ($bid =~ /_more$/ && $olderStuff) {
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				getData('morehead'),
+				getOlderStories($olderStuff, $section),
+				$bid
+			);
+
+		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
+			# do nothing!
+
+		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				$boxBank->{$bid}{title},
+				slashDisplay('userlogin', 0, 1, 1),
+				$boxBank->{$bid}{bid},
+				$boxBank->{$bid}{url}
+			);
+
 		} else {
-			my $SB = $boxBank->{$bid};
-			my $B = $I{dbobject}->getBlock($bid, 'block');
-			#my $B = $I{blockBank}{$bid};
-			print portalbox($I{fancyboxwidth}, $SB->{title}, $B, $SB->{bid}, $SB->{url});
+			$return .= portalbox(
+				$constants->{fancyboxwidth},
+				$boxBank->{$bid}{title},
+				$dbslash->getBlock($bid, 'block'),
+				$boxBank->{$bid}{bid},
+				$boxBank->{$bid}{url}
+			);
 		}
 	}
+
+	return $return;
 }
 
 #################################################################
 # pass it how many, and what.
 sub displayStories {
-	my $stories_arrayref = shift;
-	my($today, $x) = ('', 1);
+	my($stories) = @_;
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
 	my $user = getCurrentUser();
+
+	my($today, $x) = ('', 1);
 	my $cnt = int($user->{maxstories} / 3);
+	my $return;
 
-	for (@{$stories_arrayref}) {
+	for (@{$stories}) {
 		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
+		my @links;
+		my @threshComments = split m/,/, $hp;  # posts in each threshold
+		my($storytext, $story) = displayStory($sid, '', 'index');
 
-		my @threshComments = split m/,/, $hp;
+		$return .= $storytext;
 
-		# Prefix story with section if section != this section and no
-		# colon
-		my($story, $S) = displayStory($sid, '', 'index');
-
-		print $story;
-
-		my $execme = getEvalBlock('story_link');
-
-		print eval $execme;
-
-		if ($@) {
-			print STDERR "<!-- story_link eval failed!\n$@\n-->\n";
-		}
-
-		print linkStory({
-			'link'	=> "<B>Read More...</B>",
+		push @links, linkStory({
+			'link'	=> getData('readmore'),
 			sid	=> $sid,
 			section	=> $thissection
 		});
 
-		if ($S->{bodytext} || $cc) {
-			print ' | ', linkStory({
-				'link'	=> length($S->{bodytext}) . ' bytes in body',
+		if ($story->{bodytext} || $cc) {
+			push @links, linkStory({
+				'link'	=> length($story->{bodytext}) . ' ' . getData('bytes'),
 				sid	=> $sid,
 				mode	=> 'nocomment'
-			}) if $S->{bodytext};
+			}) if $story->{bodytext};
 
-			$cc = $threshComments[0];
-			print ' | <B>' if $cc;
+			my @cclink;
+			my $thresh = $threshComments[$user->{threshold} + 1];
 
-			if ($cc && $user->{threshold} > -1
-				&& $cc ne $threshComments[$user->{threshold} + 1]) {
+			if ($cc = $threshComments[0]) {
+				if ($user->{threshold} > -1 && $cc ne $thresh) {
+					$cclink[0] = linkStory({
+						sid		=> $sid,
+						threshold	=> $user->{threshold},
+						'link'		=> $thresh
+					});
+				}
 
-				print linkStory({
-					sid	  => $sid,
-					threshold => $user->{threshold},
-					'link'	  => $threshComments[$user->{threshold} + 1]
+				$cclink[1] = linkStory({
+					sid		=> $sid, 
+					threshold	=> -1, 
+					'link'		=> $cc || 0
 				});
-				print ' of ';
+
+				push @links, getData('comments', { cc => \@cclink });
 			}
 
-			print linkStory({
-				sid		=> $sid, 
-				threshold	=> '-1', 
-				'link'		=> $cc
-			}) if $cc;
+			if ($thissection ne $constants->{defaultsection} && !getCurrentForm('section')) {
+				my($section) = getSection($thissection);
+				push @links, getData('seclink', {
+					name	=> $thissection,
+					section	=> $section
+				});
+			}
 
-			print ' </B>comment', $cc > 1 ? 's' : '' if $cc;
-
+			push @links, getData('editstory', { sid => $sid }) if $user->{aseclev} > 100;
 		}
 
-		if ($thissection ne $I{defaultsection} && !getCurrentForm('section')) {
-			my($SEC) = getSection($thissection);
-			print qq' | <A HREF="$I{rootdir}/$thissection/">$SEC->{title}</A>';
-		}
-		print qq' | <A HREF="$I{rootdir}/admin.pl?op=edit&sid=$sid">Edit</A>'
-			if $user->{aseclev} > 100;
-
-		$execme = getEvalBlock('story_trailer');
-		print eval $execme; 
-
-		if ($@) {
-			print "<!-- story_trailer eval failed!\n$@\n-->\n";
-		}
+		$return .= slashDisplay('index-storylink', {
+			links	=> \@links,
+		}, 1);
 
 		my($w) = join ' ', (split m/ /, $time)[0 .. 2];
 		$today ||= $w;
-#		print "<!-- <$today> <$w> <$x> <$cnt> <$time> -->\n";
 		last if ++$x > $cnt && $today ne $w;
 	}
+
+	return $return;
 }
 
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "index-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('index-data', $hashref, 1, 1);
+}
 
 #################################################################
 main();

@@ -217,6 +217,17 @@ sub _populate {
 		unless exists $hashref->{env}; 
 }
 
+require Template::Stash; # intialize before setting vars
+$Template::Stash::LIST_OPS->{'rand'} = sub {
+	my $list = shift;
+	return $list->[rand @$list];
+};
+
+$Template::Stash::SCALAR_OPS->{'uc'} = sub { uc $_[0] };
+$Template::Stash::SCALAR_OPS->{'lc'} = sub { lc $_[0] };
+$Template::Stash::SCALAR_OPS->{'ucfirst'} = sub { ucfirst $_[0] };
+$Template::Stash::SCALAR_OPS->{'lcfirst'} = sub { lcfirst $_[0] };
+
 1;
 
 __END__

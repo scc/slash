@@ -262,7 +262,7 @@ sub generatesession {
 sub sqlDo {
 	my($self, $sql) = @_;
 	$self->sqlConnect();
-	$self->{dbh}->do($sql) || errorLog($sql);
+	$self->{dbh}->do($sql) or errorLog($sql);
 }
 
 1;

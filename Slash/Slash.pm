@@ -1087,7 +1087,7 @@ sub header {
 
 	$title =~ s/<(.*?)>//g;
 
-	slashDisplay('html-header', { title => $title }) if $title;
+	slashDisplay('html-header', { title => $title }, 0, 1) if $title;
 
 	# ssi = 1 IS NOT THE SAME as ssi = 'yes'
 	if ($form->{ssi} eq 'yes') {
@@ -1128,7 +1128,7 @@ sub footer {
 		return;
 	}
 
-	slashDisplaySection('footer');
+	slashDisplaySection('footer', 0, 0, 1);
 }
 
 #========================================================================
@@ -1253,7 +1253,9 @@ sub fancybox {
 		width		=> $width,
 		contents	=> $contents,
 		title		=> $title,
-		center		=> $center
+		center		=> $center,
+		mainwidth	=> $mainwidth,
+		insidewidth	=> $insidewidth,
 	}, $return);
 }
 
@@ -1303,15 +1305,12 @@ sub portalbox {
 		url	=> $url,
 	}, 1, 1);
 
-	unless ($user->{exboxes}) {
-		fancybox($width, $title, $contents);
-		return;
+	if ($user->{exboxes}) {
+		$title = slashDisplaySection('portalmap', {
+			title	=> $title,
+			bid	=> $bid,
+		}, 1, 1);
 	}
-
-	$title = slashDisplaySection('portalmap', {
-		title	=> $title,
-		bid	=> $bid,
-	}, 1, 1);
 
 	fancybox($width, $title, $contents, 0, 1);
 }

@@ -35,9 +35,10 @@ sub SlashVirtualUser ($$$) {
 }
 
 sub IndexHandler {
-	my ($r) = @_;
+	my($r) = @_;
 	if ($r->uri eq '/') {
-		if ($ENV{HTTP_COOKIE} =~ /(?:user|session)/) {
+		# cookie data will begin with word char or %
+		if ($r->header_in('Cookie') =~ /\b(?:user|session)=[%\w]/) {
 			$r->filename($r->document_root . '/index.pl');
 			return OK;
 		} else {

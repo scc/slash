@@ -28,7 +28,6 @@ use strict;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
-use CGI ();
 
 #################################################################
 sub main {
