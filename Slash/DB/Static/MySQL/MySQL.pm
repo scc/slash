@@ -843,9 +843,15 @@ sub deleteStoryAll {
 
 ########################################################
 # For tasks/author_cache.pl
+# please don't unnecessarily stretch lines out to 250 columns -- pudge
 sub createAuthorCache {
 	my($self) = @_;
-	$self->sqlDo('REPLACE INTO authors_cache SELECT users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author FROM users, stories, users_info WHERE stories.uid=users.uid AND users.uid=users_info.uid GROUP BY stories.uid');
+	$self->sqlDo(<<'EOT');
+REPLACE INTO authors_cache
+SELECT       users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author
+FROM         users, stories, users_info
+WHERE        stories.uid=users.uid AND users.uid=users_info.uid GROUP BY stories.uid
+EOT
 }
 
 ########################################################
