@@ -230,7 +230,7 @@ sub getUser {
 	$user->{exaid}		= testExStr($user->{exaid}) if $user->{exaid};
 	$user->{exboxes}	= testExStr($user->{exboxes}) if $user->{exboxes};
 	$user->{extid}		= testExStr($user->{extid}) if $user->{extid};
-	user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
+	$user->{points}		= 0 unless $user->{willing}; # No points if you dont want 'em
 	if ($user->{'format'} eq '%i ish') {
 		$user->{aton} = 'around'; # getData('atonish');
 	} else {
