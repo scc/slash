@@ -65,7 +65,11 @@ END %]
 [% END %]
 
 		<TD ALIGN="RIGHT">
+[% IF story.hits %]
 		<FONT SIZE="2">[% story.hits %]</FONT>
+[% ELSE %]
+		&nbsp;
+[% END %]
 		</TD>
 		<TD>
 		<FONT SIZE="2">[% story.comments %]</FONT>
