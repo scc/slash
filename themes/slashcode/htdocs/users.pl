@@ -57,7 +57,7 @@ sub main {
 	header("$constants->{sitename} Users");
 
 	if (!$user->{is_anon} && $op ne 'userclose') {
-		print createMenu('user');
+		print createMenu('users');
 	}
 
 	# and now the carnage begins

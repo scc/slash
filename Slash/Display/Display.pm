@@ -13,7 +13,10 @@ Slash::Display - Display library for Slash
 
 =head1 DESCRIPTION
 
-Process and display a template using the data passed in.
+Slash::Display uses Slash::Display::Provider to provide the
+template data from the Slash::DB API.
+
+It will process and display a template using the data passed in.
 In addition to whatever data is passed in the hashref, the contents
 of the user, form, and static objects, as well as the %ENV hash,
 are available.
@@ -171,17 +174,6 @@ sub slashDisplaySection {
 	}
 }
 
-
-sub _template {
-	Template->new(
-		TRIM		=> 1,
-		PRE_CHOMP	=> 1,
-		POST_CHOMP	=> 1,
-		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
-		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
-	);
-}
-
 #========================================================================
 
 =back
@@ -217,7 +209,81 @@ sub _populate {
 		unless exists $hashref->{env}; 
 }
 
-require Template::Stash; # intialize before setting vars
+#========================================================================
+
+=item _template()
+
+Return a Template object.
+
+Return value
+
+	A Template object (see below).
+
+=cut
+
+my $filters;
+
+sub _template {
+	Template->new(
+		TRIM		=> 1,
+		PRE_CHOMP	=> 1,
+		POST_CHOMP	=> 1,
+		LOAD_FILTERS	=> $filters,
+		LOAD_TEMPLATES	=> [ Slash::Display::Provider->new ],
+		PLUGINS		=> { Slash => 'Slash::Display::Plugin' },
+	);
+}
+
+=back
+
+=head1 TEMPLATE ENVIRONMENT
+
+The template has the options TRIM, PRE_CHOMP, and POST_CHOMP set by default.
+Its provider is Slash::Display::Provider, and the plugin module
+Slash::Display::Plugin can be referenced by simply "Slash".
+
+Additional scalar ops (which are global, so they are in effect
+for every Template object created, from this or any other module)
+include C<uc>, C<lc>, C<ucfirst>, and C<lcfirst>,
+which all do what you think.
+
+	[% myscalar.uc %]  # return upper case myscalar
+
+Additional list ops include C<rand>, which returns a random element
+from the given list.
+
+	[% mylist.rand %]  # return single random element from mylist
+
+Also provided are some filters.  The C<fixurl>, C<fixparam>, and
+C<stripByMode> filters are just frontends to the functions of those
+names in the Slash API:
+
+	[% FILTER stripByMode('literal') %]
+		I think that 1 > 2!
+	[% END %]
+
+	<A HREF="[% env.script_name %]?op=[% FILTER fixparam %][% form.op %][% END %]">
+
+=cut
+
+require Template::Filters;
+
+$filters = Template::Filters->new({
+	FILTERS => {
+		fixparam	=> \&fixparam,
+		fixurl		=> \&fixurl,
+		stripByMode	=> [ \&myStripByMode => 1 ]
+	}
+});
+
+sub myStripByMode {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], @args) };
+}
+
+
+require Template::Stash;
+
 $Template::Stash::LIST_OPS->{'rand'} = sub {
 	my $list = shift;
 	return $list->[rand @$list];
@@ -232,8 +298,6 @@ $Template::Stash::SCALAR_OPS->{'lcfirst'} = sub { lcfirst $_[0] };
 
 __END__
 
-=back
-
 
 =head1 AUTHOR
 
@@ -242,4 +306,4 @@ Chris Nandor E<lt>pudge@pobox.comE<gt>, http://pudge.net/
 
 =head1 SEE ALSO
 
-Template, Slash, Slash::Utility, Slash::Display::Plugin.
+Template, Slash, Slash::Utility, Slash::DB, Slash::Display::Plugin.

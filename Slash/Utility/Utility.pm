@@ -54,6 +54,11 @@ require Exporter;
 	eatUserCookie
 	setCookie
 	writeLog
+	fixparam
+	fixurl
+	chopEntity
+	fixHref
+	stripByMode
 );
 $Slash::Utility::VERSION = '0.01';
 
@@ -644,6 +649,327 @@ sub setCookie {
 
 	# we need to support multiple cookies, like my tummy does
 	$r->err_headers_out->add('Set-Cookie' => $bakedcookie);
+}
+
+#========================================================================
+
+=item stripByMode(STRING [, MODE, NO_WHITESPACE_FIX ])
+
+Fixes up a string based on what the mode is.
+
+[ Should this be somewhat templatized, so they can customize
+the little HTML bits? Same goes with related functions. -- pudge ]
+
+Parameters
+
+	STRING
+	The string to be manipulated.
+
+	MODE
+	May be one of:
+
+		nohtml
+		The default.  Just strips out HTML.
+
+		literal
+		Prints the text verbatim into HTML, which
+		means just converting < and > and & to their
+		HTML entities.
+
+		exttrans
+		Similarly to 'literal', converts everything
+		to its HTML entity, but then formatting is
+		preserved by converting spaces to HTML
+		space entities, and multiple newlines into BR
+		tags.
+
+		code
+		Just like 'exttrans' but wraps in CODE tags.
+
+		attribute
+		Attempts to format string to fit in as an HTML
+		attribute, which means the same thing as 'literal',
+		but " marks are also converted to their HTML entity.
+
+		plaintext
+		Similar to 'exttrans', but does not translate < and >
+		and & first (so C<stripBadHtml> is called first).
+
+		html (or anything else)
+		Just runs through C<stripBadHtml>.
+
+		NO_WHITESPACE_FIX
+		A boolean that, if true, disables fixing of whitespace
+		problems.  A common exploit in these things is to
+		run a lot of characters together so the page will
+		stretch very wide.  If NO_WHITESPACE_FIX is false,
+		then a space is inserted for every 90 consecutive
+		non-whitespace characters.
+
+Return value
+
+	The manipulated string.
+
+
+=cut
+
+sub stripByMode {
+	my($str, $fmode, $no_white_fix) = @_;
+	$fmode ||= 'nohtml';
+
+	if ($fmode eq 'literal' || $fmode eq 'exttrans' || $fmode eq 'attribute' || $fmode eq 'code') {
+		$str =~ s/(\S{90})/$1 /g unless $no_white_fix;
+		# Encode all HTML tags
+		$str =~ s/&/&amp;/g;
+		$str =~ s/</&lt;/g;
+		$str =~ s/>/&gt;/g;
+	} elsif ($fmode eq 'plaintext') {
+		$str = stripBadHtml($str, $no_white_fix);
+	}
+
+	if ($fmode eq 'plaintext' || $fmode eq 'exttrans' || $fmode eq 'code') {
+		$str =~ s/\n/<BR>/gi;  # pp breaks
+		$str =~ s/(?:<BR>\s*){2,}<BR>/<BR><BR>/gi;
+		# Preserve leading indents / spaces
+		$str =~ s/\t/    /g;
+		if ($fmode eq 'code') {
+			$str =~ s/ /&nbsp;/g;
+			$str = '<CODE>' . $str . '</CODE>';
+		} else {
+			$str =~ s/<BR>\n?( +)/"<BR>\n" . ("&nbsp; " x length($1))/ieg;
+		}
+
+	} elsif ($fmode eq 'nohtml') {
+		$str =~ s/<.*?>//g;
+		$str =~ s/<//g;
+		$str =~ s/>//g;
+		$str =~ s/&/&amp;/g;
+
+	} elsif ($fmode eq 'attribute') {
+		$str =~ s/"/&#34;/g;
+
+	} else {
+		$str = stripBadHtml($str, $no_white_fix);
+	}
+
+	return $str;
+}
+
+########################################################
+sub stripBadHtml  {
+	my($str, $no_white_fix) = @_;
+
+	$str =~ s/<(?!.*?>)//gs;
+	$str =~ s/<(.*?)>/approveTag($1)/sge;
+
+	$str =~ s/></> </g;
+
+	$str =~ s/([^<>\s]{90})/$1 /g unless $no_white_fix;
+
+	return $str;
+}
+
+########################################################
+sub fixHref {  # I don't like this.  we need to change it. -- pudge
+	my($rel_url, $print_errs) = @_;
+	my $abs_url; # the "fixed" URL
+	my $errnum; # the errnum for 404.pl
+
+	my $fixhrefs = getCurrentStatic('fixhrefs');
+	for my $qr (@{$fixhrefs}) {
+		if ($rel_url =~ $qr->[0]) {
+			my @ret = $qr->[1]->($rel_url);
+			return $print_errs ? @ret : $ret[0];
+		}
+	}
+
+	my $rootdir = getCurrentStatic('rootdir');
+	if ($rel_url =~ /^www\.\w+/) {
+		# errnum 1
+		$abs_url = "http://$rel_url";
+		return($abs_url, 1) if $print_errs;
+		return $abs_url;
+
+	} elsif ($rel_url =~ /^ftp\.\w+/) {
+		# errnum 2
+		$abs_url = "ftp://$rel_url";
+		return ($abs_url, 2) if $print_errs;
+		return $abs_url;
+
+	} elsif ($rel_url =~ /^[\w\-\$\.]+\@\S+/) {
+		# errnum 3
+		$abs_url = "mailto:$rel_url";
+		return ($abs_url, 3) if $print_errs;
+		return $abs_url;
+
+	} elsif ($rel_url =~ /^articles/ && $rel_url =~ /\.shtml$/) {
+		# errnum 6
+		my @chunks = split m|/|, $rel_url;
+		my $file = pop @chunks;
+
+		if ($file =~ /^98/ || $file =~ /^0000/) {
+			$rel_url = "$rootdir/articles/older/$file";
+			return ($rel_url, 6) if $print_errs;
+			return $rel_url;
+		} else {
+			return;
+		}
+
+	} elsif ($rel_url =~ /^features/ && $rel_url =~ /\.shtml$/) {
+		# errnum 7
+		my @chunks = split m|/|, $rel_url;
+		my $file = pop @chunks;
+
+		if ($file =~ /^98/ || $file =~ /~00000/) {
+			$rel_url = "$rootdir/features/older/$file";
+			return ($rel_url, 7) if $print_errs;
+			return $rel_url;
+		} else {
+			return;
+		}
+
+	} elsif ($rel_url =~ /^books/ && $rel_url =~ /\.shtml$/) {
+		# errnum 8
+		my @chunks = split m|/|, $rel_url;
+		my $file = pop @chunks;
+
+		if ($file =~ /^98/ || $file =~ /^00000/) {
+			$rel_url = "$rootdir/books/older/$file";
+			return ($rel_url, 8) if $print_errs;
+			return $rel_url;
+		} else {
+			return;
+		}
+
+	} elsif ($rel_url =~ /^askslashdot/ && $rel_url =~ /\.shtml$/) {
+		# errnum 9
+		my @chunks = split m|/|, $rel_url;
+		my $file = pop @chunks;
+
+		if ($file =~ /^98/ || $file =~ /^00000/) {
+			$rel_url = "$rootdir/askslashdot/older/$file";
+			return ($rel_url, 9) if $print_errs;
+			return $rel_url;
+		} else {
+			return;
+		}
+
+	} else {
+		# if we get here, we don't know what to
+		# $abs_url = $rel_url;
+		return;
+	}
+
+	# just in case
+	return $abs_url;
+}
+
+########################################################
+sub approveTag {
+	my($tag) = @_;
+
+	$tag =~ s/^\s*?(.*)\s*?$/$1/; # trim leading and trailing spaces
+	$tag =~ s/\bstyle\s*=(.*)$//i; # go away please
+
+	# Take care of URL:foo and other HREFs
+	if ($tag =~ /^URL:(.+)$/i) {
+		my $url = fixurl($1);
+		return qq!<A HREF="$url">$url</A>!;
+	} elsif ($tag =~ /href\s*=(.+)$/i) {
+		my $url = fixurl($1);
+		return qq!<A HREF="$url">!;
+	}
+
+	# Validate all other tags
+	my $approvedtags = getCurrentStatic('approvedtags');
+	$tag =~ s|^(/?\w+)|\U$1|;
+	foreach my $goodtag (@$approvedtags) {
+		return "<$tag>" if $tag =~ /^$goodtag$/ || $tag =~ m|^/$goodtag$|;
+	}
+}
+
+#========================================================================
+
+=item fixparam(DATA)
+
+Prepares data to be a parameter in a URL.  Such as:
+
+	my $url = 'http://example.com/foo.pl?bar=' . fixparam($data);
+
+Function actually calls C<fixurl(DATA, 1)>.
+
+Parameters
+
+	DATA
+	The data to be escaped.
+
+Return value
+
+	The escaped data.
+
+=cut
+
+sub fixparam {
+	fixurl($_[0], 1);
+}
+
+#========================================================================
+
+=item fixurl(DATA [, PARAM])
+
+Prepares data to be a URL.  Such as:
+
+	my $url = fixparam($someurl);
+
+Parameters
+
+	DATA
+	The data to be escaped.
+
+	PARAM
+	Boolean for whether DATA is a whole URL, or just parameter
+	data for a URL, for use like:
+
+		my $url = 'http://example.com/foo.pl?bar=' . fixurl($data, 1);
+
+	It is normally best to, instead of calling fixurl(DATA, 1), call
+	fixparam(DATA).
+
+Return value
+
+	The escaped data.
+
+=cut
+
+sub fixurl {
+	my($url, $parameter) = @_;
+
+	# RFC 2396
+	my $mark = quotemeta(q"-_.!~*'()");
+	my $alphanum = 'a-zA-Z0-9';
+	my $unreserved = $alphanum . $mark;
+	my $reserved = quotemeta(';|/?:@&=+$,');
+	my $extra = quotemeta('%#');
+
+	if ($parameter) {
+		$url =~ s/([^$unreserved])/sprintf "%%%02X", ord $1/ge;
+		return $url;
+	} else {
+		$url =~ s/[" ]//g;
+		$url =~ s/^'(.+?)'$/$1/g;
+		$url =~ s/([^$unreserved$reserved$extra])/sprintf "%%%02X", ord $1/ge;
+		$url = fixHref($url) || $url;
+		my $decoded_url = decode_entities($url);
+		return $decoded_url =~ s|^\s*\w+script\b.*$||i ? undef : $url;
+	}
+}
+
+########################################################
+sub chopEntity {
+	my($text, $length) = @_;
+	$text = substr($text, 0, $length) if $length;
+	$text =~ s/&#?[a-zA-Z0-9]*$//;
+	return $text;
 }
 
 #========================================================================

@@ -25,114 +25,88 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
-use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
-	getSlash();
-	my $SECT = getSection();
+	my $form = getCurrentForm();
+	my $section = getSection();
 
-	header("$I{sitename}: Topics", $SECT->{section});
-	print <<EOT;
-[	<A HREF="$I{rootdir}/topics.pl?op=toptopics">Recent Topics</A> |
-	<A HREF="$I{rootdir}/topics.pl?op=listtopics">List Topics</A> ]
-EOT
+	header(getData('head'), $section->{section});
+	print createMenu('topics');
 
-	if ($I{F}{op} eq "toptopics") {
-#		return;
-		topTopics($SECT);
+	if ($form->{op} eq 'toptopics') {
+		topTopics($section);
 	} else {
 		listTopics();
 	}
 
-	writeLog("topics");
-	footer($I{F}{ssi});
+	writeLog('topics');
+	footer($form->{ssi});
 }
 
 #################################################################
 sub topTopics {
-	my ($SECT) = @_;
+	my($section) = @_;
+	my $dbslash = getCurrentDB();
+	my $form = getCurrentForm(); 
 
-	titlebar("90%", "Recent Topics");
+	$section->{issue} = 0;  # should this be local() ?  -- pudge
 
-	my $topics = $I{dbobject}->getTopNewsstoryTopics($I{F}{all});
-	my $col=0;
-	printf <<EOT;
+	my(@topics, $topics);
+	$topics = $dbslash->getTopNewsstoryTopics($form->{all});
 
-<TABLE WIDTH="90%" BORDER="0" CELLPADDING="3">
-EOT
+	for (@$topics) {
+		my $top = $topics[@topics] = {};
+		@{$top}{qw(tid alttext image width height cnt)} = @$_;
+		$top->{count} = $dbslash->countStory($top->{tid});
 
-	for my $topic (@$topics) {
-	my ($tid, $alttext, $image, $width, $height, $cnt) = @$_;
-		print $I{dbobject}->countStory($tid);
-		print <<EOT;
+		my $limit = $top->{cnt} > 10
+			? 10 : $top->{cnt} < 3 || $form->{all}
+			? 3 : $top->{cnt};
 
-	<TR><TD ALIGN="RIGHT" VALIGN="TOP>
-		<FONT SIZE="6" COLOR="$I{bg}[3]">$alttext</FONT>
-		<BR>( %s )
-		<A HREF="$I{rootdir}/search.pl?topic=$tid"><IMG
-			SRC="$I{imagedir}/topics/$image"
-			BORDER="0" ALT="$alttext" ALIGN="RIGHT"
-			HSPACE="0" VSPACE="10" WIDTH="$width"
-			HEIGHT="$height"></A>
-	</TD><TD BGCOLOR="$I{bg}[2]" VALIGN="TOP">
-EOT
+		$top->{stories} = getOlderStories(
+			$dbslash->getStories($section, $limit, $top->{tid}),
+			$section
+		);
+	}
 
-		my $limit = $cnt;
-		$limit = 10 if $limit > 10;
-		$limit = 3  if $limit < 3 or $I{F}{all};
-		$SECT->{issue} = 0;
+	slashDisplay('topics-topTopics', {
+		title		=> 'Recent Topics',
+		width		=> '90%',
+		topics		=> \@topics,
+		currtime	=> scalar localtime,
+	});
 
-		my $stories = $I{dbobject}->getStories($SECT, $limit, $tid);
-		print getOlderStories($stories, $SECT);
-		$stories->finish;
-		print "\n\t</TD></TR>\n";
-	} 
-	print "</TABLE>\n\n";
-
-	printf <<EOT, scalar localtime;
-<BR><FONT SIZE="2"><CENTER>generated on %s</CENTER></FONT><BR>
-EOT
-
-	writeLog("topics");
+	writeLog('topics');
 }
 
 #################################################################
 sub listTopics {
-	titlebar("99%", "Current Topic Categories");
-	my $x = 0;
+	my $dbslash = getCurrentDB();
 
-	print qq!\n<TABLE ALIGN="CENTER">\n\t<TR>\n!;
+	slashDisplay('topics-listTopics', {
+		title		=> 'Current Topic Categories',
+		width		=> '90%',
+		topic_admin	=> getCurrentUser('aseclev') > 500,
+		topics		=> $dbslash->getTopics()
+	});
 
-	my $topics = $I{dbobject}->getTopics();
-	# Somehow sort by the alttext? Need to return to this -Brian
-	# HEre is an idea, private sort methods for sort()
-	for (values %$topics) {
-		unless ($x++ % 6) {
-			print "\t</TR><TR>";
-		}
-
-		my $href = getCurrentUser('aseclev') > 500 ? <<EOT : '';
-</A><A HREF="$I{rootdir}/admin.pl?op=topiced&nexttid=$_->{'tid'}">
-EOT
-
-		print <<EOT;
-<TD ALIGN="CENTER">
-		<A HREF="$I{rootdir}/search.pl?topic=$_->{'tid'}"><IMG
-			SRC="$I{imagedir}/topics/$_->{'image'}" ALT="$_->{'alttext'}"
-			WIDTH="$_->{'width'}" HEIGHT="$_->{'height'}"
-			BORDER="0">$href<BR>$_->{'alttext'}</A>
-		</TD>
-EOT
-	}
-
-	print "\t</TR>\n</TABLE>\n\n";
 }
 
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "topics-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('topics-data', $hashref, 1, 1);
+}
+
+#################################################################
 main();
-# Don't kick the baby!
-#$I{dbh}->disconnect if $I{dbh};
+
+1;

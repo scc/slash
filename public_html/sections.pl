@@ -25,209 +25,166 @@
 #  $Id$
 ###############################################################################
 use strict;
-use vars '%I';
 use Slash;
-use Slash::DB;
+use Slash::Display;
 use Slash::Utility;
 
 #################################################################
 sub main {
-	*I = getSlashConf();
-	getSlash();
 	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	header("Section Editor", "admin");
-	if ($user->{aseclev} > 100) {
-		# adminMenu();
-	} else { 
-		print <<EOT;
-<PRE>
-         I woke up in the Soho bar when a policeman knew my name. He said,
-         "You can go sleep at home tonite if you can get up and walk away."
-         I staggered back to the underground and a breeze threw back my
-         head. I remember throwing punches around and preachin' from my chair.
-                         From 'Who Are You' by God (aka Pete Townshend)<BR></PRE>
-EOT
+	my $op = $form->{op};
+	my $seclev = $user->{aseclev};
+
+	header(getData('head'), 'admin');
+
+	if ($seclev < 100) {
+		print getData('notadmin');
 		footer();
 		return;
 	}
 
-	my $op = $I{F}{op};
-	my $seclev = $user->{aseclev};
-	if ($op eq "rmsub" && $seclev > 99) {
+	if ($op eq 'rmsub' && $seclev > 99) {  # huh?
 
-	} elsif ($I{F}{addsection}) {
+	} elsif ($form->{addsection}) {
 		titlebar("100%", "Add Section");
-		editSection($seclev);
+		editSection();
 
-	} elsif ($I{F}{deletesection} || $I{F}{deletesection_cancel} || $I{F}{deletesection_confirm}) {
-		delSection($I{F}{section});
+	} elsif ($form->{deletesection} || $form->{deletesection_cancel} || $form->{deletesection_confirm}) {
+		delSection($form->{section});
 		listSections($user);
 
-	} elsif ($op eq "editsection" || $I{F}{editsection}) {
-		titlebar("100%", "Editing $I{F}{section} Section");
-		editSection($seclev, $I{F}{section});
-		# Edit Section
+	} elsif ($op eq "editsection" || $form->{editsection}) {
+		titlebar("100%", "Editing $form->{section} Section");
+		editSection($form->{section});
 
-	} elsif ($I{F}{savesection}) {
-		titlebar("100%", "Saving $I{F}{section}");
-		saveSection($I{F}{section});
+	} elsif ($form->{savesection}) {
+		titlebar("100%", "Saving $form->{section}");
+		saveSection($form->{section});
 		listSections($user);
 
-	} elsif ((! defined $op || $op eq "list") && $seclev > 499) {
+	} elsif ((! defined $op || $op eq 'list') && $seclev > 499) {
 		titlebar("100%", "Sections");
 		listSections($user);
 	}
+
 	footer();
 }
 
 #################################################################
 sub listSections {
 	my($user) = @_;
+	my $dbslash = getCurrentDB();
+
 	if ($user->{asection}) {
-		editSection($user->{aseclev}, $user->{asection});
+		editSection($user->{asection});
 		return;
 	}
 
-	my $sections = $I{dbobject}->getSectionTitle();
-
-	print "<B>";
-
-	for (@$sections) {
-		my($section, $title)=@$_;
-		print <<EOT if $section;
-<P><A HREF="$ENV{SCRIPT_NAME}?section=$section&op=editsection">$section</A> $title
-EOT
-	}
-
-	print "</B>";
-
-	# New section Form
-	print <<EOT;
-	<FORM ACTION="$ENV{SCRIPT_NAME}">
-		<INPUT TYPE="SUBMIT" NAME="addsection" VALUE="add section">
-	</FORM>
-EOT
-
+	slashDisplay('sections-listSections', {
+		sections => $dbslash->getSectionTitle()
+	});
 }
 
 #################################################################
 sub delSection {
 	my($section) = @_;
-	
-	if ($I{F}{deletesection}) {
-		print <<EOT;
-		<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-		<P>
-		Do you really want to delete the $section section? 
-		<INPUT TYPE="HIDDEN" NAME="section" VALUE="$section">
-		<INPUT TYPE="SUBMIT" NAME="deletesection_cancel" VALUE="Cancel">
-		<INPUT TYPE="SUBMIT" NAME="deletesection_confirm" VALUE="Delete $section">
-		</P>
-		</FORM>
-EOT
-	}
-	elsif ($I{F}{deletesection_cancel}) {
-		print "<B>Canceled deletion of $section</B><BR>\n";
-	}
-	elsif ($I{F}{deletesection_confirm}) {
-		titlebar("100%", "Deleted $section Section");
-		$I{dbobject}->deleteSection($section);
+	my $dbslash = getCurrentDB();
+	my $form = getCurrentForm();
+
+	if ($form->{deletesection}) {
+		slashDisplay('sections-delSection', {
+			section	=> $section
+		});
+	} elsif ($form->{deletesection_cancel}) {
+		slashDisplay('sections-delSectionCancel', {
+			section	=> $section
+		});
+	} elsif ($form->{deletesection_confirm}) {
+		slashDisplay('sections-delSectionConfirm', {
+			section	=> $section,
+			title	=> "Deleted $section Section",
+			width	=> '100%'
+		});
+		$dbslash->deleteSection($section);
 	}
 }
 
 #################################################################
 sub editSection {
-	my($seclev, $section) = @_;
+	my($section) = @_;
+	my $dbslash = getCurrentDB();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
-	my $sectioninstance = $I{dbobject}->getSection($section)
-		unless $I{F}{addsection};
+	my(@blocks, $this_section);
+	if ($form->{addsection}) {
+		$this_section = {};
+	} else {
+		$this_section = $dbslash->getSection($section);
+		my $blocks = $dbslash->getSectionBlock($section);
 
-	print <<EOT;
-<FORM ACTION="$ENV{SCRIPT_NAME}" METHOD="POST">
-	[	
-		<A HREF="$I{rootdir}/admin.pl?section=$section">Stories</A> |
-		<A HREF="$I{rootdir}/submit.pl?section=$section&op=list">Submissions</A> |
-		<A HREF="$I{rootdir}/index.pl?section=$section">Preview</A> |
-	]
-	<BR><BR><B>Section name:</B><BR>
-	<INPUT TYPE="TEXT" NAME="section" VALUE="$section"><BR><BR> 
-	<BR><B>Article Count</B> (how many articles to display on section index)<BR>
-	<INPUT TYPE="TEXT" NAME="artcount" SIZE="4" VALUE="$sectioninstance->{'artcount'}">
-		1/3rd of these will display intro text, 2/3rds just headers<BR><BR>
+		for (@$blocks) {
+			my $block = $blocks[@blocks] = {};
+			@{$block}{qw(section bid ordernum title portal url)} = @$_;
+			$block->{title} =~ s/<(.*?)>//g;
 
-	<B>Title</B>
-	<BR><INPUT TYPE="TEXT" NAME="title" SIZE="30" VALUE="$sectioninstance->{'title'}"><BR>
-
-EOT
-
-	my $formats;
-	print qq|<BR><BR><B>Polls for this section:</B><br>\n|;
-	$formats = $I{dbobject}->getPollQuestions();
-	createSelect('qui', $formats, $sectioninstance->{'qid'});
-
-	print qq|<BR><BR><B>Isolate mode:</B><br>\n|;
-	$formats = $I{dbobject}->getDescriptions('isolatemodes');
-	createSelect('isolate', $formats, $sectioninstance->{'isolate'});
-
-	print qq|<BR><BR><B>Issue mode:</B><br>\n|;
-	$formats = $I{dbobject}->getDescriptions('issuemodes');
-	createSelect('issue', $formats, $sectioninstance->{'issue'});
-	
-
-	unless ($I{F}{addsection}) {
-		my $blocks =  $I{dbobject}->getSectionBlock($section);
-		
-		if (@$blocks) {
-			print <<EOT;
-<BR><BR><B>edit section slashboxes (blocks)</B><BR><BR>
-<TABLE BORDER="1">
-EOT
-			for (@$blocks) {
-				my($section, $bid, $ordernum, $title, $portal, $url) = @$_;  
-				$title =~ s/<(.*?)>//g;
-				printf <<EOT, $ordernum > 0 ? '(default)' : '';
-			<TR>
-				<TD>
-				<B><A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$bid">$title</A></B>
-				<A HREF="$url">$url</A> %s 
-				</TD>
-			</TR>
-EOT
-
-			}
-			print "</TABLE>\n";
 		}
-
 	}
 
-	print <<EOT;
-	<BR><INPUT TYPE="SUBMIT" NAME="savesection" VALUE="save section">
-	<BR><INPUT TYPE="SUBMIT" NAME="addsection" VALUE="add section">
-	<BR><INPUT TYPE="SUBMIT" NAME="deletesection" VALUE="delete section">
-</FORM>
-EOT
+	my $qid = createSelect('qid', $dbslash->getPollQuestions(),
+		$this_section->{qid}, 1);
+	my $isolate = createSelect('isolate', $dbslash->getDescriptions('isolatemodes'),
+		$this_section->{isolate}, 1);
+	my $issue = createSelect('issue', $dbslash->getDescriptions('issuemodes'),
+		$this_section->{issue}, 1);
 
+	slashDisplay('sections-editSection', {
+		section		=> $section,
+		seclev		=> $user->{aseclev},
+		this_section	=> $this_section,
+		qid		=> $qid,
+		isolate		=> $isolate,
+		issue		=> $issue,
+		blocks		=> \@blocks,
+	});
 }
 
 #################################################################
 sub saveSection {
-	my ($section) = @_;
+	my($section) = @_;
+	my $dbslash = getCurrentDB();
+	my $form = getCurrentForm();
 
 	# Non alphanumerics are not allowed in the section key.
-	# And I dont' see a reason for underscores either, but 
-	# dashes should be ther.
+	# And I don't see a reason for underscores either, but 
+	# dashes should be allowed.
 	$section =~ s/[^A-Za-z0-9\-]//g;
 
-	my $status = $I{dbobject}->setSection($I{F}{section}, $I{F}{qid}, $I{F}{title}, $I{F}{issue}, $I{F}{isolate}, $I{F}{artcount});
+	my $status = $dbslash->setSection(
+		@{$form}{qw(section qid title issue isolate artcount)}
+	);
 
 	unless ($status) {
-		print "Inserted $section<br>\n";
+		print getData('insert', { section => $section });
 	}
 
-	print "Updated $section<br>\n" unless DBI::errstr;
+	print getData('update', { section => $section })
+		unless $dbslash->{dbh}->errstr;  # ack!  no can do this! -- pudge
 }
 
+#################################################################
+# this gets little snippets of data all in grouped together in
+# one template, called "sections-data"
+sub getData {
+	my($value, $hashref) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('sections-data', $hashref, 1, 1);
+}
+
+#################################################################
 main();
-# And we ask the question, why kill the handle, it is a good thing
-#$I{dbh}->disconnect if $I{dbh};
+
+1;
