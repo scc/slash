@@ -44,7 +44,7 @@ sub main {
 	$section->{mainsize} = int($section->{artcount} / 3);
 
 	my $title = getData('head', { section => $section->{section} });
-	header($title, $section->{section});
+	header($title, $section->{section} ne 'index' ? $section->{section} : '');
 
 	my $limit ||= $section->{section} eq 'index' ?
 	    $user->{maxstories} : $section->{artcount};
@@ -261,7 +261,7 @@ sub displayStories {
 				if $cc || $thresh;
 		}
 
-		if ($thissection ne $constants->{defaultsection} && !getCurrentForm('section')) {
+		if ($thissection ne $constants->{defaultsection} && !$form->{section}) {
 			my($section) = $slashdb->getSection($thissection);
 			push @links, getData('seclink', {
 				name	=> $thissection,
