@@ -148,9 +148,7 @@ sub findStory {
 	my $columns = "users.nickname, stories.title, stories.sid as sid, time, commentcount, section";
 	$columns .= ", TRUNCATE((((MATCH (stories.title) AGAINST($query) + (MATCH (introtext,bodytext) AGAINST($query)))) / 2), 1) as score "
 		if $form->{query};
-	my $tables = "stories,users";
-	$tables .= ",story_text"
-		if $form->{query};
+	my $tables = "stories,users,story_text"
 	my $other;
 	if ($form->{query}) {
 		$other = " ORDER BY score DESC";
