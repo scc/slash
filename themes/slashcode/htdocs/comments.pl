@@ -189,6 +189,9 @@ sub validateComment {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
+	my $form_success = 1;
+	my $message = '';
+
 	$$comm ||= $form->{postercomment};
 	$$subj ||= $form->{postersubj};
 
@@ -254,90 +257,34 @@ sub validateComment {
 		}
 	}
 
-	# here begins the troll detection code - PMG 160200
-	# hash ref from db containing regex, modifier (gi,g,..),field to be
-	# tested, ratio of field (this makes up the {x,} in the regex, minimum
-	# match (hard minimum), minimum length (minimum length of that comment
-	# has to be to be tested), err_message message displayed upon failure
-	# to post if regex matches contents. make sure that we don't select new
-	# filters without any regex data.
-	my $filters = $slashdb->getContentFilters();
-	my $bad = 0;
-	for (@$filters) {
-		my($number_match, $regex);
-		my $raw_regex		= $_->[1];
-		my $modifier		= 'g' if $_->[2] =~ /g/;
-		my $case		= 'i' if $_->[2] =~ /i/;
-		my $field		= $_->[3];
-		my $ratio		= $_->[4];
-		my $minimum_match	= $_->[5];
-		my $minimum_length	= $_->[6];
-		my $err_message		= $_->[7];
-		my $maximum_length	= $_->[8];
-		my $isTrollish		= 0;
-		my $text_to_test	= decode_entities(
-			$field eq 'postercomment' ? $$comm :
-			$field eq 'postersubj'    ? $$subj :
-			$form->{$field}
-		);
-		$text_to_test		=~ s/\xA0/ /g;
-		$text_to_test		=~ s/\<br\>/\n/gi;
-
-		next if ($minimum_length && length($text_to_test) < $minimum_length);
-		next if ($maximum_length && length($text_to_test) > $maximum_length);
-
-		if ($minimum_match) {
-			$number_match = "{$minimum_match,}";
-		} elsif ($ratio > 0) {
-			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
-		}
-
-		$regex = $raw_regex . $number_match;
-		my $tmp_regex = $regex;
-
-
-		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
-
-		if ($modifier eq 'g') {
-			$isTrollish = 1 if $text_to_test =~ /$regex/g;
-		} else {
-			$isTrollish = 1 if $text_to_test =~ /$regex/;
-		}
-
-		if ((length($text_to_test) >= $minimum_length)
-			&& $minimum_length && $isTrollish) {
-
-			if (((length($text_to_test) <= $maximum_length)
-				&& $maximum_length) || $isTrollish) {
-
-				$$error_message = slashDisplay('errors', {
-					type		=> 'filter message',
-					err_message	=> $err_message,
-				}, 1);
-
-				editComment('', $$error_message), return unless $preview;
-				$bad = 1;
-				last;
-			}
-
-		} elsif ($isTrollish) {
+	# test comment and subject using filterOk. If the filter is 
+	# matched against the content, display an error with the 
+	# particular message for the filter that was matched
+	my $fields = { 
+			postersubj 	=> 	$$subj,
+			postercomment 	=>	$$comm,
+	};
+			
+	for ( keys %$fields) {
+		if ( ! $slashdb->filterOk('comments', $_, $fields->{$_}, \$message)) {
 			$$error_message = slashDisplay('errors', {
-				type		=> 'filter message',
-				err_message	=> $err_message,
+					type		=> 'filter message',
+					err_message	=> $message,
 			}, 1);
 
+			$form_success = 0;
 			editComment('', $$error_message), return unless $preview;
-			$bad = 1;
 			last;
 		}
 	}
+
 
 	# interpolative hash ref. Got these figures by testing out
 	# several paragraphs of text and saw how each compressed
 	# the key is the ratio it should compress, the array lower,upper
 	# for the ratio. These ratios are _very_ conservative
 	# a comment has to be absolute shit to trip this off
-	if (!$bad) {
+	if ($form_success) {
 		my $limits = {
 			1.3 => [10,19],
 			1.1 => [20,29],
@@ -369,7 +316,7 @@ sub validateComment {
 							ratio	=> $_,
 						}, 1);
 						editComment('', $$error_message), return unless $preview;
-						$bad = 1;
+						$form_success = 0;
 						last;
 					}
 
@@ -379,7 +326,7 @@ sub validateComment {
 	}
 
 	# Return false if error condition...
-	return if $bad;
+	return if ! $form_success;
 
 	# ...otherwise return true.
 	return 1;

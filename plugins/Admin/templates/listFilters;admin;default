@@ -34,13 +34,13 @@ __template__
 	</TR>
 	<TR>
 		<TD><B> Filter id <B></TD>
+		<TD><B> Form <B></TD>
 		<TD><B> Regex <B></TD>
 		<TD><B> Modifier <B></TD>
 		<TD><B> Field <B></TD>
 		<TD><B> Ratio <B></TD>
 		<TD><B> Minimum match <B></TD>
 		<TD><B> Minimum length <B></TD>
-		<TD><B> Maximum length <B></TD>
 		<TD><B> Error message <B></TD>
 	</TR>
 
@@ -53,8 +53,8 @@ __template__
 		<TD> [% i.4 %] </TD>
 		<TD> [% i.5 %] </TD>
 		<TD> [% i.6 %] </TD>
-		<TD> [% i.8 %] </TD>
 		<TD> [% i.7 %] </TD>
+		<TD> [% i.8 %] </TD>
 	</TR>
 	[% END %]
 

@@ -14,6 +14,7 @@ use strict;
 # addresses (like 0., 192.168., 10., etc.).
 # -- pudge
 use Digest::MD5 'md5_hex';
+use HTML::Entities;
 use Slash::DB::Utility;
 use Slash::Utility;
 use URI ();
@@ -321,14 +322,73 @@ sub unsetModeratorlog {
 
 ########################################################
 sub getContentFilters {
-	my($self, $formname) = @_;
+	my($self, $formname, $field) = @_;
+
+	my $field_string = $field ne '' ? " AND field = '$field'" : " AND field != ''";
 
 	my $filters = $self->sqlSelectAll("*", "content_filters",
-		"regex != '' and field != '' and form = '$formname'");
+		"regex != '' $field_string and form = '$formname'");
 	return $filters;
 }
 
 ########################################################
+sub filterOk {
+	my($self, $formname, $field, $content, $error_message) = @_;
+
+	my $filters = $self->getContentFilters($formname, $field);
+
+	# hash ref from db containing regex, modifier (gi,g,..),field to be
+	# tested, ratio of field (this makes up the {x,} in the regex, minimum
+	# match (hard minimum), minimum length (minimum length of that comment
+	# has to be to be tested), err_message message displayed upon failure
+	# to post if regex matches contents. make sure that we don't select new
+	# filters without any regex data.
+	for (@$filters) {
+		my($number_match, $regex);
+		my $raw_regex		= $_->[2];
+		my $modifier		= 'g' if $_->[3] =~ /g/;
+		my $case		= 'i' if $_->[3] =~ /i/;
+		my $field		= $_->[4];
+		my $ratio		= $_->[5];
+		my $minimum_match	= $_->[6];
+		my $minimum_length	= $_->[7];
+		my $err_message		= $_->[8];
+		my $isTrollish		= 0;
+
+		my $text_to_test = decode_entities($content);
+
+		$text_to_test		=~ s/\xA0/ /g;
+		$text_to_test		=~ s/\<br\>/\n/gi;
+
+		next if ($minimum_length && length($text_to_test) < $minimum_length);
+
+		if ($minimum_match) {
+			$number_match = "{$minimum_match,}";
+		} elsif ($ratio > 0) {
+			$number_match = "{" . int(length($text_to_test) * $ratio) . ",}";
+		}
+
+		$regex = $raw_regex . $number_match;
+		my $tmp_regex = $regex;
+
+		$regex = $case eq 'i' ? qr/$regex/i : qr/$regex/;
+
+		if ($modifier eq 'g') {
+			$isTrollish = 1 if $text_to_test =~ /$regex/g;
+		} else {
+			$isTrollish = 1 if $text_to_test =~ /$regex/;
+		}
+
+		if ($isTrollish) {
+			$$error_message = $err_message;
+			return(0);
+		}
+	}
+	return(1);
+}
+
+################################################
+
 sub createPollVoter {
 	my($self, $qid, $aid) = @_;
 
@@ -433,7 +493,6 @@ sub setContentFilter {
 			ratio		=> $form->{ratio},
 			minimum_match	=> $form->{minimum_match},
 			minimum_length	=> $form->{minimum_length},
-			maximum_length	=> $form->{maximum_length},
 			err_message	=> $form->{err_message},
 		}, "filter_id=$form->{filter_id}"
 	);
@@ -697,7 +756,6 @@ sub createContentFilter {
 		ratio		=> 0,
 		minimum_match	=> 0,
 		minimum_length	=> 0,
-		maximum_length	=> 0,
 		err_message	=> ''
 	});
 

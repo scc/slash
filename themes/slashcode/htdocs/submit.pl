@@ -220,7 +220,7 @@ sub submissionEd {
 
 #################################################################
 sub displayForm {
-	my($username, $fakeemail, $section, $id, $title) = @_;
+	my($username, $fakeemail, $section, $id, $title, $error_message) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -231,6 +231,21 @@ sub displayForm {
 	) {
 		errorMessage(getData('maxallowed'));
 	}
+
+	if ($error_message ne '') {
+		titlebar('100%', getData('filtererror', { err_message => $error_message}));
+		print getData('filtererror', { err_message => $error_message });
+	} else {
+		for ( keys %$form ) {
+			my $message = "";
+			if (! $slashdb->filterOk('submissions', $_, $form->{$_}, \$message)) {
+				titlebar('100%', getData('filtererror', { err_message => $message}));
+				print getData('filtererror', { err_message => $message });
+				last;
+			}
+		}
+	}
+
 
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),
@@ -256,9 +271,19 @@ sub saveSub {
 	) {
 		if (length($form->{subj}) < 2) {
 			titlebar('100%', getData('error'));
-			print getData('badsubject');
-			displayForm($form->{from}, $form->{email}, $form->{section});
+			my $error_message = getData('badsubject');
+			displayForm($form->{from}, $form->{email}, $form->{section}, '', '', $error_message);
 			return;
+		}
+
+		for ( keys %$form ) {
+			my $message = "";
+			if (! $slashdb->filterOk('submissions', $_, $form->{$_}, \$message)) {
+
+
+				displayForm($form->{from}, $form->{email}, $form->{section}, '','', $message);
+				return;
+			}
 		}
 
 		$form->{story} = strip_html(url2html($form->{story}));

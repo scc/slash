@@ -86,6 +86,13 @@ INSERT INTO content_filters (regex, modifier, field, ratio, minimum_match, minim
 INSERT INTO content_filters (regex, modifier, field, ratio, minimum_match, minimum_length, err_message, maximum_length) VALUES ('^(?:)$','gi','postercomment',0.0000,0,0,'Cat got your tongue? You mean you have nothing to say?',0);
 INSERT INTO content_filters (regex, modifier, field, ratio, minimum_match, minimum_length, err_message, maximum_length) VALUES ('\\w{80}','','postersubj',0.0000,0,0,'that\'s an awful long string of letters there!',0);
 INSERT INTO content_filters (regex, modifier, field, ratio, minimum_match, minimum_length, err_message, maximum_length) VALUES ('\\w{80}','','postercomment',0.0000,0,0,'that\'s an awful long string of letters there!',0);
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','subj',0.0000,0,0,'too smelly to submit');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','story',0.0000,0,0,'too smelly to submit');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('feces','submissions', '','email',0.0000,0,0,'too smelly to submit');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','subj',0.0000,0,0,'definitely tired...');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','story',0.0000,0,0,'definitely tired...');
+INSERT INTO content_filters (regex, form, modifier, field, ratio, minimum_match, minimum_length, err_message) VALUES ('goatse\.cx','submissions', '','email',0.0000,0,0,'definitely tired...');
+
 
 
 INSERT INTO dateformats (id, format, description) VALUES (0,'%A %B %d, @%I:%M%p','Sunday March 21, @10:00AM');

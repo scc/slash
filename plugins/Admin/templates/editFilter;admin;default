@@ -15,6 +15,18 @@ __template__
 
 <TABLE BORDER="0">
 	<TR>
+		<TD VALIGN="top" WIDTH="40"><B>Form</B></TD>
+		<TD>[% form_select %]</TD>
+	</TR>
+	<TR>
+		<TD><B>List Filters</B></TD>
+		<TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List"></TD>
+	</TR>
+	<TR>
+		<TD><B>Create a new filter</B></TD>
+		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create"></TD>
+	</TR>
+	<TR>
 		<TD VALIGN="top" WIDTH="40"><B>Filter id</B><BR>This is not editable<BR><BR></TD>
 		<TD VALIGN="top"><INPUT TYPE="hidden" name="filter_id" value="[% filter_id %]">&nbsp;&nbsp;</TD>
 		<TD VALIGN="top"> [% filter_id %] </TD><TD>&nbsp;</TD>
@@ -72,15 +84,6 @@ __template__
 		<TD VALIGN="top"><INPUT TYPE="text" SIZE="8" NAME="minimum_length" VALUE="[% filter.minimum_length %]"></TD>
 	</TR>
 	<TR>
-		<TD VALIGN="top" WIDTH="40"><B>Maximum length </B>
-		<BR>This is the maximum length a comment can be in order for the filter to apply.
-		If left to zero, there will be no maximum size length.
-		<BR><BR>
-		</TD>
-		<TD>&nbsp;&nbsp;</TD><TD VALIGN="top"><BR> [% filter.maximum_length %] </TD>
-		<TD VALIGN="top"><INPUT TYPE="text" SIZE="10" NAME="maximum_lenth" VALUE="[% filter.maximum_length %]"></TD>
-	</TR>
-	<TR>
 		<TD WIDTH="40">
 		<B> Error message</B>
 		<BR>This is the error message that will be displayed if the filter is matched.<BR><BR>
@@ -96,6 +99,8 @@ __template__
 		<TD><INPUT TYPE="submit" NAME="updatefilter" VALUE="Save filter"></TD>
 		<TD><INPUT TYPE="submit" NAME="newfilter" VALUE="Create a new filter"></TD>
 		<TD><INPUT TYPE="submit" NAME="deletefilter" VALUE="Delete filter"></TD>
+		<TD><INPUT TYPE="submit" NAME="listfilters" VALUE="List Filters"></TD>
+	</TR>
 	</TR>
 </TABLE>
 </FORM>

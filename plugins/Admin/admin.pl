@@ -1207,14 +1207,18 @@ sub editFilter {
 
 	$filter_id ||= getCurrentForm('filter_id');
 
-	my @values = qw(regex modifier field ratio minimum_match
-		minimum_length maximum_length err_message);
+	my @values = qw(regex form modifier field ratio minimum_match
+		minimum_length err_message);
 	my $filter = $slashdb->getContentFilter($filter_id, \@values, 1);
+
+	my $form_list = $slashdb->getDescriptions('forms');
+	my $form_select = createSelect('formname', $form_list, $filter->{form}, 1);
 
 	# this has to be here - it really screws up the block editor
 	$filter->{err_message} = strip_literal($filter->{'err_message'});
 
 	slashDisplay('editFilter', { 
+		form_select 	=> $form_select,
 		filter		=> $filter, 
 		filter_id	=> $filter_id 
 	});

@@ -93,6 +93,7 @@ CREATE INDEX idx_countreplies ON comments(sid,pid);
 
 CREATE TABLE content_filters (
 	filter_id SERIAL,
+  	form varchar(20) DEFAULT ''NOT NULL,
 	regex varchar(100) DEFAULT '' NOT NULL,
 	modifier varchar(5) DEFAULT '' NOT NULL,
 	field varchar(20) DEFAULT '' NOT NULL,
@@ -104,6 +105,7 @@ CREATE TABLE content_filters (
 	PRIMARY KEY (filter_id)
 );
 CREATE INDEX idx_regex ON content_filters(regex);
+CREATE INDEX idx_form ON content_filters(form);
 CREATE INDEX idx_field ON content_filters(field);
 
 

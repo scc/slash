@@ -38,6 +38,9 @@ __template__
 [% CASE 'error' %]
 	Error
 
+[% CASE 'filtererror' %]
+	<P>Lameness filter: <B>[% err_message %]</B></P>
+
 [% CASE 'badsubject' %]
 	Please enter a reasonable subject.
 
