@@ -256,13 +256,13 @@ INSERT INTO code_param VALUES (21,'sortcodes',5,'Newest First (Ignore Threads)')
 INSERT INTO code_param VALUES (22,'statuscodes',1,'Refreshing');
 INSERT INTO code_param VALUES (23,'statuscodes',0,'Normal');
 INSERT INTO code_param VALUES (24,'statuscodes',10,'Archive');
-INSERT INTO code_param VALUES ('','threshcodes',-1,'-1: Uncut and Raw');
-INSERT INTO code_param VALUES ('','threshcodes',0,'0: Almost Everything');
-INSERT INTO code_param VALUES ('','threshcodes',1,'1: Filter Most ACs');
-INSERT INTO code_param VALUES ('','threshcodes',2,'2: Score +2');
-INSERT INTO code_param VALUES ('','threshcodes',3,'3: Score +3');
-INSERT INTO code_param VALUES ('','threshcodes',4,'4: Score +4');
-INSERT INTO code_param VALUES ('','threshcodes',5,'5: Score +5');
+INSERT INTO code_param VALUES ('25','threshcodes',-1,'-1: Uncut and Raw');
+INSERT INTO code_param VALUES ('26','threshcodes',0,'0: Almost Everything');
+INSERT INTO code_param VALUES ('27','threshcodes',1,'1: Filter Most ACs');
+INSERT INTO code_param VALUES ('28','threshcodes',2,'2: Score +2');
+INSERT INTO code_param VALUES ('29','threshcodes',3,'3: Score +3');
+INSERT INTO code_param VALUES ('30','threshcodes',4,'4: Score +4');
+INSERT INTO code_param VALUES ('31','threshcodes',5,'5: Score +5');
 
 #
 # Dumping data for table 'commentmodes'
