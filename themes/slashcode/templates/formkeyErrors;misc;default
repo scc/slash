@@ -142,6 +142,10 @@ form [% formname %] [% formkey %] already submitted
 [% CASE "journal_speed" %]
 You need to wait [% limit %] between posts.
 
+[% CASE "journal_unused" %]
+You have accessed the journal entry form [% limit %] times, which the system
+doesn't permit. Please submit the form.
+
 [% CASE "journal_maxposts" %]
 You can only post [% limit %] posts per [% interval %].
 

@@ -1789,7 +1789,7 @@ sub updateFormkeyId {
 
 ########################################################
 sub createFormkey {
-	my($self, $formname, $id, $sid) = @_;
+	my($self, $formname, $id) = @_;
 
 	my $constants = getCurrentStatic();
 	my $form = getCurrentForm();
@@ -1807,7 +1807,6 @@ sub createFormkey {
 		formkey		=> $form->{formkey},
 		formname 	=> $formname,
 		id 		=> $id,
-		sid		=> $sid,
 		uid		=> $ENV{SLASH_USER},
 		ipid		=> $ipid,
 		value		=> 0,
@@ -1890,8 +1889,10 @@ sub updateFormkeyVal {
 
 	my $constants = getCurrentStatic();
 
+	my $speed_limit = $constants->{"${formname}_speed_limit"};
 	my $maxposts = $constants->{"max_${formname}_allowed"} || 0;
-	my $min = time() - $maxposts; 
+
+	my $min = time() - $speed_limit; 
 	my $where = " AND idcount < $maxposts ";
 	$where .= "AND last_ts <= $min ";
 	$where .= "AND value = 0";
@@ -1933,7 +1934,7 @@ sub resetFormkey {
 
 ##################################################################
 sub updateFormkey {
-	my($self, $formkey, $cid, $length) = @_;
+	my($self, $formkey, $length) = @_;
 	$formkey  ||= getCurrentForm('formkey');
 
 	my $constants = getCurrentStatic();
@@ -1942,7 +1943,6 @@ sub updateFormkey {
 	# and increment the value from 0 to 1 (shouldn't ever get past 1)
 	# meaning that yes, this form has been submitted, so don't try i t again.
 	my $updated = $self->sqlUpdate("formkeys", {
-		cid		=> $cid,
 		submit_ts	=> time(),
 		content_length	=> $length,
 	}, "formkey=" . $self->sqlQuote($formkey));

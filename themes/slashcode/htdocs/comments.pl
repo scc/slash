@@ -244,12 +244,11 @@ sub main {
 		# the length of the primary field in your form would be a good choice.
 		if ($ops->{$op}{update_formkey}) {
 			if($retval) {
-				my $id = $form->{maxCid} ? $form->{maxCid} : '';
 				my $field_length= $form->{postercomment} ? 
 					length($form->{postercomment}) : length($form->{postercomment});
 
 				# do something with updated? ummm.
-				my $updated = $slashdb->updateFormkey($formkey, $id, $field_length); 
+				my $updated = $slashdb->updateFormkey($formkey, $field_length); 
 
 			# updateFormkeyVal updated the formkey before the function call, 
 			# but the form somehow had an error in the function it called 

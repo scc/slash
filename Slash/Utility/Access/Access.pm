@@ -288,8 +288,7 @@ sub formkeyHandler {
 		if ($formkey_op eq 'generate_formkey') {
 			my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
 			my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
-			# formkey creation can be a little less stringent
-			my $interval = ((time() - $last_created) * 2);
+			my $interval = time() - $last_created;
 			if ( $interval < $speedlimit) {
 				$msg = formkeyError('fkspeed', $formname, $interval);
 				$error_flag++;
@@ -297,8 +296,7 @@ sub formkeyHandler {
 		}
 
 		if (! $error_flag) {
-			my $sid = $form->{sid} ? $form->{sid} : '';
-			$slashdb->createFormkey($formname, $formkeyid, $sid); 
+			$slashdb->createFormkey($formname, $formkeyid); 
 		}
 	}
 		

@@ -55,11 +55,12 @@ sub main {
 	my $ops = {		
 		# initial form, no formkey needed due to 'preview' requirement
 		default		=> {
-			seclev		=> 0,
+			seclev		=> 0, 
+			checks		=> ['max_post_check','generate_formkey'],
 		},
 		previewstory	=> {
 			seclev		=>  0,
-			checks		=> ['max_post_check','generate_formkey'],
+			checks		=> ['max_post_check','update_formkeyid'],
 		},
 		submitstory	=> {
 			seclev		=> 0,
@@ -119,7 +120,7 @@ sub main {
 	} else {
 		yourPendingSubmissions();
 		displayForm($user->{nickname}, $user->{fakeemail}, $form->{section},
-			$formkeyid, getData('defaulthead'));
+			$formkeyid, getData('defaulthead')) if ! $error_flag;
 	}
 
 	if ($ops->{$tmpop}{update_formkey} && $subsaved && ! $error_flag ) {
