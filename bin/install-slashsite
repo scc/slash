@@ -17,6 +17,7 @@ usage() if $opts{'?'};
 $| = 1;
 
 my $prefix = "/usr/local/slash";
+my $prefix_site = "/usr/local/slash/site";
 my(	$user, $owner, $owner_id, $group, $group_id, $password,
 	$sitename, $username, $realname, $email, $dbh, @create, $sql,
 	@sql, $hostname, $hostname_f, $host_noport, $httpd, %slash_sites,
@@ -252,19 +253,19 @@ for (@sql) {
 	}
 }
 
-$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/logs") . " WHERE name = 'logdir'");
-$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename/htdocs") . " WHERE name = 'basedir'");
-$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix/$sitename") . " WHERE name = 'datadir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename/logs") . " WHERE name = 'logdir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename/htdocs") . " WHERE name = 'basedir'");
+$dbh->do("UPDATE vars SET value = " . $dbh->quote("$prefix_site/$sitename") . " WHERE name = 'datadir'");
 $dbh->do("UPDATE vars SET value = " . $dbh->quote($sitename) . " WHERE name = 'siteid'");
 
-mkpath "$prefix/$sitename", 0, 0775;
-mkpath "$prefix/$sitename/logs", 0, 0775;
-mkpath "$prefix/$sitename/htdocs", 0, 0775;
-mkpath "$prefix/$sitename/backups", 0, 0775;
-mkpath "$prefix/$sitename/sbin", 0, 0775;
+mkpath "$prefix_site/$sitename", 0, 0775;
+mkpath "$prefix_site/$sitename/logs", 0, 0775;
+mkpath "$prefix_site/$sitename/htdocs", 0, 0775;
+mkpath "$prefix_site/$sitename/backups", 0, 0775;
+mkpath "$prefix_site/$sitename/sbin", 0, 0775;
 find(sub {
 	my $f1 = $File::Find::name;
-	(my $f2 = $f1) =~ s|^$theme/htdocs/|$prefix/$sitename/htdocs/|;
+	(my $f2 = $f1) =~ s|^$theme/htdocs/|$prefix_site/$sitename/htdocs/|;
 	if (-d $f1) {
 		mkpath $f2, 0, 0775;
 	} else {
@@ -300,10 +301,11 @@ unless (exists $slash_sites{$user}) {
 	close(SLASHSITES);
 }
 
-find(sub { chown $owner_id, $group_id, $_ }, "$prefix/$sitename");
+find(sub { chown $owner_id, $group_id, $_ }, "$prefix_site/$sitename");
 
+apache_site_conf();
 $dbh->disconnect;
-print "\nDone, thanks.\n";
+install_message();
 
 sub usage {
 usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
@@ -327,9 +329,9 @@ sub install {
 	my ($plugin) = @_;
 	print "Now installing $plugin->{'name'}\n";
 	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix/$sitename/htdocs\n";
-		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
-		chmod(0755, "$prefix/$sitename/htdocs/$_");
+		print "copying $_ to $prefix_site/$sitename/htdocs\n";
+		copy "$plugin->{'dir'}/$_", "$prefix_site/$sitename/htdocs";
+		chmod(0755, "$prefix_site/$sitename/htdocs/$_");
 	}
 	my($sql, @sql, @create);
 
@@ -372,13 +374,13 @@ sub install {
 	}
 
 	for(@{$plugin->{'htdoc'}}) {
-		print "copying $_ to $prefix/$sitename/htdocs\n";
+		print "copying $_ to $prefix_site/$sitename/htdocs\n";
 		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs";
 	}
 
 	for(@{$plugin->{'image'}}) {
-		print "copying $_ to $prefix/$sitename/htdocs/images\n";
-		copy "$plugin->{'dir'}/$_", "$prefix/$sitename/htdocs/images";
+		print "copying $_ to $prefix_site/$sitename/htdocs/images\n";
+		copy "$plugin->{'dir'}/$_", "$prefix_site/$sitename/htdocs/images";
 	}
 	if ($plugin->{note}) {
 		my $file = "$plugin->{dir}/$plugin->{note}";  
@@ -408,6 +410,52 @@ sub install_plugin {
 			}
 		}
 	}
+}
+sub apache_site_conf {
+	#Ok, I should fix this at somepoint to extract port
+
+	my $text = qq|
+<VirtualHost $sitename:80>
+    ServerAdmin $email
+    DocumentRoot $prefix_site/$sitename/htdocs
+    ServerName $sitename
+    ErrorLog logs/${sitename}_error_log
+    CustomLog logs/${sitename}_access_log common
+    SlashVirtualUser $ARGV[0]
+    ErrorDocument 404 /404.pl
+</VirtualHost>
+|;
+	my $file = "$prefix/httpd/$sitename.conf";  
+	open(FILE, '>' . $file);
+	print FILE $text;
+	close(FILE);
+	open(FILE, ">>$prefix/httpd/slash.conf");
+	print FILE "Include $file\n";
+	close(FILE);
+}
+
+sub install_message {
+	my $text = qq|
+
+
+Unless any errors reported themself during the
+install you should now have a slashsite.
+You will either need to edit your httpd.conf
+file unless you are have slash handle it. The 
+correct syntax can be found in:
+$prefix/httpd/$sitename.conf
+You may want to take a look at it. If you are
+using virtual hosting by hostname you may
+also need to add a NameVirtualHost to your
+httpd.conf.
+To restart apache do a: 
+apachectl stop
+apachectl start
+Have fun with your new site.
+
+
+|;
+	print $text
 }
 
 __END__
