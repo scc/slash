@@ -25,7 +25,7 @@ sub handler {
 	# is not copying notes. Bad Apache!
 	# -Brian
 	my $uri = $r->uri;
-	my $dat = $r->notes('SLASH_LOG_DATA');
+	my $dat = $r->err_header_out('SLASH_LOG_DATA');
 	if ($uri eq '/') {
 		$slashdb->createAccessLog('index', $dat);
 	} elsif ($uri =~ /\.pl$/) {
