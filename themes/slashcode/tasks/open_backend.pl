@@ -9,7 +9,7 @@ my $me = 'open_backend.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '10,40 * * * *';
+$task{$me}{timespec} = '13,43 * * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

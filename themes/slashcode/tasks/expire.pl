@@ -19,8 +19,7 @@ use Getopt::Std;
 my $PROGNAME = 'expire.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-# This is just a default. See the 'timespec' file in your slash site directory.
-$task{$PROGNAME}{timespec} = '0 6 * * *';
+$task{$PROGNAME}{timespec} = '2 6 * * *';
 
 # Handles mail and administrivia necessary for RECENTLY expired users.
 $task{$PROGNAME}{code} = sub {

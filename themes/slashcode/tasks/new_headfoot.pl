@@ -5,7 +5,7 @@ my $me = 'new_headfoot.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '0 * * * *';
+$task{$me}{timespec} = '3,33 * * * *';
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 

@@ -20,8 +20,7 @@ use Slash::Utility;
 my $PROGNAME = 'spamarmor.pl';
 (my $PREFIX = $Bin) =~ s|/[^/]+/?$||;
 
-# This is just a default. See the 'timespec' file in your slash site directory.
-$task{$PROGNAME}{timespec} = '0 6 * * *';
+$task{$PROGNAME}{timespec} = '22 6 * * *';
 
 # Handles rotation of fakeemail address of all users.
 $task{$PROGNAME}{code} = sub {

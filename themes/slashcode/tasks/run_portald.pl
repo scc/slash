@@ -5,7 +5,7 @@ my $me = 'run_portald.pl';
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '30 * * * *';
+$task{$me}{timespec} = '37 * * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;

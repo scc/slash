@@ -140,13 +140,17 @@ sub process_tasks {
 		"processed $dir; "
 		. (scalar keys %success) . " successful"
 		. (
-			%failure
+			%success
 			?  " (" . join(" ", sort keys %success) . ")"
 			: ""
 		)
 		. "; "
 		. (scalar keys %failure) . " failed ("
-		. join(" ", sort keys %failure)
+		. (
+			%failure
+			?  " (" . join(" ", sort keys %failure) . ")"
+			: ""
+		)
 		. ")"
 	);
 	if (!%task) {

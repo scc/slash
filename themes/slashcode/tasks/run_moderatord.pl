@@ -8,7 +8,7 @@ use Slash::Utility;
 
 use vars qw( %task );
 
-$task{$me}{timespec} = '15 0-23/2 * * *';
+$task{$me}{timespec} = '18 0-23/2 * * *';
 $task{$me}{code} = sub {
 
 	my($virtual_user, $constants, $slashdb, $user) = @_;
