@@ -88,7 +88,7 @@ sub prog2file {
 		"virtual_user=$virtual_user",
 		$arguments,
 		"bytes=$bytes$success_str"
-	)) if verbosity() >= 1;
+	)) if verbosity() >= 2;
 
 	return $success;
 }
@@ -240,8 +240,8 @@ sub main {
 	version() if $opts{'v'};
 	$opts{'u'} ||= 'slash';
 
-	my $basename = $ARGV[0];
-	usage('No task specified') unless $basename;
+	$task_name = $ARGV[0];
+	usage('No task specified') unless $task_name;
 
 	$virtual_user = parse_slash_sites($opts{'u'});
 
@@ -261,13 +261,13 @@ sub main {
 #	srand(time() ^ ($$+($$<<15)));
 
 	my $subref = get_task_subref();
-	slashdLog("$basename begin") if verbosity() >= 2;
+	slashdLog("$task_name begin") if verbosity() >= 2;
 	my $start_time = Time::HiRes::time;
 	# runtask doesn't fork, there wouldn't be much point
 	&$subref($virtual_user, $constants, $slashdb, $user);
 	if (verbosity() >= 2) {
 		my $duration = sprintf("%.2f", Time::HiRes::time - $start_time);
-		slashdLog("$basename end (ran in ${duration}s)");
+		slashdLog("$task_name end (ran in ${duration}s)");
 	}
 }
 
