@@ -1063,16 +1063,21 @@ bunches of other user datum.
 sub prepareUser {
 	# we must get form data and cookies, because we are preparing it here
 	my($uid, $form, $uri, $cookies) = @_;
-	my($slashdb, $constants, $user);
+	my($slashdb, $constants, $user, $hostip);
 
 	$cookies ||= {};
 	$slashdb = getCurrentDB();
 	$constants = getCurrentStatic();
-	my $r = Apache->request;
-	my $hostip = $r->connection->remote_ip;
 
 	$uid = $constants->{anonymous_coward_uid} unless defined($uid) && $uid ne '';
 
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		$hostip = $r->connection->remote_ip;
+	} else {
+		$hostip = '';
+	}
+	
 	if (isAnon($uid)) {
 		if ($ENV{GATEWAY_INTERFACE}) {
 			$user = getCurrentAnonymousCoward();

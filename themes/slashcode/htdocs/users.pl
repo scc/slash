@@ -140,7 +140,7 @@ sub main {
 		displayForm();
 
 	} elsif ($op eq 'userlogin') {
-		userInfo($user->{uid});
+		showInfo();
 
 	} elsif ($form->{validateuser}) {
 		validateUser();
@@ -158,7 +158,7 @@ sub main {
 			editUser();
 
 		} elsif ($op eq 'userinfo') {
-			userInfo($user->{uid});
+			showInfo();
 
 		} elsif ($op eq 'admin') {
 			adminDispatch();
@@ -167,10 +167,10 @@ sub main {
 			adminDispatch();
 
 		} elsif ($op eq 'edithome') {
-			editHome($user->{uid});
+			editHome();
 
 		} elsif ($op eq 'editcomm') {
-			editComm($user->{uid});
+			editComm();
 
 		} elsif ($op eq 'saveuser') {
 			saveUser();
@@ -178,13 +178,13 @@ sub main {
 		} elsif ($op eq 'saveuseradmin') {
 			saveUserAdmin();
 		} elsif ($op eq 'savecomm') {
-			saveComm($user->{uid});
+			saveComm();
 
 		} elsif ($op eq 'savehome') {
-			saveHome($user->{uid});
+			saveHome();
 
 		} else {
-			userInfo($user->{uid});
+			showInfo();
 		} 
 	# regular user admin
 	############################################
@@ -215,7 +215,7 @@ sub main {
 			saveHome();
 
 		} else {
-			userInfo();
+			showInfo();
 
 		}
 
@@ -345,7 +345,7 @@ sub mailPassword {
 
 #################################################################
 sub showInfo {
-	my($id, $note) = @_;
+	my($id) = @_;
 
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
@@ -763,13 +763,13 @@ sub adminDispatch {
 		my $form = getCurrentForm();
 
 		if ($form->{userfield_flag} eq 'ip' || $form->{userfield_flag} eq 'subnet') {
-			netIDInfo();
+			showInfo();
 
 		} elsif ($form->{op} eq 'authoredit') {	
 			editUser($form->{authoruid});
 
 		} elsif ( $form->{userinfo}) {
-			userInfo();
+			showInfo();
 
 		} elsif ( $form->{edituser}) {
 			editUser();
@@ -837,7 +837,7 @@ sub editUser {
 
 	my $admin_flag = ($curuser->{seclev} >= 100) ? 1 : 0; 
 
-	$admin_block = getUserAdmin($user->{uid}, 0, 1) if $admin_flag;
+	$admin_block = getUserAdmin($user->{uid}, 1, 1) if $admin_flag;
 
 	slashDisplay('editUser', {
 		user_edit 		=> $user,
