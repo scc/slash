@@ -90,8 +90,7 @@ install (just like with install-slashsite).
 
 Yes, you can find it in the Slash::Install library.
 
-=head2 I have a really cool plugin and I would like to see it added to the Slash
-distribution. Will you distribute mine?
+=head2 I have a really cool plugin and I would like to see it added to the Slash distribution. Will you distribute mine?
 
 Maybe. We don't have any rules concerning this at the moment, so it will be
 on a case by case basis. At some point in the future we will come up

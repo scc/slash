@@ -30,6 +30,7 @@ INIT = /etc
 USER = nobody
 GROUP = nobody
 CP = cp
+INSTALL = install
 
 # Plugins (any directory in plugins/)
 PLUGINS = `find . -name CVS -prune -o -type d -name [a-zA-Z]\* -maxdepth 1 -print`
@@ -90,7 +91,7 @@ all: install
 install: slash plugins
 
 	# Create all necessary directories.
-	install -d $(SLASH_PREFIX)/bin/ $(SLASH_PREFIX)/sbin \
+	$(INSTALL) -d $(SLASH_PREFIX)/bin/ $(SLASH_PREFIX)/sbin \
 		$(SLASH_PREFIX)/sql/ $(SLASH_PREFIX)/sql/mysql/ $(SLASH_PREFIX)/sql/oracle/ $(SLASH_PREFIX)/sql/postgresql \
 		$(SLASH_PREFIX)/themes/ $(SLASH_PREFIX)/themes/slashcode/htdocs/ $(SLASH_PREFIX)/themes/slashcode/sql/ \
 		$(SLASH_PREFIX)/themes/slashcode/sql/mysql $(SLASH_PREFIX)/themes/slashcode/sql/oracle $(SLASH_PREFIX)/themes/slashcode/sql/postgresql \
@@ -136,8 +137,8 @@ install: slash plugins
 			$(PERL) -i.bak -pe "s@#!/usr/bin/perl@$$replacewith@ if $$. == 1" $$f; \
 		fi; \
 		echo "Installing '$$f' in $(SLASH_PREFIX)/$$d $$replacestr"; \
-		install -d $(SLASH_PREFIX)/$$d; \
-		install $$f $(SLASH_PREFIX)/$$d/$$b; \
+		$(INSTALL) -d $(SLASH_PREFIX)/$$d; \
+		$(INSTALL) $$f $(SLASH_PREFIX)/$$d/$$b; \
 		if [ -f "$$f.bak" ]; then \
 			if [ -f $$f ]; then \
 				rm $$f; \
@@ -172,7 +173,7 @@ install: slash plugins
 		 		init=/etc/rc.d;					\
 			 fi;							\
 			 if [ $$init ]; then					\
- 			 	install utils/slash $$init/init.d/;		\
+ 			 	$(INSTALL) utils/slash $$init/init.d/;		\
 				ln -s -f ../init.d/slash $$init/rc3.d/S99slash;	\
 				ln -s -f ../init.d/slash $$init/rc6.d/K99slash;	\
 			 else 							\
@@ -193,7 +194,7 @@ install: slash plugins
 			$(CP) httpd/slash.conf $(SLASH_PREFIX)/httpd/slash.conf.def; \
 			;;							\
 		*)								\
-			install $$a $(SLASH_PREFIX)/$$a				\
+			$(INSTALL) $$a $(SLASH_PREFIX)/$$a				\
 			;;							\
 		esac;								\
 		if [ $$replace ]; then						\

@@ -226,11 +226,9 @@ INSTALLATION
                 make
                 make install
 
-        Note: this depends on a relatively new version of the install
-        program that comes with GNU fileutils distribution. Version 4.0 is
-        recommended. Some older versions of SuSE, for example, come with
-        version 3; just install the latest fileutils package, or version 4.0
-        of install.
+        Note: you will want the GNU versions of fileutils (version
+        4.0 recommended, for cp and install) and make.  Older versions of
+        install, and make and cp from other systems, might not work.
 
         There are a few options to "make" and "make install" you may want to
         change.
@@ -243,6 +241,10 @@ INSTALLATION
                                                         scripts
                 USER            nobody                  User to own files
                 GROUP           nobody                  Group to own files
+                CP		cp			Name of or path to
+                					alternate `cp`
+                INSTALL		install			Name of or path to
+                					alternate `install`
 
         (USER and GROUP will also be changed later on a per-site basis, in
         step 6. while running install-slashsite.)

@@ -285,11 +285,9 @@ creates, and type:</P>
 <PRE>
         make
         make install</PRE>
-<P><STRONG>Note</STRONG>: this depends on a relatively new version of the <STRONG>install</STRONG>
-program that comes with GNU fileutils distribution.  Version 4.0 is
-recommended.  Some older versions of SuSE, for example, come with
-version 3; just install the latest fileutils package, or version 4.0
-of install.</P>
+<P><STRONG>Note</STRONG>: you will want the GNU versions of fileutils (version
+4.0 recommended, for cp and install) and make.  Older versions of
+install, and make and cp from other systems, might not work.</P>
 <P>There are a few options to <CODE>make</CODE> and <CODE>make install</CODE> you may
 want to change.</P>
 <PRE>
@@ -300,7 +298,11 @@ want to change.</P>
         INIT            /etc or /etc/rc.d       Location for init
                                                 scripts
         USER            nobody                  User to own files
-        GROUP           nobody                  Group to own files</PRE>
+        GROUP           nobody                  Group to own files
+	CP		cp			Name of or path to
+						alternate `cp`
+	INSTALL		install			Name of or path to
+						alternate `install`</PRE>
 <P>(USER and GROUP will also be changed later on a per-site basis,
 in step 6. while running <EM>install-slashsite</EM>.)</P>
 <P>So, for example, you might type (although the default SLASH_PREFIX
