@@ -54,7 +54,7 @@ __template__
                 <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.1 %] 
 		VALUE=1>&nbsp;
                 Show your email with random SPAM-armoring applied (this
-		changes daily).<BR> &nbsp;&nbsp;&nbsp;
+		changes weekly).<BR> &nbsp;&nbsp;&nbsp;
                 <INPUT TYPE="RADIO" NAME="emaildisplay" [% emaildisplay.2 %] 
 		VALUE=2>&nbsp;
                 Show your real email address without cowering behind childish
