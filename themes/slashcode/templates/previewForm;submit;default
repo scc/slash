@@ -19,9 +19,9 @@ previewForm
 __template__
 [% USE Slash;
 	IF submission.email && submission.name;
-		subtext = "<A HREF=\"$submission.email\">$submission.name</A> writes <EM>\"$submission.story\"</EM>";
+		subtext = "<A HREF=\"$submission.email\">$submission.name</A> writes <i>\"$submission.story\"</i>";
 	ELSIF submission.name;
-		subtext = "$submission.name writes <EM>\"$submission.story\"</EM>";
+		subtext = "$submission.name writes <i>\"$submission.story\"</i>";
 	ELSE;
 		subtext = submission.story;
 	END;

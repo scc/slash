@@ -22,9 +22,9 @@ displayForm
 __template__
 [% USE Slash;
 	IF fakeemail && username;
-		subtext = "<A HREF=\"$fakeemail\">$username</A> writes <EM>\"$fixedstory\"</EM>";
+		subtext = "<A HREF=\"$fakeemail\">$username</A> writes <i>\"$fixedstory\"</i>";
 	ELSIF username;
-		subtext = "$username writes <EM>\"$fixedstory\"</EM>";
+		subtext = "$username writes <i>\"$fixedstory\"</i>";
 	ELSE;
 		subtext = fixedstory;
 	END;
