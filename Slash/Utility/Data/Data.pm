@@ -92,7 +92,7 @@ use constant PLAINTEXT	=> 1;
 use constant HTML	=> 2;
 use constant EXTRANS	=> 3;
 use constant CODE	=> 4;
-use constant ANCHOR	=> 5;
+use constant ANCHOR	=> -4;
 
 #========================================================================
 

@@ -34,7 +34,7 @@ use Time::Local;
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
 
-$VERSION   	= '2.002002';  # v2.2.2
+$VERSION   	= '2.002006';  # v2.2.6
 # note: those last two lines of functions will be moved elsewhere
 @EXPORT		= qw(
 	getData

@@ -1,3 +1,11 @@
+slash-2.2.6, 2002.07.03
+-----------------------
+
+*	It is VERY STRONGLY RECOMMENDED that you upgrade to 2.2.6 from
+	versions 2.2.0 through 2.2.5, immediately.  This update fixes a
+	bug which allows scripting attacks which can compromise both
+	user and admin passwords.
+
 slash-2.2.5, 2002.02.07
 -----------------------
 

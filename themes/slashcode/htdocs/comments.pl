@@ -463,9 +463,6 @@ sub validateComment {
 	my $form_success = 1;
 	my $message = '';
 
-	$$comm ||= $form->{postercomment};
-	$$subj ||= $form->{postersubj};
-
 	if ($slashdb->checkReadOnly('comments')) {
 		$$error_message = getError('readonly');
 		$form_success = 0;
