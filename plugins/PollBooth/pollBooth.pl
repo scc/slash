@@ -31,8 +31,6 @@ use Slash::Utility;
 
 #################################################################
 sub main {
-	getSlash();
-
 	my $dbslash = getCurrentDB();
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();

@@ -32,8 +32,6 @@ use CGI ();
 
 #################################################################
 sub main {
-	getSlash();
-
 	my $dbslash = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
