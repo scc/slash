@@ -22,7 +22,7 @@ __template__
    FOREACH story = stories;
 	IF today != "$story.w $story.m $story.d";
 		today = "$story.w $story.m $story.d";
-		IF section.issue > 1 %]
+		IF section.issue && section.issue > 1 %]
 			<P><B><A HREF="[% constants.rootdir %]/index.pl?section=[% section.section %]&issue=[% story.day %]&mode=[% user.currentMode %]"
 				><FONT SIZE="4">[% story.w %]</FONT></A> [% story.m %] [% story.d %]</B></P>
 		[% ELSE %]

@@ -412,6 +412,8 @@ sub linkStory {
 		$threshold = $story_link->{threshold} if exists $story_link->{threshold};
 	}
 
+	return _hard_linkComment($story_link, $mode, $threshold) if $constants->{comments_hardcoded};
+
 	return slashDisplay('linkStory', {
 		mode		=> $mode,
 		threshold	=> $threshold,
@@ -997,6 +999,24 @@ sub lockTest {
 	}
 	return $msg;
 }
+
+########################################################
+# this sucks, but it is here for now
+sub _hard_linkStory {
+	my($story_link, $mode, $threshold) = @_;
+	my $constants = getCurrentStatic();
+	if (getCurrentForm('ssi') && !$threshold) {
+	    return qq[<A HREF="$constants->{rootdir}/$story_link->{section}/$story_link->{sid}.shtml">$story_link->{link}</A>];
+
+        } else {
+	    my $link = qq[<A HREF="$constants->{rootdir}/article.pl?sid=$story_link->{sid}];
+            $link .= "&amp;mode=$mode" if $mode;
+            $link .= "&amp;threshold=$threshold" if $threshold;
+	    $link .= qq[">$story_link->{link}</A>];
+            return $link;
+        }
+}
+
 
 ########################################################
 # this sucks, but it is here for now

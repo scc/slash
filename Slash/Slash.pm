@@ -699,7 +699,7 @@ sub dispStory {
 		width	=> $constants->{titlebar_width}
 	);
 
-	slashDisplay('dispStory', \%data, 1);
+	return slashDisplay('dispStory', \%data, 1);
 }
 
 #========================================================================
