@@ -20,6 +20,7 @@ A log of people who try too many times to beat the post limit
 
 * querystring - form querystring
 
+
 accesslog
 ---------
 logs page views to the site, logging occurs on a delayed
@@ -42,17 +43,16 @@ insert
 
 authors 
 -------
-contains a list of all contributing authors to slashdot, email, 
-author's quote, spiel on what they've done, password,security 
-level (?), deleted submissions,  and their last submitted story, 
-section they write for.
+No longer exists - only listed here as a reference to the fact
+that authors are now users with the 'author' flag set.
 
 
 blocks
 ------
-This is simply various parts of different pages.
-"bid" block id is a varchar of what block it is, such as 
-features, which appears in the upper right of the main page.   
+Contains content that has been pulled from remote sites via portald,
+and other pieces of code that are evaled. Contains the color block
+which is simply 8 colors comma separated which in  turn is split in 
+the code to produce site/section foreground and background colors.
 
 * bid - the name of the block (even though this seems as 
 if it should be an   integer, it's actually a name )  
@@ -127,7 +127,7 @@ the fk to sid in stories.
 
 * subject - the subject 
 
-* postcomment - their comment 
+* comment - the actual comment 
 
 * uid - user ID 
 
@@ -137,7 +137,9 @@ the fk to sid in stories.
 
 * reason - reason 
 
-* dateformats - how dates are to be displayed for a user.  
+dateformats
+-----------
+Key/value table of how dates are to be displayed for a user.  
 
 +----+-------------------------+---------------------------------+  
 | id | format                  | description                     | 
@@ -454,6 +456,9 @@ by archive_delay.
 
 * hitparade - sums of all comment counts for this story 
 
+* relatedtext - content related to the story
+
+* extratext - could be anything
 
 storiestuff
 -----------
@@ -470,8 +475,12 @@ hits they received.
 | 980814/112203  |  581 | 
 +----------------+------+
 
+
 submissions
 -----------
+submissions from users that an author either approves and it becomes a story, or 
+disapproved. "I'm just a submission, and I'm sitting here a-wishin, hoping some 
+day I'll be a story.. oh I pray that I will, but today I am still .. just a submission"
 
 * subid - submission id 
 
@@ -607,7 +616,7 @@ to get more moderator points
 
 * downmods - number of negative moderations
 
-* session_login - 
+* session_login - sessions for author users? 
 
 
 users_comments
@@ -670,7 +679,7 @@ What will appear on auser's page
 
 * maxstories - number of stories that appearnoboxes - 1 or 0 boxes or not
 
-* noboxes - Turns off slashboxes if non-zero.
+* noboxes - flag that determines whether the user wants no boxes on the right 
 
 
 users_param

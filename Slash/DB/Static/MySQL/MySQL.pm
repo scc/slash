@@ -123,7 +123,7 @@ sub deleteDaily {
 			(section='$constants->{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
 			or (to_days(now()) - to_days(time) > $delay2)");
 
-	$self->sqlDo("DELETE FROM newcomments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
+	$self->sqlDo("DELETE FROM comments where to_days(now()) - to_days(date) > $constants->{archive_delay}");
 
 	# Now for some random stuff
 	$self->sqlDo("DELETE from pollvoters");
@@ -263,11 +263,11 @@ sub getMailingList {
 sub getTop10Comments {
 	my($self) = @_;
 	my $c = $self->sqlSelectMany("stories.sid, title,
-		cid, subject,date,nickname,newcomments.points",
-		"newcomments,stories,users",
-		"newcomments.points >= 4
-		AND users.uid=newcomments.uid
-		AND newcomments.sid=stories.sid
+		cid, subject,date,nickname,comments.points",
+		"comments,stories,users",
+		"comments.points >= 4
+		AND users.uid=comments.uid
+		AND comments.sid=stories.sid
 		ORDER BY date DESC limit 10");
 
 	my $comments = $c->fetchall_arrayref;

@@ -4,10 +4,41 @@ The following is a listing of tables that make up the slashdot
 schema. Some, or all ofthe data in a table is displayed, where
  feasable, to give a better idea of a table's purpose. 
 
+abusers
+-------
+A log of people who try too many times to beat the post limit
+
+* abuser_id - auto increment id
+
+* host_name - host name of abuser
+
+* pagename - page where abuser made attempt
+
+* ts - time abuser made attempt
+
+* reason - reason for being logged
+
+* querystring - form querystring
+
+
 accesslog
 ---------
-logs host_addr, operation,dat(?),user id, and timestamp. 
-Delay updated.  
+logs page views to the site, logging occurs on a delayed
+insert
+
+* id - auto increment id
+
+* host_addr - host address of person hitting site
+
+* op - the page op
+
+* dat - 
+
+* uid - user id (fk from users)
+
+* ts - time stamp of access
+
+* query_string - form querystring
 
 
 authors 
@@ -20,9 +51,26 @@ section they write for.
 
 blocks
 ------
-This is simply various parts of different pages.
-"bid" block id is a varchar of what block it is, such as 
-features, which appears in the upper right of the main page.   
+Contains content that has been pulled from remote sites via portald,
+and other pieces of code that are evaled. Contains the color block
+which is simply 8 colors comma separated which in  turn is split in 
+the code to produce site/section foreground and background colors.
+
+* bid - the name of the block (even though this seems as 
+if it should be an   integer, it's actually a name )  
+
+* block - the actual contents of the block. This can be eval code,
+html, or a mix of both.
+
+* aid - author id, fk to authors
+
+* seclev - the seclev an admin user must be in order to edit it.
+
+* type - portal or not.
+
+* description - a text description of what the block is for or does.
+
+* blockbak - contains a backup of last save version of block
 
 
 books
@@ -43,6 +91,7 @@ Controls whether a story can be posted to or not
 |   -1 | Comments Disabled | 
 +------+-------------------+ 
 
+
 commentmodes
 ------------ 
 How comments appear.
@@ -56,6 +105,7 @@ How comments appear.
 | nocomment | No Comments |             |
 +-----------+-------------+-------------+
 
+
 comments
 --------
 These are the actual comments of posters on slashdot.sid story id 
@@ -68,7 +118,7 @@ These are the actual comments of posters on slashdot.sid story id
 
 * subject - the subject 
 
-* postcomment - their comment 
+* comment - the actual comment 
 
 * uid - user ID 
 
@@ -78,7 +128,9 @@ These are the actual comments of posters on slashdot.sid story id
 
 * reason - reason 
 
-* dateformats - how dates are to be displayed for a user.  
+dateformats
+-----------
+Key/value table of how dates are to be displayed for a user.  
 
 +----+-------------------------+---------------------------------+  
 | id | format                  | description                     | 
@@ -105,12 +157,19 @@ These are the actual comments of posters on slashdot.sid story id
 
 discussions 
 -----------
-forums... sid, title, url
+A table that basically allows discussions (comments on a particular subject) to be 
+attached to an sid that might not necessarily be a story sid. This allows for a 
+not-too-publicised functionality of going to the comments.pl script without any 
+query string, getting a list of current discussions and posting a comment on a 
+concocted sid and creating a new discussion.
 
 +---------------+-------------------+-------------+  
 | sid           | title             | url 	  |
++---------------+-------------------+-------------+  
 | 00/0SPT/MhsFY | Test Discussion | http://slashdot.org/temp.html| 
 | 00elQkla9rH/M | North Dakota has low admission standards |http://www.slashdot.org/articles/99/06/07/1234239.shtml |
+| trolltalk     | we are dweebs     | http://www.slashdot.org/articles/00/01/01/1234567.shtml |
++---------------+-------------------+-------------+  
 
 
 displaycodes 
@@ -137,6 +196,7 @@ part of slashdot or not.
 |    1 | Standalone   |
 +------+--------------+
 
+
 issuemodes 
 ----------
 Whether something (forum) was started as an 
@@ -151,6 +211,7 @@ issue or from an article, both or none.
 |    3 | Both Issue and Article |
 +------+------------------------+
 
+
 maillist 
 --------
 a flag set somewhere in another table to determineif 
@@ -163,20 +224,30 @@ a user gets email of stories appearing on slashdot
 |    1 | Email Headlines Each Night |
 +------+----------------------------+
 
+
 moderatorlog
 ------------
- when, why, who moderated something 
+When, why, who moderated something 
 
-+-------+------+-----+------------------+---------------------+-----+--------+
-| id    | uid  | val | sid              | ts                  | cid | reason |
-+-------+------+-----+------------------+---------------------+-----+--------+
-| 20475 | 5761 |  -1 | 99/09/21/1511200 | 1999-09-21 17:35:46 | 130 |      2 | 
-| 20474 |  924 |   1 | 99/09/18/2237232 | 1999-09-21 17:32:58 | 152 |      5 |
-| 20473 | 3273 |   1 | 99/09/21/1511200 | 1999-09-21 17:31:37 | 118 |      8 | 
-+-------+------+-----+------------------+---------------------+-----+--------+
+* id - auto_increment id
+
+* uid - user id, fk to users
+
+* val - value
+
+* sid - story id
+
+* ts - time stamp
+
+* cid - comment id
+
+* reason - numerical reason corresponding to names such as "troll", "insightful",
+"overrated", etc...
+
+* active - 
 
 
-newstories 
+stories/newstories 
 ----------
 cache of stories table Two weeks is the cut-off date 
 
@@ -209,9 +280,7 @@ This is what slashd looks at to determine if a page should be re-written
 
 * hitparade - 3,3,3,0,0,0,0 
 
-* relatedtext - <LI><Ahref="mailto:borges@DONTSPAMMEifi.uio.no">
-proBETA</A><L I><A href="http://slashdot.org/search.pl?topic=gnu">
-More on GNU is Not Unix</A>  
+* relatedtext - content related to the story
 
 * extratext - could be anything
 
@@ -342,40 +411,6 @@ what frequency slashd re-writes static pages.
 +------+------------+
 
 
-stories
--------
-
-* sid - story id (primary key)
-
-* tid - topic id (foreign key to topics) 
-
-* aid - author id (foreign key to authors)
-
-* commentcount - number comments per story 
-
-* title - title of the story
-
-* dept - story department 
-
-* time - time the story was submitted
-
-* introtext - the text that displays on the front page for the story 
-
-* bodytext - the main text of the story
-
-* writestatus - status code determines how often static page is re-writen.
-
-* hits - number of hits per story
-
-* section - the section the story goes in 
-
-* displaystatus - true/false if the story is to be displayed. Uses table displaycodes
-
-* commentstatus - true/false if comments 
-
-* hitparade - sums of all comment counts for this story 
-
-
 storiestuff
 -----------
 Is this a table of all the stories that have run and how many 
@@ -391,8 +426,12 @@ hits they received.
 | 980814/112203  |  581 | 
 +----------------+------+
 
+
 submissions
 -----------
+submissions from users that an author either approves and it becomes a story, or 
+disapproved. "I'm just a submission, and I'm sitting here a-wishin, hoping some 
+day I'll be a story.. oh I pray that I will, but today I am still .. just a submission"
 
 * subid - submission id 
 
@@ -479,6 +518,9 @@ a user (uid)
 
 * seclev - security level. used in old moderator system
 
+* matchname - the nickname with no spaces and all lower cases, to prevent
+duplicate nicknames from being issued
+
 users_info
 ----------
 A table containing more information about a user, including 
@@ -505,7 +547,17 @@ to get more moderator points
 
 * lastmm - last meta moderation 
 
-* lastaccess -last mmid
+* lastaccess -last time user accessed site 
+
+* lastmmid - last uid to meta-moderate this user 
+
+* m2fair - number of fair moderations
+
+* m2unfair - number of unfair moderationss
+
+* m2fairvotes - 
+
+* m2unfairvotes - 
 
 
 users_comments
@@ -567,15 +619,18 @@ What will appear on auser's page
 
 * maxstories - number of stories that appearnoboxes - 1 or 0 boxes or not
 
+* noboxes - flag that determines whether the user wants no boxes on the right 
+
 
 users_key
 ---------
+Holds a users public key, if they have one
 
 * uid - user idpubkey - the users public key
 
+
 users_prefs
 -----------
-
 User information used site wide, things that changes less than often
 
 * uid - user id

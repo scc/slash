@@ -348,41 +348,6 @@ CREATE INDEX idx_sid ON moderatorlog(sid,cid);
 CREATE INDEX idx_sid_2 ON moderatorlog(sid,user_id,cid);
 
 
-/*******************************************
-* IMPORTANT NOTE
-* date is a reserved word in Oracle,
-* so name for column name changed to 
-* new_comm_date
-*
-* comment is a reserved word
-* column comment changed to new_comment
-*******************************************/
-
-prompt drop table newcomments
-drop table newcomments;
-
-prompt create table newcomments
-CREATE TABLE newcomments (
-  sid           varchar2(30) DEFAULT '' NOT NULL,
-  cid           number(12)   DEFAULT '0' NOT NULL,
-  pid           number(12)   DEFAULT '0' NOT NULL,
-  new_comm_date date         DEFAULT trunc(to_date('1970-01-01', 'YYYY-MM-DD')) NOT NULL,
-  host_name     varchar2(30) DEFAULT '0.0.0.0' NOT NULL,
-  subject       varchar2(50) DEFAULT '' NOT NULL,
-  new_comment   clob         NOT NULL,
-  user_id       number(12)   NOT NULL,
-  points        number(6)    DEFAULT 0 NOT NULL,
-  lastmod       number(6),
-  reason        number(6)    DEFAULT 0,
-  constraint newcomments_pk PRIMARY KEY (sid,cid)
-);
-
-CREATE INDEX idx_display_new ON newcomments(sid,points,user_id);
-CREATE INDEX idx_byname_new ON newcomments(user_id,points);
-CREATE INDEX idx_theusual_new ON newcomments(sid,user_id,points,cid);
-CREATE INDEX idx_countreplies_new ON newcomments(sid,pid);
-
-
 prompt drop table newstories 
 drop table newstories;
 
