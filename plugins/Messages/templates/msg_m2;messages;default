@@ -1,0 +1,46 @@
+__section__
+default
+__description__
+Message body that is sent back to a user whenever a moderation from
+this user is metamoderated.
+__title__
+Metamoderation Message Body
+__page__
+messages
+__lang__
+en_US
+__name__
+msg_m2
+__template__
+
+[% vote = 'Fair'; IF m1_vote < 0; vote='Unfair'; END %]
+
+[% IF msg.mode == 1 %]
+
+<P>Your moderation of "<B>[% vote %]</B>" on
+message "<B>[% c_subj %]</B>" has been metamoderated.
+<P>Thank you for moderating.
+
+
+[% ELSE %]
+
+Your moderation of [% vote %] on
+message "[% c_subj %]" has been metamoderated.
+
+Thank you for moderating.
+
+[% END %]
+
+======================================================================
+
+You have received this message because you subscribed to it
+on [% constants.sitename %].  To stop receiving this and other
+messages from [% constants.sitename %], or to add more messages
+or change your preferences, please go to your user page.
+
+	[% constants.absolutedir %]/users.pl
+
+You can log in and change your preferences from there.
+
+__seclev__
+500
