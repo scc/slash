@@ -265,8 +265,8 @@ sub validateComment {
 			postercomment 	=>	$$comm,
 	};
 			
-	for ( keys %$fields) {
-		if ( ! $slashdb->filterOk('comments', $_, $fields->{$_}, \$message)) {
+	for (keys %$fields) {
+		if (! $slashdb->filterOk('comments', $_, $fields->{$_}, \$message)) {
 			$$error_message = slashDisplay('errors', {
 					type		=> 'filter message',
 					err_message	=> $message,
