@@ -838,6 +838,7 @@ sub deleteStoryAll {
 		$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
 			. join(",", map { $_->[0] } @$comment_ids)
 			. ")");
+		$self->sqlDo("DELETE FROM discussions WHERE id=$discussion_id");
 	}
 }
 
