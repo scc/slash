@@ -569,7 +569,7 @@ CREATE TABLE users_param (
   param_id int(11) NOT NULL auto_increment,
   uid int(11) DEFAULT '1' NOT NULL,
   name varchar(32) DEFAULT '' NOT NULL,
-  value varchar(254) DEFAULT '' NOT NULL,
+  value text DEFAULT '' NOT NULL,
   UNIQUE uid_key (uid,name),
   KEY (uid),
   PRIMARY KEY (param_id)

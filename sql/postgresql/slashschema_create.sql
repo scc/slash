@@ -456,7 +456,7 @@ CREATE TABLE users_param (
 	param_id SERIAL,
 	uid int4 NOT NULL,
 	name varchar(32) NOT NULL,
-	value varchar(254) NOT NUL,
+	value text NOT NUL,
 	UNIQUE (uid, name),
 	PRIMARY KEY (param_id)
 );
