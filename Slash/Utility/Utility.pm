@@ -51,9 +51,6 @@ sub getFormkey {
 # Called wherever we have errors.
 # This needs to be renamed since it works both in and outside of Apache
 sub apacheLog {
-	# ummm ... won't this fail if called while not running under
-	# Apache?
-	# Nope.... 	-Brian
 	my($package, $filename, $line) = caller(1);
 	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
@@ -107,7 +104,7 @@ sub getCurrentUser {
 	my($value) = @_;
 	my $user;
 
-	if($ENV{GATEWAY_INTERFACE}) {
+	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 		$user = $user_cfg->{'user'};
@@ -135,7 +132,7 @@ sub getCurrentForm {
 	my($value) = @_;
 	my $form;
 
-	if($ENV{GATEWAY_INTERFACE}) {
+	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 		$form = $user_cfg->{'form'};
@@ -162,10 +159,10 @@ sub getCurrentStatic {
 	my($value) = @_;
 	my $constants;
 
-	if($ENV{GATEWAY_INTERFACE}) {
-	my $r = Apache->request;
-	my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
-	$constants = $const_cfg->{'constants'};
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$constants = $const_cfg->{'constants'};
 	} else {
 		$constants = $static_constants;
 	}
@@ -188,7 +185,7 @@ sub setCurrentStatic {
 sub getCurrentAnonymousCoward {
 	my $anonymous_coward;
 
-	if($ENV{GATEWAY_INTERFACE}) {
+	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		$anonymous_coward = $const_cfg->{'anonymous_coward'};
@@ -208,7 +205,7 @@ sub setCurrentAnonymousCoward {
 sub getCurrentDB {
 	my $slashdb;
 
-	if($ENV{GATEWAY_INTERFACE}) {
+	if ($ENV{GATEWAY_INTERFACE}) {
 		my $r = Apache->request;
 		my $const_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 		my $slashdb = $const_cfg->{'dbslash'};
@@ -228,16 +225,14 @@ sub setCurrentDB {
 # This is the Chris method, since I bet he won't want to call
 # all of the other methods independtly :)
 sub setCurrentAll {
-	($static_user, $static_form, $static_constants, $static_db, $static_anonymous_coward) 
-		= @_;
+	($static_user, $static_form, $static_constants,
+		$static_db, $static_anonymous_coward) = @_;
 }
 
 #################################################################
 sub isAnon {
-	my ($uid) = @_;
-	my $anonymous_coward_uid = getCurrentStatic('anonymous_coward_uid');
-
-	return $anonymous_coward_uid == $uid ? 1 : 0;
+	my($uid) = @_;
+	return $uid == getCurrentStatic('anonymous_coward_uid');
 }
 
 1;

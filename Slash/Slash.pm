@@ -88,11 +88,11 @@ sub getSlash {
 	my $cfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $user_cfg = Apache::ModuleConfig->get($r, 'Slash::Apache::User');
 
-	$I{dbobject} = $cfg->{'dbslash'};
+	$I{dbobject} = $cfg->{dbslash};
 
 	# %I legacy
-	$I{F} = $user_cfg->{'form'};
-	my $user = $I{U} = $user_cfg->{'user'};
+	$I{F} = $user_cfg->{form};
+	my $user = $I{U} = $user_cfg->{user};
 
 	return 1;
 }
@@ -1148,7 +1148,7 @@ sub printComments {
 		if ($I{U}{is_anon}) {
 			print qq!<A HREF="$I{rootdir}/users.pl"><FONT COLOR="$I{fg}[3]">!,
 				qq!Login/Create an Account</FONT></A> !;
-		} elsif (!$I{U}{is_anon}) {
+		} else {
 			print qq!<A HREF="$I{rootdir}/users.pl?op=edituser">!,
 				qq!<FONT COLOR="$I{fg}[3]">Preferences</FONT></A> !
 		}
@@ -1874,14 +1874,14 @@ sub matchingStrings {
 	my @w1 = getImportantWords($s1);
 	my @w2 = getImportantWords($s2);
 	my $m = 0;
-	return 0 if @w1 < 2 || @w2 < 2;
+	return if @w1 < 2 || @w2 < 2;
 	foreach my $w (@w1) {
 		foreach (@w2) {
 			$m++ if $w eq $_;
 		}
 	}
 	return int($m / @w1 * 100) if $m;
-	return 0;
+	return;
 }
 
 ########################################################
@@ -1907,8 +1907,8 @@ EOT
 sub getAnonCookie {	
 	my($user) = @_;
 	my $r = Apache->request;
-	my $cookies = CGI::Cookie->parse( $r->header_in('Cookie'));
-	if (my $cookie = $cookies->('anon')) {
+	my $cookies = CGI::Cookie->parse($r->header_in('Cookie'));
+	if (my $cookie = $cookies->{anon}->value) {
 		$user->{anon_id} = $cookie;
 		$user->{anon_cookie} = 1;
 	} else {
@@ -1989,7 +1989,7 @@ EOT
 
 	# find out if this form has been submitted already
 	my($submitted_already, $submit_ts) = $dbslash->checkForm($formkey, $formname)
-		or errorMessage($cant_find_formkey_err) and return(0);
+		or errorMessage($cant_find_formkey_err), return;
 
 		if ($submitted_already) {
 			# interval of when it was submitted (this won't be used unless it's already been submitted)
@@ -2009,7 +2009,7 @@ EOT
 ##################################################################
 # nice little function to print out errors
 sub errorMessage {
-	my ($error_message) = @_;
+	my($error_message) = @_;
 	print qq|$error_message\n|;
 	return;
 }
@@ -2038,7 +2038,7 @@ each submission of $ENV{SCRIPT_NAME} in order to allow everyone to have a fair c
 <P>It's been $interval_string since your last submission!</P>
 EOT
 		errorMessage($speed_limit_err);
-		return(0);
+		return;
 
 	} else {
 		if ($dbslash->checkTimesPosted($formname, $max, $id, $formkey_earliest, $I{U})) {
@@ -2048,12 +2048,12 @@ EOT
 				$dbslash->formAbuse("invalid form key", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
 				my $invalid_formkey_err = "<P><B>Invalid form key!</B></P>\n";
 				errorMessage($invalid_formkey_err);
-				return(0);
+				return;
 			}
 
 			if (submittedAlready($I{F}{formkey}, $formname)) {
 				$dbslash->formAbuse("form already submitted", $ENV{REMOTE_ADDR}, $ENV{SCRIPT_NAME}, $ENV{QUERY_STRING});
-				return(0);
+				return;
 			}
 
 		} else {
@@ -2064,10 +2064,10 @@ EOT
 $max submissions over $timeframe_string!</B></P>
 EOT
 			errorMessage($max_posts_err);
-			return(0);
+			return;
 		}
 	}
-	return(1);
+	return 1;
 }
 
 

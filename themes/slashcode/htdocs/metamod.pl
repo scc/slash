@@ -127,7 +127,7 @@ EOT
 	$metamod{unfair} ||= 0;
 	$metamod{fair} ||= 0;
 	$I{dbobject}->setModerationVotes($I{U}{uid}, \%metamod)
-		unless ($I{U}{is_anon});
+		unless $I{U}{is_anon};
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);

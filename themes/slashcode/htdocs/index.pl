@@ -210,7 +210,7 @@ sub displayStories {
 
 	#stackTrace(8);
 	for (@{$stories_arrayref}) {
-		my ($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_}; 
+		my($sid, $thissection, $title, $time, $cc, $d, $hp) = @{$_};
 
 		my @threshComments = split m/,/, $hp;
 

@@ -44,11 +44,9 @@ sub main {
 
 	# Worst case condition here is that the first lookup will cause
 	# a hit to the database. -Brian
-	
-	$sect  = $I{dbobject}->getStory($I{F}{sid}, 'section');
-	$title  = $I{dbobject}->getStory($I{F}{sid}, 'title');
-	$ws  = $I{dbobject}->getStory($I{F}{sid}, 'writestatus');
-
+	$sect	= $I{dbobject}->getStory($I{F}{sid}, 'section');
+	$title	= $I{dbobject}->getStory($I{F}{sid}, 'title');
+	$ws	= $I{dbobject}->getStory($I{F}{sid}, 'writestatus');
 
 	if ($ws == 10) {
 		$ENV{SCRIPT_NAME} = '';

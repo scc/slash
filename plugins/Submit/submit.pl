@@ -29,7 +29,7 @@ use vars '%I';
 use Slash;
 use Slash::DB;
 use Slash::Utility;
-use CGI();
+use CGI ();
 
 #################################################################
 sub main {

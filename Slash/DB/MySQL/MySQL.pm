@@ -1271,7 +1271,7 @@ sub getBackendStories {
 ########################################################
 # This needs to be made to look like other methods so
 # you can request multiple objects
-sub getStory{
+sub getStory {
 	my($self, $sid, $member) = @_;
 
 	if ($member) {
@@ -1301,7 +1301,7 @@ sub clearStory {
 }
 
 ########################################################
-sub setStory{
+sub setStory {
 	my($self, $sid, $key, $value, $perm) = @_;
 	# The idea with $perm, is that at some point, if you set it
 	# it will update the database with the change you requested

@@ -30,7 +30,7 @@ use vars '%I';
 use Slash;
 use Slash::DB;
 use Slash::Utility;
-use CGI();
+use CGI ();
 
 
 ##################################################################
@@ -422,7 +422,6 @@ EOT
 	my $dupRows = $I{dbobject}->countComments($I{F}{sid}, '', '', $I{F}{postercomment});
 
 	if ($dupRows || !$I{F}{sid}) { 
-
 		editComment(), return unless $preview;
 		print <<EOT;
 Something is wrong: parent=$I{F}{pid} dups=$dupRows discussion=$I{F}{sid}

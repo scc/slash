@@ -28,11 +28,9 @@ sub SlashUserInit ($$) {
 # handler method
 sub handler {
 	my($r) = @_;
-	# I changed this back to filename, just in case $r->uri had
-	# not tranlated "/" to "/index.pl"
 	return OK unless $r->filename =~ /\.pl$/;
 
-	#Ok, this will make it so that we can reliably use Apache->request
+	# Ok, this will make it so that we can reliably use Apache->request
 	Apache->request($r);
 
 	my $cfg = Apache::ModuleConfig->get($r);

@@ -30,7 +30,7 @@ use Image::Size;
 use Slash;
 use Slash::Utility;
 use Slash::DB;
-use CGI();
+use CGI ();
 
 sub main {
 	*I = getSlashConf();
