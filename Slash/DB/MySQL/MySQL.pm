@@ -1398,7 +1398,7 @@ sub deleteDiscussion {
 	$self->sqlDo("DELETE FROM comments WHERE sid=$did");
 	$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
 		. join(",", map { $_->[0] } @$comment_ids)
-		. ")");
+		. ")") if @$comment_ids;
 }
 
 ########################################################
