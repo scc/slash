@@ -1601,10 +1601,10 @@ sub getSectionBlocks {
 ########################################################
 sub getAuthorDescription {
 	my($self) = @_;
-	my $story_table = getCurrentStatic('mysql_heap_table') ? 'story_heap' : 'stories';
+	my $story_table = 'stories';
 	my $authors = $self->sqlSelectAll("count(*) as c, uid",
 		$story_table,
-		'',
+		"users_param.uid = stories.uid AND users_param.name='author' AND VALUE = '1'",
 		"GROUP BY uid ORDER BY c DESC"
 	);
 
