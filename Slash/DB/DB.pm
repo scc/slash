@@ -70,6 +70,38 @@ it determines what type of database to inherit from.
 
 =head1 METHODS
 
+=head2 functionName(PARAM1, PARAM2 [, OPTIONALPARAM1])
+
+Description of functionName.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item PARAM1
+
+Description of PARAM1 (including data type).
+
+=item PARAM2
+
+etc.
+
+=back
+
+=item Return value
+
+Description of return value(s).
+
+=item Side effects
+
+Description of side effects.
+
+=back
+
+=cut
+
 =item sqlConnect(KEY)
 
 Creates a drop-down list in HTML.
