@@ -14,6 +14,10 @@ use Slash::Utility;
 use constant MSG_CODE_COMMENT_MODERATE	=> 3;
 use constant MSG_CODE_COMMENT_REPLY	=> 4;
 
+use constant COMMENTS_OPEN 	=> 0;
+use constant COMMENTS_RECYCLE 	=> 1;
+use constant COMMENTS_ARCHIVE 	=> 2;
+
 ##################################################################
 sub main {
 	my $slashdb = getCurrentDB();
