@@ -261,7 +261,6 @@ sub main {
 	print getMessage('note', { note => $note }) if defined $note;
 	print createMenu($formname) if ! $user->{is_anon};
 
-
 	$op = 'userinfo' if (! $form->{op} && ($form->{uid} || $form->{nick}));
 	$op ||= isAnon($user->{uid}) ? 'userlogin' : 'userinfo';
 
@@ -377,11 +376,11 @@ sub newUser {
 
 			return;
 		} else {
-			print getError('duplicate_user', { nick => $form->{usernick}});
+			print getError('duplicate_user', { nick => $form->{usernick} });
 			return;
 		}
 	} else {
-		print getError('duplicate_user', { nick => $form->{usernick}});
+		print getError('duplicate_user', { nick => $form->{usernick} });
 			return;
 	}
 }
@@ -451,20 +450,31 @@ sub showInfo {
 		if ($form->{uid} && ! $id) {
 			$fieldkey = 'uid';
 			($uid, $id) = ($form->{uid}, $form->{uid});
-			$requested_user = $slashdb->getUser($id);
+			$requested_user = isAnon($uid) ? $user : $slashdb->getUser($id);
 			$nick = $requested_user->{nickname};
 
 		} elsif ($form->{nick} && ! $id) {
 			$fieldkey = 'nickname';
 			($nick, $id) = ($form->{nick}, $form->{nick});
 			$uid = $slashdb->getUserUID($id);
-			$requested_user = $slashdb->getUser($uid);
+			if (isAnon($uid)) {
+				$requested_user = $user;
+				($nick, $uid, $id) = @{$user}{qw(nickname uid nickname)};
+			} else {
+				$requested_user = $slashdb->getUser($uid);
+			}
 
 		} else {
 			$fieldkey = 'uid';
 			($id, $uid) = ($user->{uid}, $user->{uid});
 			$requested_user = $slashdb->getUser($uid);
 		}
+
+		# no can do boss-man
+		if (isAnon($uid)) {
+			return displayForm();
+		}
+
 	} elsif ($user->{is_admin}) {
 		$id ||= $form->{userfield} ? $form->{userfield} : $user->{uid};
 		if ($id =~ /^\d+$/) {

@@ -230,7 +230,7 @@ sub main {
 
 	print STDERR "OP $op\n" if $constants->{DEBUG};
 	if ($constants->{DEBUG}) {
-		for(keys %{$form}) {
+		for (keys %{$form}) {
 			print STDERR "FORM key $_ value $form->{$_}\n";
 		}
 	}
@@ -355,17 +355,21 @@ sub commentIndexCreator {
 	my($form, $slashdb, $user, $constants) = @_;
 
 	my($uid, $nickname);
-	if($form->{uid} or $form->{nick}) {
-		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
-		$nickname = $slashdb->getUser($uid, 'nickname');
+	if ($form->{uid} or $form->{nick}) {
+		$uid		= $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		$nickname	= $slashdb->getUser($uid, 'nickname');
 	} else {
+		$uid		= $user->{uid};
 		$nickname	= $user->{nickname};
-		$uid	= $user->{uid};
+	}
+
+	if (isAnon($uid)) {
+		return displayComments(@_);
 	}
 
 	titlebar("90%", getData('user_discussion', { name => $nickname}));
 	my $discussions = $slashdb->getDiscussionsByCreator($uid);
-	if(@$discussions) {
+	if (@$discussions) {
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 			supress_create	=> 1,
@@ -383,7 +387,7 @@ sub commentIndexPersonal {
 
 	titlebar("90%", getData('user_discussion', { name => $user->{nickname}}));
 	my $discussions = $slashdb->getDiscussionsByCreator($user->{uid});
-	if(@$discussions) {
+	if (@$discussions) {
 		slashDisplay('discuss_list', {
 			discussions	=> $discussions,
 		});

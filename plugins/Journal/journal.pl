@@ -227,11 +227,15 @@ sub displayArticle {
 	my $collection = {};
 
 	if ($form->{uid} or $form->{nick}) {
-		$uid = $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
-		$nickname = $slashdb->getUser($uid, 'nickname');
+		$uid		= $form->{uid} ? $form->{uid} : $slashdb->getUserUID($form->{nick});
+		$nickname	= $slashdb->getUser($uid, 'nickname');
 	} else {
 		$nickname	= $user->{nickname};
 		$uid		= $user->{uid};
+	}
+
+	if (isAnon($uid)) {
+		return displayFriends(@_);
 	}
 
 	_printHead("userhead", { nickname => $nickname, uid => $uid });
@@ -323,7 +327,12 @@ sub setPrefs {
 sub listArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 
-	my $list 	= $journal->list($form->{uid} || $ENV{SLASH_USER});
+	my $uid = $form->{uid} || $ENV{SLASH_USER};
+	if (isAnon($uid)) {
+		return displayFriends(@_);
+	}
+
+	my $list 	= $journal->list($uid);
 	my $themes	= $journal->themes;
 	my $theme	= $user->{'journal_theme'} || $constants->{journal_default_theme};
 	my $nickname	= $form->{uid}
