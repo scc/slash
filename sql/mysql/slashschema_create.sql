@@ -491,34 +491,6 @@ CREATE TABLE stories (
 ) TYPE = myisam;
 
 #
-# Table structure for table 'story_heap'
-#
-
-DROP TABLE IF EXISTS story_heap;
-CREATE TABLE story_heap (
-	sid char(16) NOT NULL,
-	tid smallint UNSIGNED NOT NULL,
-	uid mediumint UNSIGNED NOT NULL,
-	title varchar(100) DEFAULT '' NOT NULL,
-	dept varchar(100),
-	time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-	hits mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	section varchar(30) DEFAULT '' NOT NULL,
-	displaystatus tinyint DEFAULT '0' NOT NULL,
-	commentstatus tinyint,
-	discussion mediumint UNSIGNED DEFAULT '0' NOT NULL,
-	submitter mediumint UNSIGNED NOT NULL,
-	commentcount smallint UNSIGNED DEFAULT '0' NOT NULL,
-	hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0' NOT NULL,
-	writestatus ENUM("ok","delete","dirty","archived") DEFAULT 'ok' NOT NULL,
-	PRIMARY KEY (sid),
-	INDEX frontpage (time, displaystatus,section,writestatus),
-	KEY time (time),
-	KEY submitter (submitter),
-	KEY searchform (displaystatus,time)
-) TYPE=heap;
-
-#
 # Table structure for table 'stories'
 #
 

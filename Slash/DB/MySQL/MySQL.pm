@@ -775,11 +775,6 @@ sub createAccessLog {
 #		$self->sqlUpdate('stories', { -hits => 'hits+1' },
 #			'sid=' . $self->sqlQuote($dat)
 #		);
-#		if ($constants->{mysql_heap_table}) {
-#			$self->sqlUpdate('story_heap', { -hits => 'hits+1' },
-#				'sid=' . $self->sqlQuote($dat)
-#			);
-#		}
 	}
 
 	$self->sqlInsert('accesslog', {
@@ -1740,9 +1735,6 @@ sub setStory {
 				if defined $hashref->{$key};
 		}
 		$self->sqlUpdate($table, \%minihash, 'sid=' . $self->sqlQuote($sid), 1);
-		if ($table eq 'stories' and getCurrentStatic('mysql_heap_table')) {
-			$self->sqlUpdate('story_heap', \%minihash, 'sid=' . $self->sqlQuote($sid), 1);
-		}
 	}
 
 	for (@param)  {
@@ -3418,7 +3410,7 @@ sub getStoriesEssentials {
 	# Order
 	my $other = "ORDER BY time DESC ";
 
-	# Since stories/story_heap may potentially have thousands of rows, we
+	# Since stories may potentially have thousands of rows, we
 	# cannot simply select the whole table and cursor through it, it might
 	# seriously suck resources.  Normally we can just add a LIMIT $limit,
 	# but if we're in "issue" form we have to be careful where we're
@@ -3713,9 +3705,6 @@ sub createStory {
 
 	$self->sqlInsert('stories', $data);
 	$self->sqlInsert('story_text', $text);
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlInsert('story_heap', $data);
-	}
 	$self->_saveExtras($story);
 
 	return $sid;
@@ -3738,25 +3727,6 @@ sub updateStory {
 		ts	=> $time,
 	}, 'sid = ' . $self->sqlQuote($form->{sid}));
 
-
-	# what if there is no story_heap?  i thought it was
-	# optional -- pudge
-	# It is, and its just like a lot of other lousy code
-	# that has kept me up all weekend.
-	# 	-Brian
-	if ($constants->{'mysql_heap_table'}) {
-		$self->sqlUpdate('story_heap', {
-			uid		=> $form->{uid},
-			tid		=> $form->{tid},
-			dept		=> $form->{dept},
-			'time'		=> $time,
-			title		=> $form->{title},
-			section		=> $form->{section},
-			displaystatus	=> $form->{displaystatus},
-			commentstatus	=> $form->{commentstatus},
-			writestatus	=> $form->{writestatus},
-		}, 'sid=' . $self->sqlQuote($form->{sid}));
-	}
 
 	$self->sqlUpdate('stories', {
 		uid		=> $form->{uid},
@@ -4011,13 +3981,10 @@ sub _saveExtras {
 }
 
 ########################################################
-# We make use of story_heap if it exists, it will be much
-# faster than stories.
 sub getStory {
 	my($self, $id, $val, $force_cache_freshen) = @_;
 	my $constants = getCurrentStatic();
 
-	# Lets see if we can use story_heap
 	my $story_table = 'stories';
 
 	# If our story cache is too old, expire it.

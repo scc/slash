@@ -97,14 +97,6 @@ sub updateCommentTotals {
 			commentcount	=> $comments->{0}{totals}[0]
 		}, 'sid=' . $self->{_dbh}->quote($sid)
 	);
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlUpdate("story_heap", {
-				hitparade	=> $hp,
-				writestatus	=> 'ok',
-				commentcount	=> $comments->{0}{totals}[0]
-			}, 'sid=' . $self->{_dbh}->quote($sid)
-		);
-	}
 }
 
 ########################################################
@@ -195,11 +187,6 @@ sub updateStoriesCounts {
 		$self->sqlUpdate('stories', { -hits => "hits+$count->[1]" },
 			'sid=' . $self->sqlQuote($count->[0])
 		);
-		if ($constants->{mysql_heap_table}) {
-			$self->sqlUpdate('story_heap', { -hits => "hits+$count->[1]" },
-				'sid=' . $self->sqlQuote($count->[0])
-			);
-		}
 	}
 }
 
@@ -848,14 +835,10 @@ sub deleteStoryAll {
 
 	$self->sqlDo("DELETE FROM stories WHERE sid=$db_sid");
 	$self->sqlDo("DELETE FROM story_text WHERE sid=$db_sid");
-	if (getCurrentStatic('mysql_heap_table')) {
-		$self->sqlDo("DELETE FROM story_heap WHERE sid=$db_sid");
-	}
 	my $discussion_id = $self->sqlSelect('id', 'discussions', "sid = $db_sid");
-	if ($discussion_id) { #comment_heap
-		# In comments/comment_heap, "sid" is a numeric discussion id.
+	if ($discussion_id) { 
+		# In comments "sid" is a numeric discussion id.
 		my $comment_ids = $self->sqlSelectAll('cid', 'comments', "sid=$discussion_id");
-# 		$self->sqlDo("DELETE FROM comment_heap WHERE sid=$discussion_id");
 		$self->sqlDo("DELETE FROM comments WHERE sid=$discussion_id");
 		$self->sqlDo("DELETE FROM comment_text WHERE cid IN ("
 			. join(",", map { $_->[0] } @$comment_ids)
