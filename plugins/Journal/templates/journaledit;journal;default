@@ -22,7 +22,7 @@ __template__
 		<INPUT TYPE="hidden" NAME="formkey" VALUE="[% form.formkey %]">
 
 		[% INCLUDE formLabel value => "Subject", comment => "This is required" %]
-		<INPUT TYPE="text" NAME="description" SIZE="60" VALUE="[% FILTER strip_attribute; article.description; END %]">
+		<INPUT TYPE="text" NAME="description" SIZE="60" MAXLENGTH="60" VALUE="[% FILTER strip_attribute; article.description; END %]">
 
 		[% INCLUDE formLabel value => "Journal Topic";
 		   def_topic = article.tid || constants.journal_default_topic;

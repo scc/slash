@@ -36,7 +36,10 @@ __template__
 	You have not made any friends (or all of your friends are losers who have not created entries in their journals).
 
 [% CASE 'create_failed' %]
-	An unknown error occured when you tried to create a journal entry.
+	An unknown error occured when you tried to create a journal entry.  Please go back to the beginning and try again.
+
+[% CASE 'no_desc_or_article' %]
+	Either the subject or the journal text was empty.  Please go back and try again.
 
 [% CASE 'noentries_found' %]
 	Sorry, there are no journal entries found for this user.

@@ -452,12 +452,8 @@ sub editComment {
 		return;
 	}
 
-	unless (lc($form->{op}) eq 'reply') {
-		$error_flag++ unless validateComment(\$form->{postercomment}, \$form->{postersubj}, \$error_message, 1); 
-	}
-
-	if ((! $error_flag && $form->{postercomment}) || $form->{op} eq 'preview') { 
-		$preview = previewForm();
+	if (lc($form->{op}) ne 'reply' || $form->{op} eq 'preview' || ($form->{postersubj} && $form->{postercomment})) {
+		$preview = previewForm(\$error_message) or $error_flag++;
 	}
 
 	if ($form->{pid} && !$form->{postersubj}) {
@@ -611,6 +607,7 @@ sub validateComment {
 ##################################################################
 # Previews a comment for submission
 sub previewForm {
+	my($error_message) = @_;
 	my $form = getCurrentForm();
 	my $user = getCurrentUser();
 
@@ -618,6 +615,8 @@ sub previewForm {
 
 	my $tempComment = strip_mode($form->{postercomment}, $form->{posttype});
 	my $tempSubject = strip_nohtml($form->{postersubj});
+
+	validateComment(\$tempComment, \$tempSubject, $error_message, 1) or return;
 
 	my $preview = {
 		nickname	=> $form->{postanon}

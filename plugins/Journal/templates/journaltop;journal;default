@@ -15,7 +15,7 @@ __template__
 [% IF type == 'top';
 	title = "Top Posters By Number of Entries";
 ELSIF type == 'recent';
-	title = "Top Recent Posters";
+	title = "Top Recent Posters By Date";
 ELSIF type == 'friend';
 	title = "Top Posters By Friends";
 END %]

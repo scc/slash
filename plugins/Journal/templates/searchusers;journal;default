@@ -17,7 +17,7 @@ __template__
 [% END %]
 
 [% val1 = BLOCK %]
-<INPUT TYPE="text" NAME="nickname" SIZE="20"><INPUT TYPE="submit" VALUE="Find">'
+<INPUT TYPE="text" NAME="nickname" SIZE="20"><INPUT TYPE="submit" VALUE="Find">
 <BR><I><FONT SIZE="-1">(Yes we all need a friend to hold on to)</FONT></I>
 [% END %]
 

@@ -161,13 +161,15 @@ sub url2abs {
 
 =head2 formatDate(DATA [, COLUMN, AS, FORMAT])
 
-Converts dates from the database.  This example would take the 1th element
-of each arrayref, format it, and put the result in the 2th element.
+Converts dates from the database; takes an arrayref of rows.
+
+This example would take the 1th element of each arrayref in C<$data>, format it,
+and put the result in the 2th element.
 
 	formatDate($data, 1, 2);
 
-This example would take the "foo" key of each hashref, format it, and put
-the result in the "bar" key.
+This example would take the "foo" key of each hashref in C<$data>, format it,
+and put the result in the "bar" key.
 
 	formatDate($data, 'foo', 'bar');
 

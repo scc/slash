@@ -21,15 +21,16 @@ __template__
 [% END %]
 
 [% USE Slash %]
-[% SWITCH value;
+[% SWITCH value %]
 
-CASE "usedform" %]
+[% CASE "usedform" %]
 [% INCLUDE titlebar width="95%" title="Form Error!" %]
 [% IF interval %]
 This form has been used already [% interval %] ago.
 You can not use a form and hit the back button to use it again.
 [% ELSE %]
-There was an error in your submission.
+There was an error in your submission; please get a new form
+and try again.
 [% END %]
 
 [% CASE "invalid" %]

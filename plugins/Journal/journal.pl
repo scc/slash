@@ -355,6 +355,12 @@ sub saveArticle {
 	my($journal, $constants, $user, $form, $slashdb) = @_;
 	my $description = strip_nohtml($form->{description});
 
+	unless ($description ne "" && $form->{article} ne "") {
+		_printHead("mainhead");
+		print getData('no_desc_or_article');
+		return 0;
+	}
+
 	return unless _validFormkey();
 
 	if ($form->{id}) {
@@ -371,7 +377,7 @@ sub saveArticle {
 			}
 			my $did = $slashdb->createDiscussion(
 				$description,
-				"$rootdir/journal.pl?op=display&id=$form->{id}",
+				"$rootdir/journal.pl?op=display&id=$form->{id}&uid=$user->{uid}",
 				$form->{tid}
 			);
 			$update{discussion}  = $did;
@@ -394,15 +400,16 @@ sub saveArticle {
 			$form->{article}, $form->{posttype}, $form->{tid});
 
 		unless ($id) {
+			_printHead("mainhead");
 			print getData('create_failed');
-			listArticle(@_);
+			return 0;
 		}
 
 		if ($constants->{journal_comments} && $form->{journal_discuss}) {
 			my $rootdir = $constants->{'rootdir'};
 			my $did = $slashdb->createDiscussion(
 				$description,
-				"$rootdir/journal.pl?op=display&id=$id",
+				"$rootdir/journal.pl?op=display&id=$id&uid=$user->{uid}",
 				$form->{tid}
 			);
 			$journal->set($id, { discussion => $did });

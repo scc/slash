@@ -19,9 +19,14 @@ __template__
 		val	= friend.uid;
 		submit	= "Yup, I'm positive";
 		text	= BLOCK %]
+[% IF user.uid == friend.uid %]
+<P>Making friends with youself?  Kinda sad, but I'll allow it,
+if you really want to do it.</P>
+[% ELSE %]
 <P>Alright, before we do this thing, I just want to really make
 sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</B>
 ([% friend.uid %]) your friend.</P>
+[% END %]
 
 <P><B>Note:</B> Who your friends are is not private; it can and will be used against you.</P>
 		[% END;
@@ -32,9 +37,14 @@ sure that you want to make <B>[% FILTER strip_literal; friend.nickname; END %]</
 		val	= 1;
 		submit	= "Yup, I'm positive";
 		text	= BLOCK %]
+[% IF user.uid == friend.uid %]
+<P>Removing yourself as friend?  Some breakups are much
+harder than others.</P>
+[% ELSE %]
 <P>Alright, before we do this thing, I just want to really make
 sure that you want to remove <B>[% FILTER strip_literal; friend.nickname; END %]</B>
 ([% friend.uid %]) as your friend.</P>
+[% END %]
 		[% END;
 	CASE "removemeta";
 		title	= "Deleting Article";
