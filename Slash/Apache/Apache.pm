@@ -122,7 +122,7 @@ sub IndexHandler {
 	# thing dynamically
 	# my $slashdb = getCurrentDB();
 	# my $dynamic = $slashdb->sqlConnect(); 
-	$dynamic = 0 if ( -e "$constants->{basedir}/dboff");
+	$dynamic = 0 if ( -e "$constants->{datadir}/dboff");
 
 	if ($uri eq '/') {
 		my $filename  = $r->filename;
@@ -164,8 +164,11 @@ sub IndexHandler {
 	}
 
 	if($uri !~ /\.shtml/ && !$dynamic) {
+		my $filename  = $r->filename;
+		my $basedir   = $constants->{basedir};
+
 		$r->uri('/index.shtml');
-		$r->filename("$constants->{basedir}/index.shtml");
+		$r->filename("$basedir/index.shtml");
 		writeLog('shtml');
 		$r->notes('SLASH_FAILURE' => "db"); #You should be able to find this in other processes
 		return OK;
