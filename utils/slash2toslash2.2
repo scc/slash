@@ -533,39 +533,42 @@ sub convert_plugins {
 	);
 
 	my $printed = 0;
-	for (@{$new_plugins}) {
+	my $alit;
+	{
 		local $" = '|';
-		my $alit = "(@{$old_plugins})";
+		$alit = "(@{$old_plugins})";
+	}
+	for my $pi (@{$new_plugins}) {
 
 		# Handle plugin fixup.
-		if ($plugin_fixup{$_}) {
-			print "\nExecuting '$_' plugin fixup.\n\n";
-			&{$plugin_fixup{$_}}();
+		if ($plugin_fixup{$pi}) {
+			print "\nExecuting '$pi' plugin fixup.\n\n";
+			&{$plugin_fixup{$pi}}();
 		}
 			
 		# Handle plugin conversion and cleanup.
-		if ($forced_plugins{$_} || /^$alit$/) {
+		if ($forced_plugins{$pi} || $pi =~ /^$alit$/) {
 			if (! $printed) {
 				print "\nConverting PLUGINS...\n";
 				$printed++;
 			}
-			if ($plugins{$_} && ! $plugins{$_}{tables}) {
+			if ($plugins{$pi} && ! $plugins{$pi}{tables}) {
 				print <<EOT;
-Skipping conversion: No conversion tableset for PLUGIN '$_'!
+Skipping conversion: No conversion tableset for PLUGIN '$pi'!
 EOT
 
 				next;
 			}
-			print "\n=== $_ ===\n";
-			for (@{$plugins{$_}{tables}}) {
+			print "\n=== $pi ===\n";
+			for (@{$plugins{$pi}{tables}}) {
 				duplicate($_, 1);
 			}
 
-			if (exists $plugin_cleanup{$_} && 
-			    (ref $plugin_cleanup{$_} eq 'CODE')) 
+			if (exists $plugin_cleanup{$pi} && 
+			    (ref $plugin_cleanup{$pi} eq 'CODE')) 
 			{
 				print "Plugin Cleanup.\n";
-				&{$plugin_fixup{$_}}();
+				&{$plugin_cleanup{$pi}}();
 			}
 		}
 	}
