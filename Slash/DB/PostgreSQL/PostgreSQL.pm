@@ -487,6 +487,26 @@ sub _genericGets {
 	return \%return;
 }
 
+########################################################
+sub sqlTableExists {
+	my($self, $table) = @_;
+	return unless $table;
+
+	$self->sqlConnect();
+	my $count = $self->{_dbh}->selectrow_array(qq|SELECT count(relname) from pg_class WHERE relname = "$table"|);
+	return $count;
+}
+
+########################################################
+sub sqlSelectColumns {
+	my($self, $table) = @_;
+	return unless $table;
+
+	$self->sqlConnect();
+	my $rows = $self->{_dbh}->selectcol_arrayref("SELECT a.attname FROM pg_class c, pg_attribute a WHERE c.relname = '$table' AND a.attnum > 0 AND a.attrelid = c.oid");
+	return $rows;
+}
+
 1;
 
 __END__
