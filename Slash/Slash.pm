@@ -63,7 +63,10 @@ BEGIN {
 }
 
 getSlashConf();
-$I{dbobject} = new Slash::DB(@I{qw[dsn dbuser dbpass]});
+$I{dbobject} = new Slash::DB('slash'); 	# Hardcoded for now. I will
+																				# put the info for Apache
+																				# to do this later.
+																				# 	-Brian
 
 
 ###############################################################################

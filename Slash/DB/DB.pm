@@ -5,8 +5,9 @@ use strict;
 $Slash::DB::VERSION = '0.01';
 
 sub new {
-  my ($class, $dsn ,$dbuser, $dbpass) = @_;
+  my ($class, $user) = @_;
 	my $self = {};
+	my $dsn = 'mysql'; #This is just here for the moment.
 	if(defined ($dsn)){
 		if($dsn =~ /mysql/) {
 			eval { require Slash::DB::MySQL;};
@@ -23,7 +24,7 @@ sub new {
 	}
 	push (@Slash::DB::EXPORT, 'sqlConnect');
 	bless ($self,$class);
-	$self->SUPER::sqlConnect($dsn ,$dbuser, $dbpass);
+	$self->SUPER::sqlConnect($user);
 	return $self;
 }
 
@@ -37,7 +38,7 @@ Slash::DB - Database Class for Slashcode
 =head1 SYNOPSIS
 
   use Slash::DB;
-  $my object = new Slash::DB("database", "user", "password");
+  $my object = new Slash::DB("virtual_user");
 
 =head1 DESCRIPTION
 

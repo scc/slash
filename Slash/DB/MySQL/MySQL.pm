@@ -5,14 +5,14 @@ package Slash::DB::MySQL;
 # this.  -Brian
 
 use strict;
-use DBI;
+use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
 
 @Slash::DB::MySQL::ISA = qw( Slash::DB::Utility );
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
-my ($dsn ,$dbuser, $dbpass, $dbh);
+my ($user); #Who we are to DBIx
 my $timeout = 30; #This should eventualy be a parameter that is configurable
 my %authorBank; # This is here to save us a database call
 my %storyBank; # This is here to save us a database call
@@ -42,9 +42,8 @@ sub sqlConnect {
 # the database connection.
 # Ok, first lets see if we already have a connection
 	my $self = shift;
-	if(@_) {
-		($dsn ,$dbuser, $dbpass) = @_;
-	}
+	($user) = @_;
+
 	if(defined($self->{dbh})) {
 		unless (eval {$self->{dbh}->ping}) {
 			print STDERR ("Undefining and calling to reconnect \n");
@@ -58,7 +57,7 @@ sub sqlConnect {
 			eval {
 				local $SIG{'ALRM'} = sub { die "Connection timed out" };
 				alarm $timeout;
-				$self->{dbh} = DBI->connect($dsn, $dbuser, $dbpass);
+				$self->{dbh} = DBIx::Password->connect($user);
 				alarm 0;
 			};
 			if ($@) {

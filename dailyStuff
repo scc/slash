@@ -32,6 +32,7 @@ use Slash::DB;
 use Slash::Utility;
 
 *I = getSlashConf();
+my $slashdb = new Slash::DB('slash');
 
 my($total) = sqlSelect("count(*)", "accesslog",
 	"to_days(now()) - to_days(ts)=1");
@@ -68,7 +69,7 @@ $c->finish;
 # clean the key table
 
 my $delete_time = time() - $I{formkey_timeframe};
-$I{dbh}->do("DELETE FROM formkeys WHERE ts < $delete_time");
+$slashdb->{dbh}->do("DELETE FROM formkeys WHERE ts < $delete_time");
 
 sub updateStamps {
 	my $columns = "uid";
@@ -78,14 +79,14 @@ sub updateStamps {
 
 	my $E = sqlSelectAll($columns, $tables, $where, $other);
 
-	$I{dbh}->do("LOCK TABLES users_info WRITE");
+	$slashdb->{dbh}->do("LOCK TABLES users_info WRITE");
 
 	for (@{$E}) {
 		my $uid=$_->[0];
 #		print "Update $uid\n";
 		sqlUpdate("users_info",{-lastaccess=>'now()'},"uid=$uid");
 	}
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 }
 
 updateStamps();
@@ -98,7 +99,7 @@ while(my($sid, $cnt) = $c->fetchrow) {
 }
 $c->finish;
 
-$I{dbh}->do("delete from accesslog where date_add(ts,interval 48 hour) < now()");
+$slashdb->{dbh}->do("delete from accesslog where date_add(ts,interval 48 hour) < now()");
 
 my $sdTotalHits = $I{dbobject}->getVar("totalhits");
 
@@ -125,7 +126,7 @@ foreach my $key (sort { $articles{$b} <=> $articles{$a} } keys %articles) {
 	my $value = $articles{$key};
 
 	my($title, $author) = sqlSelect("title,aid", "stories",
-		"sid=" . $I{dbh}->quote($key));
+		"sid=" . $slashdb->{dbh}->quote($key));
 
 	$email .= "$value\t$key " . substr($title, 0, 30) .
 		" by $author\n" if $value > 100;
@@ -135,10 +136,10 @@ $email .= "\n-----------------------\n";
 $email .= `$I{datadir}/bin/tailslash today`;
 $email .= "\n-----------------------\n";
 
-$I{dbh}->do("DELETE from pollvoters");
-$I{dbh}->do("DELETE from moderatorlog WHERE
+$slashdb->{dbh}->do("DELETE from pollvoters");
+$slashdb->{dbh}->do("DELETE from moderatorlog WHERE
 	to_days(now()) - to_days(ts) > $I{archive_delay} ");
-$I{dbh}->do("DELETE from metamodlog WHERE
+$slashdb->{dbh}->do("DELETE from metamodlog WHERE
 	to_days(now()) - to_days(ts) > $I{archive_delay} ");
 
 my($comlim) = sqlSelect("commentlimit", "users_comments", "uid=-1");
@@ -162,8 +163,8 @@ for (@{$E}) {
 		or die "Can't unlink $I{basedir}/$section/$sid.shtml: $!";
 	symlink("$I{basedir}/$section/${sid}_F.shtml", "$I{basedir}/$section/$sid.shtml")
 		or die "Can't symlink $I{basedir}/$section/${sid}_F.shtml -> $sid.shtml";
-	$I{dbh}->do("DELETE FROM comments WHERE sid='$sid'");
-	$I{dbh}->do("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
+	$slashdb->{dbh}->do("DELETE FROM comments WHERE sid='$sid'");
+	$slashdb->{dbh}->do("UPDATE stories SET writestatus=10 WHERE sid='$sid'");
 }
 sqlUpdate("users_comments",{ commentlimit=>$comlim },"uid=-1");
 
@@ -171,11 +172,11 @@ my $delay1 = $I{archive_delay} * 2;
 my $delay2 = $I{archive_delay} * 9;
 $I{defaultsection} ||= 'articles';
 
-$I{dbh}->do("delete from newstories WHERE 
+$slashdb->{dbh}->do("delete from newstories WHERE 
 	(section='$I{defaultsection}' and to_days(now()) - to_days(time) > $delay1)
 	or (to_days(now()) - to_days(time) > $delay2)");
 
-$I{dbh}->do("delete from comments where to_days(now()) - to_days(date) > $I{archive_delay}");
+$slashdb->{dbh}->do("delete from comments where to_days(now()) - to_days(date) > $I{archive_delay}");
 
 sub generateDailyMail {
 	my $columns = "sid,title,section,aid,tid,date_format(time,\"\%W \%M \%d, \@h:\%i\%p\"),dept";

@@ -33,7 +33,11 @@ use File::Path;
 use LWP::UserAgent;
 use HTTP::Request;
 use URI::Escape;
+use Slash;
+use Slash::DB;
 
+*I = getSlashConf();
+my $slashdb = new Slash::DB('slash');
 my $totalChangedStories = 1;
 
 sub END { Carp::cluck("why am I here?") }
@@ -167,8 +171,8 @@ EOT
 #################################
 sub setblock {
 	my($bid, $block)=@_;
-	$block = $I{dbh}->quote($block);
-	$I{dbh}->do("UPDATE blocks SET block=$block WHERE bid='$bid'");
+	$block = $slashdb->{dbh}->quote($block);
+	$slashdb->{dbh}->do("UPDATE blocks SET block=$block WHERE bid='$bid'");
 }
 
 #################################
@@ -220,7 +224,7 @@ sub fpsBeDamned {
 		slashdLog("(Attaching first post to $sid)");
 		my $subj = $subjects[rand @subjects];
 		my $comment = $comments[rand @comments];
-		$I{dbh}->do("INSERT into comments values (
+		$slashdb->{dbh}->do("INSERT into comments values (
 			'$sid',1,0,
 			now(),
 			'FirstPost',0,
@@ -235,7 +239,7 @@ sub fpsBeDamned {
 			"comments.sid=stories.sid AND commentcount > 1
 			AND host_name='FirstPost' LIMIT 1")) {
 		slashdLog("(Removing the *cough* first post $sid)");
-		$I{dbh}->do("delete from comments where sid='$sid' AND host_name='FirstPost'");
+		$slashdb->{dbh}->do("delete from comments where sid='$sid' AND host_name='FirstPost'");
 	}
 }
 
@@ -246,13 +250,13 @@ sub updateStoryIndex {
 	foreach my $sid (@_) {
 		$stories{$sid} = sqlSelectHashref("*","stories","sid='$sid'");
 	}
-	$I{dbh}->do("LOCK TABLES newstories WRITE");
+	$slashdb->{dbh}->do("LOCK TABLES newstories WRITE");
 
 	foreach my $sid (keys %stories) {
 		sqlReplace("newstories", $stories{$sid}, "sid='$sid'");
 	}
 
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 }
 
 #################################
@@ -309,7 +313,7 @@ sub newfooter {
 sub getBackendStories {
 	my $section = shift;
 
-	my $c = $I{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
+	my $c = $slashdb->{dbh}->prepare("SELECT stories.sid,title,time,dept,aid,alttext,
 		image,commentcount,section,introtext,bodytext,
 		topics.tid as tid
 		    FROM stories,topics
@@ -590,8 +594,8 @@ sub freshenup {
 			or warn "Can't unlink $I{basedir}/$section/$sid.shtml: $!";
 		unlink "$I{basedir}/$section/${sid}_F.shtml"
 			or warn "Can't unlink $I{basedir}/$section/${sid}_F.shtml: $!";
-		$I{dbh}->do("DELETE from stories where sid='$sid'");
-		$I{dbh}->do("DELETE from newstories where sid='$sid'");
+		$slashdb->{dbh}->do("DELETE from stories where sid='$sid'");
+		$slashdb->{dbh}->do("DELETE from newstories where sid='$sid'");
 		slashdLog("Deleting $sid");
 	}
 	$c->finish;
@@ -627,8 +631,8 @@ sub getSlicesTable {
 		$I{adfu_dbpass}) or die "Can't connect to adfu: $!";
 
 	my $count = 1;
-	$I{dbh}->do("LOCK TABLES slashslices WRITE");
-	$I{dbh}->do("DELETE FROM slashslices");
+	$slashdb->{dbh}->do("LOCK TABLES slashslices WRITE");
+	$slashdb->{dbh}->do("DELETE FROM slashslices");
 
 	my $adfu_sth = $adfu_dbh->prepare("SELECT ssID, ssRUID, ssLayer FROM slashslices");
 	$adfu_sth->execute;
@@ -646,7 +650,7 @@ EOT
 
 		$ssLayer =~ s/'/''/g;
 
-		$I{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
+		$slashdb->{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
 			"VALUES ($ssID, " . $count++ . ", $ssRUID, '$ssLayer')");
 	}
 
@@ -655,26 +659,23 @@ EOT
 
 	for (my $i = $count; $i <= 1000; $i++) {
 		my $randnum = int(rand($count - 1)) + 1;
-		my ($ssID, $ssRUID, $ssLayer) = $I{dbh}->selectrow_array(
+		my ($ssID, $ssRUID, $ssLayer) = $slashdb->{dbh}->selectrow_array(
 			"SELECT ssID, ssRUID, ssLayer from slashslices WHERE ssRank=$randnum"
 		);
 
 		next if $ssID eq "" || $ssRUID eq "";
 		$ssLayer =~ s/'/''/g;
 
-		$I{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
+		$slashdb->{dbh}->do("INSERT INTO slashslices (ssID, ssRank, ssRUID, ssLayer) " .
 			"VALUES ($ssID, $i, $ssRUID, '$ssLayer')");
 	}
 
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 }
 
 main();
 
 sub main {
-	require Slash;
-	Slash->import;
-	*I = getSlashConf();
 
 	mkpath "$I{datadir}/logs/", 0, 0755;
 	open STDERR, ">> $I{datadir}/logs/slashd.log"

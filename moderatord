@@ -27,8 +27,10 @@
 use strict;
 use vars '%I';
 use Slash;
+use Slash::DB;
 
 *I = getSlashConf();
+my $slashdb = new Slash::DB('slash');
 
 sub moderatordLog {
 	local *LOG;
@@ -41,7 +43,7 @@ sub moderatordLog {
 
 sub tokens2points {
 	my $c = sqlSelectMany("uid,tokens", "users_info", "tokens >= $I{maxtokens}");
-	$I{dbh}->do("LOCK TABLES users READ, 
+	$slashdb->{dbh}->do("LOCK TABLES users READ, 
 		users_info WRITE, 
 		users_comments WRITE");
 
@@ -65,13 +67,13 @@ sub tokens2points {
 		 seclev < 100 AND
 		 users.uid=users_comments.uid AND
 		 users.uid=users_info.uid");
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 
-	$I{dbh}->do("LOCK TABLES users_comments WRITE");
+	$slashdb->{dbh}->do("LOCK TABLES users_comments WRITE");
 	while (my($uid) = $c->fetchrow) {
 		sqlUpdate("users_comments", { points => 5 } ,"uid=$uid");
 	}
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 }
 
 sub stirpool {
@@ -85,7 +87,7 @@ sub stirpool {
 
 	my $revoked = 0;
 
-	$I{dbh}->do("LOCK TABLES users_comments WRITE");
+	$slashdb->{dbh}->do("LOCK TABLES users_comments WRITE");
 
 	while (my($p, $u) = $c->fetchrow) {
 		moderatordLog("Taking $p points from $u");
@@ -93,7 +95,7 @@ sub stirpool {
 		sqlUpdate("users_comments", { points => '0' }, "uid=$u");
 	}
 
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 	$c->finish;
 	return 0;
 	# return $revoked;
@@ -150,7 +152,7 @@ sub comments2tokens {
 	}
 
 
-	$I{dbh}->do("LOCK TABLES users_info WRITE");
+	$slashdb->{dbh}->do("LOCK TABLES users_info WRITE");
 	foreach $uid (@eligibles) {
 		next unless $scores[$uid];
 		# moderatordLog("$uid: ".$scores[$uid].", ");
@@ -158,7 +160,7 @@ sub comments2tokens {
 			-tokens	=> "tokens+" . $scores[$uid]
 		}, "uid=$uid");
 	}
-	$I{dbh}->do("UNLOCK TABLES");
+	$slashdb->{dbh}->do("UNLOCK TABLES");
 }
 
 my($tc, $lc) = $I{dbobject}->getVars("totalComments", "lastComments");

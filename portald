@@ -44,8 +44,8 @@ use URI::Escape;
 use XML::Parser;
 
 *I = getSlashConf();
+my $slashdb = new Slash::DB('slash');
 my %savedBlocks;
-#my ($basedir,$datadir)=$I{dbobject}->getVars("basedir","datadir");
 
 sub makeTmp {
 	if (-f "$I{datadir}/logs/portald.pid") {
@@ -180,7 +180,7 @@ sub getUptime {
 
 	my($today) = $c->fetchrow;
 	my($yesterday) = $c->fetchrow;
-	my($th, $tc) = ${dbobject}->getVar("totalhits", "totalComments");
+	my($th, $tc) = $slashdb->getVar("totalhits", "totalComments");
 
 	$stats .= "<B>yesterday:</B> $yesterday<BR>
 		<B>today:</B> $today<BR>
@@ -195,7 +195,7 @@ sub getUptime {
 sub setblock {
 	my($bid, $block) = @_;
 	$savedBlocks{$bid} = $block;
-	#sqlUpdate("blocks",{ block => $block }, "bid=" . $I{dbh}->quote($bid) );
+	#sqlUpdate("blocks",{ block => $block }, "bid=" . $slashdb->{dbh}->quote($bid) );
 	portaldLog("updated $bid");
 }
 
@@ -281,11 +281,11 @@ sub getSectionMenu2 {
 		ORDER BY section");
 
 	while (my($s) = $c->fetchrow) {
-		my($month, $day) = $I{dbh}->selectrow_array(
+		my($month, $day) = $slashdb->{dbh}->selectrow_array(
 			"select month(time), dayofmonth(time) from stories where " .
 			"section='$s' and time < now() and displaystatus > -1 order by ".
 			"time desc limit 1");
-		my @count = $I{dbh}->selectrow_array(
+		my @count = $slashdb->{dbh}->selectrow_array(
 			"select count(*) from stories where section='$s' and " .
 			"to_days(now()) - to_days(time) <= 2 and time < now() and " .
 			"displaystatus > -1");
@@ -310,7 +310,7 @@ makeTmp();
 portaldLog("Launching Portald");
 
 $|++;
-$I{dbh} ||= sqlconnect();
+$slashdb->{dbh} ||= sqlconnect();
 require 'portald-site' if -e 'portald-site';
 portaldLog("Updating Portal Box Thingees");
 
@@ -336,15 +336,15 @@ getUptime();
 # Clean up
 deleteTmp();
 
-# $I{dbh}->do("LOCK TABLES blocks WRITE");
+# $slashdb->{dbh}->do("LOCK TABLES blocks WRITE");
 
 foreach (keys %savedBlocks) {
 	sqlUpdate("blocks", { block => $savedBlocks{$_} },
-		"bid=" . $I{dbh}->quote($_)
+		"bid=" . $slashdb->{dbh}->quote($_)
 	);
 }
 
-# $I{dbh}->do("UNLOCK TABLES");
+# $slashdb->{dbh}->do("UNLOCK TABLES");
 
 # from 'portald-site'
 newSemiRandomBlock() if defined &newSemiRandomBlock;
