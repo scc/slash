@@ -4,6 +4,7 @@
 # $Id$
 
 use strict;
+use Date::Manip;
 use Slash;
 use Slash::Display;
 use Slash::Utility;
@@ -265,7 +266,7 @@ sub userInfo {
 
 	$admin_block = getUserAdmin($userbio->{uid}, 1, 0) if $admin_flag;
 
-	my($title, $commentstruct, $points, $nickmatch_flag);
+	my($title, $commentstruct, $points, $lastgranted, $nickmatch_flag);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
 
 	$form->{min} = 0 unless $form->{min};
@@ -280,6 +281,16 @@ sub userInfo {
 	if ($userbio->{uid} == $user->{uid}) {
 		$nickmatch_flag = 1;
 		$points = $userbio->{points};
+		if ($points) {
+			$lastgranted = $slashdb->getUser($uid, 'lastgranted');
+			if ($lastgranted) {
+				$lastgranted = timeCalc(
+					DateCalc($lastgranted,
+					'+ ' . ($constants->{stir}+1) . ' days'),
+					'%Y-%m-%d'
+				);
+			}
+		}
 		$mod_flag = 1 if $userbio->{uid} == $uid && $points > 0;
 		$title = getTitle('userinfo_user_title', { nick => $nick, uid => $uid });
 	}
@@ -317,6 +328,7 @@ sub userInfo {
 		homepage		=> $userbio->{homepage},
 		bio			=> $userbio->{bio},
 		points			=> $points,
+		lastgranted		=> $lastgranted,
 		public_key		=> $public_key,
 		commentstruct		=> $commentstruct || [],
 		nickmatch_flag		=> $nickmatch_flag,
