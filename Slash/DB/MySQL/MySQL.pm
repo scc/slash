@@ -1887,19 +1887,6 @@ sub getStoryByTime {
 	);
 }
 
-<<<<<<< MySQL.pm
-=======
-#################################################################
-#These methods should be the same
-#and to be honest add little. Perfect for
-#a rewrite.
-########################################################
-sub setUsersKey {
-	my($self, $uid, $hashref) = @_;
-	# Replace is a naughy thing
-	$self->sqlReplace("users_key", $hashref);
-}
-
 ########################################################
 sub setUsers {
 	my($self, $uid, $hashref) = @_;
@@ -2785,15 +2772,6 @@ sub getVar {
 }
 
 ########################################################
-<<<<<<< MySQL.pm
-=======
-sub getUserInfo {
-	my $answer = _genericGet('vars', 'name', @_);
-	return $answer;
-}
-
-########################################################
->>>>>>> 1.1.2.79
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
 sub getUser {
