@@ -52,7 +52,7 @@ __template__
 		</TD>
 	</TR>
 </TABLE>
-[% INCLUDE titlebar title=customize_title %]
+[% INCLUDE titlebar width='100%' title=customize_title %]
 <TABLE WIDTH="95%" ALIGN="CENTER" BORDER="0">
 	<TR>
 		<TD>

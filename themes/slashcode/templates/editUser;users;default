@@ -72,9 +72,6 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	<B>Homepage</B> (optional:you must enter a fully qualified URL!)<BR>
 		<INPUT TYPE="TEXT" NAME="homepage" VALUE="[% FILTER strip_attribute; useredit.homepage; END %]" SIZE="60"><BR>
 
-	<P><B>Headline Mailing List</B>
-	[% maillist %]
-
 	<P><B>Session Login</B>
 	[% session %]
 
