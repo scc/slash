@@ -5,10 +5,10 @@ CREATE TABLE abusers (
   ts datetime  DEFAULT '1970-01-01 00:00:00' NOT NULL,
   reason varchar(120) DEFAULT '' NOT NULL,
   querystring varchar(60) DEFAULT '' NOT NULL,
-  PRIMARY KEY (abuser_id),
-  UNIQUE (host_name),
-  UNIQUE (reason)
+  PRIMARY KEY (abuser_id)
 );
+CREATE INDEX host_name ON abusers(host_name);
+CREATE INDEX reason ON abusers(reason);
 
 
 
@@ -45,10 +45,10 @@ CREATE TABLE blocks (
   url varchar(128),
   rdf varchar(255),
   retrieve int2 DEFAULT '0',
-  PRIMARY KEY (bid),
-  UNIQUE (type),
-  UNIQUE (section)
+  PRIMARY KEY (bid)
 );
+CREATE INDEX section ON blocks(section);
+CREATE INDEX type ON blocks(type);
 
 
 CREATE TABLE code_param (
@@ -82,12 +82,12 @@ CREATE TABLE comments (
   points int2 DEFAULT '0' NOT NULL,
   lastmod int2,
   reason int2 DEFAULT '0',
-  PRIMARY KEY (sid,cid),
-  UNIQUE (sid,points,uid),
-  UNIQUE (uid,points),
-  UNIQUE (sid,uid,points,cid),
-  UNIQUE (sid,pid)
+  PRIMARY KEY (sid,cid)
 );
+CREATE INDEX display ON comments(id,points,uid);
+CREATE INDEX byname ON comments(uid,points);
+CREATE INDEX theusual ON comments(sid,uid,points,cid);
+CREATE INDEX countreplies ON comments(sid,pid);
 
 
 
@@ -102,10 +102,10 @@ CREATE TABLE content_filters (
   minimum_length int4 DEFAULT '0' NOT NULL,
   err_message varchar(150) DEFAULT '',
   maximum_length int4 DEFAULT '0' NOT NULL,
-  PRIMARY KEY (filter_id),
-  UNIQUE (regex),
-  UNIQUE (field)
+  PRIMARY KEY (filter_id)
 );
+CREATE INDEX regex ON content_filters(regex);
+CREATE INDEX field ON content_filters(field);
 
 
 
@@ -143,12 +143,12 @@ CREATE TABLE formkeys (
   ts int4 DEFAULT '0' NOT NULL,
   submit_ts int4 DEFAULT '0' NOT NULL,
   content_length int2 DEFAULT '0' NOT NULL,
-  PRIMARY KEY (formkey),
-  UNIQUE (formname),
-  UNIQUE (id),
-  UNIQUE (ts),
-  UNIQUE (submit_ts)
+  PRIMARY KEY (formkey)
 );
+CREATE INDEX formname ON formkeys(formname);
+CREATE INDEX id ON formkeys(id);
+CREATE INDEX ts ON formkeys(ts);
+CREATE INDEX submit_ts ON formkeys(submit_ts);
 
 
 
@@ -161,6 +161,8 @@ CREATE TABLE hitters (
   UNIQUE (host_addr),
   UNIQUE (hits)
 );
+CREATE INDEX host_addr ON hitters(host_addr);
+CREATE INDEX hits ON hitters(hits);
 
 
 
@@ -195,10 +197,10 @@ CREATE TABLE moderatorlog (
   ts datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
   cid int2 DEFAULT '0' NOT NULL,
   reason int4 DEFAULT '0',
-  PRIMARY KEY (id),
-  UNIQUE (sid,cid),
-  UNIQUE (sid,uid,cid)
+  PRIMARY KEY (id)
 );
+CREATE INDEX sid ON moderatorlog(sid,cid);
+CREATE INDEX sid_2 ON moderatorlog(sid,uid,cid);
 
 
 CREATE TABLE newcomments (
@@ -213,13 +215,13 @@ CREATE TABLE newcomments (
   points int2 DEFAULT '0' NOT NULL,
   lastmod int2,
   reason int2 DEFAULT '0',
-  PRIMARY KEY (sid,cid),
-  UNIQUE (sid,points,uid),
-  UNIQUE (uid,points),
-  UNIQUE (sid,uid,points,cid),
-  UNIQUE (sid,pid)
+  PRIMARY KEY (sid,cid)
 );
 
+CREATE INDEX display_new ON newcomments(sid,points,uid);
+CREATE INDEX byname_new ON newcomments(uid,points);
+CREATE INDEX theusual_new ON newcomments(sid,uid,points,cid);
+CREATE INDEX countreplies_new ON newcomments(sid,pid);
 
 CREATE TABLE newstories (
   sid varchar(20) DEFAULT '' NOT NULL,
@@ -239,10 +241,10 @@ CREATE TABLE newstories (
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
   relatedtext text,
   extratext text,
-  PRIMARY KEY (sid),
-  UNIQUE (time),
-  UNIQUE (displaystatus,time)
+  PRIMARY KEY (sid)
 );
+CREATE INDEX time ON newstories(time);
+CREATE INDEX searchform ON newstories(displaystatus,time);
 
 
 
@@ -276,6 +278,8 @@ CREATE TABLE pollvoters (
   uid int4 NOT NULL,
   UNIQUE (qid,id,uid)
 );
+CREATE INDEX qid ON pollvoters(qid,id,uid);
+
 
 
 
@@ -314,37 +318,6 @@ CREATE TABLE sessions (
 
 
 
-
-CREATE TABLE slashslices (
-  ssID SERIAL,
-  ssRank int4 DEFAULT '0' NOT NULL,
-  ssRUID int4,
-  ssLayer text,
-  PRIMARY KEY (ssID,ssRank),
-  UNIQUE (ssRank)
-);
-
-
-
-
-CREATE TABLE sortcodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
-);
-
-
-
-
-CREATE TABLE statuscodes (
-  code int2 DEFAULT '0' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
-);
-
-
-
-
 CREATE TABLE stories (
   sid varchar(20) DEFAULT '' NOT NULL,
   tid varchar(20) DEFAULT '' NOT NULL,
@@ -367,6 +340,8 @@ CREATE TABLE stories (
   UNIQUE (time),
   UNIQUE (displaystatus,time)
 );
+CREATE INDEX time ON stories(time);
+CREATE INDEX searchform ON stories(displaystatus,time);
 
 
 
@@ -393,9 +368,9 @@ CREATE TABLE submissions (
   comment varchar(255),
   uid int4 DEFAULT '1' NOT NULL,
   del int2 DEFAULT '0' NOT NULL,
-  PRIMARY KEY (subid),
-  UNIQUE (subid,section)
+  PRIMARY KEY (subid)
 );
+CREATE INDEX subid ON stories(subid,section);
 
 
 
@@ -489,6 +464,9 @@ CREATE TABLE users (
   UNIQUE (realemail),
   PRIMARY KEY (uid)
 );
+CREATE INDEX login ON users(uid,passwd,nickname);
+CREATE INDEX chk4user ON users(nickname,realemail);
+CREATE INDEX chk4email ON users(realemail);
 
 CREATE TABLE users_param (
 	param_id SERIAL,
