@@ -28,7 +28,7 @@ __template__
 		<A NAME="">
 	[% END %]
 
-		<IMG SRC="[% constants.imagedir %]/topics/[% topicref.$tid.image %]" ALT="[% topicref.$tid.alttext %]" WIDTH="[% topicref.$tid.width %]" HEIGHT="[% topicref.$tid.height %]" BORDER="0"><BR>[% tid %]</A>
+		<IMG SRC="[% constants.imagedir %]/topics/[% topicref.$tid.image %]" ALT="[% topicref.$tid.alttext %]" WIDTH="[% topicref.$tid.width %]" HEIGHT="[% topicref.$tid.height %]" BORDER="0"><BR>[% topicref.$tid.alttext %]</A>
 		</TD>
 [% END %]
 

@@ -3,6 +3,7 @@ description="Journal system for users"
 mysql_schema=mysql_schema
 mysql_dump=dump
 htdoc=journal.pl
+image=journaltopic.png
 template=templates/bluebox;journal;default
 template=templates/generic;journal;default
 template=templates/greypage;journal;default

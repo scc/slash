@@ -13,47 +13,72 @@ use Slash::Utility;
 sub main {
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
-	my $user = getCurrentUser();
+
+	my %ops = (
+		edit => \&editpoll,
+		save => \&savepoll,
+		delete => \&deletepolls,
+		list => \&listpolls,
+		default => \&default,
+		vote => \&vote,
+		get => \&poll_booth,
+	);
 
 	my $op = $form->{op};
-	if (defined $form->{aid} && $form->{aid} !~ /^\-?\d$/) {
-		undef $form->{aid};
+	if (defined $form->{'aid'} && $form->{'aid'} !~ /^\-?\d$/) {
+		undef $form->{'aid'};
 	}
 
 	header(getData('title'), $form->{section});
 
-	if ($user->{seclev} > 99 && $op eq 'edit') {
-		editpoll($form->{qid});
+	$op = 'default' unless $ops{$form->{op}};
+	$ops{$op}->($form);
 
-	} elsif ($user->{seclev} > 99 && $op eq 'save') {
-		savepoll();
-
-	} elsif (! defined $form->{qid}) {
-		listpolls();
-
-	} elsif (! defined $form->{aid}) {
-		print pollbooth($form->{qid}, 0, 1);
-
-	} else {
-		my $vote = vote($form->{qid}, $form->{aid});
-		printComments($form->{qid})
-			if $vote && ! $slashdb->getVar('nocomment', 'value');
-	}
-
-	writeLog($form->{qid});
+	writeLog($form->{'qid'});
 	footer();
 }
 
 #################################################################
+sub poll_booth {
+	my ($form) = @_;
+
+	print pollbooth($form->{'qid'}, 0, 1);
+}
+
+#################################################################
+sub default {
+	my ($form) = @_;
+
+	if (!$form->{'qid'}) {
+		listpolls(@_);
+	} elsif (! defined $form->{'aid'}) {
+		poll_booth(@_);
+	} else {
+		my $vote = vote(@_);
+		if (getCurrentStatic('poll_discussions')) {
+			my $slashdb = getCurrentDB();
+			my $discussion = $slashdb->getPollQuestion($form->{'qid'}, 'discussion');
+			printComments($discussion)
+		}
+	}
+}
+
+#################################################################
 sub editpoll {
-	my($qid) = @_;
+	my ($form) = @_;
+
+	my($qid) = $form->{'qid'};
+	unless (getCurrentUser('is_admin')) {
+		default(@_);
+		return;
+	}
 	my $slashdb = getCurrentDB();
 
 	my($currentqid) = $slashdb->getVar('currentqid', 'value');
 	my $question = $slashdb->getPollQuestion($qid, ['question', 'voters']);
 	$question->{voters} ||= 0;
 
-	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
+	my $answers = $slashdb->getPollAnswers($qid, ['answer', 'votes']) if $qid;
 
 	slashDisplay('editpoll', {
 		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
@@ -65,19 +90,37 @@ sub editpoll {
 
 #################################################################
 sub savepoll {
-	return unless getCurrentForm('qid');
+	my ($form) = @_;
+
+	unless (getCurrentUser('is_admin')) {
+		default(@_);
+		return;
+	}
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 	slashDisplay('savepoll');
-	$slashdb->savePollQuestion();
+	#We are lazy, we just pass along $form as a $poll
+	my $qid = $slashdb->savePollQuestion($form);
+
+	if ($constants->{poll_discussions}) {
+		my $discussion = $slashdb->createDiscussion('', $form->{question}, 
+			$slashdb->getTime(), 
+			"$constants->{rootdir}/pollBooth.pl?op=vote&qid=$qid", $form->{topic}
+		);
+		$slashdb->setPollQuestion($qid, { discussion => $discussion });
+	}
+	$slashdb->setStory($form->{sid}, { poll => $qid }) if $form->{sid};
 }
 
 #################################################################
 sub vote {
-	my($qid, $aid) = @_;
+	my ($form) = @_;
+
+	my $qid = $form->{'qid'};
+	my $aid = $form->{'aid'};
+
 	return unless $qid;
 
-	my $user = getCurrentUser();
-	my $constants = getCurrentStatic();
 	my $slashdb = getCurrentDB();
 
 	my(%all_aid) = map { ($_->[0], 1) }
@@ -92,7 +135,7 @@ sub vote {
 
 	my $question = $slashdb->getPollQuestion($qid, ['voters', 'question']);
 	my $notes = getData('display');
-	if ($user->{is_anon} && ! $constants->{allow_anonymous}) {
+	if (getCurrentUser('is_anon') and ! getCurrentStatic('allow_anonymous')) {
 		$notes = getData('anon');
 	} elsif ($aid > 0) {
 		my $id = $slashdb->getPollVoter($qid);
@@ -133,12 +176,24 @@ sub vote {
 }
 
 #################################################################
+sub deletepolls {
+	my ($form) = @_;
+	if (getCurrentUser('is_admin')) {
+		my $slashdb = getCurrentDB();
+		$slashdb->deletePoll($form->{'qid'});
+	}
+	listpolls(@_);
+}
+
+#################################################################
 sub listpolls {
+	my ($form) = @_;
 	my $slashdb = getCurrentDB();
-	my $min = getCurrentForm('min') || 0;
+	my $min = $form->{min} || 0;
 	my $questions = $slashdb->getPollQuestionList($min);
 	my $sitename = getCurrentStatic('sitename');
 
+	# Just me, but shouldn't title be in the template?
 	slashDisplay('listpolls', {
 		questions	=> $questions,
 		startat		=> $min + @$questions,

@@ -224,6 +224,7 @@ CREATE TABLE discussions (
   sid char(16) DEFAULT '' NOT NULL,
   title varchar(128),
   url varchar(255) NOT NULL,
+  topic int(10) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   type int(2) DEFAULT 0 NOT NULL,
   KEY (sid),
@@ -302,8 +303,8 @@ CREATE TABLE metamodlog (
 
 DROP TABLE IF EXISTS moderatorlog;
 CREATE TABLE moderatorlog (
-  id int(1) NOT NULL auto_increment,
-  uid int(1) NOT NULL,
+  id int(10) NOT NULL auto_increment,
+  uid int(10) NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
   sid int(16) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -323,7 +324,7 @@ CREATE TABLE moderatorlog (
 DROP TABLE IF EXISTS newstories;
 CREATE TABLE newstories (
   sid char(16) DEFAULT '' NOT NULL,
-  tid varchar(20) DEFAULT '' NOT NULL,
+  tid int(10) NOT NULL,
   uid int(11) NOT NULL,
   commentcount int(1) DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
@@ -335,7 +336,7 @@ CREATE TABLE newstories (
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-	header int(16),
+  discussion int(16),
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
@@ -347,8 +348,8 @@ CREATE TABLE newstories (
 
 DROP TABLE IF EXISTS pollanswers;
 CREATE TABLE pollanswers (
-  qid char(20) DEFAULT '' NOT NULL,
-  aid int(11) DEFAULT '0' NOT NULL,
+  qid int(10) NOT NULL,
+  aid int(11) NOT NULL,
   answer char(255),
   votes int(11),
   PRIMARY KEY (qid,aid)
@@ -360,9 +361,11 @@ CREATE TABLE pollanswers (
 
 DROP TABLE IF EXISTS pollquestions;
 CREATE TABLE pollquestions (
-  qid char(20) DEFAULT '' NOT NULL,
-  question char(255) DEFAULT '' NOT NULL,
+  qid int(10) NOT NULL auto_increment,
+  question char(255) NOT NULL,
   voters int(11),
+  topic int(11),
+  discussion int(11),
   date datetime,
   PRIMARY KEY (qid)
 );
@@ -373,8 +376,8 @@ CREATE TABLE pollquestions (
 
 DROP TABLE IF EXISTS pollvoters;
 CREATE TABLE pollvoters (
-  qid char(20) DEFAULT '' NOT NULL,
-  id char(35) DEFAULT '' NOT NULL,
+  qid int(10) NOT NULL,
+  id char(35) NOT NULL,
   time datetime,
   uid int(11) NOT NULL,
   KEY qid (qid,id,uid)
@@ -433,7 +436,7 @@ CREATE TABLE spamarmors (
 DROP TABLE IF EXISTS stories;
 CREATE TABLE stories (
   sid char(16) DEFAULT '' NOT NULL,
-  tid varchar(20) DEFAULT '' NOT NULL,
+  tid int(10) DEFAULT '' NOT NULL,
   uid int(11) DEFAULT '1' NOT NULL,
   commentcount int(1) DEFAULT '0',
   title varchar(100) DEFAULT '' NOT NULL,
@@ -444,7 +447,7 @@ CREATE TABLE stories (
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
-	header int(16),
+  discussion int(16),
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
@@ -500,7 +503,7 @@ CREATE TABLE submissions (
   time datetime,
   subj varchar(50),
   story text,
-  tid varchar(20),
+  tid int(10),
   note varchar(30),
   section varchar(30) DEFAULT '' NOT NULL,
   comment varchar(255),
@@ -538,15 +541,13 @@ CREATE TABLE templates (
 
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
-  id int(11) NOT NULL auto_increment,
-  section_id int(11),
-  tid char(20) NOT NULL,
+  tid int(11) NOT NULL auto_increment,
+  section int(11),
   image char(30),
   alttext char(40),
   width int(11),
   height int(11),
-  UNIQUE u_tid (tid),
-  PRIMARY KEY (id)
+  PRIMARY KEY (tid)
 );
 
 #

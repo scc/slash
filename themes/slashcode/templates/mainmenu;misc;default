@@ -15,7 +15,8 @@ mainmenu
 __template__
 		- <A HREF="[% constants.rootdir %]/about.shtml">About</A><BR>
 		- <A HREF="[% constants.rootdir %]/faq.shtml">FAQ</A><BR>
-		- <A HREF="[% constants.rootdir %]/topics.shtml">Topics</A><BR>
+		- <A HREF="[% constants.rootdir %]/comments.pl">Discussions</A><BR>
+		- <A HREF="[% constants.rootdir %]/topics.pl">Topics</A><BR>
 		- <A HREF="[% constants.rootdir %]/authors.pl">Authors</A><BR>
 		<HR NOSHADE SIZE="1">
 		- <A HREF="[% constants.rootdir %]/users.pl?op=edithome">Preferences</A><BR>

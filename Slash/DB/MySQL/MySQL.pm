@@ -225,7 +225,7 @@ sub createComment {
 	}
 
 	$self->sqlInsert('comment_text', {
-			id	=> $cid,
+			cid	=> $cid,
 			comment	=>  $comment->{postercomment},
 	});
 
@@ -391,11 +391,10 @@ sub createPollVoter {
 		uid	=> $ENV{SLASH_USER}
 	});
 
-	my $qid_db = $self->{_dbh}->quote($qid);
 	$self->sqlDo("update pollquestions set
-		voters=voters+1 where qid=$qid_db");
+		voters=voters+1 where qid=$qid");
 	$self->sqlDo("update pollanswers set votes=votes+1 where
-		qid=$qid_db and aid=" . $self->{_dbh}->quote($aid));
+		qid=$qid and aid=$aid");
 }
 
 ########################################################
@@ -412,6 +411,7 @@ sub createSubmission {
 	$submission->{'-time'} = 'now()';
 	$submission->{'subid'} = $subid;
 	$self->sqlInsert('submissions', $submission);
+
 	return $subid;
 }
 
@@ -913,6 +913,11 @@ sub setDiscussionBySid {
 }
 
 ########################################################
+sub setPollQuestion {
+	_genericSet('pollquestions', 'qid', '', @_);
+}
+
+########################################################
 sub setTemplate {
 	for (qw| page name section |) {
 		next unless $_[2]->{$_};
@@ -1004,20 +1009,18 @@ sub setSection {
 ########################################################
 sub setStoryCount {
 	my($self, $sid, $count) = @_;
+	return unless $sid;
+
 	$self->sqlUpdate('stories', {
 		-commentcount	=> "commentcount-$count",
 		writestatus	=> 1
-	}, 'sid=' . $self->{_dbh}->quote($sid));
-	$self->sqlUpdate('newstories', {
-		-commentcount	=> "commentcount-$count",
-		writestatus	=> 1
-	}, 'sid=' . $self->{_dbh}->quote($sid));
+	}, 'sid=' . $self->sqlQuote($sid));
 
 	if (getCurrentStatic('mysql_heap_table')) {
 		$self->sqlUpdate('newstories', {
 			-commentcount	=> "commentcount-$count",
 			writestatus	=> 1
-		}, 'sid=' . $self->{_dbh}->quote($sid));
+		}, 'sid=' . $self->sqlQuote($sid));
 	}
 }
 
@@ -1295,42 +1298,62 @@ sub getPollVoter {
 
 	my $md5 = md5_hex($ENV{REMOTE_ADDR} . $ENV{HTTP_X_FORWARDED_FOR});
 	my($voters) = $self->sqlSelect('id', 'pollvoters',
-		"qid=" . $self->{_dbh}->quote($id) .
-		"AND id='$md5' AND uid=$ENV{SLASH_USER}"
+		"qid=$id AND id='$md5' AND uid=$ENV{SLASH_USER}"
 	);
 
 	return $voters;
 }
 
 ########################################################
+# Yes, I hate the name of this. -Brian
 sub savePollQuestion {
-	my($self) = @_;
-	my $form = getCurrentForm();
-	$form->{voters} ||= "0";
-	$self->sqlReplace("pollquestions", {
-		qid		=> $form->{qid},
-		question	=> $form->{question},
-		voters		=> $form->{voters},
-		-date		=>'now()'
-	});
+	my($self, $poll) = @_;
+	$poll->{voters} ||= "0";
+	if($poll->{qid}) {
+		$self->sqlUpdate("pollquestions", {
+			question	=> $poll->{question},
+			voters		=> $poll->{voters},
+			topic		=> $poll->{topic},
+			-date		=>'now()'
+		});
+	} else {
+		$self->sqlInsert("pollquestions", {
+			question	=> $poll->{question},
+			voters		=> $poll->{voters},
+			topic		=> $poll->{topic},
+			-date		=>'now()'
+		});
+		$poll->{qid} = $self->getLastInsertId();
+	}
 
-	$self->setVar("currentqid", $form->{qid}) if $form->{currentqid};
+	$self->setVar("currentqid", $poll->{qid}) if $poll->{currentqid};
 
 	# Loop through 1..8 and insert/update if defined
 	for (my $x = 1; $x < 9; $x++) {
-		if ($form->{"aid$x"}) {
+		if ($poll->{"aid$x"}) {
 			$self->sqlReplace("pollanswers", {
 				aid	=> $x,
-				qid	=> $form->{qid},
-				answer	=> $form->{"aid$x"},
-				votes	=> $form->{"votes$x"}
+				qid	=> $poll->{qid},
+				answer	=> $poll->{"aid$x"},
+				votes	=> $poll->{"votes$x"}
 			});
 
 		} else {
-			$self->sqlDo("DELETE from pollanswers WHERE qid="
-				. $self->{_dbh}->quote($form->{qid}) . " and aid=$x");
+			$self->sqlDo("DELETE from pollanswers WHERE qid=$poll->{qid} and aid=$x");
 		}
 	}
+	return $poll->{qid};
+}
+
+########################################################
+# A note, this does not remove the issue of a story
+# still having a poll attached to it (orphan issue)
+sub deletePoll {
+	my($self, $qid) = @_;
+
+	$self->sqlDo("DELETE from pollanswers WHERE qid=$qid");
+	$self->sqlDo("DELETE from pollquestions WHERE qid=$qid");
+	$self->sqlDo("DELETE from pollvoters WHERE qid=$qid");
 }
 
 ########################################################
@@ -1348,7 +1371,7 @@ sub getPollQuestionList {
 sub getPollAnswers {
 	my($self, $id, $val) = @_;
 	my $values = join ',', @$val;
-	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=" . $self->{_dbh}->quote($id), 'ORDER by aid');
+	my $answers = $self->sqlSelectAll($values, 'pollanswers', "qid=$id", 'ORDER by aid');
 
 	return $answers;
 }
@@ -1357,10 +1380,13 @@ sub getPollAnswers {
 sub getPollQuestions {
 # This may go away. Haven't finished poll stuff yet
 #
-	my($self) = @_;
+	my($self, $limit) = @_;
+
+	$limit = 25 if(!defined($limit));
 
 	my $poll_hash_ref = {};
-	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC LIMIT 25";
+	my $sql = "SELECT qid,question FROM pollquestions ORDER BY date DESC ";
+	$sql .= " LIMIT $limit " if $limit;
 	my $sth = $self->{_dbh}->prepare_cached($sql);
 	$sth->execute;
 	while (my($id, $desc) = $sth->fetchrow) {
@@ -1776,7 +1802,7 @@ sub getPoll {
 	my $sth = $self->{_dbh}->prepare_cached("
 			SELECT question,answer,aid,votes  from pollquestions, pollanswers
 			WHERE pollquestions.qid=pollanswers.qid AND
-			pollquestions.qid= " . $self->{_dbh}->quote($qid) . "
+			pollquestions.qid=$qid
 			ORDER BY pollanswers.aid
 	");
 	$sth->execute;
@@ -2268,7 +2294,7 @@ sub _getCommentText {
 		return $self->{_comment_text}{$cid};
 	}
 
-	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'id='. $cid);
+	$self->{_comment_text}{$cid} = $self->sqlSelect('comment', 'comment_text', 'cid='. $cid);
 	return $self->{_comment_text}{$cid};
 }
 
@@ -2452,7 +2478,7 @@ sub getTrollUID {
 
 ########################################################
 sub createDiscussion {
-	my($self, $sid, $title, $time, $url, $type) = @_;
+	my($self, $sid, $title, $time, $url, $topic,  $type) = @_;
 
 	#If no type is specified we assume the value is zero
 	$type ||= 0;
@@ -2463,6 +2489,7 @@ sub createDiscussion {
 		title	=> $title,
 		ts	=> $time,
 		url	=> $url,
+		topic	=> $topic,
 		type	=> $type
 	});
 
@@ -2763,7 +2790,7 @@ sub getStoryList {
 ##################################################################
 sub getPollVotesMax {
 	my($self, $id) = @_;
-	my($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=" . $self->{_dbh}->quote($id));
+	my($answer) = $self->sqlSelect("max(votes)", "pollanswers", "qid=$id");
 	return $answer;
 }
 

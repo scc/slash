@@ -22,8 +22,9 @@ __template__
 [% FOREACH question = questions %]
 	[% IF admin %]
 	[% edit = " (<A HREF=\"$env.script_name?op=edit&qid=$question.0\">Edit</A>)" %]
+	[% delete = " (<A HREF=\"$env.script_name?op=delete&qid=$question.0\">Delete</A>)" %]
 	[% END %]
-<BR><LI><A HREF="[% env.script_name %]?qid=[% question.0 %]">[% question.1 %]</A> [% question.2 %][% edit %]</LI>
+<BR><LI><A HREF="[% env.script_name %]?qid=[% question.0 %]">[% question.1 %]</A> [% question.2 %][% edit %][% delete %]</LI>
 [% END %]
 
 <P><FONT SIZE="4"><B><A HREF="[% env.script_name %]?min=[% startat %]">More Polls</A></B></FONT>

@@ -298,9 +298,8 @@ sub saveArticle {
 		if ($constants->{journal_comments}) {
 			my $slashdb = getCurrentDB();
 			my $rootdir = getCurrentStatic('rootdir');
-			my $time = $slashdb->sqlTime();
-			$slashdb->createDiscussion('', $description, $time,
-				"$rootdir/journal.pl?sid=$sid"
+			$slashdb->createDiscussion('', $description, $slashdb->getTime(), 
+				"$rootdir/journal.pl?sid=$sid", $constants->{journal_default_topic}
 			);
 		}
 

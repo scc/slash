@@ -25,12 +25,12 @@ __template__
 <IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
 	[% END %]
 
-<BR><BR>Tid<BR><INPUT TYPE="TEXT" NAME="tid" VALUE="[% topic.tid %]"><BR>
+<BR><INPUT TYPE="HIDDEN" NAME="tid" VALUE="[% topic.tid %]"><BR>
+<BR>Alt Text<BR>
+<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
 <BR>Dimensions (leave blank to determine automatically)<BR>
 Width: <INPUT TYPE="TEXT" NAME="width" VALUE="[% topic.width %]" SIZE="4">
 Height: <INPUT TYPE="TEXT" NAME="height" VALUE="[% topic.height %]" SIZE="4"><BR>
-<BR>Alt Text<BR>
-<INPUT TYPE="TEXT" NAME="alttext" VALUE="[% FILTER strip_attribute %][% topic.alttext %][% END %]">
 <BR>
 
 	[% IF images_flag %]

@@ -30,7 +30,7 @@ sub main {
 		poll			=> pollbooth($story->{sid}, 1),
 		section			=> $SECT,
 		section_block		=> $slashdb->getBlock($SECT->{section}),
-		show_poll		=> $slashdb->getPollQuestion($story->{sid}),
+		show_poll		=> $slashdb->getPollQuestion($story->{poll}),
 		story			=> $story,
 		'next'			=> $slashdb->getStoryByTime('>', $story, $SECT),
 		prev			=> $slashdb->getStoryByTime('<', $story, $SECT),

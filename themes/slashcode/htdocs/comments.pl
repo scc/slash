@@ -153,10 +153,8 @@ sub commentIndex {
 sub createDiscussion {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
-	my $time = $slashdb->sqlTime();
-
 	$slashdb->createDiscussion('', $form->{title},
-		$time, $ENV{HTTP_REFERER}, 1
+		$slashdb->getTime(), $ENV{HTTP_REFERER}, $form->{topic}, 1
 	);
 
 	commentIndex(@_);
@@ -455,7 +453,7 @@ sub submitComment {
 		});
 	} else {
 		slashDisplay('comment_submit');
-		undoModeration($maxCid);
+		undoModeration($form->{sid});
 		printComments($form->{sid}, $maxCid, $maxCid);
 
 		my $tc = $slashdb->getVar('totalComments', 'value');
@@ -687,6 +685,10 @@ sub undoModeration {
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
+
+	if($sid !~ /^\d+$/) {
+		$sid = $slashdb->getDiscussionBySid($sid, 'header');
+	} 
 
 	return if !$user->{is_anon} || ($user->{seclev} > 99 && $constants->{authors_unlimited});
 
