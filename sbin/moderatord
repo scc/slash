@@ -77,11 +77,11 @@ moderatordLog(getData('moderatord_log_header'));
 # This is the object which we use to query the accesslog table. If it's not
 # defined, we use the site's DB object.
 $read_db = $slashdb;
-if ($constants->{moderatord_read_user}) {
+if ($constants->{backup_db_user}) {
 	# How many times we loop.
 	my $count = $constants->{moderatord_catchup_count} || 2;
 	# The user we use.
-	my $rusr = $constants->{moderatord_read_user};
+	my $rusr = $constants->{backup_db_user};
 	# The number of updates behind, the read database can be.
 	my $lag = $constants->{moderatord_lag_threshold};
 	# How long to wait between loops.
