@@ -378,10 +378,10 @@ sub blockEdit {
 		$blockdelete_flag = 1;
 	} else { 
 		# get the static blocks
-		my $blocks = $slashdb->getStaticBlock($seclev);
+		my $blocks = $slashdb->getDescriptions('static_block', $seclev);
 		$block_select1 = createSelect('bid1', $blocks, $bid, 1);
 
-		$blocks = $slashdb->getPortaldBlock($seclev);
+		$blocks = $slashdb->getDescriptions('portald_block', $seclev);
 		$block_select2 = createSelect('bid2', $blocks, $bid, 1);
 
 	}
@@ -494,7 +494,7 @@ sub colorEdit {
 
        	$title = getTitle('colorEdit-title');
 
-	$block = $slashdb->getColorBlock();
+	$block = $slashdb->getDescriptions('color_block');
 	$color_select = createSelect('color_block', $block, $form->{color_block}, 1);
 	
 	slashDisplay('admin-colorEdit', {

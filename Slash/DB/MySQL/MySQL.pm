@@ -11,7 +11,7 @@ use URI ();
 
 # The following two are for CommonPortals
 
-# For the getDecriptionsk() method
+# For the getDecriptions() method
 my %descriptions = (
 	'sortcodes'
 		=> sub { $_[0]->sqlSelectMany('code,name', 'sortcodes') },
@@ -54,6 +54,15 @@ my %descriptions = (
 
 	'sections'
 		=> sub { $_[0]->sqlSelectMany('section,title', 'sections', 'isolate=0', 'order by title') },
+
+	'static_block'
+		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[1] >= seclev AND type != 'portald'") },
+
+	'portald_block'
+		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "$_[1] >= seclev AND type = 'portald'") },
+
+	'color_block'
+		=> sub { $_[0]->sqlSelectMany('bid,bid', 'blocks', "type = 'color'") },
 
 	'authors'
 		=> sub { $_[0]->sqlSelectMany('aid,name', 'authors') },
@@ -567,7 +576,7 @@ sub getDescriptions {
 	my $codetype = shift; # Shift off to keep things clean
 	return unless $codetype;
 	my $codeBank_hash_ref = {};
-	my $sth = $descriptions{$codetype}->($self);
+	my $sth = $descriptions{$codetype}->($self,@_);
 	while (my($id, $desc) = $sth->fetchrow) {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
@@ -1357,55 +1366,6 @@ sub getSubmissionLast {
 	return $last_submitted;
 }
 
-########################################################
-# Below are the block methods. These will be cleaned
-# up a bit (so names and methods may change)
-# This should be in getDescription
-########################################################
-sub getStaticBlock {
-	my($self, $seclev) = @_;
-
-	my $block_hash_ref = {};
-	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev AND type != 'portald'";
-	my $sth = $self->{_dbh}->prepare_cached($sql);
-	$sth->execute;
-	while (my($id, $desc) = $sth->fetchrow) {
-		$block_hash_ref->{$id} = $desc;
-	}
-	$sth->finish;
-
-	return $block_hash_ref;
-}
-
-sub getPortaldBlock {
-	my($self, $seclev) = @_;
-
-	my $block_hash_ref = {};
-	my $sql = "SELECT bid,bid FROM blocks WHERE $seclev >= seclev and type = 'portald'";
-	my $sth = $self->{_dbh}->prepare_cached($sql);
-	$sth->execute;
-	while (my($id, $desc) = $sth->fetchrow) {
-		$block_hash_ref->{$id} = $desc;
-	}
-	$sth->finish;
-
-	return $block_hash_ref;
-}
-
-sub getColorBlock {
-	my($self) = @_;
-
-	my $block_hash_ref = {};
-	my $sql = "SELECT bid,bid FROM blocks WHERE type = 'color'";
-	my $sth = $self->{_dbh}->prepare_cached($sql);
-	$sth->execute;
-	while (my($id, $desc) = $sth->fetchrow) {
-		$block_hash_ref->{$id} = $desc;
-	}
-	$sth->finish;
-
-	return $block_hash_ref;
-}
 
 ########################################################
 sub getSectionBlocks {
