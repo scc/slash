@@ -7,7 +7,7 @@ package Slash::XML;
 
 =head1 NAME
 
-Slash::XML - Perl extension for Slash.
+Slash::XML - Perl extension for Slash
 
 =head1 SYNOPSIS
 
@@ -25,10 +25,9 @@ Slash::XML aids in creating XML.  Right now, only RSS is supported.
 
 use strict;
 use Date::Manip;
+use Time::Local;
 use Slash;
 use Slash::Utility;
-use Time::Local;
-use XML::RSS;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -37,10 +36,6 @@ use vars qw($VERSION @EXPORT);
 @EXPORT = qw(xmlDisplay);
 
 # FRY: There must be layers and layers of old stuff down there!
-
-my %types = (
-	rss	=> \&create_rss,
-);
 
 #========================================================================
 
@@ -93,14 +88,21 @@ Otherwise, returns true/false for success/failure.
 sub xmlDisplay {
 	my($type, $param, $opt) = @_;
 
-	return unless $param && exists $types{$type};
+	my $class = "Slash::XML::\U$type";
+	unless (eval "require $class") {
+		errorLog($@);
+		return;
+	}
+
+	my $content = $class->create($param);
+	if (!$content) {
+		errorLog("$class->create returned no content");
+		return;
+	}
 
 	if (! ref $opt) {
 		$opt = $opt == 1 ? { Return => 1 } : {};
 	}
-
-	my $content = $types{$type}->($param);
-	return unless $content;
 
 	if ($opt->{Return}) {
 		return $content;
@@ -115,267 +117,6 @@ sub xmlDisplay {
 		$r->status(200);
 		return 1;
 	}
-}
-
-#========================================================================
-
-=head1 NON-EXPORTED FUNCTIONS
-
-=head2 create_rss(PARAM)
-
-Creates RSS.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item PARAM
-
-Hashref of parameters.  Currently supported options are below.
-
-=over 4
-
-=item version
-
-Defaults to "1.0".  May be >= "1.0", >= "0.91", or "0.9".
-
-=item rdfencoding
-
-Defaults to "rdfencoding" in vars.
-
-=item title
-
-Defaults to "sitename" in vars.
-
-=item description
-
-Defaults to "slogan" in vars.
-
-=item link
-
-Defaults to "absolutedir" in vars.
-
-=item date
-
-Defaults to current date.  See date2iso8601().
-
-=item subject
-
-Defaults to "rdfsubject" in vars.
-
-=item language
-
-Defaults to "rdflanguage" in vars.
-
-=item creator
-
-Defaults to "adminmail" in vars.
-
-=item publisher
-
-Defaults to "rdfpublisher" in vars.
-
-=item rights
-
-Defaults to "rdfrights" in vars.
-
-=item updatePeriod
-
-Defaults to "rdfupdateperiod" in vars.
-
-=item updateFrequency
-
-Defaults to "rdfupdatefrequency" in vars.
-
-=item updateBase
-
-Defaults to "rdfupdatebase" in vars.
-
-=item image
-
-If scalar, then just prints the default image data if scalar is true.
-If hashref, then may have "title", "url", and "link" passed.
-
-=item textinput
-
-If scalar, then just prints the default textinput data if scalar is true.
-If hashref, then may have "title", "description", "name", and "link" passed.
-
-=item items
-
-An arrayref of hashrefs.  If the "story" key of the hashref is true,
-then the item is passed to rss_story().  Otherwise, "title" and "link" must
-be defined keys, and any other single-level key may be defined
-(no multiple level hash keys).
-
-=back
-
-=back
-
-=item Return value
-
-The complete RSS data as a string.
-
-=back
-
-=cut
-
-
-sub create_rss {
-	my($param) = @_;
-
-	return unless exists $param->{items};
-
-	my $constants = getCurrentStatic();
-
-	my $version  = $param->{version}     || '1.0';
-	my $encoding = $param->{rdfencoding} || $constants->{rdfencoding};
-
-	my $rss = XML::RSS->new(
-		version		=> $version,
-		encoding	=> $encoding,
-	);
-
-	# set defaults
-	my %channel = (
-		title		=> $constants->{sitename},
-		description	=> $constants->{slogan},
-		'link'		=> $constants->{absolutedir} . '/',
-
-		# dc
-		date		=> date2iso8601(),
-		subject		=> $constants->{rdfsubject},
-		language	=> $constants->{rdflanguage},
-		creator		=> $constants->{adminmail},
-		publisher	=> $constants->{rdfpublisher},
-		rights		=> $constants->{rdfrights},
-
-		# syn
-		updatePeriod	=> $constants->{rdfupdateperiod},
-		updateFrequency	=> $constants->{rdfupdatefrequency},
-		updateBase	=> $constants->{rdfupdatebase},
-	);
-
-	# let $param->{channel} override
-	for (keys %channel) {
-		my $value = defined $param->{channel}{$_}
-			? $param->{channel}{$_}
-			: $channel{$_};
-		$channel{$_} = encode($value, $_);
-	}
-
-	if ($version >= 1.0) {
-		# move from root to proper namespace
-		for (qw(date subject language creator publisher rights)) {
-			$channel{dc}{$_} = delete $channel{$_};
-		}
-
-		for (qw(updatePeriod updateFrequency updateBase)) {
-			$channel{syn}{$_} = delete $channel{$_};
-		}
-
-		my($item) = @{$param->{items}};
-		$rss->add_module(
-			prefix  => 'slash',
-			uri     => 'http://slashcode.com/rss/1.0/modules/Slash/',
-		) if $item->{story};
-
-	} elsif ($version >= 0.91) {
-		# fix mappings for 0.91
-		$channel{language}       = substr($channel{language}, 0, 2);
-		$channel{pubDate}        = delete $channel{date};
-		$channel{managingEditor} = delete $channel{publisher};
-		$channel{webMaster}      = delete $channel{creator};
-		$channel{copyright}      = delete $channel{rights};
-
-	} else {  # 0.9
-		for (keys %channel) {
-			delete $channel{$_} unless /^(?:link|title|description)$/;
-		}
-	}
-
-	# OK, now set it
-	$rss->channel(%channel);
-
-	# may be boolean
-	if ($param->{image}) {
-		# set defaults
-		my %image = (
-			title	=> $constants->{sitename},
-			url	=> $constants->{rdfimg},
-			'link'	=> $constants->{absolutedir} . '/',
-		);
-
-		# let $param->{image} override
-		if (ref($param->{image}) eq 'HASH') {
-			for (keys %image) {
-				my $value = defined $param->{image}{$_}
-					? $param->{image}{$_}
-					: $image{$_};
-				$image{$_} = encode($value, $_);
-			}
-		}
-
-		# OK, now set it
-		$rss->image(%image);
-	}
-
-	# may be boolean
-	if ($param->{textinput}) {
-		# set defaults
-		my %textinput = (
-			title		=> 'Search ' . $constants->{sitename},
-			description	=> 'Search ' . $constants->{sitename} . ' stories',
-			name		=> 'query',
-			'link'		=> $constants->{absolutedir} . '/search.pl',
-		);
-
-		# let $param->{textinput} override
-		if (ref($param->{image}) eq 'HASH') {
-			for (keys %textinput) {
-				my $value = defined $param->{textinput}{$_}
-					? $param->{textinput}{$_}
-					: $textinput{$_};
-				$textinput{$_} = encode($value, $_);
-			}
-		}
-
-		# OK, now set it
-		$rss->textinput(%textinput);
-	}
-
-	my @items;
-	for my $item (@{$param->{items}}) {
-		if ($item->{story} || (
-			defined($item->{title})  && $item->{title} ne ""
-				&&
-			defined($item->{'link'}) && $item->{'link'} ne ""
-		)) {
-			my $encoded_item = {};
-
-			# story is hashref to be deleted, containing
-			# story data
-			if ($item->{story}) {
-				# set up story params in $encoded_item ref
-				rss_story($item, $encoded_item, $version);
-			}
-
-			for my $key (keys %$item) {
-				$encoded_item->{$key} = encode($item->{$key}, $key);
-			}
-
-			push @items, $encoded_item if keys %$encoded_item;
-		}
-	}
-
-	return unless @items;
-	for (@items) {
-		$rss->add_item(%$_);
-	}
-
-	return $rss->as_string;
 }
 
 #========================================================================
@@ -410,7 +151,7 @@ Date::Manip.
 =cut
 
 sub date2iso8601 {
-	my($time) = @_;
+	my($self, $time) = @_;
 	if ($time) {	# force to GMT
 		$time .= ' GMT' unless $time =~ / GMT$/;
 	} else {	# get current seconds
@@ -422,121 +163,6 @@ sub date2iso8601 {
 	($diff = sprintf '%+0.4d', $diff) =~ s/(\d{2})$/:$1/;
 
 	return scalar UnixDate($time, "%Y-%m-%dT%H:%M$diff");
-}
-
-#========================================================================
-
-=head2 rss_story(ITEM, ENCODED_ITEM, VERSION)
-
-Set up a story item for RSS.  Called from create_rss().
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item ITEM
-
-The item hashref passed in the items param key passed to xmlDisplay().
-
-=item ENCODED_ITEM
-
-The prepared encoded data from ITEM.
-
-=item VERSION
-
-The VERSION as defined in create_rss().  Does the Right Thing for >= "1.0",
->= "0.91", and "0.9".
-
-=back
-
-=item Return value
-
-The encoded item.
-
-=back
-
-=cut
-
-sub rss_story {
-	my($item, $encoded_item, $version) = @_;
-
-	# delete it so it won't be processed later
-	my $story = delete $item->{story};
-	my $constants = getCurrentStatic();
-
-	$encoded_item->{title}  = encode($story->{title});
-	$encoded_item->{'link'} = encode("$constants->{absolutedir}/article.pl?sid=$story->{sid}", 'link');
-
-	if ($version >= 0.91) {
-		my $desc = rss_item_description($item->{description});
-		$encoded_item->{description} = encode($desc) if $desc;
-	}
-
-	if ($version >= 1.0) {
-		my $slashdb   = getCurrentDB();
-
-		$encoded_item->{dc}{date}    = encode(date2iso8601($story->{'time'}));
-		$encoded_item->{dc}{subject} = encode($story->{tid});
-		$encoded_item->{dc}{creator} = encode($slashdb->getUser($story->{uid}, 'nickname'));
-
-		$encoded_item->{slash}{section}    = encode($story->{section});
-		$encoded_item->{slash}{comments}   = encode($story->{commentcount});
-		$encoded_item->{slash}{hitparade}  = encode($story->{hitparade});
-		$encoded_item->{slash}{department} = encode($story->{dept})
-			if $constants->{use_dept};
-	}
-
-	return $encoded_item;
-}
-
-#========================================================================
-
-=head2 rss_item_description(DESC)
-
-Set up an item description.  If rdfitemdesc in the vars table is "1",
-then prints an item's description.  If it is some other true value,
-it will chop the description to that length.  If it is false, then no
-description for the item will be printed.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item DESC
-
-The description.
-
-=back
-
-=item Return value
-
-The fixed description.
-
-=back
-
-=cut
-
-
-sub rss_item_description {
-	my($desc) = @_;
-
-	my $constants = getCurrentStatic();
-
-	if ($constants->{rdfitemdesc} == 1) {
-		# keep $desc as-is
-	} elsif ($constants->{rdfitemdesc}) {
-		# limit length of $desc
-		$desc = balanceTags(chopEntity($desc, $constants->{rdfitemdesc}));
-		return $desc;
-	} else {
-		undef $desc;
-	}
-
-	return $desc;
 }
 
 #========================================================================
@@ -576,7 +202,7 @@ See xmlencode() and xmlencode_plain() in Slash::Utility.
 =cut
 
 sub encode {
-	my($value, $key) = @_;
+	my($self, $value, $key) = @_;
 	$key ||= '';
 	my $return = $key eq 'link'
 		? xmlencode_plain($value)
