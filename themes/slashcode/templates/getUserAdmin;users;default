@@ -87,8 +87,8 @@ __template__
 		<TABLE>
 			<TR>
 				<TD><INPUT TYPE="SUBMIT" NAME="userinfo" VALUE="User Info"></TD>
-				<TD><INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User"> &nbsp; 
-				<INPUT TYPE="SUBMIT" NAME="changepasswd" VALUE="Change Password"></TD>
+				<TD><INPUT TYPE="SUBMIT" NAME="edituser" VALUE="Edit User"> </TD> 
+				<TD><INPUT TYPE="SUBMIT" NAME="changepasswd" VALUE="Change Password"></TD>
 			</TR>
 			<TR>
 				<TD><INPUT TYPE="SUBMIT" NAME="edithome" VALUE="Customise Homepage"></TD>
@@ -108,7 +108,7 @@ __template__
 	<TR>
 		<TD><B>Seclev</B></TD>
 		<TD COLSPAN="4">
-		<INPUT TYPE="TEXT" NAME="seclev" value="[% useredit.seclev %]"></TD>
+		<INPUT TYPE="TEXT" NAME="seclev" SIZE="7" value="[% useredit.seclev %]"></TD>
 		<TD>&nbsp;</TD>
 	</TR>
 	<TR>
@@ -134,28 +134,28 @@ __template__
 		<TD COLSPAN="3"><B>Read-only</B></TD>
 	</TR>
 	<TR>
-		<TD>Comments</TD>
-		<TD><INPUT TYPE="checkbox" NAME="readonly_comments" [% readonly.comments %]>&nbsp;</TD>
-		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="comments_ro_reason" VALUE="[% readonly_reasons.comments %]"></TD>
+		<TD WIDTH="100">Comments</TD>
+		<TD ALIGN="LEFT" WIDTH="100"><INPUT TYPE="checkbox" NAME="readonly_comments" [% readonly.comments %]>&nbsp;&nbsp;
+		Reason <INPUT TYPE="TEXT" NAME="comments_ro_reason" VALUE="[% readonly_reasons.comments %]"></TD>
 	</TR>
 	<TR>
-		<TD>Submissions</TD>
-		<TD><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly.submit%]>&nbsp;</TD>
-		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% readonly_reasons.submit %]"></TD>
+		<TD WIDTH="100">Submissions</TD>
+		<TD ALIGN="LEFT" WIDTH="100"><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly.submit%]>&nbsp;&nbsp;
+		Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% readonly_reasons.submit %]"></TD>
 	</TR>
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10></TD>
 	</TR>
 	[% IF ! useredit.nonuid %]
 	<TR>
-		<TD><B>Expire User</B></TD>
-		<TD><INPUT TYPE="checkbox" NAME="expired" [% checked.expired %]>&nbsp;</TD>
+		<TD WIDTH="100"><B>Expire User</B></TD>
+		<TD ALIGN="LEFT" WIDTH="100"><INPUT TYPE="checkbox" NAME="expired" [% checked.expired %]>&nbsp;</TD>
 		<TD>&nbsp;</TD> 
 	</TR>
 	<TR>
-		<TD><B>Real time black list</B></TD>
-		<TD><INPUT TYPE="checkbox" NAME="rtbl" [% useredit.rtbl %]>&nbsp;</TD>
-		<TD>&nbsp;</TD> 
+		<TD WIDTH="100"><B>Real time black list</B></TD>
+		<TD ALIGN="LEFT" WIDTH="100"><INPUT TYPE="checkbox" NAME="rtbl" [% useredit.rtbl %]>&nbsp;&nbsp;
+		Reason <INPUT TYPE="TEXT" NAME="rtbl_reason" VALUE="[% useredit.rtbl_reason %]"></TD>
 	</TR>
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10></TD>

@@ -1206,6 +1206,8 @@ sub saveUserAdmin {
 
 		$user_edits_table->{seclev} = $form->{seclev};
 		$user_edits_table->{rtbl} = $form->{rtbl} eq 'on' ? 1 : 0 ;
+		$user_edits_table->{rtbl_reason} = $form->{rtbl} eq 'on' ? $form->{rtbl_reason} : '' ;
+		print STDERR "REASON rtbl_reason $user_edits_table->{rtbl_reason} form $form->{rtbl_reason}\n";
 		$user_edits_table->{author} = $form->{author} ? 1 : 0 ;
 		$user_edits_table->{defaultpoints} = $form->{defaultpoints};
 
