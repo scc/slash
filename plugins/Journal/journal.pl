@@ -133,11 +133,11 @@ sub displayRSS {
 	);
 
 
-	my $articles = $journal->gets($uid,[qw|id article  description|], $constants->{journal_default_display});
+	my $articles = $journal->getsByUid($uid, $constants->{journal_default_display});
 	for my $article (@$articles) {
 			$rss->add_item(
 				title => xmlencode($article->[2]),
-				'link'  => xmlencode("$constants->{absolutedir}/journal.pl?op=get&id=$article->[0]"),
+				'link'  => xmlencode("$constants->{absolutedir}/journal.pl?op=get&id=$article->[3]"),
 				description => xmlencode("$nickname wrote: " . $article->[1])
 		);
 	}
@@ -157,7 +157,7 @@ sub displayArticle {
 		$nickname = getCurrentUser('nickname');
 		$uid = getCurrentUser('uid');
 	}
-	my $articles = $journal->gets($uid,[qw|date article  description|], $constants->{journal_default_display});
+	my $articles = $journal->getsByUid($uid, $constants->{journal_default_display});
 	my @sorted_articles;
 	my $date;
 	my $collection = {};
@@ -185,7 +185,7 @@ sub displayArticle {
 
 sub listArticle {
 	my ($form, $journal, $constants) = @_;
-	my $list = $journal->gets(getCurrentUser('uid'),[qw| id date description |]);
+	my $list = $journal->list($ENV{SLASH_USER});
 	my $themes = $journal->themes;
 	if($form->{theme}) {
 		my $db = getCurrentDB();
