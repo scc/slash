@@ -32,7 +32,7 @@ sub main {
 		listpolls();
 
 	} elsif (! defined $form->{aid}) {
-		pollbooth($form->{qid}, 0, 1);
+		print pollbooth($form->{qid}, 0, 1);
 
 	} else {
 		my $vote = vote($form->{qid}, $form->{aid});

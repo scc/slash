@@ -553,9 +553,7 @@ works with NO_TABLE).
 
 =item Return value
 
-Well, right now prints if NO_TABLE is true, and returns if
-NO_TABLE is false.  That's because if you don't want it in
-a table, it is presumed you are going to do something with it.
+Returns the pollbooth data.
 
 =item Dependencies
 
@@ -585,7 +583,7 @@ sub pollbooth {
 	}, 1);
 
 	return $pollbooth if $no_table;
-	fancybox($constants->{fancyboxwidth}, 'Poll', $pollbooth, $center);
+	fancybox($constants->{fancyboxwidth}, 'Poll', $pollbooth, $center, 1);
 }
 
 ########################################################
