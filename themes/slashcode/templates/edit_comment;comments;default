@@ -95,10 +95,11 @@ END %]
 
 [% IF !user.is_anon && user.karma > constants.goodkarma %]
 		<INPUT TYPE="checkbox" NAME="nobonus" VALUE="$form.nobonus"> No Score +1 Bonus
-[% END %]
-[% IF allow_anonymous && user.karma > -1 && !user.isanon %]
-		<INPUT TYPE="checkbox" NAME="postanon" VALUE="$form.postanon"> Post Anonymously<BR>
-[% END %]
+[% do_br = 1; END;
+IF constants.allow_anonymous && user.karma > -1 && !user.isanon %]
+		<INPUT TYPE="checkbox" NAME="postanon" VALUE="$form.postanon"> Post Anonymously
+[% do_br = 1; END;
+IF do_br %]<BR>[% END %]
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="Submit">
 		<INPUT TYPE="SUBMIT" NAME="op" VALUE="Preview">
 		[% format_select %]

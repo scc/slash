@@ -25,17 +25,30 @@ $opts{'u'} ||= 'slash';
 	my $slashdb = Slash::DB->new($opts{'u'});
 
 	if ($opts{'y'} eq "today") {
-		my($total, $today);
+		my($total, $today, $hour, $count);
 		my $pages = $slashdb->pagesServed();
+
+		print "| Hour  | Total for hour | Total for day | Per second\n";
+
 		for (@$pages) {
 			my($cnt, $time) = @$_;
 			my $h = timeCalc($time, '%d_%H');
 			my $d = timeCalc($time, '%d');
+
+			$hour = $h unless defined $hour;
+
+			if ($h eq $hour) { # don't print
+				$count += $cnt;
+			} else { # print, then reset $cnt to current hour
+				printf("| %s | %-7d\t | %-9d\t | %.2f\n",
+					$hour, $count, $total, $count/3600);
+				$count = $cnt;
+			}
+
 			$total = 0 unless $today == $d;
 			$today = $d;
 			$total += $cnt;
-			print "| $h | $cnt  \t| $total  \t| ",
-				sprintf("%.2f", $cnt/3600), "\n";
+			$hour = $h;
 		}
 		print "$total pages served so far today.\n";
 

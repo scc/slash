@@ -359,14 +359,26 @@ sub apache_site_conf {
     ServerName $sitename
     ErrorLog logs/${sitename}_error_log
     CustomLog logs/${sitename}_access_log common
+
+    PerlSetupEnv On
+    PerlSetEnv TZ GMT
+
     SlashVirtualUser $opts{'u'}
-    ErrorDocument 404 /404.pl
+
     PerlAccessHandler Slash::Apache::User
-    # Enable the line below if you are worried about performance
-    #PerlTransHandler Slash::Apache::IndexHandler
-    #The following line enables the userdir hack.
-    #PerlTransHandler Slash::Apache::User::userdir_handler
     PerlLogHandler Slash::Apache::Log
+
+    # this directive will redirect non-logged-in users to
+    # index.shtml if they request the home page; turn it
+    # on to help increase performance
+    #PerlTransHandler Slash::Apache::IndexHandler
+
+    # this directive will enable you to display user's pages
+    # with /~username
+    #PerlTransHandler Slash::Apache::User::userdir_handler
+
+    DirectoryIndex index.pl index.shtml
+    ErrorDocument 404 /404.pl
 
     AddType text/xml .rdf 
     AddType text/xml .rss 

@@ -63,8 +63,8 @@ __template__
 
 		[% IF authoredit_flag %]
 		[% author_select %]
-		[% ELSIF storyref.aid %]
-		<INPUT TYPE="HIDDEN" NAME="aid" VALUE="[% storyref.uid %]">
+		[% ELSIF storyref.uid %]
+		<INPUT TYPE="HIDDEN" NAME="uid" VALUE="[% storyref.uid %]">
 		[% END %]
 
 		[% IF storyref.sid %]

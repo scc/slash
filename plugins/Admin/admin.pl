@@ -947,7 +947,7 @@ sub editStory {
 	my $form = getCurrentForm();
 	my $constants = getCurrentStatic();
 
-	my($authoredit_flag, $extracolumn_flag) = (0,0);
+	my($authoredit_flag, $extracolumn_flag) = (0, 0);
 	my($storyref, $story, $author, $topic, $storycontent, $storybox, $locktest,
 		$editbuttons, $sections, $topic_select, $section_select, $author_select,
 		$extracolumns, $displaystatus_select, $commentstatus_select, $description);
@@ -966,7 +966,7 @@ sub editStory {
 		$storyref->{displaystatus} = $slashdb->getVar('defaultdisplaystatus', 'value');
 		$storyref->{commentstatus} = $slashdb->getVar('defaultcommentstatus', 'value');
 
-		$storyref->{aid} ||= $user->{uid};
+		$storyref->{uid} ||= $user->{uid};
 		$storyref->{section} = $form->{section};
 
 		foreach (@{$extracolumns}) {
@@ -984,8 +984,8 @@ sub editStory {
 		$storyref->{bodytext} = $slashdb->autoUrl($form->{section}, $storyref->{bodytext});
 
 		$topic = $slashdb->getTopic($storyref->{tid});
-		$form->{aid} ||= $user->{uid};
-		$author= $slashdb->getAuthor($form->{aid});
+		$form->{uid} ||= $user->{uid};
+		$author = $slashdb->getAuthor($form->{uid});
 		$sid = $form->{sid};
 
 		if (!$form->{time} || $form->{fastforward}) {
@@ -1001,7 +1001,7 @@ sub editStory {
 
 		$user->{currentSection} = $tmp;
 		$storyref->{relatedtext} = getRelated("$storyref->{title} $storyref->{bodytext} $storyref->{introtext}")
-			. otherLinks($slashdb->getAuthor($storyref->{aid}, 'nickname'), $storyref->{tid});
+			. otherLinks($slashdb->getAuthor($storyref->{uid}, 'nickname'), $storyref->{tid});
 
 		$storybox = fancybox($constants->{fancyboxwidth}, 'Related Links', $storyref->{relatedtext},0,1);
 
@@ -1024,7 +1024,7 @@ sub editStory {
 		$storyref->{tid} ||= 'news';
 		$storyref->{section} ||= 'articles';
 
-		$storyref->{aid} = $user->{uid};
+		$storyref->{uid} = $user->{uid};
 	}
 
 	$sections = $slashdb->getDescriptions('sections');

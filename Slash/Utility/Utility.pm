@@ -2409,8 +2409,10 @@ sub filter_params {
 
 	# special few
 	my %special = (
-		sid => sub { $_[0] =~ s|[^A-Za-z0-9/.]||g },
+		sid => sub { $_[0] =~ s|[^A-Za-z0-9/._]||g },
 	);
+	# qid is same as sid
+	$special{qid} = $special{sid};
 
 	for (keys %params) {
 		$form{$_} = $params{$_};
