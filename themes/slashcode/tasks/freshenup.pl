@@ -62,6 +62,9 @@ $task{$me}{code} = sub {
 		prog2file("$constants->{basedir}/index.pl", "ssi=yes section=$key",
 			"$constants->{basedir}/$key/index.shtml");
 	}
+
+	my $num_users = $slashdb->sqlSelect("COUNT(*)", "users");
+	$slashdb->setVar("num_users_approx", $num_users);
 };
 
 sub makeDir {

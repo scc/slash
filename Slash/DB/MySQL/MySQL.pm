@@ -2433,10 +2433,10 @@ sub checkForMetaModerator {
 	my($d) = $self->sqlSelect('to_days(now()) - to_days(lastmm)',
 		'users_info', "uid = '$user->{uid}'");
 	return unless $d;
-#	my($tuid) = $self->sqlSelect('count(*)', 'users');
-	my $tuid = 500_000; # XXX change me - Jamie
+	my $num_users = getCurrentStatic('num_users_approx');
+	$num_users = 1 if !$num_users or $num_users < 1;
 	return if $user->{uid} >
-		  $tuid * $self->getVar('m2_userpercentage', 'value');
+		  $num_users * $self->getVar('m2_userpercentage', 'value');
 	return 1;  # OK to M2
 }
 
