@@ -1296,6 +1296,26 @@ sub checkStoryViewable {
 }
 
 ########################################################
+# Ugly yes, needed at the moment, yes
+# $id is a discussion id. -Brian
+sub checkDiscussionPostable {
+	my($self, $id) = @_;
+	return unless $id;          
+
+	# This should do it.  
+	my $count = $self->sqlSelect('id', 'discussions', "id='$id' AND type != 'archived' AND ts < now()");
+	return unless $count;
+
+	# Now, we are going to get paranoid and run the story checker against it
+	my $sid;
+	if ($sid = $self->getDiscussion($id, 'sid')) {  
+		return $self->checkStoryViewable($sid);
+	}                
+
+	return 1;
+}
+
+########################################################
 sub setSection {
 # We should perhaps be passing in a reference to F here. More
 # thought is needed. -Brian

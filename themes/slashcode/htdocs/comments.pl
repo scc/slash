@@ -651,7 +651,7 @@ sub submitComment {
 
 #	# Slash is not a file exchange system
 #	# still working on this...stay tuned for real commit
-#	# (maybe in 2.2.1... sigh)
+#	# (maybe in 2.4... sigh)
 #	$form->{postercomment} = distressBinaries($form->{postercomment});
 
 	# this has to be a template -- pudge
@@ -670,6 +670,13 @@ sub submitComment {
 			($constants->{comment_minscore}, $constants->{comment_maxscore});
 		$pts = $minScore if $pts < $minScore;
 		$pts = $maxScore if $pts > $maxScore;
+	}
+	# This is here to prevent posting to discussions that don't exist/are nd -Brian
+	unless ($user->{is_admin}) {
+		unless ($slashdb->checkDiscussionPostable($form->{sid})) {
+			print getError('submission error');
+			return(0);
+		}
 	}
 
 	my $maxCid = $slashdb->createComment(
