@@ -1,0 +1,4 @@
+description="Journal system for users"
+mysql_schema=mysql_schema
+mysql_dump=dump
+htdoc=journal.pl

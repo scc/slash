@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS journals;
+CREATE TABLE journals (
+	id int(5) DEFAULT '0' NOT NULL auto_increment,
+	uid int(11) DEFAULT '0' NOT NULL,
+	date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+	article longtext,
+	description varchar(80),
+	PRIMARY KEY (id),
+	KEY uidarticle (uid),
+	KEY IDandUID (id,uid)
+);
+DROP TABLE IF EXISTS journal_friends;
+CREATE TABLE journal_friends (
+	uid int(11) DEFAULT '0' NOT NULL,
+	friend int(11) DEFAULT '0' NOT NULL,
+	unique jackandjill (uid,friend)
+);
