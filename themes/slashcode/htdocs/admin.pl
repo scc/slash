@@ -33,7 +33,9 @@ sub main {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	getSection('admin');
+# Not doing anything
+#	getSection('admin');
+
 
 	redirect('/users.pl') if $user->{seclev} < 100;
 

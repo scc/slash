@@ -333,15 +333,6 @@ sub timeCalc {
 	# This is here so when user selects "6 ish" it
 	# "posted by xxx around 6 ish" instead of "on 6 ish"
 
-	# this needs to be elsewhere, so it can be done once, and
-	# access slashDisplay(); stay here for now ... maybe in
-	# User.pm ? -- pudge
-	# Yeah, it should be in User.pm --Brian
-	if ($user->{'format'} eq '%i ish') {
-		$user->{aton} = 'around'; # getData('atonish');
-	} else {
-		$user->{aton} = 'on'; # getData('aton');
-	}
 
 	# find out the user's time based on personal offset
 	# in seconds

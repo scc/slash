@@ -1949,7 +1949,7 @@ sub getOlderStories {
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
 
-	$stories ||= $slashdb->getStories($section);
+	$stories ||= $slashdb->getNewStories($section);
 	for (@$stories) {
 		my($sid, $sect, $title, $time, $commentcount, $day) = @{$_}; 
 		my($w, $m, $d, $h, $min, $ampm) = split m/ /, $time;

@@ -1862,11 +1862,12 @@ sub getComments {
 }
 
 ########################################################
-sub getStories {
-	my($self, $section, $limit, $tid) = @_;
+sub getNewStories {
+	my($self, $section, $limit, $tid, $section_display) = @_;
 
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	$section_display ||= $form->{section};
 
 	$limit ||= $user->{currentSection} eq 'index'
 		? $user->{maxstories} : $self->getSection($section, 'artcount');
@@ -1876,7 +1877,7 @@ sub getStories {
 
 	my $where = "1=1 AND time<now() "; # Mysql's Optimize gets 1 = 1";
 	$where .= "AND displaystatus=0 " unless $form->{section};
-	$where .= "AND (displaystatus>=0 AND section='$section') " if $form->{section};
+	$where .= "AND (displaystatus>=0 AND section='$section') " if $section_display;
 	$where .= "AND tid='$tid' " if $tid;
 
 	# User Config Vars
@@ -1899,6 +1900,7 @@ sub getStories {
 		push @stories, [@data];
 		last if ++$count >= $limit;
 	}
+	$cursor->finish;
 
 	return \@stories;
 }

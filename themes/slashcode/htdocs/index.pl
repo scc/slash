@@ -55,7 +55,7 @@ sub main {
 	my $title = getData('head', { section => $section });
 	header($title, $section->{section});
 
-	my $stories = $slashdb->getStories($section);
+	my $stories = $slashdb->getNewStories($section);
 	slashDisplay('index', {
 		is_moderator	=> scalar $slashdb->checkForModerator($user),
 		stories		=> scalar displayStories($stories),

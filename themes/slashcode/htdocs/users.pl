@@ -758,7 +758,7 @@ sub saveHome {
 			unless $form->{willing};
 	}
 
-	# Update users with the $H thing we've been playing with for this whole damn sub
+	# Update users with the $users_index_table thing we've been playing with for this whole damn sub
 	$slashdb->setUser($uid, $users_index_table);
 }
 
