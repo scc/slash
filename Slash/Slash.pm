@@ -230,9 +230,7 @@ sub selectSection {
 	}
 
 	my $html_to_display = qq!<SELECT NAME="$name">\n!;
-	print STDERR "VAL : $I{sectionBank}\n";
 	foreach my $s (sort keys %{$I{sectionBank}}) {
-		print STDERR "Keys: $s \n";
 		my $S = $I{sectionBank}{$s};
 		next if $S->{isolate} && $I{U}{aseclev} < 500;
 		my $selected = $s eq $section ? ' SELECTED' : '';
@@ -2146,13 +2144,14 @@ sub lockTest {
 	my ($subj) = @_;
 	return unless $subj;
 	my $msg;
-	my @sessions;
-	$I{dbobject}->getLock($subj,\@sessions);
-	for (@sessions) {
-		if (@$_[1] ne $I{U}{aid} && (my $x = matchingStrings(@$_[0], @$_[1]))) {
+	my $locks = $I{dbobject}->getLock();
+	for (@$locks) {
+		my ($thissubj, $aid) = @$_;
+		if ($aid ne $I{U}{aid} && (my $x = matchingStrings($thissubj, $subj))) {
 			$msg .= <<EOT
-<B>$x%</B> matching with <FONT COLOR="$I{fg}[1]">@$_[0]</FONT> by <B>@$_[1]</B><BR>
+<B>$x%</B> matching with <FONT COLOR="$I{fg}[1]">$thissubj</FONT> by <B>$aid</B><BR>
 EOT
+
 		}
 	}
 	return $msg;

@@ -36,20 +36,12 @@ sub main {
 	header("Cheesy Portal");
 	# Display Blocks
 	titlebar("100%", "Cheesy $I{sitename} Portal Page");
-	my $strsql="SELECT block,title,blocks.bid,url
-		   FROM blocks,sectionblocks
-		  WHERE section='index'
-		    AND portal > -1
-		    AND blocks.bid=sectionblocks.bid 
-		  GROUP BY blocks.bid
-		  ORDER BY ordernum";
-
-	my $c = $I{dbh}->prepare($strsql);
-	$c->execute;
+	my $portals = $I{dbobject}->getPortals();
 
 	print qq!<MULTICOL COLS="3">\n!;
 	my $b;
-	while (my($block, $title, $bid, $url) = $c->fetchrow) {
+	for(@$portals) {
+		my($block, $title, $bid, $url) = @$_ ;
 		if ($bid eq "mysite") {
 			$b = portalbox(200, "$I{U}{nickname}'s Slashbox",
 				$I{U}{mylinks} ||  $block
@@ -63,8 +55,6 @@ sub main {
 
 		print $b;
 	}
-
-	$c->finish;
 
 	print "\n</MULTICOL>\n";
 

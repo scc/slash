@@ -558,7 +558,6 @@ sub saveSub {
 
 		my $subid = "$hour$min$sec.$mon$mday$year";
 
-		print STDERR "Died here:$I{F}{section}:\n";
 		sqlInsert("submissions", {
 			email	=> $I{F}{email},
 			uid	=> $I{U}{uid},
@@ -570,7 +569,6 @@ sub saveSub {
 			tid	=> $I{F}{tid},
 			section	=> $I{F}{section}
 		});
-		print STDERR "Died after here\n";
 
 		$I{dbobject}->formSuccess($I{F}{formkey},0,length($I{F}{subj}));
 	}

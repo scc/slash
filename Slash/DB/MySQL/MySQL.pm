@@ -528,13 +528,12 @@ sub getColorBlock {
 
 ########################################################
 sub getLock {
-	my ($self, $subj, $return_array) = @_;
+	my ($self) = @_;
 	my $sth = $self->sqlSelectMany('lasttitle,aid', 'sessions');
-	my @session;
-	while (my($thissubj, $aid) = $sth->fetchrow) {
-		push( @$return_array, [$thissubj, $aid]);	
-	}
+	my $locks = $sth->fetchall_arrayref;
 	$sth->finish;
+
+	return $locks;
 }
 
 
@@ -646,13 +645,10 @@ my ($self) = @_;
 			#   'aid!=' . $self->{dbh}->quote($I{U}{aid}) . ' GROUP BY aid'
 			);
 
-	my @aids;
-	while (my @row = $sth->fetchrow) {
-		push @aids, \@row;
-	}
-
+	my $aids = $sth->fetchall_arrayref;
 	$sth->finish;
-	return \@aids;
+
+	return $aids;
 }
 ########################################################
 # getTopic() 
@@ -709,15 +705,10 @@ sub getPoll {
 			ORDER BY pollanswers.aid
 	");
 	$sth->execute;
-
-
-	my @polls;
-	while (my @row = $sth->fetchrow) {
-		push @polls, \@row;
-	}
+	my $polls = $sth->fetchall_arrayref;
 	$sth->finish;
 
-	return \@polls;
+	return $polls;
 }
 ##################################################################
 # Get poll
@@ -742,6 +733,25 @@ sub getSubmissionCount{
 			($articles_only ? " and section='articles'" : '')
 	);
 	return $cnt;
+}
+
+##################################################################
+# Get portals
+sub getPortals {
+	my ($self) = @_;
+	my $strsql="SELECT block,title,blocks.bid,url
+		   FROM blocks,sectionblocks
+		  WHERE section='index'
+		    AND portal > -1
+		    AND blocks.bid=sectionblocks.bid 
+		  GROUP BY blocks.bid
+		  ORDER BY ordernum";
+
+	my $sth = $self->{dbh}->prepare($strsql);
+	$sth->execute;
+
+	my $portals = $sth->fetchall_arrayref;
+	return $portals;
 }
 
 1;
