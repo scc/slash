@@ -109,6 +109,7 @@ sub sqlSelectHashref {
 	my $sth = $self->{dbh}->prepare_cached($sql);
 	# $sth->execute or print "\n<P><B>SQL Hashref Error</B><BR>\n";
 	
+	print STDERR "SQL: $sql \n";
 	unless ($sth->execute) {
 		apacheLog($sql);
 		return;
@@ -165,7 +166,10 @@ sub sqlUpdate
 	chop $sql;
 	$sql .= "\nWHERE $where\n";
 	$self->sqlConnect();
-	return $self->{dbh}->do($sql) or apacheLog($sql);
+	my $rows = $self->{dbh}->do($sql);
+	print STDERR "SQL: $sql\n";
+	apacheLog($sql) unless($rows);
+	return $rows;
 }
 
 ########################################################

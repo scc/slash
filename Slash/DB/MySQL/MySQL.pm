@@ -15,15 +15,7 @@ use URI ();
 ($Slash::DB::MySQL::VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 my $timeout = 30; #This should eventualy be a parameter that is configurable
-my %authorBank; # This is here to save us a database call
-my %storyBank; # This is here to save us a database call
-my %topicBank; # This is here to save us a database call
-my %blockBank; # This is here to save us a database call
-my %codeBank; # This is here to save us a database call
-my %sectionBank; # This is here to save us a database call
 # The following two are for CommonPortals
-my $boxes;
-my $sectionBoxes;
 
 # For the getDecriptionsk() method
 my %descriptions = (
@@ -178,6 +170,15 @@ sub init {
 		}
 	}
 	$self->{_user_tables} = \@user_tables;
+	# These are here to remind us of what exists
+	$self->{_authorBank} = {};
+	$self->{_storyBank} = {};
+	$self->{_topicBank} = {};
+	$self->{_blockBank} = {};
+	$self->{_codeBank} = {};
+	$self->{_sectionBank} = {};
+	$self->{_boxes} = {};
+	$self->{_sectionBoxes} = {};
 }
 
 ########################################################
@@ -500,7 +501,7 @@ sub getCodes {
 # silly.
 #
 	my($self, $codetype) = @_;
-	return $codeBank{$codetype} if $codeBank{$codetype};
+	return $self->{_codeBank}{$codetype} if $self->{_codeBank}{$codetype};
 
 	my $sth;
 	if ($codetype eq 'sortcodes') {
@@ -518,7 +519,7 @@ sub getCodes {
 		$codeBank_hash_ref->{$id} = $desc;
 	}
 
-	$codeBank{$codetype} = $codeBank_hash_ref;
+	$self->{_codeBank}{$codetype} = $codeBank_hash_ref;
 	$sth->finish;
 
 	return $codeBank_hash_ref;
@@ -585,12 +586,6 @@ sub getUserInstance {
 		while (my($key, $val) = each %$user_extra) {
 			$user->{$key} = $val;
 		}
-	}
-
-
-	$user_extra = $self->sqlSelectHashref('*', "users_prefs", "uid=$uid");
-	while (my($key, $val) = each %$user_extra) {
-		$user->{$key} = $val;
 	}
 
 	return $user;
@@ -744,6 +739,7 @@ sub createUser {
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
+	$self->sqlInsert("users_key", { uid => $uid } );
 
 	return $uid;
 }
@@ -786,12 +782,6 @@ sub setVar {
 sub setSessionByAid {
 	my($self, $name, $value) = @_;
 	$self->sqlUpdate('sessions', $value, 'aid=' . $self->{dbh}->quote($name));
-}
-
-########################################################
-sub setUserInfo {
-	my($self, $name, $value) = @_;
-	$self->sqlUpdate('users_info', $value, 'uid=' . $self->{dbh}->quote($name));
 }
 
 ########################################################
@@ -865,36 +855,36 @@ sub getNicknameByUID {
 # All cache'ing happens in here.
 sub getBlock {
 	my($self, $bid) = @_;
-	return $blockBank{$bid} if $blockBank{$bid};
+	return $self->{_blockBank}{$bid} if $self->{_blockBank}{$bid};
 
 	my $sth = $self->sqlSelectMany ('bid,block', 'blocks');
 	while (my($thisbid, $thisblock) = $sth->fetchrow) {
-		$blockBank{$thisbid} = $thisblock;
+		$self->{_blockBank}{$thisbid} = $thisblock;
 	}
 	$sth->finish;
 
-	return $blockBank{$bid};
+	return $self->{_blockBank}{$bid};
 }
 
 ########################################################
 sub getSectionBank {
 	my($self, $section) = @_;
 	if ($section) {
-		return $sectionBank{$section} if $sectionBank{$section};
+		return $self->{_sectionBank}{$section} if $self->{_sectionBank}{$section};
 	} else {
-		return \%sectionBank if keys %sectionBank;
+		return $self->{_sectionBank} if keys %{$self->{_sectionBank}};
 	}
 
 	my $sth = $self->sqlSelectMany('*', 'sections');
 	while (my $section = $sth->fetchrow_hashref) {
-		$sectionBank{ $section->{section} } = $section;
+		$self->{_sectionBank}{ $section->{section} } = $section;
 	}
 	$sth->finish;
 
 	if ($section) {
-		return $sectionBank{$section};
+		return $self->{_sectionBank}{$section};
 	} else {
-		return \%sectionBank;
+		return $self->{_sectionBank};
 	}
 }
 
@@ -1194,14 +1184,14 @@ sub getSectionBlock {
 sub getAuthor {
 	my($self, $aid) = @_;
 
-	return $authorBank{$aid} if $authorBank{$aid};
+	return $self->{_authorBank}{$aid} if $self->{_authorBank}{$aid};
 	# Get all the authors and throw them in a hash for later use:
 	my $sth = $self->sqlSelectMany('*', 'authors');
 	while (my $author = $sth->fetchrow_hashref) {
-		$authorBank{ $author->{aid} } = $author;
+		$self->{_authorBank}{ $author->{aid} } = $author;
 	}
 	$sth->finish;
-	return $authorBank{$aid};
+	return $self->{_authorBank}{$aid};
 }
 
 ########################################################
@@ -1392,18 +1382,18 @@ sub getStoryBySid {
 	my($self, $sid, $member) = @_;
 
 	if ($member) {
-		return $storyBank{$sid}->{$member} if $storyBank{$sid}->{$member};
+		return $self->{_storyBank}{$sid}->{$member} if $self->{_storyBank}{$sid}->{$member};
 	} else {
-		return $storyBank{$sid} if $storyBank{$sid};
+		return $self->{_storyBank}{$sid} if $self->{_storyBank}{$sid};
 	}
 	my $hashref = $self->sqlSelectHashref('title,dept,time as sqltime,time,introtext,sid,commentstatus,bodytext,aid, tid,section,commentcount, displaystatus,writestatus,relatedtext,extratext',
 		'stories', 'sid=' . $self->{dbh}->quote($sid)
 	);
-	$storyBank{$sid} = $hashref;
+	$self->{_storyBank}{$sid} = $hashref;
 	if ($member) {
-		$storyBank{$sid}->{$member};
+		$self->{_storyBank}{$sid}->{$member};
 	} else {
-		return $storyBank{$sid};
+		return $self->{_storyBank}{$sid};
 	}
 }
 
@@ -1411,9 +1401,9 @@ sub getStoryBySid {
 sub clearStory {
 	my($self, $sid) = @_;
 	if ($sid) {
-		undef $storyBank{$sid};
+		undef $self->{_storyBank}{$sid};
 	} else {
-		undef %storyBank;
+		undef $self->{_storyBank};
 	}
 }
 
@@ -1422,7 +1412,7 @@ sub setStoryBySid {
 	my($self, $sid, $key, $value, $perm) = @_;
 	# The idea with $perm, is that at some point, if you set it
 	# it will update the database with the change you requested
-	$storyBank{$sid}{$key} = $value;
+	$self->{_storyBank}{$sid}{$key} = $value;
 }
 
 ########################################################
@@ -1638,9 +1628,9 @@ sub getTopics {
 	my($self, $topic) = @_;
 
 	if ($topic) {
-		return $topicBank{$topic} if $topicBank{$topic};
+		return $self->{_topicBank}{$topic} if $self->{_topicBank}{$topic};
 	} else {
-		return \%topicBank if (keys %topicBank);
+		return $self->{_topicBank} if (keys %{$self->{_topicBank}});
 	}
 	# Lets go knock on the door of the database
 	# and grab the Topic's since they are not cached
@@ -1648,14 +1638,14 @@ sub getTopics {
 	# -Brian
 	my $sth = $self->sqlSelectMany('*', 'topics');
 	while (my $single_topic = $sth->fetchrow_hashref) {
-		$topicBank{ $single_topic->{tid} } = $single_topic;
+		$self->{_topicBank}{ $single_topic->{tid} } = $single_topic;
 	}
 	$sth->finish;
 
 	if ($topic) {
-		return $topicBank{$topic};
+		return $self->{_topicBank}{$topic};
 	} else {
-		return \%topicBank;
+		return $self->{_topicBank};
 	}
 }
 
@@ -1781,9 +1771,9 @@ sub getPortals {
 # Get standard portals
 sub getPortalsCommon {
 	my($self) = @_;
-	return($boxes, $sectionBoxes) if keys %$boxes;
-	$boxes = {};
-	$sectionBoxes = {};
+	return($self->{_boxes}, $self->{_sectionBoxes}) if keys %{$self->{_boxes}};
+	$self->{_boxes} = {};
+	$self->{_sectionBoxes} = {};
 	my $sth = $self->sqlSelectMany(
 			'blocks.bid as bid,title,url,section,portal,ordernum',
 			'sectionblocks,blocks',
@@ -1792,14 +1782,14 @@ sub getPortalsCommon {
 	# We could get rid of tmp at some point
 	my %tmp;
 	while (my $SB = $sth->fetchrow_hashref) {
-		$boxes->{$SB->{bid}} = $SB;  # Set the Slashbox
+		$self->{_boxes}{$SB->{bid}} = $SB;  # Set the Slashbox
 		next unless $SB->{ordernum} > 0;  # Set the index if applicable
 		push @{$tmp{$SB->{section}}}, $SB->{bid};
 	}
-	$sectionBoxes = \%tmp;
+	$self->{_sectionBoxes} = \%tmp;
 	$sth->finish;
 
-	return($boxes, $sectionBoxes);
+	return($self->{_boxes}, $self->{_sectionBoxes});
 }
 
 ##################################################################
@@ -1858,14 +1848,6 @@ sub checkForModerator {	# check for MetaModerator / M2, not Moderator
 }
 
 ##################################################################
-sub setUserBoxes {
-	my($self, $uid, $exboxes) = @_;
-	$self->sqlUpdate('users_index', { exboxes => $exboxes },
-		"uid=$uid", 1
-	);
-}
-
-##################################################################
 sub getAuthorAids {
 	my($self, $aid) = @_;
 	my $aids = $self->sqlSelectAll("aid", "authors", "seclev > 99", "order by aid");
@@ -1905,6 +1887,8 @@ sub getStoryByTime {
 	);
 }
 
+<<<<<<< MySQL.pm
+=======
 #################################################################
 #These methods should be the same
 #and to be honest add little. Perfect for
@@ -1925,30 +1909,6 @@ sub setUsers {
 		$hashref->{passwd} = md5_hex($hashref->{passwd});
 	}
 	$self->sqlUpdate("users", $hashref, "uid=" . $uid, 1);
-}
-
-########################################################
-sub setUsersComments {
-	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_comments", $hashref, "uid=" . $uid, 1);
-}
-
-########################################################
-sub setUsersInfo {
-	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_info", $hashref, "uid=" . $uid, 1);
-}
-
-########################################################
-sub setUsersPrefrences {
-	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_prefs", $hashref, "uid=" . $uid, 1);
-}
-
-########################################################
-sub setUsersIndex {
-	my($self, $uid, $hashref) = @_;
-	$self->sqlUpdate("users_index", $hashref, "uid=" . $uid, 1);
 }
 
 ########################################################
@@ -2568,7 +2528,6 @@ sub getSlashConf {
 	}
 
 	$conf{fixhrefs} = [];  # fix later
-
 	$conf{stats_reports} = eval $conf{stats_reports}
 		|| { $conf{adminmail} => "$conf{sitename} Stats Report" };
 
@@ -2782,6 +2741,8 @@ sub getBlockByBid {
 }
 
 ########################################################
+# This should go along with the cached data and not
+# hit the database
 sub getTopicByTid {
 	my $answer = _genericGet('topics', 'tid', @_);
 	return $answer;
@@ -2824,12 +2785,15 @@ sub getVar {
 }
 
 ########################################################
+<<<<<<< MySQL.pm
+=======
 sub getUserInfo {
 	my $answer = _genericGet('vars', 'name', @_);
 	return $answer;
 }
 
 ########################################################
+>>>>>>> 1.1.2.79
 # Now here is the thing. We want getUser to look like
 # a generic, despite the fact that it is not :)
 sub getUser {
@@ -2870,6 +2834,24 @@ sub getUser {
 	return $answer;
 }
 
+########################################################
+# Now here is the thing. We want setUser to look like
+# a generic, despite the fact that it is not :)
+sub setUser {
+	my($self, $uid, $hashref) = @_;
+	my %tables;
+	for(keys %$hashref) {
+		my $key = $self->{_all_user_keys}->{$_};
+		push @{$tables{$key}}, $_;
+	}
+	for my $table (keys %tables) {
+		my %minihash;
+		for(@{$tables{$table}}){
+			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
+		}
+		$self->sqlUpdate($table, \%minihash, "uid=" . $uid, 1);
+	}
+}
 ########################################################
 # For slashdb
 sub setStoryIndex {

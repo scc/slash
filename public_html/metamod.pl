@@ -147,7 +147,7 @@ EOT
 
 		# Update karma.
 		# This is an abuse
-		$I{dbobject}->setUserInfo("$I{U}{uid} $excon", { -karma => "karma$change" })
+		$I{dbobject}->setUser($I{U}{uid}, { -karma => "karma$change" })
 			if $change;
 	}
 }
@@ -288,7 +288,7 @@ sub isEligible {
 	# point in moderatorlog.
 	unless ($last->{'lastmmid'}) {
 		$last->{'lastmmid'} = $I{dbobject}->getModeratorLogRandom();
-		$I{dbobject}->setUserInfo($I{U}{uid}, { lastmmid => $last->{'lastmmid'} });
+		$I{dbobject}->setUser($I{U}{uid}, { lastmmid => $last->{'lastmmid'} });
 	}
 
 	return $last->{'lastmmid'}; # Hooray!

@@ -101,7 +101,7 @@ sub saveUserBoxes {
 
 	my $user = getCurrentUser();
 	$user->{exboxes} = @a ? sprintf("'%s'", join "','", @a) : '';
-	$I{dbobject}->setUserBoxes($user->{uid}, $user->{exboxes}) 
+	$I{dbobject}->setUser($user->{uid}, { exboxes => $user->{exboxes} })
 		unless $user->{is_anon};
 }
 

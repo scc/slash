@@ -563,7 +563,11 @@ EOT
 sub editHome {
 	my($uid) = @_;
 
-	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist);
+# If you are seeing problems, check to see if I have
+# missed a key
+	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist dfid tzcode maxstories);
+	# If this is the current user, why not get some of the 
+	# data from the $user hash
 	my $user_edit = $I{dbobject}->getUser($uid, @values);
 	$user_edit->{uid} = $uid;
 
@@ -751,16 +755,14 @@ EOT
 	# for the users table
 	my $H = {
 		sig		=> $I{F}{sig},
-		homepage	=> $I{F}{homepage},
-		fakeemail	=> $I{F}{fakeemail}
+		homepage	=> $I{F}{'homepage'},
+		fakeemail	=> $I{F}{'fakeemail'},
+		maillist	=> $I{F}{'maillist'},
+		realname	=> $I{F}{'realname'},
+		bio		=> $I{F}{'bio'},
+		pubkey => $I{F}{'pubkey'}
 	};
 
-	# for the users_info table
-	my $H2 = {
-		maillist	=> $I{F}{maillist},
-		realname	=> $I{F}{realname},
-		bio		=> $I{F}{bio}
-	};
 
 
 	if ($user_email->{realemail} ne $I{F}{realemail}) {
@@ -796,15 +798,8 @@ EOT
 		$note .= "Password is too short and was not changed.";
 	}
 
-	# update the public key
-	my $public_key = { uid => $uid, pubkey => $I{F}{pubkey} };
-	$I{dbobject}->setUsersKey($uid, $public_key);
-
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsers($uid, $H) if $uid != $I{anonymous_coward_uid};
-
-	# Update users with the $H2 thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersInfo($uid, $H2) if $uid != $I{anonymous_coward_uid};
+	$I{dbobject}->setUser($uid, $H) if $uid != $I{anonymous_coward_uid};
 
 	return fixparam($note);
 }
@@ -847,7 +842,7 @@ EOT
 	};
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersComments($uid,$H) if $uid != $I{anonymous_coward_uid};
+	$I{dbobject}->setUser($uid,$H) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################
@@ -922,15 +917,15 @@ EOT
 	# they be preserved when they shouldn't be.
 	my $users_comments = { points => 0 };
 	if ($uid != $I{anonymous_coward_uid}) {
-		$I{dbobject}->setUsersComments($uid, $users_comments)
+		$I{dbobject}->setUser($uid, $users_comments)
 			unless $I{F}{willing};
 	}
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersIndex($uid, $H);
+	$I{dbobject}->setUser($uid, $H);
 
 	# Update users with the $H thing we've been playing with for this whole damn sub
-	$I{dbobject}->setUsersPrefrences($uid, $H2) if $uid != $I{anonymous_coward_uid};
+	$I{dbobject}->setUser($uid, $H2) if $uid != $I{anonymous_coward_uid};
 }
 
 #################################################################

@@ -1,8 +1,8 @@
-# MySQL dump 6.0
+# MySQL dump 7.1
 #
-# Host: localhost    Database: slashdot
+# Host: localhost    Database: slash
 #--------------------------------------------------------
-# Server version	3.22.25-log
+# Server version	3.22.32
 
 #
 # Table structure for table 'abusers'
@@ -483,11 +483,11 @@ CREATE TABLE users (
   realemail varchar(50) DEFAULT '' NOT NULL,
   fakeemail varchar(50),
   homepage varchar(100),
-  passwd varchar(32) DEFAULT '' NOT NULL,
+  passwd char(32) DEFAULT '' NOT NULL,
   sig varchar(160),
   seclev int(11) DEFAULT '0' NOT NULL,
   matchname varchar(20),
-  newpasswd varchar(32),
+  newpasswd char(32),
   PRIMARY KEY (uid),
   KEY login (uid,passwd,nickname),
   KEY chk4user (nickname,realemail),

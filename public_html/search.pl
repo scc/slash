@@ -26,8 +26,8 @@
 use strict;
 use vars '%I';
 use Slash;
-use Slash::Utility;
 use Slash::DB;
+use Slash::Utility;
 
 #################################################################
 sub main {
@@ -86,7 +86,8 @@ sub searchForm {
 
 	my $t = lc $I{sitename};
 	$t = $I{F}{topic} if $I{F}{topic};
-	my $tref = $I{dbobject}->getTopic($t);
+	my $tref = $I{dbobject}->getTopics($t);
+	print "<H2>TREF $tref: $t</H2>\n";
 	print <<EOT if $tref;
 
 <IMG SRC="$I{imagedir}/topics/$tref->{image}"

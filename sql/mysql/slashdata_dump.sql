@@ -1,3 +1,9 @@
+# MySQL dump 7.1
+#
+# Host: localhost    Database: slash
+#--------------------------------------------------------
+# Server version	3.22.32
+
 #
 # Dumping data for table 'abusers'
 #
@@ -649,24 +655,23 @@ INSERT INTO tzcodes VALUES ('iss',7200,'Israel Standard');
 # Dumping data for table 'users'
 #
 
-INSERT INTO users VALUES (1,'author1','author1@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'author1',NULL);
-INSERT INTO users VALUES (-1,'Anonymous Coward','','','','eb399bcaca686f8609137153307eecf1','',0,'anonymouscoward',NULL);
-INSERT INTO users VALUES (2,'user1','user1@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user1',NULL);
-INSERT INTO users VALUES (3,'user2','user2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user2',NULL);
-INSERT INTO users VALUES (4,'user3','user3@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user3',NULL);
-INSERT INTO users VALUES (5,'user4','user4@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'user4',NULL);
-INSERT INTO users VALUES (6,'author2','author2@www.example.com',NULL,NULL,'eb399bcaca686f8609137153307eecf1',NULL,0,'author2',NULL);
+INSERT INTO users VALUES (1,'Anonymous Coward','','','','d766935ef45953f5313c6127d3689f8e','',0,'anonymouscoward',NULL);
+INSERT INTO users VALUES (2,'author1','author1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author1',NULL);
+INSERT INTO users VALUES (3,'user1','user1@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user1',NULL);
+INSERT INTO users VALUES (4,'user2','user2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user2',NULL);
+INSERT INTO users VALUES (5,'user3','user3@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user3',NULL);
+INSERT INTO users VALUES (6,'user4','user4@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'user4',NULL);
+INSERT INTO users VALUES (7,'author2','author2@www.example.com',NULL,NULL,'d766935ef45953f5313c6127d3689f8e',NULL,0,'author2',NULL);
 
 #
 # Dumping data for table 'users_comments'
 #
 
-INSERT INTO users_comments VALUES (-1,0,'html',0,4,4096,0,0,0,1,0,50000,50,0,0,'thread',0);
+INSERT INTO users_comments VALUES (1,0,'html',0,4,4096,0,0,0,1,0,50000,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (5,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (4,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (3,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (2,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
-INSERT INTO users_comments VALUES (1,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (6,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 INSERT INTO users_comments VALUES (7,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thread',0);
 
@@ -674,11 +679,10 @@ INSERT INTO users_comments VALUES (7,0,'html',1,4,4096,0,0,0,1,0,100,50,0,0,'thr
 # Dumping data for table 'users_index'
 #
 
+INSERT INTO users_index VALUES (1,'','','','',30,0);
 INSERT INTO users_index VALUES (2,'','','','\'lilithfair\',\'linuxgames\',\'linuxdev\'',30,0);
 INSERT INTO users_index VALUES (3,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (4,NULL,NULL,NULL,NULL,30,0);
-INSERT INTO users_index VALUES (-1,'','','','',30,0);
-INSERT INTO users_index VALUES (1,'','','','',30,0);
 INSERT INTO users_index VALUES (5,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (6,NULL,NULL,NULL,NULL,30,0);
 INSERT INTO users_index VALUES (7,NULL,NULL,NULL,NULL,30,0);
@@ -687,12 +691,11 @@ INSERT INTO users_index VALUES (7,NULL,NULL,NULL,NULL,30,0);
 # Dumping data for table 'users_info'
 #
 
-INSERT INTO users_info VALUES (-1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
-INSERT INTO users_info VALUES (5,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
-INSERT INTO users_info VALUES (4,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-18',0);
-INSERT INTO users_info VALUES (3,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
+INSERT INTO users_info VALUES (1,0,'Anonymous Coward','',0,'0000-00-00',1972,0,106988,'1999-09-06','0000-00-00',0);
 INSERT INTO users_info VALUES (2,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-28',0);
-INSERT INTO users_info VALUES (1,0,NULL,NULL,0,'0000-00-00',3,0,4,'0000-00-00','2000-01-25',0);
+INSERT INTO users_info VALUES (3,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
+INSERT INTO users_info VALUES (4,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-18',0);
+INSERT INTO users_info VALUES (5,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
 INSERT INTO users_info VALUES (6,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','2000-01-25',0);
 INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','0000-00-00',0);
 
@@ -700,17 +703,23 @@ INSERT INTO users_info VALUES (7,0,NULL,NULL,0,'0000-00-00',0,0,0,'0000-00-00','
 # Dumping data for table 'users_key'
 #
 
+INSERT INTO users_key VALUES (1,NULL);
+INSERT INTO users_key VALUES (2,NULL);
+INSERT INTO users_key VALUES (3,NULL);
+INSERT INTO users_key VALUES (4,NULL);
+INSERT INTO users_key VALUES (5,NULL);
+INSERT INTO users_key VALUES (6,NULL);
+INSERT INTO users_key VALUES (7,NULL);
 
 #
 # Dumping data for table 'users_prefs'
 #
 
-INSERT INTO users_prefs VALUES (-1,0,0,'est',0,0,'');
-INSERT INTO users_prefs VALUES (5,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (4,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (3,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (1,1,0,'est',0,0,'');
 INSERT INTO users_prefs VALUES (2,1,0,'edt',0,0,'');
-INSERT INTO users_prefs VALUES (1,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (3,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (4,1,0,'edt',0,0,'');
+INSERT INTO users_prefs VALUES (5,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (6,1,0,'edt',0,0,'');
 INSERT INTO users_prefs VALUES (7,1,0,'edt',0,0,'');
 
@@ -730,12 +739,12 @@ INSERT INTO vars VALUES ('commentstatus','0','default comment code',NULL,NULL);
 INSERT INTO vars VALUES ('defaultcommentstatus','0','default code for article comments- normally 0=posting allowed.',NULL,NULL);
 INSERT INTO vars VALUES ('lastComments','0','Last time we checked comments for moderation points',NULL,NULL);
 INSERT INTO vars VALUES ('lastsrandsec','awards','Last Block used in the semi-random block',NULL,NULL);
-INSERT INTO vars VALUES ('anonymous_coward_uid','-1','UID to use for anonymous coward',NULL,NULL);
+INSERT INTO vars VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward',NULL,NULL);
 INSERT INTO vars VALUES ('adminmail','admin@www.example.com','All admin mail goes here',NULL,NULL);
 INSERT INTO vars VALUES ('mailfrom','admin@www.example.com','All mail addressed from the site looks like it is coming from here',NULL,NULL);
 INSERT INTO vars VALUES ('siteowner','slash','What user this runs as',NULL,NULL);
 INSERT INTO vars VALUES ('datadir','/usr/local/slash','What is the root of the install for slash',NULL,NULL);
-INSERT INTO vars VALUES ('basedomain','slash.www.example.com','The URL for the site',NULL,NULL);
+INSERT INTO vars VALUES ('basedomain','www.example.com','The URL for the site',NULL,NULL);
 INSERT INTO vars VALUES ('cookiedomain','','What should the cookie domain be?',NULL,NULL);
 INSERT INTO vars VALUES ('siteadmin','admin','The admin for the site',NULL,NULL);
 INSERT INTO vars VALUES ('siteadmin_name','Slash Admin','The pretty name for the admin for the site',NULL,NULL);

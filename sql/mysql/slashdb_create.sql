@@ -1,3 +1,3 @@
-insert into user values ('localhost','slash',password('change'),'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
+insert into user values ('localhost','slash',password('newpassword'),'Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y');
 flush privileges;
 create database slash;

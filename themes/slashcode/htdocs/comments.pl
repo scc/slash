@@ -102,7 +102,7 @@ sub main {
 
 	} elsif ($I{F}{op} eq "Change") {
 		if ($I{U}{uid} != $I{anonymous_coward_uid} || defined $I{F}->{"savechanges"}) {
-			$I{dbobject}->setUsersComments($I{U}{uid}, {
+			$I{dbobject}->setUser($I{U}{uid}, {
 					threshold	=> $I{U}{threshold}, 
 					mode		=> $I{U}{mode},
 					commentsort	=> $I{U}{commentsort}
