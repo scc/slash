@@ -3,6 +3,12 @@ use strict;
 use Slash::DB;
 use URI;
 
+# note!  this will NOT take care of stuff like OSDN, where we have added
+# new fields to sectionblocks.  we may want to ask MySQL for the column
+# names for both tables, check for conflicts (aside from bid, of course),
+# and then fail if there are conflicts, and proceed if there are not.
+# i dunno, just a thought.  -- pudge
+
 # this script adds all the columns that exist in sectionblocks
 # into blocks, and then selects all the data from blocks and 
 # inserts the data into the new fields, so that there's only 
@@ -21,7 +27,7 @@ $slashdb->sqlDo("alter table blocks add column retrieve int(1) DEFAULT 0");
 $slashdb->sqlDo("alter table blocks add index section(section)");
 
 for (@{$sectionblocks_arrayref}) {
-	my ($bid,$section,$ordernum,$title,$portal,$url,$rdf,$retrieve) = @{$_};
+	my($bid,$section,$ordernum,$title,$portal,$url,$rdf,$retrieve) = @{$_};
 	print "bid $bid\n";
 	$slashdb->sqlUpdate('blocks', 
 		{ 
@@ -36,6 +42,7 @@ for (@{$sectionblocks_arrayref}) {
 		"bid = '$bid'");
 }
 
-$slashdb->finish;
+# not needed
+#$slashdb->finish;
 $slashdb->disconnect;
 exit(0);
