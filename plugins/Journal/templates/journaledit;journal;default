@@ -15,12 +15,12 @@ __template__
 	<TR VALIGN="TOP">
 		<TD COLSPAN=2>
 			<FORM action=/journal.pl?op=save method=post ENCTYPE="application/x-www-form-urlencoded">
-				<input type=hidden name=id value=[% form.id %]>
-				<input type=hidden name=state value=editing>
-				<input type=text name=description value=[% form.description %]><p>
+				<input type=hidden name=id value="[% form.id %]">
+				<input type=hidden name=state value="editing">
+				<input type=text name=description value="[% form.description %]"><p>
 				<textarea name=article cols=60 rows=20>[% form.article %]</textarea><p>
-				<input  type=submit name=op value=preview>
-				<input  type=submit name=op value=save>
+				<input  type=submit name=op value="preview">
+				<input  type=submit name=op value="save">
 			</FORM>
 		</TD>
 	</TR>

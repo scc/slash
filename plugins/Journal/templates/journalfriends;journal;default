@@ -16,9 +16,9 @@ __template__
 [% x = 0 %]
 [% FOREACH friend = friends %]
 	[% IF x % 2 %]
-		[% color = "#dcdcdc" %]
+		[% color = user.bg.0 %]
 	[% ELSE %]
-		[% color = "#ffffff" %]
+		[% color = user.bg.1 %]
 	[% END %]
 	<TR VALIGN="TOP" bgcolor="[% color %]">
 	<TD>[% friend.2 %]</TD>
