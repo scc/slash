@@ -136,7 +136,7 @@ __template__
 	</TR>
 	<TR>
 		<TD><B>Author flag (user is an author)</B></TD>
-		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% author_flag %]></TD>
+		<TD COLSPAN="4"><INPUT TYPE="checkbox" NAME="author" [% useredit.author %]></TD>
 		<TD>&nbsp;</TD>
 	</TR>
 	[% END %]
@@ -156,6 +156,16 @@ __template__
 		<TD>Submissions</TD>
 		<TD><INPUT TYPE="checkbox" NAME="readonly_submit" [% readonly.submit%]>&nbsp;</TD>
 		<TD>&nbsp; Reason <INPUT TYPE="TEXT" NAME="submit_ro_reason" VALUE="[% readonly_reasons.submit %]"></TD>
+	</TR>
+	<TR>
+		<TD>Expire User</TD>
+		<TD><INPUT TYPE="checkbox" NAME="expired" [% expired %]>&nbsp;</TD>
+		<TD>&nbsp;</TD> 
+	</TR>
+	<TR>
+		<TD>Real time black list</TD>
+		<TD><INPUT TYPE="checkbox" NAME="rtbl" [% useredit.rtbl %]>&nbsp;</TD>
+		<TD>&nbsp;</TD> 
 	</TR>
 	<TR>
 		<TD COLSPAN=3 HEIGHT=10>

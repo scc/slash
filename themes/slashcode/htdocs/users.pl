@@ -828,18 +828,18 @@ sub saveUserAdmin {
 		# $note .= getMessage('saveuseradmin_notsaved', { field => $form->{userfield_flag}, id => $id });
 	}
 
-	$author_flag = $form->{author} ? 1 : 0;
-
-	# $note .= getMessage('saveuseradmin_saved', { field => $form->{userfield_flag}, id => $id}) if $save_success;
+	$note .= getMessage('saveuseradmin_saved', { field => $form->{userfield_flag}, id => $id}) if $save_success;
 
 	if ($curuser->{seclev} >= 100 && ($form->{userfield_flag} eq 'uid' ||
 		$form->{userfield_flaq} eq 'nickname')) {
 
 		$users_table->{seclev} = $form->{seclev};
-		$users_table->{author} = $author_flag;
+		$users_table->{rtbl} = $form->{rtbl} eq 'on' ? 1 : 0 ;
+		$users_table->{author} = $form->{author} ? 1 : 0 ;
 
 		$slashdb->setUser($id, $users_table);
-		#	$note .= getMessage('saveuseradmin_saveduser', { field => $form->{userfield_flag}, id => $id });
+		$note .= getMessage('saveuseradmin_saveduser', { field => $form->{userfield_flag}, id => $id });
+
 		#} else {
 		#	$note .= getMessage('saveuseradmin_notsaveduser', { field => $form->{userfield_flag}, id => $id});
 		#}
@@ -1342,7 +1342,8 @@ sub getUserAdmin {
 		$uidstruct->{$_->[0]} = $slashdb->getUser($_->[0], 'nickname');
 	}
 
-	$author_flag = ($user->{author} == 1) ? ' CHECKED' : '';
+	$user->{author} = ($user->{author} == 1) ? ' CHECKED' : '';
+	$user->{rtbl} = ($user->{rtbl} == 1) ? ' CHECKED' : '';
 
 	print STDERR "userinfo flag $userinfo_flag\n";
 	return slashDisplay('getUserAdmin', {
@@ -1354,7 +1355,6 @@ sub getUserAdmin {
 		seclev_field		=> $seclev_field,
 		checked 		=> $checked,
 		author_select		=> $author_select,
-		author_flag 		=> $author_flag,
 		form_flag		=> $form_flag,
 		readonly		=> $readonly,
 		readonly_reasons 	=> $readonly_reasons,

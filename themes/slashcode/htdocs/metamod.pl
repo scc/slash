@@ -95,7 +95,8 @@ sub metaModerate {
 	# an M2 session can be retrieved by:
 	#		SELECT * from metamodlog WHERE uid=x and ts=y
 	# for a given x and y.
-	my($flag, $ts) = (0, time);
+	# rtbl
+	my ($flag, $ts) = (($user->{rtbl} ? 1 : 0), time);
 	if ($y >= $constants->{m2_mincheck}) {
 		# Test for excessive number of unfair votes (by percentage)
 		# (Ignore M2 & penalize user)
@@ -105,7 +106,7 @@ sub metaModerate {
 		$flag = 1 if (!$flag && ($metamod{unfair}/$y >= $constants->{m2_toomanyunfair}));
 	}
 
-	my $changes = $slashdb->setMetaMod(\%m2victims, $flag, $ts);
+	my $changes = $slashdb->setMetaMod(\%m2victims, $flag, $ts) unless isAnon($user->{uid});
 
 	slashDisplay('metaModerate', {
 		changes	=> $changes,
@@ -113,7 +114,8 @@ sub metaModerate {
 		metamod	=> \%metamod,
 	});
 
-	$slashdb->setModeratorVotes($user->{uid}, \%metamod) unless $user->{is_anon};
+	# Cliff: rtbl
+	$slashdb->setModeratorVotes($user->{uid}, \%metamod) unless ( isAnon($user->{uid}) || $user->{rtbl})  ;
 
 	# Of course, I'm waiting for someone to make the eventual joke...
 	my($change, $excon);
@@ -130,6 +132,8 @@ sub metaModerate {
 			# Penalty for Abuse
 			($change, $excon) = ("karma$constants->{m2_penalty}", '');
 		}
+		# rtbl
+		$change = "" if $change and $user->{rtbl} and ($change =~ /([+-]\d+)/ ? $1 : 0) > 0;
 
 		# Update karma.
 		# This is an abuse

@@ -389,23 +389,35 @@ sub tokens2points {
 	my($self) = @_;
 	my $constants = getCurrentStatic();
 	my @log;
-	my $c = $self->sqlSelectMany('uid,tokens',
-		'users_info',
-		"tokens >= $constants->{maxtokens}");
+	# rtbl
+	my $cursor = $self->sqlSelectMany('uid,tokens,rtbl',
+		'users_info, users_param',
+		"tokens >= $constants->{maxtokens} AND users_param.uid = users_info.uid");
 	$self->sqlTransactionStart('LOCK TABLES users READ,
 		users_info WRITE, users_comments WRITE');
 
-	while (my($uid, $tokens) = $c->fetchrow) {
-		push @log, getData('moderatord_tokengrantmsg', { uid => $uid });
+	# rtbl
+	while ( my ($uid, $tokens, $rtbl) = $cursor->fetchrow) {
+		# rtbl
+		if ($rtbl) {
+			push @log, getData('moderatord_tokennotgrantmsg', { uid => $uid });
+		} else {
+			push @log, getData('moderatord_tokengrantmsg', { uid => $uid });
+		}
+		# Cliff, this is where I've left off in this piece of code... just look 
+		# for anything with 'rtbl' in it
+		# dunno if the conditional field is legit
 		$self->setUser($uid, {
 			-lastgranted	=> 'now()',
 			-tokens		=> "tokens*$constants->{token_retention}",
 			-points		=> "points+" .
-				($constants->{maxtokens} / $constants->{tokensperpoint})
+				($constants->{maxtokens} / $constants->{tokensperpoint}) if ! $rtbl;
 		});
 	}
-	$c->finish;
-	$c = $self->sqlSelectMany('users.uid as uid',
+
+	$cursor->finish;
+
+	$cursor = $self->sqlSelectMany('users.uid as uid',
 		'users,users_comments,users_info',
 		"karma >= 0 AND
 		points > $constants->{maxpoints} AND
@@ -415,7 +427,7 @@ sub tokens2points {
 	$self->sqlTransactionFinish();
 
 	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");
-	while (my($uid) = $c->fetchrow) {
+	while (my($uid) = $cursor->fetchrow) {
 		$self->sqlUpdate('users_comments', {
 			points => $constants->{maxpoints},
 		}, "uid=$uid");
@@ -430,7 +442,7 @@ sub tokens2points {
 sub stirPool {
 	my($self) = @_;
 	my $stir = getCurrentStatic('stir');
-	my $c = $self->sqlSelectMany("points,users.uid as uid",
+	my $cursor = $self->sqlSelectMany("points,users.uid as uid",
 			"users,users_comments,users_info",
 			"users.uid=users_comments.uid AND
 			 users.uid=users_info.uid AND
@@ -442,13 +454,13 @@ sub stirPool {
 
 	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");
 
-	while (my($p, $u) = $c->fetchrow) {
+	while (my($p, $u) = $cursor->fetchrow) {
 		$revoked += $p;
 		$self->sqlUpdate("users_comments", { points => '0' }, "uid=$u");
 	}
 
 	$self->sqlTransactionFinish();
-	$c->finish;
+	$cursor->finish;
 
 	# We aren't using this for Slashdot, feel free to turn this on if you
 	# wish to use it (the proper return value is: $revoked)

@@ -92,6 +92,10 @@ Incremented token-count on [% num_updated %] users.
 [% points = constants.maxtokens / constants.tokensperpoint -%]
 Giving [% points %] points ([% constants.maxtokens %]t/[% constants.tokensperpoint %]) to [% uid %].
 
+[% CASE 'moderatord_tokennotgrantmsg' %]
+[% points = constants.maxtokens / constants.tokensperpoint -%]
+Not giving [% points %] points ([% constants.maxtokens %]t/[% constants.tokensperpoint %]) to [% uid %].
+
 [% CASE 'moderatord_log_footer' %]
 ---------------- END MODERATORD EXECUTION ----------------
 

@@ -2684,7 +2684,9 @@ sub getSlashConf {
 				: int $conf{m2_comments} / 3;
 
 	if (!$conf{m2_maxbonus} || $conf{m2_maxbonus} > $conf{maxkarma}) {
-		$conf{m2_maxbonus} = int $conf{goodkarma} / 2;
+		# this was changed on slashdot in 6/2001
+		# $conf{m2_maxbonus} = int $conf{goodkarma} / 2;
+		$conf{m2_maxbonus} = 1; 
 	}
 
 	my $fixup = sub {
