@@ -115,20 +115,16 @@ sub vote {
 
 	if (! keys %all_aid) {
 		print getData('invalid');
-		# Non-zero denotes error condition and that comments should not be 
-		# printed.
+		# Non-zero denotes error condition and that comments
+		# should not be printed.
 		return;
 	}
 
 	my $question = $slashdb->getPollQuestion($qid, ['voters', 'question']);
-	my $answers  = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
-	my $maxvotes = $slashdb->getPollVotesMax($qid);
-
-	# static text?
 	my $notes = getData('display');
 	if ($user->{is_anon} && ! $constants->{allow_anonymous}) {
 		$notes = getData('anon');
-	} elsif (! isAnon($aid)) {
+	} elsif ($aid > 0) {
 		my $id = $slashdb->getPollVoter($qid);
 
 		if ($id) {
@@ -142,6 +138,8 @@ sub vote {
 		}
 	}
 
+	my $answers  = $slashdb->getPollAnswers($qid, ['answer', 'votes']);
+	my $maxvotes = $slashdb->getPollVotesMax($qid);
 	my @pollitems;
 	for (@$answers) {
 		my($answer, $votes) = @$_;
