@@ -85,18 +85,17 @@ sub listSections {
 		return;
 	}
 
-	my $c = $I{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
-	$c->execute;
+	my $sections = $I{dbobject}->getSectionTitle();
 
 	print "<B>";
 
-	while (my($section, $title)=$c->fetchrow) {
+	for (@$sections) {
+		my($section, $title)=@$_;
 		print <<EOT if $section;
 <P><A HREF="$ENV{SCRIPT_NAME}?section=$section&op=editsection">$section</A> $title
 EOT
 	}
 
-	$c->finish;
 	print "</B>";
 
 	# New section Form
@@ -128,8 +127,8 @@ EOT
 		print "<B>Canceled deletion of $section</B><BR>\n";
 	}
 	elsif ($I{F}{deletesection_confirm}) {
-		titlebar("100%", "Deleted $section Section") unless DBI::errstr;
-		$I{dbh}->do("DELETE from sections WHERE section='$section'");
+		titlebar("100%", "Deleted $section Section");
+		$I{dbobject}->deleteSection($section);
 	}
 }
 
@@ -209,25 +208,17 @@ EOT
 
 #################################################################
 sub saveSection {
-	my $section = shift;
+	my ($section) = @_;
 
-	my ($rows) = sqlSelect("count(*)","sections","section = '$I{F}{section}'");
+	my $status = $I{dbobject}->setSection($I{F}{section}, $I{F}{qid}, $I{F}{title}, $I{F}{issue}, $I{F}{isolate}, $I{F}{artcount});
 
-	unless ($rows) {
-		$I{dbh}->do("INSERT into sections (section) VALUES('$section')"); 
-		print "Inserted $section<br>\n" unless DBI::errstr;
+	unless ($status) {
+		print "Inserted $section<br>\n";
 	}
-
-	sqlUpdate("sections", {
-		qid		=> $I{F}{qid},
-		title		=> $I{F}{title},
-		issue		=> $I{F}{issue},
-		isolate		=> $I{F}{isolate},
-		artcount	=> $I{F}{artcount}
-	}, "section=" . $I{dbh}->quote($I{F}{section}));
 
 	print "Updated $section<br>\n" unless DBI::errstr;
 }
 
 main();
-$I{dbh}->disconnect if $I{dbh};
+# And we ask the question, why kill the handle, it is a good thing
+#$I{dbh}->disconnect if $I{dbh};

@@ -396,10 +396,48 @@ sub getSectionBank {
 ########################################################
 sub getSection {
 	my ($self, $section) = @_;
-	print STDERR "Section $section \n";
 	$self->sqlSelect(
 			"artcount,title,qid,isolate,issue",
 			"sections","section=". $self->{dbh}->quote($section));
+}
+########################################################
+sub setSection {
+# We should perhaps be passing in a reference to F here. More
+# thought is needed. -Brian
+	my ($self, $section, $qid, $title, $issue, $isolate, $artcount) = @_;
+	my ($count) = $self->sqlSelect("count(*)","sections","section = '$section'");
+	#This is a poor attempt at a transaction I might add. -Brian
+	#I need to do this diffently under Oracle
+	if ($count) {
+		$self->{dbh}->do("INSERT into sections (section) VALUES( '$section')"
+		);
+	} 
+	$self->sqlUpdate("sections", {
+			qid   => $qid,
+			title   => $title,
+			issue   => $issue,
+			isolate   => $isolate,
+			artcount  => $artcount
+			}, "section=" . $self->{dbh}->quote($section)
+	);
+
+	return $count;
+		
+}
+########################################################
+sub getSectionTitle {
+	my ($self) = @_;
+	my $sth = $self->{dbh}->prepare("SELECT section,title FROM sections ORDER BY section");
+	$sth->execute;
+	my $sections = $sth->fetchrow_arrayref;
+	$sth->finish;
+
+	return $sections;
+}
+########################################################
+sub deleteSection{
+	my ($self, $section) = @_;
+	$self->{dbh}->do("DELETE from sections WHERE section='$section'");
 }
 ########################################################
 sub getSectionBlock {
