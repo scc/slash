@@ -40,7 +40,7 @@ sub IndexHandler {
 	my($r) = @_;
 	if ($r->uri eq '/') {
 		# cookie data will begin with word char or %
-		if ($r->header_in('Cookie') =~ /\b(?:user|session)=[%\w]/) {
+		if ($r->header_in('Cookie') =~ /\b(?:user)=[%\w]/) {
 			$r->filename($r->document_root . '/index.pl');
 			return OK;
 		} else {
