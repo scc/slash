@@ -718,6 +718,7 @@ sub createContentFilter {
 }
 
 #################################################################
+# Replication issue. This needs to be a two-phase commit.
 sub createUser {
 	my($self, $matchname, $email, $newuser) = @_;
 

@@ -245,6 +245,7 @@ sub mailPassword {
 	my($uid) = @_;
 	unless ($uid) {
 		print "Nickname was not found. No Password was mailed.<BR>\n"; 
+		return;
 	}
 	my $user = $I{dbobject}->getUserInfoByUID($uid);
 

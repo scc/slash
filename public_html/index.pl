@@ -28,7 +28,6 @@ use vars qw(%I);
 use Slash;
 use Slash::Utility;
 use Slash::DB;
-use diagnostics;
 
 #################################################################
 # I really dislike Apache::Registry sometimes. If index.pl
