@@ -999,7 +999,7 @@ EOT
 
 		my $extracolumns = $I{dbobject}->getKeys($S->{section});
 
-		foreach (@$extracolumns) {
+		foreach (@{$extracolumns}) {
 			$S->{$_} = $I{F}{$_} || $S->{$_};
 		}
 
@@ -1065,7 +1065,7 @@ EOT
 		$S->{section} ||= 'articles';
 		$S->{aid} = $I{U}{aid};
 	}
-	my @$extracolumns =  $I{dbobject}->getKeys($S->{section});
+	my $extracolumns =  $I{dbobject}->getKeys($S->{section});
 
 	my $introtext = stripByMode($S->{introtext}, 'literal', 1);
 	my $bodytext  = stripByMode($S->{bodytext}, 'literal', 1);
@@ -1129,7 +1129,7 @@ EOT
 	<TEXTAREA WRAP="VIRTUAL" NAME="introtext" COLS="70" ROWS="10">$S->{introtext}</TEXTAREA><BR>
 EOT
 
-	if (@$extracolumns) {
+	if (@{$extracolumns}) {
 		print <<EOT;
 
 <TABLE BORDER="0" CELLPADDING="2" CELLSPACING="0">
@@ -1138,7 +1138,7 @@ EOT
 	</TD></TR>
 EOT
 
-		foreach (@$extracolumns) {
+		foreach (@{$extracolumns}) {
 			next if $_ eq 'sid';
 			my($sect, $col) = split m/_/;
 			$S->{$_} = $I{F}{$_} || $S->{$_};
