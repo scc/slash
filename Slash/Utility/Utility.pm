@@ -2,6 +2,7 @@ package Slash::Utility;
 
 use strict;
 use Apache;
+use Digest::MD5 'md5_hex';
 require Exporter;
 
 @Slash::Utility::ISA = qw(Exporter);
@@ -25,6 +26,7 @@ require Exporter;
 	isAnon
 	getAnonId
 	getFormkey
+	encryptPassword
 	bakeUserCookie
 	eatUserCookie
 	setCookie
@@ -243,6 +245,13 @@ sub createCurrentDB {
 sub isAnon {
 	my($uid) = @_;
 	return $uid == getCurrentStatic('anonymous_coward_uid');
+}
+
+#################################################################
+# do the MD5 thang (could use other method in the future)
+sub encryptPassword {
+	my($passwd) = @_;
+	return md5_hex($passwd);
 }
 
 #################################################################

@@ -1,6 +1,5 @@
 package Slash::DB::MySQL;
 use strict;
-use Digest::MD5 'md5_hex';
 use DBIx::Password;
 use Slash::DB::Utility;
 use Slash::Utility;
@@ -612,32 +611,32 @@ sub getUserAuthenticate {
 	return unless $user && $passwd;
 
 	# if $kind is 1, then only try to auth password as plaintext
-	# if $kind is 2, then only try to auth password as MD5
-	# if $kind is undef or 0, try as MD5 (the most common case),
-	#     then as plaintext
-	my($EITHER, $PLAIN, $MD5) = (0, 1, 2);
+	# if $kind is 2, then only try to auth password as encrypted
+	# if $kind is undef or 0, try as encrypted
+	#	(the most common case), then as plaintext
+	my($EITHER, $PLAIN, $ENCRYPTED) = (0, 1, 2);
 	$kind ||= 0;
 
 	my $dbh = $self->{dbh};
 	my $user_db = $dbh->quote($user);
 	my $pass_db = $dbh->quote($passwd);
 
-	# try MD5 -> MD5
-	if ($kind == $EITHER || $kind == $MD5) {
+	# try ENCRYPTED -> ENCRYPTED
+	if ($kind == $EITHER || $kind == $ENCRYPTED) {
 		($uid) = $self->sqlSelect('uid', 'users',
 			"passwd=$pass_db AND uid=$user_db"
 		);
 		$cookpasswd = $passwd if defined $uid;
 	}
 
-	# try plaintext -> MD5
+	# try plaintext -> ENCRYPTED
 	if (($kind == $EITHER || $kind == $PLAIN) && !defined $uid) {
-		my $hexpasswd = md5_hex($passwd);
+		my $cryptpasswd = encryptPassword($passwd);
 		($uid) = $self->sqlSelect('uid', 'users',
-			'passwd=' . $dbh->quote($hexpasswd) .
+			'passwd=' . $dbh->quote($cryptpasswd) .
 			" AND uid=$user_db"
 		);
-		$cookpasswd = $hexpasswd if defined $uid;
+		$cookpasswd = $cryptpasswd if defined $uid;
 	}
 
 	# try newpass?
@@ -647,12 +646,12 @@ sub getUserAuthenticate {
 		);
 
 		if (defined $uid) {
-			my $hexpasswd = md5_hex($passwd);
+			my $cryptpasswd = encryptPassword($passwd);
 			$self->sqlUpdate('users', {
 				newpasswd	=> '',
-				passwd		=> $hexpasswd
+				passwd		=> $cryptpasswd
 			}, "uid=$user_db");
-			$cookpasswd = $hexpasswd;
+			$cookpasswd = $cryptpasswd;
 			$newpass = 1;
 		}
 	}
@@ -744,7 +743,7 @@ sub createUser {
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
-		passwd		=> md5_hex(changePassword())
+		passwd		=> encryptPassword(changePassword())
 	});
 
 # This is most likely a transaction problem waiting to
@@ -2852,7 +2851,7 @@ sub _genericGetCombined {
 ########################################################
 # 
 sub setUser {
-	my ($self, $uid, $hashref) = @_;
+	my($self, $uid, $hashref) = @_;
 	my $tables = [qw(
 		users users_comments users_index
 		users_info users_key users_prefs
@@ -2862,7 +2861,7 @@ sub setUser {
 	if (exists $hashref->{passwd}) {
 		# get rid of newpasswd if defined in DB
 		$hashref->{newpasswd} = '';
-		$hashref->{passwd} = md5_hex($hashref->{passwd});
+		$hashref->{passwd} = encryptPassword($hashref->{passwd});
 	}
 	my $answer = _genericSetCombined($tables, 'uid', @_);
 	return $answer;

@@ -52,7 +52,6 @@ sub handler {
 	# the form, a cookie, or they will be anonymous
 	my $uid;
 	my $op = $form->{op} || '';
-	print STDERR "OP: $op\n";
 	if (($op eq 'userlogin' || $form->{rlogin} ) && length($form->{upasswd}) > 1) {
 		my $tmpuid = $dbslash->getUserUID($form->{unickname});
 		print STDERR "FORM_AUTH: $tmpuid:$form->{upasswd}\n";
@@ -81,7 +80,6 @@ sub handler {
 			delete $cookies->{user};
 			setCookie('user', '');
 		}
-		print STDERR "COOKIE_AUTH: $tmpuid:$password\n";
 	} 
 
 	# This is just here for testing. This should actually occur way before this
@@ -227,7 +225,6 @@ sub getUser {
 
 sub filter_params {
 	my %params = @_;
-	print STDERR Dumper \%params, \@_;
 	my %form;
 
 	# fields that are numeric only

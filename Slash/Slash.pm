@@ -101,7 +101,7 @@ sub getSlash {
 # use it, so we might as well make full use of it)
 # -Brian
 sub createSelect {
-	my ($label, $hashref, $default) = @_;
+	my($label, $hashref, $default) = @_;
 	print qq!\n<SELECT name="$label">\n!;
 
 	for my $code (sort keys %$hashref) {
@@ -774,8 +774,9 @@ sub header {
 		print CGI::header(%params);
 	}
 
-	$I{userMode} = getCurrentUser('currentMode') eq 'flat' ? '_F' : '';
-	$I{currentSection} = $section || '';
+	my $constants = getCurrentStatic();
+	$constants->{userMode} = getCurrentUser('currentMode') eq 'flat' ? '_F' : '';
+	$constants->{currentSection} = $section || '';
 	getSectionColors();
 
 	$title =~ s/<(.*?)>//g;
@@ -791,7 +792,7 @@ EOT
 		return;
 	}
 
-	if ($I{run_ads}) {
+	if ($constants->{run_ads}) {
 		$adhtml = getAd(1);
 	}
 

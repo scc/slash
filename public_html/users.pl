@@ -522,7 +522,7 @@ EOT
 
 	my $sections_description = $I{dbobject}->getSectionBlocks();
 	for (@$sections_description) {
-		my($bid,$title,$o) = @$_;
+		my($bid, $title, $o) = @$_;
 		my $checked = ($exboxes =~ /'$bid'/) ? " CHECKED" : "";
 		$title =~ s/<(.*?)>//g;
 		print "<B>" if $o > 0;
@@ -559,13 +559,28 @@ EOT
 sub editHome {
 	my($uid) = @_;
 
-# If you are seeing problems, check to see if I have
-# missed a key
-	my @values = qw(realname realemail fakeemail homepage nickname passwd sig seclev bio maillist dfid tzcode maxstories);
-	# If this is the current user, why not get some of the 
-	# data from the $user hash
-	my $user_edit = $I{dbobject}->getUser($uid, @values);
-	$user_edit->{uid} = $uid;
+	# If you are seeing problems, check to see if I have
+	# missed a key -- brian
+	# added the ones needed for tildeEd() -- pudge
+	my @values = qw(
+		realname realemail fakeemail homepage nickname
+		passwd sig seclev bio maillist dfid tzcode maxstories
+		extid exsect exaid exboxes mylinks
+	);
+
+	# this is an example of how we can get the current user data ...
+	# maybe we can just add this to getUser ... ?  so we could freely
+	# call getUser and it would check the $uid and get data from
+	# getCurrentUser if it is there? -- pudge
+	my $user_edit = getCurrentUser();
+	if ($uid == $user_edit->{uid}) {
+		@values = grep ! exists $user_edit->{$_}, @values;
+		my $tmpuser = $I{dbobject}->getUser($uid, @values);
+		@{$user_edit}{ keys %$tmpuser} = values %$tmpuser;
+	} else {
+		$user_edit = $I{dbobject}->getUser($uid, @values);
+		$user_edit->{uid} = $uid;
+	}
 
 	return if isAnon($user_edit->{uid});
 
@@ -782,7 +797,7 @@ EOT
 		$note .= "Password changed.";
 		$H->{passwd} = $I{F}{pass1};
 		# check for DB error before setting cookie?  -- pudge
-		setCookie('user', bakeUserCookie($uid, $H->{passwd}));
+		setCookie('user', bakeUserCookie($uid, encryptPassword($H->{passwd})));
 
 	} elsif ($I{F}{pass1} ne $I{F}{pass2}) {
 		$note .= "Passwords don't match. Password not changed.";

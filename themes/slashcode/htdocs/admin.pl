@@ -24,7 +24,7 @@
 #  $Id$
 ###############################################################################
 use strict;
-use diagnostics;
+#use diagnostics;
 use vars '%I';
 use Image::Size;
 use Slash;
