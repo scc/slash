@@ -9,7 +9,6 @@ The main box for printing comments
 * sid = story ID
 * cid = base comment ID
 * pid = base parent ID
-* section = section name
 * lvl = what nesting level we're at
 __title__
 
@@ -27,11 +26,7 @@ __template__
 	<TR><TD BGCOLOR="[% user.bg.3 %]" ALIGN="CENTER">
 		<FONT SIZE="2" COLOR="[% user.fg.3 %]">
 [% IF title %]
-	[% Slash.linkStory({
-		link	=> "<FONT COLOR=\"$user.fg.3\">$title</FONT>",
-		sid	=> sid,
-		section	=> section,
-	}) %]
+		<A HREF="[% link %]"><FONT COLOR=\"[% $user.fg.3 %]\">[% title %]</FONT></A>
 [% ELSE %]
 	[% Slash.linkComment({
 		sid	=> sid,

@@ -295,6 +295,14 @@ sub saveArticle {
 	} else {
 		my $id = $journal->create($description,
 			$form->{article}, $form->{posttype});
+		if($constants->{journal_comments}) {
+			my $slashdb = getCurrentDB();
+			my $rootdir = getCurrentStatic('rootdir');
+			my $time = $slashdb->sqlTime();
+			$slashdb->createDiscussion('', $description, $time, 
+				"$rootdir/journal.pl?sid=$sid"
+			);
+		}
 
 		# create messages
 		my $messages = getObject('Slash::Messages');

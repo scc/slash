@@ -57,7 +57,7 @@ $SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 ########################################################
 # Behold, the beast that is threaded comments
 sub selectComments {
-	my($sid, $cid) = @_;
+	my($header, $cid, $sid) = @_;
 	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 	my $user = getCurrentUser();
@@ -66,7 +66,7 @@ sub selectComments {
 	my $comments; # One bigass struct full of comments
 	foreach my $x (0..6) { $comments->[0]{totals}[$x] = 0 }
 
-	my $thisComment = $slashdb->getCommentsForUser($sid, $cid);
+	my $thisComment = $slashdb->getCommentsForUser($header, $cid);
 	for my $C (@$thisComment) {
 		$C->{pid} = 0 if $user->{commentsort} > 3; # Ignore Threads
 
@@ -100,10 +100,12 @@ sub selectComments {
 
 	getCommentTotals($comments);
 
+	#This is broke -Brian
 	$slashdb->updateCommentTotals($sid, $comments) if $form->{ssi};
 
 	my $hp = join ',', @{$comments->[0]{totals}};
 
+	#This is broke -Brian
 	$slashdb->setStory($sid, {
 			hitparade	=> $hp,
 			writestatus	=> 0,
@@ -235,13 +237,27 @@ sub printComments {
 	my($sid, $pid, $cid) = @_;
 	my $user = getCurrentUser();
 	my $form = getCurrentForm();
+	my $slashdb = getCurrentDB();
+
+	my ($discussion, $header);
+	#Backwards compatibility
+	if($sid !~ /^\d+$/) {
+		$discussion = $slashdb->getDiscussionBySid($sid);
+		$header = $discussion->{id};
+	} else {
+		$discussion = $slashdb->getDiscussion($sid);
+		$sid = $discussion->{sid};
+		$header = $discussion->{id};
+	}
+print STDERR "DEBUG printComments: Sid:($sid) Header:($header) PID:($pid) CID:($cid) Discussion:($discussion)\n";
+
 
 	$pid ||= 0;
 	$cid ||= 0;
 	my $lvl = 0;
 
 	# Get the Comments
-	my($comments, $count) = selectComments($sid, $cid || $pid);
+	my($comments, $count) = selectComments($header, $cid || $pid, $sid);
 
 	# Should I index or just display normally?
 	my $cc = 0;
@@ -253,35 +269,19 @@ sub printComments {
 		&& $cc > $user->{commentspill}
 		&& ($user->{commentlimit} > $cc || $user->{commentlimit} > $user->{commentspill});
 
-	if ($user->{mode} ne 'archive') {
-		my($title, $section);
-		my $slashdb = getCurrentDB();
 
-		if ($slashdb->getStory($sid)) {
-			$title = $slashdb->getStory($sid, 'title');
-			$section = $slashdb->getStory($sid, 'section');
-		} else {
-			my $story = $slashdb->getNewStory($sid, ['title', 'section']);
-			$title = $story->{title};
-			$section = $story->{section};
-		}
+	slashDisplay('printCommentsMain', {
+		comments	=> $comments,
+		title		=> $discussion->{title},
+		link		=> $discussion->{url},
+		count		=> $count,
+		sid		=> $header,
+		cid		=> $cid,
+		pid		=> $pid,
+		lvl		=> $lvl,
+	});
 
-		slashDisplay('printCommentsMain', {
-			comments	=> $comments,
-			title		=> $title,
-			count		=> $count,
-			sid		=> $sid,
-			cid		=> $cid,
-			pid		=> $pid,
-			section		=> $section,
-			lvl		=> $lvl,
-		});
-
-		return if $user->{mode} eq 'nocomment';
-
-	} else {
-		slashDisplay('printCommNoArchive');
-	}
+	return if $user->{mode} eq 'nocomment';
 
 
 	my($comment, $next, $previous);
@@ -304,11 +304,11 @@ sub printComments {
 		comments	=> $comments,
 		'next'		=> $next,
 		previous	=> $previous,
-		sid		=> $sid,
+		sid		=> $header,
 		cid		=> $cid,
 		pid		=> $pid,
 		cc		=> $cc,
-		lcp		=> linkCommentPages($sid, $pid, $cid, $cc),
+		lcp		=> linkCommentPages($header, $pid, $cid, $cc),
 		lvl		=> $lvl,
 	});
 }

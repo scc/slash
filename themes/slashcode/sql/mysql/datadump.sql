@@ -43,6 +43,9 @@ INSERT INTO blocks (bid, block, seclev, type, description, section, ordernum, ti
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',0,'Comments Enabled');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',1,'Read-Only');
 INSERT INTO code_param (type, code, name) VALUES ('commentcodes',-1,'Comments Disabled');
+INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',0,'Discussion Enabled');
+INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',1,'Recycle Discusison');
+INSERT INTO code_param (type, code, name) VALUES ('discussiontypes',2,'Read Only Discussion');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes',0,'Always Display');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes',1,'Only Display Within Section');
 INSERT INTO code_param (type, code, name) VALUES ('displaycodes',-1,'Never Display');
@@ -89,15 +92,15 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 # Dumping data for table 'comments'
 #
 
-INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
+INSERT INTO comments (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','8f2e0eec531acf0e836f6770d7990857','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'8f2e0eec531acf0e836f6770d7990857');
 
 #
-# Dumping data for table 'comments'
+# Dumping data for table 'comment_heap'
 #
 
-INSERT INTO comments_hash (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES ('00/01/25/1430236',1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000');
+INSERT INTO comment_heap (sid, cid, pid, date, ipid, subnetid, subject, uid, points, lastmod, reason, signature) VALUES (1,1,0,'2000-01-25 15:47:36','1','8f2e0eec531acf0e836f6770d7990857','First Post!',1,0,-1,0,'0000');
 #
-# Dumping data for table 'comments'
+# Dumping data for table 'comment_text'
 #
 
 INSERT INTO comment_text (cid, comment) VALUES (1, 'This is the first post put into your newly installed Slash System.  There will be many more.  Many will be intelligent and well written.  Others will be drivel.  And then there will be a bunch of faceless anonymous morons who will attack you for no reason except that they are having a bad day.  But in the end it\'ll hopefully all be worth it, because those intelligent users will exchange useful ideas and hopefully learn something and grow as human beings.  Have fun!');
@@ -158,7 +161,7 @@ INSERT INTO dateformats (id, format, description) VALUES (17,'%Y.%m.%d %k:%M','1
 # Dumping data for table 'discussions'
 #
 
-INSERT INTO discussions (id, sid, title, url, ts) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','http://slashcode.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36');
+INSERT INTO discussions (id, sid, title, url, ts) VALUES (1, '00/01/25/1430236','You\'ve Installed Slash!','//www.example.com/article.pl?sid=00/01/25/1430236','2000-01-25 14:30:36');
 INSERT INTO discussions (id, sid, title, url, ts) VALUES (2, '00/01/25/1236215','Now What?','//www.example.com/article.pl?sid=00/01/25/1236215','2000-01-25 17:36:15');
 
 #
@@ -198,8 +201,8 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('topics','Rece
 #
 
 
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0');
-INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0');
+INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, header) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0', 2);
+INSERT INTO newstories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, header) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0', 1);
 
 #
 # Dumping data for table 'pollanswers'
@@ -253,8 +256,8 @@ INSERT INTO site_info VALUES ('','form','comments','comments submission form');
 # Dumping data for table 'stories'
 #
 
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0');
-INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0');
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, header) VALUES ('00/01/25/1236215','slash',2,0,'Now What?','where-do-you-go-from-here','2000-01-25 08:32:02',1,'articles',0,0,'0,0,0,0,0,0,0', 1);
+INSERT INTO stories (sid, tid, uid, commentcount, title, dept, time, writestatus, section, displaystatus, commentstatus, hitparade, header) VALUES ('00/01/25/1430236','slash',2,1,'You\'ve Installed Slash!','congratulations-dude','2000-08-28 20:47:46',0,'articles',0,0,'1,1,1,0,0,0,0', 2);
 
 #
 # Dumping data for table 'story_text'
@@ -439,6 +442,7 @@ INSERT INTO vars (name, value, description) VALUES ('defaultcommentstatus','0','
 INSERT INTO vars (name, value, description) VALUES ('defaultdisplaystatus','0','Default display status ...');
 INSERT INTO vars (name, value, description) VALUES ('defaultsection','articles','Default section to display');
 INSERT INTO vars (name, value, description) VALUES ('defaultwritestatus','1','Default write status for newly created articles');
+INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');
 INSERT INTO vars (name, value, description) VALUES ('fancyboxwidth','200','What size should the boxes be in?');
 INSERT INTO vars (name, value, description) VALUES ('formkey_timeframe','14400','The time frame that we check for a formkey');

@@ -1374,10 +1374,13 @@ sub saveStory {
 	$form->{writestatus} = 1 unless $form->{writestatus} == 10;
 
 	my $sid = $slashdb->createStory($form);
-	$slashdb->createDiscussion($sid, $form->{title},
-		$form->{'time'},
-		"$rootdir/article.pl?sid=$sid"
-	);
+	if($sid) {
+		my $id = $slashdb->createDiscussion($sid, $form->{title},
+			$form->{'time'},
+			"$rootdir/article.pl?sid=$sid"
+		);
+		$slashdb->setStory($sid, { header => $id });
+	}
 
 	titlebar('100%', getTitle('saveStory-title'));
 	listStories();

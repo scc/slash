@@ -36,7 +36,7 @@ sub main {
 		prev			=> $slashdb->getStoryByTime('<', $story, $SECT),
 	});
 
-	printComments($form->{sid});
+	printComments($story->{sid});
 
 	footer();
 	writeLog($story->{sid} || $form->{sid});

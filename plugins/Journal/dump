@@ -15,3 +15,4 @@ INSERT INTO menus (menu, label, value, seclev, menuorder) VALUES ('journal','Vie
 INSERT INTO vars (name, value, description) VALUES ('journal_top', '30', 'Number of journals to display in the top page');
 INSERT INTO vars (name, value, description) VALUES ('journal_default_display', '10', 'Number of journals to display on a user\'s page');
 INSERT INTO vars (name, value, description) VALUES ('journal_default_theme', 'generic', 'Default theme to use on journal entries');
+INSERT INTO vars (name, value, description) VALUES ('journal_comments', '0', 'Turn on and off comments for journal entries');

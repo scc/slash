@@ -127,7 +127,7 @@ CREATE TABLE commentmodes (
 #
 DROP TABLE IF EXISTS comments;
 CREATE TABLE comments (
-  sid char(16) DEFAULT '' NOT NULL,
+  sid int(16) NOT NULL,
   cid int(15) NOT NULL auto_increment,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -149,11 +149,11 @@ CREATE TABLE comments (
 );
 
 #
-# Table structure for table 'comments'
+# Table structure for table 'comment_heap'
 #
-DROP TABLE IF EXISTS comments_hash;
-CREATE TABLE comments_hash (
-  sid char(16) DEFAULT '' NOT NULL,
+DROP TABLE IF EXISTS comment_heap;
+CREATE TABLE comment_heap (
+  sid int(16) NOT NULL,
   cid int(15) NOT NULL,
   pid int(15) DEFAULT '0' NOT NULL,
   date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
@@ -220,11 +220,12 @@ CREATE TABLE dateformats (
 
 DROP TABLE IF EXISTS discussions;
 CREATE TABLE discussions (
-  id int(10) NOT NULL auto_increment, 
+  id int(16) NOT NULL auto_increment, 
   sid char(16) DEFAULT '' NOT NULL,
   title varchar(128),
-  url varchar(128),
+  url varchar(255) NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  type int(2) DEFAULT 0 NOT NULL,
   KEY (sid),
   PRIMARY KEY (id)
 );
@@ -304,7 +305,7 @@ CREATE TABLE moderatorlog (
   id int(1) NOT NULL auto_increment,
   uid int(1) NOT NULL,
   val int(1) DEFAULT '0' NOT NULL,
-  sid char(16) DEFAULT '' NOT NULL,
+  sid int(16) DEFAULT '' NOT NULL,
   ts datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   cid int(1) DEFAULT '0' NOT NULL,
   reason int(11) DEFAULT '0',
@@ -334,6 +335,7 @@ CREATE TABLE newstories (
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
+	header int(16),
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)
@@ -442,6 +444,7 @@ CREATE TABLE stories (
   displaystatus int(1) DEFAULT '0' NOT NULL,
   commentstatus int(1),
   hitparade varchar(64) DEFAULT '0,0,0,0,0,0,0',
+	header int(16),
   PRIMARY KEY (sid),
   KEY time (time),
   KEY searchform (displaystatus,time)

@@ -67,6 +67,7 @@ sub main {
 	footer();
 }
 
+##################################################################
 sub edit {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
@@ -79,6 +80,8 @@ sub edit {
 	);
 	editComment($id);
 }
+
+##################################################################
 sub reply {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
@@ -87,6 +90,7 @@ sub reply {
 	editComment($id);
 }
 
+##################################################################
 sub delete {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
@@ -99,6 +103,7 @@ sub delete {
 	$slashdb->setStoryCount($delCount);
 }
 
+##################################################################
 sub change {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
@@ -112,6 +117,7 @@ sub change {
 	printComments($form->{sid}, $form->{cid}, $form->{cid});
 }
 
+##################################################################
 sub displayComments {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
@@ -448,18 +454,17 @@ sub submitComment {
 		});
 	} else {
 		slashDisplay('comment_submit');
-		undoModeration($form->{sid});
+		undoModeration($maxCid);
 		printComments($form->{sid}, $maxCid, $maxCid);
-
-		unless ($slashdb->getDiscussion($form->{sid}, 'title')) {
-			$slashdb->setDiscussion($form->{sid}, { title => $form->{postersubj}}) if $form->{sid};
-		}
 
 		my $tc = $slashdb->getVar('totalComments', 'value' );
 		$slashdb->setVar('totalComments', ++$tc);
 
-		if ($slashdb->getStory($form->{sid}, 'writestatus') == 0) {
-			$slashdb->setStory($form->{sid}, { writestatus => 1 });
+		my $sid;
+		if($sid = $slashdb->getDiscussion($form->{sid}, 'sid')) {
+			if ($slashdb->getStory($sid, 'writestatus') == 0) {
+				$slashdb->setStory($sid, { writestatus => 1 });
+			}
 		}
 
 		$slashdb->setUser($user->{uid}, { -totalcomments => 'totalcomments+1' });
