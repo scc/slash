@@ -94,6 +94,7 @@ bin/backup-blocks
 bin/install-plugin
 bin/install-slashsite
 bin/tailslash
+bin/template-check
 bin/template-tool
 docs/HOWTO-Plugins.pod
 docs/HOWTO-Templates.pod

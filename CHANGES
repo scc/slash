@@ -1,4 +1,4 @@
-slash-1.1.6-bender, 2000.03.13
+slash-1.1.6-bender, 2000.03.14
 ------------------------------
 
 *	Major overhaul of command-line tools; many options have changed;
@@ -79,6 +79,7 @@ slash-1.1.6-bender, 2000.03.13
 
 *	Fix Search to work
 
+*	Added template-check program
 
 
 slash-1.1.5-bender, 2000.03.02
