@@ -9,15 +9,13 @@ use vars qw( %task $me );
 # sort of midnightish time for the Western Hemisphere.  Adjust for
 # your audience and admins.
 $task{$me}{timespec} = '7 6 * * *';
-$task{$me}{timespec_panic_2} = ''; # if major panic, dailyStuff can wait
 $task{$me}{code} = sub {
+
 	my($virtual_user, $constants, $slashdb, $user) = @_;
 
-	slashdLog('Daily Archiving/Deleting Begin');
-	$slashdb->deleteDaily();
-	# This should be pretty quick.
-	$slashdb->archiveComments();
-	slashdLog('Daily Archiving/Deleting End');
+	system("$constants->{sbindir}/dailyStuff $virtual_user &");
+
+	return ;
 };
 
 1;
