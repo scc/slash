@@ -289,9 +289,15 @@ sub ssiFoot {
 
 ########################################################
 sub getAd {
-	my $num = $_[0] || 1;
-	return qq|<!--#perl sub="sub { use Slash; print Slash::getAd($num); }" -->|
-		unless $ENV{SCRIPT_NAME};
+	my($num, $log) = @_; #$_[0] || 1;
+	$num ||= 1;
+
+	unless ($ENV{SCRIPT_NAME}) {
+		$log = $log ? " Slash::createLog('$log');" : "";
+		return <<EOT;
+<!--#perl sub="sub { use Slash;$log print Slash::getAd($num); }" -->
+EOT
+	}
 
 	return $ENV{"AD_BANNER_$num"};
 }

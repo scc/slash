@@ -17,7 +17,6 @@ use vars qw($VERSION);
 
 sub handler {
 	my($r) = @_;
-	my $slashdb = getCurrentDB();
 
 	# Notes has a bug (still in apache 1.3.17 at
 	# last look). Apache's directory sub handler
@@ -25,23 +24,8 @@ sub handler {
 	# -Brian
 	my $uri = $r->uri;
 	my $dat = $r->err_header_out('SLASH_LOG_DATA');
-	if ($uri eq '/') {
-		$slashdb->createAccessLog('index', $dat);
-	} elsif ($uri =~ /\.pl$/) {
-		$uri =~ s/^\/(.*)\.pl$/$1/;
-		$slashdb->createAccessLog($uri, $dat);
-	} elsif ($uri =~ /\.shtml$/) {
-		$uri =~ s/^\/(.*)\.shtml$/$1/;
-		$dat = $uri if $uri =~ /\d{2}\/\d{2}\/\d{2}\/\d{4,7}/;	
-		$uri =~ s/^\/?(\w+)\/?.*/$1/;
-		$slashdb->createAccessLog($uri, $dat);
-	} elsif ($uri =~ /\.html$/) {
-		$uri =~ s/^\/(.*)\.html$/$1/;
-		$dat = $uri if $uri =~ /\d{2}\/\d{2}\/\d{2}\/\d{4,7}/;	
-		$uri =~ s/^\/?(\w+)\/?.*/$1/;
-		$slashdb->createAccessLog($uri, $dat);
-	}
 
+	createLog($uri, $dat);
 	return OK;
 }
 

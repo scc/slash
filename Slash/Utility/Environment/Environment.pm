@@ -65,6 +65,7 @@ use vars qw($VERSION @EXPORT);
 	eatUserCookie
 	setCookie
 
+	createLog
 	errorLog
 	writeLog
 );
@@ -1393,6 +1394,34 @@ sub writeLog {
 	# is not copying notes. Bad Apache!
 	# -Brian
 	$r->err_header_out(SLASH_LOG_DATA => $dat);
+}
+
+sub createLog {
+	my($uri, $dat) = @_;
+	my $slashdb = getCurrentDB();
+
+	my $page = qr|\d{2}/\d{2}/\d{2}/\d{4,7}|;
+
+	if ($uri eq 'palm') {
+		($dat = $ENV{REQUEST_URI}) =~ s|\.shtml$||;
+		$slashdb->createAccessLog('palm', $dat);
+	} elsif ($uri eq '/') {
+		$slashdb->createAccessLog('index', $dat);
+	} elsif ($uri =~ /\.pl$/) {
+		$uri =~ s|^/(.*)\.pl$|$1|;
+		$slashdb->createAccessLog($uri, $dat);
+	} elsif ($uri =~ /\.shtml$/) {
+		$uri =~ s|^/(.*)\.shtml$|$1|;
+		$dat = $uri if $uri =~ $page;	
+		$uri =~ s|^/?(\w+)/?.*|$1|;
+		$slashdb->createAccessLog($uri, $dat);
+	} elsif ($uri =~ /\.html$/) {
+		$uri =~ s|^/(.*)\.html$|$1|;
+		$dat = $uri if $uri =~ $page;	
+		$uri =~ s|^/?(\w+)/?.*|$1|;
+		$slashdb->createAccessLog($uri, $dat);
+	}
+
 }
 
 #========================================================================
