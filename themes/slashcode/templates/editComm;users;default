@@ -104,6 +104,10 @@ __template__
 		to -1 so as long as you have your threshhold higher you will not see them)
 		<INPUT TYPE="CHECKBOX" NAME="anon_comments"[% a_check %]>
 
+		<P><B>Signature Dash</B> (Prefix everyone's signature with "--" to make
+		it blazingly obvious where comment ends and sig begins)
+		<INPUT TYPE="CHECKBOX" NAME="sigdash"[% d_check %]>
+
 		<P><B>Limit</B> only display this many comments.
 		For best results, set this to a low number and sort by score.<BR>
 		<INPUT TYPE="TEXT" NAME="commentlimit" SIZE="6" VALUE="[% user_edit.commentlimit %]">
@@ -113,15 +117,14 @@ __template__
 		<INPUT TYPE="TEXT" NAME="commentspill" VALUE="[% user_edit.commentspill %]" SIZE="3">
 
 		<P><B>Small Comment Penalty</B> (Assign -1 to comments smaller
-		than this many characters.  This might cause some comments
-		to be rated -2 and hence rendered invisible!)<BR>
+		than this many characters)<BR>
 		<INPUT TYPE="TEXT" NAME="clsmall" VALUE="[% user_edit.clsmall %]" SIZE="6">
 
 		<P><B>Long Comment Bonus </B> (Assign +1 to lengthy comments)<BR>
 		<INPUT TYPE="TEXT" NAME="clbig" VALUE="[% user_edit.clbig %]" SIZE="6">
 
 		<P><B>Max Comment Size</B> (Truncates long comments, and
-		adds a "Read More" link.  Set really big to disable)<BR>
+		adds a "Read the rest" link.  Set really big to disable)<BR>
 		<INPUT TYPE="TEXT" NAME="maxcommentsize" SIZE="6" VALUE="[% user_edit.maxcommentsize %]">
 
 		<P><B>Comment Post Mode</B>

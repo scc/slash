@@ -638,6 +638,10 @@ sub dispComment {
 		$comment->{sig} =~ s{</A[^>]+>}{</A>}gi;
 		$comment_shrunk =~ s{</A[^>]+>}{</A>}gi if $comment_shrunk;
 	}
+	if ($user->{sigdash} and $comment->{sig}
+		and $comment->{uid} != $constants->{anonymous_coward_uid}) {
+		$comment->{sig} = "<BR>--<BR>$comment->{sig}"
+	}
 
 	my @reasons = ( );
 	@reasons = @{$constants->{reasons}}
