@@ -595,13 +595,13 @@ to get more moderator points
 
 * lastmmid - last uid to meta-moderate this user 
 
-* m2fair - number of fair moderations
+* m2fair - number of fair meta-moderations
 
-* m2unfair - number of unfair moderationss
+* m2unfair - number of unfair meta-moderationss
 
-* m2fairvotes - 
+* m2fairvotes - number of times this user has had moderations voted as fair
 
-* m2unfairvotes - 
+* m2unfairvotes - number of times this user has had moderations voted as unfair
 
 * upmods - number of positive moderations 
 
@@ -670,7 +670,7 @@ What will appear on auser's page
 
 * maxstories - number of stories that appearnoboxes - 1 or 0 boxes or not
 
-* noboxes - 
+* noboxes - Turns off slashboxes if non-zero.
 
 
 users_param
