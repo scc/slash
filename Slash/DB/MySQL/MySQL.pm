@@ -1584,13 +1584,14 @@ sub savePollQuestion {
 	my($self, $poll) = @_;
 	$poll->{voters} ||= "0";
 	if ($poll->{qid}) {
+		my $qid = $self->sqlQuote($poll->{qid});
 		$self->sqlUpdate("pollquestions", {
 			question	=> $poll->{question},
 			voters		=> $poll->{voters},
 			topic		=> $poll->{topic},
 			sid		=> $poll->{sid},
 			-date		=>'now()'
-		});
+		}, "qid	= $qid");
 	} else {
 		$self->sqlInsert("pollquestions", {
 			question	=> $poll->{question},
