@@ -374,7 +374,7 @@ sub createDiscussion {
 
 		# Update form with the new SID for comment creation and other
 		# variables necessary. See "edit_comment;misc;default".
-		$newform = {
+		my $newform = {
 			sid	=> $id,
 			pid	=> 0, 
 			formkey => $form->{formkey},
