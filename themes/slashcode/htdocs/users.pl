@@ -17,9 +17,19 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $curuser = getCurrentUser();
 	my $form = getCurrentForm();
+	my $formname = $0;
+	$formname =~ s/.*\/(\w+)\.pl/$1/;
+	my $error_flag = 0;
+	my $previous_formkey;
 
 	my $suadmin_flag = $curuser->{seclev} >= 10000 ? 1 : 0 ;
+	# just trying to see why I get 'GET' when the form is 'POST'
+	# my $r = Apache->request;
+	# my $method = $r->method();
+	# print STDERR "method $method\n";
 	my $postflag = $ENV{REQUEST_METHOD} eq 'POST' ? 1 : 0 ;
+	# my $postflag = $method eq 'POST' ? 1 : 0 ;
+	print STDERR "postflag: $postflag\n";
 	my $op = $form->{op};
 	$op ||= 'userinfo';
 
@@ -43,9 +53,9 @@ sub main {
 	header(getMessage('user_header'));
 	print getMessage('note', { note => $note }) if defined $note;
 	# print STDERR "note $note\n";
-	print createMenu('users') if ! $curuser->{is_anon};
+	print createMenu($formname) if ! $curuser->{is_anon};
 
-	my %ops = (
+	my $ops = { 
 		admin		=> \&adminDispatch,
 		userlogin	=> \&showInfo,
 		userinfo	=> \&showInfo,
@@ -67,7 +77,7 @@ sub main {
 		mailpasswdform 	=> \&displayForm,
 		displayform	=> \&displayForm,
 		default		=> \&displayForm,
-	);
+	};
 
 	my $user_calls = {
 		userinfo	=> 1,
@@ -98,18 +108,152 @@ sub main {
 		saveuseradmin	=> 1,
 	};
 
+ 	my $formkey_forms = {
+ 		userlogin	=> 1, 
+ 		changepasswd	=> 1, 
+ 		edituser	=> 1, 
+ 		edithome	=> 1, 
+ 		editcomm	=> 1, 
+ 		newuser		=> 1, 
+ 		mailpasswd	=> 1, 
+ 		newuserform	=> 1, 
+ 		mailpasswdform 	=> 1,
+ 		displayform	=> 1, 
+ 	};
+
+	my $formkey_check = {
+		savepasswd	=> 'changepasswd',
+ 		saveuser	=> 'edituser',
+		savehome	=> 'edithome',
+		savecomm	=> 'editcomm',
+	};
+
 	if ($curuser->{is_anon}) {
 		$op = 'default' if $user_calls->{$op};
 
 	} elsif (! $suadmin_flag) {
 		$op = 'userinfo' if $admin_calls->{$op};
-		# $op = 'userinfo' if $post_calls->{$op} ; # && ! $postflag ;
+		# $op = 'userinfo' if $post_calls->{$op}  && ! $postflag ;
 	}
 
 	print STDERR "----------------\nOP $op\n-----------------\n";
 
 	# here goes it
-	$ops{$op}->();
+
+
+	my $formkeyid = getFormkeyId($curuser->{uid});
+	
+
+	# check to see if they've hit max user viewings, and if they have, null
+	# out the op.
+	if ($curuser->{seclev} < 100) {
+		if (my $max_users_viewings = $slashdb->checkMaxReads($formname, $formkeyid)) {
+	             		my $timeframe_string = intervalString($constants->{formkey_timeframe});
+				print getError('max reads', {
+					max_users_viewings => $max_users_viewings,
+					timeframe => $timeframe_string, 
+				});
+	
+				$op = 'noop';
+				$error_flag++;
+		}
+	
+		if ($formkey_check->{$op} && $curuser->{seclev} < 100) {
+			# this is all you need to add to have max user changes work
+			my $tmp = $slashdb->checkMaxPosts($formname, $formkeyid) ;
+			if (my $max_userchanges = $slashdb->checkMaxPosts($formname, $formkeyid)) {
+	                	$slashdb->createAbuse( ( getError('formabuse_maxuserchanges', {
+					no_error_comment 	=> 	1,
+					type 			=> 	'formabuse_maxposts', 
+					max_userchanges		=> 	$max_userchanges,
+					}, 1)),
+				$formname,
+				$ENV{QUERY_STRING},
+				$curuser->{uid},
+				$curuser->{ipid},
+				$curuser->{subnetid} 
+			);
+	             		my $timeframe_string = intervalString($constants->{formkey_timeframe});
+	      			print getError('max userchanges', { 
+					max_userchanges => $max_userchanges,
+					timeframe => $timeframe_string, 
+				});
+	
+				$error_flag++;
+			}
+			# verify a valid formkey
+			if (! $slashdb->validFormkey($formname, $formkeyid)) {	
+				$slashdb->createAbuse( getError('formabuse_invalidformkey', {
+							no_error_comment 	=> 1,
+							formkey 		=> $form->{formkey},
+							}, 1),
+						$formname,
+						$ENV{QUERY_STRING},
+						$curuser->{uid},
+						$curuser->{ipid},
+						$curuser->{subnetid} 
+				);
+	
+				print getError('invalid formkey', { formkey => $form->{formkey} });
+	
+				$error_flag++;
+			}
+			# check interval from this attempt to last successful post
+			if ( my $interval = $slashdb->checkPostInterval($formname, $formkeyid)) {	
+				my $limit_string = intervalString($constants->{userchange_speed_limit});
+				my $interval_string = intervalString($interval);
+		
+				print getError('speed limit', {
+					limit 		=> 	$limit_string,
+					interval 	=> 	$interval_string
+				});
+	
+				$error_flag++;
+			}
+			# check if form already used
+			unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
+				my $interval = time() - $slashdb->getFormkeyTs($form->{formkey},1);
+				
+				my $interval_string = intervalString($interval) if $interval < $constants->{formkey_timeframe};
+		
+				print getError('used form', {
+					interval => $interval_string
+				});
+		
+				$slashdb->createAbuse( getError('formabuse_usedform', {
+							no_error_comment	=> 1,
+							formkey 		=> $form->{formkey}
+							}, 1),
+					$formname,
+					$ENV{QUERY_STRING},
+					$curuser->{uid},
+					$curuser->{ipid},
+					$curuser->{subnetid} 
+				);
+	
+				$error_flag++;
+			}
+	
+			$previous_formkey = $form->{formkey};
+	
+			# if there's an error, change the op that will give them
+			# the form they submitted from, which requires a new formkey
+			$op = $formkey_check->{$op} if $error_flag; 
+		} 
+	} 
+
+	# create the formkey if called for
+	if ($formkey_forms->{$op} || (! $error_flag && $formkey_check->{$op})) {
+		$slashdb->createFormkey($formname, $formkeyid, $op);
+	}
+
+	# call the method
+	$ops->{$op}->() if $op ne 'noop';
+
+	# successful save action, no formkey errors, update existing formkey
+	if ($formkey_check->{$op} && $curuser->{seclev} < 100 && ! $error_flag) {
+		my $updated = $slashdb->updateFormkey($previous_formkey, $op, length($ENV{QUERY_STRING})); 
+	}
 
 	writeLog($curuser->{nickname});
 	footer();
@@ -125,7 +269,7 @@ sub checkList {
 	$string = sprintf "'%s'", join "','", @e;
 
 	if (length($string) > 254) {
-		print getMessage('checklist_msg');
+		print getError('checklist_err');
 		$string = substr($string, 0, 255);
 		$string =~ s/,'??\w*?$//g;
 	} elsif (length $string < 3) {
@@ -216,7 +360,7 @@ sub mailPasswd {
 	my $user = $slashdb->getUser($uid, ['nickname', 'realemail']);
 
 	unless ($uid) {
-		print getMessage('mailpasswd_notmailed_msg');
+		print getError('mailpasswd_notmailed_err');
 		return;
 	}
 
@@ -349,7 +493,7 @@ sub showInfo {
 
 	} else {
 		if (! defined $uid) {
-			print getMessage('userinfo_nicknf_msg', { nick => $nick });
+			print getError('userinfo_nicknf_err', { nick => $nick });
 			return;
 		}
 
@@ -416,7 +560,7 @@ sub validateUser {
 
 	if ($user->{is_anon} || !length($user->{reg_id})) {
 		if ($user->{is_anon}) {
-			print getMessage('anon_validation_attempt');
+			print getError('anon_validation_attempt');
 			displayForm();
 
 		} else {
@@ -855,7 +999,7 @@ sub saveUserAdmin {
                                 $slashdb->setReadOnly($formname, $user, $form->{$keyname}, $form->{$reason_keyname});
 		}
 
-		# $note .= getMessage('saveuseradmin_notsaved', { field => $form->{userfield_flag}, id => $id });
+		# $note .= getError('saveuseradmin_notsaved', { field => $form->{userfield_flag}, id => $id });
 	}
 
 	$note .= getMessage('saveuseradmin_saved', { field => $form->{userfield_flag}, id => $id}) if $save_success;
@@ -871,7 +1015,7 @@ sub saveUserAdmin {
 		$note .= getMessage('saveuseradmin_saveduser', { field => $form->{userfield_flag}, id => $id });
 
 		#} else {
-		#	$note .= getMessage('saveuseradmin_notsaveduser', { field => $form->{userfield_flag}, id => $id});
+		#	$note .= getError('saveuseradmin_notsaveduser', { field => $form->{userfield_flag}, id => $id});
 		#}
 	}
 
@@ -931,7 +1075,7 @@ sub savePasswd {
 	}
 
 	if (!$user->{nickname}) {
-		$note .= getMessage('cookiemsg', 0, 1);
+		$note .= getError('cookie_err', 0, 1);
 	}
 
 	if ($form->{pass1} eq $form->{pass2} && length($form->{pass1}) > 5) {
@@ -943,10 +1087,10 @@ sub savePasswd {
 		}
 
 	} elsif ($form->{pass1} ne $form->{pass2}) {
-		$note .= getMessage('saveuser_passnomatch_msg', 0, 1);
+		$note .= getError('saveuser_passnomatch_err', 0, 1);
 
 	} elsif (length $form->{pass1} < 6 && $form->{pass1}) {
-		$note .= getMessage('saveuser_passtooshort_msg', 0, 1);
+		$note .= getError('saveuser_passtooshort_err', 0, 1);
 	}
 
 	$slashdb->setUser($uid, $users_table);
@@ -984,6 +1128,7 @@ sub saveUser {
 			}
 # 		} else {
 # 			# this will never happen!  see isAnon() -- pudge
+			# right you are, sir!</McMahon>
 #   			my $note = getMessage('saveuseradmin_uid_notnumeric', { field => $form->{userfield}, id => $uid });
 # 			return($note);
 		}
@@ -1003,7 +1148,7 @@ sub saveUser {
 	$note .= getMessage('savenickname_msg', { nickname => $user->{nickname} }, 1);
 
 	if (!$user->{nickname}) {
-		$note .= getMessage('cookiemsg', 0, 1);
+		$note .= getError('cookie_err', 0, 1);
 	}
 
 	$user_fakeemail = ($user->{emaildisplay} == 1) ?
@@ -1013,7 +1158,7 @@ sub saveUser {
 	# it doesn't already exist in the userbase.
 	if ($user->{realemail} ne $form->{realemail}) {
 		if ($slashdb->checkEmail($form->{realemail})) {
-			$note = getMessage('emailexists_msg', 0, 1);
+			$note = getError('emailexists_err', 0, 1);
 			return $note;
 		}
 	}
@@ -1123,7 +1268,7 @@ sub saveComm {
 	print $savename;
 
 	if (isAnon($uid) || !$name) {
-		print getMessage('cookiemsg');
+		print getError('cookie_err');
 	}
 
 	# Take care of the lists
@@ -1181,7 +1326,7 @@ sub saveHome {
 
 	# users_cookiemsg
 	if (isAnon($uid) || !$name) {
-		my $cookiemsg = getMessage('cookiemsg');
+		my $cookiemsg = getError('cookie_err');
 		print $cookiemsg;
 	}
 
@@ -1310,12 +1455,23 @@ sub displayForm {
 
 #################################################################
 # this groups all the messages together in
-# one template, called "users-messages"
+# one template, called "messages;users;default"
 sub getMessage {
 	my($value, $hashref, $nocomm) = @_;
 	$hashref ||= {};
 	$hashref->{value} = $value;
 	return slashDisplay('messages', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
+}
+
+#################################################################
+# this groups all the errors together in
+# one template, called "errors;users;default"
+sub getError {
+	my($value, $hashref, $nocomm) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('errors', $hashref,
 		{ Return => 1, Nocomm => $nocomm });
 }
 

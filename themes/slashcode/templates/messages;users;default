@@ -29,9 +29,6 @@ __template__
 [% CASE 'userclose' %]
 	you are now logged out.
 
-[% CASE 'userinfo_nicknf_msg' %]
-	[% nick %] not found.
-
 [% CASE 'newuser_msg' %]
 	[% INCLUDE titlebar title=title width="100%" %]
 	<B>email</B>=[% form.email %]<BR>
@@ -73,7 +70,7 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	<TEXTAREA NAME="mylinks" rows=5 COLS="60" WRAP="VIRTUAL">[% FILTER strip_literal; userspace; END %]</TEXTAREA>
 	<P><MULTICOL COLS="3">
 
-[% CASE 'tilded_boxmsg' %]
+[% CASE 'tilded_box_msg' %]
 	</MULTICOL><P>
 	If you have reasonable suggestions for boxes that can be added
 	here, or a problem with one of the boxes already here,
@@ -101,33 +98,6 @@ customize [% constants.sitename %], change your password, or just click pretty w
 [% CASE 'saveuseradmin_saveduser' %]
 	Saved [% field %] [% id %] User settings
 
-[% CASE 'saveuseradmin_notsaved' %]
-	Unable to save [% field %] [% id %] Admin settings
-
-[% CASE 'saveuseradmin_notsaveduser' %]
-	Unable to save [% field %] [% id %] User settings
- 
-[% CASE 'saveuseradmin_uid_notnumeric' %]
-	Unable to save [% field %] [% id %] : a uid must be all numeric 
- 
-[% CASE 'cookiemsg' %]
-	<P>Your browser didn't save a cookie properly. This could mean you are behind a filter that
-	eliminates them, you are using a browser that doesn't support them, or you rejected it.
-
-[% CASE 'dispform_login_msg_1' %]
-	Danger, Will Robinson!  You didn't login!  You apparently put
-	in the wrong password, or the wrong nickname, or else space
-	aliens have infested the server.  I'd suggest trying again,
-	or clicking that mail password button if you forgot your password.
-
-[% CASE 'dispform_login_msg_2' %]
-	Logging in will allow you to post comments as yourself.  If you
-	don't login, you will only be able to post as [% constants.anon_name %].
-
-[% CASE 'dispform_login_msg_3' %]
-	Logging in will allow you to post comments as yourself.  If you
-	don't login, you will only be able to post as [% env.anon_name %].
-
 [% CASE 'dispform_new_msg_1' %]
 	If your registration attempt is failing, it is most likely because
 	you tried to register with a <B>duplicate nickname</B>, a <B>duplicate
@@ -144,14 +114,7 @@ customize [% constants.sitename %], change your password, or just click pretty w
 [% CASE 'mailpasswd_mailed_msg' %]
 	Passwd for [% name %] was just emailed.<BR>
 
-[% CASE 'mailpasswd_notmailed_msg' %]
-	Nickname was not found. No Password was mailed.<BR>
-
-[% CASE 'checklist_msg' %]
-	You selected too many options<BR>
-
 [% CASE 'savename_msg' %]
-
 	<P>Saving [% name %]<BR><P>
 
 [% CASE 'savenickname_msg' %]
@@ -164,23 +127,9 @@ customize [% constants.sitename %], change your password, or just click pretty w
 [% CASE 'saveuser_passchanged_msg' %]
 	Password changed.<BR>
 
-[% CASE 'saveuser_passnomatch_msg' %]
-	Passwords don't match. Password not changed.<BR>
-
-[% CASE 'saveuser_passtooshort_msg' %]
-	Password is too short and was not changed.<BR>
-
-[% CASE 'anon_validation_attempt' %]
-	<P>I'm sorry. Anonymous users have no accounts that need to be validated.
-	If you do have an account on [% constants.sitename %] that you would like
-	to re-register, then please log in as that user, first.<BR>
-
 [% CASE 'no_registration_needed' %]
 	<P>Hello, [% user.nickname %]. Your account is currently registered with
 	the system. No re-registration is necessary at this time.<BR>
-
-[% CASE 'emailexists_msg' %]
-	Sorry, [% FILTER strip_literal; form.realemail; END %] already exists in our userbase.<BR>
 
 [% CASE DEFAULT %]
 	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>

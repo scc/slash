@@ -45,6 +45,7 @@ sub main {
 	# maybe do an $op = lc($form->{'op'}) to make it simpler?
 	# just a thought.  -- pudge
 	# Not a bad idea actually --Brian
+	# why's that? The ops are already lowercase, and should be. --Patrick
 
 	my $stories;
 	#This is here to save a function call, even though the
@@ -60,9 +61,7 @@ sub main {
 	header("$SECT->{title}: $stories->{'title'}", $SECT->{section});
 
 	if ($user->{is_anon} && length($form->{upasswd}) > 1) {
-		slashDisplay('errors', {
-			type	=> 'login error',
-		});
+		print getError('login error');
 		$form->{op} = "Preview";
 	}
 	my $op = $form->{'op'};
@@ -74,6 +73,16 @@ sub main {
 	footer();
 }
 
+#################################################################
+# this groups all the errors together in
+# one template, called "errors;comments;default"
+sub getError {
+	my($value, $hashref, $nocomm) = @_;
+	$hashref ||= {};
+	$hashref->{value} = $value;
+	return slashDisplay('errors', $hashref,
+		{ Return => 1, Nocomm => $nocomm });
+}
 ##################################################################
 sub edit {
 	my($form, $slashdb, $user, $constants, $id) = @_;
@@ -92,7 +101,9 @@ sub edit {
 sub reply {
 	my($form, $slashdb, $user, $constants, $id) = @_;
 
-	$form->{formkey} = getFormkey();
+	# arghg - you don't need to do this - it's in 'createFormkey' --Patrick
+	# $form->{formkey} = getFormkey();
+
 	$slashdb->createFormkey("comments", $id, $form->{sid});
 	editComment($id);
 }
@@ -194,20 +205,15 @@ sub editComment {
 	my $reply = $slashdb->getCommentReply($form->{sid}, $form->{pid});
 
 	if (!$constants->{allow_anonymous} && $user->{is_anon}) {
-		slashDisplay('errors', {
-			type	=> 'no anonymous posting',
-		});
+		print getError('no anonymous posting');
 		return;
 	}
-
-	my $max_posts = $constants->{max_posts_allowed};
 
 	# check if user has  max comments successfully posted
 	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
                 my $timeframe_string = intervalString($constants->{formkey_timeframe});
-                slashDisplay('errors', { 
-				type => 'max posts', 
-				max_posts => $max_posts,
+		print getError('max posts', {
+				max_posts => $maxposts,
 				timeframe => $timeframe_string 
 		});
                 return;
@@ -257,31 +263,23 @@ sub validateComment {
 	$$subj ||= $form->{postersubj};
 
 	if ($slashdb->checkReadOnly('comments')) {
-		$$error_message = slashDisplay('errors', {
-			type =>	'readonly',
-		}, 1);
+		$$error_message = getError('readonly');
 		$form_success = 0;
 		editComment('', $$error_message), return unless $preview;
 	}
 
 	if (isTroll($user, $constants, $slashdb)) {
-		$$error_message = slashDisplay('errors', {
-			type	=> 'troll message',
-		}, 1);
+		$$error_message = getError('troll message');
 		return;
 	}
 
 	if (!$constants->{allow_anonymous} && ($user->{is_anon} || $form->{postanon})) {
-		$$error_message = slashDisplay('errors', {
-			type	=> 'anonymous disallowed',
-		}, 1);
+		$$error_message = getError('anonymous disallowed');
 		return;
 	}
 
 	unless ($$comm && $$subj) {
-		$$error_message = slashDisplay('errors', {
-			type	=> 'no body',
-		}, 1);
+		$$error_message = getError('no body');
 		return;
 	}
 
@@ -289,9 +287,7 @@ sub validateComment {
 	$$subj =~ s/Score:(.*)//i;
 
 	unless (defined($$comm = balanceTags($$comm, 1))) {
-		$$error_message = slashDisplay('errors', {
-			type =>	'nesting_toodeep',
-		}, 1);
+		$$error_message = getError('nesting_toodeep');
 		editComment('', $$error_message), return unless $preview;
 		return;
 	}
@@ -299,8 +295,7 @@ sub validateComment {
 	my $dupRows = $slashdb->findCommentsDuplicate($form->{sid}, $$comm);
 
 	if ($dupRows || !$form->{sid}) {
-		$$error_message = slashDisplay('errors', {
-			type	=> 'validation error',
+		$$error_message = getError('validation error', {
 			dups	=> $dupRows,
 		});
 		editComment('', $$error_message), return unless $preview;
@@ -316,10 +311,9 @@ sub validateComment {
 		# Should the naked '7' be converted to a Slash Variable for return by
 		# getCurrentStatic(). 	- Cliff
 		if (($w / ($br + 1)) < 7) {
-			$$error_message = slashDisplay('errors', {
-				type	=> 'low words-per-line',
+			$$error_message = getError('low words-per-line', {
 				ratio 	=> $w / ($br + 1),
-			}, 1);
+			});
 			editComment('', $$error_message), return unless $preview;
 			return;
 		}
@@ -337,10 +331,9 @@ sub validateComment {
 	for (keys %$fields) {
 		# run through filters
 		if (! filterOk('comments', $_, $fields->{$_}, \$message)) {
-			$$error_message = slashDisplay('errors', {
-					type		=> 'filter message',
+			$$error_message = getError('filter message', {
 					err_message	=> $message,
-			}, 1);
+			});
 
 			$form_success = 0;
 			editComment('', $$error_message), return unless $preview;
@@ -349,10 +342,9 @@ sub validateComment {
 		# run through compress test
 		if (! compressOk('comments', $_, $fields->{$_})) {
 			# blammo luser
-			$$error_message = slashDisplay('errors', {
-				type	=> 'compress filter',
-				ratio	=> $_,
-			}, 1);
+			$$error_message = getError('compress filter', {
+					ratio	=> $_,
+			});
 			editComment('', $$error_message), return unless $preview;
 			$form_success = 0;
 			last;
@@ -420,11 +412,11 @@ sub submitComment {
 
 	# check the max posts
 	if (my $maxposts = $slashdb->checkMaxPosts('comments', $id)) {
-                $slashdb->createAbuse( (slashDisplay('errors', { 
+                $slashdb->createAbuse( ( getError('formabuse_maxposts', {
 				no_error_comment 	=> 	1,
 				type 			=> 	'formabuse_maxposts', 
 				maxposts 		=> 	$maxposts 
-				}, { Return => 1, Nocomm => 1})),
+				}, 1)),
 			'comments',
 			$ENV{QUERY_STRING},
 			$user->{uid},
@@ -433,8 +425,7 @@ sub submitComment {
 		);
                         
                 my $timeframe_string = intervalString($constants->{formkey_timeframe});
-               	slashDisplay('errors', { 
-				type => 'max posts', 
+		print getError('max posts', {
 				timeframe => $timeframe_string 
 		});
                 return;
@@ -442,20 +433,18 @@ sub submitComment {
 
 	# verify a valid formkey
 	if (! $slashdb->validFormkey('comments', $id)) {	
-		$slashdb->createAbuse( slashDisplay ('errors', {
-				no_error_comment 	=> 	1,
-				type 			=> 	'formabuse_invalidformkey',
-				formkey 		=> 	$form->{formkey}
-				}, { Return => 1, Nocomm => 1}),
-			'comments',
-			$ENV{QUERY_STRING},
-			$user->{uid},
-			$user->{ipid},
-			$user->{subnetid} 
+		$slashdb->createAbuse( getError('formabuse_invalidformkey', {
+					no_error_comment	=> 1,
+					formkey 		=> $form->{formkey},
+					}, 1),
+				'comments',
+				$ENV{QUERY_STRING},
+				$user->{uid},
+				$user->{ipid},
+				$user->{subnetid} 
 		);
 
-		slashDisplay('errors', {
-			type => 'invalid formkey',
+		print getError('invalid formkey', {
 			formkey => $form->{formkey}
 		});
 
@@ -466,8 +455,7 @@ sub submitComment {
 	if ( my $response_time = $slashdb->checkResponseTime('comments', $id)) {
 		my $limit_string = intervalString($constants->{comments_response_limit});
 		my $response_string = intervalString($response_time);
-		slashDisplay('errors', {
-			type		=>	'response limit',
+		print getError('response limit', {
 			limit		=> 	$limit_string,
 			response 	=> 	$response_string
 		});
@@ -478,8 +466,8 @@ sub submitComment {
 	if ( my $interval = $slashdb->checkPostInterval('comments', $id)) {	
 		my $limit_string = intervalString($constants->{comments_speed_limit});
 		my $interval_string = intervalString($interval);
-		slashDisplay('errors', {
-			type 		=> 	'post limit',
+
+		print getError('post limit', {
 			limit 		=> 	$limit_string,
 			interval 	=> 	$interval_string
 		});
@@ -489,16 +477,15 @@ sub submitComment {
 	# check if form already used
 	unless (  my $increment_val = $slashdb->updateFormkeyVal($form->{formkey})) {	
 		my $interval_string = intervalString( time() - $slashdb->getFormkeyTs($form->{formkey},1) );
-		slashDisplay('errors', {
-			type 		=>	'used form',
+
+		print getError('used form', {
 			interval	=>	$interval_string
 		});
 
-		$slashdb->createAbuse(slashDisplay('errors', {
-				no_error_comment => 1,
-				type		=> 	'formabuse_usedform',
-				formkey 	=>	$form->{formkey}
-			}, { Return => 1, Nocomm => 1}),
+		$slashdb->createAbuse( getError('formabuse_usedform', {
+					no_error_comment 	=> 1,
+					formkey 		=> $form->{formkey}
+					}, 1),
 			'comments',
 			$ENV{QUERY_STRING},
 			$user->{uid},
@@ -547,17 +534,14 @@ sub submitComment {
 
 	if ($maxCid == -1) {
 		# What vars should be accessible here?
-		slashDisplay('errors', {
-			type	=> 'submission error',
-		});
+		print getError('submission error');
+
 	} elsif (!$maxCid) {
 		# What vars should be accessible here?
 		#	- $maxCid?
 		# What are the odds on this happening? Hmmm if it is we should
 		# increase the size of int we used for cid.
-		slashDisplay('errors', {
-			type	=> 'maxcid exceeded',
-		});
+		print getError('maxcid exceeded');
 	} else {
 		slashDisplay('comment_submit');
 		undoModeration($form->{sid});
@@ -639,9 +623,8 @@ sub moderate {
 	slashDisplay('mod_footer');
 
 	if ($hasPosted && !$total_deleted) {
-		slashDisplay('errors', {
-			type	=> 'already posted',
-		});
+		print getError('already posted');
+
 	} elsif ($user->{seclev} && $total_deleted) {
 		slashDisplay('del_message', {
 			total_deleted	=> $total_deleted,
@@ -669,9 +652,7 @@ sub moderateCid {
 
 	if ($user->{points} < 1) {
 		unless ($user->{seclev} > 99 && $superAuthor) {
-			slashDisplay('errors', {
-				type	=> 'no points',
-			});
+			print getError('no points');
 			return;
 		}
 	}

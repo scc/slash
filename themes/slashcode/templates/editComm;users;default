@@ -31,6 +31,10 @@ __template__
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
 
+[% IF form.formkey %]
+<INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
+
 <INPUT TYPE="HIDDEN" NAME="formname"  VALUE="editcomm">
 <INPUT TYPE="HIDDEN" NAME="op"  VALUE="savecomm">
 <INPUT TYPE="HIDDEN" NAME="uid"  VALUE="[% user_edit.uid %]">

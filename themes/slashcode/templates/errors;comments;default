@@ -21,7 +21,7 @@ __template__
 [% END %]
 
 [% USE Slash %]
-[% SWITCH type;
+[% SWITCH value;
 
 # LOGIN ERROR.
 CASE "login error" %]
@@ -57,18 +57,19 @@ CASE "max posts" %]
 
 [% # INVALID FORMKEY
 CASE "invalid formkey" %]
-<BR><P><B>Invalid form key [% formkey %] !</B></P>
+[% INCLUDE titlebar width="95%" title="Invalid form key!" %]
+<BR><P><B>form key: [% formkey %] !</B></P>
  
 [% # RESPONSE LIMIT 
 CASE "response limit" %]
-<BR><B>Slow down cowboy</B><BR>
+[% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
 <P>[% constants.sitename %] requires you to wait [% limit %] between
 hitting 'reply' and submitting a comment.</P>
 <P>It's been [% response %] since you hit 'reply'!</P>
 
 [% # POST LIMIT
 CASE "post limit" %]
-<BR><B>Slow down cowboy!</B><BR>
+[% INCLUDE titlebar width="95%" title="Slow Down Cowboy!" %]
 <P>[% constants.sitename %] requires you to wait [% limit %] between
 each successful posting of a comment to allow everyone a fair chance
 at posting a comment.</P>
@@ -76,7 +77,7 @@ at posting a comment.</P>
 
 [% # USED FORM
 CASE "used form" %]
-<BR><B>Form Error!</B><BR>
+[% INCLUDE titlebar width="95%" title="Form Error!" %]
 This form has been used already to submit a comment [% interval %] ago.
 You can not use a form and hit the back button to use it again.
 
@@ -103,7 +104,7 @@ Your comment has too few words per line (currently [% ratio %]).<BR>
 
 [% # FILTER MESSAGE.
 CASE "filter message" %]
-<BR>Lameness filter encountered.  Post aborted.<BR><BR>
+[% INCLUDE titlebar width="95%" title="Lameness filter encountered. Post aborted!" %]
 [% IF err_message %]
 <B>Reason: [% err_message %]</B><BR>
 [% END %]
@@ -111,7 +112,8 @@ CASE "filter message" %]
 
 [% # COMPRESS FILTER.
 CASE "compress filter" %]
-Lameness filter encountered. Your comment violated the [% ratio %] compression filter.
+[% INCLUDE titlebar width="95%" title="Lameness filter encountered." %]
+Your comment violated the [% ratio %] compression filter.
 <B>Comment aborted</B>
 
 [% # SUBMISSION ERROR.

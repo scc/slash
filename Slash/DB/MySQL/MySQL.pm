@@ -1745,6 +1745,24 @@ sub checkPostInterval {
 }
 
 ##################################################################
+sub checkMaxReads {
+	my ($self, $formname, $id) = @_;
+	my $constants = getCurrentStatic();
+
+	my $formkey_earliest = time() - $constants->{formkey_timeframe};
+	my $where = $self->_whereFormkey($id);
+	my $maxreads = {
+		comments 	=> $constants->{max_comments_viewings},
+		users		=> $constants->{max_users_viewings},
+	};
+	my ($limit_reached) = $self->sqlSelect(
+		"count(*) >= $maxreads->{$formname}",
+		"formkeys",
+		"$where AND ts >= $formkey_earliest AND formname = '$formname'");
+
+	return $limit_reached ? $maxreads->{$formname} : 0;
+}
+##################################################################
 sub checkMaxPosts {
 	my ($self, $formname, $id) = @_;
 	my $constants = getCurrentStatic();
@@ -1977,10 +1995,10 @@ sub setReadOnly {
 			$where .= "uid = $user->{uid}";
 
 		} elsif ($user->{ipid}) {
-			$where = "ipid = '$user->{ipid}'";
+			$where .= "ipid = '$user->{ipid}'";
 
 		} elsif ($user->{subnetid}) {
-			$where = "subnetid = '$user->{subnetid}'";
+			$where .= "subnetid = '$user->{subnetid}'";
 		}
 
 	} else {

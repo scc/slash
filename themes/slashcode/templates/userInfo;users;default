@@ -27,6 +27,10 @@ __template__
 [% USE Slash %]
 [% INCLUDE titlebar width="95%" %]
 
+[% IF form.formkey %]
+        <!-- INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]" -->
+[% END %]
+
 [% IF nickmatch_flag %]
 
 <P>This is <B>your</B> User Info page.  There are thousands more, but this one is yours.

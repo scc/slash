@@ -58,7 +58,11 @@ __template__
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 	[% IF authoredit_flag %]
 	<TR>
-		<FORM ACTION="[% env.script_name %]">
+		<FORM ACTION="[% env.script_name %]" METHOD="POST">
+
+[% IF form.formkey %]
+	        <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
 		<TD><B>Authors</B></TD>
 		<TD>[% author_select %]</TD>
 		<TD>&nbsp;<INPUT TYPE="SUBMIT" NAME="authoredit" VALUE="Edit Author">
@@ -72,7 +76,10 @@ __template__
 
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">
 	<TR>
-		<FORM ACTION="[% env.script_name %]">
+		<FORM ACTION="[% env.script_name %]" METHOD="POST">
+[% IF form.formkey %]
+	        <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
 		<INPUT TYPE="HIDDEN" NAME="op" VALUE="admin">
 		<TD>
 		<TABLE>

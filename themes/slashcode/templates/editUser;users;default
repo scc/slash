@@ -35,6 +35,11 @@ and Bookmarking the resulting page. This is totally insecure, but very convenien
 	[% END %]
 
 <FORM ACTION="[% env.script_name %]" METHOD="POST">
+
+[% IF form.formkey %]
+        <INPUT TYPE="HIDDEN" NAME="formkey" VALUE="[% form.formkey %]">
+[% END %]
+
 <BR>
 	<B>Real Name</B> (optional)<BR>
 		<INPUT TYPE="TEXT" NAME="realname" VALUE="[% FILTER strip_attribute; useredit.realname; END %]" SIZE="40"><BR>

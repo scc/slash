@@ -549,4 +549,5 @@ INSERT INTO vars (name, value, description) VALUES ('use_dept','1','use \"dept.\
 INSERT INTO vars (name, value, description) VALUES ('writestatus','0','Simple Boolean to determine if homepage needs rewriting');
 INSERT INTO vars (name, value, description) VALUES ('userchange_speed_limit','10','How fast a user can change their prefs');
 INSERT INTO vars (name, value, description) VALUES ('max_userchanges_allowed','50','How many changes a user can submit');
-INSERT INTO vars (name, value, description) VALUES ('max_user_viewings','100','how many times users.pl can be viewed');
+INSERT INTO vars (name, value, description) VALUES ('max_users_viewings','30','how many times users.pl can be viewed');
+INSERT INTO vars (name, value, description) VALUES ('max_comments_viewings','1000','how many times users.pl can be viewed');
