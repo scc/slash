@@ -28,7 +28,7 @@ use Slash::Utility;
 use Storable qw(freeze thaw);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@ISA       = qw(Slash::DB:Utility);
+@ISA       = qw(Slash::DB::Utility);
 
 my %descriptions = (
 	'deliverymodes'
@@ -92,10 +92,10 @@ sub _get {
 	my $prime = $self->{_drop_prime};
 	my $store = $self->{_drop_store};
 
-	my $db_id = $self->sqlQuote($msg_id);
+	my $id_db = $self->sqlQuote($msg_id);
 
 	my $data = $self->sqlSelectAll(
-		$cols, $table, "$self->{_drop_prime}=$db_id"
+		$cols, $table, "$self->{_drop_prime}=$id_db"
 	);
 
 	$data = $data->[0];
@@ -126,6 +126,17 @@ sub _gets {
 
 	return $all;
 }
+
+sub _delete {
+	my($self, $id) = @_;
+	my $table = $self->{_drop_table};
+	my $prime = $self->{_drop_prime};
+	my $id_db = $self->{_dbh}->quote($id);
+	my $where = "$prime=$id_db";
+
+	$self->sqlDo("DELETE FROM $table WHERE $where");
+}
+
 
 1;
 

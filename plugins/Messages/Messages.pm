@@ -31,7 +31,7 @@ use Slash::Display;
 use Slash::Utility;
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-use base qw(Slash::Messages::DB::MySQL Slash::DB::Utility);
+use base qw(Slash::Messages::DB::MySQL);
 
 
 #========================================================================
@@ -144,6 +144,15 @@ sub gets {
 	my $msgs = $self->_gets($count) or return;
 	$self->render($_) for @$msgs;
 	return $msgs;
+}
+
+sub delete {
+	my($self, @ids) = @_;
+	my $count;
+	for (@ids) {
+		$count += $self->_delete($_);
+	}
+	return $count;
 }
 
 sub render {
