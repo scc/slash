@@ -117,6 +117,10 @@ sub _load {
 		$time = $temp->{_modtime};
 	}
 
+	# just in case ... most data from DB will be in CRLF, doesn't
+	# hurt to do this quick s///
+	$text =~ s/\015\012/\n/g;
+
 	$data = {
 		name	=> $name,
 		text	=> $text,
@@ -181,27 +185,6 @@ sub _refresh {
 1;
 
 __END__
-
-
-=head1 BUGS
-
-=over 4
-
-=item *
-
-Crap, I think right now caching is not done per virtual host.
-
-=item *
-
-I am not sure how useful the caching is right now, especially the LRU
-part.  Rethink.
-
-=item *
-
-We need to find a way to speed up execution of cached templates, if
-possible.
-
-=back
 
 
 =head1 SEE ALSO
