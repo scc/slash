@@ -101,6 +101,8 @@ Need From address and SMTP server from vars table,
 
 =cut
 
+# needed?  if so, in vars?
+#$Mail::Sendmail::mailcfg{mime} = 0;
 sub sendEmail {
 	my($addr, $subject, $content, $pr) = @_;
 	my $constants = getCurrentStatic();
@@ -111,11 +113,14 @@ sub sendEmail {
 	}
 
 	my %data = (
-		from	=> $constants->{mailfrom},
-		smtp	=> $constants->{smtp_server},
-		subject	=> $subject,
-		body	=> $content,
-		to	=> $addr,
+		from		=> $constants->{mailfrom},
+		smtp		=> $constants->{smtp_server},
+		subject		=> $subject,
+		body		=> $content,
+		to		=> $addr,
+		# put in vars ... ?
+		'Content-type'	=> 'text/plain; charset="us-ascii"',
+		'Content-transfer-encoding'	=> '8bit',
 	);
 
 	if ($pr && $pr eq 'bulk') {
