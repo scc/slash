@@ -42,6 +42,8 @@ $task{$me}{code} = sub {
 
 	my $accesslog_rows = $slashdb->sqlCount('accesslog');
 	my $formkeys_rows = $slashdb->sqlCount('formkeys');
+	my $moderatorlog_rows = $slashdb->sqlCount('moderatorlog');
+	my $metamodlog_rows = $slashdb->sqlCount('metamodlog');
 
 	my $mod_points = $slashdb->sqlSelect('SUM(points)', 'users_comments');
 	my @time = localtime;
@@ -59,19 +61,21 @@ $task{$me}{code} = sub {
 		"GROUP BY val"
 	);
 	my $modlog_total = $modlog_hr->{1}{count} + $modlog_hr->{-1}{count};
-	my $modlog_text = sprintf(<<"EOT", $mod_points, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $modlog_total);
-mod points: %6d in system
-used total: %6d yesterday
-   used -1: %6d
-   used +1: %6d
+	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $moderatorlog_rows, $metamodlog_rows, $mod_points, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $modlog_total);
+ accesslog: %7d rows total
+  formkeys: %7d rows total
+    modlog: %7d rows total
+metamodlog: %7d rows total
+mod points: %7d in system
+used total: %7d yesterday
+   used -1: %7d yesterday
+   used +1: %7d yesterday
 EOT
 
 	my $email = <<EOT;
 $constants->{sitename} Stats for yesterday
 
 $modlog_text
- accesslog: $accesslog_rows rows total
-  formkeys: $formkeys_rows rows total
 
      total: $count->{'total'}
     unique: $count->{'unique'}
