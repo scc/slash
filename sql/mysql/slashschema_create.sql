@@ -363,6 +363,7 @@ CREATE TABLE pollanswers (
 DROP TABLE IF EXISTS pollquestions;
 CREATE TABLE pollquestions (
   qid int(10) NOT NULL auto_increment,
+  sid char(16),
   question char(255) NOT NULL,
   voters int(11),
   topic int(11),

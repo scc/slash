@@ -417,7 +417,7 @@ INSERT INTO vars (name, value, description) VALUES ('admin_timeout','30','time i
 INSERT INTO vars (name, value, description) VALUES ('allow_anonymous','1','allow anonymous posters');
 INSERT INTO vars (name, value, description) VALUES ('anonymous_coward_uid','1','UID to use for anonymous coward');
 INSERT INTO vars (name, value, description) VALUES ('approvedtags','B|I|P|A|LI|OL|UL|EM|BR|TT|STRONG|BLOCKQUOTE|DIV','Tags that you can use');
-INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving, comments deleting');
+INSERT INTO vars (name, value, description) VALUES ('archive_delay','60','days to wait for story archiving');
 INSERT INTO vars (name, value, description) VALUES ('articles_only','0','show only Articles in submission count in admin menu');
 INSERT INTO vars (name, value, description) VALUES ('authors_unlimited','1','Authors have unlimited moderation');
 INSERT INTO vars (name, value, description) VALUES ('badkarma','-10','Users get penalized for posts if karma is below this value');
@@ -443,6 +443,7 @@ INSERT INTO vars (name, value, description) VALUES ('defaultcommentstatus','0','
 INSERT INTO vars (name, value, description) VALUES ('defaultdisplaystatus','0','Default display status ...');
 INSERT INTO vars (name, value, description) VALUES ('defaultsection','articles','Default section to display');
 INSERT INTO vars (name, value, description) VALUES ('defaultwritestatus','1','Default write status for newly created articles');
+INSERT INTO vars (name, value, description) VALUES ('discussion_archive','15','Number of days till discussions are set to read only.');
 INSERT INTO vars (name, value, description) VALUES ('discussion_create_seclev','1','Seclev required to create discussions (yes, this could be an ACL in the future).');
 INSERT INTO vars (name, value, description) VALUES ('discussionrecyle','0','Default is that recylce never occurs on recyled discussions. This number is valued in days.');
 INSERT INTO vars (name, value, description) VALUES ('down_moderations','-6','number of how many comments you can post that get down moderated');

@@ -1319,6 +1319,7 @@ sub savePollQuestion {
 			question	=> $poll->{question},
 			voters		=> $poll->{voters},
 			topic		=> $poll->{topic},
+			sid		=> $poll->{sid},
 			-date		=>'now()'
 		});
 	} else {
@@ -1326,6 +1327,7 @@ sub savePollQuestion {
 			question	=> $poll->{question},
 			voters		=> $poll->{voters},
 			topic		=> $poll->{topic},
+			sid		=> $poll->{sid},
 			uid			=> getCurrentUser('uid'),
 			-date		=>'now()'
 		});
