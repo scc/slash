@@ -76,7 +76,9 @@ sub getCurrentUser {
 	my $user = $user_cfg->{'user'};
 
 	if($value) {
-		return $user->{$value};
+		return $user->{$value}
+			? $user->{$value}
+			: undef;
 	} else {
 		return $user;
 	}
@@ -89,7 +91,9 @@ sub getCurrentForm {
 	my $form = $user_cfg->{'form'};
 
 	if($value) {
-		return $form? ($value == undef) : $form->{$value};
+		return $form->{$value}
+			? $form->{$value}
+			: undef;
 	} else {
 		return $form;
 	}
