@@ -616,7 +616,7 @@ to get more moderator points
 
 * downmods - number of negative moderations
 
-* session_login - sessions for author users? 
+* session_login - boolean for whether cookie should be session-based
 
 
 users_comments

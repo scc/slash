@@ -585,6 +585,7 @@ sub saveUser {
 		pubkey		=> $form->{pubkey},
 		copy		=> $form->{copy},
 		quote		=> $form->{quote},
+		session_login	=> $form->{session_login},
 	};
 
 	if ($user->{seclev} >= 100) {

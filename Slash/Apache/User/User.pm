@@ -132,11 +132,12 @@ sub handler {
 			$slashdb->getUserAuthenticate($tmpuid, $password);
 
 		if ($uid) {
-			# password in cookie was not encrypted, so
-			# save new cookie
+			# set cookie every time, in case session_login
+			# value changes, or time is almost expired on
+			# saved cookie, or password changes, or ...
 			setCookie('user', bakeUserCookie($uid, $cookpasswd),
 				$slashdb->getUser($uid, 'session_login')
-			) if $cookpasswd ne $password;
+			);
 		} else {
 			$uid = $constants->{anonymous_coward_uid};
 			delete $cookies->{user};
