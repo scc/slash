@@ -495,7 +495,7 @@ sub freshenup {
 		$updates{$section} = 1;
 		makeDir($section, $sid);
 		$totalChangedStories++;
-
+		push @updatedsids, $sid;
 	}
 
 
