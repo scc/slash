@@ -41,7 +41,8 @@ __template__
 
 				[% INCLUDE formLabel value => "Image" %]
 				[% image_select %]
-				<br><br>
+				<BR><BR>
+				<FONT SIZE="-2">(note: if you enter a value in the field below, the image pulldown will be ignored)</FONT><BR>
 				Or enter image URL:
 				<INPUT TYPE="TEXT" LENGTH="40" NAME="image2" VALUE="[% image2 %]">
 				<BR>

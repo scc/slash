@@ -2212,8 +2212,13 @@ sub checkReadOnly {
 sub getUIDList {
 	my($self, $column, $id) = @_;
 
+	my $where;
 	my $fields = { ipid => 'ipid', subnetid => 'subnetid' };
-	my $where = "WHERE $fields->{$column} = '$id'";
+	if (length($id) == 32) {
+		$where = "WHERE ipid = '$id' OR subnetid = '$id'";
+	} else {
+		$where = "WHERE $fields->{$column} = '$id'";
+	}
 	$self->sqlSelectAll("DISTINCT uid ", "comments $where");
 }
 
@@ -2224,6 +2229,37 @@ sub getNetIDList {
 	$self->sqlSelectAll("DISTINCT ipid", "comments $where");
 }
 
+##################################################################
+sub getReadOnlyList {
+	my ($self, $min) = @_;
+	$min ||= 0;
+	my $max = $min + 100;
+
+	my $where = "WHERE readonly = 1";
+	$self->sqlSelectAll("ts, uid, ipid, subnetid, formname, reason", "accesslist $where order by ts DESC limit $min, $max");
+}
+
+##################################################################
+sub getTopAbusers {
+	my($self, $min) = @_;
+	$min ||= 0;
+	my $max = $min + 100;
+	my $where = "GROUP BY ipid ORDER BY abusecount DESC LIMIT $min,$max";
+	$self->sqlSelectAll("count(*) AS abusecount,uid,ipid,subnetid", "abusers $where");
+}
+
+##################################################################
+sub getAbuses {
+	my($self, $key, $id) = @_;
+	my $where = {
+		uid => "uid = $id",
+		ipid => "ipid = '$id'",
+		subnetid => "subnetid = '$id'",
+	};
+
+	$self->sqlSelectAll("ts,uid,ipid,subnetid,pagename,reason", "abusers WHERE $where->{$key} ORDER by ts DESC");
+	
+}
 ##################################################################
 sub getReadOnlyReason {
 	my($self, $formname, $user) = @_;

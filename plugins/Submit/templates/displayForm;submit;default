@@ -62,7 +62,7 @@ be deleted.)</FONT>
 
 [% IF savestory %]
 <P>[% INCLUDE titlebar("100%", title => form.subj) %]
-<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALIGN="RIGHT" BORDER="0"
+<IMG SRC="[% topic.imageclean %]" ALIGN="RIGHT" BORDER="0"
 	ALT="[% topic.alttext %]" HSPACE="30" VSPACE="10"
 	WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]">
 

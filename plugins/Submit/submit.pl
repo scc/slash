@@ -341,13 +341,18 @@ sub displayForm {
 
 
 	$form->{tid} ||= $constants->{defaulttopic};
+
+	my $topic = $slashdb->getTopic($form->{tid});
+	$topic->{imageclean} = $topic->{image};
+	$topic->{imageclean} = "$constants->{imagedir}/topics/$topic->{imageclean}" if $topic->{imageclean} =~ /^\w+\.\w+$/;
+
 	slashDisplay('displayForm', {
 		fixedstory	=> strip_html(url2html($form->{story})),
 		savestory	=> $form->{story} && $form->{subj},
 		username	=> $form->{from} || $username,
 		fakeemail	=> processSub($form->{email} || $fakeemail),
 		section		=> $form->{section} || $section || $constants->{defaultsection},
-		topic		=> $slashdb->getTopic($form->{tid}),
+		topic		=> $topic,
 		width		=> '100%',
 		title		=> $title,
 	});

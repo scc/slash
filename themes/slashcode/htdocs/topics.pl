@@ -32,6 +32,7 @@ sub topTopics {
 	my($section) = @_;
 	my $slashdb = getCurrentDB();
 	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
 
 	$section->{issue} = 0;  # should this be local() ?  -- pudge
 
@@ -51,6 +52,11 @@ sub topTopics {
 			$slashdb->getStoriesEssentials($section, $limit, $top->{tid}),
 			$section
 		);
+		if ($top->{image} =~ /^\w+\.\w+$/) {
+			$top->{imageclean} = "$constants->{imagedir}/topics/$top->{image}";
+		} else {
+			$top->{imageclean} = "$top->{image}";
+		}
 	}
 
 	slashDisplay('topTopics', {
@@ -64,14 +70,23 @@ sub topTopics {
 #################################################################
 sub listTopics {
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
 
 	my $topics = $slashdb->getTopics();
+
+	for (values %$topics) {
+		if ($_->{image} =~ /^\w+\.\w+$/) {
+			$_->{imageclean} = "$constants->{imagedir}/topics/$_->{image}";
+		} else {
+			$_->{imageclean} = "$_->{image}";
+		}
+	}
 
 	slashDisplay('listTopics', {
 		title		=> 'Current Topic Categories',
 		width		=> '90%',
 		topic_admin	=> getCurrentUser('seclev') > 500,
-		topics		=> [ values %$topics ],
+		topics		=> [ values %$topics],
 	});
 
 }

@@ -285,15 +285,18 @@ sub formkeyHandler {
 			$error_flag++;
 		} 
 
-		if ($formkey_op eq 'generate_formkey') {
-			my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
-			my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
-			my $interval = time() - $last_created;
-			if ( $interval < $speedlimit) {
-				$msg = formkeyError('fkspeed', $formname, $interval);
-				$error_flag++;
-			}
-		}
+		# if ($formkey_op eq 'generate_formkey') {
+
+			# screw it. This was a nobel attempt to limit the creation, but too
+			# many people don't like this. Se La Vie
+			# my $last_created =  $slashdb->getLastTs($formname, $formkeyid);
+			# my $speedlimit = $constants->{"${formname}_speed_limit"} || 0;
+			# my $interval = time() - $last_created;
+			# if ( $interval < $speedlimit) {
+		# 		$msg = formkeyError('fkspeed', $formname, $interval);
+		# 		$error_flag++;
+		# 	}
+		# }
 
 		if (! $error_flag) {
 			$slashdb->createFormkey($formname, $formkeyid);

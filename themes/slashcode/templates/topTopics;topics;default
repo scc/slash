@@ -23,7 +23,7 @@ __template__
 		<FONT SIZE="6" COLOR="[% user.bg.3 %]">[% topic.alttext %]</FONT>
 		<BR>( [% topic.count %] )
 		<A HREF="[% constants.rootdir %]/search.pl?topic=[% topic.tid %]"><IMG
-			SRC="[% constants.imagedir %]/topics/[% topic.image %]"
+			SRC="[% topic.imageclean %]"
 			BORDER="0" ALT="[% topic.alttext %]" ALIGN="RIGHT"
 			HSPACE="0" VSPACE="10" WIDTH="[% topic.width %]"
 			HEIGHT="[% topic.height %]"></A>

@@ -21,8 +21,13 @@ getUserAdmin
 __template__
 
 [% IF userinfo_flag %]
+
+<P><B><A HREF="[% constants.roodir %]/users.pl?op=topabusers">Top Abusers</A></B><BR>
+<B><A HREF="[% constants.roodir %]/users.pl?op=listreadonly">Read Only List</A></B></P>
+
 	[% IF uidstruct %]
 <BR>
+
 <TABLE BORDER="0">
 	<TR>
 		<TD><B>UIDs used by this address id:</B></TD>
@@ -33,7 +38,7 @@ __template__
 		>[% tmpuid %] &nbsp; [% uidstruct.$tmpuid %]</A>	
 		</TD>
 	</TR>
-	[% END %]
+		[% END %]
 </TABLE>
 	[% END %]
 
@@ -49,9 +54,10 @@ __template__
 		>[% tmpip.0 %]</A>	
 		</TD>
 	</TR>
-	[% END %]
+		[% END %]
 </TABLE>
 	[% END %]
+
 
 	[% IF authoredit_flag %]
 <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="0">

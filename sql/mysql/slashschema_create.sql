@@ -25,7 +25,8 @@ CREATE TABLE abusers (
 	KEY uid (uid),
 	KEY ipid (ipid),
 	KEY subnetid (subnetid),
-	KEY reason (reason)
+	KEY reason (reason),
+	KEY ts (ts)
 ) TYPE = myisam;
 
 DROP TABLE IF EXISTS accesslist; 
