@@ -91,7 +91,7 @@ sub main {
 	} elsif ($op eq 'edit') {
 		editStory($form->{sid});
 
-	} elsif ($op eq 'topics') {
+	} elsif ($op eq 'listtopics') {
 		listTopics($user->{seclev});
 
 	} elsif ($op eq 'colored' || $form->{colored} || $form->{colorrevert} || $form->{colorpreview}) {
@@ -135,6 +135,34 @@ sub main {
 	} elsif ($form->{blockdelete_confirm}) {
 		blockDelete($form->{deletebid});
 		blockEdit($user->{seclev});
+
+	} elsif ($form->{templatedelete_cancel}) {
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+
+	} elsif ($form->{templatenew}) {
+		templateEdit($user->{seclev});
+	
+	} elsif ($form->{templatepage}) {
+		templateEdit($user->{seclev}, '', $form->{page});
+
+	} elsif ($form->{templateed}) {
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+
+	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
+		templateSave($form->{thistpid});
+		templateEdit($user->{seclev}, $form->{thistpid}, $form->{page});
+
+	} elsif ($form->{templaterevert}) {
+		my $slashdb = getCurrentDB();
+		$slashdb->revertBlock($form->{thistpid}) if $user->{seclev} < 500;
+		templateEdit($user->{seclev}, $form->{tpid}, $form->{page});
+
+	} elsif ($form->{templatedelete}) {
+		templateEdit($user->{seclev},$form->{tpid}, $form->{page});
+
+	} elsif ($form->{templatedelete_confirm}) {
+		templateDelete($form->{deletebid});
+		templateEdit($user->{seclev});
 
 	} elsif ($op eq 'authors') {
 		authorEdit($form->{thisaid});
@@ -324,6 +352,127 @@ sub authorDelete {
 }
 
 ##################################################################
+# OK, here's the template editor
+# @my_names = grep /^$foo-/, @all_names;
+sub templateEdit {
+	my($seclev, $tpid, $page) = @_;
+
+	return if $seclev < 100;	
+	$page ||= 'Slash';
+
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+	my $pagehashref = {};
+
+	my ($title, $templateref,$template_select,$page_select,$description_ta,$template_ta);
+	my ($templatedelete_flag,$templateedit_flag,$templateform_flag, $template_ref) = (0,0,0);
+
+	if($tpid) {
+		$templateref = $slashdb->getTemplate($tpid, '', 1);
+	}
+
+	$title = getTitle('templateEdit-title',{},1);
+
+	if($form->{templatedelete}) {
+		$templatedelete_flag = 1;
+	} else {
+		my $templates = $slashdb->getDescriptions('templates', $seclev);
+		for(keys %$templates) {
+			if(/^(\w+)\-.+$/) {
+				$pagehashref->{$1} = $1;
+				if($page) {
+					$template_ref->{$_} = $_ if $1 eq $page;
+				}
+			} else {
+				$template_ref->{$_} = $_ if $page eq 'Slash';
+			}
+		}
+		$page_select = createSelect('page',$pagehashref,$page,1);
+		if($template_ref) {
+			$template_select = createSelect('tpid', $template_ref, $tpid, 1);
+		} else {
+			$template_select = createSelect('tpid', $templates, $tpid, 1);
+		}
+	}
+
+
+	if(! $form->{templatenew} && $tpid) {
+		if($templateref->{tpid}) {	
+			$templateedit_flag = 1;
+		}
+	}
+
+	$description_ta = strip_literal($templateref->{description}, 1);
+	$template_ta = strip_literal($templateref->{template}, 1);
+
+	$templateform_flag = 1 if ( (! $form->{templatedelete_confirm} && $tpid) || $form->{templatenew});
+
+	slashDisplay('admin-templateEdit', {
+		tpid 			=> $tpid,
+		title 			=> $title,
+		description_ta		=> $description_ta,
+		template_ta		=> $template_ta,
+		templateref		=> $templateref,
+		templateedit_flag	=> $templateedit_flag,
+		templatedelete_flag	=> $templatedelete_flag,
+		template_select		=> $template_select,
+		templateform_flag	=> $templateform_flag,
+		page_select		=> $page_select,
+	});	
+}
+
+##################################################################
+sub templateSave {
+	my($tpid) = @_;
+	return unless $tpid;
+
+	my $slashdb = getCurrentDB();
+	my $form = getCurrentForm();
+
+	return if getCurrentUser('seclev') < 500;
+
+	my $saved = $slashdb->getTemplate($tpid);
+
+	if (getCurrentForm('save_new')) {
+		if($saved->{tpid}) {
+			print getMessage('templateSave-exists-message', { tpid => $tpid } );
+			return;
+		} else {
+			print "trying to insert $tpid<br>\n";
+			$slashdb->createTemplate({
+               			tpid            => $tpid,
+				template        => $form->{template},
+				title		=> $form->{title},
+				description	=> $form->{description},
+				seclev          => $form->{seclev},
+			});
+
+	
+			print getMessage('blockSave-inserted-message', { bid => $tpid });
+		} 
+	} else {
+		$slashdb->setTemplate($tpid, { 
+				template 	=> $form->{template},
+				description	=> $form->{description},
+				title		=> $form->{title},
+				seclev		=> $form->{seclev}
+		});
+		print getMessage('blockSave-saved-message', { bid => $tpid });
+	}	
+
+}
+##################################################################
+sub templateDelete {
+	my($tpid) = @_;
+
+	my $slashdb = getCurrentDB();
+
+	return if getCurrentUser('seclev') < 500;
+	$slashdb->deleteTemplate($tpid);
+	print getMessage('blockDelete-message', { bid => $tpid });
+}
+
+##################################################################
 # Block Editing and Saving 
 # 020300 PMG modified the heck out of this code to allow editing
 # of sectionblock values retrieve, title, url, rdf, section 
@@ -497,22 +646,20 @@ sub topicEdit {
 	my $form = getCurrentForm();
 	my $basedir = getCurrentStatic('basedir');
 
-	return if getCurrentUser('seclev') < 1;
+	return if getCurrentUser('seclev') < 500;
 	my($topic, $topics_menu, $topics_select);
-	my @available_images;
+	my $available_images = {};
 	my $image_select = "";
 
 	my ($imageseen_flag,$images_flag) = (0,0);
 
 	local *DIR;
 	opendir(DIR, "$basedir/images/topics");
-	@available_images = grep(/.*\.gif|jpg/i, readdir(DIR)); 
+	# @$available_images = grep(/.*\.gif|jpg/i, readdir(DIR)); 
+
+	$available_images = { map { ($_, $_) } grep /\.(?:gif|jpg)$/, readdir DIR };
 
 	closedir(DIR);
-
-	for(@available_images) {
-		print STDERR "img $_\n";
-	}
 
 	$topics_menu = $slashdb->getDescriptions('topics');
 	$topics_select = createSelect('nexttid', $topics_menu, $form->{nexttid},1);
@@ -528,16 +675,10 @@ sub topicEdit {
 			$topic->{tid} = getTitle('topicEd-new-title',{},1);
 		}
 
-		if (@available_images) {
+		if ($available_images) {
 			$images_flag = 1;
-			$image_select = qq|<SELECT name="image">|;
-			$image_select .= qq|<OPTION value="">Select an image</OPTION>| if $form->{topicnew};
-			for (@available_images) {
-				my $selected = "SELECTED" if ($_ eq $topic->{'image'});
-				$image_select .= qq|<OPTION value="$_" $selected>$_</OPTION>\n|;
-				$selected = '';
-			}
-			$image_select .= '</SELECT>';
+			my $default = $topic->{image};
+			$image_select = createSelect('image', $available_images, $default,1);
 		} 
 	}
 
@@ -557,13 +698,8 @@ sub topicDelete {
 	my $form_tid = getCurrentForm('tid');
 
 	my $tid = $_[0] || $form_tid;
-########################################
-# WARNING
-# HTML STILL IN CODE
-########################################
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	print "<B>Deleted $tid!</B><BR>";
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	print getMessage('topicDelete-message', { tid => $tid });
 	$slashdb->deleteTopic($form_tid);
 	$form_tid = '';
 }
@@ -595,30 +731,34 @@ sub listTopics {
 	my $imagedir = getCurrentStatic('imagedir');
 
 	my $topics = $slashdb->getTopics();
-	titlebar('100%', getTitle('listTopics-title'));
+	my $title = getTitle('listTopics-title');
 
 	my $x = 0;
+	my $topicref = {};
 
-	print qq[\n<!-- begin listtopics -->\n<TABLE WIDTH="600" ALIGN="CENTER">];
 	for my $topic (values %$topics) {
-		if ($x == 0) {
-			print "<TR>\n";
-		} elsif ($x++ % 6) {
-			print "</TR><TR>\n";
+
+		$topicref->{$topic->{tid}} = { 
+			alttext  	=> $topic->{altext},
+			image 		=> $topic->{image},
+			height 		=> $topic->{height},
+			width 		=> $topic->{width},
+		};
+
+		if ($x++ % 6) {
+			$topicref->{$topic->{tid}}{trflag} = 1;
 		}
-		print qq!\t<TD ALIGN="CENTER">\n!;
 
 		if ($seclev > 500) {
-			print qq[\t\t<A HREF="$ENV{SCRIPT_NAME}?op=topiced&nexttid=$topic->{tid}">];
-		} else {
-			print qq[\t\t<A NAME="">];
+			$topicref->{$topic->{tid}}{topicedflag} = 1;		
 		}
-
-		print qq[<IMG SRC="$imagedir/topics/$topic->{image}" ALT="$topic->{alttext}"
-			WIDTH="$topic->{width}" HEIGHT="$topic->{height}" BORDER="0"><BR>$topic->{tid}</A>\n\t</TD>\n];
-
 	}
-	print "</TR></TABLE>\n<!-- end listtopics -->\n";
+
+	slashDisplay('admin-listTopics', {
+			topicref 	=> $topicref,
+			title		=> $title
+		}
+	);
 }
 
 ##################################################################

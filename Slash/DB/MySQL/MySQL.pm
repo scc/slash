@@ -84,7 +84,7 @@ my %descriptions = (
 		=> sub { $_[0]->sqlSelectMany('uid,nickname', 'users') },
 
 	'templates'
-		=> sub { $_[0]->sqlSelectMany('tpid,title', 'templates') },
+		=> sub { $_[0]->sqlSelectMany('tpid,tpid', 'templates') },
 
 	'sectionblocks'
 		=> sub { $_[0]->sqlSelectMany('bid,title', 'blocks', 'portal=1') }

@@ -9,7 +9,7 @@ use Slash::DB;
 use Getopt::Std;
 
 my %opts;
-usage() unless getopts('u:d:p:scl', \%opts);
+usage() unless getopts('u:d:p:n:f:scl', \%opts);
 
 $opts{'u'} = 'slash' unless $opts{'u'};  
 
@@ -29,26 +29,26 @@ if($opts{'d'}) {
 usage() unless($ARGV[0] || $opts{'d'});
 $opts{'d'} = '' unless $opts{'d'};
 
-print "@ARGV\n";
-
-
-
 my $slash = Slash::DB->new($opts{'u'});
 
 if($opts{'s'}) {
 	my @files;
-	unless($ARGV[0]) {
+	if($opts{'d'} && ! $ARGV[0]) {
 		opendir(DIR, $opts{'d'});
 		while(my $dir = readdir(DIR)) {
 			next if $dir =~ /\./;
 			print ":$dir:\n";
 			push @files, $dir;
 		}
+	} elsif( $opts{'f'} && $ARGV[0]) {
+		push @files, $opts{'f'};
+
 	} else {
 		for(@ARGV) {
 			push @files, $_;
 		}
 	}
+
 	for my $file (@files) {
 		print "$file\n";
 		if($opts{'d'}) {
@@ -61,8 +61,34 @@ if($opts{'s'}) {
 			$data .= $_;
 		}
 		close(FILE);
+
+		$file = $ARGV[0] if $opts{'f'};
+
 		$slash->setTemplate($file, {template => $data});
 	}
+} elsif ($opts{'n'}) {
+		if ($ARGV[0]) {
+			my $file = $opts{n};
+			my $name = $ARGV[0];
+			my $seclev = $ARGV[1];
+			$seclev ||= 100;
+			my $template;
+
+			print "creating template $name using the file $file\n";
+			print "seclev $seclev\n";
+			open(FILE,"<$file") or die "unable to open $file $!\n";
+			while(<FILE>) {
+				$template .= $_;
+			}
+			close(FILE);
+
+			$slash->createTemplate({
+					tpid 		=> $name,
+					template	=> $template,
+					seclev		=> $seclev
+			});
+		}
+
 } else {
 	unless($ARGV[0]) {
 		my $templates = $slash->getDescriptions('templates');
@@ -100,7 +126,9 @@ sub usage {
 	print "Usage:template-editor  [OPTIONS] template template....\n";
 	print "\t-d directory to dump all templates in\n";
 	print "\t-u Virtual user to use(default is slash)\n";
+	print "\t-n <templatefilename> <templatename> to create a template\n";
 	print "\t-s Save template\n";
+	print "\t-s -f <templatefilename> <templatename> to update a template\n";
 	print "\t-l list templates and their descriptions\n";
 	print "\t-p only perform list and get actions if the template matches this pattern\n";
 	print "\t-h This message\n";
