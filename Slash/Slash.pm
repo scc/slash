@@ -380,6 +380,9 @@ sub moderatorCommentLog {
 	my $mod_admin = $seclev >= $constants->{modviewseclev} ? 1 : 0;
 	my $comments = $slashdb->getModeratorCommentLog($cid);
 #	my $comments = $slashdb->getModeratorCommentLog($sid, $cid);
+
+	return if $#$comments < 0; # skip it, if no mods to show
+
 	my(@return, @reasonHist, $reasonTotal);
 
 	for my $comment (@$comments) {

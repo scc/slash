@@ -3230,13 +3230,14 @@ sub getSubmissionForUser {
 ########################################################
 sub getTrollAddress {
 	my($self) = @_;
-
+	my $hours_back = getCurrentStatic('istroll_ipid_hours') || 72;
+	my $days_back = int($hours_back / 24);
 	my $ipid = getCurrentUser('ipid');
 	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($badIP) = $self->sqlSelect("sum(val)", "$comment_table, moderatorlog",
 			"$comment_table.cid = moderatorlog.cid AND
 			 ipid ='$ENV{REMOTE_ADDR}' AND moderatorlog.active=1 AND
-			 (TO_DAYS(NOW()) - TO_DAYS(ts) < 3) GROUP BY ipid"
+			 (TO_DAYS(NOW()) - TO_DAYS(ts) < $days_back) GROUP BY ipid"
 	);
 
 	return $badIP;
@@ -3245,19 +3246,20 @@ sub getTrollAddress {
 ########################################################
 sub getTrollUID {
 	my($self) = @_;
+	my $hours_back = getCurrentStatic('istroll_uid_hours') || 72;
+	my $days_back = int($hours_back / 24);
 	my $user = getCurrentUser();
 	my $comment_table = 'comments'; #getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
 	my($badUID) = $self->sqlSelect("sum(val)",
 		"$comment_table,moderatorlog",
 		"$comment_table.cid=moderatorlog.cid
 		AND $comment_table.uid=$user->{uid} AND moderatorlog.active=1
-		AND (to_days(now()) - to_days(ts) < 3)
+		AND (to_days(now()) - to_days(ts) < $days_back)
 		GROUP BY $comment_table.uid"
 	);
 
 	return $badUID;
 }
-
 
 ########################################################
 sub createDiscussion {

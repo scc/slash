@@ -65,11 +65,17 @@ CASE "readonly" %]
 
 # TROLL MESSAGE.
 CASE "troll message" %]
-This account or IP has been temporarily disabled. This means that either
-this IP or user account has been moderated down more than 5 times in the
-last 24 hours.  If you think this is unfair, you should contact
-[% constants.admin_mail %].  If you are being a troll, now is the time for you to
-either grow up, or change your IP.
+This account or IP has been temporarily disabled. This means that this IP
+or user account has been moderated down more than
+[% 0 - constants.down_moderations %] times in the last
+[% constants.istroll_ipid_hours %]
+[% IF constants.istroll_uid_hours != constants.istroll_ipid_hours %]
+	(IP) or [% constants.istroll_uid_hours %] (account)
+[% END %]
+hours.
+If you think this is unfair, you should contact [% constants.adminmail %].
+If you are being a troll, now is the time for you to either grow up, or
+change your IP.
 [%
 
 # NESTING TOO DEEP

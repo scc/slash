@@ -376,6 +376,8 @@ INSERT INTO vars (name, value, description) VALUES ('formkey_timeframe','14400',
 INSERT INTO vars (name, value, description) VALUES ('goodkarma','25','Users get bonus points for posts if karma above this value');
 INSERT INTO vars (name, value, description) VALUES ('http_proxy','','http://proxy.www.example.com');
 INSERT INTO vars (name, value, description) VALUES ('imagedir','//www.example.com/images','Absolute URL for image directory');
+INSERT INTO vars (name, value, description) VALUES ('istroll_ipid_hours','72','Hours back that getTrollAddress checks for comment mods');
+INSERT INTO vars (name, value, description) VALUES ('istroll_uid_hours','72','Hours back that getTrollUID checks for comment mods');
 INSERT INTO vars (name, value, description) VALUES ('lastComments','0','Last time we checked comments for moderation points');
 INSERT INTO vars (name, value, description) VALUES ('lastsrandsec','awards','Last Block used in the semi-random block');
 INSERT INTO vars (name, value, description) VALUES ('logdir','/usr/local/slash/www.example.com/logs','Where should the logs be found?');
