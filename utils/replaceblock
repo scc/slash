@@ -1,18 +1,24 @@
 #!/usr/bin/perl
 
+# Proper comments will be added later.
+
 use strict;
 use Getopt::Std;
 use Slash::DB;
 
 my(@blocktypes) = ('blocks', 'portald');
 my(%opts);
-getopts('hDd:Tt:b:', \%opts);
+getopts('hDd:Tt:b:r:', \%opts);
 $"='|';
 my $regexp = '^(' . "@blocktypes" . ')$';
 usage() if $#ARGV < 1 || $opts{h} || ($opts{r} && $opts{t}) ||
 	   ($opts{t} && $opts{t} !~ /$regexp/);
 
-my($search, $replace) = map { qq[$_] } @ARGV;
+my($search, $replace) = @ARGV;
+# Catch common errors.
+$opts{r}=~ s/^\*//;
+$search =~ s/^\*//;
+
 my($dbName, $blockName, $debug, $cond, $count, $replaced) =
 	($opts{d} || 'slash', $opts{b}, $opts{D}, '', 0);
 
@@ -21,7 +27,7 @@ my $dbobject = new Slash::DB($dbName) ||
 
 $cond = 'bid=' . $dbobject->{dbh}->quote($blockName) if $blockName;
 $cond .= ' type=' . $dbobject->{dbh}->quote($opts{t}) if $opts{t};
-if ($cond !~ /^bid/) {
+if ($cond !~ /^bid/ && !$opts{T}) {
 	print (!$opts{t} ? <<EOGT:<<EOTT);
 %%%%%% You are about to perform a global search and replace on your blocks
 %%%%%% table.
@@ -33,8 +39,8 @@ EOTT
 %%%%%%
 %%%%%% Please confirm that this is what you wish by typing 'YES' at the prompt
 %%%%%% below:
-> 
 EOT
+	print "> ";
 	my $response = <STDIN>;
 	die "%%%%%% Cancelled by user.\n" if $response ne 'YES';
 }
@@ -46,7 +52,8 @@ while (my($bid, $block) = $sth->fetchrow_array()) {
 	$count++;
 
 	if ($opts{r}) {
-		next if $bid !~ /$opts{r}/;
+		eval { next if $bid !~ /$opts{r}/ } ;
+		die "Invalid block regexp '$opts{r}'!\n" if $@;
 		print "%%%%%% -- Matched\n" if $debug;
 	}
 	my $replace_cond = 'bid='.$dbobject->{dbh}->quote($bid);
@@ -56,7 +63,11 @@ while (my($bid, $block) = $sth->fetchrow_array()) {
 $block
 EOT
 
-	my $rc = $block =~ s/$search/$replace/g;
+	my $rc;
+	eval { $rc = $block =~ s/$search/$replace/g; };
+	die <<EOT if $@;
+Error in regular expression: SEARCH='$search'; REPLACE='$replace'\n
+EOT
 	unless ($rc) {
 		print "%%%%%% -- Search string not found.\n";
 		next;
