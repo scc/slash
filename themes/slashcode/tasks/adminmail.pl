@@ -51,18 +51,36 @@ $task{$me}{code} = sub {
 		$yesttime[5] + 1900, $yesttime[4] + 1, $yesttime[3];
 	my $used = $slashdb->sqlCount(
 		'moderatorlog', 
-		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'"
+		"ts BETWEEN '$yesterday 00:00' AND '$yesterday 23:59:59'"
 	);
 	my $modlog_hr = $slashdb->sqlSelectAllHashref(
 		"val",
 		"val, COUNT(*) AS count",
 		"moderatorlog",
-		"ts >= '$yesterday 00:00' and ts <= '$yesterday 23:59'",
+		"ts BETWEEN '$yesterday 00:00' AND '$yesterday 23:59:59'",
 		"GROUP BY val"
 	);
 	my $modlog_total = $modlog_hr->{1}{count} + $modlog_hr->{-1}{count};
 	my $mm_factor = ($modlog_rows ? $metamodlog_rows/$modlog_rows : 0);
-	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $modlog_rows, $metamodlog_rows, $mm_factor, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count});
+
+	# Count comments posted yesterday... using a primary key,
+	# if it'll save us a table scan.  On Slashdot this cuts the
+	# query time from about 12 seconds to about 0.8 seconds.
+	my $max_cid = $slashdb->sqlSelect("MAX(cid)", "comments");
+	my $cid_limit_clause = "";
+	if ($max_cid > 300_000) {
+		# No site can get more than 100K comments a day.
+		# It is decided.  :)
+		$cid_limit_clause = "cid > " . ($max_cid-100_000)
+			. " AND ";
+	}
+	my $comments = $slashdb->sqlSelect(
+		"COUNT(*)",
+		"comments",
+		"$cid_limit_clause date BETWEEN '$yesterday 00:00' AND '$yesterday 23:59:59'"
+	);
+
+	my $modlog_text = sprintf(<<"EOT", $accesslog_rows, $formkeys_rows, $modlog_rows, $metamodlog_rows, $mm_factor, $mod_points, $modlog_total, $modlog_hr->{-1}{count}, $modlog_hr->{1}{count}, $comments);
  accesslog: %7d rows total
   formkeys: %7d rows total
     modlog: %7d rows total
@@ -71,6 +89,7 @@ mod points: %7d in system
 used total: %7d yesterday
    used -1: %7d yesterday
    used +1: %7d yesterday
+  comments: %7d posted yesterday
 EOT
 
 	my $email = <<EOT;
@@ -107,6 +126,40 @@ EOT
 
 	$email .= "\n-----------------------\n";
 	$email .= `$constants->{slashdir}/bin/tailslash -u $virtual_user -y today`;
+
+# NewsForge's code...
+#	my($c) = sqlSelectMany("count(*),date_format(date_sub(ts,interval 5 hour),\"%d %H\") as h,
+#				date_format(date_sub(ts,interval 5 hour),\"%d\") as d",
+#				"accesslog",
+#				"to_days(date_sub(now(),interval 5 hour)) - to_days(date_sub(ts,interval 5 hour)) = 1",
+#				"GROUP BY h ORDER BY h ASC");
+#	my(%total, $max, $today, %data);
+#	while (my($cnt, $h, $d) = $c->fetchrow) {
+#		$h .= ":00 EST";
+#		$total{$d} += $cnt;
+#		$data{$h} = $cnt;
+#		$max = $cnt if $max < $cnt;
+#	}
+#	$c->finish();
+#	my $old_d;
+#	for my $h (sort keys %data) {
+#		$h =~ m/^(\d\d)/; my $d = $1 || "";
+#		if ($old_d and $d ne $old_d and defined($total{$old_d})) {
+#			print "   daily total: " . sprintf("%11u", $total{$old_d}), "\n\n";
+#			delete $total{$old_d};
+#		}
+#		$old_d = $d;
+#		print join("  ",
+#			$h,
+#			sprintf("%6.2f", $data{$h}/3600),
+#			sprintf("%7u", $data{$h}),
+#			"#" x int($data{$h}*40/$max)
+#		), "\n";
+#	}
+#	if ($old_d and defined($total{$old_d})) {
+#		print "   daily total: " . sprintf("%11u", $total{$old_d}), "\n\n";
+#	}
+
 	$email .= "\n-----------------------\n";
 
 	# Send a message to the site admin.
