@@ -294,29 +294,8 @@ sub saveArticle {
 			posttype	=> $form->{posttype},
 		});
 	} else {
-		my $id = $journal->create($description,
+		$journal->create($description,
 			$form->{article}, $form->{posttype});
-
-		# create messages
-		my $messages = getObject('Slash::Messages');
-		my $friends = $journal->reverse_friends;
-
-		my $user = getCurrentUser();
-		my $constants = getCurrentStatic();
-
-		my $data = {
-			template_name	=> 'messagenew',
-			description	=> $description,
-			article		=> $form->{article},
-			posttype	=> $form->{posttype},
-			id		=> $id,
-			uid		=> $user->{uid},
-			nickname	=> $user->{nickname}
-		};
-			
-		for (@$friends) {
-			$messages->create($_->[1], 5, $data);
-		}
 	}
 	listArticle(@_);
 }
