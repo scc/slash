@@ -449,7 +449,7 @@ The 'displayThread' template block.
 =cut
 
 sub displayThread {
-	my($sid, $pid, $lvl, $comments, $const, $displayed, $recurse) = @_;
+	my($sid, $pid, $lvl, $comments, $const) = @_;
 # Couple of notes.
 # $displayed is past along as we need it to make sure we don't print
 # to many comments. $recurse is a flag. Why not use wantarray()? For
@@ -462,7 +462,7 @@ sub displayThread {
 	my $form = getCurrentForm();
 
 	$lvl ||= 0;
-	$displayed ||= 0;
+	my $displayed = 0;
 	my $mode = getCurrentUser('mode');
 	my $indent = 1;
 	my $full = my $cagedkids = !$lvl;
@@ -522,7 +522,7 @@ sub displayThread {
 		if ($comment->{kids}) {
 			$return .= $const->{cagebegin} if $cagedkids;
 			$return .= $const->{indentbegin} if $indent;
-			(my $addition, $displayed) = displayThread($sid, $cid, $lvl+1, $comments, $const, $displayed, 1);
+			$return .= displayThread($sid, $cid, $lvl+1, $comments, $const);
 			$return .= $addition;
 			$return .= $const->{indentend} if $indent;
 			$return .= $const->{cageend} if $cagedkids;
@@ -546,10 +546,6 @@ sub displayThread {
 			{ Return => 1, Nocomm => 1 });
 		$return .= $const->{cagebigend} if $cagedkids;
 	}
-
-	if ($recurse) {
-		return ($return, $displayed);
-	} 
 
 	return $return;
 }
