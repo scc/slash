@@ -72,7 +72,7 @@ use vars qw($VERSION @EXPORT);
 # set methods when not running under mod_perl
 my($static_user, $static_form, $static_constants, $static_db,
 	$static_anonymous_coward, $static_cookie,
-	$static_virtual_user);
+	$static_virtual_user, $static_objects);
 
 # FRY: I don't regret this.  But I both rue and lament it.
 
@@ -1285,7 +1285,12 @@ sub fixint {
 
 =head2 getObject(CLASS_NAME [, VIRTUAL_USER, ARGS])
 
-Returns a object in CLASS_NAME, using the new() constructor.
+Returns a object in CLASS_NAME, using the new() constructor.  It passes
+VIRTUAL_USER and ARGS to it, and then caches it.  If the object exists
+the second time through, it will just return, without reinitializing
+(even if different VIRTUAL_USER and ARGS are passed).  That shouldn't be
+a problem, since you should only have one instance with one set of args
+required per Slash site.
 
 =over 4
 
@@ -1295,7 +1300,7 @@ Returns a object in CLASS_NAME, using the new() constructor.
 
 =item CLASS_NAME
 
-A class name to use in creating a object
+A class name to use in creating a object.
 
 =item VIRTUAL_USER
 
@@ -1318,31 +1323,28 @@ An object.
 
 sub getObject {
 	my($value, $user, @args) = @_;
-	my($r, $cfg, $objects);
+	my($cfg, $objects);
 
 	if ($ENV{GATEWAY_INTERFACE}) {
-		$r       =   Apache->request;
-		$cfg     =   Apache::ModuleConfig->get($r, 'Slash::Apache');
-		$objects =   $cfg->{'objects'};
+		my $r    = Apache->request;
+		$cfg     = Apache::ModuleConfig->get($r, 'Slash::Apache');
+		$objects = $cfg->{'objects'} ||= {};
+	} else {
+		$objects = $static_objects   ||= {};
 	}
-
-	$objects ||= {};
-	$user    ||= getCurrentVirtualUser();
-	return unless $user;
 
 	if ($objects->{$value}) {
 		return $objects->{$value};
 	} else {
+		$user    ||= getCurrentVirtualUser();
+		return unless $user;
+
 		eval "require $value";
 		if ($@) {
 			errorLog($@);
 			return;
 		}
-		$objects->{$value} = $value->new($user, @args);
-		if ($ENV{GATEWAY_INTERFACE}) {
-			$cfg->{'objects'} = $objects;
-		}
-		return $objects->{$value};
+		return $objects->{$value} = $value->new($user, @args);
 	}
 }
 
