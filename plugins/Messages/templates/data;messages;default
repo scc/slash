@@ -43,6 +43,12 @@ Not allowed to send mail; send_mail variable is false
 [% CASE 'send mail error' %]
 Error sending to '[% addr %]' for user [% uid %]: [% error %]
 
+[% CASE 'newsletter subject' %]
+Daily Stories
+
+[% CASE 'headlines subject' %]
+Daily Headlines
+
 [% CASE 'unknown mode' %]
 Unknown delivery mode '[% mode %]' for user [% uid %]
 

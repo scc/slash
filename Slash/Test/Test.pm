@@ -63,7 +63,7 @@ use vars qw($VERSION @EXPORT $vuser);
 );
 
 # "manually" export @EXPORT symbols
-Slash::Test->export_to_level(1, @EXPORT);
+Slash::Test->export_to_level(1, '', @EXPORT);
 
 # allow catching of virtual user in import list
 sub import {
