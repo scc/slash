@@ -488,7 +488,7 @@ sub createAccessLog {
 	my($self, $op, $dat) = @_;
 
 	my $uid;
-	if ($ENV{REMOTE_ADDR}) {
+	if ($ENV{REMOTE_USER}) {
 		$uid = getCurrentUser('uid')
 	} else {
 		$uid = getCurrentStatic('anonymous_coward_uid');
@@ -2947,6 +2947,12 @@ sub _genericGetsCache {
 	$self->{$table_cache_time} = time();
 
 	return $self->{$table_cache};
+}
+
+########################################################
+sub createBlock {
+	my ($self, $hash) = @_;
+	$self->sqlInsert('blocks', $hash);
 }
 
 ########################################################

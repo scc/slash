@@ -28,16 +28,22 @@ sub SlashUserInit ($$) {
 # handler method
 sub handler {
 	my($r) = @_;
-	return OK unless $r->filename =~ /\.pl$/;
-
-	# Ok, this will make it so that we can reliably use Apache->request
-	Apache->request($r);
-
 	my $cfg = Apache::ModuleConfig->get($r);
 	my $dbcfg = Apache::ModuleConfig->get($r, 'Slash::Apache');
 	my $constants = $dbcfg->{constants};
 	my $dbslash = $dbcfg->{dbslash};
+	unless ($r->filename =~ /\.pl$/) {
+		$r->subprocess_env('REMOTE_USER' => $constants->{anonymous_coward_uid});
+		$cfg->{user} = '';
+		$cfg->{form} = '';
+
+		return OK;
+	}
 	$dbslash->sqlConnect;
+
+	# Ok, this will make it so that we can reliably use Apache->request
+	Apache->request($r);
+
 
 	# Don't remove this. This solves a known bug in Apache -- brian
 	# and it creates a new one!  after this, $r is unreliable for some
