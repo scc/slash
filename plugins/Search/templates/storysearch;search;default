@@ -22,7 +22,7 @@ __template__
 			'link'	=> story.1
 		}) 
 		%]
-		by [% story.0 %] <FONT SIZE="2">on [% Slash.timeCalc(story.3) %] <b>[% story.4 %]</b></FONT><BR>
+		by [% story.0 %] with the query found [% story.6 %] times,  with [% story.4 %] number of comments <FONT SIZE="2">on [% Slash.timeCalc(story.3) %]</FONT><BR>
 	[% x = x + 1 %]
 	[% END %]
 [% ELSE %]

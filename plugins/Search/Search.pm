@@ -44,7 +44,6 @@ sub _keysearch {
 	}
 	# void context, does nothing?
 	$sql = "0" unless $sql;
-	$sql .= " as kw";
 
 	return $sql;
 };
@@ -59,15 +58,27 @@ sub findComments {
 	# and SID, article title, type and a link to the article
 	my $sql;
 
+	my $key = $self->_keysearch($form->{query}, ['subject', 'comment']);
+
 	$sql = "SELECT section, stories.sid,";
 	$sql .= " stories.uid as author, title, pid, subject, writestatus, time, date, comments.uid as uid, cid, ";
-	$sql .= "	  " . $self->_keysearch($form->{query}, ['subject', 'comment']) 
+
+	$sql .= "	 $key as kw, "
 			if $form->{query};
-	$sql .= "	  1 as kw " unless $form->{query};
+	$sql .= "	1 as kw " 
+			unless $form->{query};
+
 	$sql .= "	  FROM stories, comments WHERE stories.sid=comments.sid ";
-	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid}) if $form->{sid};
-	$sql .= "     AND points >= $form->{threshold} " if $form->{threshold};
-	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section}) if $form->{section};
+
+	$sql .= "	  AND $key > 0 " 
+			if $form->{query};
+
+	$sql .= "     AND stories.sid=" . $self->{_dbh}->quote($form->{sid}) 
+			if $form->{sid};
+	$sql .= "     AND points >= $form->{threshold} " 
+			if $form->{threshold};
+	$sql .= "     AND section=" . $self->{_dbh}->quote($form->{section}) 
+			if $form->{section};
 	$sql .= " ORDER BY kw DESC, date DESC, time DESC LIMIT $form->{min},20 ";
 
 
@@ -114,21 +125,25 @@ sub findUsers {
 sub findStory {
 	my($self, $form) = @_;
 	my $sql;
+	my $key = $self->_keysearch($form->{query}, ['title', 'introtext']);
+
 	$sql .= "SELECT nickname,title,sid, time, commentcount,section ";
-	$sql .= "," . $self->_keysearch($form->{query}, ['title', 'introtext']) . " "
+	$sql .= ",$key as kw "
 		if $form->{query};
-	$sql .= "	,0 " 
-		unless $form->{query};
+	$sql .= "	1 as kw " 
+			unless $form->{query};
 
-	$sql .= " FROM stories, users WHERE ";
+	$sql .= " FROM stories, users WHERE displaystatus>=0 ";
+
+	$sql .= " AND $key > 0 " 
+		 if $form->{query};
+
 	if($form->{section}) {
-		$sql .= qq| ((displaystatus = 0 and "$form->{section}" = "")|;
-    $sql .= qq| OR (section = "$form->{section}" and displaystatus >= 0))|;
-	} else {
-		$sql .= ' displaystatus >= 0 ';
-	}
+		$sql .= qq| AND ((displaystatus = 0 and "$form->{section}" = "")|;
+    $sql .= qq| OR (section = "$form->{section}" AND displaystatus >= 0))|;
+	} 
 
-	$sql .= " AND time < now() AND writestatus>=0 AND displaystatus>=0";
+	$sql .= " AND time < now() AND writestatus>=0 ";
 	$sql .= " AND stories.uid=" . $self->{_dbh}->quote($form->{author})
 		if $form->{author};
 	$sql .= " AND section=" . $self->{_dbh}->quote($form->{section})
