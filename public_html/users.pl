@@ -301,7 +301,7 @@ sub userInfo {
 
 	$I{F}{min} = 0 unless $I{F}{min};
 
-	my $comments = $I{dbobject}->getUserComments($uid, $I{F}{min}, $I{U});
+	my $comments = $I{dbobject}->getCommentsByUID($uid, $I{F}{min});
 
 	my $rows = @$comments;
 
