@@ -85,7 +85,7 @@ CREATE TABLE blocks (
 	description text,
 	section varchar(30) DEFAULT '' NOT NULL,
 	ordernum tinyint DEFAULT '0',
-	title varchar(128),
+	title varchar(128) NOT NULL,
 	portal tinyint DEFAULT '0',
 	url varchar(128),
 	rdf varchar(255),
