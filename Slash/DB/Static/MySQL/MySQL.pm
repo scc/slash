@@ -837,15 +837,26 @@ sub deleteStoryAll {
 
 ########################################################
 # For tasks/author_cache.pl
-# please don't unnecessarily stretch lines out to 250 columns -- pudge
+# This runs once a day, I am not worried -Brian
 sub createAuthorCache {
 	my($self) = @_;
-	$self->sqlDo(<<'EOT');
-REPLACE INTO authors_cache
-SELECT       users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author
-FROM         users, stories, users_info
-WHERE        stories.uid=users.uid AND users.uid=users_info.uid GROUP BY stories.uid
-EOT
+	my $sql;
+	$sql .= "REPLACE INTO authors_cache ";
+	$sql .= "SELECT users.uid, nickname, fakeemail, homepage, 0, bio, author ";
+	$sql .= "FROM users, users_info ";
+	$sql .= "WHERE users.author =1 ";
+	$sql .= "AND users.uid=users_info.uid";
+
+	$self->sqlDo($sql);
+
+	my $sql2;
+	$sql2 .= "REPLACE INTO authors_cache ";
+	$sql2 .= "SELECT users.uid, nickname, fakeemail, homepage, count(stories.uid), bio, author ";
+	$sql2 .= "FROM users, stories, users_info ";
+	$sql2 .= "WHERE stories.uid=users.uid ";
+	$sql2 .= "AND users.uid=users_info.uid GROUP BY stories.uid";
+
+	$self->sqlDo($sql2);
 }
 
 ########################################################
