@@ -75,7 +75,8 @@ sub main {
 	fancybox($I{fancyboxwidth}, 'Related Links', $S->{relatedtext});
 
 	# Display this section's Section Block (if Found)
-	fancybox($I{fancyboxwidth}, $SECT->{title}, $I{dbobject}->getBlock($SECT->{section}, 'block'));
+	fancybox($I{fancyboxwidth}, $SECT->{title},
+		$I{dbobject}->getBlock($SECT->{section}, 'block'));
 
 	print qq!</TD></TR><TR><TD COLSPAN="3">\n!;
 

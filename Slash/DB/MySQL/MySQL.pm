@@ -169,7 +169,7 @@ sub init {
 	for my $table (@user_tables) {
 		my $keys = $self->getKeys($table);
 		for (@$keys) {
-			$self->{'_all_user_keys'}->{$_} = $table;
+			$self->{'_all_user_keys'}{$_} = $table;
 		}
 	}
 	$self->{_user_tables} = \@user_tables;
@@ -731,8 +731,9 @@ sub createUser {
 		realemail	=> $email,
 		nickname	=> $newuser,
 		matchname	=> $matchname,
-		passwd		=> changePassword()
+		passwd		=> md5_hex(changePassword())
 	});
+
 # This is most likely a transaction problem waiting to
 # bite us at some point. -Brian
 	my($uid) = $self->sqlSelect("LAST_INSERT_ID()");
@@ -2608,7 +2609,7 @@ sub _genericGetCache {
 	my $table_cache= '_' . $table;
 
 	my $count = @values;
-	if($count == 1) {
+	if ($count == 1) {
 		return $self->{$table_cache}{$id}{$values[0]} if $self->{$table_cache}{$id};
 	} else {
 		return $self->{$table_cache}{$id} if $self->{$table_cache}{$id};
@@ -2623,7 +2624,7 @@ sub _genericGetCache {
 	}
 	$sth->finish;
 
-	if($count == 1) {
+	if ($count == 1) {
 		return $self->{$table_cache}{$id}{$values[0]};
 	} else {
 		return $self->{$table_cache}{$id};
@@ -2656,11 +2657,13 @@ sub getAuthor {
 	my $answer = _genericGetCache('authors', 'aid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getAuthors {
 	my $answer = _genericGetsCache('authors', 'aid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getPollQuestion {
 	my $answer = _genericGet('pollquestions', 'qid', @_);
@@ -2684,6 +2687,7 @@ sub getTopic {
 	my $answer = _genericGetCache('topics', 'tid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getTopics {
 	my $answer = _genericGetsCache('topics', 'tid', @_);
@@ -2707,6 +2711,7 @@ sub getSection {
 	my $answer = _genericGetCache('sectionblocks', 'bid', @_);
 	return $answer;
 }
+
 ########################################################
 sub getSections {
 	my $answer = _genericGetsCache('sectionblocks', 'bid', @_);
@@ -2739,32 +2744,29 @@ sub getUser {
 	my $members = @val;
 	my $answer;
 	if ($members == 1) {
-		my $table = $self->{_all_user_keys}->{$val[0]};
+		my $table = $self->{_all_user_keys}{$val[0]};
 		($answer) = $self->sqlSelect($val[0], $table, 'uid=' .$self->{dbh}->quote($uid));
 	} elsif ($members > 1) {
 		my $values = join ',', @val;
 		my %tables;
 		my $where;
 		my $uid_db = $self->{dbh}->quote($uid);
-		for(@val) {
-			$tables{$self->{_all_user_keys}->{$_}} = 1;
+		for (@val) {
+			$tables{$self->{_all_user_keys}{$_}} = 1;
 		}
-		for(keys %tables) {
+		for (keys %tables) {
 			$where .= "$_.uid=$uid_db AND ";
 		}
-		# Probably less resource intensive way to do this (like just
-		# chopping off the end of the array based on size). But
-		# it is late, and I am tired. -Brian
-		chop($where); chop($where); chop($where); chop($where); chop($where);
+		$where =~ s/ AND $//;
 		my $table = join ',', keys %tables;
 		$answer = $self->sqlSelectHashref($values, $table, $where);
 	} else {
 		my $where;
 		my $uid_db = $self->{dbh}->quote($uid);
-		for(keys %{$self->{_all_user_keys}}) {
+		for (keys %{$self->{_all_user_keys}}) {
 			$where .= "$_.uid=$uid_db AND ";
 		}
-		chop($where); chop($where); chop($where); chop($where); chop($where);
+		$where =~ s/ AND $//;
 		my $table = join ',', @$self->{_user_tables};
 		$answer = $self->sqlSelectHashref('*', $table, $where);
 	} 
@@ -2778,18 +2780,29 @@ sub getUser {
 sub setUser {
 	my($self, $uid, $hashref) = @_;
 	my %tables;
-	for(keys %$hashref) {
-		my $key = $self->{_all_user_keys}->{$_};
-		push @{$tables{$key}}, $_;
+
+	# encrypt password  --  done here OK?
+	if (exists $hashref->{passwd}) {
+		# get rid of newpasswd if defined in DB
+		$hashref->{newpasswd} = '';
+		$hashref->{passwd} = md5_hex($hashref->{passwd});
 	}
+
+	for my $key (keys %$hashref) {
+		my $table = $self->{_all_user_keys}{$key};
+		push @{$tables{$table}}, $key;
+	}
+
 	for my $table (keys %tables) {
 		my %minihash;
-		for(@{$tables{$table}}){
-			$minihash{$_} = $hashref->{$_} if $hashref->{$_} ne undef;
+		for my $key (@{$tables{$table}}){
+			$minihash{$key} = $hashref->{$key}
+				if defined $hashref->{$key};
 		}
-		$self->sqlUpdate($table, \%minihash, "uid=" . $uid, 1);
+		$self->sqlUpdate($table, \%minihash, "uid=$uid", 1);
 	}
 }
+
 ########################################################
 # For slashdb
 sub setStoryIndex {

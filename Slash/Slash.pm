@@ -147,7 +147,7 @@ sub createSelect {
 	my ($label, $hashref, $default) = @_;
 	print qq!\n<SELECT name="$label">\n!;
 
-	for my $code (sort(keys %$hashref)) {
+	for my $code (sort keys %$hashref) {
 		my $selected = ($default eq $code) ? ' SELECTED' : '';
 		print qq!\t<OPTION value="$code"$selected>$hashref->{$code}</OPTION>\n!;
 	}

@@ -192,7 +192,8 @@ EOT
 
 	print qq!</TD><TD WIDTH="180" VALIGN="TOP">!;
 
-	print portalbox($I{fancyboxwidth}, $section->{'title'}, $section->{'content'}, "", $section->{'url'});
+	print portalbox($I{fancyboxwidth}, $section->{'title'},
+		$section->{'content'}, "", $section->{'url'});
 }
 
 #################################################################
@@ -222,7 +223,7 @@ sub newUser {
 
 	if ($matchname ne '' && $I{F}{newuser} ne '' && $I{F}{email} =~ /\@/) {
 		my $uid;
-		if($uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
+		if ($uid = $I{dbobject}->createUser($matchname, $I{F}{email}, $I{F}{newuser})) {
 			titlebar("100%", "User $I{F}{newuser} created.");
 
 			$I{F}{pubkey} = stripByMode($I{F}{pubkey}, "html");

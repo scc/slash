@@ -178,23 +178,22 @@ EOT
 	unless ($I{F}{addsection}) {
 		my $blocks =  $I{dbobject}->getSectionBlock($section);
 		
-		if(@$blocks) {
+		if (@$blocks) {
 			print <<EOT;
 <BR><BR><B>edit section slashboxes (blocks)</B><BR><BR>
 <TABLE BORDER="1">
 EOT
-			for(@$blocks) {
-				my ($section, $bid, $ordernum, $title, $portal, $url) = @$_;  
+			for (@$blocks) {
+				my($section, $bid, $ordernum, $title, $portal, $url) = @$_;  
 				$title =~ s/<(.*?)>//g;
 				printf <<EOT, $ordernum > 0 ? '(default)' : '';
-				<TR>
+			<TR>
 				<TD>
 				<B><A HREF="$I{rootdir}/admin.pl?op=blocked&bid=$bid">$title</A></B>
 				<A HREF="$url">$url</A> %s 
 				</TD>
-				</TR>
+			</TR>
 EOT
-
 
 			}
 			print "</TABLE>\n";
