@@ -266,7 +266,7 @@ sub userInfo {
 	}
 
 	my @values = qw(homepage fakeemail bio seclev karma nickname);
-	my $userbio = $I{dbobject}->getUserBio($uid);
+	my $userbio = $I{dbobject}->getUser($uid, @values);
 
 	$userbio->{'bio'} = stripByMode($userbio->{'bio'}, "html");
 	if ($I{U}{nickname} eq $nick) {
