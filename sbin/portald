@@ -230,7 +230,7 @@ for (@{$RDFlist}) {
 	getRDF($bid, $rdf);
 }
 
-getTop10Comments();
+#getTop10Comments();
 setblock("rand", $slashdb->randomBlock());
 getSlashdotPoll();
 getUptime();
