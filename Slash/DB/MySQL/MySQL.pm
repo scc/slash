@@ -2519,7 +2519,7 @@ sub getPortals {
 	my $strsql = "SELECT block,title,blocks.bid,url
 		   FROM blocks
 		  WHERE section='index'
-		    AND portal > -1
+		    AND type='portald'
 		  GROUP BY bid
 		  ORDER BY ordernum";
 
