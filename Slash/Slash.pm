@@ -506,10 +506,10 @@ sub displayThread {
 		if ($full || $highlight) {
 			if ($lvl && $indent) {
 				$return .= $const->{tablebegin} .
-					dispComment($comment, $constants, $form, $user) . $const->{tableend};
+					dispComment($comment) . $const->{tableend};
 				$cagedkids = 0;
 			} else {
-				$return .= dispComment($comment, $constants, $form, $user);
+				$return .= dispComment($comment);
 			}
 			$displayed++;
 		} else {
@@ -587,7 +587,10 @@ The 'dispComment' template block.
 =cut
 
 sub dispComment {
-	my($comment, $constants, $form, $user) = @_;
+	my($comment) = @_;
+	my $constants = getCurrentStatic();
+	my $user = getCurrentUser();
+	my $form = getCurrentForm();
 
 	my($comment_shrunk, %reasons);
 
