@@ -39,7 +39,7 @@ use base 'Exporter';
 use vars qw($REVISION $VERSION @EXPORT);
 use Exporter ();
 use Slash::Display::Provider;
-use Slash::Utility;
+use Slash::Utility ':all';
 use Template;
 
 # $Id$
@@ -268,14 +268,22 @@ from the given list.
 	[% mylist.rand %]  # return single random element from mylist
 
 Also provided are some filters.  The C<fixurl>, C<fixparam>, and
-C<stripByMode> filters are just frontends to the functions of those
+C<strip_*> filters are just frontends to the functions of those
 names in the Slash API:
 
-	[% FILTER stripByMode('literal') %]
+	[% FILTER strip_literal %]
 		I think that 1 > 2!
 	[% END %]
 
 	<A HREF="[% env.script_name %]?op=[% FILTER fixparam %][% form.op %][% END %]">
+
+Each strip_* function in Slash::Utility is also available as a filter.
+It might seem simpler to just use the functional form:
+
+	[% FILTER strip_nohtml %][% form.something %][% END %]
+	[% Slash.strip_nohtml(form.something) %]
+
+But we might make it harder to use the Slash plugin (see L<Slash::Display::Plugin>).
 
 =cut
 
@@ -286,11 +294,53 @@ my $stripByMode = sub {
 	return sub { stripByMode($_[0], @args) };
 };
 
+my $strip_attribute = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], ATTRIBUTE, @args) };
+};
+
+my $strip_code = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], CODE, @args) };
+};
+
+my $strip_extrans = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], EXTRANS, @args) };
+};
+
+my $strip_html = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], HTML, @args) };
+};
+
+my $strip_literal = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], LITERAL, @args) };
+};
+
+my $strip_nohtml = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], NOHTML, @args) };
+};
+
+my $strip_plaintext = sub {
+	my($context, @args) = @_;
+	return sub { stripByMode($_[0], PLAINTEXT, @args) };
+};
+
 $filters = Template::Filters->new({
 	FILTERS => {
 		fixparam	=> \&fixparam,
 		fixurl		=> \&fixurl,
-		stripByMode	=> [ $stripByMode, 1 ]
+		strip_attribute	=> [ $strip_attribute,	1 ],
+		strip_code	=> [ $strip_code,	1 ],
+		strip_extrans	=> [ $strip_extrans,	1 ],
+		strip_html	=> [ $strip_html,	1 ],
+		strip_literal	=> [ $strip_literal,	1 ],
+		strip_nohtml	=> [ $strip_nohtml,	1 ],
+		strip_plaintext	=> [ $strip_plaintext,	1 ],
+		stripByMode	=> [ $stripByMode,	1 ]
 	}
 });
 

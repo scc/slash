@@ -325,17 +325,6 @@ CREATE TABLE pollvoters (
 );
 
 #
-# Table structure for table 'postmodes'
-#
-
-DROP TABLE IF EXISTS postmodes;
-CREATE TABLE postmodes (
-  code char(10) DEFAULT '' NOT NULL,
-  name char(32),
-  PRIMARY KEY (code)
-);
-
-#
 # Table structure for table 'sections'
 #
 
@@ -496,7 +485,7 @@ DROP TABLE IF EXISTS users_comments;
 CREATE TABLE users_comments (
   uid int(11) DEFAULT '1' NOT NULL,
   points int(11) DEFAULT '0' NOT NULL,
-  posttype varchar(10) DEFAULT 'html' NOT NULL,
+  posttype int(11) DEFAULT '2' NOT NULL,
   defaultpoints int(11) DEFAULT '1' NOT NULL,
   highlightthresh int(11) DEFAULT '4' NOT NULL,
   maxcommentsize int(11) DEFAULT '4096' NOT NULL,

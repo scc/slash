@@ -26,7 +26,7 @@ use Apache;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 require Exporter;
-use vars qw($REVISION $VERSION @ISA @EXPORT);
+use vars qw($REVISION $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 # $Id$
 ($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
@@ -67,12 +67,40 @@ use vars qw($REVISION $VERSION @ISA @EXPORT);
 	chopEntity
 	fixHref
 	stripByMode
+	strip_attribute
+	strip_code
+	strip_extrans
+	strip_html
+	strip_literal
+	strip_nohtml
+	strip_plaintext
+);
+
+@EXPORT_OK = qw(
+	ATTRIBUTE
+	LITERAL
+	NOHTML
+	PLAINTEXT
+	HTML
+	EXTRANS
+	CODE
+);
+
+%EXPORT_TAGS = (
+	all => [@EXPORT, @EXPORT_OK],
 );
 
 # LEELA: We're going to deliver this crate like professionals.
 # FRY: Aww, can't we just dump it in the sewer and say we delivered it?
 # BENDER: Too much work!  I say we burn it, then *say* we dumped it in the sewer!
 
+use constant ATTRIBUTE	=> -2;
+use constant LITERAL	=> -1;
+use constant NOHTML	=> 0;
+use constant PLAINTEXT	=> 1;
+use constant HTML	=> 2;
+use constant EXTRANS	=> 3;
+use constant CODE	=> 4;
 
 # These are package variables that are used when you need to use the
 # set methods when not running under mod_perl
@@ -724,7 +752,7 @@ Parameters
 		means just converting < and > and & to their
 		HTML entities.
 
-		exttrans
+		extrans
 		Similarly to 'literal', converts everything
 		to its HTML entity, but then formatting is
 		preserved by converting spaces to HTML
@@ -732,7 +760,7 @@ Parameters
 		tags.
 
 		code
-		Just like 'exttrans' but wraps in CODE tags.
+		Just like 'extrans' but wraps in CODE tags.
 
 		attribute
 		Attempts to format string to fit in as an HTML
@@ -740,7 +768,7 @@ Parameters
 		but " marks are also converted to their HTML entity.
 
 		plaintext
-		Similar to 'exttrans', but does not translate < and >
+		Similar to 'extrans', but does not translate < and >
 		and & first (so C<stripBadHtml> is called first).
 
 		html (or anything else)
@@ -763,37 +791,37 @@ Return value
 
 sub stripByMode {
 	my($str, $fmode, $no_white_fix) = @_;
-	$fmode ||= 'nohtml';
+	$fmode ||= NOHTML;
 
-	if ($fmode eq 'literal' || $fmode eq 'exttrans' || $fmode eq 'attribute' || $fmode eq 'code') {
+	if ($fmode == LITERAL || $fmode == EXTRANS || $fmode == ATTRIBUTE || $fmode == CODE) {
 		$str =~ s/(\S{90})/$1 /g unless $no_white_fix;
 		# Encode all HTML tags
 		$str =~ s/&/&amp;/g;
 		$str =~ s/</&lt;/g;
 		$str =~ s/>/&gt;/g;
-	} elsif ($fmode eq 'plaintext') {
+	} elsif ($fmode == PLAINTEXT) {
 		$str = stripBadHtml($str, $no_white_fix);
 	}
 
-	if ($fmode eq 'plaintext' || $fmode eq 'exttrans' || $fmode eq 'code') {
+	if ($fmode == PLAINTEXT || $fmode == EXTRANS || $fmode == CODE) {
 		$str =~ s/\n/<BR>/gi;  # pp breaks
 		$str =~ s/(?:<BR>\s*){2,}<BR>/<BR><BR>/gi;
 		# Preserve leading indents / spaces
 		$str =~ s/\t/    /g;
-		if ($fmode eq 'code') {
+		if ($fmode == CODE) {
 			$str =~ s/ /&nbsp;/g;
 			$str = '<CODE>' . $str . '</CODE>';
 		} else {
 			$str =~ s/<BR>\n?( +)/"<BR>\n" . ("&nbsp; " x length($1))/ieg;
 		}
 
-	} elsif ($fmode eq 'nohtml') {
+	} elsif ($fmode == NOHTML) {
 		$str =~ s/<.*?>//g;
 		$str =~ s/<//g;
 		$str =~ s/>//g;
 		$str =~ s/&/&amp;/g;
 
-	} elsif ($fmode eq 'attribute') {
+	} elsif ($fmode == ATTRIBUTE) {
 		$str =~ s/"/&#34;/g;
 
 	} else {
@@ -802,6 +830,15 @@ sub stripByMode {
 
 	return $str;
 }
+
+sub strip_attribute	{ stripByMode($_[0], ATTRIBUTE,	@_[1 .. $#_]) }
+sub strip_code		{ stripByMode($_[0], CODE,	@_[1 .. $#_]) }
+sub strip_extrans	{ stripByMode($_[0], EXTRANS,	@_[1 .. $#_]) }
+sub strip_html		{ stripByMode($_[0], HTML,	@_[1 .. $#_]) }
+sub strip_literal	{ stripByMode($_[0], LITERAL,	@_[1 .. $#_]) }
+sub strip_nohtml	{ stripByMode($_[0], NOHTML,	@_[1 .. $#_]) }
+sub strip_plaintext	{ stripByMode($_[0], PLAINTEXT,	@_[1 .. $#_]) }
+
 
 ########################################################
 sub stripBadHtml  {

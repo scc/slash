@@ -486,7 +486,7 @@ sub pollbooth {
 	my $pollbooth = slashDisplay('pollbooth', {
 		polls		=> $polls,
 		question	=> $polls->[0][0],
-		qid		=> stripByMode($qid, 'attribute'),
+		qid		=> strip_attribute($qid),
 		voters		=> $slashdb->getPollQuestion($qid, 'voters'),
 		comments	=> $slashdb->countComments($qid),
 		sect		=> $sect,

@@ -32,7 +32,7 @@ sub main {
 	my $constants = getCurrentStatic();
 	$ENV{REQUEST_URI} ||= '';
 
-	my $url = stripByMode(substr($ENV{REQUEST_URI}, 1), 'literal');
+	my $url = strip_literal(substr($ENV{REQUEST_URI}, 1));
 	my $admin = $constants->{adminmail};
 
 	header('404 File Not Found', '', '404 File Not Found');

@@ -312,7 +312,7 @@ EOT
         my $body;
 	for my $section (@$stories_and_topics) {
 		$x .= qq|<option title="View" onpick="/wml.pl?sid=$section->{sid}">| .
-			xmlEncodeStr(stripByMode($section->{title})) . 
+			xmlEncodeStr(strip_nohtml($section->{title})) . 
 			"</option>\n";
 		$z++;
         }     

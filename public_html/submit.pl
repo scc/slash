@@ -44,9 +44,9 @@ sub main {
 
 	$form->{del}	||= 0;
 	$form->{op}	||= '';
-	$form->{from}	= stripByMode($form->{from})  if $form->{from}; 
-	$form->{subj}	= stripByMode($form->{subj})  if $form->{subj}; 
-	$form->{email}	= stripByMode($form->{email}) if $form->{email}; 
+	$form->{from}	= strip_nohtml($form->{from})  if $form->{from}; 
+	$form->{subj}	= strip_nohtml($form->{subj})  if $form->{subj}; 
+	$form->{email}	= strip_nohtml($form->{email}) if $form->{email}; 
 
 	# Show submission title on browser's titlebar.
 	my($tbtitle) = $form->{title};
@@ -267,7 +267,7 @@ sub displayForm {
 		fakeemail	=> $form->{email} || $fakeemail,
 		section		=> $form->{section} || $section || $constants->{defaultsection},
 		topic		=> $slashdb->getTopic($form->{tid}),
-		literalstory	=> stripByMode($form->{story}, 'literal', 1),
+		literalstory	=> strip_literal($form->{story}, 1),
 		width		=> '100%',
 		title		=> $title,
 	});

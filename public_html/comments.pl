@@ -466,10 +466,8 @@ sub previewForm {
 
 	my $tempComment = stripByMode($form->{postercomment},
 				      $form->{posttype});
-	my $tempSubject = stripByMode($form->{postersubj},
-				      'nohtml',
-				      $user->{seclev},
-				      'B');
+	my $tempSubject = strip_nohtml($form->{postersubj},
+				      $user->{seclev});
 	my $error_message;
 
 	($tempComment, $tempSubject, $error_message) =
@@ -508,7 +506,7 @@ sub submitComment {
 	my ($f, $u, $db, $c) = @_;
 	my $error_message;
 
-	$f->{postersubj} = stripByMode($f->{postersubj},'nohtml',$u->{seclev},'');
+	$f->{postersubj} = strip_nohtml($f->{postersubj}, $u->{seclev});
 	$f->{postercomment} = stripByMode($f->{postercomment}, $f->{posttype});
 
 	($f->{postercomment}, $f->{postersubj}, $error_message) =

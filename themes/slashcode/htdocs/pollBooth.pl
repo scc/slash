@@ -87,7 +87,7 @@ sub editpoll {
 
 	slashDisplay('pollBooth-editpoll', {
 		checked		=> $currentqid eq $qid ? ' CHECKED' : '',
-		qid		=> stripByMode($qid, 'attribute'),
+		qid		=> strip_attribute($qid),
 		question	=> $question,
 		answers		=> $answers,
 	});
@@ -156,7 +156,7 @@ sub vote {
 		|| $slashdb->getBlock('postvote', 'block');
 
 	slashDisplay('pollBooth-vote', {
-		qid		=> stripByMode($qid, 'attribute'),
+		qid		=> strip_attribute($qid),
 		width		=> '99%',
 		title		=> $question->{question},
 		voters		=> $question->{voters},

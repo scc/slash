@@ -258,7 +258,7 @@ sub authorEdit {
 	$deletebutton_flag = 1 if (! $authornew && $aid ne $user->{uid}) ;
 
 	for ($author->{email}, $author->{copy}) {
-		$_ = stripByMode($_, 'literal', 1);
+		$_ = strip_literal($_, 1);
 	}
 
 	slashDisplay('admin-authorEdit', {
@@ -376,8 +376,8 @@ sub blockEdit {
 		}	
 	}	
 
-	$description_ta = stripByMode($blockref->{description}, 'literal', 1);
-	$block_ta = stripByMode($blockref->{block}, 'literal', 1);
+	$description_ta = strip_literal($blockref->{description}, 1);
+	$block_ta = strip_literal($blockref->{block}, 1);
 
 	$blockform_flag = 1 if ( (! $form->{blockdelete_confirm} && $bid) || $form->{blocknew}) ;
 
@@ -842,9 +842,9 @@ sub editStory {
 	}
 	$extracolumns =  $slashdb->getKeys($storyref->{section});
 
-	$introtext = stripByMode($storyref->{introtext}, 'literal', 1);
-	$bodytext  = stripByMode($storyref->{bodytext}, 'literal', 1);
-	$relatedtext = stripByMode($storyref->{relatedtext}, 'literal', 1);
+	$introtext = strip_literal($storyref->{introtext}, 1);
+	$bodytext  = strip_literal($storyref->{bodytext}, 1);
+	$relatedtext = strip_literal($storyref->{relatedtext}, 1);
 	my $SECT = getSection($storyref->{section});
 
 	$editbuttons = editbuttons($newarticle);
@@ -1047,7 +1047,7 @@ sub editFilter {
 	my $filter = $slashdb->getContentFilter($filter_id, \@values, 1);
 
 	# this has to be here - it really screws up the block editor
-	$filter->{err_message} = stripByMode($filter->{'err_message'}, 'literal', 1);
+	$filter->{err_message} = strip_literal($filter->{'err_message'}, 1);
 
 	slashDisplay('admin-editFilter', { 
 		filter		=> $filter, 

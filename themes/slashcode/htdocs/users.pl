@@ -50,7 +50,7 @@ sub main {
 	my $note;
 	if ($form->{note}) {
 		for (split /\n+/, $form->{note}) {
-			$note .= sprintf "<H2>%s</H2>\n", stripByMode($_, 'literal');
+			$note .= sprintf "<H2>%s</H2>\n", strip_literal($_);
 		}
 	}
 
@@ -213,7 +213,7 @@ sub newUser {
 		if ($uid = $slashdb->createUser($matchname, $form->{email}, $form->{newuser})) {
 			$title = getTitle('newUser_title');
 
-			$form->{pubkey} = stripByMode($form->{pubkey}, 'html');
+			$form->{pubkey} = strip_html($form->{pubkey});
 			print getMessage('newuser_msg', { title => $title });
 			mailPassword($uid);
 
@@ -268,7 +268,7 @@ sub userInfo {
 	my $constants = getCurrentStatic();
 
 	my $userbio = $slashdb->getUser($uid);
-	$userbio->{bio} = stripByMode($userbio->{bio}, 'html');
+	$userbio->{bio} = strip_html($userbio->{bio});
 
 	my($title, $commentstruct, $question, $points, $nickmatch_flag, $rows);
 	my($mod_flag, $karma_flag, $n) = (0, 0, 0);
@@ -279,7 +279,7 @@ sub userInfo {
 
 	my $public_key = $userbio->{pubkey};
 	if ($public_key) {
-		$public_key = stripByMode($public_key, "html");
+		$public_key = strip_html($public_key);
 	}
 
 	if ($userbio->{nickname} eq $nick) {
@@ -350,7 +350,7 @@ sub editKey {
 
 	my $pubkey = $slashdb->getUser($uid, 'pubkey');
 
-	my $key = stripByMode($pubkey, 'literal');
+	my $key = strip_literal($pubkey);
 	my $editkey = slashDisplay('users-editKey', { key => $key }, 1);	
 	return $editkey;
 }
@@ -381,8 +381,8 @@ sub editUser {
 		title		=> $title,
 		temppass	=> $temppass,
 		tempnick	=> $tempnick,	
-		bio 		=> stripByMode($user_edit->{bio}), 
-		sig 		=> stripByMode($user_edit->{sig}),
+		bio 		=> strip_nohtml($user_edit->{bio}), 
+		sig 		=> strip_nohtml($user_edit->{sig}),
 		editkey 	=> editKey($user_edit->{uid}),
 		maillist 	=> $maillist,
 		session 	=> $session_select 
@@ -421,9 +421,10 @@ sub tildeEd {
 
 	my $customize_title = getTitle('tildeEd_customize_title');
 
-	$userspace = stripByMode($userspace, 'literal');
+	$userspace = strip_literal($userspace);
 
-	my $tilded_customize_msg = getMessage('users_tilded_customize_msg', { userspace => $userspace });
+	my $tilded_customize_msg = getMessage('users_tilded_customize_msg',
+		{ userspace => $userspace });
 
 	my $sections_description = $slashdb->getSectionBlocks();
 
@@ -561,8 +562,8 @@ sub saveUser {
 	}
 
 	# stripByMode _after_ fitting sig into schema, 120 chars
-	$form->{sig}	 	= stripByMode(substr($form->{sig}, 0, 120), 'html');
-	$form->{fakeemail} 	= chopEntity(stripByMode($form->{fakeemail}, 'attribute'), 50);
+	$form->{sig}	 	= strip_html(substr($form->{sig}, 0, 120));
+	$form->{fakeemail} 	= chopEntity(strip_attribute($form->{fakeemail}), 50);
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
 
@@ -578,7 +579,7 @@ sub saveUser {
 	};
 
 	if ($user_email->{realemail} ne $form->{realemail}) {
-		$users_table->{realemail} = chopEntity(stripByMode($form->{realemail}, 'attribute'), 50);
+		$users_table->{realemail} = chopEntity(strip_attribute($form->{realemail}), 50);
 
 		$note .= getMessage('changeemail_msg', { realemail => $user_email->{realemail} }, 1);
 
