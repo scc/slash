@@ -39,6 +39,8 @@ sub new {
 		} elsif ($dsn =~ /Pg/) {
 			print STDERR "Picking PostgreSQL \n";
 			require Slash::DB::PostgreSQL;
+			require Slash::DB::MySQL;
+			push(@Slash::DB::ISA, 'Slash::DB::MySQL');
 			push(@Slash::DB::ISA, 'Slash::DB::PostgreSQL');
 #			unless ($ENV{GATEWAY_INTERFACE}) {
 #				require Slash::DB::Static::PostgreSQL;
