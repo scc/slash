@@ -1193,7 +1193,7 @@ sub listFilters {
 	my $filter_ref = $slashdb->getContentFilters($formname);
 
 	my $form_list = $slashdb->getDescriptions('forms');
-	my $form_select = createSelect('formname', $form_list, $formname,1);
+	my $form_select = createSelect('formname', $form_list, $formname, 1);
 
 	slashDisplay('listFilters', { 
 		title		=> $title, 

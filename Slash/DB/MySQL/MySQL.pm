@@ -321,9 +321,10 @@ sub unsetModeratorlog {
 
 ########################################################
 sub getContentFilters {
-	my($self,$formname) = @_;
+	my($self, $formname) = @_;
 
-	my $filters = $self->sqlSelectAll("*","content_filters","regex != '' and field != '' and form = '$formname'");  
+	my $filters = $self->sqlSelectAll("*", "content_filters",
+		"regex != '' and field != '' and form = '$formname'");
 	return $filters;
 }
 
@@ -686,7 +687,7 @@ sub getCommentsByUID {
 #################################################################
 # Just create an empty content_filter
 sub createContentFilter {
-	my($self,$formname) = @_;
+	my($self, $formname) = @_;
 
 	$self->sqlInsert("content_filters", {
 		regex		=> '',

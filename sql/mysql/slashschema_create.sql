@@ -412,20 +412,20 @@ CREATE TABLE storiestuff (
 
 DROP TABLE IF EXISTS submissions;
 CREATE TABLE submissions (
-	subid varchar(15) DEFAULT '' NOT NULL,
-	email varchar(50),
-	name varchar(50),
-	time datetime,
-	subj varchar(50),
-	story text,
-	tid varchar(20),
-	note varchar(30),
-	section varchar(30) DEFAULT '' NOT NULL,
-	comment varchar(255),
-	uid int(11) DEFAULT '1' NOT NULL,
-	del tinyint(4) DEFAULT '0' NOT NULL,
-	PRIMARY KEY (subid),
-	KEY subid (subid,section)
+  subid varchar(15) DEFAULT '' NOT NULL,
+  email varchar(50),
+  name varchar(50),
+  time datetime,
+  subj varchar(50),
+  story text,
+  tid varchar(20),
+  note varchar(30),
+  section varchar(30) DEFAULT '' NOT NULL,
+  comment varchar(255),
+  uid int(11) DEFAULT '1' NOT NULL,
+  del tinyint(4) DEFAULT '0' NOT NULL,
+  PRIMARY KEY (subid),
+  KEY subid (subid,section)
 );
 
 #
@@ -433,17 +433,17 @@ CREATE TABLE submissions (
 #
 DROP TABLE IF EXISTS templates;
 CREATE TABLE templates (
-	tpid int(11) NOT NULL auto_increment,
-	name varchar(30) NOT NULL,
-	page varchar(20) DEFAULT 'misc' NOT NULL,
-	section varchar(30) DEFAULT 'default' NOT NULL,
-	lang char(5) DEFAULT 'en_US' NOT NULL,
-	template text,
-	seclev int(1),
-	description text,
-	title varchar(128),
-	PRIMARY KEY (tpid),
-	UNIQUE true_template (name,page,section,lang)
+  tpid int(11) NOT NULL auto_increment,
+  name varchar(30) NOT NULL,
+  page varchar(20) DEFAULT 'misc' NOT NULL,
+  section varchar(30) DEFAULT 'default' NOT NULL,
+  lang char(5) DEFAULT 'en_US' NOT NULL,
+  template text,
+  seclev int(1),
+  description text,
+  title varchar(128),
+  PRIMARY KEY (tpid),
+  UNIQUE true_template (name,page,section,lang)
 );
 #
 # Table structure for table 'topics'
@@ -451,15 +451,15 @@ CREATE TABLE templates (
 
 DROP TABLE IF EXISTS topics;
 CREATE TABLE topics (
-	id int(11) NOT NULL auto_increment,
-	section_id int(11),
-	tid char(20) NOT NULL,
-	image char(30),
-	alttext char(40),
-	width int(11),
-	height int(11),
-	UNIQUE u_tid (tid),
-	PRIMARY KEY (id)
+  id int(11) NOT NULL auto_increment,
+  section_id int(11),
+  tid char(20) NOT NULL,
+  image char(30),
+  alttext char(40),
+  width int(11),
+  height int(11),
+  UNIQUE u_tid (tid),
+  PRIMARY KEY (id)
 );
 
 #
@@ -468,10 +468,10 @@ CREATE TABLE topics (
 
 DROP TABLE IF EXISTS tzcodes;
 CREATE TABLE tzcodes (
-	tz char(3) DEFAULT '' NOT NULL,
-	off_set int(1),
-	description varchar(64),
-	PRIMARY KEY (tz)
+  tz char(3) DEFAULT '' NOT NULL,
+  off_set int(1),
+  description varchar(64),
+  PRIMARY KEY (tz)
 );
 
 #
