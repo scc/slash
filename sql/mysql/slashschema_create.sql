@@ -487,7 +487,7 @@ CREATE TABLE stories (
 	FOREIGN KEY (section) REFERENCES sections(section),
 	INDEX frontpage (time, displaystatus, writestatus),
 	INDEX time (time),
-	INDEX submitter (submitter),
+	INDEX submitter (submitter)
 ) TYPE = myisam;
 
 #
