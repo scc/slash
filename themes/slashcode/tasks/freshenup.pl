@@ -47,6 +47,7 @@ $task{$me}{code} = sub {
 			"$constants->{basedir}/$sid.shtml");
 			slashdLog("$me updated $sid ($title)");
 		}
+		$slashdb->setStory($sid, { writestatus => 'ok'});
 	}
 
 	my $w  = $slashdb->getVar('writestatus', 'value');
