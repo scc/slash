@@ -74,7 +74,7 @@ EOT
 
 	# Send a message to the site admin.
 	for (@{$constants->{stats_reports}}) {
-		sendEmail($_, "$constants->{sitename} Stats Report", $email, 0, 'bulk');
+		sendEmail($_, "$constants->{sitename} Stats Report", $email, 'bulk');
 	}
 }
 
@@ -118,8 +118,8 @@ sub mailingList {
 	return unless $headlines;
 
 	# need to change for specific prefs, later
-	my $h_users = $slashdb->getHeadlineUsers();
-	my $n_users = $slashdb->getNewsletterUsers();
+	my $h_users = $messages->getHeadlineUsers();
+	my $n_users = $messages->getNewsletterUsers();
 
 	for (@{$h_users}) {
 		my $head_subj = "24 Hours of $constants->{sitename} Headlines For $_->[0]";

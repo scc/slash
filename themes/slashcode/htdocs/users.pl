@@ -253,7 +253,7 @@ sub mailPassword {
 		tempnick	=> $tempnick
 	}, 1);
 
-	sendEmail($user_email->{realemail}, $emailtitle, $msg) if $user_email->{nickname};
+	doEmail($uid, $emailtitle, $msg) if $user_email->{nickname};
 	print getMessage('mailpasswd_mailed_msg', { name => $user_email->{nickname} });
 }
 
@@ -360,10 +360,10 @@ sub validateUser {
 	# Maybe this should be taken care of in a more centralized location?
 	if ($user->{reg_id} eq $form->{id}) {
 		# We have a user and the registration IDs match. We are happy!
-		my ($maxComm, $maxDays) = (	$constants->{max_expiry_comm},
-									$constants->{max_expiry_days} );
-		my ($userComm, $userDays) = ($user->{user_expiry_comm},
-									 $user->{user_expiry_days});		
+		my($maxComm, $maxDays) = ($constants->{max_expiry_comm},
+			$constants->{max_expiry_days} );
+		my($userComm, $userDays) = ($user->{user_expiry_comm},
+			$user->{user_expiry_days});		
 		my $exp = $constants->{expiry_exponent};
 
 		# Increment only the trigger that was used.
@@ -675,11 +675,7 @@ sub saveUser {
 			nickname  => $user_email->{nickname},
 			realemail => $form->{realemail}
 		}, 1);
-		sendEmail($user_email->{realemail}, $saveuser_emailtitle, $saveuser_email_msg);
-		# Users are expired once they change their email, but this is
-		# an immediate expiration and users should be able to 
-		# quickly reregister.
-		setUserExpired($user->{uid}, 1);
+		doEmail($uid, $saveuser_emailtitle, $saveuser_email_msg);
 	}
 
 	delete $users_table->{passwd};

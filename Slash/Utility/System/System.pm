@@ -33,88 +33,10 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT	   = qw(
-	errorLog
+	doEmail
 	sendEmail
-	writeLog
 );
 @EXPORT_OK = qw();
-
-#========================================================================
-
-=head2 errorLog()
-
-Generates an error that either goes to Apache's error log
-or to STDERR. The error consists of the package and
-and filename the error was generated and the same information
-on the previous caller.
-
-=over 4
-
-=item Return value
-
-Returns 0;
-
-=back
-
-=cut
-
-sub errorLog {
-	my($package, $filename, $line) = caller(1);
-	if ($ENV{GATEWAY_INTERFACE}) {
-		my $r = Apache->request;
-		if ($r) {
-			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
-			($package, $filename, $line) = caller(2);
-			$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
-
-			return 0;
-		}
-	}
-	print STDERR ("Error in library:$package:$filename:$line:@_\n");
-	($package, $filename, $line) = caller(2);
-	print STDERR ("Which was called by:$package:$filename:$line:@_\n") if $package;
-
-	return 0;
-}
-
-#========================================================================
-
-=head2 writeLog(DATA)
-
-Places optional data in the accesslog.
-
-=over 4
-
-=item Parameters
-
-=over 4
-
-=item DATA
-
-Strings that are concatenated together to be used in the SLASH_LOG_DATA field.
-
-=back
-
-=item Return value
-
-No value is returned.
-
-=back
-
-=cut
-
-sub writeLog {
-	return unless $ENV{GATEWAY_INTERFACE};
-	my $dat = join("\t", @_);
-
-	my $r = Apache->request;
-
-	# Notes has a bug (still in apache 1.3.17 at
-	# last look). Apache's directory sub handler
-	# is not copying notes. Bad Apache!
-	# -Brian
-	$r->err_header_out(SLASH_LOG_DATA => $dat);
-}
 
 #========================================================================
 
@@ -165,7 +87,7 @@ Need From address and SMTP server from vars table,
 =cut
 
 sub sendEmail {
-	my($addr, $subject, $content, $from, $pr) = @_;
+	my($addr, $subject, $content, $pr) = @_;
 	my $constants = getCurrentStatic();
 
 	my %data = (
@@ -173,7 +95,7 @@ sub sendEmail {
 		subject	=> $subject,
 		to	=> $addr,
 		body	=> $content,
-		from	=> $from || $constants->{mailfrom}
+		from	=> $constants->{mailfrom}
 	);
 
 	if ($pr && $pr eq 'bulk') {
@@ -185,6 +107,20 @@ sub sendEmail {
 	} else {
 		errorLog("Can't send mail '$subject' to $addr: $Mail::Sendmail::error");
 		return 0;
+	}
+}
+
+
+sub doEmail {
+	my($uid, $subject, $content, $code, $pr) = @_;
+
+	my $messages = getObject("Slash::Messages");
+	if ($messages) {
+		$messages->quicksend($uid, $subject, $content, $code, $pr);
+	} else {
+		my $slashdb = getCurrentDB();
+		my $addr = $slashdb->getUser($uid, 'realemail');
+		sendEmail($addr, $subject, $content, $pr);
 	}
 }
 

@@ -372,28 +372,28 @@ sub tokens2points {
 	my $constants = getCurrentStatic();
 	my @log;
 	my $c = $self->sqlSelectMany('uid,tokens',
-								 'users_info', 
-								 "tokens >= $constants->{maxtokens}");
-
+		'users_info', 
+		"tokens >= $constants->{maxtokens}");
 	$self->sqlTransactionStart('LOCK TABLES users READ, 
-								users_info WRITE, users_comments WRITE');
+		users_info WRITE, users_comments WRITE');
+
 	while (my($uid, $tokens) = $c->fetchrow) {
 		push @log, getData('moderatord_tokengrantmsg', { uid => $uid });
 		$self->setUser($uid, {
 			-lastgranted	=> 'now()',
-			-tokens			=> "tokens*$constants->{token_retention}",
-			-points			=> "points+" .
+			-tokens		=> "tokens*$constants->{token_retention}",
+			-points		=> "points+" .
 				($constants->{maxtokens} / $constants->{tokensperpoint})
 		});
 	}
 	$c->finish;
 	$c = $self->sqlSelectMany('users.uid as uid',
-							  'users,users_comments,users_info',
-							  "karma >= 0 AND
-							   points > $constants->{maxpoints} AND 
-							   seclev < 100 AND
-							   users.uid=users_comments.uid AND
-							   users.uid=users_info.uid");
+		'users,users_comments,users_info',
+		"karma >= 0 AND
+		points > $constants->{maxpoints} AND 
+		seclev < 100 AND
+		users.uid=users_comments.uid AND
+		users.uid=users_info.uid");
 	$self->sqlTransactionFinish();
 
 	$self->sqlTransactionStart("LOCK TABLES users_comments WRITE");

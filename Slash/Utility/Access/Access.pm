@@ -25,12 +25,10 @@ LONG DESCRIPTION.
 =cut
 
 use strict;
-use HTML::Entities;
-use Slash::Utility::Environment;
-use Slash::Display;
 use Digest::MD5 'md5_hex';
-# Since we use objects via getObject(), below, should those modules be
-# included, here?
+use HTML::Entities;
+use Slash::Display;
+use Slash::Utility::Environment;
 
 use base 'Exporter';
 use vars qw($VERSION @EXPORT);
@@ -358,10 +356,10 @@ sub allowExpiry {
 
 	# We only perform the check if any of the following are turned on.
 	return ($constants->{min_expiry_days} > 0 ||
-			$constants->{max_expiry_days} > 0 ||
-            $constants->{min_expiry_comm} > 0 ||
-			$constants->{max_expiry_comm} > 0) && 
-		   $constants->{do_expiry};
+		$constants->{max_expiry_days} > 0 ||
+		$constants->{min_expiry_comm} > 0 ||
+		$constants->{max_expiry_comm} > 0
+	) && $constants->{do_expiry};
 }
 
 #========================================================================
@@ -395,10 +393,10 @@ None.
 =cut
 
 sub setUserExpired {
-    my ($uid, $val) = @_;
+	my ($uid, $val) = @_;
 
 	my $user = getCurrentUser($uid);
-    my $slashdb = getCurrentDB();
+	my $slashdb = getCurrentDB();
 	my $constants = getCurrentStatic();
 
 	# Apply the appropriate readonly flags.
@@ -408,54 +406,50 @@ sub setUserExpired {
 
 	if ($val) {
 		# Determine regid. We want to strive for as much randomness as we
-        # can without getting overly complex. Let's just create a string
-        # that should have a reasonable degree of uniqueness by user.
-        #
-        # Now, how likely is it that this will result in a collision?
-        # Note that we obscure with an MD5 hex has which is safer in URLs
-        # than base64 hashes.
-        my $regid = md5_hex(
-            (sprintf "%s%s%d", time, $user->{nickname}, int(rand 256))
-        );
- 
-        # We now unregister the user, but we need to keep the ID for later.
-        # Consider removal of the 'registered' flag. This state can simply
-        # be determined by the presence of a non-zero length value in
-        # 'reg_id'. If 'reg_id' doesn't exist, that is considered to be
-        # a zero-length value.
-        $slashdb->setUser($uid, {
-            'registered'    => '0',
-            'reg_id'        => $regid,
-        });
+		# can without getting overly complex. Let's just create a string
+		# that should have a reasonable degree of uniqueness by user.
+		#
+		# Now, how likely is it that this will result in a collision?
+		# Note that we obscure with an MD5 hex has which is safer in URLs
+		# than base64 hashes.
+        	my $regid = md5_hex(
+			(sprintf "%s%s%d", time, $user->{nickname}, int(rand 256))
+        	);
+
+		# We now unregister the user, but we need to keep the ID for later.
+		# Consider removal of the 'registered' flag. This state can simply
+		# be determined by the presence of a non-zero length value in
+		# 'reg_id'. If 'reg_id' doesn't exist, that is considered to be
+		# a zero-length value.
+		$slashdb->setUser($uid, {
+			'registered'    => '0',
+			'reg_id'        => $regid,
+		});
 		
-        my $reg_msg = slashDisplay('rereg_mail',
-            {
-                # This should probably be renamed to prevent confusion.
-                # But there is no real need for the CURRENT user's value
-                # in this template, just the user we are expiring.
-				reg_id		=> $regid,
-                useradmin   => $constants->{reg_useradmin} ||
-                               $constants->{adminmail},
-            },
- 		
-            {
-                Return  => 1,
-                Nocomm  => 1,
-                Page    => 'messages',
-            }
-        );
+		my $reg_msg = slashDisplay('rereg_mail', {
+			# This should probably be renamed to prevent confusion.
+			# But there is no real need for the CURRENT user's value
+			# in this template, just the user we are expiring.
+			reg_id		=> $regid,
+			useradmin	=> $constants->{reg_useradmin} ||
+				$constants->{adminmail},
+		}, {
+			Return  => 1,
+			Nocomm  => 1,
+			Page    => 'messages',
+		});
 
 		my $reg_subj = Slash::getData('rereg_email_subject', '', '');
-	
+
 		# Error check here? If so, what do we do?
-    	my $messages = getObject('Slash::Messages');
+		my $messages = getObject('Slash::Messages');
 		# Send the message.
-        $messages->quicksend($uid, $reg_subj, $reg_msg, 0, 0);
+		$messages->quicksend($uid, $reg_subj, $reg_msg, 0, 0);
 	} else {
 		# We only need to clear these.
 		$slashdb->setUser($uid, {
 			'registered'	=> '1',
-			'reg_id'		=> '',
+			'reg_id'	=> '',
 		});
 	}
 }

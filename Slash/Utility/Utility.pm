@@ -28,11 +28,11 @@ Unless otherwise noted, they are publically available functions.
 =cut
 
 use strict;
+use Slash::Utility::Access;
 use Slash::Utility::Anchor;
 use Slash::Utility::Data;
 use Slash::Utility::Display;
 use Slash::Utility::Environment;
-use Slash::Utility::PostCheck;
 use Slash::Utility::System;
 
 use base 'Exporter';
@@ -40,11 +40,11 @@ use vars qw($VERSION @EXPORT);
 
 ($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 @EXPORT = (
+	@Slash::Utility::Access::EXPORT,
 	@Slash::Utility::Anchor::EXPORT,
 	@Slash::Utility::Data::EXPORT,
 	@Slash::Utility::Display::EXPORT,
 	@Slash::Utility::Environment::EXPORT,
-	@Slash::Utility::PostCheck::EXPORT,
 	@Slash::Utility::System::EXPORT,
 );
 

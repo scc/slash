@@ -55,12 +55,17 @@ my %data = (
 		Slash::DB::Utility
 	)],
 	'Slash::Utility' => [qw(
+		Slash::Utility::Access
 		Slash::Utility::Anchor
 		Slash::Utility::Data
 		Slash::Utility::Display
 		Slash::Utility::Environment
-		Slash::Utility::PostCheck
 		Slash::Utility::System
+	)],
+	'Slash::Utility::Access' => [qw(
+		Slash::Display
+		Slash::Utility::System
+		Slash::Utility::Environment
 	)],
 	'Slash::Utility::Anchor' => [qw(
 		Slash::Display
@@ -76,10 +81,6 @@ my %data = (
 		Slash::Utility::Environment
 	)],
 	'Slash::Utility::Environment' => [qw(
-	)],
-	'Slash::Utility::PostCheck' => [qw(
-		Slash::Display
-		Slash::Utility::Environment
 	)],
 	'Slash::Utility::System' => [qw(
 		Slash::Utility::Environment

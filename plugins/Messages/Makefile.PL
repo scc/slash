@@ -7,6 +7,5 @@ WriteMakefile(
     'VERSION_FROM' => 'Messages.pm', # finds $VERSION
     'PM'	=> {
     	'Messages.pm'				=> '$(INST_LIBDIR)/Messages.pm',
-	'lib/Slash/Messages/DB/MySQL.pm'	=> '$(INST_LIBDIR)/Messages/DB/MySQL.pm'
     },
 );

@@ -63,6 +63,9 @@ use vars qw($VERSION @EXPORT);
 	bakeUserCookie
 	eatUserCookie
 	setCookie
+
+	errorLog
+	writeLog
 );
 
 # These are file-scoped variables that are used when you need to use the
@@ -1313,7 +1316,7 @@ sub getObject {
 	} else {
 		eval "require $value";
 		if ($@) {
-			warn $@;
+			errorLog($@);
 			return;
 		}
 		$objects->{$value} = $value->new($user, @args);
@@ -1322,6 +1325,83 @@ sub getObject {
 		}
 		return $objects->{$value};
 	}
+}
+
+#========================================================================
+
+=head2 errorLog()
+
+Generates an error that either goes to Apache's error log
+or to STDERR. The error consists of the package and
+and filename the error was generated and the same information
+on the previous caller.
+
+=over 4
+
+=item Return value
+
+Returns 0;
+
+=back
+
+=cut
+
+sub errorLog {
+	my($package, $filename, $line) = caller(1);
+	if ($ENV{GATEWAY_INTERFACE}) {
+		my $r = Apache->request;
+		if ($r) {
+			$r->log_error("$ENV{SCRIPT_NAME}:$package:$filename:$line:@_");
+			($package, $filename, $line) = caller(2);
+			$r->log_error ("Which was called by:$package:$filename:$line:@_\n");
+
+			return 0;
+		}
+	}
+	print STDERR ("Error in library:$package:$filename:$line:@_\n");
+	($package, $filename, $line) = caller(2);
+	print STDERR ("Which was called by:$package:$filename:$line:@_\n") if $package;
+
+	return 0;
+}
+
+#========================================================================
+
+=head2 writeLog(DATA)
+
+Places optional data in the accesslog.
+
+=over 4
+
+=item Parameters
+
+=over 4
+
+=item DATA
+
+Strings that are concatenated together to be used in the SLASH_LOG_DATA field.
+
+=back
+
+=item Return value
+
+No value is returned.
+
+=back
+
+=cut
+
+sub writeLog {
+	return unless $ENV{GATEWAY_INTERFACE};
+	my $dat = join("\t", @_);
+
+	my $r = Apache->request;
+
+	# Notes has a bug (still in apache 1.3.17 at
+	# last look). Apache's directory sub handler
+	# is not copying notes. Bad Apache!
+	# -Brian
+	$r->err_header_out(SLASH_LOG_DATA => $dat);
 }
 
 #========================================================================

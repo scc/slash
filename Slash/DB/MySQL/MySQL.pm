@@ -789,7 +789,7 @@ sub checkEmail {
 
 	# Returns count of users matching $email. 
 	return ($self->sqlSelect('count(uid)', 'users', 
-							 'realemail=' . $self->{_dbh}->quote($email)))[0];
+		'realemail=' . $self->{_dbh}->quote($email)))[0];
 }
 
 #################################################################
@@ -819,7 +819,7 @@ sub createUser {
 	$self->sqlInsert("users_info", {
 		uid 			=> $uid, 
 		-lastaccess		=> 'now()',
-	} );
+	});
 	$self->sqlInsert("users_prefs", { uid => $uid } );
 	$self->sqlInsert("users_comments", { uid => $uid } );
 	$self->sqlInsert("users_index", { uid => $uid } );
@@ -2420,7 +2420,7 @@ sub getSlashConf {
 	$conf{cookiepath}	||= URI->new($conf{rootdir})->path . '/';
 	$conf{maxkarma}		= 999  unless defined $conf{maxkarma};
 	$conf{minkarma}		= -999 unless defined $conf{minkarma};
-	$conf{expiry_exponent} = 1 unless defined $conf{expiry_exponent};
+	$conf{expiry_exponent}	= 1 unless defined $conf{expiry_exponent};
 	# For all fields that it is safe to default to -1 if their
 	# values are not present...
 	for (qw[min_expiry_days max_expiry_days min_expiry_comm max_expiry_comm]) {

@@ -156,7 +156,7 @@ customize [% constants.sitename %], change your password, or just click pretty w
 	the system. No re-registration is necessary at this time.<BR>
 
 [% CASE 'emailexists_msg' %]
-	Sorry, [% form.realemail %] already exists in our userbase.<BR>
+	Sorry, [% FILTER strip_literal; form.realemail; END %] already exists in our userbase.<BR>
 
 [% CASE DEFAULT %]
 	-- MISSING USER MESSAGE SEGMENT -- [[% value %]] block not found.<BR>

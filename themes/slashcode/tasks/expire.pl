@@ -26,7 +26,7 @@ $task{$PROGNAME}{timespec} = '0 6 * * *';
 
 # Handles mail and administrivia necessary for RECENTLY expired users.
 $task{$PROGNAME}{code} = sub {
-    my ($virtual_user, $constants, $slashdb, $user) = @_;
+    my($virtual_user, $constants, $slashdb, $user) = @_;
 
     # We only perform the check if any of the following are turned on.
     # the logic below, should probably be moved into Slash::Utility.

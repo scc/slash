@@ -218,17 +218,17 @@ sub getMode {
 	$mode = MSG_MODE_EMAIL if $msg->{altto};
 
 	# Can only get mail sent if registered is set
-# 	if ($mode == MSG_MODE_EMAIL && !$msg->{user}{registered}) {
-# 		$mode = MSG_MODE_WEB;
-# 	}
+	if (0 && $mode == MSG_MODE_EMAIL && !$msg->{user}{registered}) {
+		$mode = MSG_MODE_WEB;
+	}
 
 	# if newsletter or headline message, must be email (or none)
 	if ($msg->{code} =~ /^(?:0|1)$/) {
-# 		if (!$msg->{user}{registered}) {
-# 			$mode == MSG_MODE_NONE;
-# 		} else {
+		if (0 && !$msg->{user}{registered}) {
+			$mode == MSG_MODE_NONE;
+		} else {
 			$mode = MSG_MODE_EMAIL;
-# 		}
+		}
 	}
 
 	return $msg->{mode} = $mode;
@@ -253,7 +253,7 @@ sub send {
 	# if $msg is ref, assume we have the message already
 	$msg = $self->get($msg) unless ref($msg);
 
-	my $mode = $self->getMode($msg);
+	my $mode = $msg->{mode};
 
 	# should NONE, NOCODE, UNKNOWN delete msg? -- pudge
 	if ($mode == MSG_MODE_NONE) {
@@ -281,7 +281,7 @@ sub send {
 		$content = $self->callTemplate('msg_email', $msg);
 		$subject = $self->callTemplate('msg_email_subj', $msg);
 
-		if (sendEmail($addr, $subject, $content)) {
+		if (sendEmail($addr, $subject, $content, $msg->{priority})) {
 			return 1;
 		} else {
 			messagedLog(getData("send mail error", {
@@ -309,15 +309,19 @@ sub send {
 
 }
 
+# this method will only send email, and it assumes that the caller
+# already checked (if appropriate) whether or not the user is
+# allowed to get email sent to them, and whether or not they are
+# allowed to get this particular email type
 sub quicksend {
-	my($self, $uid, $subj, $message, $code) = @_;
+	my($self, $uid, $subj, $message, $code, $pr) = @_;
 
 	($code, my($type)) = $self->getDescription('messagecodes', $code);
-	return unless defined $code;
+	$code = -1 unless defined $code;
 
 	my $slashdb = getCurrentDB();
 
-	$self->send({
+	my %msg = (
 		id		=> 0,
 		fuser		=> 0,
 		altto		=> '',
@@ -328,7 +332,10 @@ sub quicksend {
 		type		=> $type,
 		date		=> time(),
 		mode		=> MSG_MODE_EMAIL,
-	});
+		priority	=> $pr,
+	);
+
+	$self->send(\%msg);
 }
 
 sub getWeb {
