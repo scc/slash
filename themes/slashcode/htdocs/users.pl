@@ -390,7 +390,7 @@ sub newUser {
 
 			$title = getTitle('newUser_title');
 
-			$form->{pubkey} = strip_html($form->{pubkey}, 1);
+			$form->{pubkey} = strip_nohtml($form->{pubkey}, 1);
 			print getMessage('newuser_msg', { 
 				suadmin_flag => $suadmin_flag, 
 				title => $title, 
@@ -1341,6 +1341,11 @@ sub saveUser {
 		print getError('sig_too_long_err');
 		$sig = undef;
 	}
+
+	# We should do some conformance checking on a user's pubkey,
+	# make sure it looks like one of the known types of public
+	# key.  Until then, just make sure it doesn't have HTML.
+	$form->{pubkey} = strip_nohtml($form->{pubkey}, 1);
 
 	$form->{homepage}	= '' if $form->{homepage} eq 'http://';
 	$form->{homepage}	= fixurl($form->{homepage});
