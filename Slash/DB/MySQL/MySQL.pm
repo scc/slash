@@ -2140,13 +2140,8 @@ sub getCommentsForUser {
 
 	my $table = 'comments';
 
-<<<<<<< MySQL.pm
-	if(getCurrentStatic('mysql_heap_table')) {
-		$table = 'comment_heap';
-=======
 	if (getCurrentStatic('mysql_heap_table')) {
 		$table = 'comments_hash';
->>>>>>> 1.2.2.39
 	}
 
 	my $user = getCurrentUser();
