@@ -183,11 +183,11 @@ sub _get_web_count_by_uid {
 	);
 
 	my $read = grep { $_->[0] } @$data;
-	return @$data ? {
+	return {
 		'read'	=> $read,
 		unread	=> scalar(@$data) - $read,
 		total	=> scalar(@$data)
-	} : 0;
+	};
 }
 
 sub _get {
