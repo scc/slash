@@ -262,6 +262,7 @@ sub saveSub {
 
 		$form->{story} = strip_html(url2html($form->{story}));
 		$slashdb->createSubmission();
+		$slashdb->formSuccess($form->{formkey}, 0, length($form->{subj}));
 
 		slashDisplay('saveSub', {
 			title		=> 'Saving',
