@@ -118,7 +118,7 @@ sub reconcileM2 {
 		if ($con_avg > $constants->{m2_consensus_trigger}) {
 			my %slots;
 			my $pool = $constants->{m2_reward_pool};
-			my ($goodk, $badk) =
+			my($goodk, $badk) =
 				@{$constants}{qw(goodkarma badkarma)};
 
 			# Randomly distribute points from among the
@@ -141,17 +141,15 @@ sub reconcileM2 {
 
 			# Adjust moderator karma. 
 			# Reward if we match consensus, penalize if not.
-			$change = ($modlog->{val} eq $rank[0]) ?
-				1 : -1;
-			my $mod_karma = $slashdb->getUser($modlog->{uid},
-						          'karma');
+			$change = ($modlog->{val} eq $rank[0])
+				? 1 : -1;
+			my $mod_karma = $slashdb->getUser($modlog->{uid}, 'karma');
 			my $update_cond = 
 				($change > 0 && $mod_karma < $goodk) ||
 				($change < 0 && $mod_karma > $badk);
 			$slashdb->setUser($modlog->{uid}, {
 				karma => $mod_karma + $change,
 			}) if $update_cond;
-				
 		}
 
 		# We only do the following if Messaging has been 

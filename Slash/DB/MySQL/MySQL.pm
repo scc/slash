@@ -1883,7 +1883,7 @@ sub resetFormkey {
 		-value		=> 0,
 		-idcount	=> '(idcount -1)',
 		ts		=> time(),
-		submit_ts => '0',
+		submit_ts	=> '0',
 	}, "formkey=" . $self->sqlQuote($formkey));
 
 	print STDERR "RESET formkey $updated\n" if $constants->{DEBUG};

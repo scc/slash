@@ -249,6 +249,10 @@ sub userdir_handler {
 		$uri =~ s/^\Q$path//;
 	}
 
+	# what's going on here?  matching ~ seems like the
+	# wrong thing to do, since you are going to match
+	# it again in the next if ... ?  if this is correct,
+	# please comment as to why --pudge
 	if (($uri =~ m[^/~/(.+)]) or ($uri =~ m[^/my(.*)])) {
 		if ($r->header_in('Cookie') =~ $USER_MATCH) {
 			my($toss,$op) = split /\//, $1, 3;

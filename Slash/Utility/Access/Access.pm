@@ -28,6 +28,7 @@ use strict;
 use Digest::MD5 'md5_hex';
 use HTML::Entities;
 use Slash::Display;
+use Slash::Utility::Data;
 use Slash::Utility::Environment;
 use Slash::Utility::System;
 
@@ -426,7 +427,7 @@ sub filterOk {
 		my $err_message		= $_->[8];
 		my $isTrollish		= 0;
 
-		my $text_to_test = decode_entities(Slash::Utility::Data::strip_nohtml($content));
+		my $text_to_test = decode_entities(strip_nohtml($content));
 
 		$text_to_test		=~ s/\xA0/ /g;
 		$text_to_test		=~ s/\<br\>/\n/gi;
@@ -507,7 +508,7 @@ sub compressOk {
 
 			# if is >= the ratio, then it's most likely a
 			# troll comment
-			my $comlen = length(Compress::Zlib::compress(Slash::Utility::Data::strip_nohtml($content)));
+			my $comlen = length(Compress::Zlib::compress(strip_nohtml($content)));
 			if (($comlen / $length) <= $_) {
 				$slashdb->createAbuse("content compress", $formname, $content);
 				return 0;

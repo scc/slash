@@ -228,6 +228,7 @@ sub main {
 	}
 
 	if ($op eq 'userlogin' && ! isAnon($user->{uid})) {
+		# why disable "returnto" ?  What's going on? -- pudge
 		# my $refer = URI->new_abs($form->{returnto} || $constants->{rootdir},
 		my $refer = URI->new_abs($constants->{rootdir},
 			$constants->{absolutedir});
