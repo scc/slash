@@ -670,7 +670,7 @@ sub topicEdit {
 	opendir(DIR, "$basedir/images/topics");
 	# @$available_images = grep(/.*\.gif|jpg/i, readdir(DIR));
 
-	$available_images = { map { ($_, $_) } grep /\.(?:gif|jpg)$/, readdir DIR };
+	$available_images = { map { ($_, $_) } grep /\.(?:gif|jpe?g|png)$/, readdir DIR };
 
 	closedir(DIR);
 
