@@ -184,15 +184,21 @@ while(my $dir = readdir(PLUGINDIR)) {
 }
 my @answers;
 my $select = 'a';
-print "Hit 'a' to select all, otherwise select numbers or 'q' to quit\n";
+print "Hit 'a' to select all, otherwise select comma separated numbers or 'q' to quit\n";
 while($select ne 'q'){
 	chomp($select = <STDIN>);
-	if($select eq 'a') {
+
+	if($select =~ /^\d\,/) {
+		@answers = split(/\,/,$select);
+		last;	
+	}
+	elsif($select eq 'a') {
 		@answers = ();
 		push @answers, $select;
 		last;
+	} elsif($select ne 'q') {
+		push @answers, $select;
 	}
-	push @answers, $select;
 }
 
 unless ($opts{'a'}) {
@@ -204,14 +210,6 @@ unless ($opts{'a'}) {
 	$username = $opts{'a'};
 }
 
-unless ($opts{'e'}) {
-	print "\nWhat is the email address of the account? [$username\@$host_noport] ";
-	chomp($email = <STDIN>);
-	$email ||= "$owner\@$host_noport";
-} else {
-	$email = $opts{'e'};
-}
-
 unless ($opts{'p'}) {
 	print "\nWhat is the password for the account? ";
 	chomp($password = <STDIN>);
@@ -220,7 +218,13 @@ unless ($opts{'p'}) {
 }
 die "You need to give us a password.\n" unless $password;
 
-
+unless ($opts{'e'}) {
+	print "\nWhat is the email address of the account? [$username\@$host_noport] ";
+	chomp($email = <STDIN>);
+	$email ||= "$owner\@$host_noport";
+} else {
+	$email = $opts{'e'};
+}
 
 # Dump in the schema then pepper with a trace of your own theme
 open(CREATE, "< $prefix/sql/$driver/schema.sql")
@@ -314,7 +318,6 @@ find(sub { chown $owner_id, $group_id, $_ }, "$prefix/$sitename");
 $dbh->disconnect;
 print "\nDone, thanks.\n";
 
-
 sub usage {
 usage() unless getopts('h:o:g:s:a:e:p:?r', \%opts);
 	print "Usage:install-slashsite  [OPTIONS] <DBIx:Password Virtual User>\n";
@@ -404,11 +407,18 @@ sub install_plugin {
 	my ($answers, $plugins) = @_;
 	if($answers->[0] eq 'a') {
 		for(keys %$plugins) {
+			print "installing plugin $_\n";
 			install($plugins->{$_});
 		}
 	} else {
 		for(@$answers) {
-			install($plugins->{$_});
+			my $i = $_;
+			for(keys %$plugins) {
+				if($i == $plugins->{$_}{order}) {
+					print "installing plugin $_\n";
+					install($plugins->{$_});
+				}
+			}
 		}
 	}
 }
