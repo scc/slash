@@ -858,10 +858,11 @@ sub getUserEmail {
 }
 
 #################################################################
+# Turns out it is faster to hit the disk
 sub getCommentsByUID {
 	my($self, $uid, $min) = @_;
 
-	my $comment_table = getCurrentStatic('mysql_heap_table') ? 'comment_heap' : 'comments';
+	my $comment_table = 'comments';
 	my $sqlquery = "SELECT pid,sid,cid,subject,date,points "
 			. " FROM $comment_table WHERE uid=$uid "
 			. " ORDER BY date DESC LIMIT $min ";
