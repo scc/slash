@@ -143,7 +143,11 @@ sub main {
 
 	} elsif ($form->{templatesave} || $form->{templatesavedef}) {
 		templateSave($form->{thistpid});
-		templateEdit($user->{seclev}, $form->{thistpid}, $form->{page}, $form->{section});
+		if($form->{newpage}) {
+			templateEdit($user->{seclev}, $form->{thistpid}, $form->{newpage}, $form->{section});
+		} else {
+			templateEdit($user->{seclev}, $form->{thistpid}, $form->{page}, $form->{section});
+		}
 
 	} elsif ($form->{templaterevert}) {
 		my $slashdb = getCurrentDB();
@@ -154,7 +158,7 @@ sub main {
 		templateEdit($user->{seclev},$form->{tpid}, $form->{page}, $form->{section});
 
 	} elsif ($form->{templatedelete_confirm}) {
-		templateDelete($form->{deletebid});
+		templateDelete($form->{deletename}, $form->{deletetpid});
 		templateEdit($user->{seclev});
 
 	} elsif ($op eq 'authors') {
@@ -473,7 +477,7 @@ sub templateSave {
 				title		=> $form->{title},
 				description	=> $form->{description},
 				seclev          => $form->{seclev},
-				page		=> $form->{page},
+				page		=> $form->{newpage},
 				section		=> $form->{section}
 			});
 
@@ -495,13 +499,13 @@ sub templateSave {
 }
 ##################################################################
 sub templateDelete {
-	my($tpid) = @_;
+	my($name,$tpid) = @_;
 
 	my $slashdb = getCurrentDB();
 
 	return if getCurrentUser('seclev') < 500;
 	$slashdb->deleteTemplate($tpid);
-	print getMessage('blockDelete-message', { bid => $tpid });
+	print getMessage('templateDelete-message', { name => $name, tpid => $tpid });
 }
 
 ##################################################################
