@@ -2638,8 +2638,11 @@ sub getSkinsDirty {
 # for new_headfoot.pl
 sub getHeadFootPages {
 	my($self, $skin, $headfoot) = @_;
-
+	
 	return [] unless $headfoot eq 'header' || $headfoot eq 'footer';
+	my $constants = getCurrentStatic();
+
+	my %inc_always = map { $_ => 1 } @{$constants->{ssi_head_inc_pages}};
 
 	$skin ||= 'default'; # default to default
 
@@ -2648,6 +2651,12 @@ sub getHeadFootPages {
 		'templates',
 		"skin = '$skin' AND name='$headfoot' AND page != 'misc'");
 	push @$list, [qw( misc )];
+
+	foreach (@$list) {
+		delete $inc_always{$_->[0]} if $inc_always{$_->[0]};
+	}
+
+	push @$list, [$_] foreach keys %inc_always;
 
 	return $list;
 }
