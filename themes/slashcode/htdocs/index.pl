@@ -395,8 +395,7 @@ sub displayStandardBlocks {
 
 	for my $bid (@boxes) {
 		if ($bid eq 'mysite') {
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= portalsidebox(
 				getData('userboxhead'),
 				$user->{mylinks} || getData('userboxdefault'),
 				$bid,
@@ -405,33 +404,32 @@ sub displayStandardBlocks {
 			);
 
 		} elsif ($bid =~ /_more$/ && $older_stories_essentials) {
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= portalsidebox(
 				getData('morehead'),
 				getOlderStories($older_stories_essentials, $skin,
 					{ first_date => $other->{first_date}, last_date => $other->{last_date} }),
 				$bid,
 				'',
-				$getblocks
+				$getblocks,
+				"olderstuff"
 			) if @$older_stories_essentials;
 
 		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
 			# do nothing!
 
 		} elsif ($bid eq 'userlogin' && $user->{is_anon}) {
-			$return .= $boxcache->{$bid} ||= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= $boxcache->{$bid} ||= portalsidebox(
 				$boxBank->{$bid}{title},
 				slashDisplay('userlogin', 0, { Return => 1, Nocomm => 1 }),
 				$boxBank->{$bid}{bid},
 				$boxBank->{$bid}{url},
-				$getblocks
+				$getblocks,
+				"login"
 			);
 
 		} elsif ($bid eq 'poll' && !$constants->{poll_cache}) {
 			# this is only executed if poll is to be dynamic
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= portalsidebox(
 				$boxBank->{$bid}{title},
 				pollbooth('_currentqid', 1),
 				$boxBank->{$bid}{bid},
@@ -447,8 +445,7 @@ sub displayStandardBlocks {
 				if ($uids && @$uids);
 			# We only display if the person has friends with data
 			if ($articles && @$articles) {
-				$return .= portalbox(
-					$constants->{fancyboxwidth},
+				$return .= portalsidebox(
 					getData('friends_journal_head'),
 					slashDisplay('friendsview', { articles => $articles}, { Return => 1 }),
 					$bid,
@@ -460,15 +457,13 @@ sub displayStandardBlocks {
 		} elsif ($bid eq 'rand' || $bid eq 'srandblock') {
 			# don't use cached title/bid/url from getPortalsCommon
 			my $data = $reader->getBlock($bid, [qw(title block bid url)]);
-			$return .= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= portalsidebox(
 				@{$data}{qw(title block bid url)},
 				$getblocks
 			);
 
 		} else {
-			$return .= $boxcache->{$bid} ||= portalbox(
-				$constants->{fancyboxwidth},
+			$return .= $boxcache->{$bid} ||= portalsidebox(
 				$boxBank->{$bid}{title},
 				$reader->getBlock($bid, 'block'),
 				$boxBank->{$bid}{bid},
@@ -578,10 +573,11 @@ sub displayStories {
 		$tmpreturn .= $storytext;
 
 		push @links, linkStory({
-			'link'	=> $msg->{readmore},
-			sid	=> $story->{sid},
-			tid	=> $story->{tid},
-			skin	=> $story->{primaryskid}
+			'link'		=> $msg->{readmore},
+			sid		=> $story->{sid},
+			tid		=> $story->{tid},
+			skin		=> $story->{primaryskid},
+			class		=> "more"
 		}, "", $ls_other);
 
 		my $link;
@@ -594,11 +590,11 @@ sub displayStories {
 
 		if ($story->{body_length} || $story->{commentcount}) {
 			push @links, linkStory({
-				'link'	=> $link,
-				sid	=> $story->{sid},
-				tid	=> $story->{tid},
-				mode	=> 'nocomment',
-				skin	=> $story->{primaryskid}
+				'link'		=> $link,
+				sid		=> $story->{sid},
+				tid		=> $story->{tid},
+				mode		=> 'nocomment',
+				skin		=> $story->{primaryskid},
 			}, "", $ls_other) if $story->{body_length};
 
 			my @commentcount_link;
@@ -611,7 +607,7 @@ sub displayStories {
 						tid		=> $story->{tid},
 						threshold	=> $user->{threshold},
 						'link'		=> $thresh,
-						skin		=> $story->{primaryskid}
+						skin		=> $story->{primaryskid},
 					}, "", $ls_other);
 				}
 			}
@@ -641,11 +637,11 @@ sub displayStories {
 				$url = $gSkin->{rootdir} . '/' . $gSkin->{index_handler} . '?section=' . $skin->{name};
 			}
 
-			push @links, [ $url, $skin->{hostname} || $skin->{title} ];
+			push @links, [ $url, $skin->{hostname} || $skin->{title}, "", "section" ];
 		}
 
 		if ($user->{seclev} >= 100) {
-			push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit') ];
+			push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), "", "edit" ];
 		}
 
 		# I added sid so that you could set up replies from the front page -Brian

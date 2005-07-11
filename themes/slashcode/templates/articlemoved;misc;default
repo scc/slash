@@ -19,15 +19,15 @@ articlemoved
 __seclev__
 10000
 __template__
-<HTML>
-<HEAD>
+<html>
+<head>
 <META HTTP-EQUIV="refresh" content="1;URL=[% url %]">
-<TITLE>Page has moved</TITLE>
-</HEAD>
-<BODY>
-<B><font size="+1">This page has moved</font></B>
-<P>
-If your browser doesn't automatically redirect you click the following <A HREF="[% url %]">Link</A>
-</BODY>
-</HTML>
+<title>Page has moved</title>
+</head>
+<body>
+<b>This page has moved</b>
+<p>
+If your browser doesn't automatically redirect you click the following <a href="[% url %]">Link</a>
+</body>
+</html>
 

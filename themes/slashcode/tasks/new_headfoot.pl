@@ -50,7 +50,7 @@ sub skinHeaders {
 		}
 
 		open my $fh, ">$file" or die "Can't open $file : $!";
-		my $header = header("", $skinname, { noheader => 1, Return => 1, Page => $_->[0] });
+		my $header = header("", $skinname, { noheader => 1, Return => 1, Page => $_->[0], nopageid => 1 });
 		print $fh $header;
 		close $fh;
 	}
