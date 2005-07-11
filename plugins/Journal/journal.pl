@@ -134,6 +134,7 @@ sub displayTop {
 		$journals = $zoo->topFriends;
 		slashDisplay('journaltop', { journals => $journals, type => 'friend' });
 	}
+	print getData("journalfoot");
 
 }
 
@@ -155,6 +156,9 @@ sub displayFriends {
 		print getData('nofriends');
 		slashDisplay('searchusers');
 	}
+	print getData("journalfoot");
+
+	
 
 }
 
@@ -200,6 +204,7 @@ sub searchUsers {
 			search	=> 1,
 		});
 	}
+	print getData("journalfoot");
 }
 
 sub displayRSS {
@@ -397,6 +402,7 @@ sub displayArticleFriends {
 		back		=> $back,
 		forward		=> $forward,
 	});
+	print getData("journalfoot");
 }
 
 sub displayArticle {
@@ -522,6 +528,7 @@ sub displayArticle {
 		forward		=> $forward,
 		show_discussion	=> $show_discussion,
 	});
+	print getData("journalfoot");
 
 	if ($show_discussion) {
 		printComments($discussion);
@@ -546,6 +553,7 @@ sub editPrefs {
 		default		=> $theme,
 		themes		=> $themes,
 	});
+	print getData("journalfoot");
 }
 
 sub setPrefs {
@@ -598,6 +606,7 @@ sub listArticle {
 	} else {
 		print getData('noentries', { nickname => $nickname });
 	}
+	print getData("journalfoot");
 }
 
 sub saveArticle {
@@ -734,6 +743,7 @@ sub articleMeta {
 		my $article = $journal->get($form->{id});
 		_printHead("mainhead") or return;
 		slashDisplay('meta', { article => $article });
+		print getData("journalfoot");
 	} else {
 		listArticle(@_);
 	}
@@ -815,6 +825,7 @@ sub editArticle {
 		article		=> $article,
 		format_select	=> $format_select,
 	});
+	print getData("journalfoot");
 }
 
 sub _validFormkey {

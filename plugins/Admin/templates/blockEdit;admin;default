@@ -13,189 +13,108 @@ blockEdit
 __template__
 [% PROCESS titlebar width='100%' %]
 
-<FORM ACTION="[% env.script_name %]" METHOD="POST">
-<INPUT TYPE="HIDDEN" NAME="op" VALUE="blocks">
+<form action="[% env.script_name %]" method="post">
+<fieldset>
+<legend>Block Editor</legend>
+<input type="hidden" name="op" value="blocks">
 
 [% IF blockdelete_flag %]
 
-<INPUT TYPE="HIDDEN" NAME="deletebid" VALUE="[% bid %]">
-<TABLE BORDER="0">
-	<TR>
-		<TD><B>Do you really want to delete Block [% bid %]?</B></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Cancel Delete of [% bid %]" NAME="blockdelete_cancel"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Really Delete [% bid %]!" NAME="blockdelete_confirm"></TD>
-	</TR>
-</TABLE>
-
+<input type="hidden" name="deletebid" value="[% bid %]">
+		Do you really want to delete Block [% bid %]?
+		<input type="submit" value="Cancel Delete of [% bid %]" name="blockdelete_cancel" class="button">
+		<input type="submit" value="Really Delete [% bid %]!" name="blockdelete_confirm" class="button">
 [% ELSE %]
 
-<P>Select a block to edit.
-<UL>
-	<LI>You can only edit static blocks.</LI>
-	<LI>Blocks that are portald type blocks are written by portald</LI>
-</UL>
-</P>
-<TABLE>
+<p>Select a block to edit.
+<ul>
+	<li>You can only edit static blocks.</li>
+	<li>Blocks that are portald type blocks are written by portald</li>
+</ul>
+</p>
+
 [% IF block_select1 %]
-	<TR>
-		<TD><B>Static and Color Blocks</B></TD><TD>
+		<label>Static and Color Blocks</label>
 		[% block_select1 %]
 
-		</TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked1"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete1"></TD>
+		<input type="submit" value="Edit Block" name="blocked1" class="button">
+		<input type="submit" value="Delete Block" name="blockdelete1" class="button">
 		
-	</TR>
 [% END %]
 [% IF block_select2 %]
-	<TR>
-		<TD><B>Portald Blocks</B></TD>
-		<TD>
+		<label>Portald Blocks</label>
 		[% block_select2 %]
-		</TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Edit Block" NAME="blocked2"></TD>
-		<TD><INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete2"></TD>
-	</TR>
+		<input type="submit" value="Edit Block" name="blocked2" class="button">
+		<input type="submit" value="Delete Block" name="blockdelete2" class="button">
 [% END %]
-</TABLE>
 [% END %]
 
 [% IF blockform_flag %]
-<TABLE BORDER="0">
-	<TR>
-		<TD><B>Block ID</B></TD>
-		<TD><INPUT TYPE="TEXT" NAME="thisbid" VALUE="[% bid %]"></TD>
-	</TR>
-	<TR>
-		<TD><B>Title</B></TD>
-		<TD COLSPAN="2">
-<INPUT TYPE="TEXT" SIZE="70" NAME="title" VALUE="[% FILTER strip_attribute %][% blockref.title %][% END %]"></TD>
-	</TR>
-	<TR>
-	<TD><B>Seclev</B></TD><TD><INPUT TYPE="TEXT" NAME="bseclev" VALUE="[% blockref.seclev %]" SIZE="6"></TD>
-	</TR>
-	<TR>
-		<TD><B>Type</B></TD><TD>[% blocktype_select %]</TD>
-	</TR>
-	<TR>
-		<TD><B>Skin</B></TD>
-		<TD COLSPAN="2">[% skins = Slash.db.getDescriptions('skins-all'); Slash.createSelect("skin", skins, blockref.skin, 1, 0, 1) %]</TD>
-	</TR>
-	<TR>
-		<TD><B>Ordernum</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="3" NAME="ordernum" VALUE="[% blockref.ordernum %]"></TD>
-	</TR>
-	<TR>
-		<TD><B>All Skins</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="all_skins" [% all_skins_checked %]></TD>
-	</TR>
+		<label>Block ID</label>
+		<input type="text" name="thisbid" value="[% bid %]">
+		<label>Title</label>
+<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% blockref.title %][% END %]">
+	<label>Seclev</label><input type="text" name="bseclev" value="[% blockref.seclev %]" size="6">
+		<label>Type</label>[% blocktype_select %]
+		<label>Skin</b></label>
+		[% skins = Slash.db.getDescriptions('skins-all'); Slash.createSelect("skin", skins, blockref.skin, 1, 0, 1) %]
+		<label>Ordernum</label>
+		<input type="text" size="3" name="ordernum" value="[% blockref.ordernum %]">
+		<label>All Skins</label>
+		<label><input type="checkbox" value="1" name="all_skins" [% all_skins_checked %]></label>
 	[% IF blockref.type == 'portald' %]
-	<TR>
-		<TD><B>Portal - check if this is a slashbox.</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="portal" [% portal_checked %]></TD>
-	</TR>
-	<TR>
-		<TD><B>Retrieve</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="CHECKBOX" VALUE="1" NAME="retrieve" [% retrieve_checked %]></TD>
-	</TR>
-	<TR>
-		<TD><B>URL</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="url" VALUE="[% blockref.url %]"><BR></TD>
-	</TR>
-	<TR>
-		<TD><B>RDF</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="70" NAME="rdf" VALUE="[% blockref.rdf %]"><BR></TD>
-	</TR>
-	<TR>
-		<TD><B>Autosubmit</B></TD>
-		<TD COLSPAN="2">[% autosubmit_select %]</TD>
-	</TR>
-	<TR>
-		<TD><B>RSS Template</B></TD>
-		<TD COLSPAN="2">[% rss_select %]</TD>
+		<label>Portal - check if this is a slashbox.</label>
+		<input type="checkbox" value="1" name="portal" [% portal_checked %]>
+		<label>etrieve</label>
+		<input type="checkbox" value="1" name="retrieve" [% retrieve_checked %]>
+		<label>URL</label>
+		<input type="text" size="70" name="url" value="[% blockref.url %]">
+		<label>RDF</label>
+		<input type="text" size="70" name="rdf" value="[% blockref.rdf %]">
+		<label>Autosubmit</label>
+		[% autosubmit_select %]
+		<label>RSS Template</label>
+		[% rss_select %]
 		
-	</TR>
-	<TR>
-		<TD>&nbsp;</TD>
-		<TD ALIGN="left" COLSPAN="2">
-		<TABLE BORDER="1" BGCOLOR="#FFFFFF">
-			<TR>
-				<TD><CODE> [% rss_template_code | strip_literal %] </CODE></TD>
-			</TR>
-		</TABLE>
-		<BR>
-		</TD>
-	</TR>
-	<TR>
-		<TD><B>Max RSS Items</B></TD>
-		<TD COLSPAN="2"><INPUT TYPE="TEXT" SIZE="5" NAME="items" VALUE="[% blockref.items %]"><BR></TD>
-	</TR>
+		[% rss_template_code | strip_literal %] 
+		<label>Max RSS Items</label>
+		<input type="text" size="5" name="items" value="[% blockref.items %]">
 	[% END %] 
 
 	[% IF blockedit_flag %]
-		<INPUT TYPE="HIDDEN" NAME="save_existing" VALUE="1">
+		<input type="hidden" name="save_existing" value="1">
 	[% ELSE %]
-		<INPUT TYPE="HIDDEN" NAME="save_new" VALUE="1">
+		<input type="hidden" name="save_new" value="1">
 	[% END %]
 
-	<TR>
-		<TD VALIGN="TOP"><B>Description</B></TD>
-		<TD ALIGN="left" COLSPAN="2">
-		<TEXTAREA ROWS="6" COLS="70" NAME="description">[% blockref.description | strip_literal %]</TEXTAREA>
-		</TD>
-	</TR>
-	<TR>
-		<TD VALIGN="TOP"><B>Block</B><BR>
-		<P>
-			<INPUT TYPE="SUBMIT" VALUE="Save Block" NAME="blocksave"><BR>
-			<INPUT TYPE="SUBMIT" NAME="blockrevert" VALUE="Revert to default">
-			<BR><INPUT TYPE="SUBMIT" NAME="blocksavedef" VALUE="Save as default">
-			(Make sure this is what you want!)
-		</P>
-		</TD>
-		<TD ALIGN="left" COLSPAN="2">
-
-		<TEXTAREA ROWS="15" COLS="100" NAME="block">[% blockref.block | strip_literal %]</TEXTAREA>
-		</TD>
-	</TR>
+		<label>Description</label>
+		<textarea rows="6" cols="70" name="description">[% blockref.description | strip_literal %]</textarea>
+		<b>Block</b><br>
+		<p>
+			<input type="submit" value="Save Block" name="blocksave" class="button">
+			<input type="submit" name="blockrevert" value="Revert to default" class="button">
+			<input type="submit" name="blocksavedef" value="Save as default" class="button">
+			[% PROCESS formNote note="(Make sure this is what you want!)" %]
+		<textarea rows="15" cols="100" name="block">[% blockref.block | strip_literal %]</textarea>
 [% END %]
 
 [% IF form.blockdelete_cancel %]
-	<TR>
-		<TD COLSPAN="3">
-		<INPUT TYPE="SUBMIT" VALUE="Delete Block" NAME="blockdelete"></P>
-		</TD>
-	</TR>
+		<input type="submit" value="Delete Block" name="blockdelete" class="button">
 [% END %]
 
 [% IF ! form.blocknew %]
-	<TR>
-		<TD COLSPAN="3">
-		<INPUT TYPE="SUBMIT" VALUE="Create a new block" NAME="blocknew"></P>
-		</TD>
-	</TR>
+		<input type="submit" value="Create a new block" name="blocknew" class="button">
 [% END %]
 
 
 [% IF blockref.description %]
-	<TR>
-		<TD COLSPAN="3">
-		<TABLE BORDER="2" CELLPADDING="4" CELLSPACING="0" BGCOLOR="[% user.colors.fg_1 %]" WIDTH="80%">
-			<TR>
-				<TD BGCOLOR="[% user.colors.bg_2 %]"><BR><B>Block ID: [% bid %]</B><BR>
-				<P>[% blockref.description %]</P><BR>
-				</TD>
-			</TR>
-		</TABLE>
-		<BR>
-		</TD>
-	</TR>
+				<label>Block ID: [% bid %]</label>
+				<p>[% blockref.description %]</p><br>
 [% END %]
-
-</TABLE>
-</FORM>
-<B><A HREF="[% gSkin.rootdir %]/sections.pl?section=[% sectionbid %]&amp;op=editsection">[% sectionbid %]</A></B>
-(<A HREF="[% gSkin.rootdir %]/users.pl?op=previewbox&amp;bid=[% bid %]">preview</A>)
+</fieldset>
+</form>
+<b><a href="[% gSkin.rootdir %]/sections.pl?section=[% sectionbid %]&amp;op=editsection">[% sectionbid %]</a></b>
+(<a href="[% gSkin.rootdir %]/users.pl?op=previewbox&amp;bid=[% bid %]">preview</a>)
 
 
 

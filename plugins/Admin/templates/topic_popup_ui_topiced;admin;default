@@ -34,7 +34,7 @@ __template__
 		stid_ordered = stcid_ordered;
 	END %]
 <td valign="top" bgcolor="#bbbbbb">
-<font color="[% user.colors.bg_3 %]"><b>[% IF name == "st" %]Parents[% ELSE %]Children[% END %]</b></font><br>
+<b>[% IF name == "st" %]Parents[% ELSE %]Children[% END %]</b><br>
 
 <table cellpadding="2"><tr><td>
 <select name="[% name %]_main_select" size=10 multiple onfocus="[% names.0 %]_change_focus('[% name %]')">

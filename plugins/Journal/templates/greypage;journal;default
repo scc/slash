@@ -12,35 +12,35 @@ __name__
 greypage
 __template__
 [% USE Slash %]
-<P><TABLE>
+<p><table>
 	[% FOREACH article = articles %]
-		<TR><TD ALIGN="LEFT" BGCOLOR="#C0C0C0" COLSPAN="2">
-			<FONT FACE="[% constants.mainfontface %]" size="+1" color="#000000">
-				<B>[% Slash.timeCalc(article.day,"%A %B %d, %Y") %]</B>
-			</FONT>
-		</TD></TR>
+		<tr><td align="left" bgcolor="#C0C0C0" colspan="2">
+			
+				<b>[% Slash.timeCalc(article.day,"%A %B %d, %Y") %]</b>
+			
+		</td></tr>
 
 		[% FOREACH diatribe = article.article %]
-			<TR VALIGN="TOP"><TD ALIGN="RIGHT" BGCOLOR="#E0E0E0" NOWRAP="NOWRAP">
-				<FONT FACE="[% constants.mainfontface %]" SIZE="1" COLOR="#000000">
-					<I>[% Slash.timeCalc(diatribe.date, "%I:%M %p") %]</I>
-				</FONT>
-			</TD><TD>
+			<tr valign="top"><td align="right" bgcolor="#E0E0E0" nowrap="NOWRAP">
+				
+					<i>[% Slash.timeCalc(diatribe.date, "%I:%M %p") %]</i>
+				
+			</td><td>
 				<DIV STYLE="text-align:left">
-					<B><FONT FACE="[% constants.mainfontface %]" SIZE="1">[% diatribe.description %]</FONT></B>
-					<P>
+					<b>[% diatribe.description %]</b>
+					<p>
 					[% diatribe.article %]
-					<A HREF="[% gSkin.rootdir %]/search.pl?tid=[% diatribe.topic.tid %]"
-						><IMG SRC="[% constants.imagedir %]/topics/[% diatribe.topic.image %]" WIDTH="[% diatribe.topic.width %]"
-							HEIGHT="[% diatribe.topic.height %]" BORDER="0" ALIGN="RIGHT"
-							HSPACE="20" VSPACE="10" ALT="[% diatribe.topic.textname %]"></A>
-				</DIV>
-			</TD>
-		</TR>
+					<a href="[% gSkin.rootdir %]/search.pl?tid=[% diatribe.topic.tid %]"
+						><img src="[% constants.imagedir %]/topics/[% diatribe.topic.image %]" width="[% diatribe.topic.width %]"
+							height="[% diatribe.topic.height %]" border="0" align="right"
+							hspace="20" VSPACE="10" ALT="[% diatribe.topic.textname %]"></a>
+				</div>
+			</td>
+		</tr>
 		[% IF diatribe.discussion && !show_discussion %]
-			<TR><TD VALIGN="RIGHT">
-				<A HREF="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</A>
-			</TD></TR>
+			<tr><td valign="right">
+				<a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</a>
+			</td></tr>
 		[% END %]
 		[% END %]
 	[% END %]
@@ -48,11 +48,11 @@ __template__
 [% PROCESS pagination %]
 
 	[% IF !user.is_anon && uid && uid != user.uid %]
-		<TR VALIGN="TOP"><TD ALIGN="RIGHT" BGCOLOR="#E0E0E0">
-			<A HREF="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Make a friend</A>
-		</TD></TR>
+		<tr valign="top"><td align="right" bgcolor="#E0E0E0">
+			<a href="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Make a friend</a>
+		</td></tr>
 	[% END %]
-</TABLE>
+</table>
 
 __seclev__
 100

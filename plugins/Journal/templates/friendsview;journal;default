@@ -12,53 +12,53 @@ __name__
 friendsview
 __template__
 [% USE Slash %]
-<BR>
-<TABLE WIDTH="95%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<br>
+<table width="95%" border="0" cellpadding="0" cellspacing="0">
 [% FOREACH diatribe = articles %]
 	[% topic = diatribe.topic %]
-	<TR><TD>
+	<tr><td>
 		[% PROCESS titlebar title => diatribe.description, width => "90%" %]
-		<TABLE WIDTH="90%" BORDER="0" CELLPADDING="0" CELLSPACING="0"> <TR>
-			<TD BGCOLOR="[% user.colors.bg_2 %]" VALIGN="TOP">
-				<B>Posted by <A HREF="[% gSkin.rootdir %]/~[% diatribe.nickname | fixparam %]/journal/">[% diatribe.nickname | strip_literal %]</A> [% user.aton %]
-				<I>[% Slash.timeCalc(diatribe.date) %]</I> (<A HREF="[% gSkin.rootdir %]/~[% diatribe.nickname | fixparam %]/journal/[% diatribe.id %]">#[% diatribe.id %]</A>)
-			</TD>
-			<TD BGCOLOR="[% user.colors.bg_2 %]" VALIGN="TOP" ALIGN="RIGHT">
+		<table width="90%" border="0" cellpadding="0" cellspacing="0"> <tr>
+			<td bgcolor="[% user.colors.bg_2 %]" valign="top">
+				<b>Posted by <a href="[% gSkin.rootdir %]/~[% diatribe.nickname | fixparam %]/journal/">[% diatribe.nickname | strip_literal %]</a> [% user.aton %]
+				<i>[% Slash.timeCalc(diatribe.date) %]</i> (<a href="[% gSkin.rootdir %]/~[% diatribe.nickname | fixparam %]/journal/[% diatribe.id %]">#[% diatribe.id %]</a>)
+			</td>
+			<td bgcolor="[% user.colors.bg_2 %]" valign="top" align="right">
 				&nbsp;
 				[% IF diatribe.discussion %]
-					<A HREF="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">[% diatribe.commentcount %] Comment[% diatribe.commentcount != 1 ? "s" : "" %]</A>
+					<a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">[% diatribe.commentcount %] Comment[% diatribe.commentcount != 1 ? "s" : "" %]</a>
 				[% END %]
-			</TD>
-		</TR>
-		<TR>
-			<TD COLSPAN="2">
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
 			[%# at some point, this needs to be linked to the topic lookup by discussion %]
-			<IMG SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" WIDTH="[% topic.width %]" HEIGHT="[% topic.height %]" ALIGN="RIGHT">
+			<img SRC="[% constants.imagedir %]/topics/[% topic.image %]" ALT="[% topic.alttext %]" width="[% topic.width %]" HEIGHT="[% topic.height %]" align="right">
 			[% diatribe.article %]
-			</TD>
-		</TR>
-		</TABLE>
+			</td>
+		</tr>
+		</table>
 
-	<BR><BR>
+	<br><br>
 [% END %]
 
 	[% back = back || 0 %]
 	[% IF (back > -1) || forward %]
-		<TR VALIGN="TOP">
-			<TD ALIGN="RIGHT" COLSPAN="2"><FONT SIZE="1">
+		<tr valign="top">
+			<td align="right" colspan="2">
 				[% IF forward %]
-					<A HREF="[% gSkin.rootdir %]/journal.pl?op=friendview&amp;uid=[% uid %]&amp;start=[% forward %]">&lt; Previous  [% constants.journal_default_display %] entries</A>
+					<a href="[% gSkin.rootdir %]/journal.pl?op=friendview&amp;uid=[% uid %]&amp;start=[% forward %]">&lt; Previous  [% constants.journal_default_display %] entries</a>
 				[% END %]
 				[% IF (back > -1) && forward %]
 					|
 				[% END %]
 				[% IF (back > -1) %]
-					<A HREF="[% gSkin.rootdir %]/journal.pl?op=friendview&amp;uid=[% uid %]&amp;start=[% back %]">Next [% constants.journal_default_display %] entries &gt;</A>
+					<a href="[% gSkin.rootdir %]/journal.pl?op=friendview&amp;uid=[% uid %]&amp;start=[% back %]">Next [% constants.journal_default_display %] entries &gt;</a>
 				[% END %]
-			</FONT></TD>
-		</TR>
+			</td>
+		</tr>
 	[% END %]
-</TABLE>
+</table>
 
 __seclev__
 500
