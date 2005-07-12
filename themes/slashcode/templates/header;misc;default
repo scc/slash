@@ -32,7 +32,6 @@ __template__
 	<br>
 	<a href="#blocks">Slash Boxes</a>
 </div>
-[% PROCESS ostg_navbar %]
 <div class="ad1">
 [% IF constants.run_ads %]
 <!-- add code. You can use your own ad system - we use one that 
