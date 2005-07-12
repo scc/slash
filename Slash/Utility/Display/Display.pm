@@ -967,14 +967,6 @@ sub portalsidebox {
 
 Print links to pages for additional comments.
 
-
-
-#========================================================================
-
-=head2 linkCommentPages(SID, PID, CID, TOTAL)
-
-Print links to pages for additional comments.
-
 =over 4
 
 =item Parameters

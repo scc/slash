@@ -899,20 +899,19 @@ sub getMetamodsForUserRaw {
 }
 
 sub getCSSValuesHashForCol {
-	my ($self, $col) = @_;
-	my $values = $self->sqlSelectColArrayref($col, "css", "", "", { distinct => 1});
-	my $result;
-	%$result =  map { $_ => 1 } @$values;
+	my($self, $col) = @_;
+	my $values = $self->sqlSelectColArrayref($col, 'css', '', '', { distinct => 1 });
+	my $result = { map { $_ => 1 } @$values };
 	return $result;
 }
 
 sub getCSS {
-	my ($self) = @_;
+	my($self) = @_;
 	my $user = getCurrentUser();
 	my $page = $user->{currentPage};
-	my $skid = getCurrentSkin("skid");
+	my $skid = getCurrentSkin('skid');
 	my $admin = $user->{is_admin};
-	my $theme = $user->{light} ? "light" : "";
+	my $theme = $user->{light} ? 'light' : "";
 	my $constants = getCurrentStatic();
 	
 	my $expire_time = $constants->{css_expire} || 3600;
@@ -927,9 +926,9 @@ sub getCSS {
 	my $css_skids_ref	= $self->{_css_skids_cache};
 	my $css_themes_ref	= $self->{_css_themes_cache};
 
-	$css_pages_ref = $self->getCSSValuesHashForCol("page") if !$css_pages_ref;
-	$css_skids_ref = $self->getCSSValuesHashForCol("skid")   if !$css_skids_ref;
-	$css_themes_ref= $self->getCSSValuesHashForCol("theme") if !$css_themes_ref;
+	$css_pages_ref = $self->getCSSValuesHashForCol('page') if !$css_pages_ref;
+	$css_skids_ref = $self->getCSSValuesHashForCol('skid')   if !$css_skids_ref;
+	$css_themes_ref= $self->getCSSValuesHashForCol('theme') if !$css_themes_ref;
 
 	$page   = '' if !$css_pages_ref->{$page};	
 	$skid   = 0  if !$css_skids_ref->{$skid};	
@@ -957,7 +956,6 @@ sub getCSS {
 	
 	$css_ref->{$skid}{$page}{$admin}{$theme} = $css;
         return $css;
-
 }
 
 ########################################################
@@ -4349,7 +4347,7 @@ sub setStory {
 	# keep the value the same.
 	# Note:  this isn't exactly right.  If the stories table is the
 	# only one being written to, we shouldn't set last_update
-	# manually, we should let it be set iff another column changes.
+	# manually, we should let it be set if another column changes.
 	# Doing it this way doesn't really hurt anything though.
 
 	if (!exists($change_hr->{last_update})
@@ -9300,7 +9298,7 @@ sub getSlashConf {
 						)],
 		charrefs_bad_entity =>		[qw( zwnj zwj lrm rlm )],
 		charrefs_bad_numeric =>		[qw( 8204 8205 8206 8207 8236 8237 8238 )],
-		charrefs_good_entity =>		[qw( amp lt gt euro pound yen )],
+		charrefs_good_entity =>		[qw( amp lt gt euro pound yen rsquo lsquo rdquo ldquo ndash mdash )],
 		charrefs_good_numeric =>	[ ],
 		cur_performance_stat_ops =>	[ ],
 		fixhrefs =>			[ ],

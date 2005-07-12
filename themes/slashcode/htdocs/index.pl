@@ -74,8 +74,8 @@ my $start_time = Time::HiRes::time;
 
 	# Decide what our issue is going to be.
 	my $limit;
-	my $issue = $form->{issue} || "";
-	$issue = "" if $issue !~ /^\d{8}$/;
+	my $issue = $form->{issue} || '';
+	$issue = '' if $issue !~ /^\d{8}$/;
 #	if ($issue) {
 #		if ($user->{is_anon}) {
 #			$limit = $gSkin->{artcount_max} * 3;
@@ -165,7 +165,7 @@ my $start_time = Time::HiRes::time;
 	return do_rss($reader, $constants, $user, $form, $stories, $skin_name) if $rss;
 
 	# Do we want to display the plug offering the user a daypass?
-	my $daypass_plug_text = "";
+	my $daypass_plug_text = '';
 	if ($constants->{daypass}) {
 		# If this var is set, only offer a daypass when there
 		# is a future story available.
@@ -267,7 +267,7 @@ sub getSidFromRemark {
 	my($remark) = @_;
 	my $regex = regexSid();
 	my($sid) = $remark =~ $regex;
-	return $sid || "";
+	return $sid || '';
 }
 
 sub do_rss {
@@ -411,7 +411,7 @@ sub displayStandardBlocks {
 				$bid,
 				'',
 				$getblocks,
-				"olderstuff"
+				'olderstuff'
 			) if @$older_stories_essentials;
 
 		} elsif ($bid eq 'userlogin' && ! $user->{is_anon}) {
@@ -424,7 +424,7 @@ sub displayStandardBlocks {
 				$boxBank->{$bid}{bid},
 				$boxBank->{$bid}{url},
 				$getblocks,
-				"login"
+				'login'
 			);
 
 		} elsif ($bid eq 'poll' && !$constants->{poll_cache}) {
@@ -577,8 +577,8 @@ sub displayStories {
 			sid		=> $story->{sid},
 			tid		=> $story->{tid},
 			skin		=> $story->{primaryskid},
-			class		=> "more"
-		}, "", $ls_other);
+			class		=> 'more'
+		}, '', $ls_other);
 
 		my $link;
 
@@ -595,7 +595,7 @@ sub displayStories {
 				tid		=> $story->{tid},
 				mode		=> 'nocomment',
 				skin		=> $story->{primaryskid},
-			}, "", $ls_other) if $story->{body_length};
+			}, '', $ls_other) if $story->{body_length};
 
 			my @commentcount_link;
 			my $thresh = $threshComments[$user->{threshold} + 1];
@@ -608,7 +608,7 @@ sub displayStories {
 						threshold	=> $user->{threshold},
 						'link'		=> $thresh,
 						skin		=> $story->{primaryskid},
-					}, "", $ls_other);
+					}, '', $ls_other);
 				}
 			}
 
@@ -618,7 +618,7 @@ sub displayStories {
 				threshold	=> -1,
 				'link'		=> $story->{commentcount} || 0,
 				skin		=> $story->{primaryskid}
-			}, "", $ls_other);
+			}, '', $ls_other);
 
 			push @commentcount_link, $thresh, ($story->{commentcount} || 0);
 			push @links, getData('comments', { cc => \@commentcount_link })
@@ -637,11 +637,11 @@ sub displayStories {
 				$url = $gSkin->{rootdir} . '/' . $gSkin->{index_handler} . '?section=' . $skin->{name};
 			}
 
-			push @links, [ $url, $skin->{hostname} || $skin->{title}, "", "section" ];
+			push @links, [ $url, $skin->{hostname} || $skin->{title}, '', 'section'];
 		}
 
 		if ($user->{seclev} >= 100) {
-			push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), "", "edit" ];
+			push @links, [ "$gSkin->{rootdir}/admin.pl?op=edit&sid=$story->{sid}", getData('edit'), '', 'edit' ];
 		}
 
 		# I added sid so that you could set up replies from the front page -Brian

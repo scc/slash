@@ -1520,7 +1520,7 @@ sub editStory {
 	});
 
 	my $ispell_comments = {
-		introtext =>    get_ispell_comments($storyref->{introtext}),
+		introtext =>    get_ispell_comments("$storyref->{title} $storyref->{introtext}"),
 		bodytext =>     get_ispell_comments($storyref->{bodytext}),
 	} unless $user->{no_spell};
 
@@ -2009,6 +2009,7 @@ sub updateStory {
 		introtext	=> $form->{introtext},
 		relatedtext	=> $form->{relatedtext},
 		-rendered	=> 'NULL', # freshenup.pl will write this
+		is_dirty	=> 1
 	};
 
 	for (qw(dept bodytext relatedtext)) {
