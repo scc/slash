@@ -3118,7 +3118,7 @@ INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, 
 
 
 # Run this only if you don't already have this CSS file already in the table or whatever theme you may be using instead 
-INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode.css','Slashcode',0,'','no','',3);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode.css','Slashcode',0,'','no','',3,0);
 
 SELECT @page_ctid := ctid FROM css_type where name="page";
 
