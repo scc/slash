@@ -915,7 +915,7 @@ sub getCSS {
 	my $theme = $user->{light} ? "light" : "";
 	my $constants = getCurrentStatic();
 	
-	my $expire_time = $constants->{css_expire} || 900;
+	my $expire_time = $constants->{css_expire} || 3600;
 	$expire_time += int(rand(60)) if $expire_time;
 	_genericCacheRefresh($self, 'css', $expire_time);
 	_genericCacheRefresh($self, 'css_pages', $expire_time);
@@ -953,7 +953,7 @@ sub getCSS {
         my $where = "css.ctid=css_type.ctid AND ";
 	$where .= join ' AND ', @clauses;
 
-        my $css = $self->sqlSelectAllHashrefArray("rel,type,media,href,title", "css, css_type", $where, "ORDER BY css_type.ordernum, css.ordernum");
+        my $css = $self->sqlSelectAllHashrefArray("rel,type,media,file,title", "css, css_type", $where, "ORDER BY css_type.ordernum, css.ordernum");
 	
 	$css_ref->{$skid}{$page}{$admin}{$theme} = $css;
         return $css;
