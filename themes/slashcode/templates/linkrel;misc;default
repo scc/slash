@@ -36,7 +36,7 @@ __template__
  END -%]
 [%- FOREACH file = css -%]
 	[% tmp = BLOCK -%]
-	<link rel="[% file.rel %]" type="[% file.type %]" media="[% file.media %]" href="[% file.href %]" [% IF title %]title="[% file.title %]"[% END %] >
+	<link rel="[% file.rel %]" type="[% file.type %]" media="[% file.media %]" href="[% gSkin.rootdir %]/[% file.href %]" [% IF title %]title="[% file.title %]"[% END %] >
 	[%- END;
 	 linkrels.push(tmp) %]
 [% END -%]
