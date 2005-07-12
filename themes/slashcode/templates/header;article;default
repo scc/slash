@@ -63,7 +63,7 @@ in this block -->
 		</div>
 		<div id="contents">
 			[% UNLESS nopageid %]
-			<div id="article">
+			<div id="[% user.currentPage %]">
 			[% END %]
 __seclev__
 10000

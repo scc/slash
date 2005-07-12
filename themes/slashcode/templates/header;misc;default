@@ -63,7 +63,7 @@ in this block -->
 		</div>
 		<div id="contents">
 			[% UNLESS nopageid %]
-			<div id="[% pagewrap = env.script_name | replace('.pl', ''); pagewrap  | replace('\/', '');  %]">
+			<div id="[% user.currentPage  %]">
 			[% END %]
 __seclev__
 10000
