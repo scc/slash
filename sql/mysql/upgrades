@@ -3071,8 +3071,51 @@ INSERT INTO vars (name, value, description) VALUES ('hc_q1_lettersomit', 'hlou',
 
 # End of T_2_5_0_74, Start of T_2_5_0_75 - 2005/06/28
 
-# Changes for plugins/HumanConf (ignore if not using that plugin)
-# and if you use the first, you may want to customize the second
-INSERT INTO vars (name, value, description) VALUES ('hc_q1_usedict', '', 'For question 1 (images), use words from a dictionary? if blank, no; otherwise, value is the absolute path to the newline-delimited file e.g. /usr/dict/words and hc_q1_lettersomit is ignored');
-INSERT INTO vars (name, value, description) VALUES ('hc_q1_usedict_excl', 'shiny$ metal ^daffodil', 'If hc_q1_usedict is set, space-sep list of regexes to exclude from words to use');
 
+INSERT INTO vars (name, value, description) VALUES ('ssihead_inc_page', 'article', 'Pages that should always use their own .inc for ssihead');
+
+CREATE TABLE css_type (
+	ctid TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARCHAR(32) NOT NULL DEFAULT '',
+	ordernum TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY  (ctid)
+) TYPE=InnoDB;
+
+CREATE TABLE css (
+	csid int(11) NOT NULL AUTO_INCREMENT,
+	rel VARCHAR(32) DEFAULT 'stylesheet',
+	type VARCHAR(32) DEFAULT 'text/css',
+	media VARCHAR(32) DEFAULT 'screen, projection',
+	file VARCHAR(64),
+	title VARCHAR(32),
+	skid INT(11) DEFAULT '0',
+	page VARCHAR(32) DEFAULT '',
+	admin ENUM('no','yes') DEFAULT 'no',
+	theme VARCHAR(32) DEFAULT '',
+	ctid TINYINT(4) NOT NULL DEFAULT '0',
+	ordernum int(11) DEFAULT '0',
+	PRIMARY KEY  (csid),
+	KEY ctid (ctid),
+	KEY page_skid (page,skid),
+	KEY skid_page (skid,page)
+) TYPE=InnoDB;
+
+INSERT INTO css_type (ctid, name, ordernum) VALUES (1,'base',1);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (2,'theme',3);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (3,'page',2);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (4,'user_theme',4);
+INSERT INTO css_type (ctid, name, ordernum) VALUES (5,'print',5);
+
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','base.css','Slashcode',0,'','no','',1,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'comments','no','',3,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'article','no','',3,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','print','print.css','Print',0,'','no','',5,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','admin.css','Slashcode',0,'','yes','',1,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'pollBooth','no','',3,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode_lite.css','Slashcode',0,'','no','light',4,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'journal','no','',3,0);
+
+
+SELECT @page_ctid := ctid FROM css_type where name="page";
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','search.css','Slashcode',0,'search','no','',@page_ctid,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','polls.css','Slashcode',0,'pollBooth','no','',@page_ctid,0);
