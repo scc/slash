@@ -478,6 +478,11 @@ div.storylinks ul li.comments a
 
 div.storylinks ul li.section { position: relative; }
 div.storylinks ul li.edit { position: relative; }
+/* Comments */
+.commentBox
+{
+        background: #600;
+}
 
 /* Footer */
 #footer
@@ -501,37 +506,14 @@ div.storylinks ul li.edit { position: relative; }
 	position: relative;
 }
 
-#footer em
-{
-        font-size: 85%;
-        float: right;
-        width: 45%;
-        text-align: center;
-        padding: 1.6em 0;
-        vertical-align: middle;
-        font-style: italic;
-        position: relative;
-}
-        
 #footer .search
-{       
-        font-size: 70%; 
-        width: 50%;
-        text-align: center;
-        padding: .6em 0 0 0;
-        margin: 0;
-        vertical-align: middle;
-        position: relative;
-}
-        
-#footer legend, #footer fieldset, #footer label
 {
-        margin: 0;
-        padding: 0;
-}       
-
-#footer .search input {
-        margin: 0;
+	font-size: small;
+	width: 50%;
+	text-align: center;
+	padding: .6em 0 0 0;
+	vertical-align: middle;
+	position: relative;
 }
 
 #footer .copyright
@@ -551,38 +533,20 @@ div.storylinks ul li.edit { position: relative; }
 	list-style: none;
 	display: inline;
 }
-
-/* Bottom Nav */
-ul.btmnav li
-{
-	border-left: 1px solid #555;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	display: inline;
-}
-
-ul.btmnav li.begin { border: none; }
-
-ul.btmnav a
-{
-	color: #600;
-	padding: 0 .4em;
-}
-
-ul.btmnav li.begin a { padding: 0 .4em 0 0; }
-
-ul.btmnav
-{
-	font-size: small;
-	color: #600;
-	text-align: center;
-	margin: 0 0 .4em 0;
-	position: relative;
-}
-
-ul.btmnav a:visited { color: #000; }
+/* Poll */
 .barColor
 {
         background: #600;
 }
+
+/* Bottom Nav */
+.btmnav
+{
+        color: #600;
+}
+.btmnav ul li a
+{
+        color: #600;
+}
+
+
