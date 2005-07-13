@@ -203,9 +203,6 @@ img { border: none; }
 	margin: 0 1em;
 	position: relative;
 }
-#slashboxes label.checkbox {
-        display: block;
-}
 /* login content */
 #slashboxes #userlogin-content legend,
 #slashboxes #login-content legend,
@@ -300,6 +297,7 @@ img { border: none; }
 	position: relative;
 	padding: 0;
 	margin: 0 0 0 7.2em;
+	min-width: 30em;
 }
 
 #messages, #submit, #comments, #login, #404, #pollBooth, #wide, #search, #authors, #topics
@@ -356,13 +354,15 @@ img { border: none; }
 	margin: 0;
 	position: relative;
 }
+html > body .body {
+min-height: 50px;
+}
 .body
 {
 	padding: .8em 1em 1em 1em;
 	margin: 0;
 	position: relative;
-	height: 100%;
-	min-height: 50px;
+height: 100%;
 }
 
 .article .details strong, .journalgeneric .details strong
@@ -477,40 +477,34 @@ div.storylinks ul li.edit { position: relative; }
 }
 
 /* Bottom Nav */
-.btmnav
-{
-        font-size: 70%;
-        font-family: arial, sans-serif;
-        color: #999;
-        text-align: center;
-        padding: 0 0 2em 0;
-        position: relative;
-        clear: both;
-}
-.btmnav ul {
-        margin: 0;
-        padding: 0;
-}
 .btmnav ul li
 {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        display: inline;
-        border: none;
+	border-left: 1px solid #555;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: inline;
 }
 
+.btmnav ul li.begin { border: none; }
 
 .btmnav ul li a
 {
-        color: #999;
-        padding: 0 .2em 0 .5em;
-        border-left: 1px solid #555;
+	color: #999;
+	padding: 0 .4em;
 }
 
-.btmnav ul li.begin a { border: none;}
-.btmnav ul a:visited { color: #000; }
+.btmnav ul li.begin a { padding: 0 .4em 0 0; }
 
+.btmnav
+{
+	color: #999;
+	text-align: center;
+	margin: 0 0 .4em 0;
+	position: relative;
+}
+
+.btmnav ul li a:visited { color: #000; }
 
 /* Usermenu */
 #usermenu {
@@ -538,6 +532,7 @@ ul.menu li {
 ul.menu li a {
         border-left: 1px solid #ccc;
         padding: 0 .3em;
+	width: auto;
 }
 ul.menu li a.begin {
 	border: none;
@@ -623,6 +618,3 @@ ul.menu li.selected a {
 .data_hl3 { background: #eee;         font-size: 75.5%;
         font-family: arial, sans-serif;}
 .data_hl3 td {border-top: 1px solid #fff;}
-
-
-
