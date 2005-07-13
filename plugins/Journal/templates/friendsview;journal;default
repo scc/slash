@@ -36,6 +36,7 @@ __template__
                                                 [% diatribe.article %]
                                         </div>
                                 </div>
+			</div>
 
 [% END %]
 
