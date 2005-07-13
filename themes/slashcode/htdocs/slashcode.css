@@ -284,7 +284,19 @@ input.button
 	margin: 0 1em;
 	position: relative;
 }
-
+/* Quick links content */
+#slashboxes #index_qlinks-content ul 
+{
+        list-style: none;
+        padding: 0;
+        margin: 0;
+}
+#slashboxes #index_qlinks-content li 
+{
+        list-style: none;
+        padding: 0;
+        margin: 0;
+}
 /* olderstuff content */
 #slashboxes #olderstuff-content ul
 {
