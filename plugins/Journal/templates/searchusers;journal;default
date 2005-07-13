@@ -11,13 +11,13 @@ en_US
 __name__
 searchusers
 __template__
-<form method="post" action="[% gSkin.rootdir %]/journal.pl" ENCtype="application/x-www-form-urlencoded">
+<form method="post" action="[% gSkin.rootdir %]/journal.pl" enctype="application/x-www-form-urlencoded">
 	<fieldset>
 		<legend>Find a User&#39;s Journal</legend>
 		<input type="hidden" name="op" value="searchusers">
 		<input type="text" name="nickname" size="20">
 		<input type="submit" value="Find" class="button">
-		[% PROCESS formNotes note = 'Yes we all need a friend to hold on to' %]
+		[% PROCESS formNote note = 'Yes we all need a friend to hold on to' %]
 	</fieldset>
 </form>
 
