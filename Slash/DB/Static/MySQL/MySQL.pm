@@ -2642,7 +2642,7 @@ sub getHeadFootPages {
 	return [] unless $headfoot eq 'header' || $headfoot eq 'footer';
 	my $constants = getCurrentStatic();
 
-	my %inc_always = map { $_ => 1 } @{$constants->{ssi_head_inc_pages}};
+	my %inc_always = map { $_ => 1 } @{$constants->{ssihead_inc_pages}};
 
 	$skin ||= 'default'; # default to default
 
