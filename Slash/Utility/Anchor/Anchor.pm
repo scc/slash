@@ -345,6 +345,7 @@ sub footer {
 	my $display;
 
         if ($form->{ssi} && $form->{ssi} eq 'yes') {
+		ssiHeadFoot('footer', $options);
                 return 1;
         }
 
