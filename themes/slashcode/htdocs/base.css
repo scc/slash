@@ -17,7 +17,7 @@ sup
 	padding: 0;
 }
 
-a { color: #600; }
+a { word-wrap: break-word; color: #600; }
 a:visited { color: #000; }
 a:hover { text-decoration: none; }
 img { border: none; }
@@ -614,4 +614,10 @@ ul.menu li.selected a {
         font-family: arial, sans-serif;}
 .data_hl3 td {border-top: 1px solid #fff;}
 
-/* v1 */
+/* Misc */
+
+blockquote, pre {
+	overflow: auto;
+	overflow-x: auto;
+  	width: 80%;
+  }
