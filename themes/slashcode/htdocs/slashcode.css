@@ -25,6 +25,8 @@ a:hover { text-decoration: none; }
 img { border: none; }
 #jump { display: none; }
 
+blockquote {overflow: auto;}
+
 /* Forms */
 #frame
 {
