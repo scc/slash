@@ -2,7 +2,7 @@
 <HEAD>
 	<TITLE>About Slashcode</TITLE>
 <!--#include virtual="/slashhead.inc"-->
-
+<div id="about">
 
 <H1>About This Site</H1>
 
