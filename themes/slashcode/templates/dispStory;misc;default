@@ -100,7 +100,9 @@ END %]
 
 [% IF full && story.bodytext %]
 	[% IF constants.run_ads && constants.ad_messaging_num; Slash.getAd(constants.ad_messaging_num); END %]
-		[% story.bodytext %]
+		<div class="full">
+			[% story.bodytext %]
+		</div>
 	[% ELSE %]
 		[% IF constants.run_ads && constants.ad_messaging_num;
 			Slash.getAd(constants.ad_messaging_num);
