@@ -214,6 +214,17 @@ div.storylinks ul li { border-left: 1px solid #555; }
 
 .btmnav ul li a { color: #600; }
 
+/* Journal */
+
+.journalslashdot .title {float: left;}
+.journalslashdot h3 { font-size: 65%; font-family: verdana, sans-serif;}
+.journalslashdot .details { float: left; font-style: italic; font-size: 65%; font-family: verdana, sans-serif; background: transparent;}
+.journalslashdot .intro {padding: 2em 0;}
+.journalslashdot div.storylinks { float: left; margin: 0; padding: 0; background: transparent;font-size: 65%;}
+.journalslashdot div.storylinks ul { margin: 0; padding: 0; background: transparent;}
+.journalslashdot div.storylinks ul li { margin: 0; padding: 0; border: none;  font-family: verdana, sans-serif; }
+.journalslashdot div.storylinks ul li.discussion a { padding: 0 .3em 0 1em;  border: none; }
+.journalslashdot div.storylinks ul li a { padding: 0 .3em 0 1em;  border-left: 1px solid #000; }
 
 /* Misc */
 pre, blockquote, code
