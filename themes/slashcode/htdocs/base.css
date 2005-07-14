@@ -7,7 +7,7 @@ body, div, form, h1, h2, h3, h4, h5, h6, #links ul li, #links ul, #topnav, img
 body
 {
 	color: #000;
-	font-family: Times, serif;
+	font-family: serif;
 	position: relative;
 }
 
@@ -17,16 +17,52 @@ sup
 	padding: 0;
 }
 
-a { word-wrap: break-word; color: #600; }
+a
+{
+	word-wrap: break-word;
+	color: #600;
+}
+
 a:visited { color: #000; }
 a:hover { text-decoration: none; }
 img { border: none; }
 #jump { display: none; }
 
+/* layout */
+
 #frame
 {
 	margin: 0 .8em;
 	position: relative;
+}
+
+#contents
+{
+	width: auto;
+	z-index: 1;
+	position: relative;
+	padding: 0;
+	margin: 0 0 0 7.2em;
+}
+
+#messages, #submit, #comments, #login, #404, #pollBooth, #wide, #search, #authors, #topics
+{
+	overflow: visible;
+	height: 100%;
+	z-index: 2;
+	position: relative;
+	margin: 0 0 1em 0;
+	padding: 0;
+}
+
+#articles, #users-blocks, #polls
+{
+	overflow: visible;
+	height: 100%;
+	z-index: 2;
+	position: relative;
+	margin: 0 15.6em 1em 0;
+	padding: 0;
 }
 
 /* Header */
@@ -83,7 +119,6 @@ img { border: none; }
 
 #links div.block
 {
-
 	padding: 0;
 	margin: 0 0 1em 0;
 	position: relative;
@@ -105,7 +140,7 @@ img { border: none; }
 	position: relative;
 }
 
-#links h4 a { color: #fff; }
+#links h4 a, #links h4 a:visited { color: #fff; }
 
 #links div.content
 {
@@ -182,7 +217,7 @@ img { border: none; }
 	z-index: 4;
 }
 
-#slashboxes h4 a { color: #fff; }
+#slashboxes h4 a, #slashboxes h4 a:visited  { color: #fff; }
 
 #slashboxes div.content
 {
@@ -203,13 +238,12 @@ img { border: none; }
 	margin: 0 1em;
 	position: relative;
 }
+
 /* login content */
 #slashboxes #userlogin-content legend,
 #slashboxes #login-content legend,
-#login legend
-{
-	display: none;
-}
+#login legend { display: none; }
+
 #slashboxes #userlogin-content fieldset,
 #slashboxes #login-content fieldset,
 #login fieldset
@@ -251,7 +285,6 @@ img { border: none; }
 {
 	padding: 0;
 	margin: 0;
-	height: 100%;
 	position: relative;
 }
 
@@ -271,58 +304,25 @@ img { border: none; }
 	position: relative;
 }
 
-.generaltitle h3 a
+.generaltitle h3 a, .generaltitle h3 a:visited
 {
 	color: #fff;
 	position: relative;
 }
-.generaltitle h3 a:visited
-{
-        color: #fff;
-}
+
 .generalbody
 {
-        padding: 1em;
-        margin: 0 0 1em 0;
-        height: 100%;
-	width: auto;
-        z-index: 2;
-        position: relative;
-}
-/* layout */
-#contents
-{
-	width: auto;
-	z-index: 1;
-	position: relative;
-	padding: 0;
-	margin: 0 0 0 7.2em;
-	min-width: 30em;
-}
-
-#messages, #submit, #comments, #login, #404, #pollBooth, #wide, #search, #authors, #topics
-{
-	overflow: visible;
-	height: 100%;
-	z-index: 2;
-	position: relative;
+	padding: 1em;
 	margin: 0 0 1em 0;
-	padding: 0;
-}
-
-#articles, #users-blocks, #polls
-{
-	overflow: visible;
 	height: 100%;
+	width: auto;
 	z-index: 2;
 	position: relative;
-	margin: 0 15.6em 1em 0;
-	padding: 0;
 }
 
 
 /* articles */
-.article
+.article, .journalgeneric
 {
 	padding: 0;
 	margin: 0;
@@ -345,7 +345,7 @@ img { border: none; }
 	position: relative;
 }
 
-.article h3 a, .journalgeneric h3 a { color: #fff; }
+.article h3 a, .journalgeneric h3 a, .article h3 a:visited, .journalgeneric h3 a:visited { color: #fff; }
 
 .article .details, .journalgeneric .details
 {
@@ -353,13 +353,13 @@ img { border: none; }
 	margin: 0;
 	position: relative;
 }
-html > body .body {
-min-height: 50px;
-}
+
+
 .body
 {
-	padding: .8em 1em 1em 1em;
+	padding: 1em;
 	margin: 0;
+	min-height: 50px;
 }
 
 .article .details strong, .journalgeneric .details strong
@@ -387,26 +387,26 @@ min-height: 50px;
 	margin: 0 0 1em 0;
 	position: relative;
 }
-
+.full {
+        margin: 1em 0 0 0;
+        position: relative;
+}
 div.storylinks
 {
 	margin: 0 0 1em 0;
 	padding: 0;
-	position: relative;
 }
 
 div.storylinks div
 {
 	margin: 0;
 	padding: 0;
-	position: relative;
 }
 
 div.storylinks ul
 {
 	padding: .4em .4em .6em .4em;
 	margin: 0;
-	position: relative;
 }
 
 div.storylinks ul li
@@ -415,25 +415,18 @@ div.storylinks ul li
 	padding: 0 .2em 0 .4em;
 	list-style: none;
 	display: inline;
-	position: relative;
 }
 
-div.storylinks ul li.more,
-div.storylinks ul li.discussion
+div.storylinks ul li.more
 {
 	border: none;
 	font-weight: bold;
-	position: relative;
 }
 
 div.storylinks ul li.comments a
 {
 	font-weight: bold;
-	position: relative;
 }
-
-div.storylinks ul li.section { position: relative; }
-div.storylinks ul li.edit { position: relative; }
 
 /* Footer */
 #footer
@@ -446,8 +439,6 @@ div.storylinks ul li.edit { position: relative; }
 
 #footer em
 {
-	float: right;
-	width: 45%;
 	text-align: center;
 	padding: 1.6em 0;
 	vertical-align: middle;
@@ -455,16 +446,7 @@ div.storylinks ul li.edit { position: relative; }
 	position: relative;
 }
 
-#footer .search
-{
-	width: 50%;
-	text-align: center;
-	padding: .6em 0 0 0;
-	vertical-align: middle;
-	position: relative;
-}
-
-#footer .copyright
+.copyright
 {
 	clear: both;
 	text-align: center;
@@ -472,127 +454,166 @@ div.storylinks ul li.edit { position: relative; }
 }
 
 /* Bottom Nav */
-.btmnav ul li
-{
-	border-left: 1px solid #555;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	display: inline;
-}
-
-.btmnav ul li.begin { border: none; }
-
-.btmnav ul li a
-{
-	color: #999;
-	padding: 0 .4em;
-}
-
-.btmnav ul li.begin a { padding: 0 .4em 0 0; }
 
 .btmnav
 {
-	color: #999;
-	text-align: center;
-	margin: 0 0 .4em 0;
-	position: relative;
+        color: #999;
+        text-align: center;
+        margin: 0 0 .4em 0;
+        position: relative;
 }
+
+.btmnav ul li
+{
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: inline;
+}
+
+.btmnav ul li a
+{
+	border-left: 1px solid #555;
+	color: #999;
+        padding: 0 .4em;
+}
+
+.btmnav ul li.begin a { border: none; padding: 0 .4em 0 0; }
 
 .btmnav ul li a:visited { color: #000; }
 
+
 /* Usermenu */
-#usermenu {
+#usermenu
+{
 	background: #fff;
 	margin: 0;
 	padding: .3em;
 	border: 1px solid #aaa;
 	border-bottom: none;
 	height: 100%;
-} 
+}
 
-ul.menu {
-        margin: 0;
-        padding: 0;
+ul.menu
+{
+	padding: 0;
 	font-size: 85.5%;
 	margin: .3em 0 0 .3em;
 }
 
-ul.menu li {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        display: inline;
-}
-ul.menu li a {
-        border-left: 1px solid #ccc;
-        padding: 0 .3em;
-	width: auto;
-}
-ul.menu li a.begin {
-	border: none;
-	padding: 0 .3em;
-}
-ul.menu li a:visited {
-	color: #600;
-}
-ul.menu li.selected a {
-        font-weight: bold;
-        text-decoration: none;
-        color: #000;
-        padding: 0 .3em;
-}
-.generalbody ul.menu, .submenu {
-	margin: -1em 0 1em 0;
-	padding: 0;
-	font-size: 70%;
-	font-family: arial, sans-serif;
-}
-.generalbody ul.menu li, .submenu li{
+ul.menu li
+{
 	margin: 0;
 	padding: 0;
 	list-style: none;
 	display: inline;
 }
-.generalbody ul.menu li a, .submemu li a {
+
+ul.menu li a
+{
+	border-left: 1px solid #ccc;
+	padding: 0 .3em;
+	width: auto;
+}
+
+ul.menu li a.begin
+{
+	border: none;
+	padding: 0 .3em;
+}
+
+ul.menu li a:visited { color: #600; }
+
+ul.menu li.selected a
+{
+	font-weight: bold;
+	text-decoration: none;
+	color: #000;
+	padding: 0 .3em;
+}
+
+.generalbody ul.menu, .submenu
+{
+	margin: -1em 0 1em 0;
+	padding: 0;
+	font-size: 70%;
+	font-family: arial, sans-serif;
+}
+
+.generalbody ul.menu li, .submenu li
+{
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: inline;
+}
+
+.generalbody ul.menu li a, .submemu li a
+{
 	border-left: 1px solid #ccc;
 	border-bottom: none;
 	padding: 0 .3em 0 .3em;
 }
-.generalbody ul.menu li a.begin, .submenu li a.begin  {
+
+.generalbody ul.menu li a.begin, .submenu li a.begin
+{
 	border: none;
 	padding: 0 .3em 0 .3em;
 }
-.generalbody ul.menu li.selected a, .submenu li.selected a {
+
+#usermenu ul.menu li.selected a, .generalbody ul.menu li.selected a, .submenu li.selected a {
         font-weight: bold;
-	border: none;
+        border: none;
         text-decoration: none;
         color: #000;
 }
 
 /* Messaging */
-.message {
-	padding: 1em;
-	}
-.error {
+.message { padding: 1em; }
+
+.error
+{
 	padding: 1em;
 	color: #600;
 	font-weight: bold;
 }
 
-/* Journal */
-.journaldate { font-family: arial, sans-serif; font-size: 70%; color: #aaa; margin: 1em 0; border-bottom: 1px solid #aaa;}
-.journalarticle {margin: 0 0 2em 0;}
-.journaltitle { font-family: arial, sans-serif; }
-.journaldetails { font-family: arial, sans-serif; font-size: 70%; color: #888; margin: .5em 0 0 0;} 
 
-.notes, .note
+
+/* Forms */
+fieldset
 {
-        font-family: arial, sans-serif;
-        font-size: 75.5%;
-        display: block;
-        padding: .3em;
+	margin: 0 0 1em 0;
+	padding: 0 1em 1em 1em;
+	border: 1px solid #aaa;
 }
+
+#footer fieldset, #slashboxes fieldset { border: none; }
+
+legend
+{
+	color: #aaa;
+	font-family: arial, helvetica, sans-serif;
+	font-size: 75.5%;
+	font-weight: bold;
+	margin: 1em 0;
+}
+
+label
+{
+	display: block;
+	font-weight: bold;
+	padding: 1em 0 0 0;
+}
+
+label.checkbox { font-weight: normal; }
+
+input.button
+{
+	display: inline;
+	margin: 1em 0 0 0;
+}
+
 
 /* Data tables */
 .data_head
@@ -603,21 +624,53 @@ ul.menu li.selected a {
 	font-family: arial, sans-serif;
 }
 
-.data_head th { text-align: left;}
-.data_hl1 { background: #ccc;         font-size: 75.5%;
-        font-family: arial, sans-serif;}
-.data_hl1 td {border-top: 1px solid #fff;}
-.data_hl2 { background: #ddd;         font-size: 75.5%;
-        font-family: arial, sans-serif;}
-.data_hl2 td {border-top: 1px solid #fff;}
-.data_hl3 { background: #eee;         font-size: 75.5%;
-        font-family: arial, sans-serif;}
-.data_hl3 td {border-top: 1px solid #fff;}
+.data_head th { text-align: left; }
+
+.data_hl1
+{
+	background: #ccc;
+	font-size: 75.5%;
+	font-family: arial, sans-serif;
+}
+
+.data_hl1 td { border-top: 1px solid #fff; }
+
+.data_hl2
+{
+	background: #ddd;
+	font-size: 75.5%;
+	font-family: arial, sans-serif;
+}
+
+.data_hl2 td { border-top: 1px solid #fff; }
+
+.data_hl3
+{
+	background: #eee;
+	font-size: 75.5%;
+	font-family: arial, sans-serif;
+}
+
+.data_hl3 td { border-top: 1px solid #fff; }
+
 
 /* Misc */
 
-blockquote, pre {
+.notes, .note
+{
+	font-family: arial, sans-serif;
+	font-size: 75.5%;
+	display: block;
+	padding: .3em;
+}
+
+blockquote, pre, code 
+{
 	overflow: auto;
 	overflow-x: auto;
-  	width: 80%;
-  }
+	position: relative;
+	width: 90%;
+	padding: 0 0 0 1em;
+	margin: 0;
+}
+
