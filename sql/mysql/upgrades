@@ -3128,4 +3128,4 @@ INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, 
 # Run this only if you pollBooth installed and don't currently have this line in your css file
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','polls.css','Slashcode',0,'pollBooth','no','',@page_ctid,0);
 
-
+UPDATE css set title="" where file="print.css";

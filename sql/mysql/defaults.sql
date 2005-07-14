@@ -129,7 +129,7 @@ INSERT INTO commentmodes (mode, name, description) VALUES ('nocomment','No Comme
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','base.css','Slashcode',0,'','no','',1,0);
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'comments','no','',2,0);
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'article','no','',2,0);
-INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','print','print.css','Print',0,'','no','',5,0);
+INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','print','print.css','',0,'','no','',5,0);
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','admin.css','Slashcode',0,'','yes','',1,0);
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','comments.css','Slashcode',0,'pollBooth','no','',2,0);
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','slashcode_lite.css','Slashcode',0,'','no','light',4,0);
