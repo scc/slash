@@ -11,14 +11,13 @@ en_US
 __name__
 confirm
 __template__
-[% USE Slash %]
 <form action="[% gSkin.rootdir %]/zoo.pl" method="POST">
-<p>
 [% IF over_socialized %]
-	You have over [% IF user.is_subscriber && constants.people_max_subscriber %] [% constants.people_max_subscriber %] [% ELSE %] [% constants.people_max %] [% END %] friends and foes at the moment. This puts you over our limit of[% IF constants.subscriber && constants.people_max_subscriber %] [% constants.people_max_subscriber %] [% ELSE %] [% constants.people_max %] [% END %] relationships that we allow. At this point you may only remove relationships with users. <br>
+<p>	You have over [% IF user.is_subscriber && constants.people_max_subscriber %] [% constants.people_max_subscriber %] [% ELSE %] [% constants.people_max %] [% END %] friends and foes at the moment. This puts you over our limit of[% IF constants.subscriber && constants.people_max_subscriber %] [% constants.people_max_subscriber %] [% ELSE %] [% constants.people_max %] [% END %] relationships that we allow. At this point you may only remove relationships with users. <br>
 	[% IF constants.subscriber && constants.people_max_subscriber && !user.is_subscriber %]
 		If you would like to up your limit to [% constants.people_max_subscriber %] you might want to consider <a href="[% gSkin.rootdir %]/subscribe.pl">subscribing</a>. 
 	[% END %]
+</p>
 	<table>
 		<tr>
 			<td>
@@ -28,7 +27,7 @@ __template__
 				<input type="radio" name="type" value="neutral"[% IF type == 'neutral'; constants.markup_checked_attribute; END %]> 
 			</td>
 			<td>
-				&nbsp;&nbsp;<input type="submit" value="Yup, I'm positive"></p>
+				&nbsp;&nbsp;<input type="submit" value="Yup, I'm positive">
 			</td>
 		</tr>
 	</table>
@@ -39,34 +38,36 @@ __template__
 			Change this?
 			</td>
 			<td>
-				[% UNLESS over_socialized %] <input type="radio" name="type" value="friend"[% IF type == 'friend'; constants.markup_checked_attribute; END %]> <img border=0 SRC="[% constants.imagedir %]/friend.gif" alt="Friend">&nbsp;Friend<br>[% END %]
-				<input type="radio" name="type" value="neutral"[% IF type == 'neutral'; constants.markup_checked_attribute; END %]> <img border=0 SRC="[% constants.imagedir %]/neutral.gif" alt="Neutral">&nbsp;Neutral<br>
-				[% UNLESS over_socialized %] <input type="radio" name="type" value="foe"[% IF type == 'foe'; constants.markup_checked_attribute; END %]> <img border=0 SRC="[% constants.imagedir %]/foe.gif" alt="Foe">&nbsp;Foe <br> [% END %]
+				[% UNLESS over_socialized %] <input type="radio" name="type" value="friend"[% IF type == 'friend'; constants.markup_checked_attribute; END %]> <img src="[% constants.imagedir %]/friend.gif" alt="Friend">&nbsp;Friend<br>[% END %]
+				<input type="radio" name="type" value="neutral"[% IF type == 'neutral'; constants.markup_checked_attribute; END %]> <img src="[% constants.imagedir %]/neutral.gif" alt="Neutral">&nbsp;Neutral<br>
+				[% UNLESS over_socialized %] <input type="radio" name="type" value="foe"[% IF type == 'foe'; constants.markup_checked_attribute; END %]> <img src="[% constants.imagedir %]/foe.gif" alt="Foe">&nbsp;Foe <br> [% END %]
 			</td>
 			<td>
-				&nbsp;&nbsp;<input type="submit" value="Yup, I'm positive"></p>
+				&nbsp;&nbsp;<input type="submit" value="Yup, I'm positive">
 			</td>
 		</tr>
 	</table>
 [% END %]
-<p>
-<b>Important Stuff:</b>
+
+<p><b>Important Stuff:</b></p>
+
 <ul>
 <li> Your relationships are public information, and visible to other [% constants.sitename %] readers.</li>
 <li> Updates to friends and foes are cached and may take a few minutes to take effect.</li>
 <li> Curious <a href="[% gSkin.rootdir %]/faq/com-mod.shtml#cm2200">what these icons mean</a>
 or <a href="[% gSkin.rootdir %]/faq/com-mod.shtml#cm2200">where you change their values?</a></li>
 </ul>
-<p>
-<b>Your Friends who ...</b><br>
+
+<p><b>Your Friends who ...</b></p>
+
 <table width="100%">
 	<tr>
 		<td>
-			<p><b>Consider <a href="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</a> a Friend</b> <img border=0 SRC="[% constants.imagedir %]/fof.gif" alt="Friends of Friends">  
+			<b>Consider <a href="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</a> a Friend</b> <img src="[% constants.imagedir %]/fof.gif" alt="Friends of Friends">  
 			&nbsp;<a href="[% gSkin.rootdir %]/my/comments">[% IF user.people_bonus_fof %]([% user.people_bonus_fof %])[% ELSE %](+0)[% END %]</a>
 		</td>
 		<td>
-			<p><b>Consider <a href="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</a> a Foe</b> <img border=0 SRC="[% constants.imagedir %]/eof.gif" alt="Foes of Friends"> 
+			<b>Consider <a href="[% gSkin.rootdir %]/~[% nickname | fixparam %]/">[% nickname %]</a> a Foe</b> <img src="[% constants.imagedir %]/eof.gif" alt="Foes of Friends"> 
 			&nbsp;<a href="[% gSkin.rootdir %]/my/comments">[% IF user.people_bonus_eof %]([% user.people_bonus_eof %])[% ELSE %](+0)[% END %]</a>
 		</td>
 	</tr>
@@ -87,9 +88,12 @@ or <a href="[% gSkin.rootdir %]/faq/com-mod.shtml#cm2200">where you change their
 </table>
 
 
+<div>
 <input type="hidden" name="formkey" value="[% form.formkey %]">
 <input type="hidden" name="op" value="action">
 <input type="hidden" name="uid" value="[% uid %]">
+</div>
+
 </form>
 
 __seclev__
