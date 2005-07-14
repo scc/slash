@@ -17,7 +17,7 @@ __name__
 loginForm
 __template__
 	[% PROCESS titlebar %]
-	<div class="generalbody">
+	<div class="generalbody" id="login">
 		[% IF msg2 && ! logged_in %]
 			<div class="message">
 				[% msg2 %]
@@ -57,19 +57,18 @@ __template__
 					(6-20 characters long)
 				</div>
 				<label class="checkbox">
-					Public Terminal
+				<input type="checkbox" name="login_temp" value="yes">Public Terminal
 				</label>
-				<input type="checkbox" name="login_temp" value="yes">
 				<input type="submit" name="userlogin" value="Log in">
 			</fieldset>
 		[% IF msg1 %]
-			<p class="message">
+			<div class="message">
 				[% msg1 %]
-			</p>
+			</div>
 		[% END %]
 		</form>
 
-		<p>
+		<div class="note">
 			Forget your password? 
 			<a href="[% env.script_name %]?op=mailpasswdform">
 				Have your password mailed to you
@@ -80,7 +79,7 @@ __template__
 				Create a new account
 			</a>
 			if you don't have one already.
-		</p>
+		</div>
 		[% IF ! logged_in %]
 		[% END %]
 	</div>
