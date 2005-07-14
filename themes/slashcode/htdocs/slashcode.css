@@ -138,7 +138,7 @@ a:visited { color: #000; }
 	border: 1px solid #aaa;
 	background: #ddd url("http://images.slashcode.com/bg_details.gif") repeat-x;
 }
-.article .body
+.article .body, .journalgeneric .body
 {
 	border: 1px solid #aaa;
 	border-top: none;
