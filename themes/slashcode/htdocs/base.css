@@ -563,7 +563,6 @@ ul.menu li.selected a
 
 #usermenu ul.menu li.selected a, .generalbody ul.menu li.selected a, .submenu li.selected a {
         font-weight: bold;
-        border: none;
         text-decoration: none;
         color: #000;
 }
@@ -653,9 +652,18 @@ input.button
 
 .data_hl3 td { border-top: 1px solid #fff; }
 
+/* Authors */
+#authors h2
+{
+        display: inline;
+}
+#authors .intro
+{
+        display: block;
+        margin: .3em;
+}
 
 /* Misc */
-
 .notes, .note
 {
 	font-family: arial, sans-serif;
@@ -673,4 +681,5 @@ blockquote, pre, code
 	padding: 0 0 0 1em;
 	margin: 0;
 }
+
 
