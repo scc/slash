@@ -13,8 +13,9 @@ friendsview
 __template__
 [% USE Slash %]
 [% FOREACH diatribe = articles %]
+<div class="journalgeneric">
 	[% topic = diatribe.topic %]
-                        <div class="journalgeneric">
+                        <div class="article">
                                 <div class="title">
                                         <h3>
                                                 [% diatribe.description %]
@@ -39,7 +40,7 @@ __template__
 			</div>
 
 [% END %]
-
+	<div class="journalpage">
 	[% back = back || 0 %]
 	[% IF (back > -1) || forward %]
 				[% IF forward %]
@@ -52,6 +53,8 @@ __template__
 					<a href="[% gSkin.rootdir %]/journal.pl?op=friendview&amp;uid=[% uid %]&amp;start=[% back %]">Next [% constants.journal_default_display %] entries &gt;</a>
 				[% END %]
 	[% END %]
+	</div>
+</div>
 
 __seclev__
 500
