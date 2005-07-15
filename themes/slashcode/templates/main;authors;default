@@ -20,26 +20,26 @@ __template__
 
 [% PROCESS titlebar %]
 <div class="generalbody">
-	<p>
+	<div class="message">
 		I keep getting asked 'Who are you guys', so to help unload some of that extra mail from my box I have now provided this nice little page with a summary of the active [% sitename %] authors here, along with the number of articles that they have posted.
-	</p>
-	[% FOREACH uid = list %]
-		[% IF uid.0 > 0 %]
-			<b><a href="[% gSkin.rootdir %]/search.pl?op=stories&amp;author=[% uid.1 %]">[% uid.0 %]</a>
-			<a href="[% uid.3 %]">[% uid.2 %]</a></b>
-			[% IF admin %]
-				[<a href="[% gSkin.rootdir %]/users.pl?uid=[% uid.1 %]">edit</a>]
-			[% END %]
-			<p>
-				[% uid.4 %]&nbsp;
-			</p>
+	</div>
+[% FOREACH uid = list %]
+	[% IF uid.0 > 0 %]
+		<div class="title">
+			<a href="[% gSkin.rootdir %]/search.pl?op=stories&amp;author=[% uid.1 %]">[% uid.0 %]</a>
+			<h2><a href="[% uid.3 %]">[% uid.2 %]</a></h2>
+		[% IF admin %]
+			[<a href="[% gSkin.rootdir %]/users.pl?uid=[% uid.1 %]">edit</a>]
 		[% END %]
-	[% END %]
-	<p>
-		<div class="notes">
-			Generated on [% time %]
 		</div>
-	</p>
+		<div class="intro">
+			[% uid.4 %]
+		</div>
+	[% END %]
+[% END %]
+	<div class="notes">
+		Generated on [% time %]
+	</div>
 </div>
 
 __seclev__
