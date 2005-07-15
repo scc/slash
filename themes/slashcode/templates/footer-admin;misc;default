@@ -16,9 +16,10 @@ __template__
 
 <div class="admin" id="footer">
 <hr>
+
+[% Slash.horizmenu() %]
 [% Slash.currentAdminUsers() %]
 
-	[% Slash.horizmenu() %]
 			[% IF constants.panic or constants.search_google %]
 				<form method="get" action="http://www.google.com/search">
 				<fieldset>

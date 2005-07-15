@@ -17,11 +17,7 @@ __template__
 			</div>	
 		</div>
 		<div id="footer">
-			[% IF user.is_admin %]
-				[% Slash.currentAdminUsers() %]
-			[% ELSE %]
-				<em>[% PROCESS motd %]</em>
-			[% END %]
+			<em>[% PROCESS motd %]</em>
 			<div class="search">
 				<form method="get" action="[% constants.rootdir %]/search.pl">
 					<fieldset>
@@ -63,6 +59,9 @@ __template__
 				</ul>
 			</div>
 		</div>
+		[% IF user.is_admin %]
+			[% Slash.currentAdminUsers() %]
+		[% END %]
 	</div>
 </body>
 </html>

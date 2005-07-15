@@ -63,10 +63,8 @@ __template__
 				[% ELSE %]
 					[% useredit.seclev %]
 				[% END %]
-				<label class="floater">
 					Author in 
 				[% section_select %]
-				<label>
 			[% END %]
 			[% IF !useredit.nonuid %]
 				<label>
@@ -165,8 +163,8 @@ __template__
 						Subscription
 					</label>
 					[% IF useredit.subscribe_payments.size or useredit.subscribe_purchases.size%]
-					<table cellspacing="0">
-						<tr bgcolor="[% user.colors.bg_3 %]">
+					<table cellspacing="0" border="0" class="data">
+						<tr class="data_head">
 							<th>Date</th>
 							<th>Email</th>
 							<th>&nbsp;</th>
@@ -177,35 +175,27 @@ __template__
 							<th>Type</th>
 						</tr>
 						[% FOREACH sp = useredit.subscribe_payments %]
-						<tr bgcolor="eeeeee">
+						<tr class="data_hl3">
 							<td>&nbsp;[% sp.0 %]&nbsp;</td>
-							<td>&nbsp;[% 
-								sp.1.chunk(12).join("<br>");
-							 %]&nbsp;</td>
+							<td>&nbsp;[% sp.1.chunk(12).join("<br>"); %]&nbsp;</td>
 							<td>&nbsp;[% sp.2 %]&nbsp;</td>
 							<td>&nbsp;[% sp.3 %]&nbsp;</td>
 							<td>&nbsp;[% sp.4 %]&nbsp;</td>
-							<td>&nbsp;[% 
-								sp.5.chunk(10).join("<br>");
-							%]&nbsp;</td>
+							<td>&nbsp;[% sp.5.chunk(10).join("<br>"); %]&nbsp;</td>
 							<td>&nbsp;[% sp.6 %]&nbsp;</td>
 							<td>&nbsp;[% sp.7 %]&nbsp;</td>
 						</tr>
 						[% END %]
 						[% IF useredit.subscribe_purchases.size %]
-							<tr bgcolor="eeeeee"><td colspan="8" align="CENTER"><b>Subscriptions given by user</b></td></tr>
+							<tr class="data_hl3"><td colspan="8" align="CENTER"><b>Subscriptions given by user</b></td></tr>
 							[% FOREACH sp = useredit.subscribe_purchases %]
-								<tr bgcolor="eeeeee">
+								<tr class="data_hl3">
 									<td>&nbsp;[% sp.0 %]&nbsp;</td>
-									<td>&nbsp;[% 
-										sp.1.chunk(12).join("<br>");
-									 %]&nbsp;</td>
+									<td>&nbsp;[% sp.1.chunk(12).join("<br>"); %]&nbsp;</td>
 									<td>&nbsp;[% sp.2 %]&nbsp;</td>
 									<td>&nbsp;[% sp.3 %]&nbsp;</td>
 									<td>&nbsp;[% sp.4 %]&nbsp;</td>
-									<td>&nbsp;[% 
-										sp.5.chunk(10).join("<br>");
-									%]&nbsp;</td>
+									<td>&nbsp;[% sp.5.chunk(10).join("<br>"); %]&nbsp;</td>
 									<td>&nbsp;[% sp.6 %]&nbsp;</td>
 									<td>&nbsp;[% sp.7 %]&nbsp;</td>
 								</tr>
@@ -225,16 +215,16 @@ __template__
 					Activity
 				</label>
 				[% IF uidstruct %]
-					<table border="0" cellpadding="2" cellspacing="0" bgcolor="[% user.colors.bg_2 %]">
-						<tr bgcolor="[% user.colors.bg_3 %]">
-							<td><b>UID</b></td>
-							<td><b>Nickname</b></td>
-							<td><b>Com</b></td>
-							<td><b>Sub</b></td>
-							<td><b>Mod</b></td>
+					<table border="0" cellpadding="2" cellspacing="0" class="data">
+						<tr class="data_head">
+							<th>UID</th>
+							<th>Nickname</th>
+							<th>Com</th>
+							<th>Sub</th>
+							<th>Mod</th>
 						</tr>
 					[% FOREACH tmpuid = uidstruct.keys %]
-						<tr bgcolor="eeeeee">
+						<tr class="data_hl3">
 							<td><a href="[% env.script_name %]?op=userinfo&amp;userfield=[% tmpuid %]">[% tmpuid %]</a></td>
 							<td>[% uidstruct.$tmpuid.nickname | strip_literal %]</td>
 							<td align="CENTER">[% IF uidstruct.$tmpuid.comments %]X[% END %]&nbsp;</td>
@@ -247,17 +237,17 @@ __template__
 				
 		
 				[% IF ipstruct %]
-					<table border="0" cellpadding="2" cellspacing="0" bgcolor="[% user.colors.bg_2 %]">
-						<tr bgcolor="[% user.colors.bg_3 %]">
-							<td><b>IPID</b></td>
-							<td><b>#</b></td>
-							<td><b>Date(s)</b></td>
-							<td><b>Com</b></td>
-							<td><b>Sub</b></td>
-							<td><b>Mod</b></td>
+					<table border="0" cellpadding="2" cellspacing="0" class="data">
+						<tr class="data_head">
+							<td>IPID</td>
+							<td>#</td>
+							<td>Date(s)</td>
+							<td>Com</td>
+							<td>Sub</td>
+							<td>Mod</td>
 						</tr>
 					[% FOREACH tmpip = ipstruct_order %]
-						<tr bgcolor="eeeeee">
+						<tr class="data_hl3">
 							<td><a href="[% env.script_name %]?op=userinfo&amp;userfield=[% tmpip %]&amp;fieldname=ipid">[% ipstruct.$tmpip.ipid_vis %]</a></td>
 
 							<td>[% ipstruct.$tmpip.count %]</td>

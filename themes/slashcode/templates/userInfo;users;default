@@ -46,9 +46,9 @@ __template__
 	</p>
 
 		[% IF ! useredit.registered %]
-			<p>
+			<div class="error">
 				This account is currently expired. Please <a href="[% gSkin.rootdir %]/users.pl?op=validateuser">re-register</a> at your earliest opportunity.<br>
-			</p>
+			</div>
 		[% END %]
 
 	<hr>
@@ -79,7 +79,7 @@ __template__
 				</p>
 			[% END %]
 
-			<br>[% Slash.createMenu("journal", { style => "oldstyle" }) %]
+			[% Slash.createMenu("journal", style => "tabbed") %]
 			[% PROCESS listComments admin_flag=admin_flag commentstruct=commentstruct commentcount=commentcount min_comment=min_comment reasons=reasons cids_to_mods=cids_to_mods type="user" useredit=useredit comment_time=comment_time%]
 			[% IF admin_flag %]
 				<p>	

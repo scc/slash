@@ -66,64 +66,44 @@ __template__
 		IF user_edit.emaildisplay.defined;
 			emaildisplay.${user_edit.emaildisplay} = constants.markup_checked_attribute;
 		END %]
-                &nbsp;&nbsp;&nbsp;
-		<input type="radio" name="emaildisplay" [% emaildisplay.0 %] 
-		value=0>&nbsp;
-        	Do not display an e-mail address.<br>
-                &nbsp;&nbsp;&nbsp;
-                <input type="radio" name="emaildisplay" [% emaildisplay.1 %] 
-		value=1>&nbsp;
-                Show your email address with random SPAM-armoring applied (this
-		changes weekly).<br> &nbsp;&nbsp;&nbsp;
-                <input type="radio" name="emaildisplay" [% emaildisplay.2 %] 
-		value=2>&nbsp;
-                Show your real email address without cowering behind childish
-		anonymity or obfuscation.<br>
-
-		<p><b>Disable Sigs</b> (strip sig quotes from comments)
+		<blockquote>
+		<input type="radio" name="emaildisplay" [% emaildisplay.0 %] value=0> Do not display an e-mail address.<br>
+                <input type="radio" name="emaildisplay" [% emaildisplay.1 %] value=1> Show your email address with random SPAM-armoring applied.<br>
+		[% PROCESS formNote note='This changes weekly' %]
+                <input type="radio" name="emaildisplay" [% emaildisplay.2 %] value=2> Show your real email address without cowering behind childish anonymity or obfuscation.
+		</blockquote>
+		<label>Disable Sigs
 		<input type="checkbox" name="nosigs"[% s_check %]>
+		</label>
+		[% PROCESS formNote note='Strip sig quotes from comments' %]
 
 		[% IF user.is_admin %]
-		<p><b>Disable Spellchecker</b>
-		<input type="checkbox" name="no_spell"[% nospell_check %]>
+		<label>Disable Spellchecker <input type="checkbox" name="no_spell"[% nospell_check %]></label>
 		[% END %]
 
-		<p><b>Display Mode</b>
+		<label>Display Mode [% commentmodes_select %]</label>
 
-		[% commentmodes_select %]
+		<label>Sort Order [% commentsort_select %]</label>
 
-		<p><b>Sort Order</b> (self explanatory?  I hope?)
+		<label>Threshold [% uthreshold_select %]</label>
+		<div class="notes">
+			Comments scored less than this setting will be ignored.  Anonymous posts start at 0, logged in posts start at 1.  Moderators add and subtract points according to the <a href="[% gSkin.rootdir %]/moderation.shtml">Guidelines</a>
+		</div>
 
-		[% commentsort_select %]
+		<label>Highlight Threshold [% highlightthresh_select %]</label>
+		[% PROCESS formNote note='Comments scoring this are displayed even after an article spills into index mode' %]
 
-		<p><b>Threshold</b>
+		<label>Hard Thresholds
+		<input type="checkbox" name="hardthresh"[% h_check %]></label>
+		[% PROCESS formNote note="Hides 'X Replies Below Current Threshold' Message from Threads" %]
 
-		[% uthreshold_select %]
+		<label>Reparent Highly Rated Comments
+		<input type="checkbox" name="reparent"[% r_check %]></label>
+		[% PROCESS formNote note="Causes comments to be displayed even if they are replies to comments under current threshold" %]
 
-		<br>(comments scored less than this setting will be ignored.
-		Anonymous posts start at 0, logged in posts start
-		at 1.  Moderators add and subtract points according to
-		the <a 
-		href="[% gSkin.rootdir %]/moderation.shtml">Guidelines</a>)
-
-		<p><b>Highlight Threshold</b>
-
-		[% highlightthresh_select %]
-
-		<br>(comments scoring this are displayed even after an article spills into index mode)
-
-		<p><b>Hard Thresholds</b> (Hides 'X Replies Below
-		Current Threshold' Message from Threads)
-		<input type="checkbox" name="hardthresh"[% h_check %]>
-
-		<p><b>Reparent Highly Rated Comments</b> (causes comments
-		to be displayed even if they are replies to comments
-		under current threshold)
-		<input type="checkbox" name="reparent"[% r_check %]>
-
-		<p><b>Do Not Display Scores</b> (Hides score:
-		They still <b>apply</b> you just don't see them.)
-		<input type="checkbox" name="noscores"[% n_check %]>
+		<label>Do Not Display Scores
+		<input type="checkbox" name="noscores"[% n_check %]></label>
+		[% PROCESS formNote note="Hides score: They still <b>apply</b> you just don't see them." %]
 
 		[%# XXX this needs to be flexible for sites that
 		    already have different reasons, in the code.  why
@@ -213,20 +193,14 @@ __template__
 		[% new_user_percent_select %]% (new users in the last X percentage of the userbase)<br>
 		[% new_user_bonus_select %] (modifier assigned to new user posts)<br>
 
-		<p><b>Comment Limit</b> (only display this many comments, 
-		for best results, set this to a low number and sort by score)
-		If set above [% constants.breaking %], then it is ignored and
-		[% constants.breaking / 2 %] is used instead.<br>
-		<input type="text" name="commentlimit" size="6" value="[% user_edit.commentlimit %]">
+		<label>Comment Limit <input type="text" name="commentlimit" size="6" value="[% user_edit.commentlimit %]"></label>
+		<div class="notes">Only display this many comments, for best results, set this to a low number and sort by score) If set above [% constants.breaking %], then it is ignored and [% constants.breaking / 2 %] is used instead.</div>
 
-		<p><b>Comment Byte Limit</b> (number of bytes of comments
-		to display. If this is reached before comment limit, break
-		the page, else use above comment limit)<br>
-		[% bytelimit_select %]<br>
+		<label>Comment Byte Limit [% bytelimit_select %]</label>
+		[% PROCESS formNote note="Number of bytes of comments to display. If this is reached before comment limit, break the page, else use above comment limit." %]
 
-		<p><b>Index Spill</b> (When an article has this many comments,
-		it switches to indexed mode)<br>
-		<input type="text" name="commentspill" value="[% user_edit.commentspill %]" size="3">
+		<label>Index Spill <input type="text" name="commentspill" value="[% user_edit.commentspill %]" size="3"></label>
+		[% PROCESS formNote note="When an article has this many comments, it switches to indexed mode." %]
 
 		<p><b><a name="clsmall">Small Comment Modifier</a></b> (Modifier assigned to smaller comments)<br>
 		<input type="text" name="clsmall" value="[% user_edit.clsmall %]" size="6"> (length of comment in bytes)<br>
@@ -236,62 +210,58 @@ __template__
 		<input type="text" name="clbig" value="[% user_edit.clbig %]" size="6"> (length of comment in bytes)<br>
 		[% long_length_bonus_select %] (modifier assigned)<br>
 
-		<p><b>Max Comment Size</b> (Truncates long comments, and
-		adds a "Read the rest" link.  Set really big to disable)<br>
-		<input type="text" name="maxcommentsize" size="6" value="[% user_edit.maxcommentsize %]">
+		<label>Max Comment Size <input type="text" name="maxcommentsize" size="6" value="[% user_edit.maxcommentsize %]"></label>
+		[% PROCESS formNote note='Truncates long comments, and adds a "Read the rest" link.  Set really big to disable.' %]
 
-		<p><b>Comment Box Size</b> (Also applies to other large
-		text boxes)<br>
+		<label>Comment Box Size</label>
 		Rows: <input type="text" name="textarea_rows" size="4" value="[% user_edit.textarea_rows || constants.textarea_rows %]">
 		Columns: <input type="text" name="textarea_cols" size="4" value="[% user_edit.textarea_cols || constants.textarea_cols %]">
+		[% PROCESS formNote note="Also applies to other large text boxes" %]
 
-		<p><b>Comment Post Mode</b>
-
+		<label>Comment Post Mode</label>
 		[% posttype_select %]
 
 [% IF user.karma > constants.goodkarma %]
-		<p><b>No Karma Bonus</b>
+		<label>No Karma Bonus
 		<input type="hidden" name="nobonus_present" value="1">
 		<input type="checkbox" name="nobonus"[% b_check %]>
+		</label>
 [% END %]
 
 [% IF user.is_subscriber %]
-		<p><b>No Subscriber Bonus</b>
+		<label>No Subscriber Bonus
 		<input type="hidden" name="nosubscriberbonus_present" value="1">
 		<input type="checkbox" name="nosubscriberbonus"[% sb_check %]>
+		</label>
 [% END %]
 
 [% IF constants.allow_anonymous && (user.karma > -1 || p_check) %]
-		<p><b>Post Anonymously</b>
+		<label>Post Anonymously
 		<input type="hidden" name="postanon_present" value="1">
 		<input type="checkbox" name="postanon"[% p_check %]>
+		</label>
 [% END %]
 
 
 [% UNLESS user_edit.domaintags.defined; user_edit.domaintags=2; END %]
 [% domaintags.${user_edit.domaintags} = constants.markup_checked_attribute -%]
 		<p><b>Display Link Domains?</b> (shows the actual domain of any link in brackets)<br>
-		&nbsp;&nbsp;&nbsp;
-		<input type="radio" name="domaintags" [% domaintags.0 %] 
-		value=0>&nbsp;
-		Never show link domains<br>
-		&nbsp;&nbsp;&nbsp;
-		<input type="radio" name="domaintags" [% domaintags.1 %] 
-		value=1>&nbsp;
-		Show the links domain only in recommended situations<br>
-		&nbsp;&nbsp;&nbsp;
-		<input type="radio" name="domaintags" [% domaintags.2 %] 
-		value=2>&nbsp;
-		Always show link domains<br>
-		<p><b>User Page Comment Listing</b></p>
+		<blockquote>
+		<input type="radio" name="domaintags" [% domaintags.0 %] value=0> Never show link domains<br>
+		<input type="radio" name="domaintags" [% domaintags.1 %] value=1> Show the links domain only in recommended situations<br>
+		<input type="radio" name="domaintags" [% domaintags.2 %] value=2> Always show link domains
+		</blockquote>
+		<label>User Page Comment Listing</label>
+		<blockquote>
 		[% UNLESS user_edit.user_comment_sort_type.defined; user_edit.user_comment_sort_type=2; END %]
 		[% user_comment_sort_type.${user_edit.user_comment_sort_type} = constants.markup_checked_attribute -%]
-		&nbsp;&nbsp;&nbsp;<input type="radio" name="user_comment_sort_type" [% user_comment_sort_type.1 %] value="1"> Selected by create time descending<br>
-		&nbsp;&nbsp;&nbsp;<input type="radio" name="user_comment_sort_type" [% user_comment_sort_type.2 %] value="2"> Selected by create time descending, results grouped by discussion, newest discussion first.
+		<input type="radio" name="user_comment_sort_type" [% user_comment_sort_type.1 %] value="1"> Selected by create time descending<br>
+		<input type="radio" name="user_comment_sort_type" [% user_comment_sort_type.2 %] value="2"> Selected by create time descending, results grouped by discussion, newest discussion first.
+		</blockquote>
 		[% IF user.is_admin %]
-		<p><b>Show Moderations in User Comment Listing</b><input type="checkbox" name="mod_with_comm" [% s_mod_check %]></p>
-		<p><b>Show Metamoderation in User Moderation Listing</b><input type="checkbox" name="m2_with_mod" [% s_m2_check %]></p>
-		<p><b>Show Metamoderation in Comment Moderation Listing</b><input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></p>
+		<label>Show Moderations in User Comment Listing <input type="checkbox" name="mod_with_comm" [% s_mod_check %]></label>
+		<label>Show Metamoderation in User Moderation Listing <input type="checkbox" name="m2_with_mod" [% s_m2_check %]></label>
+		<label>Show Metamoderation in Comment Moderation Listing <input type="checkbox" name="m2_with_mod_on_comm" [% s_m2c_check %]></label>
 		[% END %]
 		</td>
 	</tr>
