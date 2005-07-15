@@ -33,18 +33,18 @@ cur_time = Slash.db.getTime();
 [% IF submissions.size > 0 %]
 	[% PROCESS titlebar width="100%" title = title -%]
 	<table width="100%" border=0 cellpadding=3 cellspacing=0 bgcolor="[% user.colors.bg_2 %]">
-		<tr bgcolor="[% user.colors.bg_3 %]">
-			<th align="LEFT">Title</th>
-			<th align="LEFT">[% IF admin_link_user %]User[% END %]</th>
-			<th align="LEFT">[% IF admin_link_ipid %]IPID[% END %]</th>
-			<th align="LEFT">Datestamp</th>
-			<th align="LEFT">[% IF admin_flag %]State[% END %]</th>
+		<tr class="data_head">
+			<th>Title</th>
+			<th>[% IF admin_link_user %]User[% END %]</th>
+			<th>[% IF admin_link_ipid %]IPID[% END %]</th>
+			<th>Datestamp</th>
+			<th>[% IF admin_flag %]State[% END %]</th>
 		</tr>
 		[% FOREACH sub = submissions %]
 		[% story_viewable = sub.del == 2 and sub.sid and sub.story_time.lt(cur_time) and sub.displaystatus!=-1 %]
 		[% link_sid = sub.del == 2 and sub.sid and story_viewable %]
 		[% link_subid = admin_flag and !link_sid %]
-		<tr bgcolor="[% bg_toggle ? bg_col_1 : bg_col_2 %]">
+		<tr class="[% bg_toggle ? "data_hl1" : "data_hl2" %]">
 			[% bg_toggle = !bg_toggle %]
 			<td>
 				[%- IF link_sid -%]
@@ -74,10 +74,10 @@ cur_time = Slash.db.getTime();
 		[% total = total + 1 %]
 		[% END %]
 		[% IF admin_flag %]
-		<tr><td colspan="5">[% PROCESS horiz_rule %]</td></tr>
-		<tr><td colspan="2"><b>Total: [% total %]</td><td colspan="3"><b>Accepted: [% Slash.getData('percentage',{ sum => approved, count=> total},"misc") %]</b></td></tr>
+		<tr class="data_hl1"><td colspan="5">[% PROCESS horiz_rule %]</td></tr>
+		<tr class="data_hl1"><td colspan="2"><b>Total: [% total %]</td><td colspan="3"><b>Accepted: [% Slash.getData('percentage',{ sum => approved, count=> total},"misc") %]</b></td></tr>
 		[% ELSIF user.uid != sub.uid %]
-		<tr><td colspan="5"><i>(Rejected submissions are not listed.)</i></td></tr>
+		<tr class="data_hl1"><td colspan="5"><i>(Rejected submissions are not listed.)</i></td></tr>
 		[% END %]
 	</table>
 [% END %]
