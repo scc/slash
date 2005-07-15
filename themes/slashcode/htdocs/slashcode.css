@@ -226,6 +226,19 @@ div.storylinks ul li { border-left: 1px solid #555; }
 .journalslashdot div.storylinks ul li.discussion a { padding: 0 .3em 0 1em;  border: none; }
 .journalslashdot div.storylinks ul li a { padding: 0 .3em 0 1em;  border-left: 1px solid #000; }
 
+#journalgrey .journaldate { font-weight: bold; background: #eee; }
+#journalgrey .details { float:left; font-weight: bold; background: #eee; padding: 0 0.6em 0 0; }
+#journalgrey .title { background: #eee; padding: 0 0 0 0.6em; }
+#journalgrey { border: 3px solid #999; padding: 3px; }
+#journalgrey div.storylinks, #journalblue div.storylinks { background: transparent; }
+#journalgrey div.storylinks ul, #journalblue div.storylinks.ul { background: transparent; }
+
+#journalblue .journaldate { background: #369; font-weight: bold; padding: 3px; } 
+#journalblue { border: 3px solid #000; } 
+#journalblue .details {float: left; margin: 0 0.6em 0 0.3em; font-weight: bold; } 
+#journalblue .title h3 {  margin: 0; padding: 0; font-family: Times,serif;}
+
+
 /* Misc */
 pre, blockquote, code
 {
