@@ -88,16 +88,15 @@ __template__
 		</div>
 
 		<label>
-			Maximum Stories
-		</label> 
-		<input type="text" name="maxstories" size="3" value="[% user_edit.maxstories %]">
+			Maximum Stories <input type="text" name="maxstories" size="3" value="[% user_edit.maxstories %]">
+		</label>
 		<div class="notes">
 			The default is 30.  The main column displays 1/3rd of these at minimum, and all of today's stories at maximum.
 		</div>
 
 		[%# We're not using the moderation FAQ for now.      %]
 		[%# It will return...when we rewrite it. - Cliff     %]
-		<label class="checkbox">
+		<label>
 			<input type="checkbox" name="willing"[% w_check %]> Willing to Moderate 
 		</label>
 		<div class="notes">
