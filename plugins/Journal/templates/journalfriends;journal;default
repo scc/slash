@@ -22,7 +22,8 @@ __template__
 %]
 
 [% IF !user.is_anon && !search %]<form method="post" action="[% gSkin.rootdir %]/zoo.pl">
-<fieldset><legend><legend>
+<fieldset>
+	<legend>Latest from your friends</legend>
 [% PROCESS formkey_tag %]
 <input type="hidden" name="op" value="delete">
 <input type="hidden" name="type" value="friend">[% END %]
