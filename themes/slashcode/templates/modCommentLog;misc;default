@@ -57,10 +57,9 @@ bg_toggle = 0;
 		   self_url = self_url  _ url_tail;
 		   extra = "<td width=\"14\" bgcolor=\"" _ user.colors.bg_3 _ "\"><a href='" _ self_url _ "'><img src=\"" _  constants.imagedir _ (show_m2s ? "/contract.gif" : "/expand.gif") _ "\"  alt=\"\" width=\"14\" height=\"14\" border=0></a></td>";
 		%]
-		<!-- before titlebar -->
 		[% PROCESS titlebar width="100%" title=title td_extra = extra %]
 	[% END %]
-	<table bgcolor="[% user.colors.bg_2 %]" align="center" border="0" cellpadding="2" cellspacing="0" width="100%">
+	<table align="center" border="0" cellpadding="2" cellspacing="0" width="100%">
 	<tr class="data_head">
         	<th align=left>Datestamp</th>
 		<th align=right>Was</th>

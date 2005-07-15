@@ -81,7 +81,7 @@ row_class_3 = "data_hl3";
 		[% PROCESS titlebar width="100%" title = commenttitle td_extra = extra -%]
 		[% td_extra = "" %]
 	[% END %]
-	<table width="100%" border=0 cellpadding=3 cellspacing=0 bgcolor="[% user.colors.bg_2 %]">
+	<table width="100%" border="0" cellpadding="3" cellspacing="0" class="data">
 	<tr class="data_head">
 		[% IF type=="netid"; total_cols = total_cols + 1; %]<th>User</th>[% END %]
 		<th>Subject[% IF admin_flag %] / Moderator[% END %]</th>
