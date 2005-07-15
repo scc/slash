@@ -28,9 +28,11 @@ __template__
 <div id="users-blocks">
 	[% PROCESS prefs_titlebar tab_selected='user' %]
 		<div class="generalbody">
+		[% IF note %]
 			<div class="notes">
 				[% note %]
 			</div>
+		[% END %]
 		[% IF constants.offer_insecure_login_link %]
 			You can automatically log in by clicking <a href="[% gSkin.rootdir %]/index.pl?op=userlogin&amp;logtoken=[% useredit.logtoken | fixparam %]">This Link</a> and Bookmarking the resulting page. This is totally insecure, but very convenient.
 		[% END %]
@@ -94,7 +96,7 @@ __template__
 			</div>
 
 			[% editkey %]
-
+			<br>
 			<input type="hidden" name="op" value="saveuser" class="button">
 			<input type="submit" value="Save User" class="button">
 			</fieldset>

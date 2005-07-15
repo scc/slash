@@ -59,14 +59,14 @@ __template__
 				</label>
 				[% IF user.seclev >= 10000 %]
 					<input type="text" name="seclev" size="7" value="[% useredit.seclev | strip_attribute %]">
-					&nbsp;<input type="checkbox" name="author" [% useredit.author %]>
+					<input type="checkbox" name="author" [% useredit.author %]>
 				[% ELSE %]
 					[% useredit.seclev %]
 				[% END %]
-				<label>
+				<label class="floater">
 					Author in 
-				</label>
 				[% section_select %]
+				<label>
 			[% END %]
 			[% IF !useredit.nonuid %]
 				<label>

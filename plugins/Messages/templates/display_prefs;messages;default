@@ -17,27 +17,23 @@ display_prefs
 __template__
 <div id="users-blocks">
 [% prefs_titlebar %]
-<div class="generalbody">
-	[% messages_menu %]
-	[%
-	   userm = userm ? userm : user;
-	   usernick = userm.nickname | strip_literal;
+	<div class="generalbody">
+		[% messages_menu %]
+		[%
+		   userm = userm ? userm : user;
+		   usernick = userm.nickname | strip_literal;
 
-	   modenone = Slash.MSG_MODE_NONE;
-	   modemail = Slash.MSG_MODE_EMAIL;
-	   modeweb  = Slash.MSG_MODE_WEB;
-	%]
+		   modenone = Slash.MSG_MODE_NONE;
+		   modemail = Slash.MSG_MODE_EMAIL;
+		   modeweb  = Slash.MSG_MODE_WEB;
+		%]
 
-	[% IF note %]
-		<p>
-			<b>
+		[% IF note %]
+			<div class="message">
 				[% note %]
-			</b>
-		</p>
-	[% END %]
-	<p>
+			</div>
+		[% END %]
 		From this page you can configure various messages that [% constants.sitename %] can optionally send to you.  The primary options are [% deliverymodes.$modenone %] (Disabled), [% deliverymodes.$modemail %], and [% deliverymodes.$modeweb %].  Not all options are available for all message types.  [% deliverymodes.$modeweb %] messages <b>will be deleted</b> after <b>[% constants.message_web_expire || 31 %] days</b>.
-        </p>
 	<form action="[% env.script_name %]" method="post">
 		<fieldset>
 			<legend>Message Preferences</legend>	
@@ -62,20 +58,18 @@ __template__
          moderef.$mode = deliverymodes.$mode;
       END;
 %]
-	<label>[% messagecodes.$code %]</label>
-	[% UNLESS prefs.${code}.defined; prefs.$code = modenone; END;
-	Slash.createSelect("deliverymodes_$code", moderef, prefs.$code, 1, 1) %]
-[%- END %]
-
-	<p>
-		You may select a message threshold for when messages for comments (replies to journal entries, replies to comments) are sent to you.
-	</p>
-
-	<p>
-		[% thresh = userm.message_threshold.defined ? userm.message_threshold : constants.message_threshold; 
-		Slash.createSelect('message_threshold', Slash.db.getDescriptions('threshcodes'), thresh, 1) %]
-	</p>
-
+			<label>
+				[% messagecodes.$code %]
+				[% UNLESS prefs.${code}.defined; prefs.$code = modenone; END;
+				Slash.createSelect("deliverymodes_$code", moderef, prefs.$code, 1, 1) %]
+				[%- END %]
+			</label>
+                        <p>
+                                You may select a message threshold for when messages for comments (replies to journal entries, replies to comments) are sent to you.
+                        </p>
+	
+			[% thresh = userm.message_threshold.defined ? userm.message_threshold : constants.message_threshold; 
+			Slash.createSelect('message_threshold', Slash.db.getDescriptions('threshcodes'), thresh, 1) %]
 
 
 <!--
@@ -108,12 +102,12 @@ messages, disable it above.
 	[[/TABLE]][[/TD]][[/TR]]
 -->
 
-			<input type="hidden" name="uid" value="[% userm.uid %]">
-			<input type="hidden" name="op" value="save_prefs">
-			<input type="submit" value="Save Prefs">
-		</fieldset>
-	</form>
-</div>
+				<input type="hidden" name="uid" value="[% userm.uid %]">
+				<input type="hidden" name="op" value="save_prefs">
+				<input type="submit" value="Save Prefs">
+			</fieldset>
+		</form>
+	</div>
 </div>
 __seclev__
 500

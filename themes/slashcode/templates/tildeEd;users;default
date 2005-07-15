@@ -48,8 +48,9 @@ __template__
 <p>
 
 [% PROCESS titlebar title=title width="100%" %]
-
-[% criteria_msg %]
+<div class="message">
+	[% criteria_msg %]
+</div>	
 
 [% story023_data = Slash.db.getDescriptions('story023');
    checked = constants.markup_checked_attribute %]
@@ -188,8 +189,12 @@ __template__
 	</tr>
 </table>
 
-[% tilded_customize_msg %]
-[% tilded_box_msg %]
+<div class="notes">
+	[% tilded_customize_msg %]
+</div>
+<div class="notes">
+	[% tilded_box_msg %]
+</div>
 
 __seclev__
 500

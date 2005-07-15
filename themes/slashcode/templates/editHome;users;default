@@ -98,10 +98,11 @@ __template__
 		[%# We're not using the moderation FAQ for now.      %]
 		[%# It will return...when we rewrite it. - Cliff     %]
 		<label class="checkbox">
-			<input type="checkbox" name="willing"[% w_check %]>
-        		<b>Willing to Moderate</b> By default all users are willing to Moderate. Uncheck this if you aren't interested.
+			<input type="checkbox" name="willing"[% w_check %]> Willing to Moderate 
 		</label>
-
+		<div class="notes">
+			By default all users are willing to Moderate. Uncheck this if you aren't interested.
+		</div>
 		[% tilde_ed %]
 
 		<input type="submit" value="Save" class="button">
