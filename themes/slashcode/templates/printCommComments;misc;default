@@ -86,10 +86,10 @@ __template__
 								<a href="[% gSkin.rootdir %]/moderation.shtml">Moderator Guidelines</a>
 								yet?
 								<input type="hidden" name="op" value="moderate">
-								<input type="submit" value="moderate">
+								<input type="submit" value="moderate" class="button">
 								[% IF (constants.authors_unlimited && user.seclev >= constants.authors_unlimited)
 									|| user.acl.candelcomments_always %]
-									<br><b>NOTE: Checked comments will be deleted.</b>
+									[% PROCESS formNote note='Checked comments will be deleted.' %]
 								[% END %]
 							[% END %]
 							</td>
