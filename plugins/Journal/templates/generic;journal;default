@@ -12,10 +12,11 @@ __name__
 generic
 __template__
 [% USE Slash %]
+<div id="journalgeneric">
 	[% FOREACH article = articles %]
 		<div class="journaldate">[% Slash.timeCalc(article.day,"%A %B %d, %y") %]</div>
 		[% FOREACH diatribe = article.article %]
-			<div class="journalgeneric">
+			<div class="article">
 				<div class="title">
 					<h3>
 						[% diatribe.description %]
@@ -32,26 +33,47 @@ __template__
 						[% diatribe.article %]
 					</div>
 				</div>
-			[% IF diatribe.discussion && !show_discussion %]
-				<div class="storylinks">
-					<div>
-						<ul>
-							<li class="discussion"><a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</a></li>
-						</ul>
+                                        [% IF diatribe.discussion && !show_discussion %]
+                                               <div class="storylinks">
+						<div>
+                                                        <ul>
+                                                        [%- IF !user.is_anon;
+                                                                IF user.uid == uid %]
+                                                                 <li class="edit">
+                                                                    <a href="[% gSkin.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Edit</a>
+                                                                </li>
+                                                                <li class="delete">
+                                                                        <a href="[% gSkin.rootdir %]/journal.pl?op=removemeta&amp;id=[% diatribe.id %]">Delete</a>
+                                                                  </li>
+                                                             [%- END;
+                                                         END %]
+                                                    [%- IF diatribe.discussion; IF !show_discussion %]
+                                                                <li [% UNLESS user.uid == uid %]class="discussion"[% END %]>
+                                                                        <a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">[% diatribe.commentcount %] Comment[% diatribe.commentcount != 1 ? "s" : "" %]</a>
+                                                              </li>
+                                                        [%- END; ELSIF user.uid == uid %]
+                                                                <li class="enable">
+                                                                        <a href="[% gSkin.rootdir %]/journal.pl?op=edit&amp;id=[% diatribe.id %]">Enable Comments</a>
+                                                                 </li>
+                                                        [%- END %]
+                                                        <li [% IF show_discussion %]class="journalid"[% END %]>
+                                                                <a href="[% gSkin.rootdir %]/~[% nickname | fixparam %]/journal/[% diatribe.id %]">#[% diatribe.id %]</a>
+                                                         </li>
+                                                </ul>
+						</div>
 					</div>
-				</div>
-			[% END %]	
+                                        [% END %]
 			</div>			
 		[% END %]
 	[% END %]
 
-
-
+	<div class="journalpage">	
 	[% IF !user.is_anon && uid && uid != user.uid %]
-		<a href="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Add Friend</a>
-	[% END %]
-	
-	[% PROCESS pagination %]
+                <a href="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Add Friend</a>
+        [% END %]
+		[% PROCESS pagination %]
+	</div>	
+</div>
 
 __seclev__
 100
