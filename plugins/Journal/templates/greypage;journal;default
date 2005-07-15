@@ -12,47 +12,44 @@ __name__
 greypage
 __template__
 [% USE Slash %]
-<p><table>
-	[% FOREACH article = articles %]
-		<tr><td align="left" bgcolor="#C0C0C0" colspan="2">
-			
-				<b>[% Slash.timeCalc(article.day,"%A %B %d, %Y") %]</b>
-			
-		</td></tr>
 
+	<div id="journalgrey">
+	[% FOREACH article = articles %]
+		<div class="journaldate">[% Slash.timeCalc(article.day,"%A %B %d, %Y") %]</div>
 		[% FOREACH diatribe = article.article %]
-			<tr valign="top"><td align="right" bgcolor="#E0E0E0" nowrap="NOWRAP">
-				
-					<i>[% Slash.timeCalc(diatribe.date, "%I:%M %p") %]</i>
-				
-			</td><td>
-				<DIV STYLE="text-align:left">
-					<b>[% diatribe.description %]</b>
-					<p>
-					[% diatribe.article %]
-					<a href="[% gSkin.rootdir %]/search.pl?tid=[% diatribe.topic.tid %]"
-						><img src="[% constants.imagedir %]/topics/[% diatribe.topic.image %]" width="[% diatribe.topic.width %]"
-							height="[% diatribe.topic.height %]" border="0" align="right"
-							hspace="20" VSPACE="10" ALT="[% diatribe.topic.textname %]"></a>
+			<div class="details">	
+				[% Slash.timeCalc(diatribe.date, "%I:%M %p") %]
+			</div>
+			<div class="title">
+				<h3>
+					[% diatribe.description %]
+				</h3>
+			</div>
+			<div class="body">
+				<div class="topic">
+					<a href="[% gSkin.rootdir %]/search.pl?tid=[% diatribe.topic.tid %]" ><img src="[% constants.imagedir %]/topics/[% diatribe.topic.image %]" width="[% diatribe.topic.width %]" height="[% diatribe.topic.height %]" alt="[% diatribe.topic.textname %]"></a>
 				</div>
-			</td>
-		</tr>
+				<div class="intro">
+					[% diatribe.article %]
+				</div>
+			</div>
 		[% IF diatribe.discussion && !show_discussion %]
-			<tr><td valign="right">
-				<a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</a>
-			</td></tr>
+				<div class="storylinks">
+					<ul>
+						<li>
+							<a href="[% gSkin.rootdir %]/comments.pl?sid=[% diatribe.discussion %]">Discussion</a>
+						</li>
+					</ul>
+				</div>
 		[% END %]
 		[% END %]
 	[% END %]
-
+	</div>
 [% PROCESS pagination %]
 
 	[% IF !user.is_anon && uid && uid != user.uid %]
-		<tr valign="top"><td align="right" bgcolor="#E0E0E0">
-			<a href="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Make a friend</a>
-		</td></tr>
+	<a href="[% gSkin.rootdir %]/zoo.pl?op=addcheck&amp;uid=[% uid %]&amp;type=friend">Make a friend</a>
 	[% END %]
-</table>
 
 __seclev__
 100
