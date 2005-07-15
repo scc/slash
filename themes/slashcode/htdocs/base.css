@@ -322,14 +322,14 @@ img { border: none; }
 
 
 /* articles */
-.article, .journalgeneric
+.article
 {
 	padding: 0;
 	margin: 0;
 	position: relative;
 }
 
-.article div.title, .journalgeneric div.title
+.article div.title
 {
 	background: #999;
 	padding: 0;
@@ -337,7 +337,7 @@ img { border: none; }
 	position: relative;
 }
 
-.article h3, .journalgeneric h3
+.article h3
 {
 	margin: 0;
 	padding: .3em .8em .2em .8em;
@@ -345,9 +345,9 @@ img { border: none; }
 	position: relative;
 }
 
-.article h3 a, .journalgeneric h3 a, .article h3 a:visited, .journalgeneric h3 a:visited { color: #fff; }
+.article h3 a, .article h3 a:visited { color: #fff; }
 
-.article .details, .journalgeneric .details
+.article .details
 {
 	padding: .4em 1em;
 	margin: 0;
@@ -355,14 +355,14 @@ img { border: none; }
 }
 
 
-.body
+.article .body
 {
 	padding: 1em;
 	margin: 0;
 	min-height: 50px;
 }
 
-.article .details strong, .journalgeneric .details strong
+.article .details strong
 {
 	font-weight: bold;
 	position: relative;
@@ -507,6 +507,7 @@ ul.menu li
 	padding: 0;
 	list-style: none;
 	display: inline;
+	white-space: nowrap;
 }
 
 ul.menu li a
@@ -531,21 +532,28 @@ ul.menu li.selected a
 	color: #000;
 	padding: 0 .3em;
 }
-
+html > body .generalbody ul.menu, .submenu
+{
+        margin: -1em 0 3em 0;
+}
 .generalbody ul.menu, .submenu
 {
 	margin: -1em 0 1em 0;
 	padding: 0;
 	font-size: 70%;
 	font-family: arial, sans-serif;
+	display: block;
 }
-
+html > body .generalbody ul.menu li, .submenu li
+{
+        float: left;
+}
 .generalbody ul.menu li, .submenu li
 {
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	display: inline;
+	display: inline
 }
 
 .generalbody ul.menu li a, .submemu li a
@@ -613,7 +621,6 @@ input.button
 	margin: 1em 0 0 0;
 }
 
-
 /* Data tables */
 .data_head
 {
@@ -672,7 +679,7 @@ input.button
 	padding: .3em;
 }
 
-blockquote, pre, code 
+pre, code 
 {
 	overflow: auto;
 	overflow-x: auto;

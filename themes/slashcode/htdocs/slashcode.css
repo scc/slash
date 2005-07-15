@@ -11,7 +11,8 @@ a:visited { color: #000; }
 
 /* layout */
 #contents { 
-	height: auto;
+	min-width: 37em;
+	height: 100%;
 }
 #articles, #users-blocks, #polls { height: 100%; }
 
@@ -106,6 +107,10 @@ a:visited { color: #000; }
 	background: #fff;
 	border: 1px solid #aaa;
 	border-top: none;
+}
+.generalbody .article .body, .generalbody .article
+{
+	height: 100%;
 }
 
 
@@ -216,6 +221,17 @@ div.storylinks ul li { border-left: 1px solid #555; }
 .btmnav ul li a { color: #600; }
 
 /* Journal */
+.journaldate {position: relative;}
+.generalbody #journalgeneric .article 
+{
+	height: auto;
+	margin: 0 0 1em 0;
+}
+#journalgeneric div.storylinks ul li { margin: 0; padding: 0; border: none; }
+#journalgeneric div.storylinks ul li a { padding: 0 .4em 0 1em;  border-left: 1px solid #000; }
+#journalgeneric div.storylinks ul li.edit a, #journalgeneric div.storylinks ul li.discussion a, #journalgeneric div.storylinks ul li.journalid a { border: none; }
+
+
 #journalslashdot .journaldate {font-weight: bold;}
 #journalslashdot .title { margin: 0 0 0 .6em; padding: 0; float: left;}
 #journalslashdot h3 { font-size: 65%; margin: 0; padding: 0; font-family: geneva,verdana,sans-serif;}
@@ -225,24 +241,37 @@ div.storylinks ul li { border-left: 1px solid #555; }
 #journalslashdot div.storylinks ul { margin: 0; padding: 0; background: transparent;}
 #journalslashdot div.storylinks ul li { margin: 0; padding: 0; border: none;  font-family: geneva,verdana,sans-serif; }
 #journalslashdot div.storylinks ul li a { padding: 0 .4em 0 1em;  border-left: 1px solid #000; }
-#journalslashdot div.storylinks ul li.edit a, #journalslashdot div.storylinks ul li.discussion a,  #journalslashdot div.storylinks ul li.journalid a { border: none; }
+#journalslashdot div.storylinks ul li.edit a, #journalslashdot div.storylinks ul li.discussion a, #journalslashdot div.storylinks ul li.journalid a { border: none; }
 #journalslashdot .journalpage {font-size: 65.5%;  font-family: geneva,verdana,sans-serif; text-align: right;} 
 
 #journalgrey .journaldate { font-weight: bold; background: #eee; }
 #journalgrey .details { float:left; font-weight: bold; background: #eee; padding: 0 0.6em 0 0; }
 #journalgrey .title { background: #eee; padding: 0 0 0 0.6em; }
 #journalgrey { border: 3px solid #999; padding: 3px; }
-#journalgrey div.storylinks, #journalblue div.storylinks { background: transparent; }
-#journalgrey div.storylinks ul, #journalblue div.storylinks.ul { background: transparent; }
+#journalgrey div.storylinks, #journalblue div.storylinks { background: transparent; } 
+#journalgrey div.storylinks ul, #journalblue div.storylinks ul { background: transparent; }
+#journalgrey .body, #journalblue .body {height: 100%; min-height: 60px; }
+#journalblue div.storylinks ul li,  #journalgrey div.storylinks ul li  { border: none; margin: 0; padding: 0;}
 
-#journalblue .journaldate { background: #369; font-weight: bold; padding: 3px; } 
-#journalblue { border: 3px solid #000; } 
+
+#journalblue .journaldate { background: #369; font-weight: bold; padding: 3px; }
+#journalblue { border: 3px solid #000; }
 #journalblue .details {float: left; margin: 0 0.6em 0 0.3em; font-weight: bold; } 
 #journalblue .title h3 {  margin: 0; padding: 0; font-family: Times,serif;}
+        
 
+/* Forms */
+#journal input, #admin input, textarea
+{
+        width: 80%;
+}
+#journal input.button, #admin input.button
+{
+	width: auto;
+}
 
 /* Misc */
-pre, blockquote, code
+pre, code
 {
 	font-size: 80%;
 }
