@@ -21,7 +21,7 @@ __template__
 					[% PROCESS formkey_tag %]
 
 					[% PROCESS formLabel value => "Subject", comment => "This is required" %]
-					<input type="text" name="description" size="60" MAXLENGTH="60" value="[% article.description | strip_attribute %]">
+					<input type="text" name="description" size="60" maxlength="60" value="[% article.description | strip_attribute %]">
 					[% PROCESS formLabel value => "Journal Topic", comment => "";
 					   def_topic = article.tid || constants.journal_default_topic;
 					   Slash.selectTopic('tid', def_topic, '', 1) %]

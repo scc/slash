@@ -14,24 +14,23 @@ __template__
 	
 <form action="[% gSkin.rootdir %]/journal.pl" method="post" enctype="application/x-www-form-urlencoded">
 	<fieldset>
-	<legend>
-		Journal Preferences
-	</legend>
-	<input type="hidden" name="op" value="setprefs">
-	[% USE Slash %]
-	[%- IF themes.size > 1 %]
+		<legend>
+			Journal Preferences
+		</legend>
+		<input type="hidden" name="op" value="setprefs">
+		[% USE Slash %]
+		[%- IF themes.size > 1 %]
 			[% PROCESS formLabel value => "Theme" %]
 			[% Slash.createSelect("journal_theme", themes, default, 1) %]
 			[% PROCESS formNote note => "Select how your journal will be viewed" %]
-	[%- END %]
+		[%- END %]
 		[% PROCESS formLabel value => "Comments" %]
-		[% PROCESS formNote note => "Select default for new entries";
-	 	   jdcodename = (user.is_subscriber || user.is_admin) ? 'commentcodes_extended' : 'commentcodes';
+		[% jdcodename = (user.is_subscriber || user.is_admin) ? 'commentcodes_extended' : 'commentcodes';
 		   jds = Slash.db.getDescriptions(jdcodename);
 		   def_jd = user.journal_discuss || constants.defaultcommentmode;
 		   Slash.createSelect("journal_discuss", jds, def_jd, 1) %]
 		 [% PROCESS formNote note => "Select default for new entries" %]
-	<input type="submit" name="submit" value="change" class="button">
+		<input type="submit" name="submit" value="change" class="button">
 	</fieldset>
 </form>
 
