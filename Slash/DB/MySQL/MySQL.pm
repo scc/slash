@@ -938,15 +938,17 @@ sub getCSS {
 	
 	my @clauses;
 
-        my $page_in = $page ? "(page = '' or page = '$page')" : "page = ''";
+	my $page_q = $self->sqlQuote($page);
+        my $page_in = $page ? "(page = '' or page = $page_q)" : "page = ''";
         push @clauses, $page_in;
 
         my $skid_in = $skid ? "(skid = 0 or skid = '$skid')" : "skid = 0";
         push @clauses, $skid_in;
 
         push @clauses, "admin='no'" if !$admin;
-
-	my $theme_in = $theme ? "(theme='' or theme='$theme')" : "theme=''";
+	
+	my $theme_q  = $self->sqlQuote($theme);
+	my $theme_in = $theme ? "(theme='' or theme=$theme_q)" : "theme=''";
 	push @clauses, $theme_in;
 
         my $where = "css.ctid=css_type.ctid AND ";
@@ -9313,7 +9315,6 @@ sub getSlashConf {
 		submit_categories =>		[ ],
 		skins_recenttopics =>           [ ],
 		subnet_karma_post_limit_range => [ ],
-		ssihead_inc_pages		=> []
 	);
 	my %conf_fixup_hashes = (
 		# var name			# default hash of keys/values
