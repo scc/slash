@@ -13,6 +13,7 @@ en_US
 __name__
 html-header
 __template__
+[% UNLESS only_css %]
 [% DEFAULT title="$constants.sitename: $constants.slogan" %]
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
             "http://www.w3.org/TR/html4/strict.dtd">
@@ -23,8 +24,11 @@ __template__
 	<meta name="description" content="[% meta_desc | strip_attribute %]">
 	[% END %]
 	<title>[% title | strip_notags %]</title>
-
-
+[% END %]
+	[% css = Slash.db.getCSS() %]
+	[%- FOREACH file = css -%]
+	<link rel="[% file.rel %]" type="[% file.type %]" media="[% file.media %]" href="[% gSkin.rootdir %]/[% file.file %]" [% IF file.title %]title="[% file.title %]"[% END %] >
+	[% END -%]
 __seclev__
 10000
 __version__

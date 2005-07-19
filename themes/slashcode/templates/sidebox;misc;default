@@ -14,12 +14,12 @@ __seclev__
 10000
 __template__
 <div class="block">
-	<div class="title" [% IF name %]id="[% name %]-title"[% END %]>
+	<div class="title" [% IF name %]id="[% name | strip_attribute %]-title"[% END %]>
 		<h4>
 			[% title %]
 		</h4>
 	</div>
-	<div class="content" [% IF name %]id="[% name %]-content"[% END %]>
+	<div class="content" [% IF name %]id="[% name | strip_attribute %]-content"[% END %]>
 		[% contents %]
 	</div>
 </div>

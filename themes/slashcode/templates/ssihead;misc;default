@@ -15,17 +15,13 @@ en_US
 __name__
 ssihead
 __template__
-[% FOREACH op = constants.ssihead_inc_pages %]
-	[% IF op == user.currentPage %]
-		[% page = user.currentPage %]
-	[% END %]
-[% END %]
 [%- IF page -%]
 <!--#include virtual="[% dir %]/[% skin %]slashhead-[% page %].inc"-->
 [%- ELSE -%]
 <!--#include virtual="[% dir %]/[% skin %]slashhead.inc"-->
 [%- END %]
-<div id="[% user.currentPage %]">
+[% id_page = user.currentPage || "general" %]
+<div id="[% id_page %]">
 __seclev__
 10000
 __version__

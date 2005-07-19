@@ -30,14 +30,6 @@ __template__
 <link rel="alternate" title="[% constants.sitename | strip_attribute %] RSS" href="[% PROCESS rsslink %]" type="application/rss+xml">
 [%- END;
    linkrels.push(tmp) %]
-[% css = Slash.db.getCSS() %]
-[%- FOREACH file = css -%]
-	[% tmp = BLOCK -%]
-	<link rel="[% file.rel %]" type="[% file.type %]" media="[% file.media %]" href="[% gSkin.rootdir %]/[% file.file %]" [% IF file.title %]title="[% file.title %]"[% END %] >
-	[%- END;
-	 linkrels.push(tmp) %]
-[% END -%]
-
 
 [% # XXXSKIN fix! %]
 [% IF link.section;
