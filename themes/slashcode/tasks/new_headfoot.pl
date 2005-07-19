@@ -23,6 +23,19 @@ $task{$me}{code} = sub {
 		skinHeaders(@_, $skins->{$skid});
 	}
 
+	my $file = "$constants->{basedir}/slashhead-gen-full.inc";
+	open my $fh, ">$file" or die "Can't open $file : $!";
+	setCurrentForm('ssi', 1);
+	my $header = header("", "", { noheader => 1, Return => 1 });
+	setCurrentForm('ssi', 0);
+	print $fh $header;
+	close $fh;
+	
+	$file = "$constants->{basedir}/slashcssbase.inc";
+	open $fh, ">$file" or die "Can't open $file : $!";
+	my $cssbase = slashDisplay("html-header", { only_css => 1}, { Return => 1 });
+	print $fh $cssbase;
+
 	return ;
 };
 
@@ -53,6 +66,7 @@ sub skinHeaders {
 		my $header = header("", $skinname, { noheader => 1, Return => 1, Page => $_->[0], nopageid => 1 });
 		print $fh $header;
 		close $fh;
+
 	}
 
 	setCurrentForm('ssi', 0);
