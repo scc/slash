@@ -84,7 +84,7 @@ __template__
 		[% PROCESS formLabel value => "Template Name", comment => '' %]
 		<input type="text" name="name" value="[% templateref.name %]"><input type="hidden" name="thistpid" value="[% tpid %]">
 		[% PROCESS formLabel value => "Title" %]
-		<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% templateref.title %][% END %]">>
+		<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% templateref.title %][% END %]">
 		[% PROCESS formLabel value => "Seclev" %]
 		<input type="text" name="seclev" value="[% templateref.seclev %]" size="6">
 
