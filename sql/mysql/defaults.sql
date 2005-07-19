@@ -737,7 +737,7 @@ INSERT INTO vars (name, value, description) VALUES ('cookiedomain','','Domain fo
 INSERT INTO vars (name, value, description) VALUES ('cookiepath','/','Path on server for cookie to be active');
 INSERT INTO vars (name, value, description) VALUES ('cookiesecure','1','Set the secure flag in cookies if SSL is on?');
 INSERT INTO vars (name, value, description) VALUES ('counthits_lastmaxid','1','Last accesslog id scanned by counthits task');
-INSERT INTO vars (name, value, description) VALUES ('css_expire','3600','Time in seconds before template cache expires');
+INSERT INTO vars (name, value, description) VALUES ('css_expire','3600','Time in seconds before css cache expires');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_pps', '', 'Pages per second the site is running at');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats', '', 'Stores current performance stats in a var for display to admins');
 INSERT INTO vars (name, value, description) VALUES ('cur_performance_stats_disp', '1', 'Show current performance stats?');
@@ -1001,7 +1001,6 @@ INSERT INTO vars (name, value, description) VALUES ('slashd_verbosity','2','How 
 INSERT INTO vars (name, value, description) VALUES ('slashdir','/usr/local/slash','Directory where Slash was installed');
 INSERT INTO vars (name, value, description) VALUES ('slogan','Slash Site','Slogan of the site');
 INSERT INTO vars (name, value, description) VALUES ('smtp_server','localhost','The mailserver for the site');
-INSERT INTO vars (name, value, description) VALUES ('ssihead_inc_pages', 'article', 'Pages that should always use their own .inc for ssihead');
 INSERT INTO vars (name, value, description) VALUES ('stats_reports','admin@example.com','Who to send daily stats reports to');
 INSERT INTO vars (name, value, description) VALUES ('stats_sfnet_groupids','4421','List of sf.net group IDs to keep stats on');
 INSERT INTO vars (name, value, description) VALUES ('stem_uncommon_words', '1', 'Use stems of words for detecting similar stories instead of whole words?');

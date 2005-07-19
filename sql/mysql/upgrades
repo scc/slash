@@ -3073,7 +3073,7 @@ INSERT INTO vars (name, value, description) VALUES ('hc_q1_lettersomit', 'hlou',
 
 
 INSERT INTO vars (name, value, description) VALUES ('ssihead_inc_pages', 'article', 'Pages that should always use their own .inc for ssihead');
-INSERT INTO vars (name, value, description) VALUES ('css_expire','3600','Time in seconds before template cache expires');
+INSERT INTO vars (name, value, description) VALUES ('css_expire','3600','Time in seconds before css cache expires');
 
 CREATE TABLE css_type (
 	ctid TINYINT(3) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -3129,3 +3129,10 @@ INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, 
 INSERT INTO css (rel, type, media, file, title, skid, page, admin, theme, ctid, ordernum) VALUES ('stylesheet','text/css','screen, projection','polls.css','Slashcode',0,'pollBooth','no','',@page_ctid,0);
 
 UPDATE css set title="" where file="print.css";
+
+DELETE FROM vars where name = 'ssihead_inc_pages';
+
+# run this unless you have a reason not to (like, you have your own html;article;default)
+DELETE FROM templates WHERE name = 'header' AND skin = 'default' AND page='article';
+UPDATE vars set description="Time in seconds before css cache expires" where name="css_expire";
+
