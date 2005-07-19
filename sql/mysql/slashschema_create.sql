@@ -387,6 +387,11 @@ CREATE TABLE css (
 	theme VARCHAR(32) DEFAULT '',
 	ctid TINYINT(4) NOT NULL DEFAULT '0',
 	ordernum int(11) DEFAULT '0',
+	PRIMARY KEY  (csid),
+	KEY ctid (ctid),
+	KEY page_skid (page,skid),
+	KEY skid_page (skid,page)
+) TYPE=InnoDB;
 
 #
 # Table structure for table 'dateformats'
