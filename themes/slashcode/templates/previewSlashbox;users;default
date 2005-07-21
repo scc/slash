@@ -26,7 +26,7 @@ you will have that little block added to the right hand side of your
 Exciting?  Not really, but it's a great way to waste time.
 
 [% IF is_editable %]
-	<p>Edit <a href="[% gSkin.rootdir %]/admin.pl?op=blocks&amp;bid=[% form.bid %]">[% form.bid %]</a>
+	<p><a href="[% gSkin.rootdir %]/admin.pl?op=blocks&amp;bid=[% form.bid %]">Edit [% form.bid %]</a></p>
 [% END %]
 
 	</td><td width="180" valign="TOP">
