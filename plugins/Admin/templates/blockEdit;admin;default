@@ -16,7 +16,7 @@ __template__
 	<form action="[% env.script_name %]" method="post">
 		<fieldset>
 			<legend>
-				Edit [% FILTER strip_attribute %][% blockref.title %][% END %] Block
+				Select Block
 			</legend>
 			<input type="hidden" name="op" value="blocks">
 	[% IF blockdelete_flag %]
@@ -28,52 +28,42 @@ __template__
 			</div>
 	[% ELSE %]
 		[% IF block_select1 %]
-			<label>
-				Static and Color Blocks
-			</label>
+			[% PROCESS formLabel value => "Static and Color Blocks" %]
 			[% block_select1 %]
 			<input type="submit" value="Edit Block" name="blocked1" class="button">
 			<input type="submit" value="Delete Block" name="blockdelete1" class="button">
 		[% END %]
 		[% IF block_select2 %]
-			<label>
-				Portald Blocks
-			</label>
+			[% PROCESS formLabel value => "Portald Blocks" %]
 			[% block_select2 %]
 			<input type="submit" value="Edit Block" name="blocked2" class="button">
 			<input type="submit" value="Delete Block" name="blockdelete2" class="button">
 		[% END %]
 			<div class="notes">
         	                <ul>
-				        <li>You can only edit static blocks.</li>
-					<li>Blocks that are portald type blocks are written by portald</li>
+				        <li>You can only edit block content in static blocks.</li>
+					<li>Portald blocks are dynamicly written and block content changes will usually be written over.</li>
 				</ul>
 			</div>
 	[% END %]
+
 	[% IF blockform_flag %]
-			<label>
-				Block ID
-			</label>
+		</fieldset>
+		<fieldset>
+			<legend>
+                                Edit [% FILTER strip_attribute %][% blockref.title %][% END %] Block
+                        </legend>
+			[% PROCESS formLabel value => "Block ID" %]
 			<input type="text" name="thisbid" value="[% bid %]">
-			<label>
-				Title
-			</label>
+			[% PROCESS formLabel value => "Title" %]
 			<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% blockref.title %][% END %]">
-			<label>
-				Seclev
-			</label>
+			[% PROCESS formLabel value => "Seclev" %]
 			<input type="text" name="bseclev" value="[% blockref.seclev %]" size="6">
-			<label>
-				Type
-			</label>
+			[% PROCESS formLabel value => "Type" %]
 			[% blocktype_select %]
-			<label>
-				Skin
-			</label>
+			[% PROCESS formLabel value => "Skin" %]
 			[% skins = Slash.db.getDescriptions('skins-all'); Slash.createSelect("skin", skins, blockref.skin, 1, 0, 1) %]
-			<label>
-				Ordernum
-			</label>
+			[% PROCESS formLabel value => "Ordernum" %]
 			<input type="text" size="3" name="ordernum" value="[% blockref.ordernum %]">
 			<label>
 				All Skins <input type="checkbox" value="1" name="all_skins" [% all_skins_checked %]>
@@ -86,28 +76,18 @@ __template__
 			<label>
 				Retrieve <input type="checkbox" value="1" name="retrieve" [% retrieve_checked %]>
 			</label>
-			<label>
-				URL
-			</label>
+			[% PROCESS formLabel value => "URL" %]
 			<input type="text" size="70" name="url" value="[% blockref.url %]">
-			<label>
-				RDF/RSS
-			</label>
+			[% PROCESS formLabel value => "RDF/RSS" %]
 			<input type="text" size="70" name="rdf" value="[% blockref.rdf %]">
-			<label>
-				Autosubmit
-			</label>
+			[% PROCESS formLabel value => "Autosubmit" %]
 			[% autosubmit_select %]
-			<label>
-				RSS Template
-			</label>
+			[% PROCESS formLabel value => "RSS Template" %]
 			[% rss_select %]	
 			<div class="notes">
 				Current format: [% rss_template_code | strip_literal %]
 			</div>
-			<label>
-				Max RSS Items
-			</label>
+			[% PROCESS formLabel value => "Max RSS Items" %]
 			<input type="text" size="5" name="items" value="[% blockref.items %]">
 		[% END %] 
 
@@ -117,14 +97,11 @@ __template__
 			<input type="hidden" name="save_new" value="1">
 		[% END %]
 
-			<label>
-				Description
-			</label>
+			[% PROCESS formLabel value => "Description" %]
 			<textarea rows="6" cols="70" name="description">[% blockref.description | strip_literal %]</textarea>
-			<label>
-				Block Content
-			</label>
+			[% PROCESS formLabel value => "Block Content" %]
 			<textarea rows="15" cols="100" name="block">[% blockref.block | strip_literal %]</textarea>
+			<br>
 			<input type="submit" value="Save Block" name="blocksave" class="button">
 			<input type="submit" name="blockrevert" value="Revert to default" class="button">
 			<input type="submit" name="blocksavedef" value="Save as default" class="button">
