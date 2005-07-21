@@ -26,95 +26,104 @@ en_US
 __name__
 templateEdit
 __template__
-[% PROCESS titlebar width='100%' %]
 
-<form action="[% env.script_name %]" method="post">
-<fieldset>
-<legend>Template Editor</legend>
-<input type="hidden" name="op" value="templates">
-
-[% IF templatedelete_flag && seclev_flag %]
-
-<input type="hidden" name="deletetpid" value="[% tpid %]">
-<input type="hidden" name="deletename" value="[% templateref.name %]">
-		<label>Do you really want to delete Template [% templateref.name %], tpid [% tpid %]?</label>
-		<input type="submit" value="Cancel Delete of [% templateref.name %], tpid [% tpid %]" name="templatedelete_cancel" class="button">
-		<input type="submit" value="Really Delete [% templateref.name %], tpid [% tpid %]!" name="templatedelete_confirm" class="button">
-
-[% ELSE %]
-
-<h2>Select a template to edit.</h2>
-<input type="hidden" name="templatelastselect" value="[% form.templatelastselect | strip_attribute %]">
-		[% PROCESS formLabel value => "Search for template text" %]
-		<input type="text" value="[% form.templatesearchtext | strip_attribute %]" name="templatesearchtext">
-		<input type="submit" value="Search for text" name="templatesearch" class="button">
-		[% PROCESS formLabel value => "Skin" %]
-		[% skin_select %]
-		<input type="submit" value="Select skin" name="templateskin" class="button">
-		[% PROCESS formLabel value => "Page" %]
-		[% page_select %]
-		<input type="submit" value="Select page" name="templatepage">
-		<input type="submit" value="Select page and skin" name="templatepageandskin">
-		[% PROCESS formLabel value => "Templates" %]
-		[% template_select %]
-		<input type="submit" value="Edit Template" name="templateed" class="button">
-		<input type="submit" value="Delete Template" name="templatedelete" class="button">
-[% IF ! form.templatenew %]
-		[% PROCESS formLabel value => "Create a new template " %]
-		<input type="submit" value="Create a new template" name="templatenew">
-[% END %]
-[% END %]
-
-[% IF templateform_flag && seclev_flag %]
-	[% IF templateref.description %]
-					[% templateref.name %], [% templateref.page %], [% templateref.skin %]</b><br>
-				<p>[% FILTER strip_extrans %][% templateref.description %][% END %]</p><br>
+[% PROCESS titlebar %]
+<div class="generalbody">
+	<form action="[% env.script_name %]" method="post">
+		<fieldset>
+			<legend>
+				Select a template
+			</legend>
+			<input type="hidden" name="op" value="templates">
+		[% IF templatedelete_flag && seclev_flag %]
+			<input type="hidden" name="deletetpid" value="[% tpid %]">
+			<input type="hidden" name="deletename" value="[% templateref.name %]">
+			<div class="message_high">
+				Do you really want to delete Template [% templateref.name %], tpid [% tpid %]?
+				<input type="submit" value="Cancel Delete of [% templateref.name %], tpid [% tpid %]" name="templatedelete_cancel" class="button">
+				<input type="submit" value="Really Delete [% templateref.name %], tpid [% tpid %]!" name="templatedelete_confirm" class="button">
+			</div>
+		[% ELSE %]
+			<input type="hidden" name="templatelastselect" value="[% form.templatelastselect | strip_attribute %]">
+			[% PROCESS formLabel value => "Search for template text" %]
+			<input type="text" value="[% form.templatesearchtext | strip_attribute %]" name="templatesearchtext">
+			<input type="submit" value="Search for text" name="templatesearch" class="button">
+			[% PROCESS formLabel value => "Skin" %]
+			[% skin_select %]
+			<input type="submit" value="Select skin" name="templateskin" class="button">
+			[% PROCESS formLabel value => "Page" %]
+			[% page_select %]
+			<input type="submit" value="Select page" name="templatepage" class="button">
+			<input type="submit" value="Select page and skin" name="templatepageandskin" class="button">
+			[% PROCESS formLabel value => "Templates" %]
+			[% template_select %]
+			<input type="submit" value="Edit Template" name="templateed" class="button">
+			<input type="submit" value="Delete Template" name="templatedelete" class="button">
+		[% IF ! form.templatenew %]
+			[% PROCESS formLabel value => "Create a new template " %]
+			<input type="submit" value="Create a new template" name="templatenew" class="button">
+		[% END %]
 	[% END %]
-
-		[% PROCESS formLabel value => "Save template in skin" %]
-		[% saveskin_select %]
-		[% PROCESS formLabel value => "Template skin", comment => 'new template skin <input type="checkbox" name="newS">' %]
-		<input type="text" name="newskin" value="[% form.skin %]">
-		[% PROCESS formLabel value => "Save template in page", comment => '' %]
-		[% savepage_select %]
+		</fieldset>
+		<fieldset>
+	[% IF templateform_flag && seclev_flag %]
+		[% IF templateref.description %]
+			<legend> 
+				Edit ([% templateref.name %], [% templateref.page %], [% templateref.skin %])
+			</legend>
+			<p>[% FILTER strip_extrans %][% templateref.description %][% END %]</p>
+		[% ELSE %]
+			<legend>
+                                Edit
+                        </legend>	
+		[% END %]
+			[% PROCESS formLabel value => "Save template in skin" %]
+			[% saveskin_select %]
+			[% PROCESS formLabel value => "Template skin", comment => 'new template skin <input type="checkbox" name="newS">' %]
+			<input type="text" name="newskin" value="[% form.skin %]">
+			[% PROCESS formLabel value => "Save template in page", comment => '' %]
+			[% savepage_select %]
 	
-		[% PROCESS formLabel value => "Template page", comment => 'new template page <input type="checkbox" name="newP">' %]
-		<input type="text" name="newpage" value="[% form.page %]">
+			[% PROCESS formLabel value => "Template page", comment => 'new template page <input type="checkbox" name="newP">' %]
+			<input type="text" name="newpage" value="[% form.page %]">
 
-		[% PROCESS formLabel value => "Template Name", comment => '' %]
-		<input type="text" name="name" value="[% templateref.name %]"><input type="hidden" name="thistpid" value="[% tpid %]">
-		[% PROCESS formLabel value => "Title" %]
-		<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% templateref.title %][% END %]">
-		[% PROCESS formLabel value => "Seclev" %]
-		<input type="text" name="seclev" value="[% templateref.seclev %]" size="6">
+			[% PROCESS formLabel value => "Template Name", comment => '' %]
+			<input type="text" name="name" value="[% templateref.name %]"><input type="hidden" name="thistpid" value="[% tpid %]">
+			[% PROCESS formLabel value => "Title" %]
+			<input type="text" size="70" name="title" value="[% FILTER strip_attribute %][% templateref.title %][% END %]">
+			[% PROCESS formLabel value => "Seclev" %]
+			<input type="text" name="seclev" value="[% templateref.seclev %]" size="6">
 
-	[% IF templateedit_flag %]
-		<input type="hidden" name="save_existing" value="1">
-	[% ELSE %]
-		<input type="hidden" name="save_new" value="1">
+		[% IF templateedit_flag %]
+			<input type="hidden" name="save_existing" value="1">
+		[% ELSE %]
+			<input type="hidden" name="save_new" value="1">
+		[% END %]
+
+			[% PROCESS formLabel value => "Description" %]
+			<textarea rows="6" cols="70" name="description">[% templateref.description | strip_literal %]</textarea>
+			[% PROCESS formLabel value => "Template" %]
+			<textarea rows="15" cols="100" name="template">[% templateref.template | strip_literal %]</textarea>
+			<input type="submit" value="Save Template" name="templatesave" class="button">
+		[% IF form.templatedelete_cancel %]
+                	<input type="submit" value="Delete template" name="templatedelete" class="button">
+		[% END %]
+
+	[% ELSIF seclev_flag == 0 %]
+			<div class="error">
+				You don't have privileges to edit the template [% templateref.name %], TPID [% templateref.tpid %].
+			</div>
 	[% END %]
 
-		[% PROCESS formLabel value => "Description" %]
-		<textarea rows="6" cols="70" name="description">[% templateref.description | strip_literal %]</textarea>
-		[% PROCESS formLabel value => "Template" %]
-			<input type="submit" value="Save Template" name="templatesave" class="button">
-		
-			<textarea rows="15" cols="100" name="template">[% templateref.template | strip_literal %]</textarea>
-[% ELSIF seclev_flag == 0 %]
-You don't have privileges to edit the template [% templateref.name %], TPID [% templateref.tpid %].
-[% END %]
 
-[% IF form.templatedelete_cancel %]
-		<input type="submit" value="Delete template" name="templatedelete" class="button">
-[% END %]
+	[% IF ! form.templatenew && templateform_flag %]
+			[% PROCESS formLabel value => "Create a new template" %]
+			<input type="submit" value="Create a new template" name="templatenew">
+	[% END %]
 
-[% IF ! form.templatenew && templateform_flag %]
-		[% PROCESS formLabel value => "Create a new template" %]
-		<input type="submit" value="Create a new template" name="templatenew">
-[% END %]
-
-</fieldset>
-</form>
+		</fieldset>
+	</form>
+</div>
 
 __seclev__
 500
