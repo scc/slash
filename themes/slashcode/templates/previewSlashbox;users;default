@@ -29,7 +29,7 @@ Exciting?  Not really, but it's a great way to waste time.
 	<p><a href="[% gSkin.rootdir %]/admin.pl?op=blocks&amp;bid=[% form.bid %]">Edit [% form.bid %]</a></p>
 [% END %]
 
-	</td><td width="180" valign="TOP">
+	</td><td width="180" valign="top">
 
 __seclev__
 10000
