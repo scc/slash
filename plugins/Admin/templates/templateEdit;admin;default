@@ -64,18 +64,15 @@ __template__
 			<input type="submit" value="Create a new template" name="templatenew" class="button">
 		[% END %]
 	[% END %]
-		</fieldset>
-		<fieldset>
 	[% IF templateform_flag && seclev_flag %]
-		[% IF templateref.description %]
-			<legend> 
-				Edit ([% templateref.name %], [% templateref.page %], [% templateref.skin %])
-			</legend>
-			<p>[% FILTER strip_extrans %][% templateref.description %][% END %]</p>
-		[% ELSE %]
-			<legend>
+		</fieldset>
+                <fieldset>
+                       <legend>
                                 Edit
-                        </legend>	
+                        </legend>
+		[% IF templateref.description %]
+			<h3>[% templateref.name %], [% templateref.page %], [% templateref.skin %]</h3>
+			<p>[% FILTER strip_extrans %][% templateref.description %][% END %]</p>
 		[% END %]
 			[% PROCESS formLabel value => "Save template in skin" %]
 			[% saveskin_select %]
@@ -104,6 +101,7 @@ __template__
 			<textarea rows="6" cols="70" name="description">[% templateref.description | strip_literal %]</textarea>
 			[% PROCESS formLabel value => "Template" %]
 			<textarea rows="15" cols="100" name="template">[% templateref.template | strip_literal %]</textarea>
+			<br>
 			<input type="submit" value="Save Template" name="templatesave" class="button">
 		[% IF form.templatedelete_cancel %]
                 	<input type="submit" value="Delete template" name="templatedelete" class="button">
