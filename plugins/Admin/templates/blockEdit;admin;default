@@ -53,6 +53,12 @@ __template__
 			<legend>
                                 Edit [% FILTER strip_attribute %][% blockref.title %][% END %] Block
                         </legend>
+                [% IF blockref.description %]
+                        <label>
+                                Block ID: [% bid %]
+                        </label>
+                        [% blockref.description %]
+                [% END %]
 			[% PROCESS formLabel value => "Block ID" %]
 			<input type="text" name="thisbid" value="[% bid %]">
 			[% PROCESS formLabel value => "Title" %]
@@ -113,14 +119,6 @@ __template__
 
 		[% IF ! form.blocknew %]
 			<input type="submit" value="Create a new block" name="blocknew" class="button">
-		[% END %]
-
-
-		[% IF blockref.description %]
-			<label>
-				Block ID: [% bid %]
-			</label>
-			[% blockref.description %]
 		[% END %]
 		</fieldset>
 	</form>
