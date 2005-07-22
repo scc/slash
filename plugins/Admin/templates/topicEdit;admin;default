@@ -37,10 +37,9 @@ __template__
 		[% PROCESS formNote note = "WxH or leave blank to guess" %] 
 
 		[% IF topic.image %]
-			<img src="[% constants.imagedir %]/topics/[% topic.image %]" alt="[% topic.textname %]" width="[% topic.width %]" height="[% topic.height %]">
+			<img src="[% constants.imagedir %]/topics/[% topic.image %]" alt="[% topic.textname %]" width="[% topic.width %]" height="[% topic.height %]"><br>
 		[% END %]
 	[% END %]
-	
 	<label class="checkbox">
 	<input type="checkbox" name="series" value="yes"[% topic.series == 'yes' ? ' checked' : '' %]> Series
 	[%- PROCESS formNote note = "for recurring stories in sequence" %]
