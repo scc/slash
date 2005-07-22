@@ -57,7 +57,7 @@ in this block -->
 		</h2>
 		</div>
 		<div id="links">
-			[%  text = INCLUDE mainmenu; Slash.sidebox("Navigation", text, "navigation", 1) %]
+			[% text = INCLUDE mainmenu; Slash.sidebox("Navigation", text, "navigation", 1) %]
 			[% text = INCLUDE organisation; Slash.sidebox(constants.sitename, text, "sitebox", 1) %]
 		</div>
 		<div id="contents">
