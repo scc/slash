@@ -37,6 +37,7 @@ __template__
 		[% PROCESS formNote note = "WxH or leave blank to guess" %] 
 
 		[% IF topic.image %]
+		[% PROCESS formLabel value => "Image Preview" %]
 			<img src="[% constants.imagedir %]/topics/[% topic.image %]" alt="[% topic.textname %]" width="[% topic.width %]" height="[% topic.height %]"><br>
 		[% END %]
 	[% END %]
