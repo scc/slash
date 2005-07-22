@@ -42,17 +42,17 @@ __template__
 	[% END %]
 	<label class="checkbox">
 	<input type="checkbox" name="series" value="yes"[% topic.series == 'yes' ? ' checked' : '' %]> Series
-	[%- PROCESS formNote note = "for recurring stories in sequence" %]
+	[%- PROCESS formNote note = "For recurring stories in sequence" %]
 	</label>
 	<label class="checkbox">
 	<input type="checkbox" name="nexus" value="1"[% topic.nexus ? ' checked' : '' %]> Nexus
-	[%- PROCESS formNote note => "grouping of related stories" %]
+	[%- PROCESS formNote note => "Grouping of related stories" %]
 	[% IF topic.nexus %]<br><a href="[% gSkin.rootdir %]/admin.pl?op=topic_extras&amp;tid=[% topic.tid %]">Edit topic extras for this topic</a><br />[% END %]
 	</label>
 
 	<label class="checkbox">
 	<input type="checkbox" name="submittable" value="1"[% topic.submittable ? ' checked' : '' %]> Submittable
-	[%- PROCESS formNote note => "users can submit stories under this topic" %]
+	[%- PROCESS formNote note => "Users can submit stories under this topic" %]
 	</label>
 	<label class="checkbox">
 	<input type="checkbox" name="searchable" value="1"[% topic.searchable  ? ' checked' : '' %]> Searchable
