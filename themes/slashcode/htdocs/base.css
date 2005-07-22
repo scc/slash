@@ -86,18 +86,46 @@ img { border: none; }
 	margin: 0 0 .1em 0;
 }
 
-#topnav h4 a, #topnav ul a 
+#topnav h4 a
 {
 	text-align: center;
 	padding: 0 .6em;
 	text-decoration: none;
 }
 
-#topnav h4, #topnav ul 
+#topnav h4
 {
 	text-align: center;
 	margin: 0 auto;
 	white-space: nowrap;
+}
+
+#topnav li a
+{
+	text-align: center;
+	padding: 0 .6em;
+	text-decoration: none;
+}
+
+#topnav ul
+{
+	text-align: center;
+	margin: 0 auto;
+	white-space: nowrap;
+}
+
+#topnav li img 
+{
+	vertical-align:middle;
+}
+
+#topnav li
+{
+	text-align: center;
+	margin: 0 auto;
+	white-space: nowrap;
+	display: inline;
+	list-style: none;
 }
 
 #slogan h2
