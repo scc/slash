@@ -93,7 +93,6 @@ __template__
 	<input type="button" name="topicnew" value="Create New Topic" onclick="stc_submit(this)">
 	<input type="button" name="topicsave" value="Save Topic" onclick="stc_submit(this)">
 
-	<legend>Custom Topic Parameters</legend>
 	[% PROCESS formLabel value => "Delete & Reparent", comment => "irreversibly delete this topic, and reparent its children" %]
 	[% Slash.createSelect('replacementtid', topic_desc, '', 1, 0, 1) %]
 	<input type="button" name="topicdelete" value="Delete Topic" onclick="stc_submit(this)">
