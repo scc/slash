@@ -94,29 +94,20 @@ __template__
 				[% END %]
 				<input type="hidden" name="submitter" value="[% storyref.submitter | strip_attribute %]">
 				<input type="checkbox" name="display" [% display_check %]><b>Display</b>
-				<label>
-					Topics
-				</label>
-		
+				[% PROCESS formLabel value => "Topics" %]
 				[% IF topic_select %]
 					[% topic_select %]
 				[% END %]
 				[% shown_in_desc %]
-				<label>
-					Title
-				</label>
+				[% PROCESS formLabel value => "Title" %]
 				<input type="text" name="title" value="[% storyref.title | strip_attribute %]" size="50">
 
 				[% IF constants.use_dept %]
-					<label>
-						Dept
-					</label>
+					[% PROCESS formLabel value => "Dept" %]
 					<input type="text" name="dept" value="[% storyref.dept | strip_attribute %]" size="50">
 				[% END %]
 
-				<label>
-					Author
-				</label>
+				[% PROCESS formLabel value="Author" %]
 				[% author_select %]
 
 				[% FOR extra = extras %]
@@ -136,7 +127,7 @@ __template__
 
 				[% commentstatus_select %]
 				<input type="text" name="time" value="[% storyref.time %]" size="19">
-
+				<br>
 				[% IF constants.plugin.PollBooth %]
 					<label class="checkbox">
 						Poll ID:  [% storyref.qid %]
@@ -159,6 +150,7 @@ __template__
 							<a href="[% gSkin.rootdir %]/pollBooth.pl?sid=[% storyref.sid | fixparam %]&amp;op=linkstory">Link Story to Existing Poll</a>
 						</label>	
 					[% END %]
+					<br>
 				[% END %]
 
 				<label class="checkbox">
@@ -206,6 +198,7 @@ __template__
 		</div>
 	</form>
 </div>
+
 __seclev__
 10000
 __version__
