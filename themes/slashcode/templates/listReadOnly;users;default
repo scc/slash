@@ -12,7 +12,7 @@ __name__
 listReadOnly
 __template__
 [% PROCESS titlebar title="Read Only" width='100%' %]
-
+<div class="generalbody">
 [% IF readonlylist %]
 <p><b>Read Only List:</b></p>
 <table border="0" cellpadding="0">
@@ -37,7 +37,7 @@ __template__
 [% ELSE %]
 No readonly users 
 [% END %]
-
+</div>
 
 __seclev__
 100

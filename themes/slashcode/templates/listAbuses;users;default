@@ -12,7 +12,8 @@ en_US
 __name__
 listAbuses
 __template__
-[% PROCESS titlebar title="User Abuses" width='100%' %]
+[% PROCESS titlebar title="User Abuses" %]
+<div class="generalbody">
 [% IF abuses.0 %]
 <table cellspacing="0">
 	<tr>
@@ -35,7 +36,7 @@ __template__
 [% ELSE %]
 No abuses for this user
 [% END %]
-
+</div>
 
 __seclev__
 100

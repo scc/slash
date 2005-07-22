@@ -11,7 +11,8 @@ en_US
 __name__
 listBanned
 __template__
-[% PROCESS titlebar title="Banned" width='100%' %]
+[% PROCESS titlebar title="Banned" %]
+<div class="generalbody">
 
 [% IF bannedlist %]
 <p><b>Banned List:</b></p>
@@ -38,7 +39,7 @@ __template__
 No banned users 
 [% END %]
 
-
+</div>
 __seclev__
 100
 __version__
