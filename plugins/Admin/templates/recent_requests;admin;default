@@ -16,9 +16,9 @@ en_US
 __name__
 recent_requests
 __template__
-[% PROCESS titlebar title="Recent Requests" width='100%' %]
-
-	<br><table border=0 cellspacing="0" cellpadding="0">
+[% PROCESS titlebar title="Recent Requests" %]
+<div class="generalbody">
+<table border=0 cellspacing="0" cellpadding="0">
 <form action="[% gSkin.rootdir %]/admin.pl?op=recent_requests" method="get">
 <input type="hidden" name="op" value="recent_requests">
 	<tr><td>Min ID</td><td><input type="text" name="min_id" value="[% min_id %]" size="15"></td></tr>
@@ -79,6 +79,7 @@ __template__
 [% END %]
 	
 </form>
+</div>
 
 __seclev__
 100
