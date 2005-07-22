@@ -14,7 +14,9 @@ __name__
 setrectop_img
 __template__
 [% USE Slash %]
-<a href="[% gSkin.rootdir %]/search.pl?tid=[% id %]"><img src="[% image %]" width="[% width %]" height="[% height %]" alt="[% textname %]" title="[% textname %]" ></a>
+<li>
+	<a href="[% gSkin.rootdir %]/search.pl?tid=[% id %]"><img src="[% image %]" width="[% width %]" height="[% height %]" alt="[% textname %]" title="[% textname %]" ></a>
+</li>
 __seclev__
 10000
 __version__
