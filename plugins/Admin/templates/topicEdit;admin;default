@@ -46,9 +46,8 @@ __template__
 	[%- PROCESS formNote note = "For recurring stories in sequence" %]
 	</label>
 	<label class="checkbox">
-	<input type="checkbox" name="nexus" value="1"[% topic.nexus ? ' checked' : '' %]> Nexus
+	<input type="checkbox" name="nexus" value="1"[% topic.nexus ? ' checked' : '' %]> Nexus [% IF topic.nexus %]- <a href="[% gSkin.rootdir %]/admin.pl?op=topic_extras&amp;tid=[% topic.tid %]">Edit topic extras for [% topic.keyword | strip_attribute %] topic</a>[% END %]
 	[%- PROCESS formNote note => "Grouping of related stories" %]
-	[% IF topic.nexus %]<br><a href="[% gSkin.rootdir %]/admin.pl?op=topic_extras&amp;tid=[% topic.tid %]">Edit topic extras for this topic</a><br />[% END %]
 	</label>
 
 	<label class="checkbox">
