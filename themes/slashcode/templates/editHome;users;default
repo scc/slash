@@ -43,6 +43,11 @@ __template__
 <input type="hidden" name="uid" value="[% user_edit.uid %]">
 
 		<label>
+			Current Date/Time (using saved preferences)
+		</label>
+		[% Slash.timeCalc() %]
+
+		<label>
 			Date/Time Format
 		</label>
 		[% tzformat_select %]
@@ -72,6 +77,8 @@ __template__
 			'off'	=> 'Manual (Off)'
 		}, user_edit.dst, 1);
 		%]
+
+
 <!-- Possible removal due to CSS styling availabilty --> 
 		<label>
 			<input type="checkbox" name="light"[% l_check %]> Light
