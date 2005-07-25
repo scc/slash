@@ -106,6 +106,7 @@ BLOCK sub_display -%]
 	[% END %]
 		<br>[% sub.strs.2 %]</td></tr>
 [% END %]
+</div>
 __seclev__
 10000
 __version__
