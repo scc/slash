@@ -23,9 +23,9 @@ __template__
 	[% PROCESS titlebar title=title %]
 	<div class="generalbody">
 		[% IF form.unickname %]
-			<p class="message">
+			<div class="error">
 				You didn't log in!  You apparently put in the wrong password, or the wrong nickname.  Try again, or click on the mail password button if you forgot your password.
-			</p>
+			</div>
 			[% IF constants.allow_anonymous %]
 				<p class="message">
 	   				Logging in will allow you to post comments as yourself.  If you don't log in, you will only be able to post as [% Slash.getCurrentAnonymousCoward("nickname") %].
@@ -52,8 +52,7 @@ __template__
 					Password
 				</label>
 				<input type="password" name="upasswd" size="20" maxlength="20">
-				<div class="note">
-				(6-20 characters long)
+				[% PROCESS formNote note="(6-20 characters long)" %]
 				</div>
 				<input type="checkbox" name="login_temp" value="yes"> Public Terminal
 				<input type="submit" name="userlogin" value="Log in">
@@ -103,8 +102,7 @@ __template__
 					Address to send your registration information. This address will <b>not</b> be displayed on [% constants.sitename %].
 				</div>
 				<input type="submit" name="newuser" value="Create Account">
-				<div class="note">
-					Click the button to create your account and be mailed a password.
+				[% PROCESS formNote note="Click the button to create your account and be mailed a password." %]
 				</div>
 				<p class="submessage">
 					[% msg1 %]
