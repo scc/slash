@@ -1125,7 +1125,7 @@ sub getRelated {
 		for my $key (@matchkeys) {
 			# Instead of hard-coding the HTML here, we should
 			# do something a little more flexible.
-			my $str = qq[<li><a href="$rl->{$key}{link}">$rl->{$key}{name}</a></li.\n];
+			my $str = qq[<li><a href="$rl->{$key}{link}">$rl->{$key}{name}</a></li>\n];
 			push @related_text, $str;
 		}
 	}
