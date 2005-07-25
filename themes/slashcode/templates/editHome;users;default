@@ -43,8 +43,11 @@ __template__
 <input type="hidden" name="uid" value="[% user_edit.uid %]">
 
 		<label>
-			Current Date/Time (using saved preferences)
+			Current Date/Time
 		</label>
+		<div class="note">
+			Using saved preferences
+		</div>
 		[% Slash.timeCalc() %]
 
 		<label>
