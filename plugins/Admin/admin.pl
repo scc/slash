@@ -1125,7 +1125,7 @@ sub getRelated {
 		for my $key (@matchkeys) {
 			# Instead of hard-coding the HTML here, we should
 			# do something a little more flexible.
-			my $str = qq[&middot; <a href="$rl->{$key}{link}">$rl->{$key}{name}</a><br>\n];
+			my $str = qq[<li><a href="$rl->{$key}{link}">$rl->{$key}{name}</a></li.\n];
 			push @related_text, $str;
 		}
 	}
@@ -1156,9 +1156,9 @@ sub getRelated {
 		# do something a little more flexible.
 		my $str;
 		if (submitDomainAllowed($a_href_domain)) {
-			$str = qq[&middot; <a $a_attr>$label</a><br>\n];
+			$str = qq[<li><a $a_attr>$label</a></li>\n];
 		} else {
-			$str = qq[&middot; <blink><b><a style="color: #FF0000;" $a_attr>$label</a></b></blink><br>\n];
+			$str = qq[<li><blink><b><a style="color: #FF0000;" $a_attr>$label</a></b></blink></li>\n];
 		}
 		push @related_text, $str unless $label eq "?" || $label eq "[?]";
 	}
@@ -1167,7 +1167,7 @@ sub getRelated {
 		push @related_text, sprintf(
 			# Instead of hard-coding the HTML here, we should
 			# do something a little more flexible.
-			qq[&middot; <a href="%s">%s</a><br>\n],
+			qq[<li><a href="%s">%s</a></li>\n],
 			strip_attribute($_->[1]), $_->[0]
 		);
 	}

@@ -16,14 +16,10 @@ en_US
 __name__
 otherLinks
 __template__
-
-<ul>
 	[% FOR tid = tids %]
 		<li><a href="[% gSkin.rootdir %]/search.pl?tid=[% tid | fixparam %]">More [% topics.$tid.textname %] stories</a></li>
 	[% END %]
 	<li><a href="[% gSkin.rootdir %]/search.pl?op=stories&amp;author=[% uid | fixparam %]">Also by [% aid %]</a></li>
-</ul>
-
 __seclev__
 500
 __version__
