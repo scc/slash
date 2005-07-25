@@ -23,23 +23,22 @@ __template__
 [% ELSIF submission.del == 2 %]
 	<p><i>No link to story available</i></p>
 [% END %]
-
-[% PROCESS titlebar width="100%" title=submission.subj %]
-<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><IMG
-SRC="[% constants.imagedir %]/topics/[% topic.image %]"
-width="[% topic.width %]" height="[% topic.height %]" border="0"
-align="RIGHT" HSPACE="20" VSPACE="10"
-ALT="[% topic.textname %]"
-TITLE="[% topic.textname %]"></a>
-
-[% UNLESS admin_flag -%]
-[% submission_state = Slash.db.getDescriptions('submission-state') %]
-[% del = submission.del; submission_state.$del %] submission by <b>[% submission.name %] <a href="[% submission.email %]">[% submission.email %]</a></b>
-	at [% submission.time %]
-[% END -%]
-
-<p>[% subtext %]</p>
-
+<div class="article">
+	[% PROCESS titlebar title=submission.subj %]
+	<div class="details">
+	[% UNLESS admin_flag -%]
+	[% submission_state = Slash.db.getDescriptions('submission-state') %]
+	[% del = submission.del; submission_state.$del %] submission by <b>[% submission.name %] <a href="[% submission.email %]">[% submission.email %]</a></b>
+        	at [% submission.time %]
+	[% END -%]
+	</div>
+	<div class="body">
+		<div class="topic">
+			<a href="[% gSkin.rootdir %]/search.pl?tid=[% topic.tid %]"><img src="[% constants.imagedir %]/topics/[% topic.image %]" width="[% topic.width %]" height="[% topic.height %]" alt="[% topic.textname %]" title="[% topic.textname %]"></a>
+		</div>
+		[% subtext %]
+	</div>
+</div>
 [% IF admin_flag -%]
 	<form action="[% gSkin.rootdir %]/submit.pl" method="post">
 	<input type="hidden" name="op" value="changesubmission">
