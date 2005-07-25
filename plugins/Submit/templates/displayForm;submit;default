@@ -43,16 +43,17 @@ __template__
 [% IF form.op AND !savestory %]
 	<div class="error">
 		You must preview once, provide a subject, some text, and a topic before you can submit
+	</div>
 	[% IF missing_required.size > 0  %]
-		<br>
+	<div class="error">
 		You&#39;re also missing the following required fields
 		<ul>
 		[% FOREACH required = missing_required %]
 			<li>[% required.0 %]</li>	
 		[% END %]
 		</ul>
-	[% END %]
 	</div>
+	[% END %]
 [% END %]
 	<div class="message">
 		Here is where you can submit a story for the [% constants.sitename %] Editors to peer at it, poke it with a stick, and perhaps post it for all to share and enjoy.  It is <b>very</b> important that you write a clear simple subject, and include relevant links in your story.  If you wish to be anonymous, feel free to leave the identifying fields blank.  Anonymity has no effect on whether we will accept or reject the story.
