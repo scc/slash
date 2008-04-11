@@ -614,8 +614,7 @@ sub getPoints {
 	my $points = $hr->{score_start} || 0;
 
 	# User can setup to give points based on size.
-#	my $len = length($C->{comment});
-	my $len = $C->{len};
+	my $len = $C->{len} || length($C->{comment});
 	if ($len) {
 		# comments.len should always be > 0, because Slash doesn't
 		# accept zero-length comments.  If it is = 0, something is
