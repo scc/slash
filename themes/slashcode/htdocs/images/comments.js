@@ -1147,11 +1147,8 @@ function submitCountdown(pid, countSecs) {
 		return;
 
 	var counter = submitCountdowns[pid];
-	if (counter) {
-		if (countSecs == counter['countSecs'])
-			return;
+	if (counter)
 		clearInterval(counter['counter']); // just in case
-	}
 
 	if (!countSecs || countSecs < 1) { // we're at 0, so let's go home
 		count.html('');
@@ -1527,7 +1524,7 @@ function updateMoreNum(num) { // should be an integer, or empty string
 
 	var num_a;
 	if (!num)
-		num_a = 'Check for more';
+		num_a = 'Get More Comments';
 	else {
 		if (num == 1)
 			num_a = 'Get 1 More Comment';
