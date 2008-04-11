@@ -30,7 +30,7 @@ sub doCheck {
 		return RESKEY_SUCCESS;
 	}
 
-	if (!$reader->getAL2($user->{srcids}, 'trusted')) {
+	unless ($reader->checkAL2($user->{srcids}, 'trusted')) {
 		my $is_proxy = $reader->checkForOpenProxy($user->{srcids}{ip});
 		if ($is_proxy) {
 			return(RESKEY_DEATH, ['open proxy', {

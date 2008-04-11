@@ -5191,8 +5191,6 @@ CREATE TABLE tagname_cache (
 # 2008-03-19
 UPDATE vars SET value = 'T_2_5_0_198' WHERE name = 'cvs_tag_currentcode';
 
-# PUDGE LAST UPDATED HERE
-
 # for plugins/ResKey
 INSERT INTO reskey_resource_checks VALUES (NULL, 1, 'all', 'Slash::ResKey::Checks::HumanConf', 701);
 INSERT INTO reskey_vars VALUES (1, 'duration_uses-anon',         300, 'duration_uses for anon');
@@ -5281,3 +5279,10 @@ INSERT INTO reskey_vars VALUES (1, 'max_duration', 1, 'boolean for whether to st
 
 # 2008-04-09
 UPDATE vars SET value = 'T_2_5_0_201' WHERE name = 'cvs_tag_currentcode';
+
+# for plugins/ResKey (submit)
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::HumanConf',           701);
+INSERT INTO reskey_resource_checks VALUES (NULL, 6, 'all', 'Slash::ResKey::Checks::ProxyScan',           801);
+
+# PUDGE LAST UPDATED HERE
+
