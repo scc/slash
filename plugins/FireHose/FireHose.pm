@@ -2743,6 +2743,9 @@ sub createUpdateLog {
 sub createSettingLog {
 	my($self, $data) = @_;
 	return if !getCurrentStatic("firehose_logging");
+	return if !$data->{name};
+
+	$data->{value} ||= "";
 	$data->{uid} ||= getCurrentUser('uid');
 	$self->sqlInsert("firehose_setting_log", $data);
 }
