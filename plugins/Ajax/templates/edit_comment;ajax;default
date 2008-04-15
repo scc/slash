@@ -22,12 +22,12 @@ __template__
 [% IF user.is_anon %]
 <div class="warning">
 	[% IF constants.allow_anonymous %]
-You are not logged in.  You can <a href=\"${gSkin.rootdir}/login.pl\">log
-in now</a>, or <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>.
-	[% ELSE %]
-You are not logged in.  You can <a href=\"${gSkin.rootdir}/login.pl\">log
+You are not logged in.  You can <a href="[% gSkin.rootdir %]/login.pl">log
 in now</a>, <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>,
 or post as <b>[% user.nickname | strip_literal %]</b>.
+	[% ELSE %]
+You are not logged in.  You can <a href="[% gSkin.rootdir %]/login.pl">log
+in now</a>, or <a href="[% gSkin.rootdir %]/users.pl">Create an Account</a>.
 	[% END %]
 </div>
 [% END %]
