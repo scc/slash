@@ -27,9 +27,10 @@ __template__
    	horiz = 1 IF rooted || user.comments_control == 'horizontal';
    ELSE;
    	horiz = 1 IF constants.comments_control_horizontal;
-   END %]
-[% discussion2 = Slash.discussion2() %]
-[% spilltext = "Spill at <b>${user.commentspill}</b>!";
+   END;
+   discussion2 = Slash.discussion2();
+   this_title = title;
+   spilltext = "Spill at <b>${user.commentspill}</b>!";
    fineprint = 'The following comments are owned by whoever posted them.  We are not responsible for them in any way.';
    modpoints = BLOCK %]
 	| <b>[% user.points %]</b>
@@ -43,14 +44,14 @@ __template__
 [% IF discussion2 %]
 <div class="commentBox" style="font-size: 120%">
 	<div>
-[% IF title %]<span class="escape-link"><a href="[% link | strip_urlattr %]" title="Back to Article - [% title | strip_attribute %]">[% title %]</a></span>[% END %]
+[% IF this_title %]<span class="escape-link"><a href="[% link | strip_urlattr %]" title="Back to Article - [% this_title | strip_attribute %]">[% this_title %]</a></span>[% END %]
 <span class="commentBoxLinks">[% PROCESS printCommentsLinks commentslinks_id => 'd' %]</span>
 	</div>
 </div>
 [% ELSE %]
 <div class="commentBox">
-[% IF title %]
-	<a href="[% link | strip_urlattr %]">[% title %]</a>
+[% IF this_title %]
+	<a href="[% link | strip_urlattr %]">[% this_title %]</a>
 [% ELSE %]
 	[% Slash.linkComment({
 		sid	=> sid,
@@ -134,9 +135,9 @@ __template__
 		<div class="block">
 			<div class="title">
 				<h4>
-				[% IF title %]
-					<span class="h-inline"><a href="[% link | strip_urlattr %]" title="Back to Article - [% title | strip_attribute %]">[% title %]</a></span>
-					<span class="titlecount"><a href="[% link | strip_urlattr %]#topcomment" title="Back to Top Comment - [% title | strip_attribute %]"><span id="titlecountnum">[% count %]</span>&nbsp;Comment[% count == 1 ? '' : 's' %]</a></span>
+				[% IF this_title %]
+					<span class="h-inline"><a href="[% link | strip_urlattr %]" title="Back to Article - [% this_title | strip_attribute %]">[% this_title %]</a></span>
+					<span class="titlecount"><a href="[% link | strip_urlattr %]#topcomment" title="Back to Top Comment - [% this_title | strip_attribute %]"><span id="titlecountnum">[% count %]</span>&nbsp;Comment[% count == 1 ? '' : 's' %]</a></span>
 				[% ELSE %] 
 					[% Slash.linkComment({
 						sid	=> sid,
@@ -209,7 +210,12 @@ YAHOO.util.Event.addListener(window, "load", YAHOO.slashdot.ThresholdApp.init);
         </div>
       </div>
 		</div>
-		<div class="commentControlFooter">[% PROCESS printCommentsLinks commentslinks_id => 'c' %]</div>
+		<div class="commentControlFooter">[% 
+			PROCESS printCommentsLinks commentslinks_id => 'c';
+			IF user.is_anon;
+			   	PROCESS userlogin_cover return_url = gSkin.rootdir _ '/comments.pl?sid=' _ sid;
+   			END;
+		%]</div>
 		<div id="commentControlBoxStatus" class="hide"><b>Loading... please wait.</b></div>
 	</div>
 </div>
