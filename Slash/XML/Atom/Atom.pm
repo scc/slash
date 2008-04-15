@@ -153,7 +153,8 @@ sub create {
 
 	my $atom = {%$rss};
 	bless $atom, __PACKAGE__;
-	return as_atom_1_0($atom);
+	my $data = as_atom_1_0($atom);
+	return $data;
 }
 
 # copied from as_rss_1_0 in XML::RSS ... kinda ugly, but oh well
