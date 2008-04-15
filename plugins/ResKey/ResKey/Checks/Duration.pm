@@ -80,13 +80,17 @@ sub doCheckUse {
 	# as not to increase the chance of giving users a rather spurious error
 
 	@return = minDurationBetweenUses($self, $reskey_obj);
-	setMaxDuration($self) if @return;
-	return @return if @return;
+	if (@return) {
+		setMaxDuration($self);
+		return @return;
+	}
 
 	if ($self->origtype ne 'createuse') {
 		@return = minDurationBetweenCreateAndUse($self, $reskey_obj);
-		setMaxDuration($self) if @return;
-		return @return if @return;
+		if (@return) {
+			setMaxDuration($self);
+			return @return;
+		}
 	}
 
 	return RESKEY_SUCCESS;
@@ -286,15 +290,18 @@ sub setMaxDuration {
 	my($self) = @_;
 	my $check_vars = $self->getCheckVars;
 
-	if ($check_vars->{max_duration}) {
-		my @durations;
-		push @durations, (duration($self, 'minDurationBetweenUses', 1))[0];
-		push @durations, (duration($self, 'minDurationBetweenCreateAndUse', 1))[0];
+	(my $caller = lc((caller(1))[3])) =~ s/^.*:docheck(\w+)$/$1/;
+	$caller ||= '';
+	return unless ($check_vars->{max_duration} ||
+		($caller && $check_vars->{"max_duration_$caller"})
+	);
 
-		my($max_duration) = sort { $b <=> $a } @durations;
-		$self->max_duration($max_duration);
-	}
+	my @durations;
+	push @durations, (duration($self, 'minDurationBetweenUses', 1))[0];
+	push @durations, (duration($self, 'minDurationBetweenCreateAndUse', 1))[0];
 
+	my($max_duration) = sort { $b <=> $a } @durations;
+	$self->max_duration($max_duration);
 }
 
 1;
