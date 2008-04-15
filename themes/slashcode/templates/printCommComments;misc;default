@@ -38,9 +38,7 @@ __template__
 [% END %]
 
 [% IF discussion2 %]
-	[% IF discussion2 == "slashdot" %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
-	[%- END %]
 	<script type="text/javascript">
 <!--
 	window.onscroll = d2act;
@@ -51,7 +49,7 @@ __template__
 [% END %]
 
 [% IF cid && !discussion2 %]
-	<ul id="commentlisting" class="[% user.mode %]">
+	<ul id="commentlisting" class="[% user.mode %] d1">
 	[% Slash.dispComment(comment) %]
 	<div class="comment_footer">
 	[% IF previous %]
@@ -95,7 +93,7 @@ __template__
 	[% this_pid = discussion2 ? 0 : pid;
 	   thread = Slash.displayThread(sid, this_pid, lvl, comments) %]
 	[% IF thread || discussion2 %]
-		[% IF !cid || discussion2 %]<ul id="commentlisting"[% IF discussion2 %] class="d2"[% END %]>[% END %]
+		[% IF !cid || discussion2 %]<ul id="commentlisting" class="[% discussion2 ? 'd2' : 'd1' %]">[% END %]
 			[% thread || '' %]
 			<li id="roothiddens" class="hide"></li>
 		[% IF !cid || discussion2 %]</ul>[% END %]

@@ -20,10 +20,11 @@ __name__
 edit_comment
 __template__
 <div id="wide">
+[% discussion2 = Slash.discussion2() %]
 [% IF form.pid %]
         [% PROCESS titlebar title="Reply to: $reply.subject" %]
         <div class="generalbody">
-		<ul id="commentlisting">
+		<ul id="commentlisting" class="[% discussion2 ? 'd2' : 'd1' %]">
                 [% Slash.dispComment(reply) %]
 		</li>
 		</ul>
@@ -129,7 +130,7 @@ END %]
 		<a href="[% gSkin.rootdir %]/users.pl">Create an Account!</a>
 		[% END %]
 
-[% IF !user.is_anon && user.discussion2 && user.discussion2 == "slashdot";
+[% IF !user.is_anon && discussion2;
         prefslink = "<a href=\"" _ gSkin.rootdir _ "/my/comments\" target=\"_blank\"";
 
         IF constants.modal_prefs_active;
@@ -184,7 +185,7 @@ IF do_br %]<br>[% END %]
 	[% IF !user.is_anon || (user.is_anon && preview) %]
 	<input type="submit" name="op" value="Submit" class="button">
 	[% END %]
-	[% IF form.pid && Slash.discussion2() == "slashdot" %]
+	[% IF form.pid && discussion2 %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	<script type="text/javascript">
 <!--
