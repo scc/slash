@@ -1337,20 +1337,29 @@ sub countDailyByPageDistinctIPIDs {
 
 
 ########################################################
-sub countDailyStoriesAccess {
+sub countDailyStoriesAccessArticle {
 	my($self) = @_;
-	my $qlid = $self->_querylog_start('SELECT', 'accesslog_temp');
-	my $c = $self->sqlSelectMany("dat, COUNT(*), op", "accesslog_temp",
-		"op='article'",
-		"GROUP BY dat");
+	return $self->sqlSelectAllKeyValue('dat, COUNT(*)',
+		'accesslog_temp', "op='article'", 'GROUP BY dat');
+}
 
-	my %articles; 
-	while (my($sid, $cnt) = $c->fetchrow) {
-		$articles{$sid} = $cnt;
+########################################################
+sub countDailyStoriesAccessRSS {
+	my($self) = @_;
+	my $qs_hr = $self->sqlSelectAllKeyValue(
+		'query_string, COUNT(*)',
+		'accesslog_temp',
+		"op='slashdot-it' AND query_string LIKE '%from=rssbadge'",
+		'GROUP BY query_string');
+	my $sid_hr = { };
+	my $regex_sid = regexSid();
+	for my $qs (keys %$qs_hr) {
+		my($sid) = $qs =~ /sid=\b([\d/]+)\b/;
+		next unless $sid =~ $regex_sid;
+		$sid_hr->{$sid} ||= 0;
+		$sid_hr->{$sid} += $qs_hr->{$qs};
 	}
-	$c->finish;
-	$self->_querylog_finish($qlid);
-	return \%articles;
+	return $sid_hr;
 }
 
 ########################################################

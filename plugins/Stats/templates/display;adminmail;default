@@ -151,10 +151,18 @@ For [% section.skin_name %]
 
 -----------------------
 
-[% FOREACH item = lazy -%]
+Top stories viewed by article.pl:
+[% FOREACH item = lazy_article -%]
 [% item %]
 [% END %]
 
+[% IF lazy_rss.size %]
+Top stories viewed in RSS:
+[% FOREACH item = lazy_rss -%]
+[% item %]
+[% END %]
+
+[% END %]
 [% IF top_referers.size %]
 -----------------------      
 

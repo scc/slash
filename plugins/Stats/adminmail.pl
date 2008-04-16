@@ -106,8 +106,6 @@ $task{$me}{code} = sub {
 	}
 	slashdLog("Counting Error Pages End");
 
-	my $articles = $logdb->countDailyStoriesAccess();
-
 	my $admin_clearpass_warning = '';
 	if ($constants->{admin_check_clearpass}) {
 		my $clear_admins = $stats->getAdminsClearpass();
@@ -793,31 +791,53 @@ EOT
 	$data{day} = $yesterday ;
 	$data{distinct_comment_posters_uids} = sprintf("%8u", $distinct_comment_posters_uids);
 
+	my $stories_article = $logdb->countDailyStoriesAccessArticle();
 	my @top_articles =
-		grep { $articles->{$_} >= 100 }
-		sort { ($articles->{$b} || 0) <=> ($articles->{$a} || 0) }
-		keys %$articles;
+		grep { $stories_article->{$_} >= 100 }
+		sort { ($stories_article->{$b} || 0) <=> ($stories_article->{$a} || 0) }
+		keys %$stories_article;
 	$#top_articles = 24 if $#top_articles > 24; # only list top 25 stories
-	my @lazy = ( );
+	my @lazy_article = ( );
 	my %nick = ( );
 	for my $sid (@top_articles) {
-		my $hitcount = $articles->{$sid};
+		my $hitcount = $stories_article->{$sid};
  		my $story = $reader->getStory($sid, [qw( title uid )]);
 		next unless $story->{title} && $story->{uid};
 		$nick{$story->{uid}} ||= $reader->getUser($story->{uid}, 'nickname')
 			|| $story->{uid};
 
-		push @lazy, sprintf( "%6d %-16s %-10s %-30s",
+		push @lazy_article, sprintf( "%6d %-16s %-10s %-30s",
 			$hitcount, $sid, $nick{$story->{uid}},
 			substr($story->{title}, 0, 30),
 		);
 	}
+	$data{lazy_article} = \@lazy_article; 
+
+	my $stories_rss = $logdb->countDailyStoriesAccessRSS;
+	my @top_rsses =
+		grep { $stories_rss->{$_} >= 100 }
+		sort { ($stories_rss->{$b} || 0) <=> ($stories_rss->{$a} || 0) }
+		keys %$stories_rss;
+	$#top_rsses = 24 if $#top_rsses > 24; # only list top 25 stories
+	my @lazy_rss = ( );
+	for my $sid (@top_rsses) {
+		my $hitcount = $stories_rss->{$sid};
+ 		my $story = $reader->getStory($sid, [qw( title uid )]);
+		next unless $story->{title} && $story->{uid};
+		$nick{$story->{uid}} ||= $reader->getUser($story->{uid}, 'nickname')
+			|| $story->{uid};
+
+		push @lazy_rss, sprintf( "%6d %-16s %-10s %-30s",
+			$hitcount, $sid, $nick{$story->{uid}},
+			substr($story->{title}, 0, 30),
+		);
+	}
+	$data{lazy_rss} = \@lazy_rss; 
 
 	$mod_data{data} = \%mod_data;
 	$mod_data{admin_mods_text} = $admin_mods_text;
 	
 	$data{data} = \%data;
-	$data{lazy} = \@lazy; 
 	$data{admin_clearpass_warning} = $admin_clearpass_warning;
 	$data{tailslash} = $logdb->getTailslash();
 
