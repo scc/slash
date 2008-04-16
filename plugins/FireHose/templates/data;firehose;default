@@ -130,6 +130,7 @@ __template__
 			<a href="#" onclick="[% extra_onclick %] firehose_more(); return false;">[% label %]</a>
 		[% END %]
 		[% IF !contentsonly %]
+		<span id="busy"></span>
 		</span>
 		[% END %]
 [% CASE 'notavailable' %]
