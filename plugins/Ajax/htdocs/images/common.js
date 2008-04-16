@@ -881,7 +881,7 @@ function firehose_get_next_updates() {
 
 
 function firehose_get_updates_handler(transport) {
-	$('#busy').setClass('hide');
+	$('.busy').hide();
 	var response = eval_response(transport);
 	var processed = 0;
 	firehose_removals = response.update_data.removals;
@@ -942,7 +942,7 @@ function firehose_get_updates(options) {
 		params[i] = firehose_settings[i];
 	}
 
-	$('#busy').removeClass();
+	$('.busy').show();
 	ajax_update(params, '', { onComplete: firehose_get_updates_handler });
 }
 

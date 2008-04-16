@@ -470,3 +470,5 @@ li .tag-actions .not-tag:hover, li .tag-actions .del-tag:hover {color: red;}
 .briefarticle .storylinks .comments.nocomment, .briefarticle .storylinks .comments span  {display: none}
 
 .embed .paginate, .embed .firemenu, .embed a.skin, .copyright.embed { display: none; }
+#fhtablist li:before { content: "";}
+#fhtablist li { padding-left: 0.5em }

@@ -458,6 +458,8 @@ sub getOlderDaysFromDay {
 	
 	for ($start..$end) {
 		my $the_day = $slashdb->getDayFromDay($day, $_, $options);
+		next if $the_day == $today && $options->{skip_add_today};
+
 		if (($the_day < $today) || $options->{show_future_days}) {
 			push @$days, $the_day; 
 		}
