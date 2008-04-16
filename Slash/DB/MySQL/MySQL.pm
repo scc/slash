@@ -1333,6 +1333,8 @@ sub createAccessLog {
 		$dat ||= $uri;
 	}
 
+	return if $op eq 'slashdot-it' && !$constants->{slashdotit_accesslog};
+
 	my $uid = $user->{uid} || $constants->{anonymous_coward_uid};
 	my $skin_name = getCurrentSkin('name');
 	# XXXSKIN - i think these are no longer special cases ...
