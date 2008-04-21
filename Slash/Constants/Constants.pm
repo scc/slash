@@ -43,7 +43,7 @@ constants();
 sub constants {
 	my($group, @syms, @nums);
 
-	while (<DATA>) {
+	for (readline(DATA)) {
 		if (/^=head2 (\w+)$/ || /^__END__$/) {
 			if ($group && @syms && @nums) {
 				@{$CONSTANTS{$group}}{@syms} = @nums;
