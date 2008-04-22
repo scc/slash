@@ -598,13 +598,6 @@ sub userdir_handler {
                 return OK;
         }
        
-        # This is a temporary addition!
-        if ($uri =~ m[^/(?:%5[eE]|\^)]) {
-                $r->uri('/users2.pl');
-                $r->filename($constants->{basedir} . '/users2.pl');
-                return OK;
-        }
- 
 	# for self-references (/~/ and /my/)
 	if (($saveuri =~ m[^/(?:%7[eE]|~)] && $uri =~ m[^/~ (?: /(.*) | /? ) $]x)
 		# /my/ or /my can match, but not /mything
@@ -760,7 +753,7 @@ sub userdir_handler {
 	# returning it, we have to re-encode it with fixparam().  that
 	# will change if somehow Apache/mod_perl no longer decodes before
 	# returning the data. -- pudge
-	if ($saveuri =~ m[^/(?:%7[eE]|~)(.+)]) {
+	if (($saveuri =~ m[^/(?:%7[eE]|~)(.+)]) || ($saveuri =~ m[^/(?:%5[eE]|\^)(.+)])) {
 		my($string, $query) = ($1, '');
 		if ($string =~ s/\?(.+)$//) {
 			$query = $1;
@@ -876,9 +869,15 @@ sub userdir_handler {
 			$r->filename($constants->{basedir} . '/users.pl');
 
 		} else {
-			$r->args("nick=$nick&uid=$uid");
-			$r->uri('/users.pl');
-			$r->filename($constants->{basedir} . '/users.pl');
+                        if ($saveuri =~ m[^/(?:%5[eE]|\^)(.+)]) {
+                                $r->args("nick=$nick&uid=$uid");
+                                $r->uri('/users2.pl');
+                                $r->filename($constants->{basedir} . '/users2.pl');
+                        } else {
+			        $r->args("nick=$nick&uid=$uid");
+			        $r->uri('/users.pl');
+			        $r->filename($constants->{basedir} . '/users.pl');
+                        }
 		}
 
 		return OK;
