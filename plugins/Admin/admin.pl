@@ -1402,6 +1402,7 @@ sub editStory {
 		last_sid	=> $sid,
 		last_subid	=> '',
 		last_fhid	=> '',
+		last_action	=> 'editing',
 	});
 
 	# Run a spellcheck on introtext, bodytext, and title if they're set.
