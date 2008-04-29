@@ -429,7 +429,7 @@ function toggle_firehose_body(id, is_admin) {
 		var handlers = {
 			onComplete: function() {
 				if(firehoseIsInWindow(id)) { 
-					scrollToWindowFirehose(id); 
+					scrollWindowToFirehose(id); 
 				}
 				firehose_get_admin_extras(id); 
 			}
@@ -458,6 +458,9 @@ function toggleFirehoseTagbox(id) {
 }
 
 function firehose_set_options(name, value) {
+	if (value === undefined) {
+		return;
+	}
 	
 	var pairs = [
 		// name		value		curid		newid		newvalue 	title 
@@ -748,13 +751,24 @@ function firehose_handle_update() {
 		var el = firehose_updates.pop();
 		var fh = 'firehose-' + el[1];
 		var wait_interval = 800;
+		var need_animate = 1;
+
 		if(el[0] == "add") {
 			if (firehose_before[el[1]] && $('#firehose-' + firehose_before[el[1]]).size()) {
 				$('#firehose-' + firehose_before[el[1]]).after(el[2]);
+				if (!isInWindow($dom('title-'+ firehose_before[el[1]]))) {
+					need_animate = 0;
+				}
 			} else if (firehose_after[el[1]] && $('#firehose-' + firehose_after[el[1]]).size()) {
 				$('#firehose-' + firehose_after[el[1]]).before(el[2]);
+				if (!isInWindow($dom('title-'+ firehose_after[el[1]]))) {
+					need_animate = 0;
+				}
 			} else if (insert_new_at == "bottom") {
 				$('#firehoselist').append(el[2]);
+				if (!isInWindow($dom('fh-paginate'))) {
+					need_animate = 0;
+				}
 			} else {
 				$('#firehoselist').prepend(el[2]);
 			}
@@ -801,7 +815,9 @@ function firehose_handle_update() {
 					}
 				}
 			});
-			myAnim.animate();
+			if (need_animate) {
+				myAnim.animate();
+			}
 		} else if (el[0] == "remove") {
 			var fh_node = $dom(fh);
 			if (fh_is_admin && fh_view_mode == "fulltitle" && fh_node && fh_node.className == "article" ) {
@@ -827,7 +843,11 @@ function firehose_handle_update() {
 					}
 				}
 				firehose_removed_first = 1;
-				if (firehose_removals < 10 ) {
+				if (!isInWindow(fh_node)) {
+					need_animate = 0;
+				}
+
+				if ((firehose_removals < 10 ) || !need_animate) {
 					myAnim.onComplete.subscribe(function() {
 						var elem = this.getEl();
 						if (elem && elem.parentNode) {
@@ -844,6 +864,9 @@ function firehose_handle_update() {
 				}
 			}
 		}
+		if(!need_animate) {
+			wait_interval = 10;
+		}
 		setTimeout(firehose_handle_update, wait_interval);
 	} else {
 		firehose_reorder();
@@ -851,7 +874,24 @@ function firehose_handle_update() {
 	}
 }
 
+function firehose_adjust_window(onscreen) {
+	var i=0;
+	var on = 0;
+	while(i < onscreen.length && on == 0) {
+		if(isInWindow($(onscreen[i]))) {
+			on = 1;
+		} else {
+			scrollWindowToId(onscreen[i]);
+			if(isInWindow($(onscreen[i]))) {
+				on = 1;
+			}
+		}
+		i++;
+	}
+}
+
 function firehose_reorder() {
+	var onscreen = firehose_get_onscreen();
 	if (firehose_ordered) {
 		var fhlist = $('#firehoselist');
 		if (fhlist) {
@@ -1365,8 +1405,12 @@ function admin_signoff(stoid, type, id) {
 
 
 function scrollWindowToFirehose(fhid) {
-	var firehose_y = getOffsetTop($('firehose-' + fhid));
-	scroll(viewWindowLeft(), firehose_y);
+	scrollWindowToId('firehose-'+fhid);
+}
+
+function scrollWindowToId(id) {
+	var id_y = getOffsetTop($dom(id));
+	scroll(viewWindowLeft(), id_y);
 }
 
 function viewWindowLeft() {
@@ -1480,6 +1524,12 @@ function firehose_more() {
 		$('#firehose_more').hide();
 	}
 	firehose_set_options('more_num', firehose_settings.more_num);
+}
+
+function firehose_get_onscreen() {
+	var onscreen = new Array();
+	$('#firehoselist').children().each(function() { if(isInWindow(this)){ onscreen.push(this.id)} });
+	return onscreen;
 }
 
 
