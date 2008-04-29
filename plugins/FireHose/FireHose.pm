@@ -716,7 +716,7 @@ sub getNextDayAndCount {
 
 	my $day_count = $self->sqlSelect("count(*)", $tables, $where, $other);
 	
-	my $day_labels = getOlderDaysFromDay($item_day, 0, 0, { skip_add_today => 1, show_future_days => 1 });
+	my $day_labels = getOlderDaysFromDay($item_day, 0, 0, { skip_add_today => 1, show_future_days => 1, force => 1 });
 
 	return($day_labels->[0]->[0], $day_labels->[0]->[1], $day_count);
 }
@@ -1053,29 +1053,17 @@ sub ajaxRemoveUserTab {
 	});
 }
 
-sub ajaxFireHoseSetOptions {
-	my($slashdb, $constants, $user, $form, $options) = @_;
-	$options->{content_type} = 'application/json';
-	my $firehose = getObject("Slash::FireHose");
-	my $opts = $firehose->getAndSetOptions();
 
-	$firehose->createSettingLog({ 
-		uid => $user->{uid}, 
-		name => $form->{setting_name}, 
-		value => $form->{$form->{setting_name}}, 
-		"-ts" => "NOW()"}
-	);
+sub genSetOptionsReturn {
+	my($slashdb, $constants, $user, $form, $options, $opts) = @_;
+	my $data = {};
+	$data->{html}->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
+	$data->{html}->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
+	$data->{html}->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
 
-	my $html = {};
-	$html->{fhtablist} = slashDisplay("firehose_tabs", { nodiv => 1, tabs => $opts->{tabs}, options => $opts, section => $form->{section}  }, { Return => 1});
-	$html->{fhoptions} = slashDisplay("firehose_options", { nowrapper => 1, options => $opts }, { Return => 1});
-	$html->{fhadvprefpane} = slashDisplay("fhadvprefpane", { options => $opts }, { Return => 1});
-
-	my $values = {};
-	$values->{'firehose-filter'} = $opts->{fhfilter};
-	my $eval_last = "";
+	$data->{values}->{'firehose-filter'} = $opts->{fhfilter};
 	if ($form->{tab} || $form->{tabtype}) {
-		$eval_last = "firehose_slider_set_color('$opts->{color}')";
+		$data->{eval_last} = "firehose_slider_set_color('$opts->{color}')";
 	}
 
 	my $eval_first = "";
@@ -1090,15 +1078,26 @@ sub ajaxFireHoseSetOptions {
 		if ($o eq 'more_num') {
 			$value ||= 0;
 		}
-		$eval_first .= "firehose_settings.$o = " . Data::JavaScript::Anon->anon_dump("$value") . "; ";
+		$data->{eval_first} .= "firehose_settings.$o = " . Data::JavaScript::Anon->anon_dump("$value") . "; ";
 	}
+	return $data;
+}
 
-	return Data::JavaScript::Anon->anon_dump({
-		html		=> $html,
-		value		=> $values,
-		eval_first	=> $eval_first,
-		eval_last	=> $eval_last
-	});
+sub ajaxFireHoseSetOptions {
+	my($slashdb, $constants, $user, $form, $options) = @_;
+	$options->{content_type} = 'application/json';
+	my $firehose = getObject("Slash::FireHose");
+	my $opts = $firehose->getAndSetOptions();
+
+	$firehose->createSettingLog({
+		uid => $user->{uid},
+		name => $form->{setting_name},
+		value => $form->{$form->{setting_name}},
+		"-ts" => "NOW()"}
+	);
+
+	my $data = genSetOptionsReturn($slashdb, $constants, $user, $form, $options, $opts);
+	return Data::JavaScript::Anon->anon_dump($data);
 }
 
 sub ajaxSaveNoteFirehose {
@@ -1470,6 +1469,10 @@ sub ajaxUpDownFirehose {
 	my $votetype = $form->{dir} eq "+" ? "Up" : $form->{dir} eq "-" ? "Down" : "";
 	#$html->{"updown-$id"} = "Voted $votetype";
 	$value->{"newtags-$id"} = $newtagspreloadtext;
+
+	if ($user->{is_admin}) {
+		$firehose->setFireHoseSession($id, "rating");
+	}
 
 	return Data::JavaScript::Anon->anon_dump({
 		html	=> $html,
@@ -2478,9 +2481,12 @@ sub listView {
 }
 
 sub setFireHoseSession {
-	my ($self, $id) = @_;
+	my ($self, $id, $action) = @_;
 	my $user = getCurrentUser();
 	my $item = $self->getFireHose($id);
+
+	$action ||= "reviewing";
+
 	my $data = {};
 	$data->{lasttitle} = $item->{title};
 	if ($item->{type} eq "story") {
@@ -2493,6 +2499,7 @@ sub setFireHoseSession {
 	}
 	$data->{last_subid} ||= '';
 	$data->{last_sid} ||= '';
+	$data->{last_action} = $action;
 	$self->setSession($user->{uid}, $data);
 }
 
