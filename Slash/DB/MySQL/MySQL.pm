@@ -1265,20 +1265,22 @@ sub getSessionInstance {
 		"NOW() > DATE_ADD(lasttime, INTERVAL $admin_timeout MINUTE)"
 	);
 
-	my($lasttitle, $last_sid, $last_subid, $last_fhid) = $self->sqlSelect(
-		'lasttitle, last_sid, last_subid, last_fhid',
+	my($lasttitle, $last_sid, $last_subid, $last_fhid, $last_action) = $self->sqlSelect(
+		'lasttitle, last_sid, last_subid, last_fhid, last_action',
 		'sessions',
 		"uid=$uid"
 	);
 
+	if(!$lasttitle) {
 	$self->sqlReplace('sessions', {
 		-uid		=> $uid,
-		-lasttime	=> 'NOW()',
 		lasttitle	=> $lasttitle    || '',
 		last_sid	=> $last_sid     || '',
 		last_subid	=> $last_subid   || '0',
-		last_fhid	=> $last_fhid	 || '0'
+		last_fhid	=> $last_fhid	 || '0',
+		last_action	=> $last_action	 || '',
 	});
+	}
 }
 
 ########################################################
@@ -2489,6 +2491,9 @@ sub setVar {
 ########################################################
 sub setSession {
 	my($self, $name, $value) = @_;
+	if (!$value->{lasttime}) {
+		$value->{'-lasttime'} = "NOW()"
+	}
 	$self->sqlUpdate('sessions', $value, 'uid=' . $self->sqlQuote($name));
 }
 
@@ -5497,7 +5502,7 @@ sub checkForm {
 sub currentAdmin {
 	my($self) = @_;
 	my $aids = $self->sqlSelectAll(
-		'nickname,lasttime,lasttitle,last_subid,last_sid,sessions.uid,last_fhid',
+		'nickname,lasttime,lasttitle,last_subid,last_sid,sessions.uid,last_fhid,last_action',
 		'sessions,users',
 		'sessions.uid=users.uid GROUP BY sessions.uid'
 	);

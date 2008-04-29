@@ -822,6 +822,7 @@ CREATE TABLE sessions (
 	last_subid mediumint UNSIGNED,
 	last_sid varchar(16),
 	last_fhid mediumint UNSIGNED,
+	last_action varchar(16),
 	UNIQUE (uid),
 	PRIMARY KEY (session)
 ) TYPE=InnoDB;
