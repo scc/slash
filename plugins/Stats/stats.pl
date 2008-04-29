@@ -37,6 +37,7 @@ sub main {
 		table	=> [ $admin,		\&table		],
 		csv	=> [ $admin,		\&csv		],
 		list	=> [ $admin_post,	\&list		],
+		topics	=> [ $admin,		\&topics	],
 
 		default	=> [ $admin,		\&list		]
 	);
@@ -260,6 +261,15 @@ sub _get_skins {
 	my %skins = %{$slashdb->getDescriptions('skins')};
 	$skins{0} = 'All';
 	return \%skins;
+}
+
+sub topics {
+	my($slashdb, $constants, $user, $form, $stats) = @_;
+	my $days = $form->{days} ||= 30;
+	my $sort = $form->{sort} eq "name" ? "name" : "hits";
+	my $topic_stats = $stats->getTopicStats($days, $sort);
+	slashDisplay("topic_stats", { topic_stats => $topic_stats });
+
 }
 
 createEnvironment();

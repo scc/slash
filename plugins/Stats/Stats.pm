@@ -2212,6 +2212,20 @@ sub numTagsForDayByType {
 
 }
 
+sub getTopicStats {
+	my ($self, $days, $order) = @_;
+	$days = 30 if $days !~/^\d+$/;
+	my $order_clause = $order eq "name" ? "1 ASC" : "4 DESC";
+
+	return $self->sqlSelectAllHashrefArray(
+		"topics.textname, story_topics_rendered.tid, count(*) AS cnt, sum(hits) AS sum_hits, sum(commentcount) AS sum_cc, avg(hits) AS avg_hits, avg(commentcount) AS avg_cc, image", 
+		"stories, story_topics_rendered, topics",
+		"time > date_sub(now(), interval $days day) and stories.stoid = story_topics_rendered.stoid and story_topics_rendered.tid = topics.tid group by story_topics_rendered.tid",
+		"order by $order_clause"
+	);
+
+}
+
 ########################################################
 sub DESTROY {
 	my($self) = @_;
