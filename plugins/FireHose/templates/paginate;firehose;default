@@ -32,9 +32,17 @@ __template__
 <div class="menu" [% IF ulid %]id="[% ulid %]"[% END %]>
 [% END %]
 [% IF options.duration == 7 && !options.startdate %]
-	[% day = Slash.db.getDay(0) %]
-	<span class="inactive">
+	[% day = Slash.db.getDay(0);
+		got_more_link = 0;
+	%]
+
+	<span class="[% IF day!= last_day %]in[% END %]active">
 		<a href="[% gSkin.rootdir %]/[% day_page %]?[% f = fh.genFireHoseParams(options, { startdate => '', duration => 7 }); f; %][% IF form.index %]&amp;index=1[% END %]">Today</a>
+		[% IF day == last_day;
+			got_more_link = 1;
+		%]
+			[% Slash.getData('firehose_more_link', firehose_more_data, 'firehose'); %]
+		[% END %]
 	</span>
 	[% IF options.orderby == "createtime";
 		 max_days_ahead = options.smalldevices ? 1 : 2;
@@ -45,7 +53,6 @@ __template__
 	   END;
 	%]
 		[%
-		got_more_link = 0;
 		FOREACH cur_day = days;
 		%]
 		<span class="[% IF (cur_day.0 != last_day || options.orderby != "createtime") || firehose_more_data.future_count <= 0 %]in[% END %]active">
