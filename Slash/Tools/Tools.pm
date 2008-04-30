@@ -216,7 +216,7 @@ sub pmpath {
 		}
 
 		if (!$return || ! -e $return) {
-			$@ = "install path for '$module' not found";
+			carp "install path for '$module' not found";
 		} else {
 			$cache{$key} = $return;
 		}
