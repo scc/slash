@@ -89,8 +89,10 @@ sub main {
 
 sub list {
 	my($slashdb, $constants, $user, $form, $gSkin) = @_;
+	slashProfInit();
 	my $firehose = getObject("Slash::FireHose");
 	print $firehose->listView();
+	slashProfEnd();
 }
 
 sub view {

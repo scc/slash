@@ -83,8 +83,8 @@ sub findRecords {
 	# let Classic handle for now
 	return Slash::SearchToo::Classic::findRecords(@_) unless $self->handled($type);
 
-slashProfInit();
-slashProf('findRecords setup');
+# slashProfInit();
+# slashProf('findRecords setup');
 
 	my $constants = getCurrentStatic();
 
@@ -131,9 +131,9 @@ slashProf('findRecords setup');
 		%$terms = (%$terms, %$query);
 	}
 
-slashProf('_findRecords', 'findRecords setup');
+# slashProf('_findRecords', 'findRecords setup');
 	$self->_findRecords($results, $records, $sopts, $terms, $opts);
-slashProf('getRecords', '_findRecords');
+# slashProf('getRecords', '_findRecords');
 	$self->getRecords($type => $records, {
 		alldata		=> 1,
 		sort		=> $sopts->{sort},
@@ -142,11 +142,11 @@ slashProf('getRecords', '_findRecords');
 		offset		=> $sopts->{start},
 		carryover	=> $opts->{carryover}
 	});
-slashProf('prepResults', 'getRecords');
+# slashProf('prepResults', 'getRecords');
 	$self->prepResults($results, $records, $sopts);
-slashProf('', 'getRecords');
+# slashProf('', 'getRecords');
 
-slashProfEnd();
+# slashProfEnd();
 
 	return $results;
 
