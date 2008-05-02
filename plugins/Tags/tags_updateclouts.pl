@@ -46,7 +46,7 @@ $task{$me}{code} = sub {
 			'tags_peerclout',
 			"clid=$clid AND gen = 0");
 		if ($tags_peerclout && %$tags_peerclout) {
-			$slashdb->sqlDelete('tags_peerclout', 'gen > 0');
+			$slashdb->sqlDelete('tags_peerclout', "gen > 0 AND clid=$clid");
 			sleep 5; # wait for that to replicate
 			my $g = 0;
 			while (1) {
@@ -78,7 +78,7 @@ sub insert_nextgen {
 	my $rows = 0;
 	for my $hr (@$insert_ar) {
                 ($hr->{clid}, $hr->{gen}) = ($clid, $gen);
-if (!$rows) { use Data::Dumper; my $hd = Dumper($hr); $hd =~ s/\s+/ /g; print STDERR "insert hr: $hd\n"; }
+if (!$rows) { use Data::Dumper; my $hd = Dumper($hr); $hd =~ s/\s+/ /g; slashdLog("insert hr: $hd"); }
                 $rows += $slashdb->sqlInsert('tags_peerclout', $hr);
                 $tags_peerclout->{ $hr->{uid} } = $hr->{clout};
         }
