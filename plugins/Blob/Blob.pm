@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Blob;
 
@@ -12,11 +11,10 @@ use Slash::Utility;
 use MIME::Types;
 use Digest::MD5 'md5_hex';
 
-use vars qw($VERSION);
 use base 'Exporter';
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # When this plugin was first written, it used a hardcoded hash to
 # store MIME types.  Now we use the MIME::Types module.  But for

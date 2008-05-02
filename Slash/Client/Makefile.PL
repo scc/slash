@@ -2,7 +2,6 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
 	'NAME'		=> 'Slash::Client',
-	'VERSION_FROM'	=> 'lib/Slash/Client.pm',
 	'clean'	=> {
 		'FILES'	=> 'Slash-Client-*'
 	},

@@ -5,9 +5,7 @@ use warnings;
 use Slash::Utility;
 use base 'Slash::Clout';
 
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub init {
 	1;

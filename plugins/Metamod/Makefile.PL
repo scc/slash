@@ -4,7 +4,6 @@ use DBIx::Password;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Metamod',
-    'VERSION_FROM' => 'Metamod.pm', # finds $VERSION
     'PM'	=> {
     	'Metamod.pm' => '$(INST_LIBDIR)/Metamod.pm',
     },

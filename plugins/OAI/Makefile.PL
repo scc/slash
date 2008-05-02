@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::XML::OAI',
-    'VERSION_FROM' => 'OAI.pm', # finds $VERSION
     'PM'	=> { 'OAI.pm' => '$(INST_LIBDIR)/OAI.pm' },
 );

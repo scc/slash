@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Display;
 
@@ -48,11 +47,11 @@ use Slash::Utility::System;
 use Template 2.07;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT @EXPORT_OK $CONTEXT %FILTERS $TEMPNAME);
+use vars qw($CONTEXT %FILTERS $TEMPNAME);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(slashDisplay slashDisplayName);
-@EXPORT_OK = qw(get_template);
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(slashDisplay slashDisplayName);
+our @EXPORT_OK = qw(get_template);
 my(%objects);
 
 # FRY: That doesn't look like an L at all. Unless you count lowercase.

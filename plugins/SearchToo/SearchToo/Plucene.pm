@@ -7,7 +7,6 @@ use File::Spec::Functions;
 use Slash::Utility;
 use Slash::DB::Utility;
 use Slash::SearchToo::Classic;
-use vars qw($VERSION);
 use base 'Slash::SearchToo::Indexer';
 
 use Plucene::Document;
@@ -18,7 +17,7 @@ use Plucene::Search::HitCollector;
 use Plucene::Search::IndexSearcher;
 use Plucene::Search::TermQuery;
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: I did it!  And it's all thanks to the books at my local library.
 

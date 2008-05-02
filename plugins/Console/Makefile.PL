@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Console',
-    'VERSION_FROM' => 'Console.pm', # finds $VERSION
     'PM'	=> { 'Console.pm' => '$(INST_LIBDIR)/Console.pm' },
 );

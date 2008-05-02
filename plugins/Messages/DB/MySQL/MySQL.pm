@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Messages::DB::MySQL;
 
@@ -26,12 +25,11 @@ use Slash::Constants qw(:messages);
 use Slash::Utility;
 use Storable qw(freeze thaw);
 
-use vars '$VERSION';
 use base 'Slash::DB::Utility';	# first for object init stuff, but really
 				# needs to be second!  figure it out. -- pudge
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 my %descriptions = (
 	'deliverymodes'

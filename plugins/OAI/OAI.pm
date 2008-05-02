@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::XML::OAI;
 
@@ -30,9 +29,8 @@ use Slash;
 use Slash::Utility;
 use XML::RSS;
 use base 'Slash::XML';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 our %Verbs = (
 	GetRecord		=> \&GetRecord,
@@ -669,7 +667,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::XML(3), L<http://www.openarchives.org/OAI/openarchivesprotocol.html>.
-
-=head1 VERSION
-
-$Id$

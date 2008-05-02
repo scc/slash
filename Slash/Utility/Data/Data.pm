@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Utility::Data;
 
@@ -48,7 +47,6 @@ use URI;
 use XML::Parser;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
 # whitespace regex
 our $WS_RE = qr{(?: \s | </? (?:br|p) (?:\ /)?> )*}x;
@@ -62,8 +60,8 @@ BEGIN {
 	$HTML::Tagset::linkElements{slash} = ['src', 'href'];
 }
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 	addDomainTags
 	createStoryTopicData
 	slashizeLinks
@@ -4467,7 +4465,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::Utility(3).
-
-=head1 VERSION
-
-$Id$

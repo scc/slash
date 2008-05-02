@@ -2,5 +2,4 @@
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'      => 'Slash::Admin::PopupTree',
-    'VERSION_FROM' => 'PopupTree.pm', # finds $VERSION
 );

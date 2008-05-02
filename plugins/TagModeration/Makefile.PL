@@ -4,7 +4,6 @@ use DBIx::Password;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'      => 'Slash::TagModeration',
-    'VERSION_FROM' => 'TagModeration.pm', # finds $VERSION
     'PM'        => {
 	'TagModeration.pm' => '$(INST_LIBDIR)/TagModeration.pm',
     },

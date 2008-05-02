@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::FireHose',
-    'VERSION_FROM' => 'FireHose.pm', # finds $VERSION
     'PM'	=> { 'FireHose.pm' => '$(INST_LIBDIR)/FireHose.pm' },
 );

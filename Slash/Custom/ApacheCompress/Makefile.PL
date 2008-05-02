@@ -3,5 +3,4 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Custom::ApacheCompress',
-    'VERSION_FROM' => 'ApacheCompress.pm', # finds $VERSION
 );

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::XML::Atom;
 
@@ -31,9 +30,8 @@ use Slash::Utility;
 use XML::Parser::Expat;
 use base 'Slash::XML';
 use base 'Slash::XML::RSS';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 my %syn_ok_fields = (
 	'updateBase' => '',
@@ -350,7 +348,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::XML(3).
-
-=head1 VERSION
-
-$Id$
