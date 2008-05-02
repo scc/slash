@@ -1958,7 +1958,7 @@ sub filter_param {
 		$special{$key}->($data);
 	} else {
 		for my $ri (@regints) {
-			$data = fixint($data) if /$ri/;
+			$data = fixint($data) if $key =~ /$ri/;
 		}
 	}
 
