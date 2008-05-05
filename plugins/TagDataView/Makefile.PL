@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::TagDataView',
-    'VERSION_FROM' => 'TagDataView.pm', # finds $VERSION
     'PM'	=> { 'TagDataView.pm' => '$(INST_LIBDIR)/TagDataView.pm' },
 );

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::DB::Utility;
 
@@ -10,9 +9,8 @@ use Config '%Config';
 use Slash::Utility;
 use DBIx::Password;
 use Time::HiRes;
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: Bender, if this is some kind of scam, I don't get it.  You already
 # have my power of attorney.

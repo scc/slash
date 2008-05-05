@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Bookmark',
-    'VERSION_FROM' => 'Bookmark.pm', # finds $VERSION
     'PM'	=> { 'Bookmark.pm' => '$(INST_LIBDIR)/Bookmark.pm' },
 );

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Admin::PopupTree;
 
@@ -31,9 +30,8 @@ use Slash::Utility;
 #use HTML::PopupTreeSelect '1.4';
 
 use base 'HTML::PopupTreeSelect';
-use vars qw($VERSION);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 #========================================================================
 
@@ -236,7 +234,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id$

@@ -3,11 +3,10 @@ package Slash::SearchToo::Classic;
 use strict;
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 use base 'Slash::SearchToo';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: I did it!  And it's all thanks to the books at my local library.
 

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 #
 # XXX Every place we have getDilemmaInfo() needs to (a) know the $trid
 # for the tournament and (b) change to getDilemmaTournamentInfo($trid)
@@ -14,10 +13,9 @@ use Safe;
 use Storable qw( freeze thaw dclone );
 use Slash::Utility;
 use Slash::DB::Utility;
-use vars qw($VERSION);
 use base 'Slash::DB::Utility';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # ZOIDBERG: Friends! Help! A guinea pig tricked me!
 

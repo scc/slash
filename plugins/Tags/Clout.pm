@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Clout;
 
@@ -17,9 +16,7 @@ use Slash::Tags;
 use base 'Slash::DB::Utility';
 use base 'Slash::DB';
 
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub init {
 	my($self) = @_;

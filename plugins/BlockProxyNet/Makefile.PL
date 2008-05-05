@@ -3,5 +3,4 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'BlockProxyNet',
-    'VERSION_FROM' => 'block_proxy_net.pl', # finds $VERSION
 );

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Test;
 
@@ -98,10 +97,9 @@ use Slash::XML;
 
 use strict;
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT = (
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT = (
 	@Slash::EXPORT,
 	@Slash::Constants::EXPORT_OK,
 	@Slash::Display::EXPORT,
@@ -283,7 +281,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id$

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash;
 
@@ -35,18 +34,13 @@ use Time::Local;
 use Time::HiRes;
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT);
 
-$VERSION   	= '2.005000';  # v2.5.0
-# note: those last two lines of functions will be moved elsewhere
-@EXPORT		= qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 	getData gensym displayStory displayRelatedStories dispStory
 	getOlderStories getOlderDays getOlderDaysFromDay
 );
 
-
-# this is the worst damned warning ever, so SHUT UP ALREADY!
-#$SIG{__WARN__} = sub { warn @_ unless $_[0] =~ /Use of uninitialized value/ };
 
 # BENDER: Fry, of all the friends I've had ... you're the first.
 

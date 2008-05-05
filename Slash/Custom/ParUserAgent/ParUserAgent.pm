@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 # This overrides LWP::Parallel::UserAgent to allow multiple
 # proxies to be used with a single scheme, indeed with a

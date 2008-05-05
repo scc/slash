@@ -2,7 +2,6 @@
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'      => 'Slash::Clout',
-    'VERSION_FROM' => '../Clout.pm', # finds $VERSION
     'PM'        =>
         {
                 'Describe.pm' => '$(INST_LIBDIR)/Clout/Describe.pm',

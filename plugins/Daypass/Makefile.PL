@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Daypass',
-    'VERSION_FROM' => 'Daypass.pm', # finds $VERSION
     'PM'	=> { 'Daypass.pm' => '$(INST_LIBDIR)/Daypass.pm' },
 );

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Constants;
 
@@ -27,14 +26,14 @@ The constants below are grouped by tag.
 
 use strict;
 use base 'Exporter';
-use vars qw(@ISA $VERSION @EXPORT @EXPORT_OK %EXPORT_TAGS %CONSTANTS);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = '2.005001'; # v2.5.1
+our %CONSTANTS;
 
 constants();
-@EXPORT		= qw();
-@EXPORT_OK	= map { keys %{$CONSTANTS{$_}} } keys %CONSTANTS;
-%EXPORT_TAGS	= (
+our @EXPORT		= qw();
+our @EXPORT_OK	= map { keys %{$CONSTANTS{$_}} } keys %CONSTANTS;
+our %EXPORT_TAGS	= (
 	all	=> [@EXPORT_OK],
 	map { ($_, [keys %{$CONSTANTS{$_}}]) } keys %CONSTANTS
 );
@@ -214,7 +213,3 @@ in modules, etc.
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id$

@@ -3,6 +3,5 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'	=> 'Slash::Validator',
-    'VERSION_FROM' => 'Validator.pm', # finds $VERSION
     'PM'	=> { 'Validator.pm' => '$(INST_LIBDIR)/Validator.pm' },
 );

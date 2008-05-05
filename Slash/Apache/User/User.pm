@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Apache::User;
 
@@ -20,11 +19,10 @@ use Slash::Apache ();
 use Slash::Display;
 use Slash::Utility;
 use URI ();
-use vars qw($REVISION $VERSION @ISA @QUOTES $USER_MATCH $request_start_time);
+use vars qw($VERSION @ISA @QUOTES $USER_MATCH $request_start_time);
 
 @ISA		= qw(DynaLoader);
 $VERSION   	= '2.003000';  # v2.3.0
-($REVISION)	= ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 bootstrap Slash::Apache::User $VERSION;
 

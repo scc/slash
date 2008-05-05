@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::ScheduleShifts;
 
@@ -19,7 +18,7 @@ use base 'Slash::DB::MySQL';
 use constant SHIFT_DEFAULT		=> -2;
 use constant SHIFT_NOTSET		=> -1;
 
-our($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 our @DOW = qw(sun mon tue wed thu fri sat);
 our %DOW;

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Messages;
 
@@ -35,13 +34,12 @@ More to come.
 
 use strict;
 use base qw(Slash::Messages::DB::MySQL);
-use vars qw($VERSION);
 use Slash 2.003;	# require Slash 2.3.x
 use Slash::Constants ':messages';
 use Slash::Display;
 use Slash::Utility;
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 
 #========================================================================
@@ -1134,7 +1132,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3).
-
-=head1 VERSION
-
-$Id$

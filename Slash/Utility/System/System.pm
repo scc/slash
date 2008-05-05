@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::Utility::System;
 
@@ -31,6 +30,7 @@ use File::Path;
 use File::Spec::Functions;
 use File::Temp 'tempfile';
 use Mail::Sendmail;
+use Slash::Constants ();
 use Slash::Custom::Bulkmail;	# Mail::Bulkmail
 use Slash::Utility::Data;
 use Slash::Utility::Environment;
@@ -38,10 +38,9 @@ use Symbol 'gensym';
 use Time::HiRes ();
 
 use base 'Exporter';
-use vars qw($VERSION @EXPORT @EXPORT_OK);
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
-@EXPORT	   = qw(
+our $VERSION = $Slash::Constants::VERSION;
+our @EXPORT  = qw(
 	bulkEmail
 	doEmail
 	sendEmail
@@ -53,7 +52,7 @@ use vars qw($VERSION @EXPORT @EXPORT_OK);
 	prog2file
 	makeDir
 );
-@EXPORT_OK = qw();
+our @EXPORT_OK = qw();
 
 #========================================================================
 
@@ -512,7 +511,3 @@ __END__
 =head1 SEE ALSO
 
 Slash(3), Slash::Utility(3).
-
-=head1 VERSION
-
-$Id$

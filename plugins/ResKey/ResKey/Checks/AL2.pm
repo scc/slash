@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::ResKey::Checks::AL2;
 
@@ -13,7 +12,7 @@ use Exporter;
 use Slash::Utility;
 use Slash::Constants ':reskey';
 
-our($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 our @ISA    = qw(Exporter);
 our @EXPORT = qw(AL2Check);
 

@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 # This handler is called in the fourth Apache phase, access control.
 
@@ -15,9 +14,7 @@ use Slash::Display;
 use Slash::Utility;
 use Slash::XML;
 
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 sub handler {
 	my($r) = @_;

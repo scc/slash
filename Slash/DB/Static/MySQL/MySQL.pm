@@ -1,7 +1,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 package Slash::DB::Static::MySQL;
 
@@ -17,10 +16,9 @@ use Digest::MD5 'md5_hex';
 use Encode 'encode_utf8';
 use Time::HiRes;
 use URI ();
-use vars qw($VERSION);
 use base 'Slash::DB::MySQL';
 
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
+our $VERSION = $Slash::Constants::VERSION;
 
 # FRY: Hey, thinking hurts 'em! Maybe I can think of a way to use that.
 
