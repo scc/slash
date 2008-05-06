@@ -42,6 +42,9 @@ ELSIF item.type == "feed" && item.srcname;
 END;
 
 title = item.title;
+IF item.type == "comment";
+	title = "Comment: " _ item.title;
+END;
 onclick = "onclick=\"toggle_firehose_body('$item.id', $adminmode); return false\"";
 title_href="$gSkin.rootdir/firehose.pl?op=view&amp;id=$item.id";
 IF form.index;
