@@ -942,6 +942,12 @@ EOT
 		$data{firehose_report} = $fh_report;
 	}
 
+	if ($firehose && $tags) {
+		my($binspam_tag_count, $is_spam_new_count) = $stats->tallyBinspam();
+		$data{binspam_tag_count} = $binspam_tag_count;
+		$data{is_spam_new_count} = $is_spam_new_count;
+	}
+
 	if ($tags) {
 		my $tags_report = '';
 		my $tags_users = $stats->getTagCountForDay($yesterday, [], 1);
