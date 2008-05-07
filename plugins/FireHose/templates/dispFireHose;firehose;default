@@ -115,7 +115,7 @@ END %]
 		<ul>
 			<li class="more"><b>
 			[% link_url = firehose.linkFireHose(item) %]
-			[% IF item.discussion %]
+			[% IF item.discussion || item.type == "comment" %]
 				<a href="[% link_url %]">Read More</a>
 			[% ELSE %]
 				Nothing More

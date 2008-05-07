@@ -64,6 +64,10 @@ __template__
 		[% IF item.type == "story" %]
 			[% story = Slash.db.getStory(item.srcid) %]
 			[% IF story && story.fhid %]<a href="[% gSkin.rootdir %]/firehose.pl?op=view&amp;id=[% story.fhid %]">Original Submission</a>[% END %]
+		[% ELSIF item.type == "comment";
+			com = Slash.db.getComment(item.srcid);
+			disc = Slash.db.getDiscussion(com.sid); %]
+			<br>From discussion: <a href="[% disc.url %]">[% disc.title | strip_literal %]</a><br>
 		[% ELSIF item.stoid;
 			to_story = Slash.db.getStory(item.stoid) %]
 			<a href="[% gSkin.rootdir %]/article.pl?sid=[% to_story.sid | strip_attribute %]">Posted as Story</a>
@@ -98,7 +102,10 @@ __template__
 		[% IF !contentsonly %]
 		<span id="firehose_more">
 		[% END %]
-		[% label = "Get more &raquo;" %]
+		[% IF !need_label;
+			label = "Get more &raquo;"
+		   END;
+		%]
 		[% IF day_label && day_count && options.duration != -1;
 			IF need_day_label;
 				label = $day_label _ " ";
