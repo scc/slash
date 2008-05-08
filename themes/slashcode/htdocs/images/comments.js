@@ -1,7 +1,5 @@
-// $Id$
-
 var comments;
-var root_comments;
+var root_comments = [];
 var noshow_comments;
 var pieces_comments;
 var placeholder_comments = [];
@@ -29,7 +27,16 @@ var prehiddendisplaymode = {};
 var viewmodevalue = { full: 3, oneline: 2, hidden: 1};
 var currents = { full: 0, oneline: 0, hidden: 0 };
 var commentelements = {};
-var thresh_totals = {};
+var thresh_totals = {
+	"-1":{"-1":0,0:0,1:0,2:0,3:0,4:0,5:0,6:0},
+	   0:{0:0,1:0,2:0,3:0,4:0,5:0,6:0},
+	   1:{1:0,2:0,3:0,4:0,5:0,6:0},
+	   2:{2:0,3:0,4:0,5:0,6:0},
+	   3:{3:0,4:0,5:0,6:0},
+	   4:{4:0,5:0,6:0},
+	   5:{5:0,6:0},
+	   6:{6:0}
+};
 var d2_keybindings_off = 0;
 var d2_keybindings_disable = {};
 

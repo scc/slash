@@ -92,8 +92,10 @@ __template__
 
 	[% lcp %]
 	[% IF lvl; END %]
-	[% this_pid = discussion2 ? 0 : pid;
-	   thread = Slash.displayThread(sid, this_pid, lvl, comments) %]
+	[% IF comments;
+	     this_pid = discussion2 ? 0 : pid;
+	     thread = Slash.displayThread(sid, this_pid, lvl, comments);
+	   END %]
 	[% IF thread || discussion2 %]
 		[% IF !cid || discussion2 %]<ul id="commentlisting" class="[% discussion2 ? 'd2' : 'd1' %]">[% END %]
 			[% thread || '' %]
