@@ -472,3 +472,28 @@ li .tag-actions .not-tag:hover, li .tag-actions .del-tag:hover {color: red;}
 .embed .paginate, .embed .firemenu, .embed a.skin, .copyright.embed { display: none; }
 #fhtablist li:before { content: "";}
 #fhtablist li { padding-left: 0.5em }
+
+.view div.tags div.tagtitleclosed, .view div.tags div.tagtitleopen {
+margin:0pt 0pt -1.4em 0pt;
+position:relative !important;
+text-align:right;
+}
+
+.view .article div.tagtitleclosed{
+width: 90%;
+left:0pt;
+}
+
+* html .view .article div.tagtitleclosed{ /* IE6 */
+right:0pt;
+}
+
+* html body .view .article div.tagtitleclosed{ /* IE6 as well */
+left:auto;
+right:0pt;
+}
+
+*+html  .view .article div.tagtitleclosed{ /* IE7 */
+left:auto;
+right:0pt;
+}
