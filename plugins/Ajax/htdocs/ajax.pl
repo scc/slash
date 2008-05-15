@@ -2,7 +2,6 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
 use strict;
 use warnings;
@@ -12,9 +11,6 @@ use Data::JavaScript::Anon;
 use Slash 2.003;	# require Slash 2.3.x
 use Slash::Display;
 use Slash::Utility;
-use vars qw($VERSION);
-
-($VERSION) = ' $Revision$ ' =~ /\$Revision:\s+([^\s]+)/;
 
 ##################################################################
 sub main {
@@ -437,18 +433,10 @@ sub fetchComments {
 		no_d2        => 1
 	);
 
-	my %seen;
-	if ($d2_seen || $form->{d2_seen_ex}) {
-		my $lastcid = 0;
-		for my $cid (split /,/, $d2_seen || $form->{d2_seen_ex}) {
-			$cid = $lastcid ? $lastcid + $cid : $cid;
-			$seen{$cid} = 1;
-			$lastcid = $cid;
-		}
-		if ($d2_seen) {
-			$select_options{existing} = \%seen if keys %seen;
-			delete $select_options{no_d2};
-		}
+	my $seen = parseCommentBitmap($d2_seen || $form->{d2_seen_ex});
+	if ($d2_seen) {
+		$select_options{existing} = $seen if keys %$seen;
+		delete $select_options{no_d2};
 	}
 
 	my($comments) = selectComments(
@@ -467,18 +455,13 @@ sub fetchComments {
 	if ($d2_seen || @$placeholders) {
 		my $special_cids;
 		if ($d2_seen) {
-			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen{$_} } keys %$comments ];
+			$special_cids = $cids = [ sort { $a <=> $b } grep { $_ && !$seen->{$_} } keys %$comments ];
 		} elsif (@$placeholders) {
 			$special_cids = [ sort { $a <=> $b } @$placeholders ];
 			if ($form->{d2_seen_ex}) {
-				my @seen;
-				my $lastcid = 0;
-				my %check = (%seen, map { $_ => 1 } @$placeholders);
-				for my $cid (sort { $a <=> $b } keys(%check)) {
-					push @seen, $lastcid ? $cid - $lastcid : $cid;
-					$lastcid = $cid;
-				}
-				$d2_seen_0 = join ',', @seen;
+				$d2_seen_0 = makeCommentBitmap({
+					%$seen, map { $_ => 1 } @$placeholders
+				});
 			}
 		}
 
