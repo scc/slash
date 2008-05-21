@@ -41,11 +41,15 @@ MAKE = make -s
 SUBDIRS = `find . -maxdepth 1 -name CVS -prune -o -type d -name [a-zA-Z]\* -print`
 
 # Perl scripts, grouped by directory.
-BINFILES = `find bin -name CVS -prune -o -name [a-zA-Z]\* -type f -print`
-SBINFILES = `find sbin -name CVS -prune -o -name [a-zA-Z]\* -type f -print`
-THEMEFILES = `find themes -name CVS -prune -o -name [a-zA-z]\*.pl -print`
-PLUGINFILES = `find plugins -name CVS -prune -o -name [a-zA-Z]\*.pl -print`
-TAGBOXFILES = `find tagboxes -name CVS -prune -o -name [a-zA-Z]\*.pl -print`
+BINFILES = `find bin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print`
+SBINFILES = `find sbin -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\* -type f -print`
+THEMEFILES = `find themes -name CVS -prune -o -name .git -prune -o -name [a-zA-z]\*.pl -print`
+PLUGINFILES = `find plugins themes/*/plugins -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
+TAGBOXFILES = `find tagboxes themes/*/tagboxes -name CVS -prune -o -name .git -prune -o -name [a-zA-Z]\*.pl -print`
+PLUGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins/[a-zA-Z]+$$'`
+TAGINSTALL = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes/[a-zA-Z]+$$'`
+PLUGINDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'plugins$$'`
+TAGBOXDIRS = `find . -name CVS -prune -o -name .git -prune -o -type d -print | egrep 'tagboxes$$'`
 
 # What do we use to invoke perl?
 REPLACEWITH = `$(PERL) -MConfig -e 'print quotemeta($$Config{startperl})' | sed 's/@/\\@/g'`
@@ -59,7 +63,7 @@ INSTALLSITEARCH=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installsitear
 INSTALLSITELIB=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installsitelib}"'`
 INSTALLMAN3DIR=`$(PERL) -MConfig -e 'print "$(BUILDROOT)/$$Config{installman3dir}"'`
 
-.PHONY : all plugins tagboxes slash install
+.PHONY : all pluginsandtagboxes slash install
 
 #   install the shared object file into Apache 
 # We should run a script on the binaries to get the right
@@ -74,45 +78,30 @@ slash:
 		(cd Slash; $(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); $(MAKE) install UNINST=1); \
 	fi
 
-plugins: 
-	@echo "=== INSTALLING SLASH PLUGINS ==="
-	@(cd plugins; \
-	 for a in $(SUBDIRS); do \
-	 	(cd $$a; \
+pluginsandtagboxes:
+	@echo "=== INSTALLING SLASH PLUGINS AND TAGBOXES ==="
+	@(pluginstall=$(PLUGINSTALL); \
+	taginstall=$(TAGINSTALL); \
+	for f in $$pluginstall $$taginstall; do \
+		(cd $$f; \
 		 echo == $$PWD; \
 		 if [ -f Makefile.PL ]; then \
 		 	if [ ! "$(RPM)" ] ; then \
 				$(PERL) Makefile.PL; \
 				$(MAKE) install UNINST=1;\
+				$(MAKE) realclean; \
 			else \
 				echo " - Performing an RPM build."; \
 				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
 				$(MAKE) install UNINST=1; \
-			fi; \
-		 fi); \
-	done)
-
-tagboxes: 
-	@echo "=== INSTALLING SLASH TAGBOXES ==="
-	@(cd tagboxes; \
-	 for a in $(SUBDIRS); do \
-	 	(cd $$a; \
-		 echo == $$PWD; \
-		 if [ -f Makefile.PL ]; then \
-		 	if [ ! "$(RPM)" ] ; then \
-				$(PERL) Makefile.PL; \
-				$(MAKE) install UNINST=1;\
-			else \
-				echo " - Performing an RPM build."; \
-				$(PERL) Makefile.PL INSTALLSITEARCH=$(INSTALLSITEARCH) INSTALLSITELIB=$(INSTALLSITELIB) INSTALLMAN3DIR=$(INSTALLMAN3DIR); \
-				$(MAKE) install UNINST=1; \
+				$(MAKE) realclean; \
 			fi; \
 		 fi); \
 	done)
 
 all: install
 
-install: slash plugins tagboxes
+install: slash pluginsandtagboxes
 
 	# Create all necessary directories.
 	$(INSTALL) -d \
@@ -146,10 +135,15 @@ install: slash plugins tagboxes
 	# supports that option; however, its use is strongly discouraged, as it
 	# does not correctly copy special files, symbolic links or FIFOs. 
 	#
-	(cd plugins; $(MAKE) clean) 
-	$(CP) -r plugins/* $(SLASH_PREFIX)/plugins
-	(cd tagboxes; $(MAKE) clean) 
-	$(CP) -r tagboxes/* $(SLASH_PREFIX)/tagboxes
+	@(pluginstall=$(PLUGINSTALL); \
+	taginstall=$(TAGINSTALL); \
+	for f in $$pluginstall; do \
+		($(CP) -r $$f $(SLASH_PREFIX)/plugins); \
+	done; \
+	for f in $$taginstall; do \
+		($(CP) -r $$f $(SLASH_PREFIX)/tagboxes); \
+	done)
+
 	# Now all the themes
 	$(CP) -r themes/* $(SLASH_PREFIX)/themes
 	
