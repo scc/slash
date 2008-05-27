@@ -21,6 +21,10 @@ $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
+
+	if (!$constants->{imagemagick_convert}) {
+		slashdLog("no imagemagick convert location specified, exiting");
+	}
 	
 	my $file_queue_cmds = [];
 	my $cmd;
@@ -46,6 +50,9 @@ $task{$me}{code} = sub {
 sub handleFileCmd {
 	my($cmd) = @_;
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $convert = $constants->{imagemagick_convert};
+
 	if ($cmd->{action} eq "thumbnails") {
 		slashdLog("Creating Thumbnails");
 		my $files = uploadFile($cmd);
@@ -58,7 +65,7 @@ sub handleFileCmd {
 			my $thumb = $namebase . "-thumb." . $suffix;
 			my $thumbsm = $namebase . "-thumbsm." . $suffix;
 			slashdLog("About to create thumb $path$thumb");
-			system("/usr/bin/convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 $path$thumb");
+			system("$convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 $path$thumb");
 			my $data = {
 				stoid => $cmd->{stoid} || 0,
 				fhid  => $cmd->{fhid} || 0 ,
@@ -74,7 +81,7 @@ sub handleFileCmd {
 			}
 
 			slashdLog("About to create thumbsms $path$thumbsm");
-			system("/usr/bin/convert -size 100x74 $path$name  -resize '50x37>'  -bordercolor transparent -border 18 -gravity center -crop 50x37+0+0 -page +0+0 $path$thumbsm");
+			system("$convert -size 100x74 $path$name  -resize '50x37>'  -bordercolor transparent -border 18 -gravity center -crop 50x37+0+0 -page +0+0 $path$thumbsm");
 			$data = {
 				stoid => $cmd->{stoid} || 0,
 				fhid  => $cmd->{fhid} || 0,
@@ -141,6 +148,9 @@ sub uploadFile {
 	my($cmd) = @_;
 	my @suffixlist = ();
 	my $slashdb = getCurrentDB();
+	my $constants = getCurrentStatic();
+	my $convert = $constants->{imagemagick_convert};
+
 	my $story = $slashdb->getStory($cmd->{stoid});
 	my @files;
 
@@ -148,7 +158,9 @@ sub uploadFile {
 	if ($file =~ /\.(gif|jpg)$/i) {
 		my $filepng = $file;
 		$filepng =~s /\.(gif|jpg)$/\.png/;
-		system("/usr/bin/convert $file $filepng");
+		if ($convert) {
+			system("$convert $file $filepng");
+		}
 		$file = $filepng;
 	}
 
