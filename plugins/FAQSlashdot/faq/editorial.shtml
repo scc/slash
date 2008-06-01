@@ -70,7 +70,7 @@
         </small></em></p>
 
 <h2><a name="ed150" id="ed150">How do I Ask Slashdot?</a></h2>
-        <p>Ask Slashdot is maintained by <a href="mailto:cliff@slashdot.org">Cliff</a>. We prefer that you submit questions through <a href="http://slashdot.org/submit.pl">the submissions form</a>, selecting the section "Ask Slashdot" so we know to route the question to Cliff.</p>
+        <p>Ask Slashdot is maintained by the editorial staff. We prefer that you submit questions through <a href="http://slashdot.org/submit.pl">the submissions form</a>, selecting the section "Ask Slashdot" so we know to route the question appropriately.</p>
         <p><em><small>
                 Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
                 Last Modified: 10/29/00
@@ -96,7 +96,7 @@
         </small></em></p>
 
 <h2><a name="ed220" id="ed220">Why hasn't my story been accepted or rejected yet?</a></h2>
-        <p>Usually stories are examined within a few hours of their submission. Sometimes, however (and usually with stories that are submitted as Ask Slashdot or chosen as potential quickies), it might be weeks before it closes. Usually these things aren't time dependent... the answer won't change if the question is posed tomorrow or in a week, and since Ask Slashdot gets 5x more submissions then we use, there's some delay there. So be patient. You can <a href="mailto:cliff@slashdot.org">mail Cliff</a> if you have a specific question about an Ask Slashdot.</p>
+        <p>Usually stories are examined within a few hours of their submission. Sometimes, however (and usually with stories that are submitted as Ask Slashdot or chosen as potential quickies), it might be weeks before it closes. Usually these things aren't time dependent... the answer won't change if the question is posed tomorrow or in a week, and since Ask Slashdot gets 5x more submissions then we use, there's some delay there. So be patient.</p>
         <p><em><small>
                 Answered by: <a href="mailto:malda@slashdot.org">CmdrTaco</a><br>
                 Last Modified: 10/29/00
@@ -210,7 +210,6 @@
         <p><strong>Editor</strong> <a href="mailto:pudge@slashdot.org">pudge@slashdot.org</a></p>
         <h3>Ask Slashdot</h3>
         <p>If you're seeking advice from the Slashdot readership about jobs, computer hardware, software glitches, philosophical problems, etc, select the Ask Slashdot section. Regarding Legal Advice: When seeking advice on topics that touch on legal aspects, please remember that you should always be prepared to consult professional legal representation. It doesn't hurt to Ask Slashdot for pointers, and suggestions to save you some time, but Ask Slashdot should not be used in place of professional legal representation.</p>
-        <p><strong>Editor</strong> <a href="mailto:cliff@slashdot.org">cliff@slashdot.org</a></p>
         <h3>Book Reviews</h3>This section is for your original book reviews on (not necessarily) tech books, the more recent the better. If you're interested in submitting book reviews to slashdot, make sure you've read through the <a href="https://slashdot.org/book.review.guidelines.shtml">book review guidelines</a>, too.
         <p><strong>Editor</strong> <a href="mailto:timothy@slashdot.org">timothy@slashdot.org</a></p>
         <h3>BSD</h3>The BSD section hosts news about the various modern UNIXes derived from Berkeley's distribution (like Free, Open and NetBSD).
