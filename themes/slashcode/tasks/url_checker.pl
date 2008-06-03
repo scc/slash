@@ -23,14 +23,14 @@ $task{$me}{on_startup} = 1;
 $task{$me}{fork} = SLASHD_NOWAIT;
 $task{$me}{code} = sub {
 	my($virtual_user, $constants, $slashdb, $user, $info, $gSkin) = @_;
-
 	my $reader = getObject("Slash::DB", { type => 'reader'});
 
+	my $fresh_until_min = 86400 * 30;
 	my $start_time = time();
-	my $timeout = 60;
 
 	my $ua = LWP::UserAgent->new;
 	$ua->agent($constants->{url_checker_user_agent}) if $constants->{url_checker_user_agent};
+	my $timeout = 60;
 	$ua->timeout(20);
 
 	my $urls = $reader->getUrlsNeedingFirstCheck({ limit_to_firehose => 1 });
@@ -45,7 +45,7 @@ $task{$me}{code} = sub {
 	}
 
 	URL_CHECK: while (@all_urls) {
-		my @set = splice(@all_urls, 0, 20);
+		my @set = splice(@all_urls, 0, 5);
 
 		# Don't run forever...
 		if (time > $start_time + $timeout) {
@@ -64,9 +64,9 @@ $task{$me}{code} = sub {
 
 		foreach (@set) {
 			my $req = HTTP::Request->new("GET", $_->{url});
+			$slashdb->setUrl($_->{url_id}, { '-last_attempt' => 'NOW()' });
 			$ua->register($req);
 		}
-
 		my $entries = $ua->wait();
 		foreach (keys %$entries) {
 			my $res = $entries->{$_}->response;
@@ -93,8 +93,9 @@ $task{$me}{code} = sub {
 			}
 			# If this is a second or greater, we adjust the amount of time between refreshes to slowly increase
 			# time between refreshes
-			if ($item->{last_attempt}) {
+			if ($item->{last_attempt} && $res->is_success) {
 				my $secs = $slashdb->sqlSelect("UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP('$item->{last_attempt}')");
+				$secs = $fresh_until_min if !$secs || $secs < $fresh_until_min;
 				my $decay = 1.2;
 				my $secs_until_next = int($secs * $decay);
 				$url_update->{"-believed_fresh_until"} = "DATE_ADD(NOW(), INTERVAL $secs_until_next SECOND)";
