@@ -2762,13 +2762,13 @@ sub getFireHoseItemsByUrl {
 sub ajaxFireHoseUsage {
 	my($slashdb, $constants, $user, $form) = @_;
 
-	my $tag_reader = getObject('Slash::Tags', { db_type => 'reader' });
+	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
 
 	my $downlabel = $constants->{tags_downvote_tagname} || 'nix';
-	my $down_id = $tag_reader->getTagnameidFromNameIfExists($downlabel);
+	my $down_id = $tags_reader->getTagnameidFromNameIfExists($downlabel);
 	
 	my $uplabel = $constants->{tags_upvote_tagname} || 'nod';
-	my $up_id = $tag_reader->getTagnameidFromNameIfExists($uplabel);
+	my $up_id = $tags_reader->getTagnameidFromNameIfExists($uplabel);
 	my $data = {};
 
 #	$data->{fh_users} = $tags_reader->sqlSelect("COUNT(DISTINCT uid)", "tags",
