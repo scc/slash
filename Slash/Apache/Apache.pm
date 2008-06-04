@@ -273,7 +273,7 @@ sub ProxyRemoteAddr ($) {
 	# skip the following processing.  An untrusted client could send
 	# any header with any value.
 	if ($trusted_ip_regex eq '0'
-		|| $r->connect->remote_ip !~ $trusted_ip_regex) {
+		|| $r->connection->remote_ip !~ $trusted_ip_regex) {
 		return OK;
 	}
 
