@@ -702,12 +702,19 @@ sub moderate {
 	# multiple-point-spends if the user still has points.
 	my $can_del = ($constants->{authors_unlimited} && $user->{seclev} >= $constants->{authors_unlimited})
 		|| $user->{acl}{candelcomments_always};
+
 	for my $key (sort keys %{$form}) {
 		if ($can_del && $key =~ /^del_(\d+)$/) {
 			$total_deleted += deleteThread($sid, $1);
 		} elsif (!$hasPosted && $key =~ /^reason_(\d+)$/) {
-			my $cid = $1;
-			my $ret_val = $moddb->moderateComment($sid, $cid, $form->{$key});
+			my($cid, $can_mod, $ret_val, $comment) = (0, 0, 0);
+			$cid = $1;
+			$comment = $moddb->getComment($cid) if $cid;
+			$can_mod = Slash::Utility::Comments::_can_mod($comment) if $comment;
+			$ret_val = $moddb->moderateComment(
+				$sid, $cid, $form->{$key}, { comment => $comment }
+			) if $can_mod;
+
 			# If an error was returned, tell the user what
 			# went wrong.
 			if ($ret_val < 0) {
