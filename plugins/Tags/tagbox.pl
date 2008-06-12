@@ -291,9 +291,27 @@ sub run_tagboxes_until {
 	my($run_until) = @_;
 	my $activity = 0;
 	$tagboxes = $tagboxdb->getTagboxes();
+	my $overnight_sum = defined($constants->{tags_overnight_minweightsum})
+		? $constants->{tags_overnight_minweightsum}
+		: 1;
+	my($overnight_starthour, $overnight_stophour) = (undef, undef);
+	if ($overnight_sum != 1) {
+		$overnight_starthour = $constants->{tags_overnight_starthour} ||  7;
+		$overnight_stophour  = $constants->{tags_overnight_stophour}  || 10;
+	}
 
 	while (time() < $run_until && !$task_exit_flag) {
-		my $affected_ar = $tagboxdb->getMostImportantTagboxAffectedIDs();
+		my $cur_count = 10;
+		my $cur_minweightsum = 1;
+		my $gmhour = (gmtime)[2];
+		if ($overnight_sum != 1
+			&& $gmhour >= $overnight_starthour
+			&& $gmhour <= $overnight_stophour) {
+			$cur_minweightsum = $overnight_sum;
+			$cur_count = 50;
+		}
+
+		my $affected_ar = $tagboxdb->getMostImportantTagboxAffectedIDs($cur_count, $cur_minweightsum);
 		return $activity if !$affected_ar || !@$affected_ar;
 
 		$activity = 1;
