@@ -1,7 +1,10 @@
 # $Id$
 name=FireHose
 description="FireHose"
-css=firehose.css
+glob=firehosecss:htdocs/firehose.css
+firehosecss=firehose.css
+firehosecss=../Ajax/htdocs/images/tagbar.css
+css=htdocs/firehose.css
 htdoc=firehose.pl
 mysql_dump=mysql_dump.sql
 mysql_schema=mysql_schema.sql
