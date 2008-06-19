@@ -25,7 +25,7 @@ $VERSION = sprintf "%d.%03d", q$Id$ =~ /(\d+)/g
         <ul>
                 <li><strong><a href="/faq/faq-meta.shtml#fm100">What is this document?</a></strong></li>
                 <li><strong><a href="/faq/faq-meta.shtml#fm200">I have a question that is not answered in this FAQ. What should I do?</a></strong></li>
-                <li><strong><a href="/faq/faq-meta.shtml#fm300">Who is responsible for the FAQ?</a></strong></li>
+                <li><strong><a href="/faq/faq-meta.shtml#fm300">Who is responsible for this FAQ?</a></strong></li>
         </ul><!-- Editorial -->
         <h2><strong><a href="/faq/editorial.shtml">Editorial</a></strong></h2>
         <ul>
