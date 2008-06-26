@@ -64,6 +64,9 @@ sub handleFileCmd {
 			my ($namebase, $suffix) = $name =~ /^(\w+\-\d+)\.(\w+)$/;
 			my $thumb = $namebase . "-thumb." . $suffix;
 			my $thumbsm = $namebase . "-thumbsm." . $suffix;
+			my $thumblg = $namebase . "-thumblg." . $suffix;
+
+
 			slashdLog("About to create thumb $path$thumb");
 			system("$convert -size 260x194  $path$name  -resize '130x97>'  -bordercolor transparent  -border 48 -gravity center -crop 130x97+0+0 -page +0+0 $path$thumb");
 			my $data = {
@@ -86,6 +89,15 @@ sub handleFileCmd {
 				stoid => $cmd->{stoid} || 0,
 				fhid  => $cmd->{fhid} || 0,
 				name => "$path$thumbsm"
+			};
+			addFile($data);
+
+			slashdLog("About to create thumblg $path$thumblg");
+			system("$convert $path$name  -resize '425x344>' $path$thumblg");
+			$data = {
+				stoid => $cmd->{stoid} || 0,
+				fhid  => $cmd->{fhid} || 0,
+				name => "$path$thumblg"
 			};
 			addFile($data);
 		}
