@@ -37,7 +37,7 @@ our @EXPORT  = qw(
 	constrain_score dispComment displayThread printComments
 	jsSelectComments commentCountThreshold commentThresholds discussion2
 	selectComments preProcessReplyForm makeCommentBitmap parseCommentBitmap
-	saveCommentBitmap getCommentBitmap saveCommentReadLog
+	saveCommentBitmap getCommentBitmap saveCommentReadLog getCommentReadLog
 	getPoints preProcessComment postProcessComment prevComment saveComment
 );
 
@@ -233,6 +233,10 @@ sub selectComments {
 ##slashProf("sC fudging", "sC main sort");
 #slashProf("", "sC main sort");
 
+	my $comments_read = $user->{is_admin}
+		? getCommentReadLog($discussion->{id}, $user->{uid})
+		: {};
+
 	# This loop mainly takes apart the array and builds 
 	# a hash with the comments in it.  Each comment is
 	# in the index of the hash (based on its cid).
@@ -253,6 +257,8 @@ sub selectComments {
 		# Kids is what displayThread will actually use.
 		$comments->{$C->{cid}}{kids} = $tmpkids || [];
 		$comments->{$C->{cid}}{visiblekids} = $tmpvkids || 0;
+
+		$comments->{$C->{cid}}{has_read} = $comments_read->{$C->{cid}};
 
 		# The comment pushes itself onto its parent's
 		# kids array.
@@ -406,6 +412,7 @@ sub jsSelectComments {
 		my @keys = qw(pid points uid);
 		for my $cid (grep $_, keys %$comments) {
 			@{$comments_new->{$cid}}{@keys} = @{$comments->{$cid}}{@keys};
+			$comments_new->{$cid}{read} = $comments->{$cid}{has_read} ? 1 : 0;
 			$comments_new->{$cid}{opid} = $comments->{$cid}{original_pid};
 			$comments_new->{$cid}{kids} = [sort { $a <=> $b } @{$comments->{$cid}{kids}}];
 
@@ -577,6 +584,19 @@ sub saveCommentReadLog {
 	}
 }
 
+sub getCommentReadLog {
+	my($discussion_id, $uid) = @_;
+
+	$uid ||= getCurrentUser('uid');
+	my $slashdb = getCurrentDB();
+
+	my $comments_read = $slashdb->sqlSelectAllKeyValue(
+		'cid, 1',
+		'users_comments_read_log',
+		'uid=' . $slashdb->sqlQuote($uid) .
+		' AND discussion_id=' . $slashdb->sqlQuote($discussion_id)
+	);
+}
 
 sub getCommentBitmap {
 	my($discussion_id, $uid) = @_;
@@ -2200,8 +2220,10 @@ EOT2
 <div id="comment_$comment->{cid}"$classattr>
 EOT
 
+	my $new_old_comment = $comment->{has_read} ? 'oldcomment' : 'newcomment';
+
 	$return .= <<EOT if !$options->{noshow};
-	<div id="comment_top_$comment->{cid}" class="commentTop newcomment">
+	<div id="comment_top_$comment->{cid}" class="commentTop $new_old_comment">
 		<div class="title">
 $head
 $comment_links

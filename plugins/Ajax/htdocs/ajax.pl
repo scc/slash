@@ -408,16 +408,21 @@ sub readRest {
 sub fetchComments {
 	my($slashdb, $constants, $user, $form, $options) = @_;
 
-	my $cids         = [ grep { defined && /^\d+$/ } ($form->{_multi}{cids} ? @{$form->{_multi}{cids}} : $form->{cids}) ];
-	my $id           = $form->{discussion_id} || 0;
-	my $cid          = $form->{cid} || 0; # root id
-	my $d2_seen      = $form->{d2_seen};
-	my $placeholders = [ grep { defined && /^\d+$/ } ($form->{_multi}{placeholders} ? @{$form->{_multi}{placeholders}} : $form->{placeholders}) ];
+	my $cids          = [ grep { defined && /^\d+$/ } ($form->{_multi}{cids} ? @{$form->{_multi}{cids}} : $form->{cids}) ];
+	my $id            = $form->{discussion_id} || 0;
+	my $cid           = $form->{cid} || 0; # root id
+	my $d2_seen       = $form->{d2_seen};
+	my $placeholders  = [ grep { defined && /^\d+$/ } ($form->{_multi}{placeholders}  ? @{$form->{_multi}{placeholders}}  : $form->{placeholders}) ];
+	my $read_comments = [ grep { defined && /^\d+$/ } ($form->{_multi}{read_comments} ? @{$form->{_multi}{read_comments}} : $form->{read_comments}) ];
 
 	$user->{state}{ajax_accesslog_op} = "ajax_comments_fetch";
-#use Data::Dumper; print STDERR Dumper [ $form, $cids, $id, $cid, $d2_seen ];
+#use Data::Dumper; print STDERR Dumper [ $form, $cids, $id, $cid, $d2_seen, $read_comments ];
+	return unless $id;
+
+	saveCommentReadLog($read_comments, $id, $user->{uid}) if @$read_comments;
+
 	# XXX error?
-	return unless $id && (@$cids || $d2_seen);
+	return unless (@$cids || $d2_seen);
 
 	my $discussion = $slashdb->getDiscussion($id);
 	if ($discussion->{type} eq 'archived') {
@@ -583,6 +588,7 @@ sub fetchComments {
 
 	$options->{content_type} = 'application/json';
 	my %to_dump = (
+		read_comments      => $read_comments,  # send back so we can just mark them
 		update_data        => \%data,
 		html               => \%html,
 		html_append_substr => \%html_append_substr
@@ -599,6 +605,7 @@ sub fetchComments {
 		$to_dump{eval_first} .= "placeholder_no_update = " . Data::JavaScript::Anon->anon_dump({ map { $_ => 1 } @$placeholders }) . ';';
 	}
 	writeLog($id);
+#print STDERR "\n\n\n", Data::JavaScript::Anon->anon_dump(\%to_dump), "\n\n\n";
 	return Data::JavaScript::Anon->anon_dump(\%to_dump);
 }
 
