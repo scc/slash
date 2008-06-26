@@ -13,6 +13,7 @@ display
 __template__
 <div id="slashboxes">
 	[% authorbox %]
+	<span id="admintodo-wrap"></span>
 	[% storyadmin %]
 	[% tagnamesbox %]
 	[% perfbox %]

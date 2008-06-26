@@ -474,6 +474,13 @@ function firehose_set_options(name, value) {
 		firehose_settings.page = 0;
 		firehose_settings.more_num = 0;
 	}
+
+	if (name == "setfhfilter") {
+		firehose_settings.fhfilter = value;
+		firehose_settings.page = 0;
+		firehose_settings.more_num = 0;
+	}
+
 	if (name != "color") {
 	for (i=0; i< pairs.length; i++) {
 		var el = pairs[i];

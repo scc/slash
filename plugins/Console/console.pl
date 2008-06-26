@@ -56,6 +56,7 @@ sub display {
 	my $storyadmin 	= $admindb->showStoryAdminBox("");
 	my $perfbox	= $admindb->showPerformanceBox();
 	my $authorbox	= $admindb->showAuthorActivityBox();
+	my $admintodo	= $admindb->showAdminTodo();
 	my $firehosebox = "";
 	if ($constants->{plugin}{FireHose}) {
 		my $firehose = getObject("Slash::FireHose");
