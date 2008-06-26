@@ -1086,7 +1086,7 @@ CREATE TABLE story_topics_rendered (
 #
 
 DROP TABLE IF EXISTS static_files;
-CREATE TABLE story_static_files(
+CREATE TABLE static_files(
 	sfid mediumint unsigned NOT NULL auto_increment,
 	stoid mediumint unsigned NOT NULL,
 	fhid mediumint unsigned NOT NULL,
