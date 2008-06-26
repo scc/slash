@@ -5378,3 +5378,11 @@ UPDATE vars SET value = 'T_2_5_0_209' WHERE name = 'cvs_tag_currentcode';
 
 # for plugins/FireHose
 INSERT INTO ajax_ops VALUES (NULL, 'tags_get_top_firehose', 'Slash::FireHose', 'ajaxGetFireHoseTagsTop', 'ajax_tags_write', 'createuse');
+
+CREATE TABLE firehose_skin_volume(
+	skid SMALLINT UNSIGNED NOT NULL,
+	story_vol MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
+	other_vol MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
+	PRIMARY KEY (skid)
+);
+

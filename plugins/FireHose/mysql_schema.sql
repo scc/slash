@@ -99,3 +99,10 @@ CREATE TABLE firehose_setting_log(
 	PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS firehose_skin_volume;
+CREATE TABLE firehose_skin_volume(
+	skid SMALLINT UNSIGNED NOT NULL,
+	story_vol MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
+	other_vol MEDIUMINT UNSIGNED DEFAULT '0' NOT NULL,
+	PRIMARY KEY (skid)
+);

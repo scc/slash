@@ -1254,6 +1254,7 @@ sub ajaxGetAdminFirehose {
 
 sub ajaxFireHoseGetUpdates {
 	my($slashdb, $constants, $user, $form, $options) = @_;
+	my $gSkin = getCurrentSkin();
 	my $start = Time::HiRes::time();
 
 	slashProfInit();
@@ -1309,6 +1310,12 @@ sub ajaxFireHoseGetUpdates {
 	my $mode = $opts->{mode};
 	my $curmode = $opts->{mode};
 	my $mixed_abbrev_pop = $firehose->getMinPopularityForColorLevel(1);
+	my $vol = $firehose->getSkinVolume($gSkin->{skid});
+	$vol->{story_vol} ||= 0;
+	if ($vol->{story_vol} < 25) {
+		$mixed_abbrev_pop = $firehose->getMinPopularityForColorLevel(3);
+	}
+
 
 	foreach (@$items) {
 		if ($opts->{mixedmode}) {
@@ -2376,8 +2383,43 @@ sub getAndSetOptions {
 			$self->setUser($user->{uid}, { firehose_max_more_num => $options->{more_num}});
 		}
 	}
-
+	if ($user->{state}{firehose_init_list} && $options->{sel_tabtype}) {
+		my $set_opts = $self->getInitTabtypeOptions($options->{sel_tabtype});
+		foreach (keys %$set_opts) {
+			$options->{$_} = $set_opts->{$_};
+		}
+	}
 	return $options;
+}
+
+sub getInitTabtypeOptions {
+	my($self, $name) = @_;
+	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+	my $vol = $self->getSkinVolume($gSkin->{skid});
+	my $day_specified = $form->{startdate} || $form->{issue};
+	my $set_option;
+
+	$vol ||= { story_vol => 0, other_vol => 0};
+
+	if ($name eq "tabsection" && !$day_specified) {
+		if ($vol->{story_vol} > 25) {
+			$set_option->{duration} = 7;
+		} else {
+			$set_option->{duration} = -1;
+		}
+		$set_option->{startdate} = "";
+		$set_option->{mixedmode} = "1";
+	} elsif (($name eq "tabpopular" || $name eq "tabrecent") && !$day_specified) {
+		if ($vol->{story_vol} > 25) {
+			$set_option->{duration} = 7;
+		} else {
+			$set_option->{duration} = -1;
+		}
+		$set_option->{startdate} = "";
+		$set_option->{mixedmode} = "1";
+	}
+	return $set_option;
 }
 
 sub getFireHoseTagsTop {
@@ -2483,6 +2525,8 @@ sub listView {
 	my $gSkin = getCurrentSkin();
 	my $form = getCurrentForm();
 
+	$user->{state}{firehose_init_list} = 1;
+
 	my $firehose_reader = getObject('Slash::FireHose', {db_type => 'reader'});
 	my $featured;
 
@@ -2538,6 +2582,11 @@ sub listView {
 	my $mode = $options->{mode};
 	my $curmode = $options->{mode};
 	my $mixed_abbrev_pop = $self->getMinPopularityForColorLevel(1);
+	my $vol = $self->getSkinVolume($gSkin->{skid});
+	$vol->{story_vol} ||= 0;
+	if ($vol->{story_vol} < 25) {
+		$mixed_abbrev_pop = $self->getMinPopularityForColorLevel(3);
+	}
 	my $constants = getCurrentStatic();
 	
 	foreach (@$items) {
@@ -2909,6 +2958,42 @@ sub createSettingLog {
 	$data->{value} ||= "";
 	$data->{uid} ||= getCurrentUser('uid');
 	$self->sqlInsert("firehose_setting_log", $data);
+}
+
+sub getSkinVolume {
+	my($self, $skid) = @_;
+	my $skid_q = $self->sqlQuote($skid);
+	return $self->sqlSelectHashref("*", "firehose_skin_volume", "skid=$skid_q");
+}
+
+sub genFireHoseWeeklyVolume {
+	my($self, $options) = @_;
+	$options ||= {};
+	my $colors = $self->getFireHoseColors();
+	my @where;
+
+	if ($options->{type}) {
+		push @where, "type=" . $self->sqlQuote($options->{type});
+	}
+	if ($options->{not_type}) {
+		push @where, "type!=" . $self->sqlQuote($options->{not_type});
+	}
+	if ($options->{color}) {
+		my $pop;
+		$pop = $self->getMinPopularityForColorLevel($colors->{$options->{color}});
+		push @where, "popularity >= " . $self->sqlQuote($pop);
+	}
+	if ($options->{primaryskid}) {
+		push @where, "primaryskid=" . $self->sqlQuote($options->{primaryskid});
+	}
+	push @where, "createtime >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+	my $where = join ' AND ', @where;
+	return $self->sqlCount("firehose", $where);
+}
+
+sub setSkinVolume {
+	my($self, $data) = @_;
+	$self->sqlReplace("firehose_skin_volume", $data);
 }
 1;
 
