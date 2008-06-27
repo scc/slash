@@ -2979,10 +2979,10 @@ sub _removeEmpty {
 	my($html) = @_;
 	my $p    = getCurrentStatic('xhtml') ? '<p />' : '<p>';
 
-	# remove consecutive <p> tags
-	1 while $$html =~ s|<p>\s*</?p>|$p|g;
-	# remove <p> tags before beginning, or end, of blocks, or end of string
-	1 while $$html =~ s{\s* <p> \s*  ( $ | </?$is_block_re> )}{$1}gx;
+	# remove consecutive <p> or <p>, <br> tags
+	1 while $$html =~ s{<p> \s* <(?: /?p | br(?:\ /)? )>} {$p}gx;
+	# remove <p> and <br> tags before beginning, or end, of blocks, or end of string
+	1 while $$html =~ s{\s* <(?: p | br(?:\ /)?) > \s*  ( $ | </?$is_block_re> )} {$1}gx;
 
 	# remove still-empty tags
 	while ($$html =~ m|<(\w+)>\s*</\1>|) {
