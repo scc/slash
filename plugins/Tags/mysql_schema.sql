@@ -79,6 +79,7 @@ CREATE TABLE tagboxes (
 	last_tagid_logged	int UNSIGNED NOT NULL,
 	last_tdid_logged	int UNSIGNED NOT NULL,
 	last_tuid_logged	int UNSIGNED NOT NULL,
+	nosy_gtids		varchar(255) DEFAULT '' NOT NULL,
 	PRIMARY KEY tbid (tbid),
 	UNIQUE name (name)
 ) TYPE=InnoDB;

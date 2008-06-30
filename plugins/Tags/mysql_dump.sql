@@ -27,6 +27,7 @@ INSERT INTO vars (name, value, description) VALUES ('tags_stories_examples_pre',
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_examples', '', 'Example tags for stories');
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_lastscanned', '0', 'The last tagid scanned to update stories');
 INSERT INTO vars (name, value, description) VALUES ('tags_stories_top_minscore', '2', 'Minimum score a tag must have to make it into the top tags for a story');
+INSERT INTO vars (name, value, description) VALUES ('tags_feederlog_largerows', '50000', 'Number of rows at which the feederlog is considered "large", slowing additions');
 INSERT INTO vars (name, value, description) VALUES ('tags_udc_daysback', '182', 'Days back to crunch numbers for tags_udc related tables, should be a multiple of 7');
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_clid', '1', 'For tags of unknown type, which clout id do we pretend they are?');
 INSERT INTO vars (name, value, description) VALUES ('tags_unknowntype_default_mult', '0.3', 'For tags of unknown type, what multiplier do we give to the tagging user clout or type tags_unknowntype_default_clid?');
@@ -39,6 +40,7 @@ INSERT INTO vars (name, value, description) VALUES ('tags_urls_neg_tags', 'minus
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_read', '1', 'Fraction (0.0-1.0) of user UIDs which are allowed to read tags, if tags_*_allow* is set that way');
 INSERT INTO vars (name, value, description) VALUES ('tags_userfrac_write', '0.95', 'Fraction (0.0-1.0) of user UIDs which are allowed to tag, if tags_*_allow* is set that way');
 INSERT INTO vars (name, value, description) VALUES ('tags_usershow_cutoff', '200', 'More tags than this, and instead of showing the full taglist /~user/tags will show the list of tagnames');
+INSERT INTO vars (name, value, description) VALUES ('tags_tagbox_lastglobjid', '0', 'Last globjid that the tagbox scanned for possible insertion into feeder log');
 INSERT INTO vars (name, value, description) VALUES ('tags_tagname_regex', '^\!?[a-z][a-z0-9/]{0,63}$', 'Regex that tag names must conform to');
 INSERT INTO vars (name, value, description) VALUES ('tags_updateclouts_debuguids', '', 'UIDs to print debug info on during clout recalculation');
 INSERT INTO vars (name, value, description) VALUES ('tags_upvote_tagname', 'nod', 'Tag for upvote');

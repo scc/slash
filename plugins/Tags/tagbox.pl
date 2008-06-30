@@ -40,26 +40,38 @@ $task{$me}{code} = sub {
 	}
 	tagboxLog('tagbox.pl starting');
 
-	my $exclude_behind = 0;
+	my $exclude_behind = 1;
 	my $max_activity_for_run = 10;
+	my $feederlog_largerows = $constants->{tags_feederlog_largerows} || 50_000;
 	while (!$task_exit_flag) {
 
-		# Insert into tagboxlog_feeder
-		my $activity_feeder = update_feederlog($exclude_behind);
-		sleep 2;
-		last if $task_exit_flag;
+		$exclude_behind = ! $exclude_behind;
 
-		# If there was a great deal of feeder activity, there is
-		# likely to be more yet to do, and it may obsolete the
-		# results we'd get by calling run() right now.  
-		if ($activity_feeder > 10) {
-			tagboxLog("tagbox.pl re-updating feederlog, activity $activity_feeder");
-			next;
+		# If tagboxlog_feeder has grown too large, temporarily exclude
+		# adding to it until it has shrunk to a more efficient size.
+
+		my $feederlog_rows = $tagboxdb->sqlCount('tagboxlog_feeder');
+		if ($feederlog_rows < $feederlog_largerows) {
+
+			# Insert into tagboxlog_feeder
+			my $activity_feeder = update_feederlog($exclude_behind);
+			sleep 2;
+			last if $task_exit_flag;
+
+			# If there was a great deal of feeder activity, there is
+			# likely to be more yet to do, and it may obsolete the
+			# results we'd get by calling run() right now.
+			if ($activity_feeder > 10) {
+				tagboxLog("tagbox.pl re-updating feederlog, activity $activity_feeder");
+				next;
+			}
+
 		}
 
 		# Run tagboxes (based on tagboxlog_feeder)
-		my $activity_run = run_tagboxes_until(time() + 30);
-		sleep 5;
+		my $force_overnight = $feederlog_rows < $feederlog_largerows ? 0 : 1;
+		my $activity_run = run_tagboxes_until(time() + 30, $force_overnight);
+		sleep 2;
 		last if $task_exit_flag;
 
 		# If nothing's going on, ease up more (not that it probably
@@ -71,7 +83,6 @@ $task{$me}{code} = sub {
 		}
 		last if $task_exit_flag;
 
-		$exclude_behind = ! $exclude_behind;
 	}
 
 	my $msg = sprintf("exiting after %d seconds", time - $start_time);
@@ -87,6 +98,42 @@ sub update_feederlog {
 	# These are kind of arbitrary constants.
 	my $max_rows_per_tagbox = 1000;
 	my $max_rows_total = $max_rows_per_tagbox * 5;
+
+	# Pre-tagbox check:
+
+	# Get list of all new globjs since last update_feederlog, and
+	# insert NULL,NULL,NULL rows for each one wanted.
+	my $last_globjid_logged = $tagboxdb->getVar('tags_tagbox_lastglobjid', 'value', 1) || 0;
+	my $new_globjs_ar = $tagsdb->sqlSelectAllHashrefArray(
+		'globjid, gtid, target_id', 'globjs',
+		"globjid > $last_globjid_logged",
+		"ORDER BY globjid ASC LIMIT $max_rows_per_tagbox");
+	if ($new_globjs_ar && @$new_globjs_ar) {
+		my $tagbox_wants = { };
+		for my $globj_hr (@$new_globjs_ar) {
+			my @tbids = $tagboxdb->getTagboxesNosyForGlobj($globj_hr);
+			for my $tbid (@tbids) {
+				$tagbox_wants{$tbid} ||= [ ];
+				push @{ $tagbox_wants{$tbid} }, $globj_hr->{globjid};
+			}
+		}
+		for my $tbid (keys %$tagbox_wants) {
+			my $feeder_ar = [ ];
+			for my $globjid (@{ $tagbox_wants{$tbid} }) {
+				push @$feeder_ar, {
+					affected_id =>	$globjid,
+					importance =>	1,
+					tagid =>	undef,
+					tdid =>		undef,
+					tuid =>		undef,
+				};
+			}
+			insert_feederlog($tbid, $feeder_ar);
+		}
+		$tagboxdb->setVar('tags_tagbox_lastglobjid', $new_globjs_ar->[-1]{globjid});
+	}
+
+	# Now check tagboxes:
 
 	# If this is called with $exclude_behind set, ignore tagboxes
 	# which are too far behind other tagboxes.  For this purpose,
@@ -288,28 +335,32 @@ sub insert_feederlog {
 }
 
 sub run_tagboxes_until {
-	my($run_until) = @_;
+	my($run_until, $force_overnight) = @_;
 	my $constants = getCurrentStatic();
 	my $activity = 0;
 	$tagboxes = $tagboxdb->getTagboxes();
 	my $overnight_sum = defined($constants->{tags_overnight_minweightsum})
 		? $constants->{tags_overnight_minweightsum}
 		: 1;
-	my($overnight_starthour, $overnight_stophour) = (undef, undef);
-	if ($overnight_sum != 1) {
-		$overnight_starthour = $constants->{tags_overnight_starthour} ||  7;
-		$overnight_stophour  = $constants->{tags_overnight_stophour}  || 10;
-	}
+	my $overnight_starthour = $constants->{tags_overnight_starthour} ||  7;
+	my $overnight_stophour  = $constants->{tags_overnight_stophour}  || 10;
 
 	while (time() < $run_until && !$task_exit_flag) {
 		my $cur_count = 10;
 		my $cur_minweightsum = 1;
-		my $gmhour = (gmtime)[2];
-		if ($overnight_sum != 1
-			&& $gmhour >= $overnight_starthour
-			&& $gmhour <= $overnight_stophour) {
-			$cur_minweightsum = $overnight_sum;
+
+		# If it's "overnight" (as defined in vars), purge the feeder log
+		# further down.
+		my $is_overnight = $force_overnight;
+		if (!$is_overnight) {
+			my $gmhour = (gmtime)[2];
+			if ($gmhour >= $overnight_starthour && $gmhour <= $overnight_stophour) {
+				$is_overnight = 1;
+			}
+		}
+		if ($is_overnight) {
 			$cur_count = 50;
+			$cur_minweightsum = $overnight_sum;
 		}
 
 		my $affected_ar = $tagboxdb->getMostImportantTagboxAffectedIDs($cur_count, $cur_minweightsum);
@@ -328,7 +379,7 @@ print STDERR "r_t_u rows for tbid=17 id=$affected_hr->{affected_id}: " . Dumper(
 			last if time() >= $run_until || $task_exit_flag;
 		}
 
-		sleep 1;
+		Time::HiRes::sleep(0.2);
 	}
 	return $activity;
 }
