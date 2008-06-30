@@ -46,6 +46,13 @@ __template__
                         </div>
                         <br>
 
+                        <input type="checkbox" id="d2_reverse_switch" name="d2_reverse_switch"[% constants.markup_checked_attribute IF user.d2_reverse_switch %] onclick="d2_reverse_shift = $('#d2_reverse_switch').attr('checked') ? 1 : 0">&nbsp;<b>Collapse Comments After Reading</b>&nbsp;<a href="#" onclick="displayModalPrefHelp('modalprefhelp_discussion_shift_key');" class="help">?</a>
+                        <br>
+                        <div id="modalprefhelp_discussion_shift_key" class="modalprefhelp" style="display: none;">
+                                Collapse a comment when you navigate away from it when using the <a href="http://slashdot.org/faq/com-mod.shtml#cm128">Discussion 2 keybindings</a>.
+                        </div>
+                        <br>
+
                         <div>
                         Retrieve [% comment_q_name = (user.is_subscriber || user.is_admin) ? 'd2_comment_q_all' : 'd2_comment_q';
                            comment_q = Slash.db.getDescriptions(comment_q_name);

@@ -6477,6 +6477,71 @@ sub getComments {
 }
 
 #######################################################
+sub saveCommentReadLog {
+	my($self, $comments, $discussion_id, $uid) = @_;
+
+	$uid ||= getCurrentUser('uid');
+
+	my($mcd, $mcdkey);
+	if (@$comments) {
+		$mcd = $self->getMCD;
+		$mcdkey = "$self->{_mcd_keyprefix}:cmr:$uid:$discussion_id";
+	}
+
+	if ($mcd) {
+		$mcd->delete($mcdkey);
+	}
+
+	# cache inserts?
+	for my $cid (@$comments) {
+		$self->sqlInsert('users_comments_read_log', {
+			uid            => $uid,
+			discussion_id  => $discussion_id,
+			cid            => $cid
+		}, { ignore => 1 });
+	}
+
+	if ($mcd) {
+		my $comments_read = $self->getCommentReadLog($discussion_id, $uid, 1);
+		$mcd->set($mcdkey, $comments_read) if $comments_read;
+	}
+
+	1;
+}
+
+#######################################################
+sub getCommentReadLog {
+	my($self, $discussion_id, $uid, $no_mcd) = @_;
+
+	$uid ||= getCurrentUser('uid');
+
+	my($mcd, $mcdkey);
+	if (!$no_mcd) {
+		$mcd = $self->getMCD;
+		$mcdkey = "$self->{_mcd_keyprefix}:cmr:$uid:$discussion_id";
+	}
+
+	my $comments_read;
+	if ($mcd) {
+		$comments_read = $mcd->get($mcdkey);
+		return $comments_read if $comments_read;
+	}
+
+	$comments_read = $self->sqlSelectAllKeyValue(
+		'cid, 1',
+		'users_comments_read_log',
+		'uid=' . $self->sqlQuote($uid) .
+		' AND discussion_id=' . $self->sqlQuote($discussion_id)
+	) or return;
+
+	if ($mcd) {
+		$mcd->add($mcdkey, $comments_read);
+	}
+
+	return $comments_read;
+}
+
+#######################################################
 sub getSubmissionsByNetID {
 	my($self, $id, $field, $limit, $options) = @_;
 	my $mp_tid = getCurrentStatic('mainpage_nexus_tid');
