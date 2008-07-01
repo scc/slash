@@ -15,12 +15,12 @@ __seclev__
 __template__
 <script type="text/javascript">
 $(function(){
-	var w = $('#tag-widget');
-	$.extend(w[0], twidget_fns);
-	w.hide()
-	 .append(tag_bar(null, 'tags_get_top_firehose', '! x'))
-	 .append(tag_bar(null, 'tags_get_user_firehose', '_ # ! )'))
-	 .append(tag_bar(null, 'tags_get_user_firehose'));
+	var $widget = $('#tag-widget');
+	$.extend($widget[0], twidget_fns);
+	$widget.hide()
+		.append(tag_bar(null, 'tags_get_top_firehose', '! x'))
+		.append(tag_bar(null, 'tags_get_user_firehose', '_ # ! )'))
+		.append(tag_bar(null, 'tags_get_user_firehose'));
 })
 </script>
 <div id="tag-widget">
