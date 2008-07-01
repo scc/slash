@@ -120,8 +120,11 @@ INSTALLATION
         might:
 
                 GRANT SELECT, INSERT, UPDATE, DELETE, LOCK TABLES, CREATE, DROP,
-                INDEX, ALTER, PROCESS ON slash.* TO 'slash'@'localhost'
+                INDEX, ALTER ON slash.* TO 'slash'@'localhost'
                 IDENTIFIED BY (quoted password);
+
+                GRANT PROCESS ON *.* TO 'slash'@'localhost' IDENTIFIED BY
+                (quoted password);
 
         In this case, 'slash' would also be the name of your MySQL user as
         described in "Types of Users" below. You'll have to give your MySQL
