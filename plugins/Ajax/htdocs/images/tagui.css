@@ -52,7 +52,7 @@
 	background-color: lightgray;
 }
 
-#tag-widget {
+.tag-widget {
   display: block;
   position: absolute;
   z-index: 10;
