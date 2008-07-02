@@ -1363,6 +1363,7 @@ sub showInfo {
 			$tagshist = $tags_reader->getAllTagsFromUser($requested_user->{uid}, { orderby => 'created_at', orderdir => 'DESC', limit => 30, include_private => 1 });
 		}
 
+                # Latest comments
                 my $comment_blocks = $reader->sqlSelectAllHashref(
                         'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 1");
 
@@ -1372,48 +1373,57 @@ sub showInfo {
                 foreach my $comment_block (@block_ids) {
                         ($latest_comments{$comment_block}->{sid}, $latest_comments{$comment_block}->{subject})
                                 = $reader->sqlSelect("sid, subject", "comments", "cid = $comment_block");
-                        #$latest_comments{$comment_block}->{text} = $reader->sqlSelect("comment", "comment_text", "cid = $comment_block");
                 }
 
+                # Latest journals
                 my $journal_blocks = $reader->sqlSelectAllHashref(
                         'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 2");
 
                 @block_ids = split(/,/, $journal_blocks->{$uid}->{block});
+
                 my %latest_journals;
                 foreach my $journal_block (@block_ids) {
                         ($latest_journals{$journal_block}->{id}, $latest_journals{$journal_block}->{desc})
                                 = $reader->sqlSelect("id, description", "journals", "discussion = $journal_block");
                 }
 
+                # Latest submissions
+                my $submissions_blocks = $reader->sqlSelectAllHashref(
+                        'uid', 'bid, uid, block', 'user_event_blocks', "uid = $uid and code = 3");
+
+                @block_ids = split(/,/, $submissions_blocks->{$uid}->{block});
+
+                my %latest_submissions;
+                foreach my $submission_block (@block_ids) {
+                        ($latest_submissions{$submission_block}->{id}, $latest_submissions{$submission_block}->{title})
+                                = $reader->sqlSelect("id, title", "firehose_text", "id = $submission_block");
+                }
+
                 # Latest event
                 my @latest_event_index = $reader->sqlSelect("event, code", "user_events", "uid = $uid", "order by date desc limit 1");
 
-                my ($root_table, $text_table, $event_subject, $event_text, $event_rkey, $event_tkey);
-
+                my $latest_event;
                 if ($latest_event_index[1] == 1) {
-                        $root_table    = 'comments';
-                        $text_table    = 'comment_text';
-                        $event_subject = 'subject';
-                        $event_text    = 'comment';
-                        $event_rkey    = 'cid';
-                        $event_tkey    = 'cid';
+                        ($latest_event->{key}, $latest_event->{subject}) =
+                                $reader->sqlSelect("cid, subject", "comments", "uid = $uid and cid = " . $latest_event_index[0]);
+
+                        $latest_event->{text} =
+                                $reader->sqlSelect("comment, comment_text", "id = " . $latest_event->{key});
+                } elsif ($latest_event_index[1] == 2) {
+                        ($latest_event->{key}, $latest_event->{subject}) =
+                                $reader->sqlSelect("id, description", "journals", "uid = $uid and discussion = " . $latest_event_index[0]);
+
+                        $latest_event->{text} =
+                                $reader->sqlSelect("article", "journals_text", "id = " . $latest_event->{key});
                 } else {
-                        $root_table    = 'journals';
-                        $text_table    = 'journals_text';
-                        $event_subject = 'description';
-                        $event_text    = 'article';
-                        $event_rkey    = 'discussion';
-                        $event_tkey    = 'id';
+                        ($latest_event->{key}, $latest_event->{subject}) =
+                                $reader->sqlSelect("id, title", "firehose_text", "id = " . $latest_event_index[0]);
+
+                        $latest_event->{text} =
+                                $reader->sqlSelect("introtext", "firehose_text", "id = " . $latest_event->{key});
                 }
 
-                my $latest_event;
-                ($latest_event->{key}, $latest_event->{subject}) =
-                        $reader->sqlSelect("$event_tkey, $event_subject", "$root_table", "uid = $uid and $event_rkey = " . $latest_event_index[0]);
-
-                $latest_event->{text} =
-                        $reader->sqlSelect($event_text, $text_table, "$event_tkey = " . $latest_event->{key});
-
-                $latest_event->{code} = $latest_event_index[1];
+                $latest_event->{code} = $latest_event_index[1];                
 
 		slashDisplay('userInfo2', {
 			title			=> $title,
@@ -1439,6 +1449,7 @@ sub showInfo {
 			tagshist		=> $tagshist,
                         latest_comments         => \%latest_comments,
                         latest_journals         => \%latest_journals,
+                        latest_submissions      => \%latest_submissions,
                         latest_event            => $latest_event,
 		}, { Page => 'users', Skin => 'default'});
 	}
