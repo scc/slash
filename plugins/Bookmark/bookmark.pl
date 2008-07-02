@@ -54,9 +54,7 @@ sub bookmark {
 		my $tags = getObject('Slash::Tags');
 		my $tag_ar = $tags->getTagsByNameAndIdArrayref("urls", $url_id, { uid => $user->{uid} });
 		$tags_str = join ' ', sort map { $_->{tagname}} @$tag_ar;
-		
 	}
-	
 	my $reskey = getObject('Slash::ResKey');
 	my $rkey = $reskey->key('bookmark');
 	unless ($rkey->create) {
@@ -67,8 +65,8 @@ sub bookmark {
 			$options->{errors}{reskey} = $rkey->errstr;
 		}
 	}
-	print slashDisplay("bookmark", { 
-		fudgedurl	=> $fudgedurl, 
+	print slashDisplay("bookmark", {
+		fudgedurl	=> $fudgedurl,
 		errors		=> $options->{errors},
 		tags_string	=> $tags_str
 	}, { Return => 1 });
@@ -125,11 +123,14 @@ sub saveBookmark {
 		if ($constants->{plugin}{FireHose}) {
 			my $firehose = getObject("Slash::FireHose");
 			my $the_bookmark = $bookmark->getBookmark($bookmark_id);
-			$firehose->createUpdateItemFromBookmark($bookmark_id, {
+			my $id = $firehose->createUpdateItemFromBookmark($bookmark_id, {
 				type		=> "bookmark",
 			});
+			if ($user->{is_admin} && $id) {
+				$firehose->setSectionTopicsFromTagstring($id, $form->{tags});
+			}
+
 		}
-					
 	}
 
 	my $tags = getObject('Slash::Tags');
