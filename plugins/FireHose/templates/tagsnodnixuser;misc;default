@@ -2,7 +2,7 @@ __section__
 default
 __description__
 id = id
-newtagspreloadtext = text to preload the newtags-# field with
+content = text to preload the newtags-# field with
 
 WARNING: keep the related string in nodnix.js in sync with the <li> expansion, below
 __title__
@@ -14,7 +14,7 @@ en_US
 __name__
 tagsnodnixuser
 __template__
-[% FOREACH tag = newtagspreloadtext.split(' ') %]
+[% FOREACH tag = content.split(' ') %]
 <li>[% tag %]<span class="tag-actions"><a class="not-tag" onmousedown="nodnix_not_tag('[% tag %]'); return false" href="#">!</a> <a class="del-tag" onmousedown="nodnix_del_tag('[% tag %]'); return false" href="#">x</a></span></li>
 [% END %]
 __seclev__
