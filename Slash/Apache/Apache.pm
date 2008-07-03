@@ -314,7 +314,7 @@ sub ConnectionIsSSL {
 		return 1 if $se && $se eq 'on'; # https is on
 	}
 
-	my $x = $r->header_in('X-SSL-On');
+	$x = $r->header_in('X-SSL-On');
 	return 1 if $x && $x eq 'yes'; 
 
 	# We're out of ideas.  If the above didn't work we must not be
