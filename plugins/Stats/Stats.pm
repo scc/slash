@@ -1287,11 +1287,20 @@ sub countDailyByPages {
 
 ########################################################
 sub countFromRSSStatsBySections {
-	my ($self) = @_;
+	my($self, $options) = @_;
+	my $op_clause = '';
+	if ($options->{no_op}) {
+		my $no_op = $options->{no_op};
+		$no_op = [ $no_op ] if !ref($no_op);
+		if (@$no_op) {
+			my $op_not_in = join(",", map { $self->sqlQuote($_) } @$no_op);
+			$op_clause = " AND op NOT IN ($op_not_in)";
+		}
+	}
 	$self->sqlSelectAllHashref("skid",
 		"skid, count(*) AS cnt, COUNT(DISTINCT uid) AS uids, COUNT(DISTINCT host_addr) AS ipids",
 		"accesslog_temp",
-		"referer='rss'",
+		"referer='rss'$op_clause",
 		"GROUP BY skid");
 }
 

@@ -447,7 +447,7 @@ EOT
 	# 1 hour
 	slashdLog("Sectional Stats Begin");
 	my $skins =  $slashdb->getDescriptions('skins');
-	my $stats_from_rss = $logdb->countFromRSSStatsBySections();
+	my $stats_from_rss = $logdb->countFromRSSStatsBySections({ no_op => $constants->{op_exclude_from_countdaily} });
 	#XXXSECTIONTOPICS - don't think we need this anymore but just making sure
 	#$sections->{index} = 'index';
 	
