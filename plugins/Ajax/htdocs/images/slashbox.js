@@ -1,4 +1,4 @@
-YAHOO.namespace("slashdot");
+; YAHOO.namespace("slashdot");
 
 YAHOO.slashdot.SlashBox = function( id, sGroup, config ) {
 	if ( id ) {

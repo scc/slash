@@ -1,4 +1,4 @@
-// $Id$
+; // $Id$
 
 function um_ajax(the_behaviors, the_events) {
 	ajax_update({

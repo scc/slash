@@ -1,4 +1,4 @@
-// $Id$
+; // $Id$
 
 function configSectionPopup() { 
 	var title = "<a href=\"#\" onclick=\"window.location.reload()\" style=\"color:#fff;\">Sectional&nbsp;Display&nbsp;Prefs</a>&nbsp;";
