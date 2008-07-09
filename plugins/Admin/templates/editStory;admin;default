@@ -276,7 +276,10 @@ __template__
 </td>
 <td>
 	[% IF mfile.filetype == "image" %]
-		<a href="#media" onclick="appendToMedia('\n<img src=\'[% constants.imagedir %][% bigfile %]\'>')"><img src="[% constants.imagedir %][% mfile.name %]" width="[% width %]" height="[% height %]"></a>
+		[% admindb = Slash.getObject("Slash::Admin");
+                   thumblink = admindb.getStoryThumbLargeLink(mfile.sfid, storyref.stoid);
+		%]
+		<a href="#media" onclick="appendToMedia('\n[% thumblink %]')"><img src="[% constants.imagedir %][% mfile.name %]" width="[% width %]" height="[% height %]"></a>
 	[% ELSE %]
 		<a href="#media" onclick="appendToMedia('\n<a href=\'[% constants.imagedir %][% mfile.name %]\'>[% filename %]</a>')">Add [% filename %]</a>
 	[% END %]

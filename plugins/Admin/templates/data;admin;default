@@ -153,6 +153,12 @@ CASE "comment_db_down" %]
 [% CASE 'storyadminbox_js' %]
 	<script type="text/javascript">admin_storyadminbox_fetch(30);</script>
 
+[% CASE 'thumb_link_large' %]
+[% IF full_img -%]
+<a href=\'[% constants.imagedir %][% full_img.name %]\'><img src=\'[% constants.imagedir %][% thumb_img.name %]\'></a>
+[%- ELSE -%]
+<img src=\'[% constants.imagedir %][% thumb_img.name %]\'>
+[%- END -%]
 [% END %]
 __seclev__
 10000
