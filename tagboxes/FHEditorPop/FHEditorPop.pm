@@ -25,6 +25,7 @@ use strict;
 
 use Slash;
 use Slash::DB;
+use Slash::Utility::Comments;
 use Slash::Utility::Environment;
 use Slash::Tagbox;
 
@@ -189,7 +190,12 @@ sub run {
 			$color_level = $this_color_level if $this_color_level < $color_level;
 		}
 	} elsif ($type eq "comments") {
-		$color_level = 4;
+		my $comment = $self->getComment($target_id);
+		my $score = constrain_score($comment->{points} + $comment->{tweak});
+		   if ($score >= 3) {	$color_level = 4 }
+		elsif ($score >= 2) {	$color_level = 5 }
+		elsif ($score >= 1) {	$color_level = 6 }
+		else {			$color_level = 7 }
 	}
 	$popularity = $firehose->getEntryPopularityForColorLevel($color_level) + $extra_pop;
 
