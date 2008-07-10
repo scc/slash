@@ -297,6 +297,8 @@ sub do {
 	my $output = `$cmd \Q$file\E`;
 	if ($output) {
 		$self->output($output, { title => "$cmd $basename" });
+		$self->front->prop('source_language')->set(to => $opt->{type})
+			if $opt->{type};
 		$self->front->prop('source_language')->set(to => '(none)')
 			if $opt->{notype};
 	}
