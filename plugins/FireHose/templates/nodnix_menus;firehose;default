@@ -42,5 +42,12 @@ __template__
   <div id="nix-completions" class="menu autocomplete"></div>
 </div>
 [% END %]
+<script type="text/javascript">
+var tag_context = {
+	nod: '[% FOR postag IN postags %][% postag %] [% END %]',
+	nix: '[% FOR negtag IN negtags %][% negtag %] [% END %]'
+}
+</script>
+
 __version__
 $Id$
