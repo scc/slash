@@ -66,6 +66,10 @@ div.tag-widget .tbar > ul > li:hover ul.tmenu {
 	display: inline;
 }
 
+div.tag-widget.sorting .tbar > ul > li:hover ul.tmenu {
+	display: none;
+}
+
 /* for debugging */
 .tbar[get=top] { border: 1px solid red }
 .tbar[get=system] { border: 1px solid blue }
