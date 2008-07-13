@@ -209,6 +209,9 @@ var twidget_fns = {
 			extraParams: {
 				op:		'tags_list_tagnames',
 			},
+			formatItem: function(row /*, i, N, query*/){
+				return row.split(/\s+/)[0]
+			},
 		});
 		return this
 	},
