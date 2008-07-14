@@ -23,15 +23,25 @@ function form_submit_tags( form, widget ){
 
 
 function click_tag( event ) {
-	var $tag_el = $('.tag', this);
+	var $tag_el = $(this).find('.tag').andSelf().eq(0);
 	var tag = $tag_el.text();
 	var op	= $(event.target).text();
 
+	var its_the_capsule = op==tag && (op=='+' || op=='-');
+	if ( its_the_capsule ) {
+		tag = { '+': 'nod', '-': 'nix' }[op];
+		op = '';
+	}
+
 	// op differs from tag when the click was in a menu
 	//	so, if in a menu, or right on the tag itself, do something
-	if ( event.target!==this && (op!==tag || event.target===$tag_el[0]) ) {
+	if ( (event.target!==this || its_the_capsule) && (op!==tag || event.target===$tag_el[0]) ) {
 		var command = normalize_tag_menu_command(tag, op);
-		var $widget = $(this).parents('.tag-widget').eq(0);
+		var $widget = (
+			its_the_capsule
+				? $(this).parents('[id^=firehose]').find('.tag-widget')
+				: $(this).parents('.tag-widget')
+		).eq(0);
 
 		if ( event.shiftKey ) {
 			// if the shift key is down, append the tag to the edit field
@@ -93,12 +103,15 @@ var tbar_fns = {
 		var update_map = this.map_tags(tags = split_if_string(tags));
 
 		// update in-place the ones we can; build a list of the ones we can't ($.map returns a js array)
+		var new_tags_seen = {};
 		var new_tags = $.map(tags, function(t){
 			var bt = bare_tag(t);
 			if ( bt in update_map )
 				$(update_map[bt]).html(t);
-			else
-				return t;
+			else if ( !(bt in new_tags_seen) ) {
+				new_tags_seen[bt] = true;
+				return t
+			}
 		});
 
 		// a $ list of the actual .tag elements we updated in-place
@@ -159,9 +172,12 @@ var tbar_fns = {
 // XXX temporarily handle some special cases myself.
 // Jamie will want to know about this.
 function normalize_nodnix( expr ){
-	return expr.replace(normalize_nodnix.pattern, _normalize_nodnix);
+	return expr.replace(_normalize_nodnix.pattern, _normalize_nodnix)
 }
-normalize_nodnix.pattern = /-!(nod|nix)|-(nod|nix)|!(nod|nix)|nod|nix/g;
+
+function normalize_no_nodnix( expr ){
+	return expr.replace(_normalize_nodnix.pattern, '')
+}
 
 function _normalize_nodnix( cmd ){
 	if ( cmd == 'nod' || cmd == '!nix' )
@@ -175,6 +191,7 @@ function _normalize_nodnix( cmd ){
 	else
 		return cmd;
 }
+_normalize_nodnix.pattern = /-!(nod|nix)|-(nod|nix)|!(nod|nix)|nod|nix/g;
 
 function normalize_tag_menu_command( tag, op ){
 	if ( op == "x" )
@@ -209,12 +226,16 @@ var twidget_fns = {
 			extraParams: {
 				op:		'tags_list_tagnames',
 			},
+			formatItem: function(row /*, i, N, query*/){
+				return row.split(/\s+/)[0]
+			},
 		});
 		return this
 	},
 
 
 	set_tags: function( tags ){
+		console.log('widget.set_tags("'+tags+'")');
 		var widget = this;
 		$.each(tags.split('\n'), function(){
 			var match = /^<(\w+)>?(.*)$/.exec(this);
@@ -234,10 +255,13 @@ var twidget_fns = {
 		var $busy = $('.widget-busy', widget).show();
 
 		if ( tag_cmds ) {
+			var command_feedback = normalize_no_nodnix(tag_cmds);
+			tag_cmds = normalize_nodnix(tag_cmds);
+
 			// 'harden' the new tags into the user tag-bar, but styled 'local-only'
 			// tags in the response from the server will wipe-out local-only
 			$('.tbar[get*=user]', this).each(function(){
-				this.update_tags(tag_cmds, 'prepend', 'local-only')
+				this.update_tags(command_feedback, 'prepend', 'local-only')
 			});
 		}
 
@@ -250,7 +274,7 @@ var twidget_fns = {
 			// console.log(response);
 			widget.set_tags(response);
 			$busy.removeAttr('style')
-		});
+		}, 'text');
 		return this
 	},
 
@@ -261,7 +285,7 @@ var twidget_fns = {
 
 
 	submit_tags: function( tag_cmds ){
-		return this._submit_fetch(normalize_nodnix(tag_cmds))
+		return this._submit_fetch(tag_cmds)
 	},
 
 
@@ -352,14 +376,10 @@ function create_firehose_vote_handler( firehose_id ) {
 		 $('<div class="connector" get="vote" style="display:none"></div>')[0],
 		 {
 			set_tags: function( tags ){
-				if ( tags.length > 3 )
-					tags = tags.split(' ')[0];
-
 				firehose_fix_up_down(firehose_id, {
-					'':	'vote',
 					'nod':	'votedup',
 					'nix':	'voteddown'
-				}[tags])
+				}[tags] || 'vote')
 			},
 		 }
 	);
@@ -530,21 +550,24 @@ function style_tags_globally( widget ){
 
 	// Step 3: find every tag span and apply the styles we've calculated
         $('.tbar span.tag', widget).each(function(){
-		var new_className = 'tag';
-		var tag = $(this).text();
+		var $this = $(this);
+		var tag = $this.text();
+
+		var class_list = '';
 		if ( tag in style_map )
 			// we saw this tag, and know all the styles
-			new_className += ' ' + style_map[tag];
+			class_list = style_map[tag];
 		else {
 			// didn't see this tag on the global phase, so it has
 			// no global styles, but it _might_ still have local
 			// which we'll cache in case we see this tag again
 			var local_styles = style_map[tag] = local_style_for(tag);
 			if ( local_styles ) {
-				new_className += ' ' + local_styles;
+				class_list = local_styles;
 			}
 		}
 
-                this.className = new_className;
+		$this.parent().setClass(class_list);
+		this.className = class_list ? 'tag '+class_list : 'tag';
         })
 }

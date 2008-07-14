@@ -911,7 +911,10 @@ function firehose_handle_update() {
 	if ( fh_is_admin && $('.tag-widget').length ) {
 		$('#firehose h3:has(a[class!=skin]):not([dcset])')
 			.dblclickToggle(open_firehose_tag_widget, close_firehose_tag_widget)
-			.attr('dcset', true);
+			.attr('dcset', true)
+			.parents('[id^=firehose-]')
+			.find('.up, .down')
+			.click(click_tag)
 	}
 }
 

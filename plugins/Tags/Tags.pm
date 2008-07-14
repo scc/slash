@@ -1323,11 +1323,11 @@ sub ajaxSetGetCombinedTags {
 
 	my $type = $form->{type} || 'firehose';
 
-	my $base_item;
+	my ($base_item, $base_writer);
 	my $globjid;
 	if ( $type eq 'firehose' ) {
-		my $firehose_reader = getObject('Slash::FireHose', {db_type => 'reader'});
-		$base_item = $firehose_reader->getFireHose($form->{id});
+		$base_writer = getObject('Slash::FireHose');
+		$base_item = $base_writer->getFireHose($form->{id});
 		$globjid = $base_item->{globjid} if $base_item;
 	}
 	# XXX TO DO: handle other types here, setting $base_item appropriately
@@ -1348,17 +1348,45 @@ sub ajaxSetGetCombinedTags {
 			deactivate_by_operator => 1,
 			tagname_required => 1
 		});
+		if ( $user->{is_admin} && $type eq 'firehose' ) {
+			my $added_tags =
+				join ' ',
+				map { $1 unless /^-(.+)/ }
+				split /\s+/,
+				lc $form->{tags};
+
+			$base_writer->setSectionTopicsFromTagstring($form->{id}, $added_tags);
+		};
 	} else {
 		my $current_tags_array = $tags_reader->getTagsByNameAndIdArrayref($table, $item_id, { uid => $uid });
 		$user_tags = join ' ', sort map { $_->{tagname} } @$current_tags_array;
 	}
 
+	my $datatype_tag = $base_item ? $base_item->{type} : '';
 	my $top_tags = $base_item ? $base_item->{toptags} : '';
 
-	# XXX how to get the system tags?
-	my $system_tags = '';
+	my $section_tag = '';
+	my $s = $base_item->{primaryskid};
+	if ( $s ) {
+		if ( $s != $constants->{mainpage_skid} ) {
+			my $skin = $base_writer->getSkin($s);
+			$section_tag = $skin->{name};
+		} else {
+			$section_tag = 'slashdot';
+		}
+	}
+
+	my $topic_tags = '';
+	my $t = $base_item->{tid};
+	if ( $t ) {
+		my $topic = $base_writer->getTopic($t);
+		$topic_tags = $topic->{keyword};
+	}
 
 	my $vote_tags = $tags_reader->getUserNodNixForGlobj($globjid, $uid);
+
+	# XXX how to get the system tags?
+	my $system_tags = $datatype_tag . ' ' . $section_tag . ' ' . $topic_tags;
 
 	return slashDisplay('combined_tags', {
 		vote_tags =>	$vote_tags,
