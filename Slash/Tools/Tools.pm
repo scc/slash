@@ -22,6 +22,7 @@ our @EXPORT = qw(
 	basefile basename dirname
 	syntax_check %CONFIG
 	@BIN_EXT $BIN_EXT $BIN_RE
+	myprint myexit mysystem
 );
 
 our @BIN_EXT = qw(gz tgz bz2 gif jpg png ico);
@@ -236,6 +237,19 @@ sub pmpath {
 	return $return;
 }
 
+sub myprint {
+	print        join "\n", @_, '' if @_;
+}
+
+sub myexit {
+	print STDERR join "\n", @_, '' if @_;
+	exit;
+}
+
+sub mysystem {
+	#print "@_\n";
+	system(@_);
+}
 
 package Slash::Tools::BBEdit;
 use Carp;
