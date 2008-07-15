@@ -232,7 +232,7 @@ sub selectComments {
 ##slashProf("sC fudging", "sC main sort");
 #slashProf("", "sC main sort");
 
-	my $comments_read = ($user->{is_subscriber} || $user->{is_admin})
+	my $comments_read = !$user->{is_anon}
 		? $slashdb->getCommentReadLog($discussion->{id}, $user->{uid})
 		: {};
 

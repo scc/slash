@@ -6495,6 +6495,7 @@ sub saveCommentReadLog {
 	my($self, $comments, $discussion_id, $uid) = @_;
 
 	$uid ||= getCurrentUser('uid');
+	return if isAnon($uid);
 
 	my($mcd, $mcdkey);
 	if (@$comments) {
@@ -6528,6 +6529,7 @@ sub getCommentReadLog {
 	my($self, $discussion_id, $uid, $no_mcd) = @_;
 
 	$uid ||= getCurrentUser('uid');
+	return if isAnon($uid);
 
 	my($mcd, $mcdkey);
 	if (!$no_mcd) {

@@ -870,18 +870,6 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			}
 
 			if (do_update) {
-			  if (!user_is_subscriber && !user_is_admin) {
-				if (newoldstuff) {
-					for (var i = 0; i < last_updated_comments.length; i++) {
-						var this_cid = last_updated_comments[i];
-						var this_id  = fetchEl('comment_top_' + this_cid);
-						if (this_id)
-							this_id.className = this_id.className.replace(' newcomment', ' oldcomment');
-					}
-				}
-				last_updated_comments_index = last_updated_comments.length - 1;
-			  }
-
 				for (var i = 0; i < update.new_cids_order.length; i++) {
 					var this_cid = update.new_cids_order[i];
 					if (!placeholder_no_update[this_cid] && comments[this_cid]['points'] >= -1) {
@@ -892,12 +880,8 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 					}
 
 					var this_id  = fetchEl('comment_top_' + this_cid);
-					if (this_id) {
-					  if (!user_is_subscriber && !user_is_admin) {
-						this_id.className = this_id.className.replace(' oldcomment', ' newcomment');
-					  }
+					if (this_id)
 						last_updated_comments.push(this_cid);
-					}
 				}
 
 				// later we may need to find a known point and scroll
@@ -937,14 +921,12 @@ function ajaxFetchComments(cids, option, thresh, highlight) {
 			if (highlight && last_updated_comments.length)
 				next_cid_check = 1;
 
-			if (user_is_subscriber || user_is_admin) {
-				if (!d2_comment_order)
-					next_cid_lower_thresh = 1;
-				else if (!do_update) {
-					next_cid_lower_thresh = 1;
-					if (highlight)
-						next_cid_check = 1;
-				}
+			if (!d2_comment_order)
+				next_cid_lower_thresh = 1;
+			else if (!do_update) {
+				next_cid_lower_thresh = 1;
+				if (highlight)
+					next_cid_check = 1;
 			}
 
 			if (next_cid_check) {
@@ -2068,9 +2050,12 @@ function setCommentRead (cid) {
 		&& !read_comments[cid]
 		&& $('#comment_otherdetails_' + cid).length
 		&& !noSeeFirstComment(cid)
-		&& (user_is_subscriber || user_is_admin)
 	) {
-		read_comments[cid] = 1;
+		// this happens later for logged-in users
+		if (user_is_anon)
+			comments[cid]['read'] = 1;
+		else
+			read_comments[cid] = 1;
 	}
 }
 
@@ -2434,35 +2419,30 @@ function sortKids(cid) { // maybe cache later
 }
 
 function isUnread(cid) {
+	// XXX should we loook at read_comments[cid],
+	// not just comments[cid]['read'] ?  -- pudge
 	setDefaultDisplayMode(cid);
-	if (user_is_subscriber || user_is_admin) {
-		// skip if hidden, or a placeholder (-2)
-		if (
-			(
-				(displaymode[cid] != 'hidden')
-					&&
-				(parseInt(comments[cid]['read']) == 0)
-					&&
-				(comments[cid]['points'] > -2)
-			)
-		) {
-			return 1;
-		} else if (parseInt(comments[cid]['read']) == 1) {
-			// sometimes things happen in the wrong order, and
-			// a comment was not fully rendered when it was set
-			// to read, so clean up here just in case; this is a
-			// good place to do it, because this is where we might
-			// be confused if we are going to the next unread
-			// comment, but it is already read, but looks like
-			// it is not -- pudge
-			$('#comment_top_' + cid).removeClass('newcomment').addClass('oldcomment');
-			return 0;
-		}
-	} else {
-		if ($('#comment_top_' + cid).hasClass('newcomment'))
-			return 1;
-		else
-			return 0;
+	// skip if hidden, or a placeholder (-2)
+	if (
+		(
+			(displaymode[cid] != 'hidden')
+				&&
+			(parseInt(comments[cid]['read']) == 0)
+				&&
+			(comments[cid]['points'] > -2)
+		)
+	) {
+		return 1;
+	} else if (parseInt(comments[cid]['read']) == 1) {
+		// sometimes things happen in the wrong order, and
+		// a comment was not fully rendered when it was set
+		// to read, so clean up here just in case; this is a
+		// good place to do it, because this is where we might
+		// be confused if we are going to the next unread
+		// comment, but it is already read, but looks like
+		// it is not -- pudge
+		$('#comment_top_' + cid).removeClass('newcomment').addClass('oldcomment');
+		return 0;
 	}
 }
 
@@ -2543,9 +2523,10 @@ function reduceThresholdPrint(highlight) {
 
 	var html = '<div>\
 <p>There are no more comments available at Score:--SCORE--, but there might be more at Score:--SCORE1--.</p><p>Would you like to lower your threshold for \
-<input type="button" value="this" onclick="reduceThreshold(--HIGHLIGHT--,1)"> \
-<input type="button" value="all"  onclick="reduceThreshold(--HIGHLIGHT--)"> \
-discussions?<br>\
+<input type="button" value="this" onclick="reduceThreshold(--HIGHLIGHT--,1)"> ';
+	if (!user_is_anon)
+		html = html + '<input type="button" value="all"  onclick="reduceThreshold(--HIGHLIGHT--)"> ';
+	html = html + 'discussion(s)?<br>\
 <input type="button" value="No Thanks" onclick="reduceThreshold(-1)">\
 </p>\
 \
