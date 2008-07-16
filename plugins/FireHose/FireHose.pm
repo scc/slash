@@ -2186,36 +2186,6 @@ sub getAndSetOptions {
 		}
 	}
 
-	# number of firehose items per page in the normal case
-	if ($mode eq "full") {
-		if ($user->{is_admin}) {
-			$options->{limit} = $pagesize eq "large" ? 50 : 25;
-		} else {
-			$options->{limit} = $pagesize eq "large" ? 25 : 15;
-		}
-	} else {
-		if ($user->{is_admin}) {
-			$options->{limit} = 50;
-		} else {
-			$options->{limit} = $pagesize eq "large" ? 30 : 25;
-		}
-	}
-
-	# the non-normal cases: a small device (e.g., iPhone) or an embedded use (e.g., Google Gadget)
-	my $force_smaller = $form->{embed};
-	if (!$force_smaller && $constants->{smalldevices_ua_regex}) {
-		my $smalldev_re = qr($constants->{smalldevices_ua_regex});
-		if ($ENV{HTTP_USER_AGENT} && $ENV{HTTP_USER_AGENT} =~ $smalldev_re) {
-			$force_smaller = 1;
-		}
-	}
-
-	# ...for which we'll have fewer items per page
-	if ($force_smaller) {
-		$options->{smalldevices} = 1;
-		$options->{limit} = 10;
-	}
-
 	if ($user->{is_admin} && $form->{setusermode}) {
 		$self->setUser($user->{uid}, { firehose_usermode => $form->{firehose_usermode} ? 1 : "" });
 	}
@@ -2417,7 +2387,48 @@ sub getAndSetOptions {
 			$options->{$_} = $set_opts->{$_};
 		}
 	}
+	$options->{smalldevices} = 1 if $self->shouldForceSmall();
+	$options->{limit} = $self->getFireHoseLimitSize($options->{mode}, $pagesize, $options->{smalldevices});
 	return $options;
+}
+
+sub getFireHoseLimitSize {
+	my($self, $mode, $pagesize, $forcesmall) = @_;
+	my $user = getCurrentUser();
+	my $constants = getCurrentStatic();
+	my $form = getCurrentForm();
+
+	my $limit;
+
+	if ($mode eq "full") {
+		if ($user->{is_admin}) {
+			$limit = $pagesize eq "large" ? 50 : 25;
+		} else {
+			$limit = $pagesize eq "large" ? 25 : 15;
+		}
+	} else {
+		$limit = $user->{is_admin} ? 50 :
+			$pagesize eq "large" ? 30 : 25;
+	}
+
+	$limit = 10 if $forcesmall;
+	return $limit;
+}
+
+sub shouldForceSmall {
+	my($self) = @_;
+	my $form = getCurrentForm();
+	my $constants = getCurrentStatic();
+
+	# the non-normal cases: a small device (e.g., iPhone) or an embedded use (e.g., Google Gadget)
+	my $force_smaller = $form->{embed} ? 1 : 0;
+	if (!$force_smaller && $constants->{smalldevices_ua_regex}) {
+		my $smalldev_re = qr($constants->{smalldevices_ua_regex});
+		if ($ENV{HTTP_USER_AGENT} && $ENV{HTTP_USER_AGENT} =~ $smalldev_re) {
+			$force_smaller = 1;
+		}
+	}
+	return $force_smaller;
 }
 
 sub getInitTabtypeOptions {
@@ -2568,7 +2579,6 @@ sub listView {
 		}
 	}
 	my $initial = ($form->{tab} || $form->{tabtype} || $form->{fhfilter} || defined $form->{page} || $lv_opts->{fh_page} eq "console.pl" || $form->{ssi} && defined $form->{fhfilter}) ? 0 : 1;
-
 	my $options = $lv_opts->{options} || $self->getAndSetOptions({ initial => $initial });
 	my $base_page = $lv_opts->{fh_page} || "firehose.pl";
 
