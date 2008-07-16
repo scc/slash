@@ -78,6 +78,7 @@ sub feed_newtags {
 	# 'nod' and 'nix', esp. from editors, are important.  Other tags are not.
 	my $upvoteid   = $tagsdb->getTagnameidCreate($constants->{tags_upvote_tagname}   || 'nod');
 	my $downvoteid = $tagsdb->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
+	my $maybeid    = $tagsdb->getTagnameidCreate('maybe');
 	my $admins = $self->getAdmins();
 	for my $uid (keys %$admins) {
 		$admins->{$uid}{seclev} = $tagsdb->getUser($uid, 'seclev');
@@ -85,7 +86,8 @@ sub feed_newtags {
 
 	my $ret_ar = [ ];
 	for my $tag_hr (@$tags_ar) {
-		next unless $tag_hr->{tagnameid} == $upvoteid || $tag_hr->{tagnameid} == $downvoteid;
+		next unless $tag_hr->{tagnameid} == $upvoteid || $tag_hr->{tagnameid} == $downvoteid
+			|| $tag_hr->{tagnameid} == $maybeid;
 		my $seclev = exists $admins->{ $tag_hr->{uid} }
 			? $admins->{ $tag_hr->{uid} }{seclev}
 			: 1;
@@ -132,7 +134,7 @@ sub feed_userchanges {
 	my $constants = getCurrentStatic();
 	main::tagboxLog("FHEditorPop->feed_userchanges called: users_ar='" . join(' ', map { $_->{tuid} } @$users_ar) .  "'");
 
-	# XXX need to fill this in, and check FirstMover feed_userchanges too
+	# XXX need to fill this in
 
 	return [ ];
 }
@@ -202,12 +204,15 @@ sub run {
 	# Add up nods and nixes.
 	my $upvoteid   = $tagsdb->getTagnameidCreate($constants->{tags_upvote_tagname}   || 'nod');
 	my $downvoteid = $tagsdb->getTagnameidCreate($constants->{tags_downvote_tagname} || 'nix');
+	my $maybeid    = $tagsdb->getTagnameidCreate('maybe') || 0;
 	my $admins = $self->getAdmins();
 	my $tags_ar = $tagboxdb->getTagboxTags($self->{tbid}, $affected_id, 0, $options);
 	$tagsdb->addCloutsToTagArrayref($tags_ar, 'vote');
 	my $udc_cache = { };
+	my($n_admin_maybes, $n_admin_nixes, $maybe_pop_delta) = (0, 0, 0);
 	for my $tag_hr (@$tags_ar) {
 		next if $options->{starting_only};
+		next if $tag_hr->{inactivated};
 		my $sign = 0;
 		$sign =  1 if $tag_hr->{tagnameid} == $upvoteid   && !$options->{downvote_only};
 		$sign = -1 if $tag_hr->{tagnameid} == $downvoteid && !$options->{upvote_only};
@@ -221,7 +226,35 @@ sub run {
 		my $udc_mult = get_udc_mult($tag_hr->{created_at_ut}, $udc_cache);
 #main::tagboxLog(sprintf("extra_pop for %d: %.6f * %.6f", $tag_hr->{tagid}, $extra_pop, $udc_mult));
 		$extra_pop *= $udc_mult;
+		if ($seclev > 1 && $sign == 1) {
+			# If this admin nod comes with a 'maybe', don't change
+			# popularity yet;  save it up and wait to see if any
+			# admins end up 'nix'ing.
+			if (grep {
+				     $_->{tagnameid} == $maybeid
+				&&   $_->{uid}       == $tag_hr->{uid}
+				&&   $_->{globjid}   == $tag_hr->{globjid}
+				&& ! $_->{inactivated}
+			} @$tags_ar) {
+				++$n_admin_maybes;
+				$maybe_pop_delta += $extra_pop;
+				$extra_pop = 0;
+			}
+		} elsif ($seclev > 1 && $sign == -1) {
+			++$n_admin_nixes;
+		}
 		$popularity += $extra_pop;
+	}
+	if ($n_admin_maybes > 0) {
+		if ($n_admin_nixes) {
+			# If any admin nixes, then all the admin nod+maybes are
+                        # ignored.  The nixes have already been counted normally.
+		} else {
+			# No admin nixes, so the maybes boost editor popularity by
+			# some fraction of the usual amount.
+			my $frac = $constants->{tagbox_fheditorpop_maybefrac} || 0.1;
+			$popularity += $maybe_pop_delta * $frac;
+		}
 	}
 
 	# If more than a certain number of users have tagged this item with
