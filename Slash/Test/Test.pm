@@ -189,6 +189,7 @@ sub slashTest {
 		my $object = getObject("Slash::$plugin");
 		if ($object) {
 			no strict 'refs';
+			no warnings 'once';
 			${"main::$name"} = $object;
 		}
 	}
