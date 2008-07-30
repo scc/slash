@@ -30,6 +30,7 @@ use XML::RSS;
 use Slash;
 use Slash::Utility;
 use Slash::Display;
+use Slash::XML;
 
 my $virtual_user = $ARGV[0];
 createEnvironment($virtual_user);
@@ -76,9 +77,17 @@ sub getTopComments {
 	my $moddb = getObject("Slash::$constants->{m1_pluginname}");
 	my $reasons = $moddb->getReasons;
 
+	my @items;
 	my $block = '<ul>';
 	foreach (@$A) {
-		my($sid, $title, $cid, $subj, $d, $nickname, $points, $reason) = @$_;
+		my($sid, $title, $cid, $subj, $d, $nickname, $points, $reason, $date) = @$_;
+		push @items, {
+			'link'  => "$gSkin->{absolutedir}/comments.pl?sid=$sid&cid=$cid",
+			title   => "$subj ($points points, $reasons->{$reason}{name})",
+			'time'  => $date,
+			creator => $nickname,
+			description => "Attached to <a href=\"$gSkin->{absolutedir}/article.pl?sid=$sid\">$title</a>"
+		};
 		$block .= <<EOT;
 
 <li> <b><a href="$gSkin->{rootdir}/comments.pl?sid=$sid&amp;cid=$cid">$subj</a>
@@ -92,6 +101,17 @@ EOT
 	$block .= '</ul>';
 	setblock('topcomments', $block);
 
+	if (@items && -d "$constants->{basedir}/privaterss/") {
+		my $rss = xmlDisplay('rss', {
+			channel => {
+				title       => "$constants->{sitename}: Hot Comments",
+				'link'      => "$gSkin->{absolutedir}/",
+			},
+			items   => \@items,
+			rdfitemdesc_html => 1
+		}, 1);
+		save2file("$constants->{basedir}/privaterss/topcomments.rss", $rss);
+	}
 }
 
 #################################################################

@@ -879,7 +879,7 @@ sub getTopComments {
 		&& $num_top_comments < $num_wanted
 	) {
 		my $comment = $self->sqlSelectArrayRef(
-			"stories.sid, title, cid, subject, date, nickname, comments.points, comments.reason",
+			"stories.sid, title, cid, subject, date, nickname, comments.points, comments.reason, date",
 			"comments, stories, story_text, users",
 			"cid=$cids->[$num_top_comments]->[0]
 				AND stories.stoid = story_text.stoid
