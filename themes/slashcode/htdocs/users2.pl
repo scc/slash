@@ -1451,6 +1451,7 @@ sub showInfo {
                         latest_journals         => \%latest_journals,
                         latest_submissions      => \%latest_submissions,
                         latest_event            => $latest_event,
+                        data_pane               => $form->{dp},
 		}, { Page => 'users', Skin => 'default'});
 	}
 

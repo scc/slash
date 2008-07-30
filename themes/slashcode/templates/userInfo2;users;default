@@ -136,9 +136,9 @@ __template__
 
         <div class="nav">
                 <ul class="menu" id="tablist">
-                [% IF latest_comments.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]">Comments</a></li>[% END %]
-                [% IF latest_journals.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]">Journals</a></li>[% END %]
-                [% IF latest_submissions.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]">Submissions</a></li>[% END %]
+                [% IF latest_comments.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]/comments">Comments</a></li>[% END %]
+                [% IF latest_journals.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]/journal">Journals</a></li>[% END %]
+                [% IF latest_submissions.size != 0 %]<li><a href="[% constants.absolutedir_secure %]/^[% useredit.nickname %]/submissions">Submissions</a></li>[% END %]
                 </ul>
         </div>
 
@@ -194,10 +194,13 @@ __template__
 
         <div id="yui-main">
                 <div class="yui-b">
-                <br>&nbsp;
-                <h2>We probably want some kind of header here to describe the contents of the data pane.</h2>
 
-                [% PROCESS listComments admin_flag=admin_flag commentstruct=commentstruct commentcount=commentcount min_comment=min_comment reasons=reasons cids_to_mods=cids_to_mods type="user" useredit=useredit comment_time=comment_time %]
+                [% IF data_pane == 'journal' %]
+                [% ELSIF data_pane == 'submissions' %]
+                [% ELSE %]
+                        [% PROCESS listComments admin_flag=admin_flag commentstruct=commentstruct commentcount=commentcount min_comment=min_comment reasons=reasons cids_to_mods=cids_to_mods type="user" useredit=useredit comment_time=comment_time %]
+                [% END %]
+
                 </div>
         </div>
 
