@@ -43,9 +43,11 @@ __template__
 </div>
 [% END %]
 <script type="text/javascript">
-var tag_context = {
-	nod: '[% FOR postag IN postags %][% postag %] [% END %]',
-	nix: '[% FOR negtag IN negtags %][% negtag %] [% END %]'
+var suggestions_for_context = {
+	nod: '[% IF postags.size %][% FOR postag IN postags %][% postag %] [% END %][% ELSE %]fresh funny insightful interesting maybe[% END %]',
+	nix: '[% IF negtags.size %][% FOR negtag IN negtags %][% negtag %] [% END %][% ELSE %]binspam dupe notthebest offtopic slownewsday stale stupid[% END %]',
+	story: 'neverdisplay',
+	default: 'hold quik back typo dupe'
 }
 </script>
 
