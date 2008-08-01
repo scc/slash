@@ -22,6 +22,10 @@ $task{$me}{code} = sub {
 		slashdLog("$me - metamoderation inactive") if verbosity() >= 2;
 		return ;
 	}
+	if ($constants->{tagbox}{Metamod}) {
+		slashdLog("$me - superceded by Metamod tagbox");
+		return ;
+	}
 
 	reconcile_m2();
 	update_modlog_ids();
