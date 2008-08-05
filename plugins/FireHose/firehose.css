@@ -145,6 +145,7 @@ ul.menu#fhtablist li.active:before, .paginate .active:before { content: ""; }
 .daybreak,
 .paginate { background: #666 url('//images.slashdot.org/block-title-bg.png') repeat-x; }
 .paginate { margin-right: 18.5em; }
+#metamodwrap .paginate { margin-right: 0em}
 #users .paginate { margin-right: 0em; }
 
 .admin .paginate { margin-right: 0; }
@@ -167,6 +168,7 @@ padding-top:0.9em;}
 .storylinks li.comments {border-left: 1px solid #ccc; padding-left: 1em !important}
 #firehoselist { padding: 1em 0 0 0; }
 #firehoselist, #firehose #message, .firemenu { margin-right: 18.5em; }
+#metamodwrap #firehoselist, #firehose #metamodwrap #message { margin-right: 0em; }
 #users #firehoselist, #users #firehose #message, #users .firemenu { margin-right: 0em; }
 .admin #firehoselist, .admin #firehose #message, .admin .firemenu { margin-right: 0; }
 .article .generaltitle .title .date,
