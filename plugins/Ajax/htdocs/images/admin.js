@@ -19,6 +19,73 @@ function um_set_settings(behavior) {
 	}, 'links-vendors-content');
 }
 
+//
+// firehose + admin + tagui
+//
+
+function firehose_handle_admin_commands( commands ){
+	var neverdisplay, hold, signoff;
+
+	var admin_commands, everything_else;
+	[ admin_commands, everything_else ] = separate(commands, function(cmd){
+		var is_admin = true;
+		switch ( cmd ) {
+			case 'neverdisplay':	neverdisplay = true; break;
+			case 'hold':		hold = true; break;
+			case 'signed':
+			case 'unsigned':
+			case 'signoff':
+				signoff = 'true';
+				break;
+			default:
+				is_admin = false;
+		}
+		return is_admin
+	});
+
+	var id = this.getAttribute('tag-server');
+
+	if ( neverdisplay && confirm("Set story to neverdisplay?") ) {
+		everything_else.push('neverdisplay');
+
+		var nd_tag_server = this.mark_busy(true);
+		$.post('/ajax.pl', {
+			op:	'admin_neverdisplay',
+			resky:	reskey_static,
+			stoid:	'',
+			fhid:	id
+		}, function(){
+			nd_tag_server.mark_busy(false);
+			firehose_remove_entry(id)
+		});
+	}
+
+	if ( signoff ) {
+		var $cookie = $('[stoid]', this);
+		var stoid = $cookie.attr('stoid');
+		var signoff_tag_server = this.mark_busy(true);
+		$.post('/ajax.pl', {
+			op:	'admin_signoff',
+			resky:	reskey_static,
+			stoid:	$cookie.attr('stoid'),
+		}, function(){
+			signoff_tag_server.mark_busy(false)
+		});
+
+		$('[context=signoff]', this).remove();
+		everything_else.push('signed')
+	}
+
+	if ( hold )
+		everything_else.push('hold');
+
+	if ( hold || signoff )
+		firehose_collapse_entry(id);
+
+	return everything_else
+}
+
+
 function admin_neverdisplay(stoid, type, fhid) {
 	if (confirm("Set story to neverdisplay?")) {
 		ajax_update({
@@ -243,19 +310,27 @@ function firehose_reject (el) {
 }
 
 function firehose_open_note(id) {
-	$('#note-form-'+id).removeClass();
-	$('#note-input-'+id).each(function(){this.focus()});
-	$('#note-text-'+id).setClass("hide");
+	var $entry = $('#firehose-'+id);
+
+	$entry.find('.note-wrapper').removeClass('no-note');
+	$entry.find('#note-form-'+id).removeClass('hide');
+	$entry.find('#note-input-'+id).each(function(){this.focus()});
+	$entry.find('#note-text-'+id).addClass('hide');
 }
 
 function firehose_save_note(id) {
+  var $entry = $('#firehose-'+id);
+
+	var note_text = $entry.find('#note-input-'+id).val();
+	$entry.find('.note-wrapper')[note_text ? 'removeClass' : 'addClass']('no-note');
+
 	ajax_update({
 		op:	'firehose_save_note',
-		note:	$('#note-input-'+id).val(),
+		note:	note_text,
 		id:	id
 	}, 'note-text-'+id);
-	$('#note-form-'+id).setClass("hide");
-	$('#note-text-'+id).removeClass();
+	$entry.find('#note-form-'+id).addClass('hide');
+	$entry.find('#note-text-'+id).removeClass('hide');
 }
 
 function firehose_get_admin_extras(id) {
