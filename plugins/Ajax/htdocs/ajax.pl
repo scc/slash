@@ -69,7 +69,7 @@ sub main {
 			# feel free to send msgdiv => 'thisdivhere' to the ajax call,
 			# and any reskey error messages will be sent to it
 			if ($form->{msgdiv}) {
-				header_ajax({ content_type => 'application/json' });
+				http_send({ content_type => 'application/json' });
 				(my $msgdiv = $form->{msgdiv}) =~ s/[^\w-]+//g;
 				print Data::JavaScript::Anon->anon_dump({
 					html	  => { $msgdiv => $rkey->errstr },
@@ -89,7 +89,7 @@ sub main {
 #	print STDERR "AJAX7 $$: $user->{uid}, $op ($retval)\n";
 
 	if ($retval) {
-		header_ajax($options);
+		http_send($options);
 		print $retval;
 	}
 
@@ -1094,17 +1094,6 @@ sub saveModalPrefs {
 
 ##################################################################
 sub default { }
-
-##################################################################
-sub header_ajax {
-	my($options) = @_;
-	my $ct = $options->{content_type} || 'text/plain';
-
-	my $r = Apache->request;
-	$r->content_type($ct);
-	$r->header_out('Cache-Control', 'no-cache');
-	$r->send_http_header;
-}
 
 ##################################################################
 sub getOps {

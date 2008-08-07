@@ -1344,9 +1344,13 @@ sub setCookie {
 	# ".slashdot.org" is OK.  the only way to set a cookie
 	# to a *host* is to leave the domain blank, which is
 	# why we set the first cookie with no domain. -- pudge
+	# unless domain does not match the root domain -- pudge
 
 	# domain must start with a '.' and have one more '.'
-	# embedded in it, else we ignore it
+	# embedded in it, else we ignore it, so you can
+	# enter an *invalid* value in skins.cookiedomain to
+	# override constants.cookiedomain, and *not* have
+	# any domain cookie set -- pudge
 	my $domain = ($cookiedomain && $cookiedomain =~ /^\..+\./)
 		? $cookiedomain
 		: '';
@@ -1362,8 +1366,6 @@ sub setCookie {
 
 	my $cookie = Apache::Cookie->new($r, %cookiehash);
 
-	# this should be fine, but if there is a problem, comment the following
-	# lines, and uncomment the one right above "bake"
 	if (!$val) {
 		$cookie->expires('-1y');  # delete
 	} elsif ($session && $session =~ /^\+\d+[mhdy]$/) {

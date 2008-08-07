@@ -217,6 +217,11 @@ sub mailPasswd {
 
 	my $user_send = $reader->getUser($uid);
 
+	if ($user->{acl}{nopasswd}) {
+		push @note, getData('mail_acl_nopasswd');
+		$error = 1;
+	}
+
 	if (!$error) {
 		# A user coming from a srcid that's been marked as not
 		# acceptable for posting from also does not get to

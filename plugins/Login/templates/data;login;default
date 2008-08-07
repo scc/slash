@@ -112,6 +112,10 @@ __template__
 	password mailed to you</a>.
 
 
+[% CASE 'mail_acl_nopasswd' %]
+	[% returnme.data_constant = 1 %]
+	This account is not allowed to log in normally.  No password was mailed.
+
 [% CASE 'mail_nonickname' %]
 	[% returnme.data_constant = 1 %]
 	User was not found.  No password was mailed.
