@@ -50,7 +50,7 @@ IF item.type == "comment";
 	IF com.reason;
 		reason = ", " _ constants.reasons.${com.reason}.name;
 	END;
-	title = "Comment: " _ item.title _ " (Score " _ score _ reason _ ")";
+	title = "<span class='skin'>Comment:</span> " _ item.title _ " <span class='reason'>(Score " _ score _ reason _ ")</span>";
 END;
 onclick = "onclick=\"toggle_firehose_body('$item.id', $adminmode); return false\"";
 title_href="$gSkin.rootdir/firehose.pl?op=view&amp;id=$item.id";
