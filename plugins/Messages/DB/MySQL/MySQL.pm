@@ -25,11 +25,49 @@ use Slash::Constants qw(:messages);
 use Slash::Utility;
 use Storable qw(nfreeze thaw);
 
-use base 'Slash::DB::Utility';	# first for object init stuff, but really
-				# needs to be second!  figure it out. -- pudge
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
+
+sub isInstalled {
+	my $constants = getCurrentStatic();
+	return undef if !$constants->{plugin}{Messages};
+	1;
+}
+
+sub init {
+	my($self, @args) = @_;
+
+	$self->SUPER::init(@args) if $self->can('SUPER::init');
+
+	my $slashdb = getCurrentDB();
+	my $plugins = $slashdb->getDescriptions('plugins');
+	my $constants = getCurrentStatic();
+#use Data::Dumper; warn "Messages/DB/MySQL.pm init() self=$self slashdb=$slashdb args='@args' cpm='$constants->{plugin}{Messages}' plugins: " . Dumper($plugins);
+	return unless $plugins->{Messages};
+
+	$self->{_drop_table}	= 'message_drop';
+	$self->{_drop_cols}	= 'id,user,code,message,fuser,altto,date';
+	$self->{_drop_prime}	= 'id';
+	$self->{_drop_store}	= 'message';
+
+	$self->{_web_table}	= 'message_web, message_web_text';
+	$self->{_web_table1}	= 'message_web';
+	$self->{_web_table2}	= 'message_web_text';
+	$self->{_web_cols}	= 'message_web.id,user,code,message,fuser,readed,date,subject';
+	$self->{_web_prime}	= 'message_web.id=message_web_text.id AND message_web.id';
+	$self->{_web_prime1}	= 'id';
+	$self->{_web_prime2}	= 'id';
+
+	$self->{_prefs_table}	= 'users_messages';
+	$self->{_prefs_cols}	= 'users_messages.code,users_messages.mode';
+	$self->{_prefs_prime1}	= 'uid';
+	$self->{_prefs_prime2}	= 'code';
+
+	$self->{_log_table}	= 'message_log';
+
+	1;
+}
 
 my %descriptions = (
 	'deliverymodes'
@@ -109,35 +147,6 @@ sub setPrefs {
 			mode	=> $prefs->{$code},
 		});
 	}
-}
-
-sub init {
-	my($self, @args) = @_;
-
-	my $slashdb = getCurrentDB();
-	my $plugins = $slashdb->getDescriptions('plugins');
-	return unless $plugins->{'Messages'};
-
-	$self->{_drop_table}	= 'message_drop';
-	$self->{_drop_cols}	= 'id,user,code,message,fuser,altto,date';
-	$self->{_drop_prime}	= 'id';
-	$self->{_drop_store}	= 'message';
-
-	$self->{_web_table}	= 'message_web, message_web_text';
-	$self->{_web_table1}	= 'message_web';
-	$self->{_web_table2}	= 'message_web_text';
-	$self->{_web_cols}	= 'message_web.id,user,code,message,fuser,readed,date,subject';
-	$self->{_web_prime}	= 'message_web.id=message_web_text.id AND message_web.id';
-	$self->{_web_prime1}	= 'id';
-	$self->{_web_prime2}	= 'id';
-
-	$self->{_prefs_table}	= 'users_messages';
-	$self->{_prefs_cols}	= 'users_messages.code,users_messages.mode';
-	$self->{_prefs_prime1}	= 'uid';
-	$self->{_prefs_prime2}	= 'code';
-
-	$self->{_log_table}	= 'message_log';
-	1;
 }
 
 sub log {

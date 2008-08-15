@@ -13,21 +13,14 @@ use File::Temp 'tempfile';
 use Slash;
 use Slash::Utility;
 
-use base 'Exporter';
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::HumanConf';
 
 our $VERSION = $Slash::Constants::VERSION;
 
-sub new {
-	my($class, $user) = @_;
+sub init {
+	my($self) = @_;
 
-	return unless $class->isInstalled();
-
-	my $self = {};
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect();
+	$self->SUPER::init() if $self->can('SUPER::init');
 
 	my $constants = getCurrentStatic();
 	$self->{imagemargin} = $constants->{hc_q1_margin} || 6;
@@ -39,7 +32,12 @@ sub new {
 		@{ $self->{possible_fonts} } = ( gdMediumBoldFont, gdLargeFont, gdGiantFont );
 	}
 
-	return $self;
+	1;
+}
+
+sub isInstalled {
+	my($class) = @_;
+	return Slash::HumanConf::isInstalled('Slash::HumanConf') ? 1 : 0;
 }
 
 sub getPoolSize {

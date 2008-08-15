@@ -271,6 +271,7 @@ reload: install
 	apachectl start
 
 #   cleanup
+# We need this to remove Makefile.old's as well, and *.xs.orig
 clean:
 	(cd Slash; if [ ! -f Makefile ]; then perl Makefile.PL; fi; $(MAKE) clean)
 	(rm Slash/Apache/Apache.xs Slash/Apache/User/User.xs)

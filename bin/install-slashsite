@@ -2,10 +2,11 @@
 # This code is a part of Slash, and is released under the GPL.
 # Copyright 1997-2005 by Open Source Technology Group. See README
 # and COPYING for more information, or see http://slashcode.com/.
-# $Id$
 
-# This is the uber install script.
-# -Brian (brian@tangent.org)
+# This is the script to install a website running Slash.  It should
+# not be run until Slash has been installed with 'make install'.
+# See INSTALL file for details.  Original version by Brian "Krow"
+# Aker (brian@tangent.org)
 
 use strict;
 use Config '%Config';

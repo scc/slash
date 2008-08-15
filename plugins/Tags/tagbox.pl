@@ -375,6 +375,7 @@ if ($affected_hr->{tbid} == 17) {
 my $feeder_ar = $tagboxdb->sqlSelectAllHashrefArray('*', 'tagboxlog_feeder', "tbid=17 AND affected_id=$affected_hr->{affected_id}", 'ORDER BY tfid');
 print STDERR "r_t_u rows for tbid=17 id=$affected_hr->{affected_id}: " . Dumper($feeder_ar)
 }
+if (! $tagbox->{object}) { die "no object for tbid=$affected_hr->{tbid}: " . Dumper($tagbox) }
 			$tagbox->{object}->run($affected_hr->{affected_id});
 			$tagboxdb->markTagboxRunComplete($affected_hr);
 			last if time() >= $run_until || $task_exit_flag;

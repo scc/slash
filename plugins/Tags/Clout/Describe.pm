@@ -4,13 +4,14 @@ use strict;
 use warnings;
 use Date::Parse qw( str2time );
 use Slash::Utility;
+
 use base 'Slash::Clout';
 
 our $VERSION = $Slash::Constants::VERSION;
 
 sub init {
 	my($self) = @_;
-	$self->SUPER::init(@_);
+	$self->SUPER::init() if $self->can('SUPER::init');
 	# Hard-coded constants should be in the vars table.
 	# cumfrac is the cumulative fraction of how much weight is propagated
 	# for each matching tag.  E.g. if $cumfrac is 0.5, the first match may

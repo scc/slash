@@ -7,8 +7,6 @@ package Slash::TagModeration;
 use strict;
 
 use Slash;
-use Slash::Utility;
-use Slash::DB::Utility;
 use Slash::Display;
 
 our $VERSION = $Slash::Constants::VERSION;

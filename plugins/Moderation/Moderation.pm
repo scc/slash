@@ -7,34 +7,20 @@ package Slash::Moderation;
 use strict;
 use Date::Format qw(time2str);
 use Slash;
-use Slash::Utility;
-use Slash::DB::Utility;
+use Slash::Utility::Environment;
 use Slash::Display;
 
-use base 'Exporter';
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
 
-sub new {
-	my($class, $user) = @_;
-	my $self = {};
-
-	(my $modname = $class) =~ s/^Slash:://;
-
-	my $plugin = getCurrentStatic('plugin');
-	return unless $plugin->{$modname};
-
+sub isInstalled {
+	my($class) = @_;
 	my $constants = getCurrentStatic();
-	return undef unless $constants->{m1}
-		&& $constants->{m1_pluginname} eq $modname;
-
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect();
-
-	return $self;
+	return 0 if ! $constants->{m1};
+	my($plugin_name) = $class =~ /^Slash::(\w+)$/;
+	return 0 if $constants->{m1_pluginname} ne $plugin_name;
+	return $class->SUPER::isInstalled();
 }
 
 ########################################################

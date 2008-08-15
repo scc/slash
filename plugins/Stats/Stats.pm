@@ -11,30 +11,19 @@ Slash::Stats - Stats plugin for Slash
 =cut
 
 use strict;
-use DBIx::Password;
-use Slash;
-use Slash::Utility;
-use Slash::DB::Utility;
 use LWP::UserAgent;
+use Slash;
+use Slash::Utility::Environment;
 
-use base 'Slash::DB::Utility';
-use base 'Slash::DB::MySQL';
+use base 'Slash::Plugin';
 
 our $VERSION = $Slash::Constants::VERSION;
 
-sub new {
-	my($class, $user, $options) = @_;
-	my $self = {};
+sub init {
+	my($self, $options) = @_;
 	my $slashdb = getCurrentDB();
-	my $plugin = getCurrentStatic('plugin');
 	my $constants = getCurrentStatic();
 	
-	return unless $plugin->{'Stats'};
-
-	bless($self, $class);
-	$self->{virtual_user} = $user;
-	$self->sqlConnect;
-
 	# The default _day is yesterday.  (86400 seconds = 1 day)
 	# Build _day_between_clause for testing the usual DATETIME column
 	# type against the day in question, and _ts_between_clause for
@@ -57,7 +46,7 @@ sub new {
 	my $count = 0;
 	if ($options->{create}) {
 		
-		if (getCurrentStatic('adminmail_check_replication')) {
+		if ($constants->{adminmail_check_replication}) {
 			my $wait_sec = 600;
 			my $num_try = 0;
 			my $max_tries = 48;
@@ -239,7 +228,7 @@ sub new {
 
 	}
 
-	return $self;
+	1;
 }
 
 
