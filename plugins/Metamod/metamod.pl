@@ -18,6 +18,10 @@ sub main {
 	my $op = getCurrentForm('op') || '';
 	my $section = $slashdb->getSection($form->{section});
 
+	if ($user->{is_subscriber} && $constants->{plugin}{FireHose}) {
+		redirect("$constants->{rootdir}/firehose.pl?op=metamod");
+	}
+
 	header(getData('header'), $section->{section}) or return;
 
 	if (!$constants->{m1}) {
