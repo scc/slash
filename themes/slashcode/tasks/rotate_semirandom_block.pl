@@ -17,7 +17,7 @@ $task{$me}{code} = sub {
 
         my($virtual_user, $constants, $slashdb, $user) = @_;
         
-        my @choices = qw/askslashdot developers interview science yro firehose topcomments books activetags/;
+        my @choices = qw/askslashdot developers interview science yro firehose topcomments books activetags idle_pics idle_video/;
         my $choice;
         my $lastchoice = $slashdb->getVar('lastsrandsec', 'value', 1);
        
@@ -32,10 +32,12 @@ $task{$me}{code} = sub {
         if ($choice eq 'interview')   { $title = 'Interviews'; }
         if ($choice eq 'bsd')         { $title = 'BSD'; }
         if ($choice eq 'yro')         { $title = 'YRO'; }
-        if ($choice eq 'firehose')    { $title = 'Firehose'; $url = "http://slashdot.org/firehose/" }
+        if ($choice eq 'firehose')    { $title = 'Firehose'; $url = "//slashdot.org/firehose/" }
         if ($choice eq 'topcomments') { $title = 'Hot Comments'; $url = '' }
         if ($choice eq 'books')       { $title = 'Book Reviews'; }
         if ($choice eq 'activetags')  { $title = 'Recent Tags'; $url = "/tags" }
+        if ($choice eq 'idle_video')  { $title = 'Idle Video'; $url = "//idle.slashdot.org" }
+        if ($choice eq 'idle_pics')  { $title = 'Idle Pics'; $url = "//idle.slashdot.org" }
 
         $slashdb->sqlUpdate("blocks",{ block=>$slashdb->getBlock($choice, 'block'), title=>$title, url=> $url }, "bid='srandblock'");
         
