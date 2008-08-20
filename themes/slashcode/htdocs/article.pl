@@ -15,6 +15,7 @@ sub main {
 	my $constants = getCurrentStatic();
 	my $user      = getCurrentUser();
 	my $form      = getCurrentForm();
+	my $gSkin     = getCurrentSkin();
 
 	my $story;
 	my $reader = getObject('Slash::DB', { db_type => 'reader' });
@@ -78,6 +79,9 @@ sub main {
 		my $SECT = $reader->getSection($story->{section});
 		# This should be a getData call for title
 		my $title = "$constants->{sitename} | $story->{title}";
+		if ($gSkin->{name} eq "idle") {
+			$title = "$gSkin->{hostname} | $story->{title}";
+		}
 
 		my $authortext;
 		if ($user->{is_admin} ) {
