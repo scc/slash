@@ -22,15 +22,81 @@ $task{$me}{code} = sub {
 
 	my $rss = {};
 
-	$rss->{"firehose"} = [ "green", "" ];
-	$rss->{"firehose_nostories"} = ["green",  "-story" ];
+	$rss->{"firehose"} = [ "", "green", "" ];
+	$rss->{"firehose_nostories"} = ["Non-Stories", "green",  "-story" ];
+	$rss->{"firehose_stories"} = ["Stories", "black", "story", { limit => 25}];
+	$rss->{"firehose_recent"} = ["Recent", "indigo", "-story", { limit => 25 }];
+	$rss->{"firehose_popular"} = ["Popular", "black", "-story", { orderby => "popularity", limit => 25, duration => 7 }];
 
 	foreach (keys %$rss) {
-		slashdLog("gen firehose $_\n");
-		gen_firehose_rss($virtual_user, $_, $rss->{$_}->[0], $rss->{$_}->[1], "rss");
+		gen_firehose_rss($virtual_user, $_, "", $rss->{$_}->[0], $rss->{$_}->[1], $rss->{$_}->[2],$rss->{$_}->[3], "rss");
 	}
-		
+
+	my $skins = $slashdb->getSkins();
+	foreach(keys %$skins) {
+		my $skinname = $skins->{$_}{name};
+		foreach (keys %$rss) {
+			gen_firehose_rss($virtual_user, "$skinname\_$_", $skinname, $rss->{$_}->[0], $rss->{$_}->[1], "$skinname $rss->{$_}->[2]", $rss->{$_}->[3], "rss");
+		}
+	}
+
+
 };
+
+sub gen_firehose_rss {
+	my($vu, $base, $skin, $label, $color, $filter, $opts, $content_type) = @_;
+	my $constants = getCurrentStatic();
+	my $slashdb = getCurrentDB();
+	my $gSkin = getCurrentSkin();
+	my $form = getCurrentForm();
+	$opts ||= {};
+	$content_type ||= "rss";
+
+	slashdLog("$base $skin $label $color '$filter'");
+	use Data::Dumper;
+	slashdLog(Dumper($opts)) if $opts;
+
+	$form->{color} = $color;
+	$form->{fhfilter} = $filter;
+	$form->{duration} = -1;
+	$form->{startdate} = '';
+
+
+	my $firehose = getObject("Slash::FireHose");
+	my $options = $firehose->getAndSetOptions({ no_set => 1 });
+	$options->{limit} = 10;
+
+	foreach (keys %$opts) {
+		$options->{$_} = $opts->{$_};
+	}
+
+
+	my ($its, $results) = $firehose->getFireHoseEssentials($options);
+	my @items;
+	foreach (@$its) {
+		my $item = $firehose->getFireHose($_->{id});
+		my $link = $firehose->linkFireHose($item);
+		push @items, {
+			title 		=> $item->{title},
+			time 		=> $item->{createtime},
+			creator 	=> $slashdb->getUser($item->{uid}, 'nickname'),
+			'link'		=> $link,
+			description	=> $item->{introtext}
+		};
+	}
+	my $rss = xmlDisplay($content_type, {
+		channel => {
+			title		=> "$constants->{sitename} $skin Firehose $label",
+			'link'		=> "$gSkin->{absolutedir}/firehose.pl",
+			descriptions 	=> "$constants->{sitename} $skin Firehose $label"
+		},
+		image	=> 1,
+		items	=> \@items,
+	}, 1);
+
+	save2file("$constants->{basedir}/$base\.$content_type", $rss, \&fudge);
+}
+
 
 # this normalizes old and new content, stripping data that
 # updates every time
@@ -40,51 +106,6 @@ sub fudge {
 	return($current, $new);
 }
 
-
-sub gen_firehose_rss {
-	my($vu, $base, $color, $filter, $content_type) = @_;
-	my $constants = getCurrentStatic();
-	my $slashdb = getCurrentDB();
-	my $gSkin = getCurrentSkin();
-	my $form = getCurrentForm();
-	$content_type ||= "rss";
-
-	$form->{color} = $color;
-	$form->{fhfilter} = $filter;
-	$form->{duration} = -1;
-	$form->{startdate} = '';
-	$form->{pagesize} = "large";
-	
-	my $firehose = getObject("Slash::FireHose");
-	my $options = $firehose->getAndSetOptions({ no_set => 1 });
-
-	#use Data::Dumper;
-	#slashdLog(Dumper($options));
-
-	my ($its, $results) = $firehose->getFireHoseEssentials($options);
-	my @items;
-	foreach (@$its) {
-		my $item = $firehose->getFireHose($_->{id});
-		push @items, {
-			title 		=> $item->{title},
-			time 		=> $item->{createtime},
-			creator 	=> $slashdb->getUser($item->{uid}, 'nickname'),
-			'link'		=> "$gSkin->{absolutedir}/firehose.pl?op=view&id=$item->{id}",
-			description	=> $item->{introtext}
-		};
-	}
-	my $rss = xmlDisplay($content_type, {
-		channel => {
-			title		=> "$constants->{sitename} Firehose",
-			'link'		=> "$gSkin->{absolutedir}/firehose.pl",
-			descriptions 	=> "$constants->{sitename} Firehose"
-		},
-		image	=> 1,
-		items	=> \@items,
-	}, 1);
-
-	save2file("$constants->{basedir}/$base\.$content_type", $rss, \&fudge);
-}
 
 
 
