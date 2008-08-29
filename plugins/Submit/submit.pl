@@ -782,7 +782,6 @@ sub fixStory {
 	# leave if - has nonwhitespace on either side, otherwise, convert
 	unless (getCurrentStatic('submit_keep_dashes')) {
 		$str =~ s/(\s+-+\s+)/ &mdash; /g;
-		$str =~ s/(\s*--+\s*)/ &mdash; /g;
 	}
 
 	$str = balanceTags($str, { deep_nesting => 1 });
