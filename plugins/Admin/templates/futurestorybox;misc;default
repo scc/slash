@@ -58,18 +58,13 @@ __template__
 	</td></tr>
 [%- END %]
 
-
-[% FOREACH story = future;
-	futurestorywrite(story);
-END;
-futurestorywrite(present,0);
-FOREACH story = otherpresent;
-	futurestorywrite(story);
-END;
-FOREACH story = past;
-	futurestorywrite(story);
-END %]
-[%
+[% IF future.size; FOREACH story = future;
+	futurestorywrite(story) IF story;
+END; END;
+futurestorywrite(present,0) IF present;
+IF past.size; FOREACH story = past;
+	futurestorywrite(story) IF story;
+END; END;
 IF pastextras.size; FOREACH story = pastextras;
 	IF !user_signoffs.${story.stoid} && !user_signoffs.${story.stoid}.cnt;
 		futurestorywrite(story) IF story;
