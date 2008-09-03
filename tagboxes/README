@@ -20,9 +20,9 @@ calls Slash::Tagbox::TagCountUser::feed_newtags or feed_deactivatedtags.
 Those methods return data that tagbox.pl pushes onto the tagboxlog_feeder
 table.  When there is accumulated data in that table that requires a
 user's tag count to be rewritten, tagbox.pl collects it and calls
-Slash::Tagbox::TagCountUser::run.  That method returns data that tagbox.pl
-passes to setUser to write the new tag count for any affected users, and
-then deletes the used rows from tagboxlog_feeder.
+Slash::Tagbox::TagCountUser::run.  That method calls setUser to write
+the new tag count for the affected user, and tagbox.pl deletes the
+used rows from tagboxlog_feeder.
 
 
 Purpose:
@@ -50,7 +50,6 @@ This solves the following problems in the following ways:
 
 Warning:
 
-All tagbox code is extremely beta and the API is subject to
-change in the weeks to come.  (2006-06-27)
+The API will change.
 
 
