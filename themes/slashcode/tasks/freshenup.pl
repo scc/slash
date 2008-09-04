@@ -414,7 +414,7 @@ $task{$me}{code} = sub {
 		});
 
 		if ($constants->{plugin}{FireHose}) {
-			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, skippop => 1, fhfilter => "story", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "black", index => "1", nocolors => 1  });
+			gen_firehose_static($virtual_user, "index_firehose.shtml", $gSkin->{name}, "", {  skipmenu => 1, });
 			if ($base ne "firehose") {
 				gen_firehose_static($virtual_user, "firehose.shtml", $gSkin->{name}, "", { fhfilter => " ", duration => "7", mode => 'fulltitle', mixedmode => '1', setfield => '1', color => "blue", nodates => '1'  });
 			}
