@@ -386,6 +386,21 @@ EOT
 			my $avg = $stats->getAverageHitsPerStoryOnDay($yesterday, $pages);
 			$statsSave->createStatDaily("avg_hits_per_story", $avg);
 		}
+		if ($op eq 'slashdot-it') {
+			# This "badge" page gets its normal stats plus two more sets
+			# breaking its total down into badges delivered to RSS readers,
+			# and those not.
+			my $from_rss = $logdb->getSummaryStats({ op => $op, qs_like => q{from=rss%} });
+			$statsSave->createStatDaily("${op}_rss_uids",  $from_rss->{uids});
+			$statsSave->createStatDaily("${op}_rss_ipids", $from_rss->{cnt});
+			$statsSave->createStatDaily("${op}_rss_bytes", $from_rss->{bytes});
+			$statsSave->createStatDaily("${op}_rss_page",  $from_rss->{pages});
+			my $no_rss = $logdb->getSummaryStats({ op => $op, qs_not_like => q{from=rss%} });
+			$statsSave->createStatDaily("${op}_norss_uids",  $no_rss->{uids});
+			$statsSave->createStatDaily("${op}_norss_ipids", $no_rss->{cnt});
+			$statsSave->createStatDaily("${op}_norss_bytes", $no_rss->{bytes});
+			$statsSave->createStatDaily("${op}_norss_page",  $no_rss->{pages});
+		}
 	}
 	#Other not recorded
 	{
