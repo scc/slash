@@ -98,6 +98,7 @@ sub getDaddyList {
 
 	my $editors = $schedule->getEditors;
 	my $all = join ', ', map { "<$_->{realemail}>" } grep { $_->{realemail} } @$editors;
+	my $extra = ', <pudge@slashdot.org>, <jamie@slashdot.org>';
 
 	for (0 .. $#{$shift_types}) {
 		my $shift = $shift_types->[$_];
@@ -107,11 +108,23 @@ sub getDaddyList {
 			title	=> $shift,
 			'link'	=> $link
 		};
+
+		my($nickname, $email);
 		if ($daddy->{uid} > 0) {
-			$item->{description} = "$daddy->{nickname} <$daddy->{realemail}>";
+			($nickname, $email) = ($daddy->{nickname}, "<$daddy->{realemail}>");
 		} else {
-			$item->{description} = "unassigned $all";
+			($nickname, $email) = ('unassigned', $all);
 		}
+
+		if ($form->{text} && $item->{title} eq 'now') {
+			http_send({ content_type => 'text/plain' });
+			my $send = $email . $extra;
+			$send =~ s/, /\n/g;
+			print $send;
+			return;
+		}
+
+		$item->{description} = "$nickname $email";
 
 		push @items, $item;
 	}
