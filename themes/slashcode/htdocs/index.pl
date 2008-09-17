@@ -19,6 +19,8 @@ my $start_time = Time::HiRes::time;
 	my $form	= getCurrentForm();
 	my $slashdb	= getCurrentDB();
 	my $reader	= getObject('Slash::DB', { db_type => 'reader' });
+	my $script = $ENV{SCRIPT_NAME};
+	$script = "/index2.pl" if $user->{index_beta};
 
 	if ($form->{op} && $form->{op} eq 'userlogin' && !$user->{is_anon}
 			# Any login attempt, successful or not, gets
@@ -27,9 +29,10 @@ my $start_time = Time::HiRes::time;
 			# the URL (this is a security risk via "Referer")
 		|| $form->{upasswd} || $form->{unickname}
 	) {
-		my $refer = $form->{returnto} || $ENV{SCRIPT_NAME};
+		my $refer = $form->{returnto} || $script;
 		redirect($refer); return;
 	}
+	redirect($script) if $user->{index_beta};
 
 	my($stories, $Stories); # could this be MORE confusing please? kthx
 
