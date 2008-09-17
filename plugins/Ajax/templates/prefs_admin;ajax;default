@@ -13,7 +13,7 @@ __template__
 [% IF user.is_admin %]
 
                 [% IF tabbed == 1 %]
-                <div style="text-align: center;">
+                <div style="margin-top: 1em; text-align: center;">
                 &nbsp;
                 <a href="#" style="font-weight: bold; text-decoration: none; font-size: 14px;" onclick="getModalPrefs('user', 'User', 1); return false;">User</a>
                 &nbsp;|&nbsp;

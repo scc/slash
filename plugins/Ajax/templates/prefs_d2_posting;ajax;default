@@ -16,7 +16,7 @@ __template__
 [% range = [ lo .. hi ] %]
 
                 [% IF tabbed == 1 %]
-                <div style="text-align: center;">
+                <div style="margin-top: 1em; text-align: center;">
                 &nbsp;
                 <span style="font-weight: bold; text-decoration: none; font-size: 14px; color: #ccc">Posting</span>
                 &nbsp;|&nbsp;
