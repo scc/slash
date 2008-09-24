@@ -20,7 +20,6 @@ en_US
 __name__
 index
 __template__
-	[% PROCESS autocomplete %]
 	<a name="blocks"></a>
 	<div id="slashboxes">
 	[% UNLESS user.noboxes %]
