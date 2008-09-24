@@ -272,4 +272,4 @@ YAHOO.slashdot.DateWidget.prototype.handlePeerChange = function( type, args, obj
 		this.setDate(args[2], args[1]);
 	this.unmuteEvents();
 }
-
+;
