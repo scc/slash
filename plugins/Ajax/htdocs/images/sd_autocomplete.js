@@ -497,3 +497,5 @@ YAHOO.slashdot.AutoCompleteWidget.prototype._onSdTextboxKeyDown = function( e, m
 			me._pending_hide = setTimeout(YAHOO.slashdot.gCompleterWidget._hide, 15000);
 	}
 }
+
+;
