@@ -26,7 +26,7 @@ __template__
 				op	=> 'Reply',
 				subject	=> 'Reply to This',
 				subject_only => 1,
-				onclick	=> (discussion2 ? "replyTo($cid); return false;" : '')
+				onclick	=> (discussion2 ? "D2.replyTo($cid); return false;" : '')
 			}) %]</b></p></span>
 		[% END %]
 
@@ -36,14 +36,14 @@ __template__
 			pid	=> original_pid,
 			subject	=> 'Parent',
 			subject_only => 1,
-			onclick	=> (discussion2 ? "return selectParent($original_pid)" : '')
+			onclick	=> (discussion2 ? "return D2.selectParent($original_pid)" : '')
 		}, 1) %]</b></p></span>[% END %]
 		
 		[% IF can_mod %]
 		<div id="reasondiv_[% cid %]" class="modsel">[% Slash.createSelect("reason_$cid", reasons, {
 			'return'	=> 1,
 			nsort		=> 1, 
-			onchange	=> (discussion2 ? 'return doModerate(this)' : '')
+			onchange	=> (discussion2 ? 'return D2.doModerate(this)' : '')
 		}) %]</div>[% END %]
 
 		[% IF can_del %]

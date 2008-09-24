@@ -189,8 +189,8 @@ IF do_br %]<br>[% END %]
 	<script src="[% constants.imagedir %]/comments.js?[% constants.cvs_tag_currentcode %]" type="text/javascript"></script>
 	<script type="text/javascript">
 <!--
-	comment_body_reply[[% form.pid %]] = '[% pid_reply %]';
-	document.write('<input type="button" name="quotereply" id="quotereply" value="Quote" class="button" onclick="quoteReply([% form.pid %])">');
+	D2.comment_body_reply()[[% form.pid %]] = '[% pid_reply %]';
+	document.write('<input type="button" name="quotereply" id="quotereply" value="Quote" class="button" onclick="D2.quoteReply([% form.pid %])">');
 //-->
 	</script>
 	[% END %]

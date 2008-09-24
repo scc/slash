@@ -154,7 +154,7 @@ __template__
 				}) %]
 				[% END %]
 		<span class="ccw-header-links">[% PROCESS printCommentsLinks commentslinks_id => 'b' %]</span>
-		<span id="d2toggle" title="Toggle window location" onclick="toggleDisplayOptions()" class="close">/</span>
+		<span id="d2toggle" title="Toggle window location" onclick="D2.toggleDisplayOptions()" class="close">/</span>
 				</h4>
 			</div>
 		</div>
@@ -165,8 +165,8 @@ YAHOO.slashdot.ThresholdApp = function() {
   return {
     init: function() {
       gCommentControlWidget = new YAHOO.slashdot.ThresholdWidget([% "'X'" IF horiz %]);
-      gCommentControlWidget.setTHT(user_threshold, user_highlightthresh);
-      updateTotals();
+      gCommentControlWidget.setTHT(D2.user_threshold(), D2.user_highlightthresh());
+      D2.updateTotals();
     }
   };
 }();

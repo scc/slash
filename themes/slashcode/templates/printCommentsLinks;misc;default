@@ -14,7 +14,7 @@ __name__
 printCommentsLinks
 __template__
 [% IF discussion2 %]
-	<a href="#" onclick="ajaxFetchComments(0,1); return false"><span id="more_comments_num_[% commentslinks_id %]"></span> More</a> | 
+	<a href="#" onclick="D2.ajaxFetchComments(0,1); return false"><span id="more_comments_num_[% commentslinks_id %]"></span> More</a> |
 [% END; IF user.is_anon %]
 	<a href="[% gSkin.rootdir %]/login.pl" onclick="show_login_box(); return false">Login</a>
 [% ELSE %]
@@ -28,7 +28,7 @@ __template__
 		op           => 'reply',
 		subject      => 'Reply',
 		subject_only => 1,
-		onclick      => (discussion2 ? "replyTo(0); return false;" : '')
+		onclick      => (discussion2 ? "D2.replyTo(0); return false;" : '')
 	});
 END %]
 __seclev__
