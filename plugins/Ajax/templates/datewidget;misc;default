@@ -29,7 +29,9 @@ __template__
 <div id="[% id %]-calendar-pane" class="calendar-pane"></div>
 </div>
 <script type="text/javascript">
-  YAHOO.util.Event.addListener(window, "load", function(){ attachDateWidgetTo({id:"[% id %]", [% IF peer; %]peer:"[% peer %]"[% ELSE %]mode:"[% start_mode %]"[% IF date; %], date:new Date("[% date %]")[% END %][% END %][% IF init; %], init:[% init; END %]}); });
+$(function(){
+	 attachDateWidgetTo({id:"[% id %]", [% IF peer; %]peer:"[% peer %]"[% ELSE %]mode:"[% start_mode %]"[% IF date; %], date:new Date("[% date %]")[% END %][% END %][% IF init; %], init:[% init; END %]});
+});
 </script>
 __seclev__
 10000
