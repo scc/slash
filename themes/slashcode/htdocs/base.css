@@ -26,6 +26,10 @@ a:hover { text-decoration: none; }
 img { border: none; }
 #jump { display: none; }
 
+span.sd-info-block, span[class^=sd-key-] {
+	display: none !important;
+}
+
 /* layout */
 #frame
 {

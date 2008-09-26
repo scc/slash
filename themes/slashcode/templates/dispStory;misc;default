@@ -25,6 +25,11 @@ __template__
 [% dispmode = dispmode || "full" %]
 [% IF dispmode == "full" %]
 <div class="article">
+<span class="sd-info-block" style="display: none">
+	<span class="sd-key-sid">[% story.sid %]</span>
+	<span class="type">story</span>
+	[% IF user.is_admin %]<span class="stoid">[% story.stoid %]</span>[% END %]
+</span>
 [% IF magic;
 	thisskin = Slash.db.getSkin(story.primaryskid);
 	IF thisskin.rootdir;
