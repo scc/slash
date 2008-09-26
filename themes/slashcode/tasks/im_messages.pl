@@ -114,7 +114,7 @@ $task{$me}{code} = sub {
 						my $nick = $slashdb->getUser($admins->{$admin}{'uid'}, 'aim');
 						next if !$nick;
 
-						$oscar->send_im($nick, $messages{$message_type}->{$id}{'remark'});
+						safe_send_im($oscar, $nick, $messages{$message_type}->{$id}{'remark'});
 						sleep(4);
 					}
 				}
@@ -124,7 +124,7 @@ $task{$me}{code} = sub {
 					my $nick = $slashdb->getUser($messages{$message_type}->{$id}{'user'}, 'aim');
 					next if !$nick;
 
-					$oscar->send_im($nick, $messages{'message_drop'}->{$id}{'message'});
+					safe_send_im($oscar, $nick, $messages{'message_drop'}->{$id}{'message'});
 					sleep(4);
 				}
 			}
@@ -136,6 +136,19 @@ $task{$me}{code} = sub {
 	return;
 };
 
+sub safe_send_im {
+	my($oscar, $nick, $message) = @_;
+	eval {
+		no warnings 'all';
+		$oscar->send_im($nick, $message);
+	};
+	if ($@) {
+		my $warning = $@;
+		chomp($warning);
+		slashdLog(sprintf('Net::OSCAR::send_im failed (%s) sending to %s: %s',
+			$warning, $nick, $message));
+	}
+}
 
 sub getMessageCodesByType {
 	my($type) = @_;
