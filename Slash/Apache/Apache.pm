@@ -396,6 +396,8 @@ sub IndexHandler {
 			# consider using File::Basename::basename() here
 			# for more robustness, if it ever matters -- pudge
 			my($base) = split(/\./, $gSkin->{index_handler});
+			$base = "index_firehose" if $constants->{index_anon_index_firehose} && $r->header_in('User-Agent') !~ /MSIE [2-6]/;
+
 			$base = $constants->{index_handler_noanon}
 				if $constants->{index_noanon};
 			if ($gSkin->{skid} == $constants->{mainpage_skid}) {
