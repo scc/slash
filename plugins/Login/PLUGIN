@@ -6,4 +6,5 @@ template=templates/changePasswd;login;default
 template=templates/data;login;default
 template=templates/loginForm;login;default
 template=templates/newUserForm;login;default
+template=templates/newuser_msg;login;default
 template=templates/sendPasswdForm;login;default
