@@ -51,7 +51,9 @@ sub main {
 		},
 	};
 
-	if ($user->{is_anon} && $op !~ /^(paypal|makepayment)$/) {
+	$op = 'pause' if $form->{merchant_return_link};
+
+	if ($user->{is_anon} && $op !~ /^(paypal|makepayment|pause)$/) {
 		my $rootdir = getCurrentSkin('rootdir');
 		redirect("$rootdir/users.pl");
 		return;
@@ -59,18 +61,13 @@ sub main {
 
 	$op = 'default' unless $ops->{$op};
 
-	if ($op ne 'pause') {
-		# "pause" is special, it does a 302 redirect so we need
-		# to not output any HTML.  Everything else gets this,
-		# header and menu.
-		header("subscribe") or return;
-		print createMenu('users', {
-			style =>	'tabbed',
-			justify =>	'right',
-			color =>	'colored',
-			tab_selected =>	'preferences',
-		});
-	}
+	header("subscribe") or return;
+	print createMenu('users', {
+		style =>	'tabbed',
+		justify =>	'right',
+		color =>	'colored',
+		tab_selected =>	'preferences',
+	});
 
 	my $retval = $ops->{$op}{function}->($form, $slashdb, $user, $constants);
 
@@ -229,14 +226,17 @@ sub makepayment {
 	}
 }
 
-# Wait a moment for an instant payment notification to take place
-# "behind the scenes," then redirect the user to the main subscribe.pl
-# page where they will see their new subscription options.
+# Thank the user for subscribing.  Don't include details about their
+# subscription because the transaction may still be happening
+# behind-the-scenes and so may not be complete yet.  Once they read
+# this page and click through, though, all should be updated.
+
 sub pause {
 	my($form, $slashdb, $user, $constants) = @_;
-	my $gSkin = getCurrentSkin();
-	sleep 5;
-	redirect("$gSkin->{rootdir}/subscribe.pl");
+	$user->{state}{page_adless} = 1;
+	titlebar("100%", "Thanks!");
+	my $thanksblock = getBlock('subscriber_plug', 'block');
+	slashDisplay('pause', { thanksblock => $thanksblock });
 }
 
 sub grant {
