@@ -19,7 +19,7 @@ ELSE;
 END
 %]
 
-<div style="float: left; width: 42%;">
+<div style="float: left; width: 42%;padding-left:1.5em">
 <h2>Help</h2>
 
 <br>
