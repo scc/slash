@@ -34,14 +34,13 @@ __template__
 		<td>[% Slash.timeCalc(remark.time, '%H:%M:%S', 0) %]</td>
 		<td>[% IF !Slash.isAnon(remark.uid); Slash.db.getUser(remark.uid, 'nickname'); END %]</td>
 		<td>[% remark.priority || 0 %]</td>
-		<td>[% Slash.chopEntity(remark.remark, 120) %]</td>
-		<td>[% IF remark.stoid;
-			thisstory = Slash.db.getStory(remark.stoid);
-			IF thisstory %]<a href="[% gSkin.rootdir %]/admin.pl?sid=[% thisstory.sid %]&amp;op=edit"
-				>Edit</a>[%
-			END;
-		    END -%]
-		</td>			
+                [% isstory_flag = 0 %]
+                [% IF remark.stoid;
+                        thisstory = Slash.db.getStory(remark.stoid);
+                        isstory_flag = 1;
+                   END;
+                %]
+                <td>[% IF isstory_flag %]<a href="[% gSkin.rootdir %]/admin.pl?sid=[% thisstory.sid %]&amp;op=edit">[% END %][% Slash.chopEntity(remark.remark, 130) %][% IF isstory_flag %]</a>[% END %]</td>		
 	</tr>
 [% END # FOREACH %]
 </table>
