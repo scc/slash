@@ -12,11 +12,11 @@ __name__
 neverdisplay
 __template__
 [% IF constants.plugin.Ajax %]
-[% story = Slash.db.getStory(stoid) %]
+[% possndstory = Slash.db.getStory(stoid) %]
 [% IF storylink %]
 <li class="neverdisplay">[% END %]
 [% PROCESS ajax_reskey_signoff reskey_label => 'signoff-reskey-' _ stoid, reskey_name => 'ajax_admin' %]
-<span id="nvd-[% stoid %]" onclick="admin_neverdisplay('[% stoid %]'[% IF fhid %], 'firehose', '[% fhid %]'[% END %])">[% UNLESS story.neverdisplay %]display[% END %]</span>
+<span id="nvd-[% stoid %]" onclick="admin_neverdisplay('[% stoid %]'[% IF fhid %], 'firehose', '[% fhid %]'[% END %])">[% UNLESS possndstory.neverdisplay %]display[% END %]</span>
 [% IF storylink %]</li>[% END %]
 [% END %]
 __seclev__
