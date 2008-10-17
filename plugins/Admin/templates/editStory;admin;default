@@ -68,7 +68,7 @@ __template__
 					<td>[% story.weight %]</td>
 					<td><a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">[% story.title %]</a></td>
 					<td>[% Slash.timeCalc(story.time) %]</td>
-					<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% IF storyref.related_sids_hr.${story.sid}; constants.markup_checked_attribute; END %]></td>
+					<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% constants.markup_checked_attribute IF storyref.related_sids_hr.${story.sid} %]></td>
 					<td>
 						[% FOREACH word = story.words %]
 							[%- word -%][% UNLESS words_seen.$word %]<input type="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
@@ -94,7 +94,7 @@ __template__
 			<td><a href="[% gSkin.rootdir %]/article.pl?sid=[% story.sid %]">
 			[% story.title %]</a></td>
 			<td>[% Slash.timeCalc(story.time) %]</td>
-			<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% IF storyref.related_sids_hr.${story.sid}; constants.markup_checked_attribute; END %]></td>
+			<td><input type="checkbox" name="related_story" value="[% story.sid | strip_attribute %]"[% constants.markup_checked_attribute IF storyref.related_sids_hr.${story.sid} %]></td>
 			<td>
 				[% FOREACH word = story.words %]
 					[%- word -%][% UNLESS words_seen.$word %]<INPUT TYPE="checkbox" name="set_common_word" value="[% word %]">[%- END -%]
@@ -111,7 +111,7 @@ __template__
 			<td></td>
 			<td><a href="[% gSkin.rootdir %]"/comments.pl?sid=[% storyref.related_cids_hr.$cid.sid %]&amp;cid=[% cid %]">[% storyref.related_cids_hr.$cid.subject %]</a></td>
 			<td></td>
-			<td><input type="checkbox" name="related_comment" value="[% cid | strip_attribute %]" [% constants.markup_checked_attribute %]></td>
+			<td><input type="checkbox" name="related_comment" value="[% cid | strip_attribute %]"[% constants.markup_checked_attribute %]></td>
 			<td></td>
 			</tr>
 		[% END %]
@@ -254,7 +254,7 @@ __template__
 					[% IF mfile.filetype != "image" || (mfile.filetype == "image" && bigfile.match('-thumb\.')) %]
 						[% filename = mfile.name %]
 						[% filename = filename.replace(".*\/", ""); %]
-						<tr><td><input type="radio" name="thumb" value="[% mfile.sfid %]" [% IF storyref.thumb == mfile.sfid; constants.markup_checked_attribute; END %]></td><td>[% filename %]</td><td>[% mfile.width %]</td>
+						<tr><td><input type="radio" name="thumb" value="[% mfile.sfid %]"[% constants.markup_checked_attribute IF storyref.thumb == mfile.sfid %]></td><td>[% filename %]</td><td>[% mfile.width %]</td>
 						<td>[% mfile.height %]</td>
 
 						<td>
@@ -287,7 +287,7 @@ __template__
 </tr>
 					[% END %]
 					[% END %]
-					<tr><td><input type="radio" name="thumb" value="0" [% IF !storyref.thumb; constants.markup_checked_attribute; END %]></td><td>None</td><td colspan="1"></td></tr>
+					<tr><td><input type="radio" name="thumb" value="0"[% constants.markup_checked_attribute IF !storyref.thumb %]></td><td>None</td><td colspan="1"></td></tr>
 					</table>
 				[% END %]
 

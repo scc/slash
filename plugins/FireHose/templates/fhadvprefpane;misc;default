@@ -85,7 +85,7 @@ END;
 
 <br>
 
-<input type="checkbox" name="nodates" onchange="firehose_set_options('nodates', !this.checked)" [% IF !options.nodates; constants.markup_checked_attribute; END %]> <b>Dates</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nodates'); return false" title="Click To Expand Help" class="help">?</a>
+<input type="checkbox" name="nodates" onchange="firehose_set_options('nodates', !this.checked)"[% constants.markup_checked_attribute IF !options.nodates %]> <b>Dates</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nodates'); return false" title="Click To Expand Help" class="help">?</a>
 <br>
 <div style="padding-left: 10px;">
         <div id="modalprefhelp_nodates" class="modalprefhelp" style="display: none;">
@@ -95,7 +95,7 @@ END;
 
 <br>
 
-<input type="checkbox" name="nobylines" onchange="firehose_set_options('nobylines', !this.checked)" [% IF !options.nobylines; constants.markup_checked_attribute; END %]> <b>Bylines</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nobylines'); return false" title="Click To Expand Help" class="help">?</a>
+<input type="checkbox" name="nobylines" onchange="firehose_set_options('nobylines', !this.checked)"[% constants.markup_checked_attribute IF !options.nobylines %]> <b>Bylines</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nobylines'); return false" title="Click To Expand Help" class="help">?</a>
 <br>
 <div style="padding-left: 10px;">
         <div id="modalprefhelp_nobylines" class="modalprefhelp" style="display: none;">
@@ -105,7 +105,7 @@ END;
 
 <br>
 
-<input type="checkbox" name="nothumbs" onchange="firehose_set_options('nothumbs', !this.checked)" [% IF !options.nothumbs; constants.markup_checked_attribute; END %]> <b>Thumbs</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nothumbs'); return false" title="Click To Expand Help" class="help">?</a>
+<input type="checkbox" name="nothumbs" onchange="firehose_set_options('nothumbs', !this.checked)"[% constants.markup_checked_attribute IF !options.nothumbs %]> <b>Thumbs</b> <a href="#" onclick="displayModalPrefHelp('modalprefhelp_nothumbs'); return false" title="Click To Expand Help" class="help">?</a>
 <br>
 <div style="padding-left: 10px;">
         <div id="modalprefhelp_nothumbs" class="modalprefhelp" style="display: none;">
@@ -115,15 +115,15 @@ END;
 
 <br>
 
-<input type="checkbox" name="nocolors" onchange="firehose_set_options('nocolors', !this.checked)" [% IF !options.nocolors; constants.markup_checked_attribute; END %]> <b>Color Swatches</b>
+<input type="checkbox" name="nocolors" onchange="firehose_set_options('nocolors', !this.checked)"[% constants.markup_checked_attribute IF !options.nocolors %]> <b>Color Swatches</b>
 
 <br><br>
 
-<input type="checkbox" name="mixedmode" onchange="firehose_set_options('mixedmode', this.checked)" [% IF options.mixedmode; constants.markup_checked_attribute; END %]> <b>Expand Top Rated</b>
+<input type="checkbox" name="mixedmode" onchange="firehose_set_options('mixedmode', this.checked)"[% constants.markup_checked_attribute IF options.mixedmode %]> <b>Expand Top Rated</b>
 
 <br><br>
 
-<input type="checkbox" name="nocommentcount" onchange="firehose_set_options('nocommentcnt', !this.checked)" [% IF !options.nocommentcnt; constants.markup_checked_attribute; END %]> <b>Show comment count for abbreviated</b>
+<input type="checkbox" name="nocommentcount" onchange="firehose_set_options('nocommentcnt', !this.checked)"[% constants.markup_checked_attribute IF !options.nocommentcnt %]> <b>Show comment count for abbreviated</b>
 
 <br><br>
 
@@ -134,7 +134,7 @@ END;
 
 [% IF user.is_admin %]
         <input type="hidden" name="setusermode" value="1">
-        <input type="checkbox" value="1" name="firehose_usermode" onchange="firehose_set_options('firehose_usermode', this.checked)" [% constants.markup_checked_attribute IF options.firehose_usermode %]> <b>User Mode</b>
+        <input type="checkbox" value="1" name="firehose_usermode" onchange="firehose_set_options('firehose_usermode', this.checked)"[% constants.markup_checked_attribute IF options.firehose_usermode %]> <b>User Mode</b>
 
 <br><br>
 [% END %]

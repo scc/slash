@@ -49,9 +49,9 @@ __template__
 	<p><b>[% opt.short_desc %]</b>
 	<br>
 	&nbsp;&nbsp;&nbsp;<input type="radio" name="opt_[% opt.name %]" value="0"
-		[% IF !opt.checked; constants.markup_checked_attribute; END %]>&nbsp;Off
+		[% constants.markup_checked_attribute IF !opt.checked %]>&nbsp;Off
 	&nbsp;&nbsp;&nbsp;<input type="radio" name="opt_[% opt.name %]" value="1"
-		[% IF opt.checked; constants.markup_checked_attribute; END %]>&nbsp;On
+		[% constants.markup_checked_attribute IF opt.checked %]>&nbsp;On
 		<div class="notes">[% opt.long_desc %]</div>
 	</p>
 [% END %]

@@ -46,9 +46,9 @@ __template__
 	<p><b>Show Tags</b>
 	<br>
 	&nbsp;&nbsp;&nbsp;<input type="radio" name="showtags" value="0"
-		[% IF user_edit.tags_turnedoff; constants.markup_checked_attribute; END %]>&nbsp;Off
+		[% constants.markup_checked_attribute IF user_edit.tags_turnedoff %]>&nbsp;Off
 	&nbsp;&nbsp;&nbsp;<input type="radio" name="showtags" value="1"
-		[% IF !user_edit.tags_turnedoff; constants.markup_checked_attribute; END %]>&nbsp;On
+		[% constants.markup_checked_attribute IF !user_edit.tags_turnedoff %]>&nbsp;On
 		<div class="notes">(Turn this off to ignore all tags.)</div>
 	</p>
 

@@ -87,10 +87,10 @@ __template__
 			emaildisplay.${user_edit.emaildisplay} = constants.markup_checked_attribute;
 		END %]
 		<blockquote><div>
-		<input type="radio" name="emaildisplay" [% emaildisplay.0 %] value=0> Do not display an e-mail address.<br>
-                <input type="radio" name="emaildisplay" [% emaildisplay.1 %] value=1> Show your email address with random SPAM-armoring applied.<br>
+		<input type="radio" name="emaildisplay" value="0"[% emaildisplay.0 %]> Do not display an e-mail address.<br>
+                <input type="radio" name="emaildisplay" value="1"[% emaildisplay.1 %]> Show your email address with random SPAM-armoring applied.<br>
 		[% PROCESS formNote note='This changes weekly' %]
-                <input type="radio" name="emaildisplay" [% emaildisplay.2 %] value=2> Show your real email address without cowering behind childish anonymity or obfuscation.
+                <input type="radio" name="emaildisplay" value="2"[% emaildisplay.2 %]> Show your real email address without cowering behind childish anonymity or obfuscation.
 		</div></blockquote>
 		<label>Disable Sigs
 		<input type="checkbox" name="nosigs"[% s_check %]>
@@ -269,16 +269,16 @@ __template__
 [% domaintags.${user_edit.domaintags} = constants.markup_checked_attribute -%]
 		<p><b>Display Link Domains?</b> (shows the actual domain of any link in brackets)<br>
 		<blockquote><div>
-		<input type="radio" name="domaintags" [% domaintags.0 %] value=0> Never show link domains<br>
-		<input type="radio" name="domaintags" [% domaintags.1 %] value=1> Show the links domain only in recommended situations<br>
-		<input type="radio" name="domaintags" [% domaintags.2 %] value=2> Always show link domains
+		<input type="radio" name="domaintags" value="0"[% domaintags.0 %]> Never show link domains<br>
+		<input type="radio" name="domaintags" value="1"[% domaintags.1 %]> Show the links domain only in recommended situations<br>
+		<input type="radio" name="domaintags" value="2"[% domaintags.2 %]> Always show link domains
 		</div></blockquote>
 		<label>User Page Comment Listing</label>
 		<blockquote><div>
 		[% UNLESS user_edit.user_comment_sort_type.defined; user_edit.user_comment_sort_type=2; END %]
 		[% user_comment_sort_type.${user_edit.user_comment_sort_type} = constants.markup_checked_attribute -%]
-		<input type="radio" name="user_comment_sort_type"[% user_comment_sort_type.1 %] value="1"> Selected by create time descending<br>
-		<input type="radio" name="user_comment_sort_type"[% user_comment_sort_type.2 %] value="2"> Selected by create time descending, results grouped by discussion, newest discussion first.
+		<input type="radio" name="user_comment_sort_type" value="1"[% user_comment_sort_type.1 %]> Selected by create time descending<br>
+		<input type="radio" name="user_comment_sort_type" value="2"[% user_comment_sort_type.2 %]> Selected by create time descending, results grouped by discussion, newest discussion first.
 		</div></blockquote>
 		[% IF user.is_admin %]
 		<label>Show Moderations in User Comment Listing <input type="checkbox" name="mod_with_comm" [% s_mod_check %]></label>

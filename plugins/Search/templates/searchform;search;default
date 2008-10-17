@@ -32,24 +32,24 @@ __template__
 
 	<input type="submit" value="Search"><BR>
 
-	<input type="radio" name="op" value="stories"[% IF op == 'stories'; constants.markup_checked_attribute; END %]> Stories
-	<input type="radio" name="op" value="comments"[% IF op == 'comments'; constants.markup_checked_attribute; END %]> Comments
-	<input type="radio" name="op" value="users"[% IF op == 'users'; constants.markup_checked_attribute; END %]> Users
-	<input type="radio" name="op" value="polls"[% IF op == 'polls'; constants.markup_checked_attribute; END %]> Polls
+	<input type="radio" name="op" value="stories"[% constants.markup_checked_attribute IF op == 'stories' %]> Stories
+	<input type="radio" name="op" value="comments"[% constants.markup_checked_attribute IF op == 'comments' %]> Comments
+	<input type="radio" name="op" value="users"[% constants.markup_checked_attribute IF op == 'users' %]> Users
+	<input type="radio" name="op" value="polls"[% constants.markup_checked_attribute IF op == 'polls' %]> Polls
 	[% IF constants.search_journal_enabled %]
-		<input type="radio" name="op" value="journals"[% IF op == 'journals'; constants.markup_checked_attribute; END %]> Journals
+		<input type="radio" name="op" value="journals"[% constants.markup_checked_attribute IF op == 'journals' %]> Journals
 	[% END %]
 	[% IF constants.rss_store %]
 		[% IF constants.search_rss_enabled || user.is_admin %]
-			<input type="radio" name="op" value="rss"[% IF op == 'rss'; constants.markup_checked_attribute; END %]> RSS Headlines
+			<input type="radio" name="op" value="rss"[% constants.markup_checked_attribute IF op == 'rss' %]> RSS Headlines
 		[% END %]
 	[% END %]
 	[% IF constants.submiss_view || user.is_admin %]
-		<input type="radio" name="op" value="submissions"[% IF op == 'submissions'; constants.markup_checked_attribute; END %]> Submissions
+		<input type="radio" name="op" value="submissions"[% constants.markup_checked_attribute IF op == 'submissions' %]> Submissions
 	[% END %]
 	<div class="options">
 	[% IF journal_option %]
-	<input type="checkbox" name="journal_only" value="1"[% IF form.journal_only == '1'; constants.markup_checked_attribute; END %]> Users with Journals
+	<input type="checkbox" name="journal_only" value="1"[% constants.markup_checked_attribute IF form.journal_only == '1' %]> Users with Journals
 	[% END %]
 
 	[% IF submission_notes %]

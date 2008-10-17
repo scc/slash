@@ -47,9 +47,9 @@ __template__
 <tr class="data_hl1">
 	<td valign="top">Next</td>
 	<td>
-		<input type="radio" name="redirect" value="bookmark" [% IF !form.redirect || form.redirect == "bookmark"; constants.markup_checked_attribute; END; %]>Return to bookmark
-		<input type="radio" name="redirect" value="journal" [% IF form.redirect == "journal"; constants.markup_checked_attribute; END; %]>Journal about this
-		<input type="radio" name="redirect" value="submit"  [% IF form.redirect == "submit"; constants.markup_checked_attribute; END; %]>Submit to [% constants.sitename %]
+		<input type="radio" name="redirect" value="bookmark"[% constants.markup_checked_attribute IF (!form.redirect || form.redirect == "bookmark") %]>Return to bookmark
+		<input type="radio" name="redirect" value="journal"[% constants.markup_checked_attribute IF form.redirect == "journal" %]>Journal about this
+		<input type="radio" name="redirect" value="submit"[% constants.markup_checked_attribute IF form.redirect == "submit" %]>Submit to [% constants.sitename %]
 		</td>
 </tr>
 <tr class="data_hl1">
