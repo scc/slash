@@ -14,13 +14,9 @@ en_US
 __name__
 portalmap
 __template__
-<map name="[% bid %]">
-	<area shape="rect" coords="0,0,7,7" href="[% env.script_name %]?op=d&amp;bid=[% bid %]" alt="Down">
-	<area shape="rect" coords="8,0,14,7" href="[% env.script_name %]?op=x&amp;bid=[% bid %]" alt="Kill">
-	<area shape="rect" coords="15,0,21,7" href="[% env.script_name %]?op=u&amp;bid=[% bid %]" alt="Up">
-</map>
-<img src="[% constants.imagedir %]/portalmap.gif" width="21" height="7" usemap="#[% bid %]" class="map" alt="">
+
 [% title %]
+<span class="closebox" onClick="Slash.Boxes.remove('[% bid %]-container')"></span>
 
 __seclev__
 500
