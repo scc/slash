@@ -43,7 +43,8 @@ $task{$me}{code} = sub {
 				
 				my $title = strip_notags($item->{title});
 				my $link = fudgeurl($item->{link});
-				my $text = strip_mode($item->{description}, HTML);
+                                my $text = $item->{description};
+                                $text = strip_mode($text, HTML) unless ($feed->{nofilter});
 				my $taglist = $feed->{tags};
 				
 				my $data = {
