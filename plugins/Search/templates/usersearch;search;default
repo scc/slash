@@ -21,7 +21,7 @@ __template__
 			</li>
 		[% END %]
 			<li class="author">
-			<a href="[% gSkin.rootdir %]/~[% thisuser.nickname | strip_paramattr %]/">[% thisuser.nickname | strip_literal %]</a> &nbsp;
+			<a href="[% constants.real_rootdir %]/~[% thisuser.nickname | strip_paramattr %]/">[% thisuser.nickname | strip_literal %]</a> &nbsp;
 			[% IF thisuser.fakeemail %]
 				([% thisuser.uid %]) email: <a href="mailto:[% thisuser.fakeemail | strip_paramattr_nonhttp %]">[% thisuser.fakeemail | strip_literal %]</a>
 			[% ELSE %]
@@ -30,7 +30,7 @@ __template__
 			</li>
 		[% IF thisuser.journal_last_entry_date %]
 			<li class="data">
-				<a href="[% gSkin.rootdir %]/~[% thisuser.nickname | strip_paramattr %]/journal/"><em> Last Journal entry [% Slash.timeCalc(thisuser.journal_last_entry_date) %]</em></A>
+				<a href="[% constants.real_rootdir %]/~[% thisuser.nickname | strip_paramattr %]/journal/"><em> Last Journal entry [% Slash.timeCalc(thisuser.journal_last_entry_date) %]</em></A>
 			</li>
 		[% END %]
 		[% UNLESS user.is_anon %]

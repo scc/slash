@@ -37,13 +37,13 @@ __template__
 [% UNLESS page == 'relation' %]
 	[% IF uid == user.uid && !user.is_anon %]
 	<ul class="menu">
-		<li><a href="[% gSkin.rootdir %]/my/friends/friends" class="begin">Friends of Friends</a></li>
-		<li><a href="[% gSkin.rootdir %]/my/friends/foes">Foes of Friends</a></li>
+		<li><a href="[% constants.real_rootdir %]/my/friends/friends" class="begin">Friends of Friends</a></li>
+		<li><a href="[% constants.real_rootdir %]/my/friends/foes">Foes of Friends</a></li>
 	</ul>
 	[% ELSE %]
 	<ul class="menu">
-		<li><a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/friends" class="begin">Friends of Friends</a></li>
-		<li><a href="[% gSkin.rootdir %]/~[% nickname | strip_paramattr %]/friends/foes">Foes of Friends</a></li>
+		<li><a href="[% constants.real_rootdir %]/~[% nickname | strip_paramattr %]/friends/friends" class="begin">Friends of Friends</a></li>
+		<li><a href="[% constants.real_rootdir %]/~[% nickname | strip_paramattr %]/friends/foes">Foes of Friends</a></li>
 	</ul>
 	[% END %]
 [% END; END %]

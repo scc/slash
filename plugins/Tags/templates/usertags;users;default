@@ -18,9 +18,9 @@ usertags
 __template__
 [% thisnickname = useredit.nickname | strip_literal;
    url_nick = useredit.nickname | strip_paramattr;
-   url_base = "$gSkin.rootdir/~$url_nick/";
+   url_base = "$constants.real_rootdir/~$url_nick/";
    uid = useredit.uid;
-   title = "Tags by <a href=\"$gSkin.rootdir/~$url_nick/\">$thisnickname ($uid)</a>";
+   title = "Tags by <a href=\"$constants.real_rootdir/~$url_nick/\">$thisnickname ($uid)</a>";
    PROCESS user_titlebar tab_selected='tags' %]
 
 [% IF user.tags_canread_stories && tags_grouped.keys.size %]
@@ -38,7 +38,7 @@ __template__
 					<a href="[% tag.url.url %]" rel="nofollow">[% tag.url.bookmark.title || tag.url.validtitle || tag.url.initialtitle | strip_literal %]</a>
 				[% ELSIF tag.globj_type == "journals" %]
 					[% nick = Slash.db.getUser(tag.journal.uid, 'nickname') %]
-					<a href="[% gSkin.rootdir %]/~[% nick | fixparam %]/journal/[% tag.journal.id %]/">[% tag.journal.description | strip_literal %]</a>
+					<a href="[% constants.real_rootdir %]/~[% nick | fixparam %]/journal/[% tag.journal.id %]/">[% tag.journal.description | strip_literal %]</a>
 				[% END %]
 			</td>
 			</tr>

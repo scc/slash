@@ -28,7 +28,7 @@ __template__
 	%]
 
 	<tr class="data_hl1"><td class="data_bgc1">
-		<a href="[% gSkin.rootdir %]/~[% id | strip_paramattr %]/"><b>[% id %]</b></a>
+		<a href="[% constants.real_rootdir %]/~[% id | strip_paramattr %]/"><b>[% id %]</b></a>
 	</td><td>
 		[% lastsecs %]
 		[% IF lastsecs and lasttitle %]&nbsp;/&nbsp;<a href="[% constants.absolutedir_secure %]/[% IF last_subid %]submit.pl?op=viewsub&amp;subid=[% last_subid %][% ELSIF last_sid %]/admin.pl?op=edit&amp;sid=[% last_sid %][% END %]">[% lasttitle %]</a>

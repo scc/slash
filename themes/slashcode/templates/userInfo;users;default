@@ -64,7 +64,7 @@ __template__
 	[% PROCESS titlebar title="Last Journal Entry" %]
 			[% Slash.createMenu("journal", style => "tabbed") %]
 			<b>
-				<a href="[% gSkin.rootdir %]/~[% useredit.nick_plain | strip_paramattr %]/journal/">
+				<a href="[% constants.real_rootdir %]/~[% useredit.nick_plain | strip_paramattr %]/journal/">
 					[% lastjournal.description | strip_notags %]
 				</a>
 			</b>,

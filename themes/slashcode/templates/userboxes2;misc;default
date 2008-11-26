@@ -25,7 +25,7 @@ IF !useredit.is_anon;
 
 	title = 'User Bio';
 	contents = BLOCK;
-		'<a href="'; gSkin.rootdir; '/~';
+		'<a href="'; constants.real_rootdir; '/~';
 			useredit.nickname | strip_paramattr; '/">';
                         useredit.nickname | strip_literal; '</a> ';
 		PROCESS zoo_icons person=useredit.uid implied="";

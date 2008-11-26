@@ -67,7 +67,7 @@ ELSIF env.script_name.search('article\.pl');
 
 ELSIF env.script_name.search('journal\.pl');
 	IF link.uid && link.nickname; tmp = BLOCK -%]
-<link rel="author"    title="[% link.nickname | strip_attribute %]" href="[% gSkin.rootdir %]/~[% link.nickname | strip_paramattr %]/">
+<link rel="author"    title="[% link.nickname | strip_attribute %]" href="[% constants.real_rootdir %]/~[% link.nickname | strip_paramattr %]/">
 	[%- END; linkrels.push(tmp); tmp = BLOCK -%]
 <link rel="alternate" title="[% link.nickname | strip_attribute %]'s Journal RSS" href="[% PROCESS rsslink_journal rsslink_style = 'journal' %]" type="application/rss+xml">
 	[%- END; linkrels.push(tmp); tmp = BLOCK -%]
@@ -89,7 +89,7 @@ ELSIF env.script_name.search('journal\.pl');
 
 ELSIF env.script_name.search('messages\.pl');
 	IF !user.is_anon; tmp = BLOCK -%]
-<link rel="alternate" title="[% constants.sitename | strip_attribute %] Messages RSS" href="[% gSkin.rootdir %]/my/inbox/rss/[% Slash.getPublicLogToken() | fixparam %]" type="application/rss+xml">
+<link rel="alternate" title="[% constants.sitename | strip_attribute %] Messages RSS" href="[% constants.real_rootdir %]/my/inbox/rss/[% Slash.getPublicLogToken() | fixparam %]" type="application/rss+xml">
 	[%- END; linkrels.push(tmp); END;
 ELSIF env.script_name.search('bookmark\.pl');
 	tmp = BLOCK -%]
@@ -101,7 +101,7 @@ ELSIF env.script_name.search('bookmark\.pl');
 
 ELSE; # default author link, where author is a nickname
 	    IF link.author; tmp = BLOCK -%]
-<link rel="author"    title="[% link.author | strip_attribute %]" href="[% gSkin.rootdir %]/~[% link.author | strip_paramattr %]/">
+<link rel="author"    title="[% link.author | strip_attribute %]" href="[% constants.real_rootdir %]/~[% link.author | strip_paramattr %]/">
 	[%- END; linkrels.push(tmp); END;
 
 END %]
