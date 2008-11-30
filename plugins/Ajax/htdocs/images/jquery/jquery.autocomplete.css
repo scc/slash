@@ -31,6 +31,7 @@
 	in relative units scroll will be broken in firefox
 	*/
 	line-height: 16px;
+	text-align: left;
 	overflow: hidden;
 }
 
