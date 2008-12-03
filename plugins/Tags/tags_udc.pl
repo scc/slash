@@ -94,12 +94,14 @@ sub populate_tags_udc {
 	my $hour = $cur_hour - 3600*$hoursback;
 	my $hour_next = $hour + 3600;
 	my $tags_reader = getObject('Slash::Tags', { db_type => 'reader' });
+	my $comments_gtid = $tags_reader->getGlobjTypes()->{comments} || 5;
 	my $tags_ar = $tags_reader->sqlSelectAllHashrefArray(
-		'*',
-		'tags',
+		'tags.*',
+		'tags NATURAL JOIN globjids',
 		"created_at BETWEEN FROM_UNIXTIME($hour) AND DATE_ADD(FROM_UNIXTIME($hour), INTERVAL 3599 SECOND)
 		 AND tagnameid IN ($dnid, $upid)
-		 AND inactivated IS NULL");
+		 AND inactivated IS NULL
+		 AND gtid != $comments_gtid");
 	$tags_reader->addCloutsToTagArrayref($tags_ar, 'vote');
 
 	my $cloutsum = 0;
